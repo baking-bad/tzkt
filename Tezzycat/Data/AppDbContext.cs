@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 
 using Tezzycat.Models;
 
@@ -42,8 +43,10 @@ namespace Tezzycat.Data
                 new AppState
                 {
                     Id = -1,
-                    CurrentHash = "",
-                    CurrentLevel = -1
+                    Level = -1,
+                    Timestamp = DateTime.MinValue,
+                    Protocol = "",
+                    Hash = "",
                 });
         }
     }

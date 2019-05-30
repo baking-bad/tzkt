@@ -78,7 +78,7 @@ namespace Tezzycat.Services
                 #region check for updates
                 try
                 {
-                    while (!await Node.HasUpdatesAsync(AppState.CurrentLevel))
+                    while (!await Node.HasUpdatesAsync(AppState.Level))
                         await Task.Delay(1000);
 
                     Logger.LogDebug($"Newer head found: {(await Node.GetHeaderAsync()).Level}");
@@ -91,49 +91,54 @@ namespace Tezzycat.Services
                 }
                 #endregion
 
-                #region validate current branch
-                try
+                using (var scope = Services.CreateScope())
                 {
-                    while (AppState.CurrentLevel >= 0
-                        && !await Node.ValidateBranchAsync(AppState.CurrentLevel, AppState.CurrentHash))
+                    var db = scope.ServiceProvider.GetService<AppDbContext>();
+
+                    #region validate current branch
+                    try
                     {
-                        Logger.LogError($"Invalid branch: {AppState.CurrentLevel} - {AppState.CurrentHash}. Reverting block...");
+                        while (AppState.Level >= 0
+                            && !await Node.ValidateBranchAsync(AppState.Level, AppState.Hash))
+                        {
+                            Logger.LogError($"Invalid branch: {AppState.Level} - {AppState.Hash}. Reverting block...");
 
-                        var protocol = Protocols.GetProtocolHandler(AppState.CurrentProtocol);
-                        AppState = await protocol.RevertLastBlock();
+                            var protoHandler = Protocols.GetProtocolHandler(AppState.Protocol);
+                            AppState = await protoHandler.RevertLastBlock(db);
 
-                        Logger.LogDebug($"Reverted to: {AppState.CurrentLevel} - {AppState.CurrentHash}");
+                            Logger.LogDebug($"Reverted to: {AppState.Level} - {AppState.Hash}");
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogCritical($"Failed to validate branch. {ex.Message}");
-                    await Task.Delay(5000);
-                    continue;
-                }
-                #endregion
-
-                #region apply updates
-                try
-                {
-                    while (await Node.HasUpdatesAsync(AppState.CurrentLevel))
+                    catch (Exception ex)
                     {
-                        Logger.LogDebug($"Applying block {AppState.CurrentLevel + 1}...");
-
-                        var block = await Node.Rpc.Blocks[AppState.CurrentLevel + 1].GetAsync();
-                        var protocol = Protocols.GetProtocolHandler(block["protocol"].String());
-                        AppState = await protocol.ApplyBlock((JObject)block);
-
-                        Logger.LogDebug($"New head: {AppState.CurrentLevel} - {AppState.CurrentHash}");
+                        Logger.LogCritical($"Failed to validate branch. {ex.Message}");
+                        await Task.Delay(5000);
+                        continue;
                     }
+                    #endregion
+
+                    #region apply updates
+                    try
+                    {
+                        while (await Node.HasUpdatesAsync(AppState.Level))
+                        {
+                            Logger.LogDebug($"Applying block {AppState.Level + 1}...");
+
+                            var block = await Node.Rpc.Blocks[AppState.Level + 1].GetAsync();
+                            var protoHandler = Protocols.GetProtocolHandler(block["protocol"].String());
+                            AppState = await protoHandler.ApplyBlock(db, (JObject)block);
+
+                            Logger.LogDebug($"New head: {AppState.Level} - {AppState.Hash}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogCritical($"Failed to apply updates. {ex.Message}");
+                        await Task.Delay(5000);
+                        continue;
+                    }
+                    #endregion
                 }
-                catch (Exception ex)
-                {
-                    Logger.LogCritical($"Failed to apply updates. {ex.Message}");
-                    await Task.Delay(5000);
-                    continue;
-                }
-                #endregion
             }
 
             State = ObserverState.Stoped;

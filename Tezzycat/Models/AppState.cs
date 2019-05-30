@@ -8,8 +8,9 @@ namespace Tezzycat.Models
     public class AppState
     {
         public int Id { get; set; }
-        public int CurrentLevel { get; set; }
-        public string CurrentHash { get; set; }
-        public string CurrentProtocol { get; set; }
+        public int Level { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string Protocol { get; set; }
+        public string Hash { get; set; }
     }
 }

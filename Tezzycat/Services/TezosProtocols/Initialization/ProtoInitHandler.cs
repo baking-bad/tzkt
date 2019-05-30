@@ -9,9 +9,9 @@ using Tezzycat.Models;
 
 namespace Tezzycat.Services.Protocols
 {
-    public class Proto1Handler : IProtocolHandler
+    public class ProtoInitHandler : IProtocolHandler
     {
-        public string Kind => "Proto1";
+        public string Kind => "Initialization";
 
         public Task<AppState> ApplyBlock(AppDbContext db, JObject block)
         {

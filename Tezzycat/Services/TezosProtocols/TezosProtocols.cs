@@ -15,7 +15,7 @@ namespace Tezzycat.Services
             Handlers = new Dictionary<string, IProtocolHandler>
             {
                 { "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i", new GenesisHandler() },
-                { "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P", new GenesisHandler() },
+                { "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P", new ProtoInitHandler() },
                 { "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY", new Proto1Handler() },
                 { "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt", new Proto2Handler() },
                 { "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP", new Proto3Handler() }

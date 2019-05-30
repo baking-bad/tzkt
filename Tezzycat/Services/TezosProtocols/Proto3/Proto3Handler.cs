@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
+using Tezzycat.Data;
 using Tezzycat.Models;
 
 namespace Tezzycat.Services.Protocols
@@ -12,12 +13,12 @@ namespace Tezzycat.Services.Protocols
     {
         public string Kind => "Proto3";
 
-        public Task<AppState> ApplyBlock(JObject block)
+        public Task<AppState> ApplyBlock(AppDbContext db, JObject block)
         {
             throw new NotImplementedException();
         }
 
-        public Task<AppState> RevertLastBlock()
+        public Task<AppState> RevertLastBlock(AppDbContext db)
         {
             throw new NotImplementedException();
         }

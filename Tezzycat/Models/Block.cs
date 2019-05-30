@@ -11,7 +11,7 @@ namespace Tezzycat.Models
         public DateTime Timestamp { get; set; }
         public int ProtocolId { get; set; }
 
-        public int BakerId { get; set; }
+        public int? BakerId { get; set; }
         public int Priority { get; set; }
 
         #region relations

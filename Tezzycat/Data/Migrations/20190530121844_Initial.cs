@@ -31,9 +31,10 @@ namespace Tezzycat.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    CurrentLevel = table.Column<int>(nullable: false),
-                    CurrentHash = table.Column<string>(nullable: true),
-                    CurrentProtocol = table.Column<string>(nullable: true)
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    Protocol = table.Column<string>(nullable: true),
+                    Hash = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -114,6 +115,7 @@ namespace Tezzycat.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Blocks = table.Column<int>(nullable: false),
                     Hash = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -563,7 +565,7 @@ namespace Tezzycat.Migrations
                     Hash = table.Column<string>(nullable: true),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     ProtocolId = table.Column<int>(nullable: false),
-                    BakerId = table.Column<int>(nullable: false),
+                    BakerId = table.Column<int>(nullable: true),
                     Priority = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
@@ -574,7 +576,7 @@ namespace Tezzycat.Migrations
                         column: x => x.BakerId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Blocks_Protocols_ProtocolId",
                         column: x => x.ProtocolId,
@@ -585,8 +587,8 @@ namespace Tezzycat.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "CurrentHash", "CurrentLevel", "CurrentProtocol" },
-                values: new object[] { -1, "", -1, null });
+                columns: new[] { "Id", "Hash", "Level", "Protocol", "Timestamp" },
+                values: new object[] { -1, "", -1, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_BakerStats_BakerId",
