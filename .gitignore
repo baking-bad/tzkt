@@ -339,4 +339,4 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
-/Tezzycat/Properties/launchSettings.json
+*/Properties/launchSettings.json
