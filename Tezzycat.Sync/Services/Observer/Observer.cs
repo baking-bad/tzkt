@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
 using Tezzycat.Data;
+using Tezzycat.Data.Models;
 
 namespace Tezzycat.Sync.Services
 {
@@ -27,6 +28,54 @@ namespace Tezzycat.Sync.Services
             Logger = logger;
         }
 
+        private async Task<bool> WaitForUpdatesAsync(AppState state, CancellationToken token)
+        {
+            while (!await Node.HasUpdatesAsync(state.Level))
+            {
+                if (token.IsCancellationRequested)
+                    return false;
+
+                await Task.Delay(1000);
+            }
+            return true;
+        }
+
+        private async Task<bool> ValidateBranchAsync(AppState state, IServiceScope scope, CancellationToken token)
+        {
+            while (state.Level >= 0 && !await Node.ValidateBranchAsync(state.Level, state.Hash))
+            {
+                if (token.IsCancellationRequested)
+                    return false;
+
+                Logger.LogError($"Invalid branch: {state.Level} - {state.Hash}. Reverting block...");
+
+                var protoHandler = scope.ServiceProvider.GetProtocolHandler(state.Protocol);
+                state = await protoHandler.RevertLastBlock();
+
+                Logger.LogDebug($"Reverted to: {state.Level} - {state.Hash}");
+            }
+            return true;
+        }
+
+        private async Task<bool> ApplyUpdatesAsync(AppState state, IServiceScope scope, CancellationToken token)
+        {
+            while (await Node.HasUpdatesAsync(state.Level))
+            {
+                if (token.IsCancellationRequested)
+                    return false;
+
+                Logger.LogDebug($"Loading block {state.Level + 1}...");
+                var block = await Node.Rpc.Blocks[state.Level + 1].GetAsync();
+
+                Logger.LogDebug($"Applying block...");
+                var protoHandler = scope.ServiceProvider.GetProtocolHandler(block["protocol"].String());
+                state = await protoHandler.ApplyBlock(block);
+
+                Logger.LogDebug($"Applied");
+            }
+            return true;
+        }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Logger.LogWarning("Observer is started");
@@ -41,8 +90,8 @@ namespace Tezzycat.Sync.Services
                     #region check for updates
                     try
                     {
-                        while (!await Node.HasUpdatesAsync(state.Level))
-                            await Task.Delay(1000);
+                        if (!await WaitForUpdatesAsync(state, stoppingToken))
+                            break;
 
                         Logger.LogDebug($"Newer head is found: {(await Node.GetHeaderAsync()).Level}");
                     }
@@ -57,16 +106,10 @@ namespace Tezzycat.Sync.Services
                     #region validate current branch
                     try
                     {
-                        while (state.Level >= 0
-                            && !await Node.ValidateBranchAsync(state.Level, state.Hash))
-                        {
-                            Logger.LogError($"Invalid branch: {state.Level} - {state.Hash}. Reverting block...");
+                        if (!await ValidateBranchAsync(state, scope, stoppingToken))
+                            break;
 
-                            var protoHandler = scope.ServiceProvider.GetProtocolHandler(state.Protocol);
-                            state = await protoHandler.RevertLastBlock();
-
-                            Logger.LogDebug($"Reverted to: {state.Level} - {state.Hash}");
-                        }
+                        Logger.LogDebug($"Current head: {state.Level} - {state.Hash}");
                     }
                     catch (Exception ex)
                     {
@@ -79,16 +122,10 @@ namespace Tezzycat.Sync.Services
                     #region apply updates
                     try
                     {
-                        while (await Node.HasUpdatesAsync(state.Level))
-                        {
-                            Logger.LogDebug($"Applying block {state.Level + 1}...");
+                        if (!await ApplyUpdatesAsync(state, scope, stoppingToken))
+                            break;
 
-                            var block = await Node.Rpc.Blocks[state.Level + 1].GetAsync();
-                            var protoHandler = scope.ServiceProvider.GetProtocolHandler(block["protocol"].String());
-                            state = await protoHandler.ApplyBlock(block);
-
-                            Logger.LogDebug($"New head: {state.Level} - {state.Hash}");
-                        }
+                        Logger.LogDebug($"New head: {state.Level} - {state.Hash}");
                     }
                     catch (Exception ex)
                     {
