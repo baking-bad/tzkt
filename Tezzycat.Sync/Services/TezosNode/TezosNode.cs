@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 
 using Netezos.Rpc;
 
@@ -24,6 +25,9 @@ namespace Tezzycat.Sync.Services
                 nodeConf.Chain == "test" ? Chain.Test : Chain.Main);
         }
         public void Dispose() => Rpc.Dispose();
+
+        public async Task<JObject> GetBlockAsync(int level)
+            => (JObject)await Rpc.Blocks[level].GetAsync();
 
         public async Task<Header> GetHeaderAsync()
         {

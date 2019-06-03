@@ -10,7 +10,7 @@ namespace Tezzycat.Sync.Services
     {
         string Kind { get; }
 
-        Task<AppState> ApplyBlock(JToken block);
+        Task<AppState> ApplyBlock(JObject block);
         Task<AppState> RevertLastBlock();
     }
 }

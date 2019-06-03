@@ -19,7 +19,7 @@ namespace Tezzycat.Sync.Services.Protocols
             Db = db;
         }
 
-        public async Task<AppState> ApplyBlock(JToken block)
+        public async Task<AppState> ApplyBlock(JObject block)
         {
             var state = await Db.AppState.FirstOrDefaultAsync()
                 ?? throw new Exception("AppState is missed");

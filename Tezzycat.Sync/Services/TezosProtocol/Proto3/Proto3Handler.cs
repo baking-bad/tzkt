@@ -13,7 +13,7 @@ namespace Tezzycat.Sync.Services.Protocols
     {
         public string Kind => "Proto3";
 
-        public Task<AppState> ApplyBlock(JToken block)
+        public Task<AppState> ApplyBlock(JObject block)
         {
             throw new NotImplementedException();
         }

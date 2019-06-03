@@ -43,6 +43,8 @@ namespace Tezzycat.Sync
                                 hostContext.Configuration.GetConnectionString("DefaultConnection"));
                         });
 
+                    services.AddMemoryCache();
+
                     services.AddTezosNode();
                     services.AddTezosProtocols();
                     services.AddHostedService<Observer>();
