@@ -12,9 +12,16 @@ namespace Tezzycat.Sync.Services.Protocols
     {
         public string Kind => "Genesis";
 
-        public async Task<AppState> ApplyBlock(SyncContext db, JObject block)
+        private readonly SyncContext Db;
+
+        public GenesisHandler(SyncContext db)
         {
-            var state = await db.AppState.FirstOrDefaultAsync()
+            Db = db;
+        }
+
+        public async Task<AppState> ApplyBlock(JToken block)
+        {
+            var state = await Db.AppState.FirstOrDefaultAsync()
                 ?? throw new Exception("AppState is missed");
 
             var level = block["header"]["level"].Int32();
@@ -22,7 +29,7 @@ namespace Tezzycat.Sync.Services.Protocols
                 throw new Exception($"Invalid blocks order: {state.Level} -> {level}");
 
             var protoHash = block["protocol"].String();
-            var proto = await db.Protocols.FirstOrDefaultAsync(x => x.Hash == protoHash)
+            var proto = await Db.Protocols.FirstOrDefaultAsync(x => x.Hash == protoHash)
                 ?? new Protocol { Hash = protoHash };
             
             var b = new Block
@@ -33,7 +40,7 @@ namespace Tezzycat.Sync.Services.Protocols
                 Protocol = proto,
                 Timestamp = block["header"]["timestamp"].DateTime(),
             };
-            db.Blocks.Add(b);
+            Db.Blocks.Add(b);
 
             proto.Blocks++;
             state.Level = b.Level;
@@ -41,27 +48,27 @@ namespace Tezzycat.Sync.Services.Protocols
             state.Protocol = proto.Hash;
             state.Hash = b.Hash;
 
-            await db.SaveChangesAsync();
+            await Db.SaveChangesAsync();
             return state;
         }
 
-        public async Task<AppState> RevertLastBlock(SyncContext db)
+        public async Task<AppState> RevertLastBlock()
         {
-            var state = await db.AppState.FirstOrDefaultAsync()
+            var state = await Db.AppState.FirstOrDefaultAsync()
                 ?? throw new Exception("AppState is missed");
 
-            var block = await db.Blocks
+            var block = await Db.Blocks
                 .Include(x => x.Protocol)
                 .FirstOrDefaultAsync(x => x.Level == state.Level)
                 ?? throw new Exception($"Failed to revert: block {state.Level} is not found");
 
-            db.Blocks.Remove(block);
+            Db.Blocks.Remove(block);
 
             block.Protocol.Blocks--;
             if (block.Protocol.Blocks == 0)
-                db.Protocols.Remove(block.Protocol);
+                Db.Protocols.Remove(block.Protocol);
 
-            var prevBlock = await db.Blocks
+            var prevBlock = await Db.Blocks
                 .Include(x => x.Protocol)
                 .FirstOrDefaultAsync(x => x.Level == state.Level - 1);
 
@@ -70,7 +77,7 @@ namespace Tezzycat.Sync.Services.Protocols
             state.Protocol = prevBlock?.Protocol.Hash ?? "";
             state.Hash = prevBlock?.Hash ?? "";
 
-            await db.SaveChangesAsync();
+            await Db.SaveChangesAsync();
             return state;
         }
     }

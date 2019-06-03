@@ -17,14 +17,12 @@ namespace Tezzycat.Sync.Services
     public class Observer : BackgroundService
     {
         private readonly TezosNode Node;
-        private readonly TezosProtocols Protocols;
         private readonly IServiceScopeFactory Services;
         private readonly ILogger Logger;
 
-        public Observer(TezosNode node, TezosProtocols protocols, IServiceScopeFactory services, ILogger<Observer> logger)
+        public Observer(TezosNode node, IServiceScopeFactory services, ILogger<Observer> logger)
         {
             Node = node;
-            Protocols = protocols;
             Services = services;
             Logger = logger;
         }
@@ -64,8 +62,8 @@ namespace Tezzycat.Sync.Services
                         {
                             Logger.LogError($"Invalid branch: {state.Level} - {state.Hash}. Reverting block...");
 
-                            var protoHandler = Protocols.GetProtocolHandler(state.Protocol);
-                            state = await protoHandler.RevertLastBlock(db);
+                            var protoHandler = scope.ServiceProvider.GetProtocolHandler(state.Protocol);
+                            state = await protoHandler.RevertLastBlock();
 
                             Logger.LogDebug($"Reverted to: {state.Level} - {state.Hash}");
                         }
@@ -86,8 +84,8 @@ namespace Tezzycat.Sync.Services
                             Logger.LogDebug($"Applying block {state.Level + 1}...");
 
                             var block = await Node.Rpc.Blocks[state.Level + 1].GetAsync();
-                            var protoHandler = Protocols.GetProtocolHandler(block["protocol"].String());
-                            state = await protoHandler.ApplyBlock(db, (JObject)block);
+                            var protoHandler = scope.ServiceProvider.GetProtocolHandler(block["protocol"].String());
+                            state = await protoHandler.ApplyBlock(block);
 
                             Logger.LogDebug($"New head: {state.Level} - {state.Hash}");
                         }
