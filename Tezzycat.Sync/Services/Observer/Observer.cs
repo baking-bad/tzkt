@@ -121,9 +121,9 @@ namespace Tezzycat.Sync.Services
                     Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                     var block = await Node.GetBlockAsync(AppState.Level + 1);
 
-                    if (AppState.Level >= 0 && block.GetPredessor() != AppState.Hash)
+                    if (AppState.Level >= 0 && block.GetPredecessor() != AppState.Hash)
                     {
-                        Logger.LogError($"Unknown predessor. Rebase local branch...");
+                        Logger.LogError($"Unknown predecessor. Rebase local branch...");
 
                         if (!await RebaseLocalBranchAsync(scope, cancelToken))
                             return false;

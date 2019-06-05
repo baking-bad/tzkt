@@ -12,6 +12,6 @@ namespace Tezzycat.Sync
         public static bool Bool(this JObject jObject) => jObject.Value<bool>();
 
         public static string GetProtocol(this JObject jObject) => jObject["protocol"].String();
-        public static string GetPredessor(this JObject jObject) => jObject["header"]["predecessor"].String();
+        public static string GetPredecessor(this JObject jObject) => jObject["header"]["predecessor"].String();
     }
 }
