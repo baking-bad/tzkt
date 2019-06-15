@@ -47,16 +47,19 @@ namespace Tezzycat.Data.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Address = table.Column<string>(nullable: true),
-                    PublicKey = table.Column<string>(nullable: true),
-                    DelegateId = table.Column<int>(nullable: false),
-                    ManagerId = table.Column<int>(nullable: false),
-                    Code = table.Column<bool>(nullable: false),
+                    Kind = table.Column<int>(nullable: false),
+                    Address = table.Column<string>(fixedLength: true, maxLength: 36, nullable: false),
+                    PublicKey = table.Column<string>(maxLength: 65, nullable: true),
+                    DelegateId = table.Column<int>(nullable: true),
+                    ManagerId = table.Column<int>(nullable: true),
                     Delegatable = table.Column<bool>(nullable: false),
                     Spendable = table.Column<bool>(nullable: false),
-                    Active = table.Column<bool>(nullable: false),
+                    Staked = table.Column<bool>(nullable: false),
                     Balance = table.Column<long>(nullable: false),
-                    Counter = table.Column<long>(nullable: false)
+                    Counter = table.Column<long>(nullable: false),
+                    Frozen = table.Column<long>(nullable: false),
+                    StakingBalance = table.Column<long>(nullable: false),
+                    DelegatorsCount = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -66,13 +69,13 @@ namespace Tezzycat.Data.Migrations
                         column: x => x.DelegateId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Contracts_Contracts_ManagerId",
                         column: x => x.ManagerId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -189,6 +192,7 @@ namespace Tezzycat.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Level = table.Column<int>(nullable: false),
                     ContractId = table.Column<int>(nullable: false),
+                    DelegateId = table.Column<int>(nullable: false),
                     Balance = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
@@ -197,6 +201,12 @@ namespace Tezzycat.Data.Migrations
                     table.ForeignKey(
                         name: "FK_BalanceSnapshots_Contracts_ContractId",
                         column: x => x.ContractId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BalanceSnapshots_Contracts_DelegateId",
+                        column: x => x.DelegateId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -216,7 +226,7 @@ namespace Tezzycat.Data.Migrations
                     Fee = table.Column<long>(nullable: false),
                     Applied = table.Column<bool>(nullable: false),
                     Internal = table.Column<bool>(nullable: false),
-                    DelegateId = table.Column<int>(nullable: false)
+                    DelegateId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -226,7 +236,7 @@ namespace Tezzycat.Data.Migrations
                         column: x => x.DelegateId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_DelegationOps_Contracts_SenderId",
                         column: x => x.SenderId,
@@ -424,7 +434,7 @@ namespace Tezzycat.Data.Migrations
                     Applied = table.Column<bool>(nullable: false),
                     Internal = table.Column<bool>(nullable: false),
                     ContractId = table.Column<int>(nullable: false),
-                    DelegateId = table.Column<int>(nullable: false),
+                    DelegateId = table.Column<int>(nullable: true),
                     ManagerId = table.Column<int>(nullable: false),
                     Delegatable = table.Column<bool>(nullable: false),
                     Spendable = table.Column<bool>(nullable: false),
@@ -445,7 +455,7 @@ namespace Tezzycat.Data.Migrations
                         column: x => x.DelegateId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_OriginationOps_Contracts_ManagerId",
                         column: x => x.ManagerId,
@@ -566,7 +576,8 @@ namespace Tezzycat.Data.Migrations
                     Timestamp = table.Column<DateTime>(nullable: false),
                     ProtocolId = table.Column<int>(nullable: false),
                     BakerId = table.Column<int>(nullable: true),
-                    Priority = table.Column<int>(nullable: false)
+                    Priority = table.Column<int>(nullable: false),
+                    Validations = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -588,7 +599,7 @@ namespace Tezzycat.Data.Migrations
             migrationBuilder.InsertData(
                 table: "AppState",
                 columns: new[] { "Id", "Hash", "Level", "Protocol", "Timestamp" },
-                values: new object[] { -1, "", -1, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
+                values: new object[] { -1, "", -1, "", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_BakerStats_BakerId",
@@ -606,6 +617,11 @@ namespace Tezzycat.Data.Migrations
                 column: "ContractId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BalanceSnapshots_DelegateId",
+                table: "BalanceSnapshots",
+                column: "DelegateId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Blocks_BakerId",
                 table: "Blocks",
                 column: "BakerId");
@@ -616,10 +632,15 @@ namespace Tezzycat.Data.Migrations
                 column: "ProtocolId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Contracts_Address",
+                table: "Contracts",
+                column: "Address",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Contracts_DelegateId",
                 table: "Contracts",
-                column: "DelegateId",
-                unique: true);
+                column: "DelegateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contracts_ManagerId",

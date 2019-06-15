@@ -10,7 +10,7 @@ namespace Tezzycat.Sync.Services
         public static void AddTezosProtocols(this IServiceCollection services)
         {
             services.AddScoped<GenesisHandler>();
-            services.AddScoped<MigrationHandler>();
+            services.AddScoped<InitializationHandler>();
             services.AddScoped<Proto1Handler>();
             services.AddScoped<Proto2Handler>();
             services.AddScoped<Proto3Handler>();
@@ -23,7 +23,7 @@ namespace Tezzycat.Sync.Services
                 case "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i":
                     return services.GetRequiredService<GenesisHandler>();
                 case "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P":
-                    return services.GetRequiredService<MigrationHandler>();
+                    return services.GetRequiredService<InitializationHandler>();
                 case "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY":
                     return services.GetRequiredService<Proto1Handler>();
                 case "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt":

@@ -11,8 +11,8 @@ namespace Tezzycat.Sync.Services.Protocols
 {
     public class GenesisHandler : IProtocolHandler
     {
-        private readonly SyncContext Db;
-        private readonly IMemoryCache Cache;
+        protected readonly SyncContext Db;
+        protected readonly IMemoryCache Cache;
 
         public GenesisHandler(SyncContext db, IMemoryCache cache)
         {
@@ -27,9 +27,15 @@ namespace Tezzycat.Sync.Services.Protocols
         {
             var block = await ParseBlock(json);
 
-            await PreApply(block);
-            await Apply(block);
-            await PostApply(block);
+            if (block.Level != 0)
+                throw new Exception("Genesis block must be at level 0");
+
+            if (block.Protocol.Blocks > 0)
+                throw new Exception("Genesis block already exists");
+
+            Db.Blocks.Add(block);
+            ProtocolUp(block.Protocol);
+            await SetAppState(block);
 
             await Db.SaveChangesAsync();
             return await GetAppStateAsync();
@@ -37,19 +43,25 @@ namespace Tezzycat.Sync.Services.Protocols
 
         public virtual async Task<AppState> RevertLastBlock()
         {
-            var block = await GetLastBlock();
+            var lastBlock = await GetLastBlock();
 
-            await PreRevert(block);
-            await Revert(block);
-            await PostRevert(block);
+            if (lastBlock == null)
+                throw new Exception("Nothing to revert");
+
+            if (lastBlock.Level != 0)
+                throw new Exception("Genesis block must be at level 0");
+
+            Db.Blocks.Remove(lastBlock);
+            ProtocolDown(lastBlock.Protocol);
+            await SetAppState(null);
 
             await Db.SaveChangesAsync();
             return await GetAppStateAsync();
         }
         #endregion
 
-        #region cached data
-        protected virtual async Task<AppState> GetAppStateAsync()
+        #region cached state
+        protected async Task<AppState> GetAppStateAsync()
         {
             if (!Cache.TryGetValue<AppState>(nameof(AppState), out var state))
             {
@@ -60,18 +72,7 @@ namespace Tezzycat.Sync.Services.Protocols
             return state;
         }
 
-        protected virtual async Task<Protocol> GetProtocolAsync(string hash)
-        {
-            if (!Cache.TryGetValue<Protocol>(hash, out var protocol))
-            {
-                protocol = await Db.Protocols.FirstOrDefaultAsync(x => x.Hash == hash)
-                    ?? new Protocol { Hash = hash };
-                Cache.Set(hash, protocol);
-            }
-            return protocol;
-        }
-
-        protected virtual async Task UpdateAppState(Block block)
+        protected async Task SetAppState(Block block)
         {
             var state = await GetAppStateAsync();
 
@@ -82,18 +83,29 @@ namespace Tezzycat.Sync.Services.Protocols
 
             Db.Update(state);
         }
+        #endregion
 
-        protected virtual Task IncrementProtocol(Protocol protocol)
+        #region cached protocols
+        protected async Task<Protocol> GetProtocolAsync(string hash)
+        {
+            if (!Cache.TryGetValue<Protocol>(hash, out var protocol))
+            {
+                protocol = await Db.Protocols.FirstOrDefaultAsync(x => x.Hash == hash)
+                    ?? new Protocol { Hash = hash };
+                Cache.Set(hash, protocol);
+            }
+            return protocol;
+        }
+
+        protected void ProtocolUp(Protocol protocol)
         {
             protocol.Blocks++;
 
             if (Db.Entry(protocol).State != EntityState.Added)
                 Db.Update(protocol);
-
-            return Task.CompletedTask;
         }
 
-        protected virtual Task DecrementProtocol(Protocol protocol)
+        protected void ProtocolDown(Protocol protocol)
         {
             if (--protocol.Blocks == 0)
             {
@@ -104,11 +116,10 @@ namespace Tezzycat.Sync.Services.Protocols
             {
                 Db.Update(protocol);
             }
-            return Task.CompletedTask;
         }
         #endregion
 
-        #region blocks
+        #region virtual
         protected virtual async Task<Block> ParseBlock(JObject block)
         {
             return new Block
@@ -126,58 +137,7 @@ namespace Tezzycat.Sync.Services.Protocols
 
             return await Db.Blocks
                 .Include(x => x.Protocol)
-                .FirstOrDefaultAsync(x => x.Level == state.Level)
-                ?? throw new Exception("There are no blocks");
-        }
-
-        protected virtual async Task<Block> GetSecondLastBlock()
-        {
-            var state = await GetAppStateAsync();
-
-            return await Db.Blocks
-                .Include(x => x.Protocol)
-                .FirstOrDefaultAsync(x => x.Level == state.Level - 1);
-        }
-        #endregion
-
-        #region applying
-        protected virtual Task PreApply(Block block)
-        {
-            if (block.Protocol.Blocks > 0)
-                throw new Exception("Genesis block already exists");
-            return Task.CompletedTask;
-        }
-
-        protected virtual Task Apply(Block block)
-        {
-            Db.Blocks.Add(block);
-            return Task.CompletedTask;
-        }
-
-        protected virtual async Task PostApply(Block block)
-        {
-            await IncrementProtocol(block.Protocol);
-            await UpdateAppState(block);
-        }
-        #endregion
-
-        #region reverting
-        protected virtual Task PreRevert(Block block)
-        {
-            return Task.CompletedTask;
-        }
-
-        protected virtual Task Revert(Block block)
-        {
-            Db.Blocks.Remove(block);
-            return Task.CompletedTask;
-        }
-
-        protected virtual async Task PostRevert(Block block)
-        {
-            await DecrementProtocol(block.Protocol);
-            var lastBlock = await GetSecondLastBlock();
-            await UpdateAppState(lastBlock);
+                .FirstOrDefaultAsync(x => x.Level == state.Level);
         }
         #endregion
     }

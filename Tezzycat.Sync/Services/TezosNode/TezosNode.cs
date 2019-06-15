@@ -29,6 +29,15 @@ namespace Tezzycat.Sync.Services
         public async Task<JObject> GetBlockAsync(int level)
             => (JObject)await Rpc.Blocks[level].GetAsync();
 
+        public async Task<JArray> GetContractsAsync(int level)
+            => (JArray)await Rpc.Blocks[level].Context.Raw.Contracts.GetAsync(1);
+
+        public async Task<JArray> GetBakingRightsAsync(int cycle, int cycleSize, int maxPriority)
+            => (JArray)await Rpc.Blocks[cycle * cycleSize + 1].Helpers.BakingRights.GetFromCycleAsync(cycle, maxPriority);
+
+        public async Task<JArray> GetEndorsingRightsAsync(int cycle, int cycleSize)
+            => (JArray)await Rpc.Blocks[cycle * cycleSize + 1].Helpers.EndorsingRights.GetFromCycleAsync(cycle);
+
         public async Task<Header> GetHeaderAsync()
         {
             if (DateTime.UtcNow >= NextBlock)

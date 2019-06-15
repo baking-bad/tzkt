@@ -6,7 +6,7 @@ namespace Tezzycat.Data.Models
     public class OriginationOperation : ManagerOperation
     {
         public int ContractId { get; set; }
-        public int DelegateId { get; set; }
+        public int? DelegateId { get; set; }
         public int ManagerId { get; set; }
         public bool Delegatable { get; set; }
         public bool Spendable { get; set; }

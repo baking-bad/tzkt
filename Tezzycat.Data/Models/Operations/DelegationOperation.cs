@@ -5,7 +5,7 @@ namespace Tezzycat.Data.Models
 {
     public class DelegationOperation : ManagerOperation
     {
-        public int DelegateId { get; set; }
+        public int? DelegateId { get; set; }
 
         #region relations
         [ForeignKey("DelegateId")]

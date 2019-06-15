@@ -13,6 +13,7 @@ namespace Tezzycat.Data.Models
 
         public int? BakerId { get; set; }
         public int Priority { get; set; }
+        public int Validations { get; set; }
 
         #region relations
         [ForeignKey("ProtocolId")]

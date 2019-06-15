@@ -2,17 +2,16 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Tezzycat.Data;
 
 namespace Tezzycat.Data.Migrations
 {
     [DbContext(typeof(SyncContext))]
-    [Migration("20190530121844_Initial")]
-    partial class Initial
+    partial class SyncContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,7 +19,7 @@ namespace Tezzycat.Data.Migrations
                 .HasAnnotation("ProductVersion", "2.2.4-servicing-10062")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            modelBuilder.Entity("Tezzycat.Models.ActivationOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.ActivationOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -40,7 +39,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("ActivationOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.AppState", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.AppState", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -63,11 +62,12 @@ namespace Tezzycat.Data.Migrations
                             Id = -1,
                             Hash = "",
                             Level = -1,
+                            Protocol = "",
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.BakerStat", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.BakerStat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -117,7 +117,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("BakerStats");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.BakingRight", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.BakingRight", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -135,7 +135,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("BakingRights");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.BalanceSnapshot", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.BalanceSnapshot", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -144,16 +144,20 @@ namespace Tezzycat.Data.Migrations
 
                     b.Property<int>("ContractId");
 
+                    b.Property<int>("DelegateId");
+
                     b.Property<int>("Level");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ContractId");
 
+                    b.HasIndex("DelegateId");
+
                     b.ToTable("BalanceSnapshots");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.Block", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.Block", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -170,6 +174,8 @@ namespace Tezzycat.Data.Migrations
 
                     b.Property<DateTime>("Timestamp");
 
+                    b.Property<int>("Validations");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BakerId");
@@ -179,42 +185,54 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("Blocks");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.Contract", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.Contract", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<bool>("Active");
-
-                    b.Property<string>("Address");
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(36);
 
                     b.Property<long>("Balance");
-
-                    b.Property<bool>("Code");
 
                     b.Property<long>("Counter");
 
                     b.Property<bool>("Delegatable");
 
-                    b.Property<int>("DelegateId");
+                    b.Property<int?>("DelegateId");
 
-                    b.Property<int>("ManagerId");
+                    b.Property<int>("DelegatorsCount");
 
-                    b.Property<string>("PublicKey");
+                    b.Property<long>("Frozen");
+
+                    b.Property<int>("Kind");
+
+                    b.Property<int?>("ManagerId");
+
+                    b.Property<string>("PublicKey")
+                        .HasMaxLength(65);
 
                     b.Property<bool>("Spendable");
 
+                    b.Property<bool>("Staked");
+
+                    b.Property<long>("StakingBalance");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DelegateId")
+                    b.HasIndex("Address")
                         .IsUnique();
+
+                    b.HasIndex("DelegateId");
 
                     b.HasIndex("ManagerId");
 
                     b.ToTable("Contracts");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.CycleStat", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.CycleStat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -242,7 +260,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("CycleStats");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DelegationOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DelegationOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -251,7 +269,7 @@ namespace Tezzycat.Data.Migrations
 
                     b.Property<int>("Counter");
 
-                    b.Property<int>("DelegateId");
+                    b.Property<int?>("DelegateId");
 
                     b.Property<long>("Fee");
 
@@ -274,7 +292,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("DelegationOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DelegatorStat", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DelegatorStat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -296,7 +314,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("DelegatorStats");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DoubleBakingOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DoubleBakingOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -330,7 +348,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("DoubleBakingOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DoubleEndorsingOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DoubleEndorsingOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -364,7 +382,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("DoubleEndorsingOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.EndorsementOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.EndorsementOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -388,7 +406,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("EndorsementOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.EndorsingRight", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.EndorsingRight", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -406,7 +424,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("EndorsingRights");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.NonceRevelationOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.NonceRevelationOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -428,7 +446,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("NonceRevelationOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.OriginationOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.OriginationOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -443,7 +461,7 @@ namespace Tezzycat.Data.Migrations
 
                     b.Property<bool>("Delegatable");
 
-                    b.Property<int>("DelegateId");
+                    b.Property<int?>("DelegateId");
 
                     b.Property<long>("Fee");
 
@@ -476,7 +494,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("OriginationOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.Proposal", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.Proposal", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -488,7 +506,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("Proposals");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.ProposalOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.ProposalOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -519,7 +537,7 @@ namespace Tezzycat.Data.Migrations
                     b.HasDiscriminator<string>("Discriminator").HasValue("ProposalOperation");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.Protocol", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.Protocol", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -533,7 +551,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("Protocols");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.RevealOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.RevealOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -563,7 +581,7 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("RevealOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.TransactionOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.TransactionOperation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -601,202 +619,203 @@ namespace Tezzycat.Data.Migrations
                     b.ToTable("TransactionOps");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.BallotOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.BallotOperation", b =>
                 {
-                    b.HasBaseType("Tezzycat.Models.ProposalOperation");
+                    b.HasBaseType("Tezzycat.Data.Models.ProposalOperation");
 
                     b.Property<int>("Vote");
 
                     b.HasDiscriminator().HasValue("BallotOperation");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.BakerStat", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.BakerStat", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.BakingRight", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.BakingRight", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.BalanceSnapshot", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.BalanceSnapshot", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Contract")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Contract")
                         .WithMany()
                         .HasForeignKey("ContractId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Delegate")
+                        .WithMany()
+                        .HasForeignKey("DelegateId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.Block", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.Block", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId");
 
-                    b.HasOne("Tezzycat.Models.Protocol", "Protocol")
+                    b.HasOne("Tezzycat.Data.Models.Protocol", "Protocol")
                         .WithMany()
                         .HasForeignKey("ProtocolId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.Contract", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.Contract", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Delegate")
-                        .WithOne()
-                        .HasForeignKey("Tezzycat.Models.Contract", "DelegateId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Delegate")
+                        .WithMany("DelegatedContracts")
+                        .HasForeignKey("DelegateId");
 
-                    b.HasOne("Tezzycat.Models.Contract", "Manager")
-                        .WithMany()
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Manager")
+                        .WithMany("OriginatedContracts")
+                        .HasForeignKey("ManagerId");
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DelegationOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DelegationOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Delegate")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Delegate")
                         .WithMany()
-                        .HasForeignKey("DelegateId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("DelegateId");
 
-                    b.HasOne("Tezzycat.Models.Contract", "Sender")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DelegatorStat", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DelegatorStat", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Delegator")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Delegator")
                         .WithMany()
                         .HasForeignKey("DelegatorId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DoubleBakingOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DoubleBakingOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Accuser")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Accuser")
                         .WithMany()
                         .HasForeignKey("AccuserId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Offender")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Offender")
                         .WithMany()
                         .HasForeignKey("OffenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.DoubleEndorsingOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.DoubleEndorsingOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Accuser")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Accuser")
                         .WithMany()
                         .HasForeignKey("AccuserId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Offender")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Offender")
                         .WithMany()
                         .HasForeignKey("OffenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.EndorsementOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.EndorsementOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Delegate")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Delegate")
                         .WithMany()
                         .HasForeignKey("DelegateId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.EndorsingRight", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.EndorsingRight", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.NonceRevelationOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.NonceRevelationOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Baker")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Baker")
                         .WithMany()
                         .HasForeignKey("BakerId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.OriginationOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.OriginationOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Contract")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Contract")
                         .WithMany()
                         .HasForeignKey("ContractId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Delegate")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Delegate")
                         .WithMany()
-                        .HasForeignKey("DelegateId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("DelegateId");
 
-                    b.HasOne("Tezzycat.Models.Contract", "Manager")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Manager")
                         .WithMany()
                         .HasForeignKey("ManagerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Sender")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.ProposalOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.ProposalOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Proposal", "Proposal")
+                    b.HasOne("Tezzycat.Data.Models.Proposal", "Proposal")
                         .WithMany()
                         .HasForeignKey("ProposalId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Sender")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.RevealOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.RevealOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Sender")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Tezzycat.Models.TransactionOperation", b =>
+            modelBuilder.Entity("Tezzycat.Data.Models.TransactionOperation", b =>
                 {
-                    b.HasOne("Tezzycat.Models.Contract", "Sender")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tezzycat.Models.Contract", "Target")
+                    b.HasOne("Tezzycat.Data.Models.Contract", "Target")
                         .WithMany()
                         .HasForeignKey("TargetId")
                         .OnDelete(DeleteBehavior.Cascade);

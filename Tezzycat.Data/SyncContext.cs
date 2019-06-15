@@ -39,6 +39,7 @@ namespace Tezzycat.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            #region app state
             modelBuilder.Entity<AppState>().HasData(
                 new AppState
                 {
@@ -48,6 +49,33 @@ namespace Tezzycat.Data
                     Protocol = "",
                     Hash = "",
                 });
+            #endregion
+
+            #region contracts
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.Address)
+                .IsUnique();
+
+            modelBuilder.Entity<Contract>()
+                .Property(x => x.Address)
+                .HasMaxLength(36)
+                .IsFixedLength()
+                .IsRequired();
+
+            modelBuilder.Entity<Contract>()
+                .Property(x => x.PublicKey)
+                .HasMaxLength(65);
+
+            modelBuilder.Entity<Contract>()
+                .HasOne(x => x.Delegate)
+                .WithMany(x => x.DelegatedContracts)
+                .HasForeignKey(x => x.DelegateId);
+
+            modelBuilder.Entity<Contract>()
+                .HasOne(x => x.Manager)
+                .WithMany(x => x.OriginatedContracts)
+                .HasForeignKey(x => x.ManagerId);
+            #endregion
         }
     }
 }
