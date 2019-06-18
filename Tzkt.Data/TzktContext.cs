@@ -53,8 +53,18 @@ namespace Tzkt.Data
 
             #region contracts
             modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.Id)
+                .IsUnique();
+
+            modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.Address)
                 .IsUnique();
+
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.DelegateId);
+
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.ManagerId);
 
             modelBuilder.Entity<Contract>()
                 .Property(x => x.Address)
