@@ -33,7 +33,7 @@ namespace Tzkt.Sync.Services
             #region init state
             using (var scope = Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<SyncContext>();
+                var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
                 AppState = await db.AppState.FirstOrDefaultAsync()
                     ?? throw new Exception("Failed to init app state");
             }

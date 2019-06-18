@@ -9,7 +9,7 @@ using Tzkt.Data;
 
 namespace Tzkt.Data.Migrations
 {
-    [DbContext(typeof(SyncContext))]
+    [DbContext(typeof(TzktContext))]
     [Migration("20190615222359_Initial")]
     partial class Initial
     {

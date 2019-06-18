@@ -37,7 +37,7 @@ namespace Tzkt.Sync
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddEntityFrameworkNpgsql()
-                        .AddDbContext<SyncContext>(options =>
+                        .AddDbContext<TzktContext>(options =>
                         {
                             options.UseNpgsql(
                                 hostContext.Configuration.GetConnectionString("DefaultConnection"));

@@ -14,8 +14,8 @@ namespace Tzkt.Api.Controllers
     [ApiController]
     public class StateController : ControllerBase
     {
-        private readonly ViewContext Db;
-        public StateController(ViewContext db)
+        private readonly ApiContext Db;
+        public StateController(ApiContext db)
         {
             Db = db;
         }

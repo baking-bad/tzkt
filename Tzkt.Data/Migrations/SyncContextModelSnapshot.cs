@@ -8,8 +8,8 @@ using Tzkt.Data;
 
 namespace Tzkt.Data.Migrations
 {
-    [DbContext(typeof(SyncContext))]
-    partial class SyncContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(TzktContext))]
+    partial class TzktContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

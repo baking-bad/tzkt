@@ -5,7 +5,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Data
 {
-    public class SyncContext : DbContext
+    public class TzktContext : DbContext
     {
         public DbSet<AppState> AppState { get; set; }
 
@@ -35,7 +35,7 @@ namespace Tzkt.Data
         public DbSet<RevealOperation> RevealOps { get; set; }
         public DbSet<TransactionOperation> TransactionOps { get; set; }
 
-        public SyncContext(DbContextOptions<SyncContext> options) : base(options) { }
+        public TzktContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

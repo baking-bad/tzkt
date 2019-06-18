@@ -26,7 +26,7 @@ namespace Tzkt.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddEntityFrameworkNpgsql()
-                .AddDbContext<ViewContext>(options =>
+                .AddDbContext<ApiContext>(options =>
                 {
                     options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
                 });

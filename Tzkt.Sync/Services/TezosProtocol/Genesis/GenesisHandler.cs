@@ -11,10 +11,10 @@ namespace Tzkt.Sync.Services.Protocols
 {
     public class GenesisHandler : IProtocolHandler
     {
-        protected readonly SyncContext Db;
+        protected readonly TzktContext Db;
         protected readonly IMemoryCache Cache;
 
-        public GenesisHandler(SyncContext db, IMemoryCache cache)
+        public GenesisHandler(TzktContext db, IMemoryCache cache)
         {
             Db = db;
             Cache = cache;

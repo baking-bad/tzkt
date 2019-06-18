@@ -9,9 +9,9 @@ using Tzkt.Data;
 
 namespace Tzkt.Sync
 {
-    public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<SyncContext>
+    public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TzktContext>
     {
-        public SyncContext CreateDbContext(string[] args)
+        public TzktContext CreateDbContext(string[] args)
         {
             var environment = Environment.GetEnvironmentVariable("TZKT_Environment")
                 ?? EnvironmentName.Production;
@@ -30,10 +30,10 @@ namespace Tzkt.Sync
                 .AddEnvironmentVariables("TZKT_")
                 .Build();
 
-            var builder = new DbContextOptionsBuilder<SyncContext>();
+            var builder = new DbContextOptionsBuilder<TzktContext>();
             builder.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
 
-            return new SyncContext(builder.Options);
+            return new TzktContext(builder.Options);
         }
     }
 }

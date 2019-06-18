@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Services.Protocols
         protected readonly TezosNode Node;
         protected readonly Dictionary<string, Contract> Contracts;
 
-        public InitializationHandler(TezosNode node, SyncContext db, IMemoryCache cache)
+        public InitializationHandler(TezosNode node, TzktContext db, IMemoryCache cache)
             :base(db, cache)
         {
             Node = node;
