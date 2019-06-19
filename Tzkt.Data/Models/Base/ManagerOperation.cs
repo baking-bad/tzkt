@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tzkt.Data.Models.Base
 {
@@ -9,11 +10,15 @@ namespace Tzkt.Data.Models.Base
         public long Fee { get; set; }
 
         public bool Applied { get; set; }
-        public bool Internal { get; set; }
+        public int? ParentId { get; set; }
+        public int? Nonce { get; set; }
 
         #region relations
         [ForeignKey("SenderId")]
         public Contract Sender { get; set; }
+
+        [ForeignKey("ParentId")]
+        public TransactionOperation Parent { get; set; }
         #endregion
     }
 }

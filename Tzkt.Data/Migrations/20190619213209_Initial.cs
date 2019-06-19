@@ -9,23 +9,6 @@ namespace Tzkt.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "ActivationOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
-                    Address = table.Column<string>(nullable: true),
-                    Balance = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ActivationOps", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AppState",
                 columns: table => new
                 {
@@ -59,11 +42,14 @@ namespace Tzkt.Data.Migrations
                     Counter = table.Column<long>(nullable: false),
                     Frozen = table.Column<long>(nullable: false),
                     StakingBalance = table.Column<long>(nullable: false),
-                    DelegatorsCount = table.Column<int>(nullable: false)
+                    DelegatorsCount = table.Column<int>(nullable: false),
+                    Operations = table.Column<int>(nullable: false),
+                    OperationsMask = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Contracts", x => x.Id);
+                    table.UniqueConstraint("AK_Contracts_Address", x => x.Address);
                     table.ForeignKey(
                         name: "FK_Contracts_Contracts_DelegateId",
                         column: x => x.DelegateId,
@@ -118,7 +104,7 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Blocks = table.Column<int>(nullable: false),
+                    Weight = table.Column<int>(nullable: false),
                     Hash = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -213,39 +199,6 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DelegationOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
-                    SenderId = table.Column<int>(nullable: false),
-                    Counter = table.Column<int>(nullable: false),
-                    Fee = table.Column<long>(nullable: false),
-                    Applied = table.Column<bool>(nullable: false),
-                    Internal = table.Column<bool>(nullable: false),
-                    DelegateId = table.Column<int>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DelegationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Contracts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Contracts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "DelegatorStats",
                 columns: table => new
                 {
@@ -274,108 +227,6 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DoubleBakingOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
-                    BakerId = table.Column<int>(nullable: false),
-                    AccusedLevel = table.Column<int>(nullable: false),
-                    AccuserId = table.Column<int>(nullable: false),
-                    Reward = table.Column<long>(nullable: false),
-                    OffenderId = table.Column<int>(nullable: false),
-                    Burned = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DoubleBakingOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DoubleBakingOps_Contracts_AccuserId",
-                        column: x => x.AccuserId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleBakingOps_Contracts_BakerId",
-                        column: x => x.BakerId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleBakingOps_Contracts_OffenderId",
-                        column: x => x.OffenderId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DoubleEndorsingOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
-                    BakerId = table.Column<int>(nullable: false),
-                    AccusedLevel = table.Column<int>(nullable: false),
-                    AccuserId = table.Column<int>(nullable: false),
-                    Reward = table.Column<long>(nullable: false),
-                    OffenderId = table.Column<int>(nullable: false),
-                    Burned = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DoubleEndorsingOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DoubleEndorsingOps_Contracts_AccuserId",
-                        column: x => x.AccuserId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleEndorsingOps_Contracts_BakerId",
-                        column: x => x.BakerId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleEndorsingOps_Contracts_OffenderId",
-                        column: x => x.OffenderId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EndorsementOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
-                    DelegateId = table.Column<int>(nullable: false),
-                    SlotsCount = table.Column<int>(nullable: false),
-                    Reward = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EndorsementOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_EndorsementOps_Contracts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "EndorsingRights",
                 columns: table => new
                 {
@@ -397,6 +248,182 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ActivationOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    AccountId = table.Column<int>(nullable: false),
+                    Balance = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActivationOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ActivationOps_Contracts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BallotOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    Period = table.Column<int>(nullable: false),
+                    ProposalId = table.Column<int>(nullable: false),
+                    SenderId = table.Column<int>(nullable: false),
+                    Vote = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BallotOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BallotOps_Proposals_ProposalId",
+                        column: x => x.ProposalId,
+                        principalTable: "Proposals",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BallotOps_Contracts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DelegationOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(nullable: false),
+                    Counter = table.Column<int>(nullable: false),
+                    Fee = table.Column<long>(nullable: false),
+                    Applied = table.Column<bool>(nullable: false),
+                    ParentId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
+                    DelegateId = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DelegationOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_Contracts_DelegateId",
+                        column: x => x.DelegateId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_Contracts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DoubleBakingOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    AccusedLevel = table.Column<int>(nullable: false),
+                    AccuserId = table.Column<int>(nullable: false),
+                    Reward = table.Column<long>(nullable: false),
+                    OffenderId = table.Column<int>(nullable: false),
+                    Burned = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DoubleBakingOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DoubleBakingOps_Contracts_AccuserId",
+                        column: x => x.AccuserId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DoubleBakingOps_Contracts_OffenderId",
+                        column: x => x.OffenderId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DoubleEndorsingOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    AccusedLevel = table.Column<int>(nullable: false),
+                    AccuserId = table.Column<int>(nullable: false),
+                    Reward = table.Column<long>(nullable: false),
+                    OffenderId = table.Column<int>(nullable: false),
+                    Burned = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DoubleEndorsingOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DoubleEndorsingOps_Contracts_AccuserId",
+                        column: x => x.AccuserId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DoubleEndorsingOps_Contracts_OffenderId",
+                        column: x => x.OffenderId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EndorsementOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    DelegateId = table.Column<int>(nullable: false),
+                    SlotsCount = table.Column<int>(nullable: false),
+                    Reward = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EndorsementOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EndorsementOps_Contracts_DelegateId",
+                        column: x => x.DelegateId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "NonceRevelationOps",
                 columns: table => new
                 {
@@ -404,16 +431,143 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
                     BakerId = table.Column<int>(nullable: false),
-                    NonceLevel = table.Column<int>(nullable: false)
+                    RevelationLevel = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NonceRevelationOps", x => x.Id);
+                    table.UniqueConstraint("AK_NonceRevelationOps_RevelationLevel", x => x.RevelationLevel);
                     table.ForeignKey(
                         name: "FK_NonceRevelationOps_Contracts_BakerId",
                         column: x => x.BakerId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Blocks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Hash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    ProtocolId = table.Column<int>(nullable: false),
+                    BakerId = table.Column<int>(nullable: true),
+                    Priority = table.Column<int>(nullable: false),
+                    Operations = table.Column<int>(nullable: false),
+                    OperationsMask = table.Column<int>(nullable: false),
+                    Validations = table.Column<int>(nullable: false),
+                    RevelationId = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Blocks", x => x.Id);
+                    table.UniqueConstraint("AK_Blocks_Level", x => x.Level);
+                    table.ForeignKey(
+                        name: "FK_Blocks_Contracts_BakerId",
+                        column: x => x.BakerId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Blocks_Protocols_ProtocolId",
+                        column: x => x.ProtocolId,
+                        principalTable: "Protocols",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Blocks_NonceRevelationOps_RevelationId",
+                        column: x => x.RevelationId,
+                        principalTable: "NonceRevelationOps",
+                        principalColumn: "RevelationLevel",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProposalOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    Period = table.Column<int>(nullable: false),
+                    ProposalId = table.Column<int>(nullable: false),
+                    SenderId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProposalOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProposalOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProposalOps_Proposals_ProposalId",
+                        column: x => x.ProposalId,
+                        principalTable: "Proposals",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProposalOps_Contracts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(nullable: false),
+                    Counter = table.Column<int>(nullable: false),
+                    Fee = table.Column<long>(nullable: false),
+                    Applied = table.Column<bool>(nullable: false),
+                    ParentId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
+                    TargetId = table.Column<int>(nullable: false),
+                    TargetAllocated = table.Column<bool>(nullable: false),
+                    Amount = table.Column<long>(nullable: false),
+                    StorageFee = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TransactionOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TransactionOps_TransactionOps_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "TransactionOps",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TransactionOps_Contracts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TransactionOps_Contracts_TargetId",
+                        column: x => x.TargetId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -427,12 +581,13 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
                     SenderId = table.Column<int>(nullable: false),
                     Counter = table.Column<int>(nullable: false),
                     Fee = table.Column<long>(nullable: false),
                     Applied = table.Column<bool>(nullable: false),
-                    Internal = table.Column<bool>(nullable: false),
+                    ParentId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
                     ContractId = table.Column<int>(nullable: false),
                     DelegateId = table.Column<int>(nullable: true),
                     ManagerId = table.Column<int>(nullable: false),
@@ -457,11 +612,23 @@ namespace Tzkt.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_OriginationOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_OriginationOps_Contracts_ManagerId",
                         column: x => x.ManagerId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_TransactionOps_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "TransactionOps",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_OriginationOps_Contracts_SenderId",
                         column: x => x.SenderId,
@@ -478,17 +645,30 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
                     SenderId = table.Column<int>(nullable: false),
                     Counter = table.Column<int>(nullable: false),
                     Fee = table.Column<long>(nullable: false),
                     Applied = table.Column<bool>(nullable: false),
-                    Internal = table.Column<bool>(nullable: false),
-                    PublicKey = table.Column<string>(nullable: true)
+                    ParentId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
+                    PublicKey = table.Column<string>(maxLength: 65, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_RevealOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RevealOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RevealOps_TransactionOps_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "TransactionOps",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_RevealOps_Contracts_SenderId",
                         column: x => x.SenderId,
@@ -497,109 +677,26 @@ namespace Tzkt.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "TransactionOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
-                    SenderId = table.Column<int>(nullable: false),
-                    Counter = table.Column<int>(nullable: false),
-                    Fee = table.Column<long>(nullable: false),
-                    Applied = table.Column<bool>(nullable: false),
-                    Internal = table.Column<bool>(nullable: false),
-                    TargetId = table.Column<int>(nullable: false),
-                    TargetAllocated = table.Column<bool>(nullable: false),
-                    Amount = table.Column<long>(nullable: false),
-                    StorageFee = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TransactionOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TransactionOps_Contracts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TransactionOps_Contracts_TargetId",
-                        column: x => x.TargetId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ProposalOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(nullable: true),
-                    Period = table.Column<int>(nullable: false),
-                    ProposalId = table.Column<int>(nullable: false),
-                    SenderId = table.Column<int>(nullable: false),
-                    Discriminator = table.Column<string>(nullable: false),
-                    Vote = table.Column<int>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProposalOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ProposalOps_Proposals_ProposalId",
-                        column: x => x.ProposalId,
-                        principalTable: "Proposals",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProposalOps_Contracts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Blocks",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Hash = table.Column<string>(nullable: true),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    ProtocolId = table.Column<int>(nullable: false),
-                    BakerId = table.Column<int>(nullable: true),
-                    Priority = table.Column<int>(nullable: false),
-                    Validations = table.Column<int>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Blocks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Blocks_Contracts_BakerId",
-                        column: x => x.BakerId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Blocks_Protocols_ProtocolId",
-                        column: x => x.ProtocolId,
-                        principalTable: "Protocols",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.InsertData(
                 table: "AppState",
                 columns: new[] { "Id", "Hash", "Level", "Protocol", "Timestamp" },
                 values: new object[] { -1, "", -1, "", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ActivationOps_AccountId",
+                table: "ActivationOps",
+                column: "AccountId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ActivationOps_Level",
+                table: "ActivationOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ActivationOps_OpHash",
+                table: "ActivationOps",
+                column: "OpHash");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BakerStats_BakerId",
@@ -622,14 +719,52 @@ namespace Tzkt.Data.Migrations
                 column: "DelegateId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BallotOps_Level",
+                table: "BallotOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BallotOps_OpHash",
+                table: "BallotOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BallotOps_ProposalId",
+                table: "BallotOps",
+                column: "ProposalId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BallotOps_SenderId",
+                table: "BallotOps",
+                column: "SenderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Blocks_BakerId",
                 table: "Blocks",
                 column: "BakerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Blocks_Hash",
+                table: "Blocks",
+                column: "Hash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blocks_Level",
+                table: "Blocks",
+                column: "Level",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Blocks_ProtocolId",
                 table: "Blocks",
                 column: "ProtocolId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blocks_RevelationId",
+                table: "Blocks",
+                column: "RevelationId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contracts_Address",
@@ -643,6 +778,12 @@ namespace Tzkt.Data.Migrations
                 column: "DelegateId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Contracts_Id",
+                table: "Contracts",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Contracts_ManagerId",
                 table: "Contracts",
                 column: "ManagerId");
@@ -651,6 +792,21 @@ namespace Tzkt.Data.Migrations
                 name: "IX_DelegationOps_DelegateId",
                 table: "DelegationOps",
                 column: "DelegateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DelegationOps_Level",
+                table: "DelegationOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DelegationOps_OpHash",
+                table: "DelegationOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DelegationOps_ParentId",
+                table: "DelegationOps",
+                column: "ParentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DelegationOps_SenderId",
@@ -673,9 +829,9 @@ namespace Tzkt.Data.Migrations
                 column: "AccuserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DoubleBakingOps_BakerId",
+                name: "IX_DoubleBakingOps_Level",
                 table: "DoubleBakingOps",
-                column: "BakerId");
+                column: "Level");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DoubleBakingOps_OffenderId",
@@ -683,14 +839,19 @@ namespace Tzkt.Data.Migrations
                 column: "OffenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DoubleBakingOps_OpHash",
+                table: "DoubleBakingOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DoubleEndorsingOps_AccuserId",
                 table: "DoubleEndorsingOps",
                 column: "AccuserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DoubleEndorsingOps_BakerId",
+                name: "IX_DoubleEndorsingOps_Level",
                 table: "DoubleEndorsingOps",
-                column: "BakerId");
+                column: "Level");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DoubleEndorsingOps_OffenderId",
@@ -698,9 +859,24 @@ namespace Tzkt.Data.Migrations
                 column: "OffenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DoubleEndorsingOps_OpHash",
+                table: "DoubleEndorsingOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EndorsementOps_DelegateId",
                 table: "EndorsementOps",
                 column: "DelegateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EndorsementOps_Level",
+                table: "EndorsementOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EndorsementOps_OpHash",
+                table: "EndorsementOps",
+                column: "OpHash");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EndorsingRights_BakerId",
@@ -713,9 +889,25 @@ namespace Tzkt.Data.Migrations
                 column: "BakerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_NonceRevelationOps_Level",
+                table: "NonceRevelationOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NonceRevelationOps_OpHash",
+                table: "NonceRevelationOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NonceRevelationOps_RevelationLevel",
+                table: "NonceRevelationOps",
+                column: "RevelationLevel");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_ContractId",
                 table: "OriginationOps",
-                column: "ContractId");
+                column: "ContractId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_DelegateId",
@@ -723,14 +915,39 @@ namespace Tzkt.Data.Migrations
                 column: "DelegateId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OriginationOps_Level",
+                table: "OriginationOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_ManagerId",
                 table: "OriginationOps",
                 column: "ManagerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OriginationOps_OpHash",
+                table: "OriginationOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OriginationOps_ParentId",
+                table: "OriginationOps",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_SenderId",
                 table: "OriginationOps",
                 column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProposalOps_Level",
+                table: "ProposalOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProposalOps_OpHash",
+                table: "ProposalOps",
+                column: "OpHash");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProposalOps_ProposalId",
@@ -743,9 +960,39 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RevealOps_Level",
+                table: "RevealOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RevealOps_OpHash",
+                table: "RevealOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RevealOps_ParentId",
+                table: "RevealOps",
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RevealOps_SenderId",
                 table: "RevealOps",
                 column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionOps_Level",
+                table: "TransactionOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionOps_OpHash",
+                table: "TransactionOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionOps_ParentId",
+                table: "TransactionOps",
+                column: "ParentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_SenderId",
@@ -756,10 +1003,86 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TransactionOps_TargetId",
                 table: "TransactionOps",
                 column: "TargetId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_ActivationOps_Blocks_Level",
+                table: "ActivationOps",
+                column: "Level",
+                principalTable: "Blocks",
+                principalColumn: "Level",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_BallotOps_Blocks_Level",
+                table: "BallotOps",
+                column: "Level",
+                principalTable: "Blocks",
+                principalColumn: "Level",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_DelegationOps_Blocks_Level",
+                table: "DelegationOps",
+                column: "Level",
+                principalTable: "Blocks",
+                principalColumn: "Level",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_DelegationOps_TransactionOps_ParentId",
+                table: "DelegationOps",
+                column: "ParentId",
+                principalTable: "TransactionOps",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_DoubleBakingOps_Blocks_Level",
+                table: "DoubleBakingOps",
+                column: "Level",
+                principalTable: "Blocks",
+                principalColumn: "Level",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_DoubleEndorsingOps_Blocks_Level",
+                table: "DoubleEndorsingOps",
+                column: "Level",
+                principalTable: "Blocks",
+                principalColumn: "Level",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_EndorsementOps_Blocks_Level",
+                table: "EndorsementOps",
+                column: "Level",
+                principalTable: "Blocks",
+                principalColumn: "Level",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_NonceRevelationOps_Blocks_Level",
+                table: "NonceRevelationOps",
+                column: "Level",
+                principalTable: "Blocks",
+                principalColumn: "Level",
+                onDelete: ReferentialAction.Cascade);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Blocks_Contracts_BakerId",
+                table: "Blocks");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_NonceRevelationOps_Contracts_BakerId",
+                table: "NonceRevelationOps");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_NonceRevelationOps_Blocks_Level",
+                table: "NonceRevelationOps");
+
             migrationBuilder.DropTable(
                 name: "ActivationOps");
 
@@ -776,7 +1099,7 @@ namespace Tzkt.Data.Migrations
                 name: "BalanceSnapshots");
 
             migrationBuilder.DropTable(
-                name: "Blocks");
+                name: "BallotOps");
 
             migrationBuilder.DropTable(
                 name: "CycleStats");
@@ -800,9 +1123,6 @@ namespace Tzkt.Data.Migrations
                 name: "EndorsingRights");
 
             migrationBuilder.DropTable(
-                name: "NonceRevelationOps");
-
-            migrationBuilder.DropTable(
                 name: "OriginationOps");
 
             migrationBuilder.DropTable(
@@ -812,16 +1132,22 @@ namespace Tzkt.Data.Migrations
                 name: "RevealOps");
 
             migrationBuilder.DropTable(
+                name: "Proposals");
+
+            migrationBuilder.DropTable(
                 name: "TransactionOps");
+
+            migrationBuilder.DropTable(
+                name: "Contracts");
+
+            migrationBuilder.DropTable(
+                name: "Blocks");
 
             migrationBuilder.DropTable(
                 name: "Protocols");
 
             migrationBuilder.DropTable(
-                name: "Proposals");
-
-            migrationBuilder.DropTable(
-                name: "Contracts");
+                name: "NonceRevelationOps");
         }
     }
 }

@@ -3,7 +3,7 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class DoubleEndorsingOperation : AnonimousOperation
+    public class DoubleEndorsingOperation : BaseOperation
     {
         public int AccusedLevel { get; set; }
 

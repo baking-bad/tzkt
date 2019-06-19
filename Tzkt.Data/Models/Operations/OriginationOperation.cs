@@ -8,9 +8,11 @@ namespace Tzkt.Data.Models
         public int ContractId { get; set; }
         public int? DelegateId { get; set; }
         public int ManagerId { get; set; }
+
         public bool Delegatable { get; set; }
         public bool Spendable { get; set; }
         public long Balance { get; set; }
+
         public long StorageFee { get; set; }
 
         #region relations

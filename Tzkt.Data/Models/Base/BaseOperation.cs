@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tzkt.Data.Models.Base
 {
@@ -8,5 +9,10 @@ namespace Tzkt.Data.Models.Base
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
         public string OpHash { get; set; }
+
+        #region relations
+        [ForeignKey("Level")]
+        public Block Block { get; set; }
+        #endregion
     }
 }

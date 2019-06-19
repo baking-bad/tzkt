@@ -1,9 +1,19 @@
-﻿using Tzkt.Data.Models.Base;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class NonceRevelationOperation : AnonimousOperation
+    public class NonceRevelationOperation : BaseOperation
     {
-        public int NonceLevel { get; set; } 
+        public int BakerId { get; set; }
+        public int RevelationLevel { get; set; }
+
+        #region relations
+        [ForeignKey("BakerId")]
+        public Contract Baker { get; set; }
+
+        public Block RevelationBlock { get; set; }
+        #endregion
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
@@ -9,9 +10,10 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    partial class TzktContextModelSnapshot : ModelSnapshot
+    [Migration("20190619213209_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,17 +26,27 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Address");
+                    b.Property<int>("AccountId");
 
                     b.Property<long>("Balance");
 
                     b.Property<int>("Level");
 
-                    b.Property<string>("OpHash");
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
 
                     b.Property<DateTime>("Timestamp");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique();
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
 
                     b.ToTable("ActivationOps");
                 });
@@ -157,6 +169,41 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("BalanceSnapshots");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.BallotOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int>("Level");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
+
+                    b.Property<int>("Period");
+
+                    b.Property<int>("ProposalId");
+
+                    b.Property<int>("SenderId");
+
+                    b.Property<DateTime>("Timestamp");
+
+                    b.Property<int>("Vote");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("ProposalId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("BallotOps");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.Block", b =>
                 {
                     b.Property<int>("Id")
@@ -164,13 +211,22 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int?>("BakerId");
 
-                    b.Property<string>("Hash");
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
 
                     b.Property<int>("Level");
+
+                    b.Property<int>("Operations");
+
+                    b.Property<int>("OperationsMask");
 
                     b.Property<int>("Priority");
 
                     b.Property<int>("ProtocolId");
+
+                    b.Property<int?>("RevelationId");
 
                     b.Property<DateTime>("Timestamp");
 
@@ -180,7 +236,16 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("BakerId");
 
+                    b.HasIndex("Hash")
+                        .IsUnique();
+
+                    b.HasIndex("Level")
+                        .IsUnique();
+
                     b.HasIndex("ProtocolId");
+
+                    b.HasIndex("RevelationId")
+                        .IsUnique();
 
                     b.ToTable("Blocks");
                 });
@@ -211,6 +276,10 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int?>("ManagerId");
 
+                    b.Property<int>("Operations");
+
+                    b.Property<int>("OperationsMask");
+
                     b.Property<string>("PublicKey")
                         .HasMaxLength(65);
 
@@ -222,10 +291,15 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasAlternateKey("Address");
+
                     b.HasIndex("Address")
                         .IsUnique();
 
                     b.HasIndex("DelegateId");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
 
                     b.HasIndex("ManagerId");
 
@@ -273,11 +347,16 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("Fee");
 
-                    b.Property<bool>("Internal");
-
                     b.Property<int>("Level");
 
-                    b.Property<string>("OpHash");
+                    b.Property<int?>("Nonce");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
+
+                    b.Property<int?>("ParentId");
 
                     b.Property<int>("SenderId");
 
@@ -286,6 +365,12 @@ namespace Tzkt.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DelegateId");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("ParentId");
 
                     b.HasIndex("SenderId");
 
@@ -323,15 +408,16 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("AccuserId");
 
-                    b.Property<int>("BakerId");
-
                     b.Property<long>("Burned");
 
                     b.Property<int>("Level");
 
                     b.Property<int>("OffenderId");
 
-                    b.Property<string>("OpHash");
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
 
                     b.Property<long>("Reward");
 
@@ -341,9 +427,11 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("AccuserId");
 
-                    b.HasIndex("BakerId");
+                    b.HasIndex("Level");
 
                     b.HasIndex("OffenderId");
+
+                    b.HasIndex("OpHash");
 
                     b.ToTable("DoubleBakingOps");
                 });
@@ -357,15 +445,16 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("AccuserId");
 
-                    b.Property<int>("BakerId");
-
                     b.Property<long>("Burned");
 
                     b.Property<int>("Level");
 
                     b.Property<int>("OffenderId");
 
-                    b.Property<string>("OpHash");
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
 
                     b.Property<long>("Reward");
 
@@ -375,9 +464,11 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("AccuserId");
 
-                    b.HasIndex("BakerId");
+                    b.HasIndex("Level");
 
                     b.HasIndex("OffenderId");
+
+                    b.HasIndex("OpHash");
 
                     b.ToTable("DoubleEndorsingOps");
                 });
@@ -391,7 +482,10 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("Level");
 
-                    b.Property<string>("OpHash");
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
 
                     b.Property<long>("Reward");
 
@@ -402,6 +496,10 @@ namespace Tzkt.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DelegateId");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
 
                     b.ToTable("EndorsementOps");
                 });
@@ -433,15 +531,24 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("Level");
 
-                    b.Property<int>("NonceLevel");
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
 
-                    b.Property<string>("OpHash");
+                    b.Property<int>("RevelationLevel");
 
                     b.Property<DateTime>("Timestamp");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BakerId");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RevelationLevel");
 
                     b.ToTable("NonceRevelationOps");
                 });
@@ -465,13 +572,18 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("Fee");
 
-                    b.Property<bool>("Internal");
-
                     b.Property<int>("Level");
 
                     b.Property<int>("ManagerId");
 
-                    b.Property<string>("OpHash");
+                    b.Property<int?>("Nonce");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
+
+                    b.Property<int?>("ParentId");
 
                     b.Property<int>("SenderId");
 
@@ -483,11 +595,18 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContractId");
+                    b.HasIndex("ContractId")
+                        .IsUnique();
 
                     b.HasIndex("DelegateId");
 
+                    b.HasIndex("Level");
+
                     b.HasIndex("ManagerId");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("ParentId");
 
                     b.HasIndex("SenderId");
 
@@ -511,12 +630,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired();
-
                     b.Property<int>("Level");
 
-                    b.Property<string>("OpHash");
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
 
                     b.Property<int>("Period");
 
@@ -528,13 +647,15 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
                     b.HasIndex("ProposalId");
 
                     b.HasIndex("SenderId");
 
                     b.ToTable("ProposalOps");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("ProposalOperation");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Protocol", b =>
@@ -542,9 +663,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int>("Blocks");
-
                     b.Property<string>("Hash");
+
+                    b.Property<int>("Weight");
 
                     b.HasKey("Id");
 
@@ -562,19 +683,32 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("Fee");
 
-                    b.Property<bool>("Internal");
-
                     b.Property<int>("Level");
 
-                    b.Property<string>("OpHash");
+                    b.Property<int?>("Nonce");
 
-                    b.Property<string>("PublicKey");
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
+
+                    b.Property<int?>("ParentId");
+
+                    b.Property<string>("PublicKey")
+                        .IsRequired()
+                        .HasMaxLength(65);
 
                     b.Property<int>("SenderId");
 
                     b.Property<DateTime>("Timestamp");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("ParentId");
 
                     b.HasIndex("SenderId");
 
@@ -594,11 +728,16 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("Fee");
 
-                    b.Property<bool>("Internal");
-
                     b.Property<int>("Level");
 
-                    b.Property<string>("OpHash");
+                    b.Property<int?>("Nonce");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .IsFixedLength(true)
+                        .HasMaxLength(51);
+
+                    b.Property<int?>("ParentId");
 
                     b.Property<int>("SenderId");
 
@@ -612,6 +751,12 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("ParentId");
+
                     b.HasIndex("SenderId");
 
                     b.HasIndex("TargetId");
@@ -619,13 +764,18 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("TransactionOps");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.BallotOperation", b =>
+            modelBuilder.Entity("Tzkt.Data.Models.ActivationOperation", b =>
                 {
-                    b.HasBaseType("Tzkt.Data.Models.ProposalOperation");
+                    b.HasOne("Tzkt.Data.Models.Contract", "Account")
+                        .WithOne("Activation")
+                        .HasForeignKey("Tzkt.Data.Models.ActivationOperation", "AccountId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Property<int>("Vote");
-
-                    b.HasDiscriminator().HasValue("BallotOperation");
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Activations")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.BakerStat", b =>
@@ -657,16 +807,40 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.BallotOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Ballots")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
+                        .WithMany("Ballots")
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.Contract", "Sender")
+                        .WithMany("Ballots")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.Block", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Baker")
-                        .WithMany()
+                        .WithMany("BakedBlocks")
                         .HasForeignKey("BakerId");
 
                     b.HasOne("Tzkt.Data.Models.Protocol", "Protocol")
-                        .WithMany()
+                        .WithMany("Blocks")
                         .HasForeignKey("ProtocolId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.NonceRevelationOperation", "Revelation")
+                        .WithOne("RevelationBlock")
+                        .HasForeignKey("Tzkt.Data.Models.Block", "RevelationId")
+                        .HasPrincipalKey("Tzkt.Data.Models.NonceRevelationOperation", "RevelationLevel");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
@@ -683,11 +857,21 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Delegate")
-                        .WithMany()
+                        .WithMany("IncomingDelegations")
                         .HasForeignKey("DelegateId");
 
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Delegations")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
+                        .WithMany("InternalDelegations")
+                        .HasForeignKey("ParentId");
+
                     b.HasOne("Tzkt.Data.Models.Contract", "Sender")
-                        .WithMany()
+                        .WithMany("Delegations")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
@@ -708,17 +892,18 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.DoubleBakingOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Accuser")
-                        .WithMany()
+                        .WithMany("DoubleBakingAccusations")
                         .HasForeignKey("AccuserId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tzkt.Data.Models.Contract", "Baker")
-                        .WithMany()
-                        .HasForeignKey("BakerId")
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("DoubleBakings")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Tzkt.Data.Models.Contract", "Offender")
-                        .WithMany()
+                        .WithMany("DoubleBakings")
                         .HasForeignKey("OffenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
@@ -726,17 +911,18 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.DoubleEndorsingOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Accuser")
-                        .WithMany()
+                        .WithMany("DoubleEndorsingAccusations")
                         .HasForeignKey("AccuserId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Tzkt.Data.Models.Contract", "Baker")
-                        .WithMany()
-                        .HasForeignKey("BakerId")
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("DoubleEndorsings")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Tzkt.Data.Models.Contract", "Offender")
-                        .WithMany()
+                        .WithMany("DoubleEndorsings")
                         .HasForeignKey("OffenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
@@ -744,8 +930,14 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.EndorsementOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Delegate")
-                        .WithMany()
+                        .WithMany("Endorsements")
                         .HasForeignKey("DelegateId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Endorsements")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
@@ -760,63 +952,105 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Baker")
-                        .WithMany()
+                        .WithMany("Revelations")
                         .HasForeignKey("BakerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Revelations")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.OriginationOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Contract")
-                        .WithMany()
-                        .HasForeignKey("ContractId")
+                        .WithOne("Origination")
+                        .HasForeignKey("Tzkt.Data.Models.OriginationOperation", "ContractId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Tzkt.Data.Models.Contract", "Delegate")
-                        .WithMany()
+                        .WithMany("DelegatedOriginations")
                         .HasForeignKey("DelegateId");
 
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Originations")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Tzkt.Data.Models.Contract", "Manager")
-                        .WithMany()
+                        .WithMany("ManagedOriginations")
                         .HasForeignKey("ManagerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
+                        .WithMany("InternalOriginations")
+                        .HasForeignKey("ParentId");
+
                     b.HasOne("Tzkt.Data.Models.Contract", "Sender")
-                        .WithMany()
+                        .WithMany("Originations")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.ProposalOperation", b =>
                 {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Proposals")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
-                        .WithMany()
+                        .WithMany("Proposals")
                         .HasForeignKey("ProposalId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Tzkt.Data.Models.Contract", "Sender")
-                        .WithMany()
+                        .WithMany("Proposals")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.RevealOperation", b =>
                 {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Reveals")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
+                        .WithMany("InternalReveals")
+                        .HasForeignKey("ParentId");
+
                     b.HasOne("Tzkt.Data.Models.Contract", "Sender")
-                        .WithMany()
+                        .WithMany("Reveals")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TransactionOperation", b =>
                 {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("Transactions")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
+                        .WithMany("InternalTransactions")
+                        .HasForeignKey("ParentId");
+
                     b.HasOne("Tzkt.Data.Models.Contract", "Sender")
-                        .WithMany()
+                        .WithMany("OutgoingTransactions")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Tzkt.Data.Models.Contract", "Target")
-                        .WithMany()
+                        .WithMany("IncomingTransactions")
                         .HasForeignKey("TargetId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });

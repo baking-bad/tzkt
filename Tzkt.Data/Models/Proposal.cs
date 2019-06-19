@@ -9,5 +9,10 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public string Hash { get; set; }
+
+        #region relations
+        public List<BallotOperation> Ballots { get; set; }
+        public List<ProposalOperation> Proposals { get; set; }
+        #endregion
     }
 }

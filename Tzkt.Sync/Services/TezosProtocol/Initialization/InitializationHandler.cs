@@ -33,7 +33,7 @@ namespace Tzkt.Sync.Services.Protocols
             if (block.Level != 1)
                 throw new Exception("Initialization block must be at level 1");
 
-            if (block.Protocol.Blocks > 0)
+            if (block.Protocol.Weight > 0)
                 throw new Exception("Initialization block already exists");
 
             await SeedContracts();

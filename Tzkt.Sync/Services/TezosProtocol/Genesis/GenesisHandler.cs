@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Services.Protocols
             if (block.Level != 0)
                 throw new Exception("Genesis block must be at level 0");
 
-            if (block.Protocol.Blocks > 0)
+            if (block.Protocol.Weight > 0)
                 throw new Exception("Genesis block already exists");
 
             Db.Blocks.Add(block);
@@ -99,7 +99,7 @@ namespace Tzkt.Sync.Services.Protocols
 
         protected void ProtocolUp(Protocol protocol)
         {
-            protocol.Blocks++;
+            protocol.Weight++;
 
             if (Db.Entry(protocol).State != EntityState.Added)
                 Db.Update(protocol);
@@ -107,7 +107,7 @@ namespace Tzkt.Sync.Services.Protocols
 
         protected void ProtocolDown(Protocol protocol)
         {
-            if (--protocol.Blocks == 0)
+            if (--protocol.Weight == 0)
             {
                 Db.Protocols.Remove(protocol);
                 Cache.Remove(protocol.Hash);
