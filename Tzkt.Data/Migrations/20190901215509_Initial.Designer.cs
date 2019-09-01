@@ -10,7 +10,7 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20190619213209_Initial")]
+    [Migration("20190901215509_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -62,6 +62,8 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<string>("Protocol");
 
+                    b.Property<bool>("Synced");
+
                     b.Property<DateTime>("Timestamp");
 
                     b.HasKey("Id");
@@ -75,6 +77,7 @@ namespace Tzkt.Data.Migrations
                             Hash = "",
                             Level = -1,
                             Protocol = "",
+                            Synced = false,
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -181,7 +184,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
-                    b.Property<int>("Period");
+                    b.Property<int>("PeriodId");
 
                     b.Property<int>("ProposalId");
 
@@ -196,6 +199,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
+
+                    b.HasIndex("PeriodId");
 
                     b.HasIndex("ProposalId");
 
@@ -339,8 +344,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<bool>("Applied");
-
                     b.Property<int>("Counter");
 
                     b.Property<int?>("DelegateId");
@@ -359,6 +362,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ParentId");
 
                     b.Property<int>("SenderId");
+
+                    b.Property<byte>("Status");
 
                     b.Property<DateTime>("Timestamp");
 
@@ -408,18 +413,18 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("AccuserId");
 
-                    b.Property<long>("Burned");
+                    b.Property<long>("AccuserReward");
 
                     b.Property<int>("Level");
 
                     b.Property<int>("OffenderId");
 
+                    b.Property<long>("OffenderLoss");
+
                     b.Property<string>("OpHash")
                         .IsRequired()
                         .IsFixedLength(true)
                         .HasMaxLength(51);
-
-                    b.Property<long>("Reward");
 
                     b.Property<DateTime>("Timestamp");
 
@@ -445,18 +450,18 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("AccuserId");
 
-                    b.Property<long>("Burned");
+                    b.Property<long>("AccuserReward");
 
                     b.Property<int>("Level");
 
                     b.Property<int>("OffenderId");
 
+                    b.Property<long>("OffenderLoss");
+
                     b.Property<string>("OpHash")
                         .IsRequired()
                         .IsFixedLength(true)
                         .HasMaxLength(51);
-
-                    b.Property<long>("Reward");
 
                     b.Property<DateTime>("Timestamp");
 
@@ -489,7 +494,7 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("Reward");
 
-                    b.Property<int>("SlotsCount");
+                    b.Property<int>("Slots");
 
                     b.Property<DateTime>("Timestamp");
 
@@ -558,8 +563,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<bool>("Applied");
-
                     b.Property<long>("Balance");
 
                     b.Property<int>("ContractId");
@@ -588,6 +591,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("SenderId");
 
                     b.Property<bool>("Spendable");
+
+                    b.Property<byte>("Status");
 
                     b.Property<long>("StorageFee");
 
@@ -618,9 +623,34 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<int?>("ExplorationPeriodId");
+
                     b.Property<string>("Hash");
 
+                    b.Property<int?>("InitiatorId");
+
+                    b.Property<int?>("PromotionPeriodId");
+
+                    b.Property<int?>("ProposalPeriodId");
+
+                    b.Property<int>("Status");
+
+                    b.Property<int?>("TestingPeriodId");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ExplorationPeriodId")
+                        .IsUnique();
+
+                    b.HasIndex("InitiatorId");
+
+                    b.HasIndex("PromotionPeriodId")
+                        .IsUnique();
+
+                    b.HasIndex("ProposalPeriodId");
+
+                    b.HasIndex("TestingPeriodId")
+                        .IsUnique();
 
                     b.ToTable("Proposals");
                 });
@@ -637,7 +667,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
-                    b.Property<int>("Period");
+                    b.Property<int>("PeriodId");
 
                     b.Property<int>("ProposalId");
 
@@ -650,6 +680,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
+
+                    b.HasIndex("PeriodId");
 
                     b.HasIndex("ProposalId");
 
@@ -677,8 +709,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<bool>("Applied");
-
                     b.Property<int>("Counter");
 
                     b.Property<long>("Fee");
@@ -699,6 +729,8 @@ namespace Tzkt.Data.Migrations
                         .HasMaxLength(65);
 
                     b.Property<int>("SenderId");
+
+                    b.Property<byte>("Status");
 
                     b.Property<DateTime>("Timestamp");
 
@@ -722,8 +754,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("Amount");
 
-                    b.Property<bool>("Applied");
-
                     b.Property<int>("Counter");
 
                     b.Property<long>("Fee");
@@ -740,6 +770,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ParentId");
 
                     b.Property<int>("SenderId");
+
+                    b.Property<byte>("Status");
 
                     b.Property<long>("StorageFee");
 
@@ -762,6 +794,117 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("TargetId");
 
                     b.ToTable("TransactionOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.VotingEpoch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int>("Level");
+
+                    b.Property<int>("Progress");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VotingEpoches");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.VotingPeriod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired();
+
+                    b.Property<int>("EndLevel");
+
+                    b.Property<int>("EpochId");
+
+                    b.Property<int>("Kind");
+
+                    b.Property<int>("StartLevel");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EpochId");
+
+                    b.ToTable("VotingPeriods");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("VotingPeriod");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.ExplorationPeriod", b =>
+                {
+                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
+
+                    b.Property<int>("Abstainings");
+
+                    b.Property<int>("Approvals");
+
+                    b.Property<int>("Participation");
+
+                    b.Property<int>("ProposalId");
+
+                    b.Property<int>("Quorum");
+
+                    b.Property<int>("Refusals");
+
+                    b.Property<int>("TotalStake");
+
+                    b.HasIndex("ProposalId");
+
+                    b.HasDiscriminator().HasValue("ExplorationPeriod");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.PromotionPeriod", b =>
+                {
+                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
+
+                    b.Property<int>("Abstainings")
+                        .HasColumnName("PromotionPeriod_Abstainings");
+
+                    b.Property<int>("Approvals")
+                        .HasColumnName("PromotionPeriod_Approvals");
+
+                    b.Property<int>("Participation")
+                        .HasColumnName("PromotionPeriod_Participation");
+
+                    b.Property<int>("ProposalId")
+                        .HasColumnName("PromotionPeriod_ProposalId");
+
+                    b.Property<int>("Quorum")
+                        .HasColumnName("PromotionPeriod_Quorum");
+
+                    b.Property<int>("Refusals")
+                        .HasColumnName("PromotionPeriod_Refusals");
+
+                    b.Property<int>("TotalStake")
+                        .HasColumnName("PromotionPeriod_TotalStake");
+
+                    b.HasIndex("ProposalId");
+
+                    b.HasDiscriminator().HasValue("PromotionPeriod");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.ProposalPeriod", b =>
+                {
+                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
+
+                    b.HasDiscriminator().HasValue("ProposalPeriod");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TestingPeriod", b =>
+                {
+                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
+
+                    b.Property<int>("ProposalId")
+                        .HasColumnName("TestingPeriod_ProposalId");
+
+                    b.HasIndex("ProposalId");
+
+                    b.HasDiscriminator().HasValue("TestingPeriod");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.ActivationOperation", b =>
@@ -813,6 +956,11 @@ namespace Tzkt.Data.Migrations
                         .WithMany("Ballots")
                         .HasForeignKey("Level")
                         .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
+                        .WithMany("Ballots")
+                        .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
@@ -995,12 +1143,40 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.Proposal", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.ExplorationPeriod", "ExplorationPeriod")
+                        .WithOne()
+                        .HasForeignKey("Tzkt.Data.Models.Proposal", "ExplorationPeriodId");
+
+                    b.HasOne("Tzkt.Data.Models.Contract", "Initiator")
+                        .WithMany("PushedProposals")
+                        .HasForeignKey("InitiatorId");
+
+                    b.HasOne("Tzkt.Data.Models.PromotionPeriod", "PromotionPeriod")
+                        .WithOne()
+                        .HasForeignKey("Tzkt.Data.Models.Proposal", "PromotionPeriodId");
+
+                    b.HasOne("Tzkt.Data.Models.ProposalPeriod", "ProposalPeriod")
+                        .WithMany("Candidates")
+                        .HasForeignKey("ProposalPeriodId");
+
+                    b.HasOne("Tzkt.Data.Models.TestingPeriod", "TestingPeriod")
+                        .WithOne()
+                        .HasForeignKey("Tzkt.Data.Models.Proposal", "TestingPeriodId");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.ProposalOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Block", "Block")
                         .WithMany("Proposals")
                         .HasForeignKey("Level")
                         .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
+                        .WithMany("Proposals")
+                        .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
@@ -1052,6 +1228,38 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.Contract", "Target")
                         .WithMany("IncomingTransactions")
                         .HasForeignKey("TargetId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.VotingPeriod", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.VotingEpoch", "Epoch")
+                        .WithMany("Periods")
+                        .HasForeignKey("EpochId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.ExplorationPeriod", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
+                        .WithMany()
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.PromotionPeriod", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
+                        .WithMany()
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TestingPeriod", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
+                        .WithMany()
+                        .HasForeignKey("ProposalId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618

@@ -9,7 +9,7 @@ namespace Tzkt.Data.Models.Base
         public int Counter { get; set; }
         public long Fee { get; set; }
 
-        public bool Applied { get; set; }
+        public OperationStatus Status { get; set; }
         public int? ParentId { get; set; }
         public int? Nonce { get; set; }
 
@@ -20,5 +20,14 @@ namespace Tzkt.Data.Models.Base
         [ForeignKey("ParentId")]
         public TransactionOperation Parent { get; set; }
         #endregion
+    }
+
+    public enum OperationStatus : byte
+    {
+        None,
+        Applied,
+        Backtracked,
+        Skipped,
+        Failed
     }
 }

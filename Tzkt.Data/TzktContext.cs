@@ -20,7 +20,14 @@ namespace Tzkt.Data
         public DbSet<DelegatorStat> DelegatorStats { get; set; }
         public DbSet<CycleStat> CycleStats { get; set; }
 
+        public DbSet<VotingEpoch> VotingEpoches { get; set; }
+        public DbSet<VotingPeriod> VotingPeriods { get; set; }
+        public DbSet<ExplorationPeriod> ExplorationPeriods { get; set; }
+        public DbSet<PromotionPeriod> PromotionPeriods { get; set; }
+        public DbSet<ProposalPeriod> ProposalPeriods { get; set; }
+        public DbSet<TestingPeriod> TestingPeriods { get; set; }
         public DbSet<Proposal> Proposals { get; set; }
+
         public DbSet<Protocol> Protocols { get; set; }
 
         public DbSet<ActivationOperation> ActivationOps { get; set; }
@@ -216,6 +223,11 @@ namespace Tzkt.Data
                 .HasOne(x => x.Proposal)
                 .WithMany(x => x.Ballots)
                 .HasForeignKey(x => x.ProposalId);
+
+            modelBuilder.Entity<BallotOperation>()
+                .HasOne(x => x.Period)
+                .WithMany(x => x.Ballots)
+                .HasForeignKey(x => x.PeriodId);
             #endregion
             #endregion
 
@@ -536,6 +548,11 @@ namespace Tzkt.Data
                 .HasOne(x => x.Proposal)
                 .WithMany(x => x.Proposals)
                 .HasForeignKey(x => x.ProposalId);
+
+            modelBuilder.Entity<ProposalOperation>()
+                .HasOne(x => x.Period)
+                .WithMany(x => x.Proposals)
+                .HasForeignKey(x => x.PeriodId);
             #endregion
             #endregion
 

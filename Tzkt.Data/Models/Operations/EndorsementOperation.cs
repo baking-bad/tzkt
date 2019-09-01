@@ -6,7 +6,8 @@ namespace Tzkt.Data.Models
     public class EndorsementOperation : BaseOperation
     {
         public int DelegateId { get; set; }
-        public int SlotsCount { get; set; }
+        public int Slots { get; set; }
+
         public long Reward { get; set; }
 
         #region relations

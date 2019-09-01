@@ -36,6 +36,7 @@ namespace Tzkt.Data.Models
         public List<Block> BakedBlocks { get; set; }
         public List<Contract> DelegatedContracts { get; set; }
         public List<Contract> OriginatedContracts { get; set; }
+        public List<Proposal> PushedProposals { get; set; }
 
         #region operations
         public List<EndorsementOperation> Endorsements { get; set; }
