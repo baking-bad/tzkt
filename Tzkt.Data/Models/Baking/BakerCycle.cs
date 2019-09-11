@@ -2,7 +2,7 @@
 
 namespace Tzkt.Data.Models
 {
-    public class BakerStat
+    public class BakerCycle
     {
         public int Id { get; set; }
         public int Cycle { get; set; }

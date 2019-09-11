@@ -2,7 +2,7 @@
 
 namespace Tzkt.Data.Models
 {
-    public class DelegatorStat
+    public class DelegatorSnapshot
     {
         public int Id { get; set; }
         public int Cycle { get; set; }

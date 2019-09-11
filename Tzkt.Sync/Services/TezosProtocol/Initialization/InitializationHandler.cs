@@ -220,12 +220,12 @@ namespace Tzkt.Sync.Services.Protocols
             #endregion
 
             #region init cycle
-            var cycleStat = new CycleStat
+            var cycleObj = new Cycle
             {
-                Cycle = cycle,
+                Index = cycle,
                 Snapshot = 1,
             };
-            Db.CycleStats.Add(cycleStat);
+            Db.Cycles.Add(cycleObj);
             #endregion
 
             #region init snapshots
@@ -236,27 +236,27 @@ namespace Tzkt.Sync.Services.Protocols
                     Balance = x.Balance,
                     Contract = x,
                     Delegate = GetContract(x.Delegate?.Address ?? x.Address),
-                    Level = cycleStat.Snapshot
+                    Level = cycleObj.Snapshot
                 });
             #endregion
 
             #region init delegators
             var delegators = snapshots
                 .Where(x => x.Contract.Kind != ContractKind.Baker)
-                .Select(x => new DelegatorStat
+                .Select(x => new DelegatorSnapshot
                 {
                     Baker = x.Delegate,
                     Balance = x.Balance,
                     Delegator = x.Contract,
                     Cycle = cycle
                 });
-            Db.DelegatorStats.AddRange(delegators);
+            Db.DelegatorSnapshots.AddRange(delegators);
             #endregion
 
             #region init bakers
             var bakers = snapshots
                 .Where(x => x.Contract.Kind == ContractKind.Baker)
-                .Select(x => new BakerStat
+                .Select(x => new BakerCycle
                 {
                     Baker = x.Contract,
                     Balance = x.Balance,
@@ -271,7 +271,7 @@ namespace Tzkt.Sync.Services.Protocols
                         .DefaultIfEmpty(new EndorsingRight())
                         .Sum(r => r.Slots)
                 });
-            Db.BakerStats.AddRange(bakers);
+            Db.BakerCycles.AddRange(bakers);
             #endregion
         }
         private async Task ClearCycle(int cycle)
@@ -282,14 +282,14 @@ namespace Tzkt.Sync.Services.Protocols
             //Db.EndorsingRights.RemoveRange(
             //    await Db.EndorsingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
 
-            Db.CycleStats.Remove(
-                await Db.CycleStats.FirstAsync(x => x.Cycle == cycle));
+            Db.Cycles.Remove(
+                await Db.Cycles.FirstAsync(x => x.Index == cycle));
 
-            Db.DelegatorStats.RemoveRange(
-                await Db.DelegatorStats.Where(x => x.Cycle == cycle).ToListAsync());
+            Db.DelegatorSnapshots.RemoveRange(
+                await Db.DelegatorSnapshots.Where(x => x.Cycle == cycle).ToListAsync());
 
-            Db.BakerStats.RemoveRange(
-                await Db.BakerStats.Where(x => x.Cycle == cycle).ToListAsync());
+            Db.BakerCycles.RemoveRange(
+                await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());
         }
     }
 }

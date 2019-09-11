@@ -16,9 +16,9 @@ namespace Tzkt.Data
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<EndorsingRight> EndorsingRights { get; set; }
 
-        public DbSet<BakerStat> BakerStats { get; set; }
-        public DbSet<DelegatorStat> DelegatorStats { get; set; }
-        public DbSet<CycleStat> CycleStats { get; set; }
+        public DbSet<BakerCycle> BakerCycles { get; set; }
+        public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
+        public DbSet<Cycle> Cycles { get; set; }
 
         public DbSet<VotingEpoch> VotingEpoches { get; set; }
         public DbSet<VotingPeriod> VotingPeriods { get; set; }
