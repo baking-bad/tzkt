@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
-namespace Tzkt.Sync.Services.Protocols
+namespace Tzkt.Sync.Protocols
 {
     public class GenesisHandler : IProtocolHandler
     {
@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Services.Protocols
         }
 
         #region IProtocolHandler
-        public virtual string Kind => "Genesis";
+        public virtual string Protocol => "Genesis";
 
         public virtual async Task<AppState> ApplyBlock(JObject json)
         {
@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Services.Protocols
 
             Db.Blocks.Add(block);
             ProtocolUp(block.Protocol);
-            await SetAppState(block);
+            await SetAppStateAsync(block);
 
             await Db.SaveChangesAsync();
             return await GetAppStateAsync();
@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Services.Protocols
 
             Db.Blocks.Remove(lastBlock);
             ProtocolDown(lastBlock.Protocol);
-            await SetAppState(null);
+            await SetAppStateAsync(null);
 
             await Db.SaveChangesAsync();
             return await GetAppStateAsync();
@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Services.Protocols
             return state;
         }
 
-        protected async Task SetAppState(Block block)
+        protected async Task SetAppStateAsync(Block block)
         {
             var state = await GetAppStateAsync();
 

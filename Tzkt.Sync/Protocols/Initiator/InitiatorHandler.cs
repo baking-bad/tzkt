@@ -8,23 +8,23 @@ using Newtonsoft.Json.Linq;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
+using Tzkt.Sync.Services;
 
-namespace Tzkt.Sync.Services.Protocols
+namespace Tzkt.Sync.Protocols
 {
-    public class InitializationHandler : GenesisHandler
+    public class InitiatorHandler : GenesisHandler
     {
         protected readonly TezosNode Node;
         protected readonly Dictionary<string, Contract> Contracts;
 
-        public InitializationHandler(TezosNode node, TzktContext db, IMemoryCache cache)
-            :base(db, cache)
+        public InitiatorHandler(TezosNode node, TzktContext db, IMemoryCache cache) : base(db, cache)
         {
             Node = node;
             Contracts = new Dictionary<string, Contract>(64);
         }
 
         #region IProtocolHandler
-        public override string Kind => "Initialization";
+        public override string Protocol => "Initiator";
 
         public override async Task<AppState> ApplyBlock(JObject json)
         {
@@ -48,7 +48,7 @@ namespace Tzkt.Sync.Services.Protocols
 
             Db.Blocks.Add(block);
             ProtocolUp(block.Protocol);
-            await SetAppState(block);
+            await SetAppStateAsync(block);
 
             await Db.SaveChangesAsync();
             return await GetAppStateAsync();
@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Services.Protocols
 
             Db.Blocks.Remove(lastBlock);
             ProtocolDown(lastBlock.Protocol);
-            await SetAppState(await GetSecondLastBlock());
+            await SetAppStateAsync(await GetSecondLastBlock());
 
             await Db.SaveChangesAsync();
             return await GetAppStateAsync();
@@ -117,7 +117,7 @@ namespace Tzkt.Sync.Services.Protocols
         private async Task SeedContracts()
         {
             Contracts.Clear();
-            var contracts = await Node.GetContractsAsync(1);
+            var contracts = await Node.GetContractsAsync(level: 1);
             #region seed
             foreach (var data in contracts)
             {

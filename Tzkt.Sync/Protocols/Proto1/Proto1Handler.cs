@@ -7,11 +7,11 @@ using Newtonsoft.Json.Linq;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
-namespace Tzkt.Sync.Services.Protocols
+namespace Tzkt.Sync.Protocols
 {
-    public class Proto2Handler : IProtocolHandler
+    public class Proto1Handler : IProtocolHandler
     {
-        public string Kind => "Proto2";
+        public string Protocol => "Proto1";
 
         public Task<AppState> ApplyBlock(JObject block)
         {
