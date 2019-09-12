@@ -66,24 +66,21 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CycleStats",
+                name: "Cycles",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Cycle = table.Column<int>(nullable: false),
+                    Index = table.Column<int>(nullable: false),
                     Snapshot = table.Column<int>(nullable: false),
                     ActiveBakers = table.Column<int>(nullable: false),
                     ActiveDelegators = table.Column<int>(nullable: false),
-                    TotalBalances = table.Column<int>(nullable: false),
                     TotalRolls = table.Column<int>(nullable: false),
-                    Transactions = table.Column<int>(nullable: false),
-                    TransactionsVolume = table.Column<int>(nullable: false),
-                    CreatedContracts = table.Column<int>(nullable: false)
+                    TotalBalances = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CycleStats", x => x.Id);
+                    table.PrimaryKey("PK_Cycles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -115,7 +112,7 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BakerStats",
+                name: "BakerCycles",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -142,9 +139,9 @@ namespace Tzkt.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BakerStats", x => x.Id);
+                    table.PrimaryKey("PK_BakerCycles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BakerStats_Contracts_BakerId",
+                        name: "FK_BakerCycles_Contracts_BakerId",
                         column: x => x.BakerId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
@@ -201,7 +198,7 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DelegatorStats",
+                name: "DelegatorSnapshots",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -213,15 +210,15 @@ namespace Tzkt.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DelegatorStats", x => x.Id);
+                    table.PrimaryKey("PK_DelegatorSnapshots", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DelegatorStats_Contracts_BakerId",
+                        name: "FK_DelegatorSnapshots_Contracts_BakerId",
                         column: x => x.BakerId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_DelegatorStats_Contracts_DelegatorId",
+                        name: "FK_DelegatorSnapshots_Contracts_DelegatorId",
                         column: x => x.DelegatorId,
                         principalTable: "Contracts",
                         principalColumn: "Id",
@@ -247,6 +244,92 @@ namespace Tzkt.Data.Migrations
                         principalTable: "Contracts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VotingPeriods",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    EpochId = table.Column<int>(nullable: false),
+                    Kind = table.Column<int>(nullable: false),
+                    StartLevel = table.Column<int>(nullable: false),
+                    EndLevel = table.Column<int>(nullable: false),
+                    ProposalId = table.Column<int>(nullable: true),
+                    TotalStake = table.Column<int>(nullable: true),
+                    Participation = table.Column<int>(nullable: true),
+                    Quorum = table.Column<int>(nullable: true),
+                    Abstainings = table.Column<int>(nullable: true),
+                    Approvals = table.Column<int>(nullable: true),
+                    Refusals = table.Column<int>(nullable: true),
+                    PromotionPeriod_ProposalId = table.Column<int>(nullable: true),
+                    PromotionPeriod_TotalStake = table.Column<int>(nullable: true),
+                    PromotionPeriod_Participation = table.Column<int>(nullable: true),
+                    PromotionPeriod_Quorum = table.Column<int>(nullable: true),
+                    PromotionPeriod_Abstainings = table.Column<int>(nullable: true),
+                    PromotionPeriod_Approvals = table.Column<int>(nullable: true),
+                    PromotionPeriod_Refusals = table.Column<int>(nullable: true),
+                    TestingPeriod_ProposalId = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VotingPeriods", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VotingPeriods_VotingEpoches_EpochId",
+                        column: x => x.EpochId,
+                        principalTable: "VotingEpoches",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Proposals",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Hash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: true),
+                    Status = table.Column<int>(nullable: false),
+                    InitiatorId = table.Column<int>(nullable: false),
+                    ProposalPeriodId = table.Column<int>(nullable: false),
+                    ExplorationPeriodId = table.Column<int>(nullable: true),
+                    TestingPeriodId = table.Column<int>(nullable: true),
+                    PromotionPeriodId = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Proposals", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Proposals_VotingPeriods_ExplorationPeriodId",
+                        column: x => x.ExplorationPeriodId,
+                        principalTable: "VotingPeriods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Proposals_Contracts_InitiatorId",
+                        column: x => x.InitiatorId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Proposals_VotingPeriods_PromotionPeriodId",
+                        column: x => x.PromotionPeriodId,
+                        principalTable: "VotingPeriods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Proposals_VotingPeriods_ProposalPeriodId",
+                        column: x => x.ProposalPeriodId,
+                        principalTable: "VotingPeriods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Proposals_VotingPeriods_TestingPeriodId",
+                        column: x => x.TestingPeriodId,
+                        principalTable: "VotingPeriods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -289,6 +372,18 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BallotOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BallotOps_VotingPeriods_PeriodId",
+                        column: x => x.PeriodId,
+                        principalTable: "VotingPeriods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BallotOps_Proposals_ProposalId",
+                        column: x => x.ProposalId,
+                        principalTable: "Proposals",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_BallotOps_Contracts_SenderId",
                         column: x => x.SenderId,
@@ -485,6 +580,48 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ProposalOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    PeriodId = table.Column<int>(nullable: false),
+                    ProposalId = table.Column<int>(nullable: false),
+                    SenderId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProposalOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProposalOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProposalOps_VotingPeriods_PeriodId",
+                        column: x => x.PeriodId,
+                        principalTable: "VotingPeriods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProposalOps_Proposals_ProposalId",
+                        column: x => x.ProposalId,
+                        principalTable: "Proposals",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProposalOps_Contracts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Contracts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TransactionOps",
                 columns: table => new
                 {
@@ -637,117 +774,6 @@ namespace Tzkt.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "ProposalOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
-                    PeriodId = table.Column<int>(nullable: false),
-                    ProposalId = table.Column<int>(nullable: false),
-                    SenderId = table.Column<int>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProposalOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ProposalOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProposalOps_Contracts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Proposals",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    Hash = table.Column<string>(nullable: true),
-                    Status = table.Column<int>(nullable: false),
-                    InitiatorId = table.Column<int>(nullable: true),
-                    ProposalPeriodId = table.Column<int>(nullable: true),
-                    ExplorationPeriodId = table.Column<int>(nullable: true),
-                    TestingPeriodId = table.Column<int>(nullable: true),
-                    PromotionPeriodId = table.Column<int>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Proposals", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Proposals_Contracts_InitiatorId",
-                        column: x => x.InitiatorId,
-                        principalTable: "Contracts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "VotingPeriods",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
-                    EpochId = table.Column<int>(nullable: false),
-                    Kind = table.Column<int>(nullable: false),
-                    StartLevel = table.Column<int>(nullable: false),
-                    EndLevel = table.Column<int>(nullable: false),
-                    Discriminator = table.Column<string>(nullable: false),
-                    ProposalId = table.Column<int>(nullable: true),
-                    TotalStake = table.Column<int>(nullable: true),
-                    Participation = table.Column<int>(nullable: true),
-                    Quorum = table.Column<int>(nullable: true),
-                    Abstainings = table.Column<int>(nullable: true),
-                    Approvals = table.Column<int>(nullable: true),
-                    Refusals = table.Column<int>(nullable: true),
-                    PromotionPeriod_ProposalId = table.Column<int>(nullable: true),
-                    PromotionPeriod_TotalStake = table.Column<int>(nullable: true),
-                    PromotionPeriod_Participation = table.Column<int>(nullable: true),
-                    PromotionPeriod_Quorum = table.Column<int>(nullable: true),
-                    PromotionPeriod_Abstainings = table.Column<int>(nullable: true),
-                    PromotionPeriod_Approvals = table.Column<int>(nullable: true),
-                    PromotionPeriod_Refusals = table.Column<int>(nullable: true),
-                    TestingPeriod_ProposalId = table.Column<int>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_VotingPeriods", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_VotingPeriods_Proposals_ProposalId",
-                        column: x => x.ProposalId,
-                        principalTable: "Proposals",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_VotingPeriods_Proposals_PromotionPeriod_ProposalId",
-                        column: x => x.PromotionPeriod_ProposalId,
-                        principalTable: "Proposals",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_VotingPeriods_Proposals_TestingPeriod_ProposalId",
-                        column: x => x.TestingPeriod_ProposalId,
-                        principalTable: "Proposals",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_VotingPeriods_VotingEpoches_EpochId",
-                        column: x => x.EpochId,
-                        principalTable: "VotingEpoches",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.InsertData(
                 table: "AppState",
                 columns: new[] { "Id", "Hash", "Level", "Protocol", "Synced", "Timestamp" },
@@ -770,8 +796,8 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BakerStats_BakerId",
-                table: "BakerStats",
+                name: "IX_BakerCycles_BakerId",
+                table: "BakerCycles",
                 column: "BakerId");
 
             migrationBuilder.CreateIndex(
@@ -890,13 +916,13 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DelegatorStats_BakerId",
-                table: "DelegatorStats",
+                name: "IX_DelegatorSnapshots_BakerId",
+                table: "DelegatorSnapshots",
                 column: "BakerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DelegatorStats_DelegatorId",
-                table: "DelegatorStats",
+                name: "IX_DelegatorSnapshots_DelegatorId",
+                table: "DelegatorSnapshots",
                 column: "DelegatorId");
 
             migrationBuilder.CreateIndex(
@@ -1047,6 +1073,12 @@ namespace Tzkt.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Proposals_Id",
+                table: "Proposals",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Proposals_InitiatorId",
                 table: "Proposals",
                 column: "InitiatorId");
@@ -1114,24 +1146,21 @@ namespace Tzkt.Data.Migrations
                 column: "TargetId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_VotingPeriods_ProposalId",
-                table: "VotingPeriods",
-                column: "ProposalId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VotingPeriods_PromotionPeriod_ProposalId",
-                table: "VotingPeriods",
-                column: "PromotionPeriod_ProposalId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VotingPeriods_TestingPeriod_ProposalId",
-                table: "VotingPeriods",
-                column: "TestingPeriod_ProposalId");
+                name: "IX_VotingEpoches_Id",
+                table: "VotingEpoches",
+                column: "Id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_VotingPeriods_EpochId",
                 table: "VotingPeriods",
                 column: "EpochId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VotingPeriods_Id",
+                table: "VotingPeriods",
+                column: "Id",
+                unique: true);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ActivationOps_Blocks_Level",
@@ -1147,22 +1176,6 @@ namespace Tzkt.Data.Migrations
                 column: "Level",
                 principalTable: "Blocks",
                 principalColumn: "Level",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_BallotOps_VotingPeriods_PeriodId",
-                table: "BallotOps",
-                column: "PeriodId",
-                principalTable: "VotingPeriods",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_BallotOps_Proposals_ProposalId",
-                table: "BallotOps",
-                column: "ProposalId",
-                principalTable: "Proposals",
-                principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
@@ -1212,54 +1225,6 @@ namespace Tzkt.Data.Migrations
                 principalTable: "Blocks",
                 principalColumn: "Level",
                 onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_ProposalOps_VotingPeriods_PeriodId",
-                table: "ProposalOps",
-                column: "PeriodId",
-                principalTable: "VotingPeriods",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_ProposalOps_Proposals_ProposalId",
-                table: "ProposalOps",
-                column: "ProposalId",
-                principalTable: "Proposals",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Proposals_VotingPeriods_ExplorationPeriodId",
-                table: "Proposals",
-                column: "ExplorationPeriodId",
-                principalTable: "VotingPeriods",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Proposals_VotingPeriods_PromotionPeriodId",
-                table: "Proposals",
-                column: "PromotionPeriodId",
-                principalTable: "VotingPeriods",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Proposals_VotingPeriods_ProposalPeriodId",
-                table: "Proposals",
-                column: "ProposalPeriodId",
-                principalTable: "VotingPeriods",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Proposals_VotingPeriods_TestingPeriodId",
-                table: "Proposals",
-                column: "TestingPeriodId",
-                principalTable: "VotingPeriods",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -1273,28 +1238,8 @@ namespace Tzkt.Data.Migrations
                 table: "NonceRevelationOps");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Proposals_Contracts_InitiatorId",
-                table: "Proposals");
-
-            migrationBuilder.DropForeignKey(
                 name: "FK_NonceRevelationOps_Blocks_Level",
                 table: "NonceRevelationOps");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Proposals_VotingPeriods_ExplorationPeriodId",
-                table: "Proposals");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Proposals_VotingPeriods_PromotionPeriodId",
-                table: "Proposals");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Proposals_VotingPeriods_ProposalPeriodId",
-                table: "Proposals");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Proposals_VotingPeriods_TestingPeriodId",
-                table: "Proposals");
 
             migrationBuilder.DropTable(
                 name: "ActivationOps");
@@ -1303,7 +1248,7 @@ namespace Tzkt.Data.Migrations
                 name: "AppState");
 
             migrationBuilder.DropTable(
-                name: "BakerStats");
+                name: "BakerCycles");
 
             migrationBuilder.DropTable(
                 name: "BakingRights");
@@ -1315,13 +1260,13 @@ namespace Tzkt.Data.Migrations
                 name: "BallotOps");
 
             migrationBuilder.DropTable(
-                name: "CycleStats");
+                name: "Cycles");
 
             migrationBuilder.DropTable(
                 name: "DelegationOps");
 
             migrationBuilder.DropTable(
-                name: "DelegatorStats");
+                name: "DelegatorSnapshots");
 
             migrationBuilder.DropTable(
                 name: "DoubleBakingOps");
@@ -1345,7 +1290,16 @@ namespace Tzkt.Data.Migrations
                 name: "RevealOps");
 
             migrationBuilder.DropTable(
+                name: "Proposals");
+
+            migrationBuilder.DropTable(
                 name: "TransactionOps");
+
+            migrationBuilder.DropTable(
+                name: "VotingPeriods");
+
+            migrationBuilder.DropTable(
+                name: "VotingEpoches");
 
             migrationBuilder.DropTable(
                 name: "Contracts");
@@ -1358,15 +1312,6 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "NonceRevelationOps");
-
-            migrationBuilder.DropTable(
-                name: "VotingPeriods");
-
-            migrationBuilder.DropTable(
-                name: "Proposals");
-
-            migrationBuilder.DropTable(
-                name: "VotingEpoches");
         }
     }
 }

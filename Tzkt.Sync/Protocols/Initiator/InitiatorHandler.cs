@@ -36,6 +36,8 @@ namespace Tzkt.Sync.Protocols
             if (block.Protocol.Weight > 0)
                 throw new Exception("Initialization block already exists");
 
+            await InitVotingEpoch();
+
             await SeedContracts();
 
             await InitCycle(0);
@@ -44,7 +46,6 @@ namespace Tzkt.Sync.Protocols
             await InitCycle(3);
             await InitCycle(4);
             await InitCycle(5);
-            await InitCycle(6);
 
             Db.Blocks.Add(block);
             ProtocolUp(block.Protocol);
@@ -64,7 +65,6 @@ namespace Tzkt.Sync.Protocols
             if (lastBlock.Level != 1)
                 throw new Exception("Initialization block must be at level 1");
 
-            await ClearCycle(6);
             await ClearCycle(5);
             await ClearCycle(4);
             await ClearCycle(3);
@@ -73,6 +73,8 @@ namespace Tzkt.Sync.Protocols
             await ClearCycle(0);
 
             await ClearContracts();
+
+            await ClearVotingEpoch();
 
             Db.Blocks.Remove(lastBlock);
             ProtocolDown(lastBlock.Protocol);
@@ -215,8 +217,8 @@ namespace Tzkt.Sync.Protocols
                     Slots = x["slots"].Count()
                 });
 
-            //Db.BakingRights.AddRange(bakingRights);
-            //Db.EndorsingRights.AddRange(endorsingRights);
+            Db.BakingRights.AddRange(bakingRights);
+            Db.EndorsingRights.AddRange(endorsingRights);
             #endregion
 
             #region init cycle
@@ -276,11 +278,11 @@ namespace Tzkt.Sync.Protocols
         }
         private async Task ClearCycle(int cycle)
         {
-            //Db.BakingRights.RemoveRange(
-            //    await Db.BakingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
+            Db.BakingRights.RemoveRange(
+                await Db.BakingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
 
-            //Db.EndorsingRights.RemoveRange(
-            //    await Db.EndorsingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
+            Db.EndorsingRights.RemoveRange(
+                await Db.EndorsingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
 
             Db.Cycles.Remove(
                 await Db.Cycles.FirstAsync(x => x.Index == cycle));
@@ -290,6 +292,33 @@ namespace Tzkt.Sync.Protocols
 
             Db.BakerCycles.RemoveRange(
                 await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());
+        }
+
+        private Task InitVotingEpoch()
+        {
+            var epoch = new VotingEpoch
+            {
+                Level = 1
+            };
+
+            var period = new ProposalPeriod
+            {
+                Epoch = epoch,
+                Kind = VotingPeriods.Proposal,
+                StartLevel = 1,
+                EndLevel = 32768
+            };
+
+            Db.VotingEpoches.Add(epoch);
+            Db.VotingPeriods.Add(period);
+            return Task.CompletedTask;
+        }
+        private async Task ClearVotingEpoch()
+        {
+            var epoch = await Db.VotingEpoches.ToListAsync();
+            var periods = await Db.VotingPeriods.ToListAsync();
+            Db.VotingPeriods.RemoveRange(periods);
+            Db.VotingEpoches.RemoveRange(epoch);
         }
     }
 }

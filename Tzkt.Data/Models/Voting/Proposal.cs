@@ -12,9 +12,9 @@ namespace Tzkt.Data.Models
         public string Hash { get; set; }
         public ProposalStatus Status { get; set; }
 
-        public int? InitiatorId { get; set; }
+        public int InitiatorId { get; set; }
 
-        public int? ProposalPeriodId { get; set; }
+        public int ProposalPeriodId { get; set; }
         public int? ExplorationPeriodId { get; set; }
         public int? TestingPeriodId { get; set; }
         public int? PromotionPeriodId { get; set; }

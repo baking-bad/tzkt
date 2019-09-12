@@ -94,6 +94,7 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> RebaseLocalBranchAsync(IServiceScope scope, CancellationToken cancelToken)
         {
+            //while (AppState.Level >= 0)
             while (AppState.Level >= 0 && !await Node.ValidateBranchAsync(AppState.Level, AppState.Hash))
             {
                 if (cancelToken.IsCancellationRequested)
@@ -121,6 +122,7 @@ namespace Tzkt.Sync.Services
                     Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                     var block = await Node.GetBlockAsync(AppState.Level + 1);
 
+                    //if (AppState.Level >= 0)
                     if (AppState.Level >= 0 && block.GetPredecessor() != AppState.Hash)
                     {
                         Logger.LogError($"Unknown predecessor. Rebase local branch...");

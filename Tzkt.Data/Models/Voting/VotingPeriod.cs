@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tzkt.Data.Models
 {
-    public class VotingPeriod
+    public abstract class VotingPeriod
     {
         public int Id { get; set; }
         public int EpochId { get; set; }

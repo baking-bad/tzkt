@@ -148,6 +148,7 @@ namespace Tzkt.Data
             #endregion
             #endregion
 
+            #region operations
             #region activations
             #region indexes
             modelBuilder.Entity<ActivationOperation>()
@@ -648,6 +649,95 @@ namespace Tzkt.Data
                 .HasOne(x => x.Target)
                 .WithMany(x => x.IncomingTransactions)
                 .HasForeignKey(x => x.TargetId);
+            #endregion
+            #endregion
+            #endregion
+
+            #region voting
+            #region epoches
+            #region indexes
+            modelBuilder.Entity<VotingEpoch>()
+                .HasIndex(x => x.Id)
+                .IsUnique();
+            #endregion
+            #region keys
+            modelBuilder.Entity<VotingEpoch>()
+                .HasKey(x => x.Id);
+            #endregion
+            #region props
+            #endregion
+            #region relations
+            #endregion
+            #endregion
+
+            #region periods
+            #region indexes
+            modelBuilder.Entity<VotingPeriod>()
+                .HasIndex(x => x.Id)
+                .IsUnique();
+            #endregion
+            #region keys
+            modelBuilder.Entity<VotingPeriod>()
+                .HasKey(x => x.Id);
+            #endregion
+            #region props
+            modelBuilder.Entity<VotingPeriod>()
+                .HasDiscriminator<VotingPeriods>(nameof(VotingPeriod.Kind))
+                .HasValue<ProposalPeriod>(Models.VotingPeriods.Proposal)
+                .HasValue<ExplorationPeriod>(Models.VotingPeriods.Exploration)
+                .HasValue<TestingPeriod>(Models.VotingPeriods.Testing)
+                .HasValue<PromotionPeriod>(Models.VotingPeriods.Promotion);
+            #endregion
+            #region relations
+            modelBuilder.Entity<VotingPeriod>()
+                .HasOne(x => x.Epoch)
+                .WithMany(x => x.Periods)
+                .HasForeignKey(x => x.EpochId);
+            #endregion
+            #endregion
+
+            #region proposals
+            #region indexes
+            modelBuilder.Entity<Proposal>()
+                .HasIndex(x => x.Id)
+                .IsUnique();
+            #endregion
+            #region keys
+            modelBuilder.Entity<Proposal>()
+                .HasKey(x => x.Id);
+            #endregion
+            #region props
+            modelBuilder.Entity<Proposal>()
+                .Property(nameof(Proposal.Hash))
+                .HasMaxLength(51)
+                .IsFixedLength(true);
+            #endregion
+            #region relations
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.Initiator)
+                .WithMany(x => x.PushedProposals)
+                .HasForeignKey(x => x.InitiatorId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.ProposalPeriod)
+                .WithMany(x => x.Candidates)
+                .HasForeignKey(x => x.ProposalPeriodId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.ExplorationPeriod)
+                .WithOne(x => x.Proposal)
+                .HasForeignKey<Proposal>(x => x.ExplorationPeriodId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.TestingPeriod)
+                .WithOne(x => x.Proposal)
+                .HasForeignKey<Proposal>(x => x.TestingPeriodId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.PromotionPeriod)
+                .WithOne(x => x.Proposal)
+                .HasForeignKey<Proposal>(x => x.PromotionPeriodId);
+            #endregion
             #endregion
             #endregion
         }
