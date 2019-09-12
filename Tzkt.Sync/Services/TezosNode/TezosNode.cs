@@ -10,19 +10,18 @@ namespace Tzkt.Sync.Services
 {
     public class TezosNode : IDisposable
     {
-        public TezosRpc Rpc { get; }
+        public TezosRpc Rpc { get; private set; }
 
+        private string ChainId;
+        private Constants Constants;
         private Header Header;
         private DateTime NextBlock;
 
         public TezosNode(IConfiguration config)
         {
             var nodeConf = config.GetTezosNodeConfig();
-
-            Rpc = new TezosRpc(
-                nodeConf.Endpoint,
-                nodeConf.Timeout,
-                nodeConf.Chain == "test" ? Chain.Test : Chain.Main);
+            ChainId = nodeConf.ChainId;
+            Rpc = new TezosRpc(nodeConf.Endpoint, nodeConf.Timeout);
         }
         public void Dispose() => Rpc.Dispose();
 
@@ -30,20 +29,32 @@ namespace Tzkt.Sync.Services
             => (JObject)await Rpc.Blocks[level].GetAsync();
 
         public async Task<JArray> GetContractsAsync(int level)
-            => (JArray)await Rpc.Blocks[level].Context.Raw.Contracts.GetAsync(1);
+            => (JArray)await Rpc.Blocks[level].Context.Raw.Contracts.GetAsync(depth: 1);
 
-        public async Task<JArray> GetBakingRightsAsync(int cycle, int cycleSize, int maxPriority)
-            => (JArray)await Rpc.Blocks[cycle * cycleSize + 1].Helpers.BakingRights.GetFromCycleAsync(cycle, maxPriority);
+        public async Task<JArray> GetBakingRightsAsync(int level, int cycle, int maxPriority)
+            => (JArray)await Rpc.Blocks[level].Helpers.BakingRights.GetFromCycleAsync(cycle, maxPriority);
 
-        public async Task<JArray> GetEndorsingRightsAsync(int cycle, int cycleSize)
-            => (JArray)await Rpc.Blocks[cycle * cycleSize + 1].Helpers.EndorsingRights.GetFromCycleAsync(cycle);
+        public async Task<JArray> GetEndorsingRightsAsync(int level, int cycle)
+            => (JArray)await Rpc.Blocks[level].Helpers.EndorsingRights.GetFromCycleAsync(cycle);
 
         public async Task<Header> GetHeaderAsync()
         {
             if (DateTime.UtcNow >= NextBlock)
             {
-                Header = await Rpc.Blocks.Head.Header.GetAsync<Header>();
-                NextBlock = Header.Timestamp.AddSeconds(60);
+                var header = await Rpc.Blocks.Head.Header.GetAsync<Header>();
+
+                if (header.ChainId != ChainId)
+                    throw new Exception("Invalid chain");
+
+                if (header.Protocol != Header?.Protocol)
+                    Constants = await Rpc.Blocks.Head.Context.Constants.GetAsync<Constants>();
+
+                NextBlock = header.Timestamp.AddSeconds(
+                    header.Level != Header?.Level
+                    ? Constants.BlockIntervals[0]
+                    : 1);
+
+                Header = header;
             }
 
             return Header;

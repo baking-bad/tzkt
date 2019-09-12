@@ -196,8 +196,8 @@ namespace Tzkt.Sync.Protocols
         {
             #region init rights
             var rights = await Task.WhenAll(
-                Node.GetBakingRightsAsync(cycle, 4096, 1),
-                Node.GetEndorsingRightsAsync(cycle, 4096));
+                Node.GetBakingRightsAsync(1, cycle, 1),
+                Node.GetEndorsingRightsAsync(1, cycle));
 
             var bakingRights = rights[0]
                 .Select(x => new BakingRight
