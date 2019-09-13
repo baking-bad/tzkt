@@ -1,10 +1,11 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
 using Tzkt.Sync.Services;
@@ -13,26 +14,20 @@ namespace Tzkt.Sync
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
-            var environment = Environment.GetEnvironmentVariable("TZKT_Environment")
-                ?? EnvironmentName.Production;
+            CreateHostBuilder(args).Build().Run();
+        }
 
-            var builder = new HostBuilder()
-                .UseEnvironment(environment)
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostContext, config) =>
                 {
-                    config.AddJsonFile(
-                        $"appsettings.json",
-                        optional: false,
-                        reloadOnChange: false);
-
-                    config.AddJsonFile(
-                        $"appsettings.{environment}.json",
-                        optional: true,
-                        reloadOnChange: false);
-
                     config.AddEnvironmentVariables("TZKT_");
+                })
+                .ConfigureHostConfiguration(configHost =>
+                {
+                    configHost.AddEnvironmentVariables(prefix: "TZKT_");
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
@@ -47,18 +42,8 @@ namespace Tzkt.Sync
 
                     services.AddTezosNode();
                     services.AddTezosProtocols();
+
                     services.AddHostedService<Observer>();
-                })
-                .ConfigureLogging((hostContext, logging) =>
-                {
-                    logging.AddConfiguration(
-                        hostContext.Configuration.GetSection("Logging"));
-
-                    logging.AddConsole();
-                    logging.AddDebug();
                 });
-
-            await builder.RunConsoleAsync();
-        }
     }
 }

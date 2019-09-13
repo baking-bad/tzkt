@@ -14,7 +14,7 @@ namespace Tzkt.Sync
         public TzktContext CreateDbContext(string[] args)
         {
             var environment = Environment.GetEnvironmentVariable("TZKT_Environment")
-                ?? EnvironmentName.Production;
+                ?? Environments.Production;
 
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())

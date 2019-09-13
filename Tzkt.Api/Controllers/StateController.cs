@@ -10,8 +10,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class StateController : ControllerBase
     {
         private readonly ApiContext Db;
@@ -24,7 +24,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<object>> Get()
         {
             var state = await Db.AppState.FirstOrDefaultAsync();
-            return new 
+            return new
             {
                 hash = state.Hash,
                 level = state.Level,
