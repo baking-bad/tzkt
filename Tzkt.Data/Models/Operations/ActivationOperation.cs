@@ -9,8 +9,8 @@ namespace Tzkt.Data.Models
         public long Balance { get; set; }
 
         #region relations
-        [ForeignKey("AccountId")]
-        public Contract Account { get; set; }
+        [ForeignKey(nameof(AccountId))]
+        public Account Account { get; set; }
         #endregion
     }
 }

@@ -13,8 +13,8 @@ namespace Tzkt.Data.Models
         public long StorageFee { get; set; }
 
         #region relations
-        [ForeignKey("TargetId")]
-        public Contract Target { get; set; }
+        [ForeignKey(nameof(TargetId))]
+        public BaseAddress Target { get; set; }
 
         public List<DelegationOperation> InternalDelegations { get; set; }
         public List<OriginationOperation> InternalOriginations { get; set; }

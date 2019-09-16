@@ -20,14 +20,17 @@ namespace Tzkt.Data.Models
         public int? RevelationId { get; set; }
 
         #region relations
-        [ForeignKey("ProtocolId")]
+        [ForeignKey(nameof(ProtocolId))]
         public Protocol Protocol { get; set; }
 
-        [ForeignKey("BakerId")]
-        public Contract Baker { get; set; }
+        [ForeignKey(nameof(BakerId))]
+        public Delegate Baker { get; set; }
 
-        [ForeignKey("RevelationId")]
+        [ForeignKey(nameof(RevelationId))]
         public NonceRevelationOperation Revelation { get; set; }
+
+        public List<Delegate> ActivatedDelegates { get; set; }
+        public List<Delegate> DeactivatedDelegates { get; set; }
 
         #region operations
         public List<EndorsementOperation> Endorsements { get; set; }

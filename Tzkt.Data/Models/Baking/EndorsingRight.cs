@@ -10,8 +10,8 @@ namespace Tzkt.Data.Models
         public int Slots { get; set; }
 
         #region relations
-        [ForeignKey("BakerId")]
-        public Contract Baker { get; set; }
+        [ForeignKey(nameof(BakerId))]
+        public Delegate Baker { get; set; }
         #endregion
     }
 }

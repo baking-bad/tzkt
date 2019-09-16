@@ -14,11 +14,11 @@ namespace Tzkt.Data.Models
         public long OffenderLoss { get; set; }
 
         #region relations
-        [ForeignKey("AccuserId")]
-        public Contract Accuser { get; set; }
+        [ForeignKey(nameof(AccuserId))]
+        public Delegate Accuser { get; set; }
 
-        [ForeignKey("OffenderId")]
-        public Contract Offender { get; set; }
+        [ForeignKey(nameof(OffenderId))]
+        public Delegate Offender { get; set; }
         #endregion
     }
 }

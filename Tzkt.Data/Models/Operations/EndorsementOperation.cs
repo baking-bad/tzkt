@@ -11,8 +11,8 @@ namespace Tzkt.Data.Models
         public long Reward { get; set; }
 
         #region relations
-        [ForeignKey("DelegateId")]
-        public Contract Delegate { get; set; }
+        [ForeignKey(nameof(DelegateId))]
+        public Delegate Delegate { get; set; }
         #endregion
     }
 }

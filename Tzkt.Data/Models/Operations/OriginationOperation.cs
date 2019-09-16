@@ -16,14 +16,14 @@ namespace Tzkt.Data.Models
         public long StorageFee { get; set; }
 
         #region relations
-        [ForeignKey("ContractId")]
+        [ForeignKey(nameof(ContractId))]
         public Contract Contract { get; set; }
 
-        [ForeignKey("DelegateId")]
-        public Contract Delegate { get; set; }
+        [ForeignKey(nameof(DelegateId))]
+        public Delegate Delegate { get; set; }
 
-        [ForeignKey("ManagerId")]
-        public Contract Manager { get; set; }
+        [ForeignKey(nameof(ManagerId))]
+        public Account Manager { get; set; }
         #endregion
     }
 }

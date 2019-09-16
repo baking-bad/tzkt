@@ -14,10 +14,10 @@ namespace Tzkt.Data.Models.Base
         public int? Nonce { get; set; }
 
         #region relations
-        [ForeignKey("SenderId")]
-        public Contract Sender { get; set; }
+        [ForeignKey(nameof(SenderId))]
+        public BaseAddress Sender { get; set; }
 
-        [ForeignKey("ParentId")]
+        [ForeignKey(nameof(ParentId))]
         public TransactionOperation Parent { get; set; }
         #endregion
     }

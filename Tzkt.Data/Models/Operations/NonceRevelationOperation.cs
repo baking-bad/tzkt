@@ -10,8 +10,8 @@ namespace Tzkt.Data.Models
         public int RevelationLevel { get; set; }
 
         #region relations
-        [ForeignKey("BakerId")]
-        public Contract Baker { get; set; }
+        [ForeignKey(nameof(BakerId))]
+        public Delegate Baker { get; set; }
 
         public Block RevelationBlock { get; set; }
         #endregion

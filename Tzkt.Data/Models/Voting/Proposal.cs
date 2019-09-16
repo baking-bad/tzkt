@@ -21,7 +21,7 @@ namespace Tzkt.Data.Models
 
         #region relations
         [ForeignKey(nameof(InitiatorId))]
-        public Contract Initiator { get; set; }
+        public Delegate Initiator { get; set; }
 
         [ForeignKey(nameof(ProposalPeriodId))]
         public ProposalPeriod ProposalPeriod { get; set; }

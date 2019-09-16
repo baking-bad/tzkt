@@ -9,14 +9,20 @@ namespace Tzkt.Data
     {
         public DbSet<AppState> AppState { get; set; }
 
-        public DbSet<Block> Blocks { get; set; }
+        #region accounts
+        public DbSet<BaseAddress> Addresses { get; set; }
+        public DbSet<Account> Accounts { get; set; }
         public DbSet<Contract> Contracts { get; set; }
+        public DbSet<Models.Delegate> Delegates { get; set; }
+        #endregion
+
+        public DbSet<Block> Blocks { get; set; }
         public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
 
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<EndorsingRight> EndorsingRights { get; set; }
 
-        public DbSet<BakerCycle> BakerCycles { get; set; }
+        public DbSet<BakingCycle> BakerCycles { get; set; }
         public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
         public DbSet<Cycle> Cycles { get; set; }
 
@@ -56,6 +62,99 @@ namespace Tzkt.Data
                     Protocol = "",
                     Hash = "",
                 });
+            #endregion
+
+            #region accounts
+            #region address
+            #region indexes
+            modelBuilder.Entity<BaseAddress>()
+                .HasIndex(x => x.Id)
+                .IsUnique();
+
+            modelBuilder.Entity<BaseAddress>()
+                .HasIndex(x => x.Address)
+                .IsUnique();
+
+            modelBuilder.Entity<BaseAddress>()
+                .HasIndex(x => x.Staked);
+            #endregion
+            #region keys
+            modelBuilder.Entity<BaseAddress>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<BaseAddress>()
+                .HasAlternateKey(x => x.Address);
+            #endregion
+            #region props
+            modelBuilder.Entity<BaseAddress>()
+                .HasDiscriminator<AddressType>(nameof(BaseAddress.Type))
+                .HasValue<Account>(AddressType.Account)
+                .HasValue<Models.Delegate>(AddressType.Delegate)
+                .HasValue<Contract>(AddressType.Contract);
+            #endregion
+            #region relations
+            modelBuilder.Entity<BaseAddress>()
+                .HasOne(x => x.Delegate)
+                .WithMany(x => x.DelegatedAddresses)
+                .HasForeignKey(x => x.DelegateId);
+            #endregion
+            #endregion
+
+            #region account
+            #region indexes
+            #endregion
+            #region keys
+            #endregion
+            #region props
+            modelBuilder.Entity<Account>()
+                .Property(x => x.PublicKey)
+                .HasMaxLength(65);
+            #endregion
+            #region relations
+            #endregion
+            #endregion
+
+            #region delegate
+            #region indexes
+            #endregion
+            #region keys
+            #endregion
+            #region props
+            #endregion
+            #region relations
+            modelBuilder.Entity<Models.Delegate>()
+                .HasOne(x => x.ActivationBlock)
+                .WithMany(x => x.ActivatedDelegates)
+                .HasForeignKey(x => x.ActivationLevel)
+                .HasPrincipalKey(x => x.Level);
+
+            modelBuilder.Entity<Models.Delegate>()
+                .HasOne(x => x.DeactivationBlock)
+                .WithMany(x => x.DeactivatedDelegates)
+                .HasForeignKey(x => x.DeactivationLevel)
+                .HasPrincipalKey(x => x.Level);
+            #endregion
+            #endregion
+
+            #region contracts
+            #region indexes
+            #endregion
+            #region keys
+            #endregion
+            #region props
+            #endregion
+            #region relations
+            modelBuilder.Entity<Contract>()
+                .HasOne(x => x.Manager)
+                .WithMany(x => x.ManagedContracts)
+                .HasForeignKey(x => x.ManagerId);
+
+            modelBuilder.Entity<Contract>()
+                .HasOne(x => x.Originator)
+                .WithMany(x => x.OriginatedContracts)
+                .HasForeignKey(x => x.OriginatorId);
+            #endregion
+            #endregion
             #endregion
 
             #region block
@@ -98,53 +197,6 @@ namespace Tzkt.Data
                 .WithOne(x => x.RevelationBlock)
                 .HasForeignKey<Block>(x => x.RevelationId)
                 .HasPrincipalKey<NonceRevelationOperation>(x => x.RevelationLevel);
-            #endregion
-            #endregion
-
-            #region contracts
-            #region indexes
-            modelBuilder.Entity<Contract>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Contract>()
-                .HasIndex(x => x.Address)
-                .IsUnique();
-
-            modelBuilder.Entity<Contract>()
-                .HasIndex(x => x.DelegateId);
-
-            modelBuilder.Entity<Contract>()
-                .HasIndex(x => x.ManagerId);
-            #endregion
-            #region keys
-            modelBuilder.Entity<Contract>()
-                .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Contract>()
-                .HasAlternateKey(x => x.Address);
-            #endregion
-            #region props
-            modelBuilder.Entity<Contract>()
-                .Property(x => x.Address)
-                .HasMaxLength(36)
-                .IsFixedLength()
-                .IsRequired();
-
-            modelBuilder.Entity<Contract>()
-                .Property(x => x.PublicKey)
-                .HasMaxLength(65);
-            #endregion
-            #region relations
-            modelBuilder.Entity<Contract>()
-                .HasOne(x => x.Delegate)
-                .WithMany(x => x.DelegatedContracts)
-                .HasForeignKey(x => x.DelegateId);
-
-            modelBuilder.Entity<Contract>()
-                .HasOne(x => x.Manager)
-                .WithMany(x => x.OriginatedContracts)
-                .HasForeignKey(x => x.ManagerId);
             #endregion
             #endregion
 
@@ -266,12 +318,12 @@ namespace Tzkt.Data
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasOne(x => x.Sender)
-                .WithMany(x => x.Delegations)
+                .WithMany(x => x.SentDelegations)
                 .HasForeignKey(x => x.SenderId);
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasOne(x => x.Delegate)
-                .WithMany(x => x.IncomingDelegations)
+                .WithMany(x => x.ReceivedDelegations)
                 .HasForeignKey(x => x.DelegateId);
 
             modelBuilder.Entity<DelegationOperation>()
@@ -315,12 +367,12 @@ namespace Tzkt.Data
 
             modelBuilder.Entity<DoubleBakingOperation>()
                 .HasOne(x => x.Accuser)
-                .WithMany(x => x.DoubleBakingAccusations)
+                .WithMany(x => x.SentDoubleBakingAccusations)
                 .HasForeignKey(x => x.AccuserId);
 
             modelBuilder.Entity<DoubleBakingOperation>()
                 .HasOne(x => x.Offender)
-                .WithMany(x => x.DoubleBakings)
+                .WithMany(x => x.ReceivedDoubleBakingAccusations)
                 .HasForeignKey(x => x.OffenderId);
             #endregion
             #endregion
@@ -359,12 +411,12 @@ namespace Tzkt.Data
 
             modelBuilder.Entity<DoubleEndorsingOperation>()
                 .HasOne(x => x.Accuser)
-                .WithMany(x => x.DoubleEndorsingAccusations)
+                .WithMany(x => x.SentDoubleEndorsingAccusations)
                 .HasForeignKey(x => x.AccuserId);
 
             modelBuilder.Entity<DoubleEndorsingOperation>()
                 .HasOne(x => x.Offender)
-                .WithMany(x => x.DoubleEndorsings)
+                .WithMany(x => x.ReceivedDoubleEndorsingAccusations)
                 .HasForeignKey(x => x.OffenderId);
             #endregion
             #endregion
@@ -501,7 +553,7 @@ namespace Tzkt.Data
 
             modelBuilder.Entity<OriginationOperation>()
                 .HasOne(x => x.Sender)
-                .WithMany(x => x.Originations)
+                .WithMany(x => x.SentOriginations)
                 .HasForeignKey(x => x.SenderId);
 
             modelBuilder.Entity<OriginationOperation>()
@@ -642,12 +694,12 @@ namespace Tzkt.Data
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasOne(x => x.Sender)
-                .WithMany(x => x.OutgoingTransactions)
+                .WithMany(x => x.SentTransactions)
                 .HasForeignKey(x => x.SenderId);
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasOne(x => x.Target)
-                .WithMany(x => x.IncomingTransactions)
+                .WithMany(x => x.ReceivedTransactions)
                 .HasForeignKey(x => x.TargetId);
             #endregion
             #endregion

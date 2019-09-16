@@ -12,11 +12,11 @@ namespace Tzkt.Data.Models
         public long Balance { get; set; }
 
         #region relations
-        [ForeignKey("DelegatorId")]
-        public Contract Delegator { get; set; }
+        [ForeignKey(nameof(DelegatorId))]
+        public BaseAddress Delegator { get; set; }
 
-        [ForeignKey("BakerId")]
-        public Contract Baker { get; set; }
+        [ForeignKey(nameof(BakerId))]
+        public Delegate Baker { get; set; }
         #endregion
     }
 }

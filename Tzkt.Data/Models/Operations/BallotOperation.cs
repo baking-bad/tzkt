@@ -12,14 +12,14 @@ namespace Tzkt.Data.Models
         public Vote Vote { get; set; }
 
         #region relations
-        [ForeignKey("PeriodId")]
+        [ForeignKey(nameof(PeriodId))]
         public VotingPeriod Period { get; set; }
 
-        [ForeignKey("ProposalId")]
+        [ForeignKey(nameof(ProposalId))]
         public Proposal Proposal { get; set; }
 
-        [ForeignKey("SenderId")]
-        public Contract Sender { get; set; }
+        [ForeignKey(nameof(SenderId))]
+        public Delegate Sender { get; set; }
         #endregion
     }
 

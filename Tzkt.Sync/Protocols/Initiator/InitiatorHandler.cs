@@ -95,7 +95,7 @@ namespace Tzkt.Sync.Protocols
 
                 contract = new Contract
                 {
-                    Kind = ContractKind.Account,
+                    //Kind = ContractKind.Account,
                     Address = address,
                     Spendable = true
                 };
@@ -118,7 +118,7 @@ namespace Tzkt.Sync.Protocols
 
         private async Task SeedContracts()
         {
-            Contracts.Clear();
+            /*Contracts.Clear();
             var contracts = await Node.GetContractsAsync(level: 1);
             #region seed
             foreach (var data in contracts)
@@ -185,7 +185,7 @@ namespace Tzkt.Sync.Protocols
                     + (contract.DelegatorsCount > 0 ? delegators.Sum(x => x.Balance) : 0);
             }
             #endregion
-            Db.Contracts.AddRange(Contracts.Values);
+            Db.Contracts.AddRange(Contracts.Values);*/
         }
         private async Task ClearContracts()
         {
@@ -196,7 +196,7 @@ namespace Tzkt.Sync.Protocols
 
         private async Task InitCycle(int cycle)
         {
-            #region init rights
+            /*#region init rights
             var rights = await Task.WhenAll(
                 Node.GetBakingRightsAsync(1, cycle, 1),
                 Node.GetEndorsingRightsAsync(1, cycle));
@@ -236,7 +236,7 @@ namespace Tzkt.Sync.Protocols
                 .Select(x => new BalanceSnapshot
                 {
                     Balance = x.Balance,
-                    Contract = x,
+                    Address = x,
                     Delegate = GetContract(x.Delegate?.Address ?? x.Address),
                     Level = cycleObj.Snapshot
                 });
@@ -258,7 +258,7 @@ namespace Tzkt.Sync.Protocols
             #region init bakers
             var bakers = snapshots
                 .Where(x => x.Contract.Kind == ContractKind.Baker)
-                .Select(x => new BakerCycle
+                .Select(x => new BakingCycle
                 {
                     Baker = x.Contract,
                     Balance = x.Balance,
@@ -274,7 +274,7 @@ namespace Tzkt.Sync.Protocols
                         .Sum(r => r.Slots)
                 });
             Db.BakerCycles.AddRange(bakers);
-            #endregion
+            #endregion*/
         }
         private async Task ClearCycle(int cycle)
         {

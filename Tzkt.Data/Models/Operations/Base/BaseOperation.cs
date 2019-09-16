@@ -11,7 +11,7 @@ namespace Tzkt.Data.Models.Base
         public string OpHash { get; set; }
 
         #region relations
-        [ForeignKey("Level")]
+        [ForeignKey(nameof(Level))]
         public Block Block { get; set; }
         #endregion
     }

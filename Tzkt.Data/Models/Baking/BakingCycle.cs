@@ -2,7 +2,7 @@
 
 namespace Tzkt.Data.Models
 {
-    public class BakerCycle
+    public class BakingCycle
     {
         public int Id { get; set; }
         public int Cycle { get; set; }
@@ -38,8 +38,8 @@ namespace Tzkt.Data.Models
         #endregion
 
         #region relations
-        [ForeignKey("BakerId")]
-        public Contract Baker { get; set; }
+        [ForeignKey(nameof(BakerId))]
+        public Delegate Baker { get; set; }
         #endregion
     }
 }
