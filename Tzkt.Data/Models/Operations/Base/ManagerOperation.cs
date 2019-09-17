@@ -15,7 +15,7 @@ namespace Tzkt.Data.Models.Base
 
         #region relations
         [ForeignKey(nameof(SenderId))]
-        public BaseAddress Sender { get; set; }
+        public Account Sender { get; set; }
 
         [ForeignKey(nameof(ParentId))]
         public TransactionOperation Parent { get; set; }

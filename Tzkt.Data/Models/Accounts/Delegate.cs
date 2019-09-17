@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tzkt.Data.Models
 {
-    public class Delegate : Account
+    public class Delegate : User
     {
         public int ActivationLevel { get; set; }
         public int? DeactivationLevel { get; set; }
@@ -23,7 +23,7 @@ namespace Tzkt.Data.Models
         public Block DeactivationBlock { get; set; }
 
         public List<Block> BakedBlocks { get; set; }
-        public List<BaseAddress> DelegatedAddresses { get; set; }
+        public List<Account> DelegatedAccounts { get; set; }
         public List<Proposal> PushedProposals { get; set; }
 
         public List<BakingRight> BakingRights { get; set; }

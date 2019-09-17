@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tzkt.Data.Models
 {
-    public class Contract : BaseAddress
+    public class Contract : Account
     {
         public int? ManagerId { get; set; }
         public int? OriginatorId { get; set; }
@@ -13,10 +13,10 @@ namespace Tzkt.Data.Models
 
         #region relations
         [ForeignKey(nameof(ManagerId))]
-        public Account Manager { get; set; }
+        public User Manager { get; set; }
 
         [ForeignKey(nameof(OriginatorId))]
-        public BaseAddress Originator { get; set; }
+        public Account Originator { get; set; }
 
         #region operations
         public OriginationOperation Origination { get; set; }

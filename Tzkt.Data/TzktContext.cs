@@ -10,10 +10,10 @@ namespace Tzkt.Data
         public DbSet<AppState> AppState { get; set; }
 
         #region accounts
-        public DbSet<BaseAddress> Addresses { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Contract> Contracts { get; set; }
         public DbSet<Models.Delegate> Delegates { get; set; }
+        public DbSet<User> Users { get; set; }
         #endregion
 
         public DbSet<Block> Blocks { get; set; }
@@ -67,35 +67,35 @@ namespace Tzkt.Data
             #region accounts
             #region address
             #region indexes
-            modelBuilder.Entity<BaseAddress>()
+            modelBuilder.Entity<Account>()
                 .HasIndex(x => x.Id)
                 .IsUnique();
 
-            modelBuilder.Entity<BaseAddress>()
+            modelBuilder.Entity<Account>()
                 .HasIndex(x => x.Address)
                 .IsUnique();
 
-            modelBuilder.Entity<BaseAddress>()
+            modelBuilder.Entity<Account>()
                 .HasIndex(x => x.Staked);
             #endregion
             #region keys
-            modelBuilder.Entity<BaseAddress>()
+            modelBuilder.Entity<Account>()
                 .HasKey(x => x.Id);
 
-            modelBuilder.Entity<BaseAddress>()
+            modelBuilder.Entity<Account>()
                 .HasAlternateKey(x => x.Address);
             #endregion
             #region props
-            modelBuilder.Entity<BaseAddress>()
-                .HasDiscriminator<AddressType>(nameof(BaseAddress.Type))
-                .HasValue<Account>(AddressType.Account)
+            modelBuilder.Entity<Account>()
+                .HasDiscriminator<AddressType>(nameof(Account.Type))
+                .HasValue<User>(AddressType.Account)
                 .HasValue<Models.Delegate>(AddressType.Delegate)
                 .HasValue<Contract>(AddressType.Contract);
             #endregion
             #region relations
-            modelBuilder.Entity<BaseAddress>()
+            modelBuilder.Entity<Account>()
                 .HasOne(x => x.Delegate)
-                .WithMany(x => x.DelegatedAddresses)
+                .WithMany(x => x.DelegatedAccounts)
                 .HasForeignKey(x => x.DelegateId);
             #endregion
             #endregion
@@ -106,7 +106,7 @@ namespace Tzkt.Data
             #region keys
             #endregion
             #region props
-            modelBuilder.Entity<Account>()
+            modelBuilder.Entity<User>()
                 .Property(x => x.PublicKey)
                 .HasMaxLength(65);
             #endregion

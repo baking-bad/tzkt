@@ -10,7 +10,7 @@ namespace Tzkt.Data.Models
 
         #region relations
         [ForeignKey(nameof(AccountId))]
-        public Account Account { get; set; }
+        public User Account { get; set; }
         #endregion
     }
 }

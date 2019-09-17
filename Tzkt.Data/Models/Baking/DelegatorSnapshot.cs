@@ -13,7 +13,7 @@ namespace Tzkt.Data.Models
 
         #region relations
         [ForeignKey(nameof(DelegatorId))]
-        public BaseAddress Delegator { get; set; }
+        public Account Delegator { get; set; }
 
         [ForeignKey(nameof(BakerId))]
         public Delegate Baker { get; set; }

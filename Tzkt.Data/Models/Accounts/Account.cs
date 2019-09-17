@@ -1,19 +1,41 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Tzkt.Data.Models
 {
-    public class Account : BaseAddress
+    public abstract class Account
     {
-        public string PublicKey { get; set; }
-        public long Counter { get; set; }
+        public int Id { get; set; }
+        public AddressType Type { get; set; }
+        public string Address { get; set; }
+
+        public int? DelegateId { get; set; }
+        public bool Staked { get; set; }
+
+        public long Balance { get; set; }
+        public Operations Operations { get; set; }
 
         #region relations
-        public List<Contract> ManagedContracts { get; set; }
+        [ForeignKey(nameof(DelegateId))]
+        public Delegate Delegate { get; set; }
+
+        public List<Contract> OriginatedContracts { get; set; }
+        public List<DelegatorSnapshot> BalanceSnapshots { get; set; }
 
         #region operations
-        public ActivationOperation Activation { get; set; }
-        public List<OriginationOperation> ManagedOriginations { get; set; }
+        public List<DelegationOperation> SentDelegations { get; set; }
+        public List<OriginationOperation> SentOriginations { get; set; }
+        public List<TransactionOperation> SentTransactions { get; set; }
+        public List<TransactionOperation> ReceivedTransactions { get; set; }
+        public List<RevealOperation> Reveals { get; set; }
         #endregion
         #endregion
+    }
+
+    public enum AddressType
+    {
+        Account,
+        Delegate,
+        Contract
     }
 }

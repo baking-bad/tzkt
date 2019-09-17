@@ -23,7 +23,7 @@ namespace Tzkt.Data.Models
         public Delegate Delegate { get; set; }
 
         [ForeignKey(nameof(ManagerId))]
-        public Account Manager { get; set; }
+        public User Manager { get; set; }
         #endregion
     }
 }

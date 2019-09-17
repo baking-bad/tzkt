@@ -14,7 +14,7 @@ namespace Tzkt.Data.Models
 
         #region relations
         [ForeignKey(nameof(TargetId))]
-        public BaseAddress Target { get; set; }
+        public Account Target { get; set; }
 
         public List<DelegationOperation> InternalDelegations { get; set; }
         public List<OriginationOperation> InternalOriginations { get; set; }
