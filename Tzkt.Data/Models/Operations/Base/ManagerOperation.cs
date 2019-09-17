@@ -7,18 +7,21 @@ namespace Tzkt.Data.Models.Base
     {
         public int SenderId { get; set; }
         public int Counter { get; set; }
-        public long Fee { get; set; }
+
+        public long BakerFee { get; set; }
+        public long? StorageFee { get; set; }
+        public long? AllocationFee { get; set; }
+
+        public int GasUsed { get; set; }
+        public int GasLimit { get; set; }
+        public int StorageUsed { get; set; }
+        public int StorageLimit { get; set; }
 
         public OperationStatus Status { get; set; }
-        public int? ParentId { get; set; }
-        public int? Nonce { get; set; }
 
         #region relations
         [ForeignKey(nameof(SenderId))]
         public Account Sender { get; set; }
-
-        [ForeignKey(nameof(ParentId))]
-        public TransactionOperation Parent { get; set; }
         #endregion
     }
 

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -20,5 +21,56 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(OffenderId))]
         public Delegate Offender { get; set; }
         #endregion
+    }
+
+    public static class DoubleEndorsingOperationModel
+    {
+        public static void BuildDoubleEndorsingOperationModel(this ModelBuilder modelBuilder)
+        {
+            #region indexes
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasIndex(x => x.OpHash);
+
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasIndex(x => x.AccuserId);
+
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasIndex(x => x.OffenderId);
+            #endregion
+            
+            #region keys
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+            
+            #region props
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+            
+            #region relations
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasOne(x => x.Block)
+                .WithMany(x => x.DoubleEndorsings)
+                .HasForeignKey(x => x.Level)
+                .HasPrincipalKey(x => x.Level);
+
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasOne(x => x.Accuser)
+                .WithMany(x => x.SentDoubleEndorsingAccusations)
+                .HasForeignKey(x => x.AccuserId);
+
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasOne(x => x.Offender)
+                .WithMany(x => x.ReceivedDoubleEndorsingAccusations)
+                .HasForeignKey(x => x.OffenderId);
+            #endregion
+        }
     }
 }

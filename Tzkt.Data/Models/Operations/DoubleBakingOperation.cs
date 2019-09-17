@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -20,5 +21,56 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(OffenderId))]
         public Delegate Offender { get; set; }
         #endregion
+    }
+
+    public static class DoubleBakingOperationModel
+    {
+        public static void BuildDoubleBakingOperationModel(this ModelBuilder modelBuilder)
+        {
+            #region indexes
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasIndex(x => x.OpHash);
+
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasIndex(x => x.AccuserId);
+
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasIndex(x => x.OffenderId);
+            #endregion
+            
+            #region keys
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+            
+            #region props
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
+            #region relations
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasOne(x => x.Block)
+                .WithMany(x => x.DoubleBakings)
+                .HasForeignKey(x => x.Level)
+                .HasPrincipalKey(x => x.Level);
+
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasOne(x => x.Accuser)
+                .WithMany(x => x.SentDoubleBakingAccusations)
+                .HasForeignKey(x => x.AccuserId);
+
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasOne(x => x.Offender)
+                .WithMany(x => x.ReceivedDoubleBakingAccusations)
+                .HasForeignKey(x => x.OffenderId);
+            #endregion
+        }
     }
 }
