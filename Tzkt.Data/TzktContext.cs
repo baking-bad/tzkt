@@ -23,6 +23,16 @@ namespace Tzkt.Data
         public DbSet<Protocol> Protocols { get; set; }
         #endregion
 
+        #region voting
+        public DbSet<Proposal> Proposals { get; set; }
+        public DbSet<VotingEpoch> VotingEpoches { get; set; }
+        public DbSet<VotingPeriod> VotingPeriods { get; set; }
+        public DbSet<ProposalPeriod> ProposalPeriods { get; set; }
+        public DbSet<ExplorationPeriod> ExplorationPeriods { get; set; }
+        public DbSet<TestingPeriod> TestingPeriods { get; set; }
+        public DbSet<PromotionPeriod> PromotionPeriods { get; set; }
+        #endregion
+
         public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
 
         public DbSet<BakingRight> BakingRights { get; set; }
@@ -31,13 +41,6 @@ namespace Tzkt.Data
         public DbSet<BakingCycle> BakerCycles { get; set; }
         public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
 
-        public DbSet<VotingEpoch> VotingEpoches { get; set; }
-        public DbSet<VotingPeriod> VotingPeriods { get; set; }
-        public DbSet<ExplorationPeriod> ExplorationPeriods { get; set; }
-        public DbSet<PromotionPeriod> PromotionPeriods { get; set; }
-        public DbSet<ProposalPeriod> ProposalPeriods { get; set; }
-        public DbSet<TestingPeriod> TestingPeriods { get; set; }
-        public DbSet<Proposal> Proposals { get; set; }
 
         public DbSet<ActivationOperation> ActivationOps { get; set; }
         public DbSet<BallotOperation> BallotOps { get; set; }
@@ -471,7 +474,7 @@ namespace Tzkt.Data
 
             modelBuilder.Entity<ProposalOperation>()
                 .HasOne(x => x.Proposal)
-                .WithMany(x => x.Proposals)
+                .WithMany(x => x.Proposings)
                 .HasForeignKey(x => x.ProposalId);
 
             modelBuilder.Entity<ProposalOperation>()
@@ -578,91 +581,13 @@ namespace Tzkt.Data
             #endregion
 
             #region voting
-            #region epoches
-            #region indexes
-            modelBuilder.Entity<VotingEpoch>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-            #endregion
-            #region keys
-            modelBuilder.Entity<VotingEpoch>()
-                .HasKey(x => x.Id);
-            #endregion
-            #region props
-            #endregion
-            #region relations
-            #endregion
-            #endregion
-
-            #region periods
-            #region indexes
-            modelBuilder.Entity<VotingPeriod>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-            #endregion
-            #region keys
-            modelBuilder.Entity<VotingPeriod>()
-                .HasKey(x => x.Id);
-            #endregion
-            #region props
-            modelBuilder.Entity<VotingPeriod>()
-                .HasDiscriminator<VotingPeriods>(nameof(VotingPeriod.Kind))
-                .HasValue<ProposalPeriod>(Models.VotingPeriods.Proposal)
-                .HasValue<ExplorationPeriod>(Models.VotingPeriods.Exploration)
-                .HasValue<TestingPeriod>(Models.VotingPeriods.Testing)
-                .HasValue<PromotionPeriod>(Models.VotingPeriods.Promotion);
-            #endregion
-            #region relations
-            modelBuilder.Entity<VotingPeriod>()
-                .HasOne(x => x.Epoch)
-                .WithMany(x => x.Periods)
-                .HasForeignKey(x => x.EpochId);
-            #endregion
-            #endregion
-
-            #region proposals
-            #region indexes
-            modelBuilder.Entity<Proposal>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-            #endregion
-            #region keys
-            modelBuilder.Entity<Proposal>()
-                .HasKey(x => x.Id);
-            #endregion
-            #region props
-            modelBuilder.Entity<Proposal>()
-                .Property(nameof(Proposal.Hash))
-                .HasMaxLength(51)
-                .IsFixedLength(true);
-            #endregion
-            #region relations
-            modelBuilder.Entity<Proposal>()
-                .HasOne(x => x.Initiator)
-                .WithMany(x => x.PushedProposals)
-                .HasForeignKey(x => x.InitiatorId);
-
-            modelBuilder.Entity<Proposal>()
-                .HasOne(x => x.ProposalPeriod)
-                .WithMany(x => x.Candidates)
-                .HasForeignKey(x => x.ProposalPeriodId);
-
-            modelBuilder.Entity<Proposal>()
-                .HasOne(x => x.ExplorationPeriod)
-                .WithOne(x => x.Proposal)
-                .HasForeignKey<Proposal>(x => x.ExplorationPeriodId);
-
-            modelBuilder.Entity<Proposal>()
-                .HasOne(x => x.TestingPeriod)
-                .WithOne(x => x.Proposal)
-                .HasForeignKey<Proposal>(x => x.TestingPeriodId);
-
-            modelBuilder.Entity<Proposal>()
-                .HasOne(x => x.PromotionPeriod)
-                .WithOne(x => x.Proposal)
-                .HasForeignKey<Proposal>(x => x.PromotionPeriodId);
-            #endregion
-            #endregion
+            modelBuilder.BuildProposalModel();
+            modelBuilder.BuildVotingEpochModel();
+            modelBuilder.BuildVotingPeriodModel();
+            modelBuilder.BuildProposalPeriodModel();
+            modelBuilder.BuildExplorationPeriodModel();
+            modelBuilder.BuildTestingPeriodModel();
+            modelBuilder.BuildPromotionPeriodModel();
             #endregion
         }
     }

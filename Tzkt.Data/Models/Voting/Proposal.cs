@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -34,10 +32,57 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(PromotionPeriodId))]
         public PromotionPeriod PromotionPeriod { get; set; }
-
-        public List<BallotOperation> Ballots { get; set; }
-        public List<ProposalOperation> Proposals { get; set; }
         #endregion
+
+        #region indirect relations
+        public List<BallotOperation> Ballots { get; set; }
+        public List<ProposalOperation> Proposings { get; set; }
+        #endregion
+    }
+
+    public static class ProposalModel
+    {
+        public static void BuildProposalModel(this ModelBuilder modelBuilder)
+        {
+            #region keys
+            modelBuilder.Entity<Proposal>()
+                .HasKey(x => x.Id);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<Proposal>()
+                .Property(nameof(Proposal.Hash))
+                .IsFixedLength(true)
+                .HasMaxLength(51);
+            #endregion
+
+            #region relations
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.Initiator)
+                .WithMany(x => x.PushedProposals)
+                .HasForeignKey(x => x.InitiatorId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.ProposalPeriod)
+                .WithMany(x => x.Candidates)
+                .HasForeignKey(x => x.ProposalPeriodId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.ExplorationPeriod)
+                .WithOne(x => x.Proposal)
+                .HasForeignKey<Proposal>(x => x.ExplorationPeriodId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.TestingPeriod)
+                .WithOne(x => x.Proposal)
+                .HasForeignKey<Proposal>(x => x.TestingPeriodId);
+
+            modelBuilder.Entity<Proposal>()
+                .HasOne(x => x.PromotionPeriod)
+                .WithOne(x => x.Proposal)
+                .HasForeignKey<Proposal>(x => x.PromotionPeriodId);
+            #endregion
+        }
     }
 
     public enum ProposalStatus
