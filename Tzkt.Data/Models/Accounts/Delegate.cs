@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -21,9 +22,12 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(DeactivationLevel))]
         public Block DeactivationBlock { get; set; }
+        #endregion
+
+        #region indirect relations
+        public List<Account> DelegatedAccounts { get; set; }
 
         public List<Block> BakedBlocks { get; set; }
-        public List<Account> DelegatedAccounts { get; set; }
         public List<Proposal> PushedProposals { get; set; }
 
         public List<BakingRight> BakingRights { get; set; }
@@ -32,7 +36,6 @@ namespace Tzkt.Data.Models
         public List<BakingCycle> BakingCycles { get; set; }
         public List<DelegatorSnapshot> DelegatorsSnapshots { get; set; }
 
-        #region operations
         public List<EndorsementOperation> Endorsements { get; set; }
 
         public List<BallotOperation> Ballots { get; set; }
@@ -43,10 +46,29 @@ namespace Tzkt.Data.Models
         public List<DoubleEndorsingOperation> SentDoubleEndorsingAccusations { get; set; }
         public List<DoubleEndorsingOperation> ReceivedDoubleEndorsingAccusations { get; set; }
         public List<NonceRevelationOperation> Revelations { get; set; }
-        
+
         public List<DelegationOperation> ReceivedDelegations { get; set; }
         public List<OriginationOperation> DelegatedOriginations { get; set; }
         #endregion
-        #endregion
+    }
+
+    public static class DelegateModel
+    {
+        public static void BuildDelegateModel(this ModelBuilder modelBuilder)
+        {
+            #region relations
+            modelBuilder.Entity<Delegate>()
+                .HasOne(x => x.ActivationBlock)
+                .WithMany(x => x.ActivatedDelegates)
+                .HasForeignKey(x => x.ActivationLevel)
+                .HasPrincipalKey(x => x.Level);
+
+            modelBuilder.Entity<Delegate>()
+                .HasOne(x => x.DeactivationBlock)
+                .WithMany(x => x.DeactivatedDelegates)
+                .HasForeignKey(x => x.DeactivationLevel)
+                .HasPrincipalKey(x => x.Level);
+            #endregion
+        }
     }
 }

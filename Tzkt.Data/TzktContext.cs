@@ -65,96 +65,10 @@ namespace Tzkt.Data
             #endregion
 
             #region accounts
-            #region address
-            #region indexes
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Address)
-                .IsUnique();
-
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Staked);
-            #endregion
-            #region keys
-            modelBuilder.Entity<Account>()
-                .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Account>()
-                .HasAlternateKey(x => x.Address);
-            #endregion
-            #region props
-            modelBuilder.Entity<Account>()
-                .HasDiscriminator<AddressType>(nameof(Account.Type))
-                .HasValue<User>(AddressType.Account)
-                .HasValue<Models.Delegate>(AddressType.Delegate)
-                .HasValue<Contract>(AddressType.Contract);
-            #endregion
-            #region relations
-            modelBuilder.Entity<Account>()
-                .HasOne(x => x.Delegate)
-                .WithMany(x => x.DelegatedAccounts)
-                .HasForeignKey(x => x.DelegateId);
-            #endregion
-            #endregion
-
-            #region account
-            #region indexes
-            #endregion
-            #region keys
-            #endregion
-            #region props
-            modelBuilder.Entity<User>()
-                .Property(x => x.PublicKey)
-                .HasMaxLength(65);
-            #endregion
-            #region relations
-            #endregion
-            #endregion
-
-            #region delegate
-            #region indexes
-            #endregion
-            #region keys
-            #endregion
-            #region props
-            #endregion
-            #region relations
-            modelBuilder.Entity<Models.Delegate>()
-                .HasOne(x => x.ActivationBlock)
-                .WithMany(x => x.ActivatedDelegates)
-                .HasForeignKey(x => x.ActivationLevel)
-                .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<Models.Delegate>()
-                .HasOne(x => x.DeactivationBlock)
-                .WithMany(x => x.DeactivatedDelegates)
-                .HasForeignKey(x => x.DeactivationLevel)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
-            #endregion
-
-            #region contracts
-            #region indexes
-            #endregion
-            #region keys
-            #endregion
-            #region props
-            #endregion
-            #region relations
-            modelBuilder.Entity<Contract>()
-                .HasOne(x => x.Manager)
-                .WithMany(x => x.ManagedContracts)
-                .HasForeignKey(x => x.ManagerId);
-
-            modelBuilder.Entity<Contract>()
-                .HasOne(x => x.Originator)
-                .WithMany(x => x.OriginatedContracts)
-                .HasForeignKey(x => x.OriginatorId);
-            #endregion
-            #endregion
+            modelBuilder.BuildAccountModel();
+            modelBuilder.BuildContractModel();
+            modelBuilder.BuildDelegateModel();
+            modelBuilder.BuildUserModel();
             #endregion
 
             #region block

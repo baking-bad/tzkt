@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -17,10 +18,28 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(OriginatorId))]
         public Account Originator { get; set; }
+        #endregion
 
-        #region operations
+        #region indirect relations
         public OriginationOperation Origination { get; set; }
         #endregion
-        #endregion
+    }
+
+    public static class ContractModel
+    { 
+        public static void BuildContractModel(this ModelBuilder modelBuilder)
+        {
+            #region relations
+            modelBuilder.Entity<Contract>()
+                .HasOne(x => x.Manager)
+                .WithMany(x => x.ManagedContracts)
+                .HasForeignKey(x => x.ManagerId);
+
+            modelBuilder.Entity<Contract>()
+                .HasOne(x => x.Originator)
+                .WithMany(x => x.OriginatedContracts)
+                .HasForeignKey(x => x.OriginatorId);
+            #endregion
+        }
     }
 }
