@@ -7,13 +7,13 @@ namespace Tzkt.Data.Models
     public class NonceRevelationOperation : BaseOperation
     {
         public int BakerId { get; set; }
-        public int RevelationLevel { get; set; }
+        public int RevealedLevel { get; set; }
 
         #region relations
         [ForeignKey(nameof(BakerId))]
         public Delegate Baker { get; set; }
 
-        public Block RevelationBlock { get; set; }
+        public Block RevealedBlock { get; set; }
         #endregion
     }
 }

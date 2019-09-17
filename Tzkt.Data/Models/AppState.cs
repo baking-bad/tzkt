@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -14,5 +12,21 @@ namespace Tzkt.Data.Models
         public DateTime Timestamp { get; set; }
         public string Protocol { get; set; }
         public string Hash { get; set; }
+    }
+
+    public static class AppStateModel
+    {
+        public static void BuildAppStateModel(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<AppState>().HasData(
+                new AppState
+                {
+                    Id = -1,
+                    Level = -1,
+                    Timestamp = DateTime.MinValue,
+                    Protocol = "",
+                    Hash = "",
+                });
+        }
     }
 }

@@ -64,7 +64,8 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Account>()
                 .Property(x => x.Address)
                 .IsFixedLength(true)
-                .HasMaxLength(36);
+                .HasMaxLength(36)
+                .IsRequired();
             #endregion
 
             #region relations

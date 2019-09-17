@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -14,9 +15,8 @@ namespace Tzkt.Data.Models
 
         public int? BakerId { get; set; }
         public int Priority { get; set; }
-        public int Operations { get; set; }
-        public int OperationsMask { get; set; }
         public int Validations { get; set; }
+        public Operations Operations { get; set; }
         public int? RevelationId { get; set; }
 
         #region relations
@@ -28,11 +28,12 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(RevelationId))]
         public NonceRevelationOperation Revelation { get; set; }
+        #endregion
 
+        #region indirect relations
         public List<Delegate> ActivatedDelegates { get; set; }
         public List<Delegate> DeactivatedDelegates { get; set; }
 
-        #region operations
         public List<EndorsementOperation> Endorsements { get; set; }
 
         public List<BallotOperation> Ballots { get; set; }
@@ -48,6 +49,55 @@ namespace Tzkt.Data.Models
         public List<TransactionOperation> Transactions { get; set; }
         public List<RevealOperation> Reveals { get; set; }
         #endregion
-        #endregion
+    }
+
+    public static class BlockModel
+    {
+        public static void BuildBlockModel(this ModelBuilder modelBuilder)
+        {
+            #region indexes
+            modelBuilder.Entity<Block>()
+                .HasIndex(x => x.Level)
+                .IsUnique();
+
+            modelBuilder.Entity<Block>()
+                .HasIndex(x => x.Hash)
+                .IsUnique();
+            #endregion
+
+            #region keys
+            modelBuilder.Entity<Block>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<Block>()
+                .HasAlternateKey(x => x.Level);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<Block>()
+                .Property(x => x.Hash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
+            #region relations
+            modelBuilder.Entity<Block>()
+                .HasOne(x => x.Protocol)
+                .WithMany(x => x.Blocks)
+                .HasForeignKey(x => x.ProtocolId);
+
+            modelBuilder.Entity<Block>()
+                .HasOne(x => x.Baker)
+                .WithMany(x => x.BakedBlocks)
+                .HasForeignKey(x => x.BakerId);
+
+            modelBuilder.Entity<Block>()
+                .HasOne(x => x.Revelation)
+                .WithOne(x => x.RevealedBlock)
+                .HasForeignKey<Block>(x => x.RevelationId)
+                .HasPrincipalKey<NonceRevelationOperation>(x => x.RevealedLevel);
+            #endregion
+        }
     }
 }

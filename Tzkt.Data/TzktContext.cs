@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data.Models;
 
@@ -7,16 +6,23 @@ namespace Tzkt.Data
 {
     public class TzktContext : DbContext
     {
+        #region app state
         public DbSet<AppState> AppState { get; set; }
+        #endregion
 
         #region accounts
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Contract> Contracts { get; set; }
-        public DbSet<Models.Delegate> Delegates { get; set; }
+        public DbSet<Delegate> Delegates { get; set; }
         public DbSet<User> Users { get; set; }
         #endregion
 
+        #region blocks
         public DbSet<Block> Blocks { get; set; }
+        public DbSet<Cycle> Cycles { get; set; }
+        public DbSet<Protocol> Protocols { get; set; }
+        #endregion
+
         public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
 
         public DbSet<BakingRight> BakingRights { get; set; }
@@ -24,7 +30,6 @@ namespace Tzkt.Data
 
         public DbSet<BakingCycle> BakerCycles { get; set; }
         public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
-        public DbSet<Cycle> Cycles { get; set; }
 
         public DbSet<VotingEpoch> VotingEpoches { get; set; }
         public DbSet<VotingPeriod> VotingPeriods { get; set; }
@@ -33,8 +38,6 @@ namespace Tzkt.Data
         public DbSet<ProposalPeriod> ProposalPeriods { get; set; }
         public DbSet<TestingPeriod> TestingPeriods { get; set; }
         public DbSet<Proposal> Proposals { get; set; }
-
-        public DbSet<Protocol> Protocols { get; set; }
 
         public DbSet<ActivationOperation> ActivationOps { get; set; }
         public DbSet<BallotOperation> BallotOps { get; set; }
@@ -53,15 +56,7 @@ namespace Tzkt.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             #region app state
-            modelBuilder.Entity<AppState>().HasData(
-                new AppState
-                {
-                    Id = -1,
-                    Level = -1,
-                    Timestamp = DateTime.MinValue,
-                    Protocol = "",
-                    Hash = "",
-                });
+            modelBuilder.BuildAppStateModel();
             #endregion
 
             #region accounts
@@ -72,46 +67,9 @@ namespace Tzkt.Data
             #endregion
 
             #region block
-            #region indexes
-            modelBuilder.Entity<Block>()
-                .HasIndex(x => x.Level)
-                .IsUnique();
-
-            modelBuilder.Entity<Block>()
-                .HasIndex(x => x.Hash)
-                .IsUnique();
-            #endregion
-            #region keys
-            modelBuilder.Entity<Block>()
-                .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Block>()
-                .HasAlternateKey(x => x.Level);
-            #endregion
-            #region props
-            modelBuilder.Entity<Block>()
-                .Property(x => x.Hash)
-                .HasMaxLength(51)
-                .IsFixedLength()
-                .IsRequired();
-            #endregion
-            #region relations
-            modelBuilder.Entity<Block>()
-                .HasOne(x => x.Baker)
-                .WithMany(x => x.BakedBlocks)
-                .HasForeignKey(x => x.BakerId);
-
-            modelBuilder.Entity<Block>()
-                .HasOne(x => x.Protocol)
-                .WithMany(x => x.Blocks)
-                .HasForeignKey(x => x.ProtocolId);
-
-            modelBuilder.Entity<Block>()
-                .HasOne(x => x.Revelation)
-                .WithOne(x => x.RevelationBlock)
-                .HasForeignKey<Block>(x => x.RevelationId)
-                .HasPrincipalKey<NonceRevelationOperation>(x => x.RevelationLevel);
-            #endregion
+            modelBuilder.BuildBlockModel();
+            modelBuilder.BuildCycleModel();
+            modelBuilder.BuildProtocolModel();
             #endregion
 
             #region operations
@@ -383,13 +341,13 @@ namespace Tzkt.Data
                 .HasIndex(x => x.BakerId);
 
             modelBuilder.Entity<NonceRevelationOperation>()
-                .HasIndex(x => x.RevelationLevel);
+                .HasIndex(x => x.RevealedLevel);
             #endregion
             #region keys
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasKey(x => x.Id);
             modelBuilder.Entity<NonceRevelationOperation>()
-                .HasAlternateKey(x => x.RevelationLevel);
+                .HasAlternateKey(x => x.RevealedLevel);
             #endregion
             #region props
             modelBuilder.Entity<NonceRevelationOperation>()
