@@ -9,9 +9,6 @@ namespace Tzkt.Data.Models
         public int? ManagerId { get; set; }
         public int? OriginatorId { get; set; }
 
-        public bool Delegatable { get; set; }
-        public bool Spendable { get; set; }
-
         #region relations
         [ForeignKey(nameof(ManagerId))]
         public User Manager { get; set; }

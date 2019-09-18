@@ -12,10 +12,11 @@ namespace Tzkt.Data.Models.Base
         public long? StorageFee { get; set; }
         public long? AllocationFee { get; set; }
 
-        public int GasUsed { get; set; }
         public int GasLimit { get; set; }
-        public int StorageUsed { get; set; }
+        public int GasUsed { get; set; }
+
         public int StorageLimit { get; set; }
+        public int StorageUsed { get; set; }
 
         public OperationStatus Status { get; set; }
 

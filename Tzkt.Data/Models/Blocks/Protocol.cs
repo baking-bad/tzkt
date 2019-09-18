@@ -6,6 +6,7 @@ namespace Tzkt.Data.Models
     public class Protocol
     {
         public int Id { get; set; }
+        public int Code { get; set; }
         public string Hash { get; set; }
         public int Weight { get; set; }
 
@@ -21,6 +22,9 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<Protocol>()
                 .HasKey(x => x.Id);
+
+            modelBuilder.Entity<Protocol>()
+                .HasAlternateKey(x => x.Code);
             #endregion
 
             #region props

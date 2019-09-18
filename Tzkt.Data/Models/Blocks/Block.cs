@@ -11,7 +11,7 @@ namespace Tzkt.Data.Models
         public int Level { get; set; }
         public string Hash { get; set; }
         public DateTime Timestamp { get; set; }
-        public int ProtocolId { get; set; }
+        public int ProtoCode { get; set; }
 
         public int? BakerId { get; set; }
         public int Priority { get; set; }
@@ -20,7 +20,7 @@ namespace Tzkt.Data.Models
         public int? RevelationId { get; set; }
 
         #region relations
-        [ForeignKey(nameof(ProtocolId))]
+        [ForeignKey(nameof(ProtoCode))]
         public Protocol Protocol { get; set; }
 
         [ForeignKey(nameof(BakerId))]
@@ -85,7 +85,8 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Block>()
                 .HasOne(x => x.Protocol)
                 .WithMany(x => x.Blocks)
-                .HasForeignKey(x => x.ProtocolId);
+                .HasForeignKey(x => x.ProtoCode)
+                .HasPrincipalKey(x => x.Code);
 
             modelBuilder.Entity<Block>()
                 .HasOne(x => x.Baker)

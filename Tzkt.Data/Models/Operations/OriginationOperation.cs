@@ -10,8 +10,6 @@ namespace Tzkt.Data.Models
         public int? DelegateId { get; set; }
         public int ManagerId { get; set; }
 
-        public bool Delegatable { get; set; }
-        public bool Spendable { get; set; }
         public long Balance { get; set; }
 
         #region relations

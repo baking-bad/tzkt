@@ -11,6 +11,7 @@ namespace Tzkt.Data.Models
         public AccountType Type { get; set; }
 
         public long Balance { get; set; }
+        public long Counter { get; set; }
         public Operations Operations { get; set; }
 
         public int? DelegateId { get; set; }
