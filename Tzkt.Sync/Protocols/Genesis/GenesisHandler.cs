@@ -6,18 +6,22 @@ using Newtonsoft.Json.Linq;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
+using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols
 {
     public class GenesisHandler : IProtocolHandler
     {
         protected readonly TzktContext Db;
+        protected readonly ProtocolsCache ProtoCache;
+        protected readonly StateCache StateCache;
         protected readonly IMemoryCache Cache;
 
-        public GenesisHandler(TzktContext db, IMemoryCache cache)
+        public GenesisHandler(TzktContext db, ProtocolsCache protoCache, StateCache stateCache)
         {
             Db = db;
-            Cache = cache;
+            ProtoCache = protoCache;
+            StateCache = stateCache;
         }
 
         #region IProtocolHandler
@@ -34,11 +38,11 @@ namespace Tzkt.Sync.Protocols
                 throw new Exception("Genesis block already exists");
 
             Db.Blocks.Add(block);
-            ProtocolUp(block.Protocol);
-            await SetAppStateAsync(block);
+            ProtoCache.ProtocolUp(block.Protocol);
+            await StateCache.SetAppStateAsync(block);
 
             await Db.SaveChangesAsync();
-            return await GetAppStateAsync();
+            return await StateCache.GetAppStateAsync();
         }
 
         public virtual async Task<AppState> RevertLastBlock()
@@ -52,70 +56,11 @@ namespace Tzkt.Sync.Protocols
                 throw new Exception("Genesis block must be at level 0");
 
             Db.Blocks.Remove(lastBlock);
-            ProtocolDown(lastBlock.Protocol);
-            await SetAppStateAsync(null);
+            ProtoCache.ProtocolDown(lastBlock.Protocol);
+            await StateCache.SetAppStateAsync(null);
 
             await Db.SaveChangesAsync();
-            return await GetAppStateAsync();
-        }
-        #endregion
-
-        #region cached state
-        protected async Task<AppState> GetAppStateAsync()
-        {
-            if (!Cache.TryGetValue<AppState>(nameof(AppState), out var state))
-            {
-                state = await Db.AppState.FirstOrDefaultAsync()
-                    ?? throw new Exception("Failed to get app state");
-                Cache.Set(nameof(AppState), state);
-            }
-            return state;
-        }
-
-        protected async Task SetAppStateAsync(Block block)
-        {
-            var state = await GetAppStateAsync();
-
-            state.Level = block?.Level ?? -1;
-            state.Timestamp = block?.Timestamp ?? DateTime.MinValue;
-            state.Protocol = block?.Protocol.Hash ?? "";
-            state.Hash = block?.Hash ?? "";
-
-            Db.Update(state);
-        }
-        #endregion
-
-        #region cached protocols
-        protected async Task<Protocol> GetProtocolAsync(string hash)
-        {
-            if (!Cache.TryGetValue<Protocol>(hash, out var protocol))
-            {
-                protocol = await Db.Protocols.FirstOrDefaultAsync(x => x.Hash == hash)
-                    ?? new Protocol { Hash = hash };
-                Cache.Set(hash, protocol);
-            }
-            return protocol;
-        }
-
-        protected void ProtocolUp(Protocol protocol)
-        {
-            protocol.Weight++;
-
-            if (Db.Entry(protocol).State != EntityState.Added)
-                Db.Update(protocol);
-        }
-
-        protected void ProtocolDown(Protocol protocol)
-        {
-            if (--protocol.Weight == 0)
-            {
-                Db.Protocols.Remove(protocol);
-                Cache.Remove(protocol.Hash);
-            }
-            else
-            {
-                Db.Update(protocol);
-            }
+            return await StateCache.GetAppStateAsync();
         }
         #endregion
 
@@ -126,14 +71,14 @@ namespace Tzkt.Sync.Protocols
             {
                 Hash = block["hash"].String(),
                 Level = block["header"]["level"].Int32(),
-                Protocol = await GetProtocolAsync(block["protocol"].String()),
+                Protocol = await ProtoCache.GetProtocolAsync(block["protocol"].String()),
                 Timestamp = block["header"]["timestamp"].DateTime(),
             };
         }
 
         protected virtual async Task<Block> GetLastBlock()
         {
-            var state = await GetAppStateAsync();
+            var state = await StateCache.GetAppStateAsync();
 
             return await Db.Blocks
                 .Include(x => x.Protocol)

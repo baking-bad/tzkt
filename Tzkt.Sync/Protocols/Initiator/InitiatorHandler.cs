@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols
         protected readonly TezosNode Node;
         protected readonly Dictionary<string, Contract> Contracts;
 
-        public InitiatorHandler(TezosNode node, TzktContext db, IMemoryCache cache) : base(db, cache)
+        public InitiatorHandler(TezosNode node, TzktContext db, ProtocolsCache protoCache, StateCache stateCache) : base(db, protoCache, stateCache)
         {
             Node = node;
             Contracts = new Dictionary<string, Contract>(64);
@@ -48,11 +48,11 @@ namespace Tzkt.Sync.Protocols
             await InitCycle(5);
 
             Db.Blocks.Add(block);
-            ProtocolUp(block.Protocol);
-            await SetAppStateAsync(block);
+            ProtoCache.ProtocolUp(block.Protocol);
+            await StateCache.SetAppStateAsync(block);
 
             await Db.SaveChangesAsync();
-            return await GetAppStateAsync();
+            return await StateCache.GetAppStateAsync();
         }
 
         public override async Task<AppState> RevertLastBlock()
@@ -77,11 +77,11 @@ namespace Tzkt.Sync.Protocols
             await ClearVotingEpoch();
 
             Db.Blocks.Remove(lastBlock);
-            ProtocolDown(lastBlock.Protocol);
-            await SetAppStateAsync(await GetSecondLastBlock());
+            ProtoCache.ProtocolDown(lastBlock.Protocol);
+            await StateCache.SetAppStateAsync(await GetSecondLastBlock());
 
             await Db.SaveChangesAsync();
-            return await GetAppStateAsync();
+            return await StateCache.GetAppStateAsync();
         }
         #endregion
 
@@ -107,7 +107,7 @@ namespace Tzkt.Sync.Protocols
 
         protected virtual async Task<Block> GetSecondLastBlock()
         {
-            var state = await GetAppStateAsync();
+            var state = await StateCache.GetAppStateAsync();
 
             return await Db.Blocks
                 .Include(x => x.Protocol)
