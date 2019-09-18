@@ -96,8 +96,7 @@ namespace Tzkt.Sync.Protocols
                 contract = new Contract
                 {
                     //Kind = ContractKind.Account,
-                    Address = address,
-                    Spendable = true
+                    Address = address
                 };
 
                 Db.Contracts.Add(contract);
@@ -278,7 +277,7 @@ namespace Tzkt.Sync.Protocols
         }
         private async Task ClearCycle(int cycle)
         {
-            Db.BakingRights.RemoveRange(
+            /*Db.BakingRights.RemoveRange(
                 await Db.BakingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
 
             Db.EndorsingRights.RemoveRange(
@@ -291,7 +290,7 @@ namespace Tzkt.Sync.Protocols
                 await Db.DelegatorSnapshots.Where(x => x.Cycle == cycle).ToListAsync());
 
             Db.BakerCycles.RemoveRange(
-                await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());
+                await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());*/
         }
 
         private Task InitVotingEpoch()

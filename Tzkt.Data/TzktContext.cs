@@ -19,7 +19,6 @@ namespace Tzkt.Data
 
         #region blocks
         public DbSet<Block> Blocks { get; set; }
-        public DbSet<Cycle> Cycles { get; set; }
         public DbSet<Protocol> Protocols { get; set; }
         #endregion
 
@@ -47,13 +46,12 @@ namespace Tzkt.Data
         public DbSet<PromotionPeriod> PromotionPeriods { get; set; }
         #endregion
 
-        public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
-
-        public DbSet<BakingRight> BakingRights { get; set; }
-        public DbSet<EndorsingRight> EndorsingRights { get; set; }
-
-        public DbSet<BakingCycle> BakerCycles { get; set; }
-        public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
+        //public DbSet<Cycle> Cycles { get; set; }
+        //public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
+        //public DbSet<BakingRight> BakingRights { get; set; }
+        //public DbSet<EndorsingRight> EndorsingRights { get; set; }
+        //public DbSet<BakingCycle> BakerCycles { get; set; }
+        //public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
 
         public TzktContext(DbContextOptions options) : base(options) { }
 
@@ -72,7 +70,6 @@ namespace Tzkt.Data
 
             #region block
             modelBuilder.BuildBlockModel();
-            modelBuilder.BuildCycleModel();
             modelBuilder.BuildProtocolModel();
             #endregion
 

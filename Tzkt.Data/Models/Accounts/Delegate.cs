@@ -30,11 +30,10 @@ namespace Tzkt.Data.Models
         public List<Block> BakedBlocks { get; set; }
         public List<Proposal> PushedProposals { get; set; }
 
-        public List<BakingRight> BakingRights { get; set; }
-        public List<EndorsingRight> EndorsingRights { get; set; }
-
-        public List<BakingCycle> BakingCycles { get; set; }
-        public List<DelegatorSnapshot> DelegatorsSnapshots { get; set; }
+        //public List<BakingRight> BakingRights { get; set; }
+        //public List<EndorsingRight> EndorsingRights { get; set; }
+        //public List<BakingCycle> BakingCycles { get; set; }
+        //public List<DelegatorSnapshot> DelegatorsSnapshots { get; set; }
 
         public List<EndorsementOperation> Endorsements { get; set; }
 

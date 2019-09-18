@@ -26,13 +26,13 @@ namespace Tzkt.Data.Models
         #region indirect relations
         public List<Contract> OriginatedContracts { get; set; }
 
-        public List<DelegatorSnapshot> BalanceSnapshots { get; set; }
+        //public List<DelegatorSnapshot> BalanceSnapshots { get; set; }
 
         public List<DelegationOperation> SentDelegations { get; set; }
         public List<OriginationOperation> SentOriginations { get; set; }
         public List<TransactionOperation> SentTransactions { get; set; }
         public List<TransactionOperation> ReceivedTransactions { get; set; }
-        public List<RevealOperation> Reveals { get; set; }
+        public RevealOperation Reveal { get; set; }
         #endregion
     }
 
