@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json.Linq;
 
 using Tzkt.Data;
@@ -12,10 +10,11 @@ namespace Tzkt.Sync.Protocols
 {
     public class GenesisHandler : IProtocolHandler
     {
+        public virtual string Protocol => "Genesis";
+
         protected readonly TzktContext Db;
         protected readonly ProtocolsCache ProtoCache;
         protected readonly StateCache StateCache;
-        protected readonly IMemoryCache Cache;
 
         public GenesisHandler(TzktContext db, ProtocolsCache protoCache, StateCache stateCache)
         {
@@ -23,9 +22,6 @@ namespace Tzkt.Sync.Protocols
             ProtoCache = protoCache;
             StateCache = stateCache;
         }
-
-        #region IProtocolHandler
-        public virtual string Protocol => "Genesis";
 
         public virtual async Task<AppState> ApplyBlock(JObject json)
         {
@@ -47,22 +43,21 @@ namespace Tzkt.Sync.Protocols
 
         public virtual async Task<AppState> RevertLastBlock()
         {
-            var lastBlock = await GetLastBlock();
+            var currentBlock = await StateCache.GetCurrentBlock();
 
-            if (lastBlock == null)
+            if (currentBlock == null)
                 throw new Exception("Nothing to revert");
 
-            if (lastBlock.Level != 0)
+            if (currentBlock.Level != 0)
                 throw new Exception("Genesis block must be at level 0");
 
-            Db.Blocks.Remove(lastBlock);
-            ProtoCache.ProtocolDown(lastBlock.Protocol);
+            Db.Blocks.Remove(currentBlock);
+            ProtoCache.ProtocolDown(currentBlock.Protocol);
             await StateCache.SetAppStateAsync(null);
 
             await Db.SaveChangesAsync();
             return await StateCache.GetAppStateAsync();
         }
-        #endregion
 
         #region virtual
         protected virtual async Task<Block> ParseBlock(JObject block)
@@ -74,15 +69,6 @@ namespace Tzkt.Sync.Protocols
                 Protocol = await ProtoCache.GetProtocolAsync(block["protocol"].String()),
                 Timestamp = block["header"]["timestamp"].DateTime(),
             };
-        }
-
-        protected virtual async Task<Block> GetLastBlock()
-        {
-            var state = await StateCache.GetAppStateAsync();
-
-            return await Db.Blocks
-                .Include(x => x.Protocol)
-                .FirstOrDefaultAsync(x => x.Level == state.Level);
         }
         #endregion
     }

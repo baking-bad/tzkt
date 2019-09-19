@@ -11,6 +11,8 @@ namespace Tzkt.Sync.Services
     {
         #region cache
         static AppState AppState = null;
+        static Block CurrentBlock = null;
+        static Block PreviousBlock = null;
         #endregion
 
         readonly TzktContext Db;
@@ -32,14 +34,44 @@ namespace Tzkt.Sync.Services
         {
             var state = await GetAppStateAsync();
 
+            PreviousBlock = block?.Level == state.Level + 1 ? CurrentBlock : null;
+            CurrentBlock = block;
+
             state.Level = block?.Level ?? -1;
             state.Timestamp = block?.Timestamp ?? DateTime.MinValue;
             state.Protocol = block?.Protocol.Hash ?? "";
             state.Hash = block?.Hash ?? "";
-
+            
             Db.Update(state);
         }
 
-        public void Clear() => AppState = null;
+        public async Task<Block> GetCurrentBlock()
+        {
+            var state = await GetAppStateAsync();
+
+            CurrentBlock ??= await Db.Blocks
+                .Include(x => x.Protocol)
+                .FirstOrDefaultAsync(x => x.Level == state.Level);
+
+            return CurrentBlock;
+        }
+
+        public async Task<Block> GetPreviousBlock()
+        {
+            var state = await GetAppStateAsync();
+
+            PreviousBlock ??= await Db.Blocks
+                .Include(x => x.Protocol)
+                .FirstOrDefaultAsync(x => x.Level == state.Level - 1);
+
+            return PreviousBlock;
+        }
+
+        public void Clear()
+        {
+            AppState = null;
+            CurrentBlock = null;
+            PreviousBlock = null;
+        }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json.Linq;
 
 using Tzkt.Data;
@@ -14,17 +13,17 @@ namespace Tzkt.Sync.Protocols
 {
     public class InitiatorHandler : GenesisHandler
     {
-        protected readonly TezosNode Node;
-        protected readonly Dictionary<string, Contract> Contracts;
+        public override string Protocol => "Initiator";
 
-        public InitiatorHandler(TezosNode node, TzktContext db, ProtocolsCache protoCache, StateCache stateCache) : base(db, protoCache, stateCache)
+        protected readonly TezosNode Node;
+        protected readonly AccountsCache AccountsCache;
+
+        public InitiatorHandler(TezosNode node, TzktContext db, AccountsCache accountsCache, ProtocolsCache protoCache, StateCache stateCache)
+            : base(db, protoCache, stateCache)
         {
             Node = node;
-            Contracts = new Dictionary<string, Contract>(64);
+            AccountsCache = accountsCache;
         }
-
-        #region IProtocolHandler
-        public override string Protocol => "Initiator";
 
         public override async Task<AppState> ApplyBlock(JObject json)
         {
@@ -36,16 +35,8 @@ namespace Tzkt.Sync.Protocols
             if (block.Protocol.Weight > 0)
                 throw new Exception("Initialization block already exists");
 
-            await InitVotingEpoch();
-
-            await SeedContracts();
-
-            await InitCycle(0);
-            await InitCycle(1);
-            await InitCycle(2);
-            await InitCycle(3);
-            await InitCycle(4);
-            await InitCycle(5);
+            await StartVotingEpoch();
+            await SeedAccountsAsync();
 
             Db.Blocks.Add(block);
             ProtoCache.ProtocolUp(block.Protocol);
@@ -57,145 +48,108 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task<AppState> RevertLastBlock()
         {
-            var lastBlock = await GetLastBlock();
+            var currentBlock = await StateCache.GetCurrentBlock();
 
-            if (lastBlock == null)
+            if (currentBlock == null)
                 throw new Exception("Nothing to revert");
 
-            if (lastBlock.Level != 1)
+            if (currentBlock.Level != 1)
                 throw new Exception("Initialization block must be at level 1");
 
-            await ClearCycle(5);
-            await ClearCycle(4);
-            await ClearCycle(3);
-            await ClearCycle(2);
-            await ClearCycle(1);
-            await ClearCycle(0);
+            await ClearAccounts();
+            await RevertVotingEpoch();
 
-            await ClearContracts();
-
-            await ClearVotingEpoch();
-
-            Db.Blocks.Remove(lastBlock);
-            ProtoCache.ProtocolDown(lastBlock.Protocol);
-            await StateCache.SetAppStateAsync(await GetSecondLastBlock());
+            Db.Blocks.Remove(currentBlock);
+            ProtoCache.ProtocolDown(currentBlock.Protocol);
+            await StateCache.SetAppStateAsync(await StateCache.GetPreviousBlock());
 
             await Db.SaveChangesAsync();
             return await StateCache.GetAppStateAsync();
         }
-        #endregion
 
-        #region virtual
-        protected virtual Contract GetContract(string address)
+        private async Task SeedAccountsAsync()
         {
-            if (!Contracts.TryGetValue(address, out var contract))
-            {
-                if (!address.StartsWith("tz"))
-                    throw new Exception($"Contract {address} doesn't exist");
-
-                contract = new Contract
-                {
-                    //Kind = ContractKind.Account,
-                    Address = address
-                };
-
-                Db.Contracts.Add(contract);
-                Contracts[address] = contract;
-            }
-            return contract;
-        }
-
-        protected virtual async Task<Block> GetSecondLastBlock()
-        {
-            var state = await StateCache.GetAppStateAsync();
-
-            return await Db.Blocks
-                .Include(x => x.Protocol)
-                .FirstOrDefaultAsync(x => x.Level == state.Level - 1);
-        }
-        #endregion
-
-        private async Task SeedContracts()
-        {
-            /*Contracts.Clear();
             var contracts = await Node.GetContractsAsync(level: 1);
-            #region seed
-            foreach (var data in contracts)
+            var delegates = new List<Data.Models.Delegate>(8);
+            var accounts = new List<Account>(64);
+
+            #region seed delegates
+            foreach (var data in contracts.Where(x => x[1]["delegate"]?.String() == x[0].String()))
             {
-                var address = data[0].String();
-                var contract = data[1];
-
-                Contracts[address] = new Contract
+                var baker = new Data.Models.Delegate
                 {
-                    Kind = address.StartsWith("tz")
-                            ? contract["delegate"] == null
-                                ? ContractKind.Account
-                                : ContractKind.Baker
-                            : contract["code"] == null
-                                ? ContractKind.Originated
-                                : ContractKind.SmartContract,
-                    Address = address,
-
-                    Delegatable = contract["delegatable"]?.Bool() ?? false,
-                    Spendable = contract["spendable"]?.Bool() ?? false,
-                    Staked = contract["delegate"] != null,
-                    
-                    Balance = contract["balance"].Int64(),
-                    Counter = contract["counter"].Int64(),
-                    Frozen = 0
+                    Address = data[0].String(),
+                    ActivationLevel = 1,
+                    Balance = data[1]["balance"].Int64(),
+                    Counter = data[1]["counter"].Int64(),
+                    PublicKey = data[1]["manager"].String(),
+                    Staked = true,
+                    Type = AccountType.Delegate
                 };
+                AccountsCache.AddAccount(baker);
+                delegates.Add(baker);
+                accounts.Add(baker);
             }
             #endregion
-            #region relations
-            foreach (var data in contracts)
+
+            #region seed users
+            foreach (var data in contracts.Where(x => x[0].String()[0] == 't' && x[1]["delegate"] == null))
             {
-                var address = data[0].String();
-                var contract = data[1];
-                var delegatee = contract["delegate"]?.String();
-                var manager = contract["manager"]?.String();
-
-                if (address.StartsWith("KT"))
+                var user = new User
                 {
-                    if (delegatee != null)
-                        Contracts[address].Delegate = GetContract(delegatee);
-
-                    if (manager?.StartsWith("tz") != true)
-                        throw new Exception("This should never happen. KT should have a manager");
-
-                    Contracts[address].Manager = GetContract(manager);
-                }
-                else
-                {
-                    if (delegatee != null && delegatee != address)
-                        throw new Exception("This should never happen. Tz can't delegate to another tz");
-
-                    if (manager?.StartsWith("tz") == false)
-                        Contracts[address].PublicKey = manager;
-                }
+                    Address = data[0].String(),
+                    Balance = data[1]["balance"].Int64(),
+                    Counter = data[1]["counter"].Int64(),
+                    Type = AccountType.User, 
+                };
+                AccountsCache.AddAccount(user);
+                accounts.Add(user);
             }
             #endregion
+
+            #region seed contracts
+            foreach (var data in contracts.Where(x => x[0].String()[0] == 'K'))
+            {
+                var contract = new Contract
+                {
+                    Address = data[0].String(),
+                    Balance = data[1]["balance"].Int64(),
+                    Counter = data[1]["counter"].Int64(),
+                    DelegationLevel = 1,
+                    Manager = (User)await AccountsCache.GetAccountAsync(data[1]["manager"].String()),
+                    Staked = data[1]["delegate"] != null,
+                    Type = AccountType.Contract,
+                };
+
+                if (data[1]["delegate"] != null)
+                    contract.Delegate = (Data.Models.Delegate)await AccountsCache.GetAccountAsync(data[1]["delegate"].String());
+
+                AccountsCache.AddAccount(contract);
+                accounts.Add(contract);
+            }
+            #endregion
+
             #region stats
-            foreach (var contract in Contracts.Values.Where(x => x.Kind == ContractKind.Baker))
+            foreach (var baker in delegates)
             {
-                var delegators = Contracts.Values.Where(x => x.Delegate == contract);
+                var delegators = accounts.Where(x => x.Delegate == baker);
 
-                contract.DelegatorsCount = delegators.Count();
-                contract.StakingBalance = contract.Balance
-                    + (contract.DelegatorsCount > 0 ? delegators.Sum(x => x.Balance) : 0);
+                baker.Delegators = delegators.Count();
+                baker.StakingBalance = baker.Balance
+                    + (baker.Delegators > 0 ? delegators.Sum(x => x.Balance) : 0);
             }
             #endregion
-            Db.Contracts.AddRange(Contracts.Values);*/
         }
-        private async Task ClearContracts()
+        private async Task ClearAccounts()
         {
-            var contracts = await Db.Contracts.ToListAsync();
-            Db.Contracts.RemoveRange(contracts);
-            Contracts.Clear();
+            var accounts = await Db.Accounts.ToListAsync();
+            Db.Accounts.RemoveRange(accounts);
+            AccountsCache.Clear(true);
         }
 
-        private async Task InitCycle(int cycle)
+        /*private async Task InitCycle(int cycle)
         {
-            /*#region init rights
+            #region init rights
             var rights = await Task.WhenAll(
                 Node.GetBakingRightsAsync(1, cycle, 1),
                 Node.GetEndorsingRightsAsync(1, cycle));
@@ -273,11 +227,11 @@ namespace Tzkt.Sync.Protocols
                         .Sum(r => r.Slots)
                 });
             Db.BakerCycles.AddRange(bakers);
-            #endregion*/
-        }
-        private async Task ClearCycle(int cycle)
+            #endregion
+        }*/
+        /*private async Task ClearCycle(int cycle)
         {
-            /*Db.BakingRights.RemoveRange(
+            Db.BakingRights.RemoveRange(
                 await Db.BakingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
 
             Db.EndorsingRights.RemoveRange(
@@ -290,16 +244,12 @@ namespace Tzkt.Sync.Protocols
                 await Db.DelegatorSnapshots.Where(x => x.Cycle == cycle).ToListAsync());
 
             Db.BakerCycles.RemoveRange(
-                await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());*/
-        }
+                await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());
+        }*/
 
-        private Task InitVotingEpoch()
+        protected virtual Task StartVotingEpoch()
         {
-            var epoch = new VotingEpoch
-            {
-                Level = 1
-            };
-
+            var epoch = new VotingEpoch { Level = 1 };
             var period = new ProposalPeriod
             {
                 Epoch = epoch,
@@ -312,12 +262,13 @@ namespace Tzkt.Sync.Protocols
             Db.VotingPeriods.Add(period);
             return Task.CompletedTask;
         }
-        private async Task ClearVotingEpoch()
+        protected virtual async Task RevertVotingEpoch()
         {
-            var epoch = await Db.VotingEpoches.ToListAsync();
-            var periods = await Db.VotingPeriods.ToListAsync();
-            Db.VotingPeriods.RemoveRange(periods);
-            Db.VotingEpoches.RemoveRange(epoch);
+            var epoches = await Db.VotingEpoches
+                .Include(x => x.Periods)
+                .ToListAsync();
+
+            Db.VotingEpoches.RemoveRange(epoches);
         }
     }
 }
