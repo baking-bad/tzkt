@@ -31,14 +31,10 @@ namespace Tzkt.Sync.Services
         protected override async Task ExecuteAsync(CancellationToken cancelToken)
         {
             #region init state
-            using (var scope = Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-                AppState = await db.AppState.FirstOrDefaultAsync()
-                    ?? throw new Exception("Failed to init app state");
-            }
+            AppState = await ResetState();
+            Logger.LogDebug($"State initialized. Level: {AppState.Level}");
             #endregion
-            
+
             Logger.LogWarning("Observer is started");
 
             while (!cancelToken.IsCancellationRequested)
@@ -71,6 +67,7 @@ namespace Tzkt.Sync.Services
                 catch (Exception ex)
                 {
                     Logger.LogCritical($"Failed to apply updates. {ex.Message}");
+                    AppState = await ResetState();
                     await Task.Delay(5000);
                     continue;
                 }
@@ -78,6 +75,20 @@ namespace Tzkt.Sync.Services
             }
 
             Logger.LogWarning("Observer is stoped");
+        }
+
+        private async Task<AppState> ResetState()
+        {
+            using var scope = Services.CreateScope();
+            var accountsCache = scope.ServiceProvider.GetRequiredService<AccountsCache>();
+            var protocolsCache = scope.ServiceProvider.GetRequiredService<ProtocolsCache>();
+            var stateCache = scope.ServiceProvider.GetRequiredService<StateCache>();
+
+            accountsCache.Clear(true);
+            protocolsCache.Clear();
+            stateCache.Clear();
+
+            return await stateCache.GetAppStateAsync();
         }
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
