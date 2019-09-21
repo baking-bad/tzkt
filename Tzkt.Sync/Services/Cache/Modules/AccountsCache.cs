@@ -29,6 +29,36 @@ namespace Tzkt.Sync.Services
             Db.Accounts.Add(account);
         }
 
+        public async Task<bool> ExistsAsync(string address, AccountType type)
+        {
+            if (String.IsNullOrEmpty(address))
+                return false;
+
+            if (Accounts.ContainsKey(address))
+                return Accounts[address].Type == type;
+
+            var account = await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address);
+            return account?.Type == type;
+        }
+
+        public async Task<Account> GetAccountAsync(int id)
+        {
+            var account = Accounts.Values.FirstOrDefault(x => x.Id == id);
+            if (account == null)
+            {
+                if (Accounts.Count >= MaxSize)
+                    foreach (var key in Accounts.Where(x => x.Value.Type != AccountType.Delegate).Select(x => x.Key).Take(MaxSize / 8).ToList())
+                        Accounts.Remove(key);
+
+                account = await Db.Accounts.FirstOrDefaultAsync(x => x.Id == id)
+                    ?? throw new Exception($"Account #{id} doesn't exist");
+
+                Accounts[account.Address] = account;
+            }
+
+            return account;
+        }
+
         public async Task<Account> GetAccountAsync(string address)
         {
             if (!Accounts.ContainsKey(address))

@@ -67,6 +67,30 @@ namespace Tzkt.Sync.Protocols
             return await StateCache.GetAppStateAsync();
         }
 
+        protected virtual Task StartVotingEpoch()
+        {
+            var epoch = new VotingEpoch { Level = 1 };
+            var period = new ProposalPeriod
+            {
+                Epoch = epoch,
+                Kind = VotingPeriods.Proposal,
+                StartLevel = 1,
+                EndLevel = 32768
+            };
+
+            Db.VotingEpoches.Add(epoch);
+            Db.VotingPeriods.Add(period);
+            return Task.CompletedTask;
+        }
+        protected virtual async Task RevertVotingEpoch()
+        {
+            var epoches = await Db.VotingEpoches
+                .Include(x => x.Periods)
+                .ToListAsync();
+
+            Db.VotingEpoches.RemoveRange(epoches);
+        }
+
         private async Task SeedAccountsAsync()
         {
             var contracts = await Node.GetContractsAsync(level: 1);
@@ -246,29 +270,5 @@ namespace Tzkt.Sync.Protocols
             Db.BakerCycles.RemoveRange(
                 await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());
         }*/
-
-        protected virtual Task StartVotingEpoch()
-        {
-            var epoch = new VotingEpoch { Level = 1 };
-            var period = new ProposalPeriod
-            {
-                Epoch = epoch,
-                Kind = VotingPeriods.Proposal,
-                StartLevel = 1,
-                EndLevel = 32768
-            };
-
-            Db.VotingEpoches.Add(epoch);
-            Db.VotingPeriods.Add(period);
-            return Task.CompletedTask;
-        }
-        protected virtual async Task RevertVotingEpoch()
-        {
-            var epoches = await Db.VotingEpoches
-                .Include(x => x.Periods)
-                .ToListAsync();
-
-            Db.VotingEpoches.RemoveRange(epoches);
-        }
     }
 }

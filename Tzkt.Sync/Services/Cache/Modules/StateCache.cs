@@ -51,6 +51,7 @@ namespace Tzkt.Sync.Services
 
             CurrentBlock ??= await Db.Blocks
                 .Include(x => x.Protocol)
+                .Include(x => x.Baker)
                 .FirstOrDefaultAsync(x => x.Level == state.Level);
 
             return CurrentBlock;
@@ -62,6 +63,7 @@ namespace Tzkt.Sync.Services
 
             PreviousBlock ??= await Db.Blocks
                 .Include(x => x.Protocol)
+                .Include(x => x.Baker)
                 .FirstOrDefaultAsync(x => x.Level == state.Level - 1);
 
             return PreviousBlock;
