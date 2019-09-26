@@ -37,8 +37,21 @@ namespace Tzkt.Sync.Services
             if (Accounts.ContainsKey(address))
                 return Accounts[address].Type == type;
 
-            var account = await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address);
-            return account?.Type == type;
+            var account = type switch
+            {
+                AccountType.User => await Db.Users.FirstOrDefaultAsync(x => x.Address == address),
+                AccountType.Delegate => await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address),
+                AccountType.Contract => (Account)await Db.Contracts.FirstOrDefaultAsync(x => x.Address == address),
+                _ => null
+            };
+
+            if (account != null)
+            {
+                Accounts[address] = account;
+                return true;
+            }
+
+            return false;
         }
 
         public async Task<Account> GetAccountAsync(int id)

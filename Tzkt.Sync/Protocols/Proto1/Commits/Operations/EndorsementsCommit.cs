@@ -22,18 +22,22 @@ namespace Tzkt.Sync.Protocols.Proto1
         public List<EndorsementOperation> Content { get; protected set; }
 
         protected readonly TzktContext Db;
-        protected readonly CacheService Cache;
+        protected readonly AccountsCache Accounts;
+        protected readonly ProtocolsCache Protocols;
+        protected readonly StateCache State;
 
         public EndorsementsCommit(TzktContext db, CacheService cache)
         {
             Db = db;
-            Cache = cache;
+            Accounts = cache.Accounts;
+            Protocols = cache.Protocols;
+            State = cache.State;
         }
 
-        public virtual async Task<EndorsementsCommit> Init(JToken rawBlock, Block currentBlock)
+        public virtual async Task<EndorsementsCommit> Init(JToken rawBlock, Block parsedBlock)
         {
             await Validate(rawBlock);
-            Content = await Parse(rawBlock, currentBlock);
+            Content = await Parse(rawBlock, parsedBlock);
             return this;
         }
 
@@ -47,7 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             foreach (var endorsement in Content)
             {
-                #region update balances
+                #region balances
                 var baker = endorsement.Delegate;
                 baker.Balance += endorsement.Reward;
                 baker.FrozenRewards += endorsement.Reward;
@@ -68,15 +72,15 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             foreach (var endorsement in Content)
             {
-                #region update balances
-                var baker = (Data.Models.Delegate)await Cache.Accounts.GetAccountAsync(endorsement.DelegateId);
+                #region balances
+                var baker = (Data.Models.Delegate)await Accounts.GetAccountAsync(endorsement.DelegateId);
                 baker.Balance -= endorsement.Reward;
                 baker.FrozenRewards -= endorsement.Reward;
                 baker.FrozenDeposits -= EndorsementDeposit * endorsement.Slots;
                 #endregion
 
                 #region counters
-                if (await Db.EndorsementOps.CountAsync(x => x.DelegateId == baker.Id) == 1)
+                if (await Db.EndorsementOps.CountAsync(x => x.DelegateId == baker.Id && x.Id != endorsement.Id) == 0)
                     baker.Operations &= ~Operations.Endorsements;
                 #endregion
 
@@ -87,7 +91,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task Validate(JToken block)
         {
-            var lastBlock = await Cache.State.GetCurrentBlock();
+            var lastBlock = await State.GetCurrentBlock();
 
             foreach (var operation in block["operations"]?[0] ?? throw new Exception("Endorsements missed"))
             {
@@ -110,7 +114,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         throw new Exception("Invalid endorsement metadata");
 
                     var delegat = metadata["delegate"]?.String();
-                    if (!await Cache.Accounts.ExistsAsync(delegat, AccountType.Delegate))
+                    if (!await Accounts.ExistsAsync(delegat, AccountType.Delegate))
                         throw new Exception($"Invalid endorsement delegate '{delegat}'");
 
                     var slotsCount = metadata["slots"]?.Count() ?? -1;
@@ -146,30 +150,30 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        public async Task<List<EndorsementOperation>> Parse(JToken rawBlock, Block currentBlock)
+        public async Task<List<EndorsementOperation>> Parse(JToken rawBlock, Block parsedBlock)
         {
             var operations = (JArray)rawBlock["operations"][0];
             var result = new List<EndorsementOperation>(operations.Count);
 
             foreach (var operation in operations)
             {
-                var opHash = operation["hash"]?.String();
+                var opHash = operation["hash"].String();
 
                 foreach (var content in operation["contents"])
                 {
                     var metadata = content["metadata"];
 
-                    var delegat = metadata["delegate"].String();
                     var slots = metadata["slots"].Count();
+                    var delegateAddress = metadata["delegate"].String();
                     var balanceUpdates = BalanceUpdates.Parse((JArray)metadata["balance_updates"]);
 
                     result.Add(new EndorsementOperation
                     {
-                        Block = currentBlock,
-                        Timestamp = currentBlock.Timestamp,
+                        Block = parsedBlock,
+                        Timestamp = parsedBlock.Timestamp,
                         OpHash = opHash,
                         Slots = slots,
-                        Delegate = (Data.Models.Delegate)await Cache.Accounts.GetAccountAsync(delegat),
+                        Delegate = (Data.Models.Delegate)await Accounts.GetAccountAsync(delegateAddress),
                         Reward = balanceUpdates.FirstOrDefault(x => x is RewardsUpdate)?.Change ?? 0
                     });
                 }
@@ -179,6 +183,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         }
 
         long GetEndorsementReward(int slots, int priority)
-            => (long)Math.Round((double)slots * EndorsementReward / (priority + 1));
+            => (long)Math.Round(slots * EndorsementReward / (priority + 1.0));
     }
 }
