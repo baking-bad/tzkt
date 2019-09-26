@@ -133,7 +133,7 @@ namespace Tzkt.Sync.Services
                     Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                     var block = await Node.GetBlockAsync(AppState.Level + 1);
 
-                    if (AppState.Level >= 8)
+                    if (AppState.Level >= 5000)
                     //if (AppState.Level >= 0 && block.GetPredecessor() != AppState.Hash)
                     {
                         Logger.LogError($"Unknown predecessor. Rebase local branch...");
