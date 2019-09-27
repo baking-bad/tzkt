@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
+using Tzkt.Data.Models.Base;
 using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -20,6 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected readonly AccountsCache Accounts;
         protected readonly ProtocolsCache Protocols;
         protected readonly StateCache State;
+        protected readonly Dictionary<string, string> PubKeys;
 
         public RevealsCommit(TzktContext db, CacheService cache)
         {
@@ -27,6 +29,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             Accounts = cache.Accounts;
             Protocols = cache.Protocols;
             State = cache.State;
+
+            PubKeys = new Dictionary<string, string>(4);
         }
 
         public virtual async Task<RevealsCommit> Init(JToken rawBlock, Block parsedBlock)
@@ -46,23 +50,59 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             foreach (var reveal in Content)
             {
-                throw new NotImplementedException();
+                #region balances
+                var baker = reveal.Block.Baker;
+                var account = reveal.Sender;
+
+                baker.FrozenFees += reveal.BakerFee;
+                account.Balance -= reveal.BakerFee;
+                #endregion
+
+                #region counters
+                baker.Operations |= Operations.Reveals;
+                account.Counter = Math.Max(account.Counter, reveal.Counter);
+                #endregion
+
+                if (account is User user)
+                    user.PublicKey = PubKeys[account.Address];
+
+                Db.Delegates.Update(baker);
+                Db.Accounts.Update(account);
+                Db.RevealOps.Add(reveal);
             }
 
             return Task.CompletedTask;
         }
 
-        public Task Revert()
+        public async Task Revert()
         {
             foreach (var reveal in Content)
             {
-                throw new NotImplementedException();
-            }
+                #region balances
+                var baker = reveal.Block.Baker;
+                var account = reveal.Sender;
 
-            return Task.CompletedTask;
+                baker.FrozenFees -= reveal.BakerFee;
+                account.Balance += reveal.BakerFee;
+                #endregion
+
+                #region counters
+                if (!await Db.RevealOps.AnyAsync(x => x.Sender.Id == account.Id && x.Id != reveal.Id))
+                    baker.Operations &= ~Operations.Reveals;
+
+                account.Counter = Math.Min(account.Counter, reveal.Counter - 1);
+                #endregion
+
+                if (account is User user)
+                    user.PublicKey = null;
+
+                Db.Delegates.Update(baker);
+                Db.Accounts.Update(account);
+                Db.RevealOps.Remove(reveal);
+            }
         }
 
-        public Task Validate(JToken block)
+        public async Task Validate(JToken block)
         {
             foreach (var operation in block["operations"]?[3] ?? throw new Exception("Manager operations missed"))
             {
@@ -73,11 +113,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var content in operation["contents"]
                     .Where(x => (x["kind"]?.String() ?? throw new Exception("Invalid content kind")) == "reveal"))
                 {
-                    throw new NotImplementedException();
+                    if (!await Accounts.ExistsAsync(content["source"].String(), AccountType.User))
+                        throw new Exception("Unknown source");
+
+                    if (content["public_key"] == null)
+                        throw new Exception("Invalid reveal pubkey");
                 }
             }
-
-            return Task.CompletedTask;
         }
 
         public async Task<List<RevealOperation>> Parse(JToken rawBlock, Block parsedBlock)
@@ -92,11 +134,30 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     var metadata = content["metadata"];
 
-                    throw new NotImplementedException();
+                    PubKeys[content["source"].String()] = content["public_key"].String();
+
+                    result.Add(new RevealOperation
+                    {
+                        OpHash = opHash,
+                        Block = parsedBlock,
+                        Timestamp = parsedBlock.Timestamp,
+                        BakerFee = content["fee"].Int64(),
+                        Counter = content["counter"].Int32(),
+                        GasLimit = content["gas_limit"].Int32(),
+                        StorageLimit = content["storage_limit"].Int32(),
+                        Status = ParseStatus(metadata["operation_result"]["status"].String()),
+                        Sender = await Accounts.GetAccountAsync(content["source"].String())
+                    });
                 }
             }
 
             return result;
         }
+
+        OperationStatus ParseStatus(string status) => status switch
+        {
+            "applied" => OperationStatus.Applied,
+            _ => throw new NotImplementedException()
+        };
     }
 }
