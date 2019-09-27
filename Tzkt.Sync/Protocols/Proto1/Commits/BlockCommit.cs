@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 using Tzkt.Data;
@@ -33,12 +34,16 @@ namespace Tzkt.Sync.Protocols.Proto1
         public Block Content { get; protected set; }
 
         protected readonly TzktContext Db;
-        protected readonly CacheService Cache;
+        protected readonly AccountsCache Accounts;
+        protected readonly ProtocolsCache Protocols;
+        protected readonly StateCache State;
 
         public BlockCommit(TzktContext db, CacheService cache)
         {
             Db = db;
-            Cache = cache;
+            Accounts = cache.Accounts;
+            Protocols = cache.Protocols;
+            State = cache.State;
         }
 
         public virtual async Task<BlockCommit> Init(JToken block)
@@ -56,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task Apply()
         {
-            #region update balances
+            #region balances
             var baker = Content.Baker;
             baker.Balance += BlockReward;
             baker.FrozenRewards += BlockReward;
@@ -65,13 +70,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.Blocks.Add(Content);
-            Cache.Protocols.ProtocolUp(Content.Protocol);
-            await Cache.State.SetAppStateAsync(Content);
+            Protocols.ProtocolUp(Content.Protocol);
+            await State.SetAppStateAsync(Content);
         }
 
         public virtual async Task Revert()
         {
-            #region update balances
+            #region balances
             var baker = Content.Baker;
             baker.Balance -= BlockReward;
             baker.FrozenRewards -= BlockReward;
@@ -80,13 +85,33 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.Blocks.Remove(Content);
-            Cache.Protocols.ProtocolDown(Content.Protocol);
-            await Cache.State.SetAppStateAsync(await Cache.State.GetPreviousBlock());
+            Protocols.ProtocolDown(Content.Protocol);
+            var prevBlock = await State.GetPreviousBlock();
+            await State.SetAppStateAsync(prevBlock);
         }
 
-        public virtual Task Validate(JToken block)
+        public virtual async Task Validate(JToken block)
         {
-            return Task.CompletedTask;
+            var currentBlock = await State.GetCurrentBlock();
+
+            if (block["hash"] == null)
+                throw new Exception($"Invalid block hash");
+
+            if (block["header"]?["level"]?.Int32() != currentBlock.Level + 1)
+                throw new Exception($"Invalid block level");
+
+            if (block["protocol"] == null)
+                throw new Exception($"Invalid block protocol");
+
+            if (block["header"]?["timestamp"] == null)
+                throw new Exception($"Invalid block timestamp");
+
+            if (block["header"]?["priority"] == null)
+                throw new Exception($"Invalid block priority");
+
+            var baker = block["metadata"]?["baker"]?.ToString();
+            if (!await Accounts.ExistsAsync(baker, AccountType.Delegate))
+                throw new Exception($"Invalid block baker '{baker}'");
         }
 
         public virtual async Task<Block> Parse(JToken block)
@@ -95,10 +120,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Hash = block["hash"].String(),
                 Level = block["header"]["level"].Int32(),
-                Protocol = await Cache.Protocols.GetProtocolAsync(block["protocol"].String()),
+                Protocol = await Protocols.GetProtocolAsync(block["protocol"].String()),
                 Timestamp = block["header"]["timestamp"].DateTime(),
                 Priority = block["header"]["priority"].Int32(),
-                Baker = (Delegate)await Cache.Accounts.GetAccountAsync(block["metadata"]["baker"].String())
+                Baker = (Data.Models.Delegate)await Accounts.GetAccountAsync(block["metadata"]["baker"].String())
             };
         }
     }
