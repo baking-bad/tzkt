@@ -59,7 +59,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #endregion
 
                 #region counters
-                baker.Operations |= Operations.Reveals;
+                account.Operations |= Operations.Reveals;
                 account.Counter = Math.Max(account.Counter, reveal.Counter);
                 #endregion
 
@@ -79,8 +79,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             foreach (var reveal in Content)
             {
                 #region balances
-                var baker = reveal.Block.Baker;
-                var account = reveal.Sender;
+                var block = await State.GetCurrentBlock();
+                var baker = (Data.Models.Delegate)await Accounts.GetAccountAsync(block.BakerId.Value);
+                var account = await Accounts.GetAccountAsync(reveal.SenderId);
 
                 baker.FrozenFees -= reveal.BakerFee;
                 account.Balance += reveal.BakerFee;
@@ -88,7 +89,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 #region counters
                 if (!await Db.RevealOps.AnyAsync(x => x.Sender.Id == account.Id && x.Id != reveal.Id))
-                    baker.Operations &= ~Operations.Reveals;
+                    account.Operations &= ~Operations.Reveals;
 
                 account.Counter = Math.Min(account.Counter, reveal.Counter - 1);
                 #endregion

@@ -38,10 +38,10 @@ namespace Tzkt.Sync.Protocols
             commits.Add(await new VotingCommit(Db, Cache).Init(json));
 
             commits.Add(await new ActivationsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
+            commits.Add(await new RevealsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
             commits.Add(await new DelegationsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
             commits.Add(await new OriginationsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
             commits.Add(await new TransactionsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
-            commits.Add(await new RevealsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
 
             commits.Add(await new EndorsementsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
             commits.Add(await new DoubleBakingsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
@@ -93,10 +93,10 @@ namespace Tzkt.Sync.Protocols
             commits.Add(await new DoubleBakingsCommit(Db, Cache).Init(doubleBakings));
             commits.Add(await new EndorsementsCommit(Db, Cache).Init(endorsements));
 
-            commits.Add(await new RevealsCommit(Db, Cache).Init(reveals));
             commits.Add(await new TransactionsCommit(Db, Cache).Init(transactions));
             commits.Add(await new OriginationsCommit(Db, Cache).Init(originations));
             commits.Add(await new DelegationsCommit(Db, Cache).Init(delegations));
+            commits.Add(await new RevealsCommit(Db, Cache).Init(reveals));
             commits.Add(await new ActivationsCommit(Db, Cache).Init(activations));
 
             commits.Add(await new VotingCommit(Db, Cache).Init(voting));
