@@ -66,8 +66,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (account is User user)
                     user.PublicKey = PubKeys[account.Address];
 
-                Db.Delegates.Update(baker);
-                Db.Accounts.Update(account);
+                if (Db.Entry(baker).State != EntityState.Added)
+                    Db.Delegates.Update(baker);
+
+                if (Db.Entry(account).State != EntityState.Added)
+                    Db.Accounts.Update(account);
+
                 Db.RevealOps.Add(reveal);
             }
 
@@ -114,9 +118,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var content in operation["contents"]
                     .Where(x => (x["kind"]?.String() ?? throw new Exception("Invalid content kind")) == "reveal"))
                 {
-                    if (!await Accounts.ExistsAsync(content["source"].String(), AccountType.User))
-                        throw new Exception("Unknown source");
-
                     if (content["public_key"] == null)
                         throw new Exception("Invalid reveal pubkey");
                 }

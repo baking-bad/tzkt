@@ -71,7 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     throw new Exception($"Invalid anonimous operation hash '{opHash}'");
 
                 foreach (var content in operation["contents"]
-                    .Where(x => (x["kind"]?.String() ?? throw new Exception("Invalid content kind")) == "activation"))
+                    .Where(x => (x["kind"]?.String() ?? throw new Exception("Invalid content kind")) == "activate_account"))
                 {
                     throw new NotImplementedException();
                 }
@@ -88,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 var opHash = operation["hash"].String();
 
-                foreach (var content in operation["contents"].Where(x => x["kind"].String() == "activation"))
+                foreach (var content in operation["contents"].Where(x => x["kind"].String() == "activate_account"))
                 {
                     var metadata = content["metadata"];
 

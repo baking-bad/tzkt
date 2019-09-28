@@ -12,12 +12,12 @@ namespace Tzkt.Sync.Protocols
             var result = new List<IBalanceUpdate>(json.Count);
             foreach (var item in json)
             {
-                result.Add((item["category"]?.String(), item["kind"]?.String()) switch
+                result.Add((item["kind"]?.String(), item["category"]?.String()) switch
                 {
-                    ("contract", null) => item.Value<ContractUpdate>(),
-                    ("freezer", "deposits") => item.Value<DepositsUpdate>(),
-                    ("freezer", "rewards") => item.Value<RewardsUpdate>(),
-                    ("freezer", "fees") => item.Value<FeesUpdate>(),
+                    ("contract", null) => item.ToObject<ContractUpdate>(),
+                    ("freezer", "deposits") => item.ToObject<DepositsUpdate>(),
+                    ("freezer", "rewards") => item.ToObject<RewardsUpdate>(),
+                    ("freezer", "fees") => item.ToObject<FeesUpdate>(),
                     (var c, var k) => throw new Exception($"Invalid balance update item ('{c}', '{k}')")
                 });
             }

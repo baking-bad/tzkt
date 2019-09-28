@@ -22,4 +22,14 @@ namespace Tzkt.Data.Models
         Originations        = 0b_0010_0000_0000,
         Reveals             = 0b_0100_0000_0000
     }
+
+    [Flags]
+    public enum InternalOperations : byte
+    {
+        None            = 0b_0000,
+
+        Delegations     = 0b_0001,
+        Originations    = 0b_0010,
+        Transactions    = 0b_0100
+    }
 }

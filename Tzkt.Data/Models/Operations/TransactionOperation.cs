@@ -8,9 +8,10 @@ namespace Tzkt.Data.Models
     public class TransactionOperation : InternalOperation
     {
         public int TargetId { get; set; }
-        public bool TargetAllocated { get; set; }
 
         public long Amount { get; set; }
+
+        public InternalOperations? InternalOperations { get; set; }
 
         #region relations
         [ForeignKey(nameof(TargetId))]
