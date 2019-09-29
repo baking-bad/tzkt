@@ -55,6 +55,15 @@ namespace Tzkt.Sync.Protocols
             foreach (var commit in commits)
                 await commit.Apply();
 
+            #region update counter
+            var reveals = (commits[5] as RevealsCommit).Content.Count;
+            var delegations = (commits[6] as DelegationsCommit).Content.Count(x => x.Parent == null);
+            var originations = (commits[7] as OriginationsCommit).Content.Count(x => x.Parent == null);
+            var transactions = (commits[8] as TransactionsCommit).Content.Count(x => x.Parent == null);
+
+            await Cache.State.UpdateCounter(reveals + delegations + originations + transactions);
+            #endregion
+
             await Db.SaveChangesAsync();
             return await Cache.State.GetAppStateAsync();
         }
@@ -68,9 +77,9 @@ namespace Tzkt.Sync.Protocols
             var voting = await Db.VotingPeriods.Include(x => x.Epoch).Where(x => x.StartLevel == block.Level).FirstOrDefaultAsync();
 
             var activations = await Db.ActivationOps.Where(x => x.Level == block.Level).ToListAsync();
-            var delegations = await Db.DelegationOps.Where(x => x.Level == block.Level).ToListAsync();
-            var originations = await Db.OriginationOps.Where(x => x.Level == block.Level).ToListAsync();
-            var transactions = await Db.TransactionOps.Where(x => x.Level == block.Level).ToListAsync();
+            var delegations = await Db.DelegationOps.Include(x => x.Parent).Where(x => x.Level == block.Level).ToListAsync();
+            var originations = await Db.OriginationOps.Include(x => x.Parent).Where(x => x.Level == block.Level).ToListAsync();
+            var transactions = await Db.TransactionOps.Include(x => x.Parent).Where(x => x.Level == block.Level).ToListAsync();
             var reveals = await Db.RevealOps.Where(x => x.Level == block.Level).ToListAsync();
 
             var endorsements = await Db.EndorsementOps.Where(x => x.Level == block.Level).ToListAsync();
@@ -107,6 +116,14 @@ namespace Tzkt.Sync.Protocols
 
             foreach (var commit in commits)
                 await commit.Revert();
+
+            #region update counter
+            await Cache.State.UpdateCounter(
+                - reveals.Count
+                - delegations.Count(x => x.Parent == null)
+                - originations.Count(x => x.Parent == null)
+                - transactions.Count(x => x.Parent == null));
+            #endregion
 
             await Db.SaveChangesAsync();
             return await Cache.State.GetAppStateAsync();

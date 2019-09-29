@@ -45,6 +45,18 @@ namespace Tzkt.Sync.Services
             Db.Update(state);
         }
 
+        public async Task<int> GetCounter()
+        {
+            var state = await GetAppStateAsync();
+            return state.Counter;
+        }
+
+        public async Task UpdateCounter(int change)
+        {
+            var state = await GetAppStateAsync();
+            state.Counter += change;
+        }
+
         public async Task<Block> GetCurrentBlock()
         {
             var state = await GetAppStateAsync();

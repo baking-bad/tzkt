@@ -17,10 +17,12 @@ namespace Tzkt.Sync.Services
         #endregion
 
         readonly TzktContext Db;
+        readonly StateCache State;
 
-        public AccountsCache(TzktContext db)
+        public AccountsCache(TzktContext db, StateCache state)
         {
             Db = db;
+            State = state;
         }
 
         public void AddAccount(Account account)
@@ -87,7 +89,13 @@ namespace Tzkt.Sync.Services
                     if (address[0] != 't')
                         throw new Exception($"Contract {address} doesn't exist");
 
-                    account = new User { Address = address, Type = AccountType.User };
+                    account = new User
+                    {
+                        Address = address,
+                        Counter = await State.GetCounter(),
+                        Type = AccountType.User,
+                    };
+
                     Db.Accounts.Add(account);
                 }
 

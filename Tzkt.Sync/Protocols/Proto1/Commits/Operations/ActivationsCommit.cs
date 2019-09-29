@@ -62,15 +62,15 @@ namespace Tzkt.Sync.Protocols.Proto1
             return Task.CompletedTask;
         }
 
-        public Task Revert()
+        public async Task Revert()
         {
             foreach (var activation in Content)
             {
-                Db.ActivationOps.Remove(activation);
-                Db.Accounts.Remove(activation.Account);
-            }
+                var account = await Accounts.GetAccountAsync(activation.AccountId);
 
-            return Task.CompletedTask;
+                Db.ActivationOps.Remove(activation);
+                Db.Accounts.Remove(account);
+            }
         }
 
         public async Task Validate(JToken block)
