@@ -18,7 +18,8 @@ namespace Tzkt.Data.Migrations
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     Protocol = table.Column<string>(nullable: true),
-                    Hash = table.Column<string>(nullable: true)
+                    Hash = table.Column<string>(nullable: true),
+                    Counter = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -171,7 +172,7 @@ namespace Tzkt.Data.Migrations
                     Address = table.Column<string>(fixedLength: true, maxLength: 36, nullable: false),
                     Type = table.Column<byte>(nullable: false),
                     Balance = table.Column<long>(nullable: false),
-                    Counter = table.Column<long>(nullable: false),
+                    Counter = table.Column<int>(nullable: false),
                     Operations = table.Column<int>(nullable: false),
                     DelegateId = table.Column<int>(nullable: true),
                     DelegationLevel = table.Column<int>(nullable: true),
@@ -464,9 +465,10 @@ namespace Tzkt.Data.Migrations
                     StorageUsed = table.Column<int>(nullable: false),
                     Status = table.Column<byte>(nullable: false),
                     ParentId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
                     TargetId = table.Column<int>(nullable: false),
-                    TargetAllocated = table.Column<bool>(nullable: false),
-                    Amount = table.Column<long>(nullable: false)
+                    Amount = table.Column<long>(nullable: false),
+                    InternalOperations = table.Column<byte>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -559,6 +561,7 @@ namespace Tzkt.Data.Migrations
                     StorageUsed = table.Column<int>(nullable: false),
                     Status = table.Column<byte>(nullable: false),
                     ParentId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
                     DelegateId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
@@ -610,6 +613,7 @@ namespace Tzkt.Data.Migrations
                     StorageUsed = table.Column<int>(nullable: false),
                     Status = table.Column<byte>(nullable: false),
                     ParentId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
                     ContractId = table.Column<int>(nullable: false),
                     DelegateId = table.Column<int>(nullable: true),
                     ManagerId = table.Column<int>(nullable: false),
@@ -658,8 +662,8 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "Hash", "Level", "Protocol", "Synced", "Timestamp" },
-                values: new object[] { -1, "", -1, "", false, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
+                columns: new[] { "Id", "Counter", "Hash", "Level", "Protocol", "Synced", "Timestamp" },
+                values: new object[] { -1, 0, "", -1, "", false, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",

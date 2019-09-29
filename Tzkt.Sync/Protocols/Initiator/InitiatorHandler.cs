@@ -105,7 +105,7 @@ namespace Tzkt.Sync.Protocols
                     Address = data[0].String(),
                     ActivationLevel = 1,
                     Balance = data[1]["balance"].Int64(),
-                    Counter = data[1]["counter"].Int64(),
+                    Counter = data[1]["counter"].Int32(),
                     PublicKey = data[1]["manager"].String(),
                     Staked = true,
                     Type = AccountType.Delegate
@@ -123,7 +123,7 @@ namespace Tzkt.Sync.Protocols
                 {
                     Address = data[0].String(),
                     Balance = data[1]["balance"].Int64(),
-                    Counter = data[1]["counter"].Int64(),
+                    Counter = data[1]["counter"].Int32(),
                     Type = AccountType.User, 
                 };
                 AccountsCache.AddAccount(user);
@@ -138,7 +138,7 @@ namespace Tzkt.Sync.Protocols
                 {
                     Address = data[0].String(),
                     Balance = data[1]["balance"].Int64(),
-                    Counter = data[1]["counter"].Int64(),
+                    Counter = data[1]["counter"].Int32(),
                     DelegationLevel = 1,
                     Manager = (User)await AccountsCache.GetAccountAsync(data[1]["manager"].String()),
                     Staked = data[1]["delegate"] != null,

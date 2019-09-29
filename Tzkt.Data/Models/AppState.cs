@@ -12,6 +12,8 @@ namespace Tzkt.Data.Models
         public DateTime Timestamp { get; set; }
         public string Protocol { get; set; }
         public string Hash { get; set; }
+
+        public int Counter { get; set; }
     }
 
     public static class AppStateModel

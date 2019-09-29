@@ -36,8 +36,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("Balance")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("Counter")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("DelegateId")
                         .HasColumnType("integer");
@@ -113,6 +113,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Hash")
                         .HasColumnType("text");
 
@@ -136,6 +139,7 @@ namespace Tzkt.Data.Migrations
                         new
                         {
                             Id = -1,
+                            Counter = 0,
                             Hash = "",
                             Level = -1,
                             Protocol = "",

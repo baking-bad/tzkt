@@ -11,8 +11,8 @@ using Tzkt.Data.Models;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20190928143439_Fix1")]
-    partial class Fix1
+    [Migration("20190929204226_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -38,8 +38,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("Balance")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("Counter")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("DelegateId")
                         .HasColumnType("integer");
@@ -115,6 +115,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Hash")
                         .HasColumnType("text");
 
@@ -138,6 +141,7 @@ namespace Tzkt.Data.Migrations
                         new
                         {
                             Id = -1,
+                            Counter = 0,
                             Hash = "",
                             Level = -1,
                             Protocol = "",
