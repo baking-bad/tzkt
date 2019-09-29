@@ -111,15 +111,48 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             foreach (var operation in block["operations"]?[3] ?? throw new Exception("Manager operations missed"))
             {
-                var opHash = operation["hash"]?.String();
-                if (String.IsNullOrEmpty(opHash))
-                    throw new Exception($"Invalid manager operation hash '{opHash}'");
+                operation.RequireValue("hash");
+                operation.RequireArray("contents");
 
                 foreach (var content in operation["contents"]
                     .Where(x => (x["kind"]?.String() ?? throw new Exception("Invalid content kind")) == "reveal"))
                 {
-                    if (content["public_key"] == null)
-                        throw new Exception("Invalid reveal pubkey");
+                    content.RequireValue("source");
+                    content.RequireValue("fee");
+                    content.RequireValue("counter");
+                    content.RequireValue("gas_limit");
+                    content.RequireValue("storage_limit");
+                    content.RequireValue("public_key");
+                    content.RequireObject("metadata");
+
+                    var metadata = content["metadata"];
+                    metadata.RequireArray("balance_updates");
+                    metadata.RequireObject("operation_result");
+
+                    var fee = content["fee"].Int64();
+                    var src = content["source"].String();
+
+                    var opUpdates = BalanceUpdates.Parse((JArray)metadata["balance_updates"]);
+                    if ((fee == 0 && opUpdates.Count != 0) || (fee != 0 && opUpdates.Count != 2))
+                        throw new Exception($"Invalid transaction balance updates count");
+
+                    if (opUpdates.Count > 0)
+                    {
+                        if (!(opUpdates.FirstOrDefault(x => x is ContractUpdate) is ContractUpdate senderFeeUpdate) ||
+                            !(opUpdates.FirstOrDefault(x => x is FeesUpdate) is FeesUpdate bakerFeeUpdate) ||
+                            senderFeeUpdate.Change != -bakerFeeUpdate.Change ||
+                            bakerFeeUpdate.Change != fee ||
+                            senderFeeUpdate.Contract != src ||
+                            bakerFeeUpdate.Delegate != block["metadata"]["baker"].String() ||
+                            bakerFeeUpdate.Level != block["metadata"]["level"]["cycle"].Int32())
+                            throw new Exception($"Invalid transaction fee balance updates");
+                    }
+
+                    var result = metadata["operation_result"];
+                    result.RequireValue("status");
+
+                    if (result["status"].String() != "applied")
+                        throw new NotSupportedException();
                 }
             }
         }
@@ -135,6 +168,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var content in operation["contents"].Where(x => x["kind"].String() == "reveal"))
                 {
                     var metadata = content["metadata"];
+                    var opResult = metadata["operation_result"];
 
                     PubKeys[content["source"].String()] = content["public_key"].String();
 
@@ -146,9 +180,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                         BakerFee = content["fee"].Int64(),
                         Counter = content["counter"].Int32(),
                         GasLimit = content["gas_limit"].Int32(),
+                        GasUsed = opResult["consumed_gas"]?.Int32() ?? 0,
                         StorageLimit = content["storage_limit"].Int32(),
                         Status = ParseStatus(metadata["operation_result"]["status"].String()),
-                        Sender = await Accounts.GetAccountAsync(content["source"].String())
+                        Sender = await Accounts.GetAccountAsync(content["source"].String()),
                     });
                 }
             }

@@ -252,13 +252,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (opUpdates.Count > 0)
                     {
-                        var senderFeeUpdate = opUpdates.FirstOrDefault(x => x is ContractUpdate) as ContractUpdate;
-                        var bakerFeeUpdate = opUpdates.FirstOrDefault(x => x is FeesUpdate) as FeesUpdate;
-
-                        if (senderFeeUpdate == null ||
-                            bakerFeeUpdate == null ||
+                        if (!(opUpdates.FirstOrDefault(x => x is ContractUpdate) is ContractUpdate senderFeeUpdate) ||
+                            !(opUpdates.FirstOrDefault(x => x is FeesUpdate) is FeesUpdate bakerFeeUpdate) ||
                             senderFeeUpdate.Change != -bakerFeeUpdate.Change ||
-                            bakerFeeUpdate.Change != fee || 
+                            bakerFeeUpdate.Change != fee ||
                             senderFeeUpdate.Contract != src ||
                             bakerFeeUpdate.Delegate != block["metadata"]["baker"].String() ||
                             bakerFeeUpdate.Level != block["metadata"]["level"]["cycle"].Int32())
