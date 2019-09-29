@@ -105,7 +105,7 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> RebaseLocalBranchAsync(IServiceScope scope, CancellationToken cancelToken)
         {
-            while (AppState.Level >= 20)
+            while (AppState.Level >= 30)
             //while (AppState.Level >= 0 && !await Node.ValidateBranchAsync(AppState.Level, AppState.Hash))
             {
                 if (cancelToken.IsCancellationRequested)

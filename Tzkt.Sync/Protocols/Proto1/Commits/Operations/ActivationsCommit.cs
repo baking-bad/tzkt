@@ -46,7 +46,17 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             foreach (var activation in Content)
             {
-                throw new NotImplementedException();
+                #region balances
+                var account = activation.Account;
+
+                account.Balance = activation.Balance;
+                #endregion
+
+                #region counters
+                account.Operations |= Operations.Activations;
+                #endregion
+
+                Db.ActivationOps.Add(activation);
             }
 
             return Task.CompletedTask;
@@ -56,28 +66,41 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             foreach (var activation in Content)
             {
-                throw new NotImplementedException();
+                Db.ActivationOps.Remove(activation);
+                Db.Accounts.Remove(activation.Account);
             }
 
             return Task.CompletedTask;
         }
 
-        public Task Validate(JToken block)
+        public async Task Validate(JToken block)
         {
             foreach (var operation in block["operations"]?[2] ?? throw new Exception("Anonimous operations missed"))
             {
-                var opHash = operation["hash"]?.String();
-                if (String.IsNullOrEmpty(opHash))
-                    throw new Exception($"Invalid anonimous operation hash '{opHash}'");
+                operation.RequireValue("hash");
+                operation.RequireArray("contents");
 
                 foreach (var content in operation["contents"]
                     .Where(x => (x["kind"]?.String() ?? throw new Exception("Invalid content kind")) == "activate_account"))
                 {
-                    throw new NotImplementedException();
+                    content.RequireValue("pkh");
+                    content.RequireObject("metadata");
+
+                    var src = content["pkh"].String();
+                    if (await Accounts.ExistsAsync(src, AccountType.User))
+                        throw new Exception("Account is already activated");
+
+                    var metadata = content["metadata"];
+                    metadata.RequireArray("balance_updates");
+
+                    var opUpdates = BalanceUpdates.Parse((JArray)metadata["balance_updates"]);
+                    if (opUpdates.Count != 1)
+                        throw new Exception($"Invalid activation balance updates count");
+
+                    if (!(opUpdates[0] is ContractUpdate update) || update.Contract != content["pkh"].String())
+                        throw new Exception($"Invalid activation balance updates");
                 }
             }
-
-            return Task.CompletedTask;
         }
 
         public async Task<List<ActivationOperation>> Parse(JToken rawBlock, Block parsedBlock)
@@ -90,9 +113,16 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 foreach (var content in operation["contents"].Where(x => x["kind"].String() == "activate_account"))
                 {
-                    var metadata = content["metadata"];
+                    result.Add(new ActivationOperation
+                    {
+                        Block = parsedBlock,
+                        Timestamp = parsedBlock.Timestamp,
+                        
+                        OpHash = opHash,
 
-                    throw new NotImplementedException();
+                        Account = (User)await Accounts.GetAccountAsync(content["pkh"].String()),
+                        Balance = content["metadata"]["balance_updates"][0]["change"].Int64()
+                    });
                 }
             }
 
