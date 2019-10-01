@@ -30,19 +30,42 @@ namespace Tzkt.Sync.Services
             return AppState;
         }
 
-        public async Task SetAppStateAsync(Block block)
+        public async Task SetAppStateAsync(Block block, string nextProtocol)
         {
             var state = await GetAppStateAsync();
 
-            PreviousBlock = block?.Level == state.Level + 1 ? CurrentBlock : null;
+            if (block?.Level != state.Level + 1 || String.IsNullOrEmpty(nextProtocol))
+                throw new Exception("Failed to set app state");
+
+            PreviousBlock = CurrentBlock;
             CurrentBlock = block;
 
-            state.Level = block?.Level ?? -1;
-            state.Timestamp = block?.Timestamp ?? DateTime.MinValue;
-            state.Protocol = block?.Protocol.Hash ?? "";
-            state.Hash = block?.Hash ?? "";
+            state.Level = block.Level;
+            state.Timestamp = block.Timestamp;
+            state.Protocol = block.Protocol.Hash;
+            state.NextProtocol = nextProtocol;
+            state.Hash = block.Hash;
             
             Db.Update(state);
+        }
+
+        public async Task ReduceAppStateAsync()
+        {
+            var appState = await GetAppStateAsync();
+            var currBlock = await GetCurrentBlock()
+                ?? throw new Exception("Failed to reduce initial app state");
+            var prevBlock = await GetPreviousBlock();
+
+            PreviousBlock = null;
+            CurrentBlock = prevBlock;
+
+            appState.Level = prevBlock?.Level ?? -1;
+            appState.Timestamp = prevBlock?.Timestamp ?? DateTime.MinValue;
+            appState.Protocol = prevBlock?.Protocol.Hash ?? "";
+            appState.NextProtocol = prevBlock == null ? "" : currBlock.Protocol.Hash;
+            appState.Hash = prevBlock?.Hash ?? "";
+
+            Db.Update(appState);
         }
 
         public async Task<int> GetCounter()

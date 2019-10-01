@@ -32,6 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         #endregion
 
         public Block Content { get; protected set; }
+        public string NextProtocol { get; protected set; }
 
         protected readonly TzktContext Db;
         protected readonly AccountsCache Accounts;
@@ -50,6 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             await Validate(block);
             Content = await Parse(block);
+            NextProtocol = block["metadata"]["next_protocol"].String();
             return this;
         }
 
@@ -71,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.Blocks.Add(Content);
             Protocols.ProtocolUp(Content.Protocol);
-            await State.SetAppStateAsync(Content);
+            await State.SetAppStateAsync(Content, NextProtocol);
         }
 
         public virtual async Task Revert()
@@ -86,8 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.Blocks.Remove(Content);
             Protocols.ProtocolDown(Content.Protocol);
-            var prevBlock = await State.GetPreviousBlock();
-            await State.SetAppStateAsync(prevBlock);
+            await State.ReduceAppStateAsync();
         }
 
         public virtual async Task Validate(JToken block)

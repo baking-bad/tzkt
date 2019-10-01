@@ -11,6 +11,7 @@ namespace Tzkt.Data.Models
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
         public string Protocol { get; set; }
+        public string NextProtocol { get; set; }
         public string Hash { get; set; }
 
         public int Counter { get; set; }
@@ -27,7 +28,10 @@ namespace Tzkt.Data.Models
                     Level = -1,
                     Timestamp = DateTime.MinValue,
                     Protocol = "",
+                    NextProtocol = "",
                     Hash = "",
+
+                    Counter = 0
                 });
         }
     }

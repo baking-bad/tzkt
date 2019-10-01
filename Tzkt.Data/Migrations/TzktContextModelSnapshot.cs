@@ -122,6 +122,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
+                    b.Property<string>("NextProtocol")
+                        .HasColumnType("text");
+
                     b.Property<string>("Protocol")
                         .HasColumnType("text");
 
@@ -142,6 +145,7 @@ namespace Tzkt.Data.Migrations
                             Counter = 0,
                             Hash = "",
                             Level = -1,
+                            NextProtocol = "",
                             Protocol = "",
                             Synced = false,
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)

@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols
 
             Db.Blocks.Add(block);
             ProtoCache.ProtocolUp(block.Protocol);
-            await StateCache.SetAppStateAsync(block);
+            await StateCache.SetAppStateAsync(block, json["metadata"]["next_protocol"].String());
 
             await Db.SaveChangesAsync();
             return await StateCache.GetAppStateAsync();
@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Protocols
 
             Db.Blocks.Remove(currentBlock);
             ProtoCache.ProtocolDown(currentBlock.Protocol);
-            await StateCache.SetAppStateAsync(null);
+            await StateCache.ReduceAppStateAsync();
 
             await Db.SaveChangesAsync();
             return await StateCache.GetAppStateAsync();

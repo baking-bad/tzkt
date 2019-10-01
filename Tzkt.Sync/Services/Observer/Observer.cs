@@ -145,7 +145,7 @@ namespace Tzkt.Sync.Services
                     }
 
                     Logger.LogDebug($"Applying block...");
-                    var protoHandler = scope.ServiceProvider.GetProtocolHandler(block.GetProtocol());
+                    var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
                     AppState = await protoHandler.ApplyBlock(block);
 
                     Logger.LogDebug($"Applied");

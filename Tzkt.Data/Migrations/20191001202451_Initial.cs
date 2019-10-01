@@ -18,6 +18,7 @@ namespace Tzkt.Data.Migrations
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     Protocol = table.Column<string>(nullable: true),
+                    NextProtocol = table.Column<string>(nullable: true),
                     Hash = table.Column<string>(nullable: true),
                     Counter = table.Column<int>(nullable: false)
                 },
@@ -662,8 +663,8 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "Counter", "Hash", "Level", "Protocol", "Synced", "Timestamp" },
-                values: new object[] { -1, 0, "", -1, "", false, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
+                columns: new[] { "Id", "Counter", "Hash", "Level", "NextProtocol", "Protocol", "Synced", "Timestamp" },
+                values: new object[] { -1, 0, "", -1, "", "", false, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",

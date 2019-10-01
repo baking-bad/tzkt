@@ -20,6 +20,7 @@ namespace Tzkt.Sync
         {
             switch (protocol)
             {
+                case "":
                 case "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i":
                     return services.GetRequiredService<GenesisHandler>();
                 case "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P":

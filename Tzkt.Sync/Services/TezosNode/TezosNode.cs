@@ -26,8 +26,8 @@ namespace Tzkt.Sync.Services
         public void Dispose() => Rpc.Dispose();
 
         public async Task<JObject> GetBlockAsync(int level)
-            => (JObject)await Rpc.Blocks[level].GetAsync();
-            //=> (JObject)await Rpc.GetAsync($"chains/main/blocks/{level}");
+            //=> (JObject)await Rpc.Blocks[level].GetAsync();
+            => (JObject)await Rpc.GetAsync($"chains/main/blocks/{level}");
 
         public async Task<JArray> GetContractsAsync(int level)
             => (JArray)await Rpc.Blocks[level].Context.Raw.Contracts.GetAsync(depth: 1);
