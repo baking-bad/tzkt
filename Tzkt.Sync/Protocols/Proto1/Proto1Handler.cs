@@ -41,7 +41,10 @@ namespace Tzkt.Sync.Protocols
             commits.Add(await new RevealsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
             commits.Add(await new DelegationsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
             commits.Add(await new OriginationsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
-            commits.Add(await new TransactionsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
+            commits.Add(await new TransactionsCommit(Db, Cache).Init(json,
+                (commits[0] as ICommit<Block>).Content,
+                (commits[6] as ICommit<List<DelegationOperation>>).Content,
+                (commits[7] as ICommit<List<OriginationOperation>>).Content));
 
             commits.Add(await new EndorsementsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));
             commits.Add(await new DoubleBakingsCommit(Db, Cache).Init(json, (commits[0] as ICommit<Block>).Content));

@@ -35,10 +35,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             State = cache.State;
         }
 
-        public virtual async Task<TransactionsCommit> Init(JToken rawBlock, Block parsedBlock)
+        public virtual async Task<TransactionsCommit> Init(JToken rawBlock, Block parsedBlock,
+            List<DelegationOperation> parsedDelegations, List<OriginationOperation> parsedOriginations)
         {
             await Validate(rawBlock);
-            Content = await Parse(rawBlock, parsedBlock);
+            Content = await Parse(rawBlock, parsedBlock, parsedDelegations, parsedOriginations);
             return this;
         }
 
@@ -354,7 +355,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        public async Task<List<TransactionOperation>> Parse(JToken rawBlock, Block parsedBlock)
+        public async Task<List<TransactionOperation>> Parse(JToken rawBlock, Block parsedBlock,
+            List<DelegationOperation> parsedDelegations, List<OriginationOperation> parsedOriginations)
         {
             var result = new List<TransactionOperation>();
 
@@ -368,8 +370,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                     result.Add(transaction);
 
                     if (content["metadata"]["internal_operation_results"] != null)
+                    {
+                        foreach (var delegation in parsedDelegations.Where(x => x.OpHash == opHash && x.Counter == transaction.Counter))
+                            delegation.Parent = transaction;
+
+                        foreach (var origination in parsedOriginations.Where(x => x.OpHash == opHash && x.Counter == transaction.Counter))
+                            origination.Parent = transaction;
+
                         foreach (var internalContent in content["metadata"]["internal_operation_results"].Where(x => x["kind"].String() == "transaction"))
                             result.Add(await ParseInternalTransaction(transaction, internalContent));
+                    }
                 }
             }
 

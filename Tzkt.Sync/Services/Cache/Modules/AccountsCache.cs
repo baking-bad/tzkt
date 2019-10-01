@@ -31,20 +31,20 @@ namespace Tzkt.Sync.Services
             Db.Accounts.Add(account);
         }
 
-        public async Task<bool> ExistsAsync(string address, AccountType type)
+        public async Task<bool> ExistsAsync(string address, AccountType? type = null)
         {
             if (String.IsNullOrEmpty(address))
                 return false;
 
             if (Accounts.ContainsKey(address))
-                return Accounts[address].Type == type;
+                return Accounts[address].Type == type || type == null;
 
             var account = type switch
             {
                 AccountType.User => await Db.Users.FirstOrDefaultAsync(x => x.Address == address),
                 AccountType.Delegate => await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address),
-                AccountType.Contract => (Account)await Db.Contracts.FirstOrDefaultAsync(x => x.Address == address),
-                _ => null
+                AccountType.Contract => await Db.Contracts.FirstOrDefaultAsync(x => x.Address == address),
+                _ => await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
             };
 
             if (account != null)
