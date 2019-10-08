@@ -1,0 +1,48 @@
+﻿using System.Text.Json.Serialization;
+
+namespace Tzkt.Sync.Protocols.Proto1
+{
+    interface IBalanceUpdate
+    {
+        public long Change { get; }
+        bool IsValidFormat();
+    }
+
+    class ContractUpdate : IBalanceUpdate
+    {
+        [JsonPropertyName("contract")]
+        public string Contract { get; set; }
+
+        [JsonPropertyName("change")]
+        public long Change { get; set; }
+
+        #region validation
+        public bool IsValidFormat() =>
+            !string.IsNullOrEmpty(Contract) &&
+            Change != 0;
+        #endregion
+    }
+
+    class FreezerUpdate : IBalanceUpdate
+    {
+        [JsonPropertyName("delegate")]
+        public string Delegate { get; set; }
+
+        [JsonPropertyName("level")]
+        public int Level { get; set; }
+
+        [JsonPropertyName("change")]
+        public long Change { get; set; }
+
+        #region validation
+        public bool IsValidFormat() =>
+            !string.IsNullOrEmpty(Delegate) &&
+            Level >= 0 &&
+            Change != 0;
+        #endregion
+    }
+
+    class DepositsUpdate : FreezerUpdate { }
+    class RewardsUpdate : FreezerUpdate { }
+    class FeesUpdate : FreezerUpdate { }
+}

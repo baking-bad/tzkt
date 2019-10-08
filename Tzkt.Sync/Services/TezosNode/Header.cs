@@ -1,23 +1,23 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Services
 {
     public class Header
     {
-        [JsonProperty("chain_id")]
+        [JsonPropertyName("chain_id")]
         public string ChainId { get; set; }
 
-        [JsonProperty("protocol")]
+        [JsonPropertyName("protocol")]
         public string Protocol { get; set; }
 
-        [JsonProperty("hash")]
+        [JsonPropertyName("hash")]
         public string Hash { get; set; }
 
-        [JsonProperty("level")]
+        [JsonPropertyName("level")]
         public int Level { get; set; }
 
-        [JsonProperty("timestamp")]
+        [JsonPropertyName("timestamp")]
         public DateTime Timestamp { get; set; }
     }
 }
