@@ -245,9 +245,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.Counter = Math.Min(sender.Counter, transaction.Counter - 1);
             #endregion
 
+            if (target.Operations == Operations.None && target.Counter > 0)
+                Db.Accounts.Remove(target);
+            else
+                Db.Accounts.Update(target);
+
             Db.Delegates.Update(baker);
             Db.Accounts.Update(sender);
-            Db.Accounts.Update(target);
             Db.TransactionOps.Remove(transaction);
         }
 
@@ -274,8 +278,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 target.Operations &= ~Operations.Transactions;
             #endregion
 
+            if (target.Operations == Operations.None && target.Counter > 0)
+                Db.Accounts.Remove(target);
+            else
+                Db.Accounts.Update(target);
+
             Db.Accounts.Update(sender);
-            Db.Accounts.Update(target);
             Db.Accounts.Update(initiator);
             Db.TransactionOps.Remove(transaction);
         }

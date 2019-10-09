@@ -102,7 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (sender is User user)
                     user.PublicKey = null;
 
-                if (sender.Operations == Operations.None)
+                if (sender.Operations == Operations.None && sender.Counter > 0)
                     Db.Accounts.Remove(sender);
                 else
                     Db.Accounts.Update(sender);
