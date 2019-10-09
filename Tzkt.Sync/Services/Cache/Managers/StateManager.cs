@@ -7,7 +7,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
-    public class StateCache
+    public class StateManager
     {
         #region cache
         static AppState AppState = null;
@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Services
 
         readonly TzktContext Db;
 
-        public StateCache(TzktContext db)
+        public StateManager(TzktContext db)
         {
             Db = db;
         }

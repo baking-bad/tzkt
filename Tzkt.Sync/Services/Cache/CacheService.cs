@@ -4,11 +4,11 @@ namespace Tzkt.Sync.Services
 {
     public class CacheService
     {
-        public AccountsCache Accounts { get; }
-        public ProtocolsCache Protocols { get; }
-        public StateCache State { get; }
+        public AccountManager Accounts { get; }
+        public ProtocolManager Protocols { get; }
+        public StateManager State { get; }
 
-        public CacheService(AccountsCache accounts, ProtocolsCache protocols, StateCache state)
+        public CacheService(AccountManager accounts, ProtocolManager protocols, StateManager state)
         {
             Accounts = accounts;
             Protocols = protocols;
@@ -20,9 +20,9 @@ namespace Tzkt.Sync.Services
     {
         public static void AddCaches(this IServiceCollection services)
         {
-            services.AddScoped<AccountsCache>();
-            services.AddScoped<ProtocolsCache>();
-            services.AddScoped<StateCache>();
+            services.AddScoped<AccountManager>();
+            services.AddScoped<ProtocolManager>();
+            services.AddScoped<StateManager>();
             services.AddScoped<CacheService>();
         }
     }

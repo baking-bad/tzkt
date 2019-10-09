@@ -18,9 +18,9 @@ namespace Tzkt.Sync
 
         public readonly TzktContext Db;
         public readonly CacheService Cache;
-        public readonly AccountsCache Accounts;
-        public readonly ProtocolsCache Protocols;
-        public readonly StateCache State;
+        public readonly AccountManager Accounts;
+        public readonly ProtocolManager Protocols;
+        public readonly StateManager State;
         public readonly ILogger Logger;
 
         public ProtocolHandler(TzktContext db, CacheService cache, ILogger logger)

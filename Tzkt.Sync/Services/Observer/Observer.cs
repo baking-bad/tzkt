@@ -81,9 +81,9 @@ namespace Tzkt.Sync.Services
         private async Task<AppState> ResetState()
         {
             using var scope = Services.CreateScope();
-            var accountsCache = scope.ServiceProvider.GetRequiredService<AccountsCache>();
-            var protocolsCache = scope.ServiceProvider.GetRequiredService<ProtocolsCache>();
-            var stateCache = scope.ServiceProvider.GetRequiredService<StateCache>();
+            var accountsCache = scope.ServiceProvider.GetRequiredService<AccountManager>();
+            var protocolsCache = scope.ServiceProvider.GetRequiredService<ProtocolManager>();
+            var stateCache = scope.ServiceProvider.GetRequiredService<StateManager>();
 
             accountsCache.Clear(true);
             protocolsCache.Clear();

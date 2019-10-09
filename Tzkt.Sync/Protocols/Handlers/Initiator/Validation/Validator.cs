@@ -6,7 +6,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 {
     class Validator : IValidator
     {
-        readonly StateCache State;
+        readonly StateManager State;
 
         public Validator(ProtocolHandler protocol)
         {

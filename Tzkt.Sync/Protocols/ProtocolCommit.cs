@@ -13,9 +13,9 @@ namespace Tzkt.Sync.Protocols
         protected readonly List<ICommit> Commits;
 
         protected readonly TzktContext Db;
-        protected readonly AccountsCache Accounts;
-        protected readonly ProtocolsCache Protocols;
-        protected readonly StateCache State;
+        protected readonly AccountManager Accounts;
+        protected readonly ProtocolManager Protocols;
+        protected readonly StateManager State;
         protected readonly ILogger Logger;
 
         public ProtocolCommit(ProtocolHandler protocol, List<ICommit> commits)

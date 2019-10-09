@@ -9,7 +9,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
-    public class ProtocolsCache
+    public class ProtocolManager
     {
         #region cache
         const int MaxSize = 16;
@@ -18,7 +18,7 @@ namespace Tzkt.Sync.Services
 
         readonly TzktContext Db;
 
-        public ProtocolsCache(TzktContext db)
+        public ProtocolManager(TzktContext db)
         {
             Db = db;
         }

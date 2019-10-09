@@ -18,8 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual int EndorsementReward => 0;
         #endregion
 
-        readonly AccountsCache Accounts;
-        readonly StateCache State;
+        readonly AccountManager Accounts;
+        readonly StateManager State;
 
         public Validator(ProtocolHandler protocol)
         {

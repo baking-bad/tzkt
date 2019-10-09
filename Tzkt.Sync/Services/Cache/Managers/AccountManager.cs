@@ -9,7 +9,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
-    public class AccountsCache
+    public class AccountManager
     {
         #region cache
         const int MaxSize = 8192;
@@ -17,9 +17,9 @@ namespace Tzkt.Sync.Services
         #endregion
 
         readonly TzktContext Db;
-        readonly StateCache State;
+        readonly StateManager State;
 
-        public AccountsCache(TzktContext db, StateCache state)
+        public AccountManager(TzktContext db, StateManager state)
         {
             Db = db;
             State = state;
