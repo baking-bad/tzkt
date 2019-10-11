@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols
         public override ISerializer Serializer => throw new NotImplementedException();
         public override IValidator Validator => throw new NotImplementedException();
 
-        public Proto2Handler(TzktContext db, CacheService cache, ILogger<Proto2Handler> logger) : base(db, cache, logger)
+        public Proto2Handler(TezosNode node, TzktContext db, CacheService cache, ILogger<Proto2Handler> logger) : base(node, db, cache, logger)
         {
 
         }

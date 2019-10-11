@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Protocols
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
-        public GenesisHandler(TzktContext db, CacheService cache, ILogger<GenesisHandler> logger) : base(db, cache, logger)
+        public GenesisHandler(TezosNode node, TzktContext db, CacheService cache, ILogger<GenesisHandler> logger) : base(node, db, cache, logger)
         {
             Serializer = new Serializer();
             Validator = new Validator(this);

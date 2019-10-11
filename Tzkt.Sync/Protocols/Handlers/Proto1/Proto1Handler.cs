@@ -17,14 +17,12 @@ namespace Tzkt.Sync.Protocols
         public override string Protocol => "Proto 1";
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
-        public readonly TezosNode Node;
 
-        public Proto1Handler(TzktContext db, CacheService cache, ILogger<Proto1Handler> logger, TezosNode node)
-            : base(db, cache, logger)
+        public Proto1Handler(TezosNode node, TzktContext db, CacheService cache, ILogger<Proto1Handler> logger)
+            : base(node, db, cache, logger)
         {
             Serializer = new Serializer();
             Validator = new Validator(this);
-            Node = node;
         }
 
         public override async Task<List<ICommit>> GetCommits(IBlock block)

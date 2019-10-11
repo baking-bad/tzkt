@@ -15,14 +15,12 @@ namespace Tzkt.Sync.Protocols
         public override string Protocol => "Initiator";
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
-        public readonly TezosNode Node;
 
         public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, ILogger<InitiatorHandler> logger)
-            : base(db, cache, logger)
+            : base(node, db, cache, logger)
         {
             Serializer = new Serializer();
             Validator = new Validator(this);
-            Node = node;
         }
 
         public override async Task<List<ICommit>> GetCommits(IBlock block)

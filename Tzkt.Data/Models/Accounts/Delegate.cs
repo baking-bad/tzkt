@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
 {
     public class Delegate : User
     {
-        public int ActivationLevel { get; set; }
+        public int? ActivationLevel { get; set; }
         public int? DeactivationLevel { get; set; }
 
         public long FrozenDeposits { get; set; }
@@ -60,13 +60,15 @@ namespace Tzkt.Data.Models
                 .HasOne(x => x.ActivationBlock)
                 .WithMany(x => x.ActivatedDelegates)
                 .HasForeignKey(x => x.ActivationLevel)
-                .HasPrincipalKey(x => x.Level);
+                .HasPrincipalKey(x => x.Level)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Delegate>()
                 .HasOne(x => x.DeactivationBlock)
                 .WithMany(x => x.DeactivatedDelegates)
                 .HasForeignKey(x => x.DeactivationLevel)
-                .HasPrincipalKey(x => x.Level);
+                .HasPrincipalKey(x => x.Level)
+                .OnDelete(DeleteBehavior.SetNull);
             #endregion
         }
     }

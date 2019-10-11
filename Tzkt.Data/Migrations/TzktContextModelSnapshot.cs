@@ -996,7 +996,7 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.User");
 
-                    b.Property<int>("ActivationLevel")
+                    b.Property<int?>("ActivationLevel")
                         .HasColumnType("integer");
 
                     b.Property<int?>("DeactivationLevel")
@@ -1353,13 +1353,13 @@ namespace Tzkt.Data.Migrations
                         .WithMany("ActivatedDelegates")
                         .HasForeignKey("ActivationLevel")
                         .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Tzkt.Data.Models.Block", "DeactivationBlock")
                         .WithMany("DeactivatedDelegates")
                         .HasForeignKey("DeactivationLevel")
-                        .HasPrincipalKey("Level");
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 #pragma warning restore 612, 618
         }

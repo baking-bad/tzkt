@@ -12,14 +12,7 @@ namespace Tzkt.Sync.Protocols.Initiator
     {
         public List<Account> BootstrapedAccounts { get; private set; }
 
-        readonly TezosNode Node;
-        readonly Serializer Serializer;
-
-        public BootstrapCommit(InitiatorHandler protocol, List<ICommit> commits) : base(protocol, commits)
-        {
-            Node = protocol.Node;
-            Serializer = protocol.Serializer as Serializer;
-        }
+        public BootstrapCommit(InitiatorHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
         public override Task Init(IBlock block)
         {
@@ -28,8 +21,8 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public override async Task Apply()
         {
-            var stream = await Node.GetContractsAsync(level: 1);
-            var contracts = await Serializer.DeserializeContracts(stream);
+            var stream = await Proto.Node.GetContractsAsync(level: 1);
+            var contracts = await (Proto.Serializer as Serializer).DeserializeContracts(stream);
             var delegates = new List<Data.Models.Delegate>(8);
             var accounts = new List<Account>(64);
 

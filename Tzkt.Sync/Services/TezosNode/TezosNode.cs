@@ -36,6 +36,9 @@ namespace Tzkt.Sync.Services
         public Task<Stream> GetContractsAsync(int level)
             => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/raw/json/contracts/index?depth=1");
 
+        public Task<Stream> GetDelegateAsync(int level, string address)
+            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/delegates/{address}");
+
         public Task<Stream> GetBakingRightsAsync(int level, int cycle, int maxPriority)
             => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/baking_rights?cycle={cycle}&max_priority={maxPriority}");
 

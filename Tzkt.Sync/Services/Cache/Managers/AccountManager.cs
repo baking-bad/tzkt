@@ -41,10 +41,10 @@ namespace Tzkt.Sync.Services
 
             var account = type switch
             {
-                AccountType.User => await Db.Users.FirstOrDefaultAsync(x => x.Address == address),
-                AccountType.Delegate => await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address),
-                AccountType.Contract => await Db.Contracts.FirstOrDefaultAsync(x => x.Address == address),
-                _ => await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
+                AccountType.User => await Db.Users.Include(x => x.Delegate).FirstOrDefaultAsync(x => x.Address == address),
+                AccountType.Delegate => await Db.Delegates.Include(x => x.Delegate).FirstOrDefaultAsync(x => x.Address == address),
+                AccountType.Contract => await Db.Contracts.Include(x => x.Delegate).FirstOrDefaultAsync(x => x.Address == address),
+                _ => await Db.Accounts.Include(x => x.Delegate).FirstOrDefaultAsync(x => x.Address == address)
             };
 
             if (account != null)
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Services
                     foreach (var key in Accounts.Where(x => x.Value.Type != AccountType.Delegate).Select(x => x.Key).Take(MaxSize / 8).ToList())
                         Accounts.Remove(key);
 
-                account = await Db.Accounts.FirstOrDefaultAsync(x => x.Id == id)
+                account = await Db.Accounts.Include(x => x.Delegate).FirstOrDefaultAsync(x => x.Id == id)
                     ?? throw new Exception($"Account #{id} doesn't exist");
 
                 Accounts[account.Address] = account;
@@ -82,7 +82,7 @@ namespace Tzkt.Sync.Services
                     foreach (var key in Accounts.Where(x => x.Value.Type != AccountType.Delegate).Select(x => x.Key).Take(MaxSize / 8).ToList())
                         Accounts.Remove(key);
 
-                var account = await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address);
+                var account = await Db.Accounts.Include(x => x.Delegate).FirstOrDefaultAsync(x => x.Address == address);
 
                 if (account == null)
                 {
@@ -103,6 +103,16 @@ namespace Tzkt.Sync.Services
             }
 
             return Accounts[address];
+        }
+
+        public void ChangeAccountType(Account from, Account to, List<RevealOperation> reveals)
+        {
+            if (from.Address != to.Address)
+                throw new ArgumentException("Changed accounts should have equal addresses");
+
+            Db.Entry(from).State = EntityState.Detached;
+            Db.Entry(to).State = EntityState.Modified;
+            Accounts[from.Address] = to;
         }
 
         public void Clear(bool bakers = false)

@@ -11,7 +11,7 @@ using Tzkt.Data.Models;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20191001202451_Initial")]
+    [Migration("20191011130027_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -998,7 +998,7 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.User");
 
-                    b.Property<int>("ActivationLevel")
+                    b.Property<int?>("ActivationLevel")
                         .HasColumnType("integer");
 
                     b.Property<int?>("DeactivationLevel")
@@ -1355,13 +1355,13 @@ namespace Tzkt.Data.Migrations
                         .WithMany("ActivatedDelegates")
                         .HasForeignKey("ActivationLevel")
                         .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Tzkt.Data.Models.Block", "DeactivationBlock")
                         .WithMany("DeactivatedDelegates")
                         .HasForeignKey("DeactivationLevel")
-                        .HasPrincipalKey("Level");
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 #pragma warning restore 612, 618
         }

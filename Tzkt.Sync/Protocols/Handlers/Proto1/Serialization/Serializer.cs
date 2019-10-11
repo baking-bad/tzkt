@@ -37,5 +37,22 @@ namespace Tzkt.Sync.Protocols.Proto1
                 throw new SerializationException($"[{ex.Path}] {ex.Message}");
             }
         }
+
+        public async Task<RawDelegate> DeserializeDelegate(Stream stream)
+        {
+            try
+            {
+                var rawContracts = await JsonSerializer.DeserializeAsync<RawDelegate>(stream, Options);
+
+                if (!rawContracts.IsValidFormat())
+                    throw new SerializationException($"invalid format");
+
+                return rawContracts;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
     }
 }

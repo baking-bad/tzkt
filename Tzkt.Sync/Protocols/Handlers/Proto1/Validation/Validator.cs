@@ -108,10 +108,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 if (delegation.Source != delegation.Delegate && !await Accounts.ExistsAsync(delegation.Delegate, AccountType.Delegate))
                     throw new ValidationException("unknown delegate account");
-
-                var delegatAccount = await Accounts.GetAccountAsync(delegation.Delegate);
-                if (delegation.Source == delegation.Delegate && delegatAccount is User)
-                    throw new NotImplementedException();
             }
         }
 

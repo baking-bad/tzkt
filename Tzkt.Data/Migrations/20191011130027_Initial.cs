@@ -215,13 +215,13 @@ namespace Tzkt.Data.Migrations
                         column: x => x.ActivationLevel,
                         principalTable: "Blocks",
                         principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Accounts_Blocks_DeactivationLevel",
                         column: x => x.DeactivationLevel,
                         principalTable: "Blocks",
                         principalColumn: "Level",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(

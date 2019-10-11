@@ -16,6 +16,7 @@ namespace Tzkt.Sync
         public abstract ISerializer Serializer { get; }
         public abstract IValidator Validator { get; }
 
+        public readonly TezosNode Node;
         public readonly TzktContext Db;
         public readonly CacheService Cache;
         public readonly AccountManager Accounts;
@@ -23,8 +24,9 @@ namespace Tzkt.Sync
         public readonly StateManager State;
         public readonly ILogger Logger;
 
-        public ProtocolHandler(TzktContext db, CacheService cache, ILogger logger)
+        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, ILogger logger)
         {
+            Node = node;
             Db = db;
             Cache = cache;
             Accounts = cache.Accounts;
