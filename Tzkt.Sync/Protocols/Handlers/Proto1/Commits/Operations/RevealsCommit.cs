@@ -53,26 +53,44 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public override Task Apply()
         {
+            if (Reveals == null)
+                throw new Exception("Commit is not initialized");
+
             foreach (var reveal in Reveals)
             {
-                #region balances
-                reveal.Block.Baker.FrozenFees += reveal.BakerFee;
-                reveal.Sender.Balance -= reveal.BakerFee;
+                #region entities
+                var block = reveal.Block;
+                var blockBaker = block.Baker;
+
+                var sender = reveal.Sender;
+                var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
+                //Db.TryAttach(block);
+                Db.TryAttach(blockBaker);
+
+                Db.TryAttach(sender);
+                Db.TryAttach(senderDelegate);
                 #endregion
 
-                #region counters
-                reveal.Sender.Counter = Math.Max(reveal.Sender.Counter, reveal.Counter);
-                reveal.Sender.Operations |= Operations.Reveals;
-                reveal.Block.Operations |= Operations.Reveals;
+                #region apply operation
+                sender.Balance -= reveal.BakerFee;
+                if (senderDelegate != null) senderDelegate.StakingBalance -= reveal.BakerFee;
+                blockBaker.FrozenFees += reveal.BakerFee;
+
+                sender.Operations |= Operations.Reveals;
+                block.Operations |= Operations.Reveals;
+                
+                sender.Counter = Math.Max(sender.Counter, reveal.Counter);
                 #endregion
 
-                if (reveal.Sender is User user)
-                    user.PublicKey = PubKeys[reveal.Sender.Address];
+                #region apply result
+                if (reveal.Status == OperationStatus.Applied)
+                {
+                    if (sender is User user)
+                        user.PublicKey = PubKeys[sender.Address];
+                }
+                #endregion
 
-                if (Db.Entry(reveal.Sender).State != EntityState.Added)
-                    Db.Accounts.Update(reveal.Sender);
-
-                Db.Delegates.Update(reveal.Block.Baker);
                 Db.RevealOps.Add(reveal);
             }
 
@@ -81,33 +99,47 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public override async Task Revert()
         {
+            if (Reveals == null)
+                throw new Exception("Commit is not initialized");
+
             foreach (var reveal in Reveals)
             {
+                #region entities
                 var block = await State.GetCurrentBlock();
-                var baker = (Data.Models.Delegate)await Accounts.GetAccountAsync(block.BakerId.Value);
-                var sender = await Accounts.GetAccountAsync(reveal.SenderId);
+                var blockBaker = block.Baker;
 
-                #region balances
-                baker.FrozenFees -= reveal.BakerFee;
-                sender.Balance += reveal.BakerFee;
+                var sender = await Accounts.GetAccountAsync(reveal.SenderId);
+                var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
+                Db.TryAttach(block);
+                Db.TryAttach(blockBaker);
+
+                Db.TryAttach(sender);
+                Db.TryAttach(senderDelegate);
                 #endregion
 
-                #region counters
-                if (!await Db.RevealOps.AnyAsync(x => x.Sender.Id == sender.Id && x.Id != reveal.Id))
-                    sender.Operations &= ~Operations.Reveals;
+                #region revert result
+                if (reveal.Status == OperationStatus.Applied)
+                {
+                    if (sender is User user)
+                        user.PublicKey = null;
+                }
+                #endregion
+
+                #region revert operation
+                sender.Balance += reveal.BakerFee;
+                if (senderDelegate != null) senderDelegate.StakingBalance += reveal.BakerFee;
+                blockBaker.FrozenFees -= reveal.BakerFee;
+
+                if (!await Db.RevealOps.AnyAsync(x => x.SenderId == sender.Id && x.Counter < reveal.Counter))
+                    sender.Operations &= ~Operations.Delegations;
 
                 sender.Counter = Math.Min(sender.Counter, reveal.Counter - 1);
                 #endregion
 
-                if (sender is User user)
-                    user.PublicKey = null;
-
                 if (sender.Operations == Operations.None && sender.Counter > 0)
                     Db.Accounts.Remove(sender);
-                else
-                    Db.Accounts.Update(sender);
 
-                Db.Delegates.Update(baker);
                 Db.RevealOps.Remove(reveal);
             }
         }

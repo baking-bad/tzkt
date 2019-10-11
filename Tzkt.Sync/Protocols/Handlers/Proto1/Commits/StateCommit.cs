@@ -37,9 +37,9 @@ namespace Tzkt.Sync.Protocols.Proto1
         public override async Task Revert()
         {
             var reveals = FindCommit<RevealsCommit>().Reveals.Count;
-            var delegations = FindCommit<DelegationsCommit>().Delegations.Count(x => x.Parent == null);
-            var originations = FindCommit<OriginationsCommit>().Originations.Count(x => x.Parent == null);
-            var transactions = FindCommit<TransactionsCommit>().Transactions.Count(x => x.Parent == null);
+            var delegations = FindCommit<DelegationsCommit>().Delegations.Count(x => x.ParentId == null);
+            var originations = FindCommit<OriginationsCommit>().Originations.Count(x => x.ParentId == null);
+            var transactions = FindCommit<TransactionsCommit>().Transactions.Count(x => x.ParentId == null);
 
             await State.UpdateCounter(-reveals - delegations - originations - transactions);
             await State.ReduceAppStateAsync();

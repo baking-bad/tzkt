@@ -118,87 +118,138 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public Task ApplyTransaction(TransactionOperation transaction)
         {
-            #region balances
-            var baker = transaction.Block.Baker;
+            #region entities
+            var block = transaction.Block;
+            var blockBaker = block.Baker;
+
             var sender = transaction.Sender;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
             var target = transaction.Target;
+            var targetDelegate = target.Delegate ?? target as Data.Models.Delegate;
 
-            baker.FrozenFees += transaction.BakerFee;
-            sender.Balance -= transaction.BakerFee;
+            //Db.TryAttach(block);
+            Db.TryAttach(blockBaker);
 
-            sender.Balance -= transaction.Amount;
-            target.Balance += transaction.Amount;
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
 
-            sender.Balance -= transaction.StorageFee ?? 0;
-            sender.Balance -= transaction.AllocationFee ?? 0;
+            Db.TryAttach(target);
+            Db.TryAttach(targetDelegate);
             #endregion
 
-            #region counters
+            #region apply operation
+            sender.Balance -= transaction.BakerFee;
+            if (senderDelegate != null) senderDelegate.StakingBalance -= transaction.BakerFee;
+            blockBaker.FrozenFees += transaction.BakerFee;
+
             sender.Operations |= Operations.Transactions;
             target.Operations |= Operations.Transactions;
+            block.Operations |= Operations.Transactions;
 
             sender.Counter = Math.Max(sender.Counter, transaction.Counter);
-
-            transaction.Block.Operations |= Operations.Transactions;
             #endregion
 
-            if (Db.Entry(baker).State != EntityState.Added)
-                Db.Delegates.Update(baker);
+            #region apply result
+            if (transaction.Status == OperationStatus.Applied)
+            {
+                sender.Balance -= transaction.Amount;
+                sender.Balance -= transaction.StorageFee ?? 0;
+                sender.Balance -= transaction.AllocationFee ?? 0;
 
-            if (Db.Entry(sender).State != EntityState.Added)
-                Db.Accounts.Update(sender);
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance -= transaction.Amount;
+                    senderDelegate.StakingBalance -= transaction.StorageFee ?? 0;
+                    senderDelegate.StakingBalance -= transaction.AllocationFee ?? 0;
+                }
 
-            if (Db.Entry(target).State != EntityState.Added)
-                Db.Accounts.Update(target);
+                target.Balance += transaction.Amount;
+
+                if (targetDelegate != null)
+                {
+                    targetDelegate.StakingBalance += transaction.Amount;
+                }
+            }
+            #endregion
 
             Db.TransactionOps.Add(transaction);
-
             return Task.CompletedTask;
         }
 
         public Task ApplyInternalTransaction(TransactionOperation transaction)
         {
-            #region balances
+            #region entities
+            var block = transaction.Block;
+
+            var parentTx = transaction.Parent;
+            var parentSender = parentTx.Sender;
+            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
+
             var sender = transaction.Sender;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
             var target = transaction.Target;
-            var parent = transaction.Parent;
-            var initiator = parent.Sender;
+            var targetDelegate = target.Delegate ?? target as Data.Models.Delegate;
 
-            sender.Balance -= transaction.Amount;
-            target.Balance += transaction.Amount;
+            //Db.TryAttach(block);
 
-            initiator.Balance -= transaction.StorageFee ?? 0;
-            initiator.Balance -= transaction.AllocationFee ?? 0;
+            //Db.TryAttach(parentTx);
+            //Db.TryAttach(parentSender);
+            //Db.TryAttach(parentDelegate);
+
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
+
+            Db.TryAttach(target);
+            Db.TryAttach(targetDelegate);
             #endregion
 
-            #region counters
+            #region apply operation
+            parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Transactions;
             sender.Operations |= Operations.Transactions;
             target.Operations |= Operations.Transactions;
-            parent.InternalOperations = (parent.InternalOperations ?? InternalOperations.None) | InternalOperations.Transactions;
-
-            transaction.Block.Operations |= Operations.Transactions;
+            block.Operations |= Operations.Transactions;
             #endregion
 
-            parent.GasUsed += transaction.GasUsed;
-            parent.StorageUsed += transaction.StorageUsed;
+            #region apply result
+            if (transaction.Status == OperationStatus.Applied)
+            {
+                sender.Balance -= transaction.Amount;
 
-            if (transaction.AllocationFee != null)
-                parent.AllocationFee = (parent.AllocationFee ?? 0) + transaction.AllocationFee;
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance -= transaction.Amount;
+                }
 
-            if (transaction.StorageFee != null)
-                parent.StorageFee = (parent.StorageFee ?? 0) + transaction.StorageFee;
+                parentSender.Balance -= transaction.StorageFee ?? 0;
+                parentSender.Balance -= transaction.AllocationFee ?? 0;
 
-            if (Db.Entry(sender).State != EntityState.Added)
-                Db.Accounts.Update(sender);
+                if (parentDelegate != null)
+                {
+                    parentDelegate.StakingBalance -= transaction.StorageFee ?? 0;
+                    parentDelegate.StakingBalance -= transaction.AllocationFee ?? 0;
+                }
 
-            if (Db.Entry(target).State != EntityState.Added)
-                Db.Accounts.Update(target);
+                target.Balance += transaction.Amount;
 
-            if (Db.Entry(initiator).State != EntityState.Added)
-                Db.Accounts.Update(initiator);
+                if (targetDelegate != null)
+                {
+                    targetDelegate.StakingBalance += transaction.Amount;
+                }
+
+                parentTx.GasUsed += transaction.GasUsed;
+                parentTx.StorageUsed += transaction.StorageUsed;
+
+                if (transaction.AllocationFee != null)
+                    parentTx.AllocationFee = (parentTx.AllocationFee ?? 0) + transaction.AllocationFee;
+
+                if (transaction.StorageFee != null)
+                    parentTx.StorageFee = (parentTx.StorageFee ?? 0) + transaction.StorageFee;
+            }
+            #endregion
 
             Db.TransactionOps.Add(transaction);
-
             return Task.CompletedTask;
         }
 
@@ -218,28 +269,58 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task RevertTransaction(TransactionOperation transaction)
         {
-            #region balances
+            #region entities
             var block = await State.GetCurrentBlock();
+            var blockBaker = block.Baker;
 
-            var baker = (Data.Models.Delegate)await Accounts.GetAccountAsync(block.BakerId.Value);
             var sender = await Accounts.GetAccountAsync(transaction.SenderId);
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
             var target = await Accounts.GetAccountAsync(transaction.TargetId);
+            var targetDelegate = target.Delegate ?? target as Data.Models.Delegate;
 
-            baker.FrozenFees -= transaction.BakerFee;
-            sender.Balance += transaction.BakerFee;
+            Db.TryAttach(block);
+            Db.TryAttach(blockBaker);
 
-            sender.Balance += transaction.Amount;
-            target.Balance -= transaction.Amount;
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
 
-            sender.Balance += transaction.StorageFee ?? 0;
-            sender.Balance += transaction.AllocationFee ?? 0;
+            Db.TryAttach(target);
+            Db.TryAttach(targetDelegate);
             #endregion
 
-            #region counters
-            if (!await Db.TransactionOps.AnyAsync(x => (x.Sender.Id == sender.Id || x.TargetId == sender.Id) && x.Id != transaction.Id))
+            #region revert result
+            if (transaction.Status == OperationStatus.Applied)
+            {
+                sender.Balance += transaction.Amount;
+                sender.Balance += transaction.StorageFee ?? 0;
+                sender.Balance += transaction.AllocationFee ?? 0;
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance += transaction.Amount;
+                    senderDelegate.StakingBalance += transaction.StorageFee ?? 0;
+                    senderDelegate.StakingBalance += transaction.AllocationFee ?? 0;
+                }
+
+                target.Balance -= transaction.Amount;
+
+                if (targetDelegate != null)
+                {
+                    targetDelegate.StakingBalance -= transaction.Amount;
+                }
+            }
+            #endregion
+
+            #region revert operation
+            sender.Balance += transaction.BakerFee;
+            if (senderDelegate != null) senderDelegate.StakingBalance += transaction.BakerFee;
+            blockBaker.FrozenFees -= transaction.BakerFee;
+
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Counter < transaction.Counter))
                 sender.Operations &= ~Operations.Transactions;
 
-            if (!await Db.TransactionOps.AnyAsync(x => (x.Sender.Id == target.Id || x.TargetId == target.Id) && x.Id != transaction.Id))
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Counter < transaction.Counter))
                 target.Operations &= ~Operations.Transactions;
 
             sender.Counter = Math.Min(sender.Counter, transaction.Counter - 1);
@@ -247,44 +328,73 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (target.Operations == Operations.None && target.Counter > 0)
                 Db.Accounts.Remove(target);
-            else
-                Db.Accounts.Update(target);
 
-            Db.Delegates.Update(baker);
-            Db.Accounts.Update(sender);
             Db.TransactionOps.Remove(transaction);
         }
 
         public async Task RevertInternalTransaction(TransactionOperation transaction)
         {
-            #region balances
-            var parent = transaction.Parent;
+            #region entities
+            var parentTx = transaction.Parent;
+            var parentSender = await Accounts.GetAccountAsync(parentTx.SenderId);
+            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
+
             var sender = await Accounts.GetAccountAsync(transaction.SenderId);
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
             var target = await Accounts.GetAccountAsync(transaction.TargetId);
-            var initiator = await Accounts.GetAccountAsync(parent.SenderId);
+            var targetDelegate = target.Delegate ?? target as Data.Models.Delegate;
 
-            sender.Balance += transaction.Amount;
-            target.Balance -= transaction.Amount;
+            //Db.TryAttach(parentTx);
+            //Db.TryAttach(parentSender);
+            //Db.TryAttach(parentDelegate);
 
-            initiator.Balance += transaction.StorageFee ?? 0;
-            initiator.Balance += transaction.AllocationFee ?? 0;
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
+
+            Db.TryAttach(target);
+            Db.TryAttach(targetDelegate);
             #endregion
 
-            #region counters
-            if (!await Db.TransactionOps.AnyAsync(x => (x.Sender.Id == sender.Id || x.TargetId == sender.Id) && x.Id != transaction.Id))
+            #region apply result
+            if (transaction.Status == OperationStatus.Applied)
+            {
+                sender.Balance += transaction.Amount;
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance += transaction.Amount;
+                }
+
+                parentSender.Balance += transaction.StorageFee ?? 0;
+                parentSender.Balance += transaction.AllocationFee ?? 0;
+
+                if (parentDelegate != null)
+                {
+                    parentDelegate.StakingBalance += transaction.StorageFee ?? 0;
+                    parentDelegate.StakingBalance += transaction.AllocationFee ?? 0;
+                }
+
+                target.Balance -= transaction.Amount;
+
+                if (targetDelegate != null)
+                {
+                    targetDelegate.StakingBalance -= transaction.Amount;
+                }
+            }
+            #endregion
+
+            #region revert operation
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Counter < transaction.Counter))
                 sender.Operations &= ~Operations.Transactions;
 
-            if (!await Db.TransactionOps.AnyAsync(x => (x.Sender.Id == target.Id || x.TargetId == target.Id) && x.Id != transaction.Id))
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Counter < transaction.Counter))
                 target.Operations &= ~Operations.Transactions;
             #endregion
 
             if (target.Operations == Operations.None && target.Counter > 0)
                 Db.Accounts.Remove(target);
-            else
-                Db.Accounts.Update(target);
 
-            Db.Accounts.Update(sender);
-            Db.Accounts.Update(initiator);
             Db.TransactionOps.Remove(transaction);
         }
 
