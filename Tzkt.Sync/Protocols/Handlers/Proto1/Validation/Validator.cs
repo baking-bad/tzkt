@@ -147,9 +147,25 @@ namespace Tzkt.Sync.Protocols.Proto1
             throw new NotImplementedException();
         }
 
-        protected Task ValidateOrigination(RawOriginationContent origination, RawBlock rawBlock)
+        protected async Task ValidateOrigination(RawOriginationContent origination, RawBlock rawBlock)
         {
-            throw new NotImplementedException();
+            if (!await Cache.AccountExistsAsync(origination.Source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                origination.Metadata.BalanceUpdates,
+                rawBlock.Metadata.Baker,
+                origination.Source,
+                origination.Fee,
+                rawBlock.Metadata.LevelInfo.Cycle);
+
+            if (origination.Metadata.Result.BalanceUpdates != null)
+                ValidateTransferBalanceUpdates(
+                    origination.Metadata.Result.BalanceUpdates,
+                    origination.Source,
+                    origination.Metadata.Result.OriginatedContracts[0],
+                    origination.Balance,
+                    (origination.Metadata.Result.PaidStorageSizeDiff + Protocol.OriginationSize) * Protocol.ByteCost);
         }
 
         protected async Task ValidateReveal(RawRevealContent reveal, RawBlock rawBlock)

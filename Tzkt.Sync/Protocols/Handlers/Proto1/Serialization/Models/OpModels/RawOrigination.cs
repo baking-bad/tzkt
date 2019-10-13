@@ -42,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             StorageLimit >= 0 &&
             !string.IsNullOrEmpty(Manager) &&
             Balance >= 0 &&
-            !string.IsNullOrEmpty(Delegate) &&
+            (Delegate == null || Delegate != "") &&
             Metadata?.IsValidFormat() == true;
         #endregion
     }
@@ -75,10 +75,10 @@ namespace Tzkt.Sync.Protocols.Proto1
         public List<string> OriginatedContracts { get; set; }
 
         [JsonPropertyName("consumed_gas")]
-        public long ConsumedGas { get; set; }
+        public int ConsumedGas { get; set; }
 
         [JsonPropertyName("paid_storage_size_diff")]
-        public long PaidStorageSizeDiff { get; set; }
+        public int PaidStorageSizeDiff { get; set; }
 
         #region validation
         public bool IsValidFormat() =>

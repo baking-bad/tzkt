@@ -53,6 +53,9 @@ namespace Tzkt.Sync.Services
 
         public async Task<Account> GetAccountAsync(string address)
         {
+            if (String.IsNullOrEmpty(address))
+                return null;
+
             return await AppCache.GetOrSetAccount(address, async () =>
                 await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
                     ?? (address[0] != 't'
