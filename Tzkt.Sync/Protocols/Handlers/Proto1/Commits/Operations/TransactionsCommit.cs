@@ -288,7 +288,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (Transactions == null)
                 throw new Exception("Commit is not initialized");
 
-            foreach (var transaction in Transactions)
+            foreach (var transaction in Transactions
+                .OrderBy(x => x.Parent?.SenderId ?? x.SenderId)
+                .ThenByDescending(x => x.Counter)
+                .ThenByDescending(x => x.ParentId ?? 0))
             {
                 if (transaction.ParentId == null)
                     await RevertTransaction(transaction);
