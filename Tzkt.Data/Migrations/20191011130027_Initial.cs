@@ -35,7 +35,25 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Code = table.Column<int>(nullable: false),
                     Hash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
-                    Weight = table.Column<int>(nullable: false)
+                    Weight = table.Column<int>(nullable: false),
+                    PreserverCycles = table.Column<int>(nullable: false),
+                    BlocksPerCycle = table.Column<int>(nullable: false),
+                    BlocksPerCommitment = table.Column<int>(nullable: false),
+                    BlocksPerSnapshot = table.Column<int>(nullable: false),
+                    BlocksPerVoting = table.Column<int>(nullable: false),
+                    TimeBetweenBlocks = table.Column<int>(nullable: false),
+                    EndorsersPerBlock = table.Column<int>(nullable: false),
+                    HardOperationGasLimit = table.Column<int>(nullable: false),
+                    HardOperationStorageLimit = table.Column<int>(nullable: false),
+                    HardBlockGasLimit = table.Column<int>(nullable: false),
+                    TokensPerRoll = table.Column<long>(nullable: false),
+                    RevelationReward = table.Column<long>(nullable: false),
+                    BlockDeposit = table.Column<long>(nullable: false),
+                    BlockReward = table.Column<long>(nullable: false),
+                    EndorsementDeposit = table.Column<long>(nullable: false),
+                    EndorsementReward = table.Column<long>(nullable: false),
+                    OriginationSize = table.Column<int>(nullable: false),
+                    ByteCost = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {

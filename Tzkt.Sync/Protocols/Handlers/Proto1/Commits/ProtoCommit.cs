@@ -19,6 +19,31 @@ namespace Tzkt.Sync.Protocols.Proto1
         public override async Task Init(IBlock block)
         {
             Protocol = await Cache.GetProtocolAsync(block.Protocol);
+
+            if (Protocol.Weight == 0)
+            {
+                var stream = await Proto.Node.GetConstantsAsync(block.Level);
+                var rawConst = await (Proto.Serializer as Serializer).DeserializeConstants(stream);
+
+                Protocol.BlockDeposit = rawConst.BlockDeposit;
+                Protocol.BlockReward = rawConst.BlockReward;
+                Protocol.BlocksPerCommitment = rawConst.BlocksPerCommitment;
+                Protocol.BlocksPerCycle = rawConst.BlocksPerCycle;
+                Protocol.BlocksPerSnapshot = rawConst.BlocksPerSnapshot;
+                Protocol.BlocksPerVoting = rawConst.BlocksPerVoting;
+                Protocol.ByteCost = rawConst.ByteCost;
+                Protocol.EndorsementDeposit = rawConst.EndorsementDeposit;
+                Protocol.EndorsementReward = rawConst.EndorsementReward;
+                Protocol.EndorsersPerBlock = rawConst.EndorsersPerBlock;
+                Protocol.HardBlockGasLimit = rawConst.HardBlockGasLimit;
+                Protocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;
+                Protocol.HardOperationStorageLimit = rawConst.HardOperationStorageLimit;
+                Protocol.OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost;
+                Protocol.PreserverCycles = rawConst.PreserverCycles;
+                Protocol.RevelationReward = rawConst.RevelationReward;
+                Protocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
+                Protocol.TokensPerRoll = rawConst.TokensPerRoll;
+            }
         }
 
         public override Task Apply()

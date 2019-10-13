@@ -33,6 +33,9 @@ namespace Tzkt.Sync.Services
         public Task<Stream> GetBlockAsync(int level)
             => Rpc.GetStreamAsync($"chains/main/blocks/{level}");
 
+        public Task<Stream> GetConstantsAsync(int level)
+            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/constants");
+
         public Task<Stream> GetContractsAsync(int level)
             => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/raw/json/contracts/index?depth=1");
 

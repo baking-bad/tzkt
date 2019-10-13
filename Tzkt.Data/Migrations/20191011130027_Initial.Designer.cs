@@ -682,7 +682,46 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<long>("BlockDeposit")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BlockReward")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("BlocksPerCommitment")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlocksPerCycle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlocksPerSnapshot")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlocksPerVoting")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ByteCost")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Code")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("EndorsementDeposit")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("EndorsementReward")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("EndorsersPerBlock")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HardBlockGasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HardOperationGasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HardOperationStorageLimit")
                         .HasColumnType("integer");
 
                     b.Property<string>("Hash")
@@ -690,6 +729,21 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("character(51)")
                         .IsFixedLength(true)
                         .HasMaxLength(51);
+
+                    b.Property<int>("OriginationSize")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PreserverCycles")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("RevelationReward")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TimeBetweenBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TokensPerRoll")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("Weight")
                         .HasColumnType("integer");

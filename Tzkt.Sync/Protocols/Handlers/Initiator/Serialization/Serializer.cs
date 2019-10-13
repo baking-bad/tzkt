@@ -37,6 +37,23 @@ namespace Tzkt.Sync.Protocols.Initiator
             }
         }
 
+        public async Task<RawConstants> DeserializeConstants(Stream stream)
+        {
+            try
+            {
+                var rawConstants = await JsonSerializer.DeserializeAsync<RawConstants>(stream, Options);
+
+                if (!rawConstants.IsValidFormat())
+                    throw new SerializationException($"invalid format");
+
+                return rawConstants;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
+
         public async Task<List<RawContract>> DeserializeContracts(Stream stream)
         {
             try
