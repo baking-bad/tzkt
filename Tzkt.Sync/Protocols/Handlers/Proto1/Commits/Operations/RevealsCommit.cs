@@ -16,10 +16,25 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public RevealsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+
+            Reveals = await Db.RevealOps.Where(x => x.Level == block.Level).ToListAsync();
+            foreach (var op in Reveals)
+            {
+                op.Block = block;
+                op.Sender = await Cache.GetAccountAsync(op.SenderId);
+                op.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(op.Sender.DelegateId);
+            }
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
             var parsedBlock = FindCommit<BlockCommit>().Block;
+            parsedBlock.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(parsedBlock.BakerId);
 
             Reveals = new List<RevealOperation>();
             PubKeys = new Dictionary<string, string>(4);
@@ -28,6 +43,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var content in op.Contents.Where(x => x is RawRevealContent))
                 {
                     var reveal = content as RawRevealContent;
+                    var sender = await Cache.GetAccountAsync(reveal.Source);
+                    sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
                     PubKeys[reveal.Source] = reveal.PublicKey;
 
@@ -40,7 +57,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Counter = reveal.Counter,
                         GasLimit = reveal.GasLimit,
                         StorageLimit = reveal.StorageLimit,
-                        Sender = await Accounts.GetAccountAsync(reveal.Source),
+                        Sender = sender,
                         Status = reveal.Metadata.Result.Status switch
                         {
                             "applied" => OperationStatus.Applied,
@@ -105,13 +122,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             foreach (var reveal in Reveals)
             {
                 #region entities
-                var block = await State.GetCurrentBlock();
+                var block = reveal.Block;
                 var blockBaker = block.Baker;
 
-                var sender = await Accounts.GetAccountAsync(reveal.SenderId);
+                var sender = reveal.Sender;
                 var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
-                Db.TryAttach(block);
+                //Db.TryAttach(block);
                 Db.TryAttach(blockBaker);
 
                 Db.TryAttach(sender);
@@ -138,7 +155,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #endregion
 
                 if (sender.Operations == Operations.None && sender.Counter > 0)
+                {
                     Db.Accounts.Remove(sender);
+                    Cache.RemoveAccount(sender);
+                }
 
                 Db.RevealOps.Remove(reveal);
             }
@@ -152,10 +172,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<RevealsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<RevealOperation> reveals)
+        public static async Task<RevealsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new RevealsCommit(protocol, commits) { Reveals = reveals };
-            return Task.FromResult(commit);
+            var commit = new RevealsCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

@@ -12,6 +12,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public OriginationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override Task Init()
+        {
+            Originations = new List<OriginationOperation>();
+            return Task.CompletedTask;
+        }
+
         public override Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
@@ -48,10 +54,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<OriginationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<OriginationOperation> originations)
+        public static async Task<OriginationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new OriginationsCommit(protocol, commits) { Originations = originations };
-            return Task.FromResult(commit);
+            var commit = new OriginationsCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

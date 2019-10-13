@@ -18,6 +18,17 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public EndorsementsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            Endorsements = await Db.EndorsementOps.Where(x => x.Level == block.Level).ToListAsync();
+            foreach (var op in Endorsements)
+            {
+                op.Block = block;
+                op.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(op.DelegateId);
+            }
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
@@ -36,7 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Timestamp = parsedBlock.Timestamp,
                         OpHash = op.Hash,
                         Slots = endorsement.Metadata.Slots.Count,
-                        Delegate = (Data.Models.Delegate)await Accounts.GetAccountAsync(endorsement.Metadata.Delegate),
+                        Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(endorsement.Metadata.Delegate),
                         Reward = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate)?.Change ?? 0
                     });
                 }
@@ -50,19 +61,25 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             foreach (var endorsement in Endorsements)
             {
-                #region balances
-                endorsement.Delegate.Balance += endorsement.Reward;
-                endorsement.Delegate.FrozenRewards += endorsement.Reward;
-                endorsement.Delegate.FrozenDeposits += EndorsementDeposit * endorsement.Slots;
+                #region entities
+                var block = endorsement.Block;
+                var sender = endorsement.Delegate;
+
+                //Db.TryAttach(block);
+                Db.TryAttach(sender);
                 #endregion
 
-                #region counters
-                endorsement.Delegate.Operations |= Operations.Endorsements;
-                endorsement.Block.Operations |= Operations.Endorsements;
-                endorsement.Block.Validations++;
+                #region apply operation
+                sender.Balance += endorsement.Reward;
+                sender.FrozenRewards += endorsement.Reward;
+                sender.FrozenDeposits += EndorsementDeposit * endorsement.Slots;
+
+                sender.Operations |= Operations.Endorsements;
+                block.Operations |= Operations.Endorsements;
+
+                block.Validations++;
                 #endregion
 
-                Db.Delegates.Update(endorsement.Delegate);
                 Db.EndorsementOps.Add(endorsement);
             }
             return Task.CompletedTask;
@@ -75,19 +92,23 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             foreach (var endorsement in Endorsements)
             {
-                #region balances
-                var baker = (Data.Models.Delegate)await Accounts.GetAccountAsync(endorsement.DelegateId);
-                baker.Balance -= endorsement.Reward;
-                baker.FrozenRewards -= endorsement.Reward;
-                baker.FrozenDeposits -= EndorsementDeposit * endorsement.Slots;
+                #region entities
+                var block = endorsement.Block;
+                var sender = endorsement.Delegate;
+
+                //Db.TryAttach(block);
+                Db.TryAttach(sender);
                 #endregion
 
-                #region counters
-                if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == baker.Id && x.Id != endorsement.Id))
-                    baker.Operations &= ~Operations.Endorsements;
+                #region apply operation
+                sender.Balance -= endorsement.Reward;
+                sender.FrozenRewards -= endorsement.Reward;
+                sender.FrozenDeposits -= EndorsementDeposit * endorsement.Slots;
+
+                if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Level < endorsement.Level))
+                    sender.Operations &= ~Operations.Endorsements;
                 #endregion
 
-                Db.Delegates.Update(baker);
                 Db.EndorsementOps.Remove(endorsement);
             }
         }
@@ -100,10 +121,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<EndorsementsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<EndorsementOperation> endorsements)
+        public static async Task<EndorsementsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new EndorsementsCommit(protocol, commits) { Endorsements = endorsements };
-            return Task.FromResult(commit);
+            var commit = new EndorsementsCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

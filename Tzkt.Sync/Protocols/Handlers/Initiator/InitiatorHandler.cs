@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
-using Tzkt.Data.Models;
 using Tzkt.Sync.Services;
 using Tzkt.Sync.Protocols.Initiator;
 
@@ -28,6 +26,7 @@ namespace Tzkt.Sync.Protocols
             var rawBlock = block as RawBlock;
 
             var commits = new List<ICommit>();
+            commits.Add(await ProtoCommit.Create(this, commits, rawBlock));
             commits.Add(await BootstrapCommit.Create(this, commits, rawBlock));
             commits.Add(await BlockCommit.Create(this, commits, rawBlock));
             commits.Add(await VotingCommit.Create(this, commits, rawBlock));
@@ -36,15 +35,13 @@ namespace Tzkt.Sync.Protocols
             return commits;
         }
 
-        public override async Task<List<ICommit>> GetCommits(Block block)
+        public override async Task<List<ICommit>> GetReverts()
         {
-            var accounts = await Db.Accounts.ToListAsync();
-            var period = await Db.VotingPeriods.Include(x => x.Epoch).SingleAsync();
-
             var commits = new List<ICommit>();
-            commits.Add(await VotingCommit.Create(this, commits, period));
-            commits.Add(await BlockCommit.Create(this, commits, block));
-            commits.Add(await BootstrapCommit.Create(this, commits, accounts));
+            commits.Add(await VotingCommit.Create(this, commits));
+            commits.Add(await BlockCommit.Create(this, commits));
+            commits.Add(await BootstrapCommit.Create(this, commits));
+            commits.Add(await ProtoCommit.Create(this, commits));
             commits.Add(await StateCommit.Create(this, commits));
 
             return commits;

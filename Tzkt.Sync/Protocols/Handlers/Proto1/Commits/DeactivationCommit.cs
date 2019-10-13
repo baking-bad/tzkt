@@ -18,13 +18,22 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public DeactivationCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+
+            Delegates = new List<Data.Models.Delegate>();
+            foreach (var delegat in await Db.Delegates.Where(x => x.DeactivationLevel == block.Level).ToListAsync())
+                Delegates.Add((Data.Models.Delegate)await Cache.GetAccountAsync(delegat));
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
 
             Delegates = new List<Data.Models.Delegate>();
             foreach (var baker in rawBlock.Metadata.Deactivated)
-                Delegates.Add((Data.Models.Delegate)await Accounts.GetAccountAsync(baker));
+                Delegates.Add((Data.Models.Delegate)await Cache.GetAccountAsync(baker));
         }
 
         public override Task Apply()
@@ -55,10 +64,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<DeactivationCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<Data.Models.Delegate> delegates)
+        public static async Task<DeactivationCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new DeactivationCommit(protocol, commits) { Delegates = delegates };
-            return Task.FromResult(commit);
+            var commit = new DeactivationCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

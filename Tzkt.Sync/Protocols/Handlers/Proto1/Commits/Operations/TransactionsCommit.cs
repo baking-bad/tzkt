@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
 
-using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
-using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
@@ -24,10 +20,32 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public TransactionsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+
+            Transactions = await Db.TransactionOps.Where(x => x.Level == block.Level).ToListAsync();
+            foreach (var op in Transactions)
+            {
+                op.Block = block;
+                op.Sender = await Cache.GetAccountAsync(op.SenderId);
+                op.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(op.Sender.DelegateId);
+
+                op.Target = await Cache.GetAccountAsync(op.TargetId);
+                op.Target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(op.Target.DelegateId);
+
+                op.Parent ??= op.ParentId != null
+                    ? Transactions.FirstOrDefault(x => x.Id == op.ParentId)
+                    : null;
+            }
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
             var parsedBlock = FindCommit<BlockCommit>().Block;
+            parsedBlock.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(parsedBlock.BakerId);
 
             Transactions = new List<TransactionOperation>();
             foreach (var op in rawBlock.Operations[3])
@@ -47,6 +65,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         async Task<TransactionOperation> ParseTransaction(Block block, string opHash, RawTransactionContent content)
         {
+            var sender = await Cache.GetAccountAsync(content.Source);
+            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+
+            var target = await Cache.GetAccountAsync(content.Destination);
+            target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
+
             return new TransactionOperation
             {
                 Block = block, 
@@ -59,8 +83,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Counter = content.Counter,
                 GasLimit = content.GasLimit,
                 StorageLimit = content.StorageLimit,
-                Sender = await Accounts.GetAccountAsync(content.Source),
-                Target = await Accounts.GetAccountAsync(content.Destination),
+                Sender = sender,
+                Target = target,
 
                 Status = content.Metadata.Result.Status switch
                 {
@@ -77,6 +101,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         async Task<TransactionOperation> ParseInternalTransaction(TransactionOperation parent, RawInternalTransactionResult content)
         {
+            var sender = await Cache.GetAccountAsync(content.Source);
+            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+
+            var target = await Cache.GetAccountAsync(content.Destination);
+            target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
+
             return new TransactionOperation
             {
                 Parent = parent,
@@ -88,8 +118,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 Amount = content.Amount,
                 Nonce = content.Nonce,
-                Sender = await Accounts.GetAccountAsync(content.Source),
-                Target = await Accounts.GetAccountAsync(content.Destination),
+                Sender = sender,
+                Target = target,
 
                 Status = content.Result.Status switch
                 {
@@ -270,16 +300,16 @@ namespace Tzkt.Sync.Protocols.Proto1
         public async Task RevertTransaction(TransactionOperation transaction)
         {
             #region entities
-            var block = await State.GetCurrentBlock();
+            var block = transaction.Block;
             var blockBaker = block.Baker;
 
-            var sender = await Accounts.GetAccountAsync(transaction.SenderId);
+            var sender = transaction.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
-            var target = await Accounts.GetAccountAsync(transaction.TargetId);
+            var target = transaction.Target;
             var targetDelegate = target.Delegate ?? target as Data.Models.Delegate;
 
-            Db.TryAttach(block);
+            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
 
             Db.TryAttach(sender);
@@ -336,14 +366,16 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region entities
             var parentTx = transaction.Parent;
-            var parentSender = await Accounts.GetAccountAsync(parentTx.SenderId);
+            var parentSender = parentTx.Sender;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
-            var sender = await Accounts.GetAccountAsync(transaction.SenderId);
+            var sender = transaction.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
-            var target = await Accounts.GetAccountAsync(transaction.TargetId);
+            var target = transaction.Target;
             var targetDelegate = target.Delegate ?? target as Data.Models.Delegate;
+
+            //Db.TryAttach(block);
 
             //Db.TryAttach(parentTx);
             //Db.TryAttach(parentSender);
@@ -393,7 +425,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             if (target.Operations == Operations.None && target.Counter > 0)
+            {
                 Db.Accounts.Remove(target);
+                Cache.RemoveAccount(target);
+            }
 
             Db.TransactionOps.Remove(transaction);
         }
@@ -406,10 +441,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<TransactionsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<TransactionOperation> transactions)
+        public static async Task<TransactionsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new TransactionsCommit(protocol, commits) { Transactions = transactions };
-            return Task.FromResult(commit);
+            var commit = new TransactionsCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

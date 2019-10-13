@@ -6,11 +6,11 @@ namespace Tzkt.Sync.Protocols.Initiator
 {
     class Validator : IValidator
     {
-        readonly StateManager State;
+        readonly CacheService Cache;
 
         public Validator(ProtocolHandler protocol)
         {
-            State = protocol.State;
+            Cache = protocol.Cache;
         }
 
         public async Task<IBlock> ValidateBlock(IBlock block)
@@ -18,13 +18,13 @@ namespace Tzkt.Sync.Protocols.Initiator
             if (!(block is RawBlock rawBlock))
                 throw new ArgumentException("invalid type of the block to validate");
 
-            if (rawBlock.Level != (await State.GetCurrentBlock()).Level + 1)
+            if (rawBlock.Level != (await Cache.GetCurrentBlockAsync()).Level + 1)
                 throw new ValidationException($"Invalid block level", true);
 
-            if (rawBlock.Predecessor != (await State.GetCurrentBlock()).Hash)
+            if (rawBlock.Predecessor != (await Cache.GetCurrentBlockAsync()).Hash)
                 throw new ValidationException($"Invalid block predecessor", true);
 
-            if (rawBlock.Protocol != (await State.GetAppStateAsync()).NextProtocol)
+            if (rawBlock.Protocol != (await Cache.GetAppStateAsync()).NextProtocol)
                 throw new ValidationException($"Invalid block protocol", true);
 
             if (rawBlock.Level != 1)

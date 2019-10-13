@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols
 
         }
 
-        public override Task<List<ICommit>> GetCommits(Block block)
+        public override Task<List<ICommit>> GetReverts()
         {
             throw new NotImplementedException();
         }

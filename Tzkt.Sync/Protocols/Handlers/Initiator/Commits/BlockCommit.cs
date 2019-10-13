@@ -11,6 +11,11 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public BlockCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            Block = await Cache.GetCurrentBlockAsync();
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
@@ -19,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             {
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
-                Protocol = await Protocols.GetProtocolAsync(rawBlock.Protocol),
+                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol),
                 Timestamp = rawBlock.Header.Timestamp
             };
         }
@@ -30,8 +35,6 @@ namespace Tzkt.Sync.Protocols.Initiator
                 throw new Exception("Commit is not initialized");
 
             Db.Blocks.Add(Block);
-            Protocols.ProtocolUp(Block.Protocol);
-
             return Task.CompletedTask;
         }
 
@@ -41,8 +44,6 @@ namespace Tzkt.Sync.Protocols.Initiator
                 throw new Exception("Commit is not initialized");
 
             Db.Blocks.Remove(Block);
-            Protocols.ProtocolDown(Block.Protocol);
-
             return Task.CompletedTask;
         }
 
@@ -54,10 +55,11 @@ namespace Tzkt.Sync.Protocols.Initiator
             return commit;
         }
 
-        public static Task<BlockCommit> Create(ProtocolHandler protocol, List<ICommit> commits, Block block)
+        public static async Task<BlockCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new BlockCommit(protocol, commits) { Block = block };
-            return Task.FromResult(commit);
+            var commit = new BlockCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

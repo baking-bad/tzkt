@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-
-using Tzkt.Data;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
-using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
@@ -15,6 +12,12 @@ namespace Tzkt.Sync.Protocols.Proto1
         public VotingPeriod VotingPeriod { get; protected set; }
 
         public VotingCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+
+        public override async Task Init()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            VotingPeriod = await Db.VotingPeriods.Include(x => x.Epoch).Where(x => x.StartLevel == block.Level).FirstOrDefaultAsync();
+        }
 
         public override Task Init(IBlock block)
         {
@@ -49,10 +52,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<VotingCommit> Create(ProtocolHandler protocol, List<ICommit> commits, VotingPeriod votingPeriod)
+        public static async Task<VotingCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new VotingCommit(protocol, commits) { VotingPeriod = votingPeriod };
-            return Task.FromResult(commit);
+            var commit = new VotingCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

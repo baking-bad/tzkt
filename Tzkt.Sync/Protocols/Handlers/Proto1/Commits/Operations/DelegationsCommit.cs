@@ -20,18 +20,49 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public DelegationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+
+            Activations = new HashSet<string>();
+            Delegations = await Db.DelegationOps.Include(x => x.Parent).Where(x => x.Level == block.Level).ToListAsync();
+            foreach (var op in Delegations)
+            {
+                op.Block = block;
+                op.Sender = await Cache.GetAccountAsync(op.SenderId);
+                op.Sender.Delegate ??= op.Sender.DelegateId != null
+                    ? (Data.Models.Delegate)await Cache.GetAccountAsync(op.Sender.DelegateId)
+                    : null;
+
+                op.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(op.DelegateId);
+
+                //op.Parent ??= op.ParentId != null
+                //    ? Transactions.FirstOrDefault(x => x.Id == op.ParentId)
+                //    : null;
+            }
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
             var parsedBlock = FindCommit<BlockCommit>().Block;
+            parsedBlock.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(parsedBlock.BakerId);
 
-            Delegations = new List<DelegationOperation>();
             Activations = new HashSet<string>();
+            Delegations = new List<DelegationOperation>();
             foreach (var op in rawBlock.Operations[3])
             {
                 foreach (var content in op.Contents.Where(x => x is RawDelegationContent))
                 {
                     var delegation = content as RawDelegationContent;
+
+                    var sender = await Cache.GetAccountAsync(delegation.Source);
+                    sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+
+                    var delegat = !String.IsNullOrEmpty(delegation.Delegate) && delegation.Source != delegation.Delegate
+                        ? (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.Delegate)
+                        : null;
 
                     if (delegation.Source == delegation.Delegate)
                         Activations.Add(delegation.Source);
@@ -47,11 +78,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Counter = delegation.Counter,
                         GasLimit = delegation.GasLimit,
                         StorageLimit = delegation.StorageLimit,
-                        Sender = await Accounts.GetAccountAsync(delegation.Source),
-                        Delegate = delegation.Delegate != null && delegation.Source != delegation.Delegate
-                           ? (Data.Models.Delegate)await Accounts.GetAccountAsync(delegation.Delegate)
-                           : null,
-
+                        Sender = sender,
+                        Delegate = delegat,
                         Status = delegation.Metadata.Result.Status switch
                         {
                             "applied" => OperationStatus.Applied,
@@ -108,6 +136,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (sender is User user)
                         {
                             await UpgradeUser(delegation);
+                            sender = delegation.Sender;
+                            newDelegate = delegation.Delegate;
                         }
                         else if (sender is Data.Models.Delegate)
                         {
@@ -133,20 +163,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             foreach (var delegation in Delegations)
             {
                 #region entities
-                var block = await State.GetCurrentBlock();
+                var block = delegation.Block;
                 var blockBaker = block.Baker;
 
-                var sender = await Accounts.GetAccountAsync(delegation.SenderId);
+                var sender = delegation.Sender;
                 var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
-                var newDelegate = delegation.DelegateId != null
-                    ? (Data.Models.Delegate)await Accounts.GetAccountAsync((int)delegation.DelegateId)
-                    : null;
+                var newDelegate = delegation.Delegate;
 
                 var prevDelegation = await GetPrevDelegationAsync(sender, delegation.Counter);
                 var prevDelegate = prevDelegation?.Delegate;
 
-                Db.TryAttach(block);
+                //Db.TryAttach(block);
                 Db.TryAttach(blockBaker);
 
                 Db.TryAttach(sender);
@@ -170,6 +198,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (prevActivation == null)
                         {
                             await DowngradeDelegate(delegation);
+                            sender = delegation.Sender;
+                            newDelegate = delegation.Delegate;
 
                             if (prevDelegate != null)
                                 await SetDelegate(sender, newDelegate, delegation.Level);
@@ -254,7 +284,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
-            Accounts.ChangeAccountType(user, delegat, FindCommit<RevealsCommit>().Reveals);
+            Db.Entry(user).State = EntityState.Detached;
+            Db.Entry(delegat).State = EntityState.Modified;
+            Cache.AddAccount(delegat);
 
             #region update graph
             foreach (var op in FindCommit<RevealsCommit>().Reveals
@@ -336,7 +368,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
-            Accounts.ChangeAccountType(delegat, user, null);
+            Db.Entry(delegat).State = EntityState.Detached;
+            Db.Entry(user).State = EntityState.Modified;
+            Cache.AddAccount(user);
 
             #region update graph
             foreach (var op in FindCommit<RevealsCommit>().Reveals
@@ -370,7 +404,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             delegat.Staked = true;
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
-                delegator.Staked = true;
+            {
+                var account = await Cache.GetAccountAsync(delegator);
+                account.Staked = true;
+            }
 
             delegation.Delegate = delegat;
         }
@@ -380,12 +417,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             var delegat = delegation.Sender as Data.Models.Delegate;
 
             var deactivationBlock = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == deactivationLevel);
-            delegat.DeactivationBlock = deactivationBlock;
             delegat.DeactivationLevel = deactivationBlock.Level;
             delegat.Staked = false;
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
-                delegator.Staked = false;
+            {
+                var account = await Cache.GetAccountAsync(delegator);
+                account.Staked = false;
+            }
         }
 
         Task SetDelegate(Account sender, Data.Models.Delegate newDelegate, int level)
@@ -429,7 +468,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (result != null)
             {
                 result.Sender = sender;
-                result.Delegate = (Data.Models.Delegate)await Accounts.GetAccountAsync((int)result.DelegateId);
+                result.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(result.DelegateId);
             }
 
             return result;
@@ -465,10 +504,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<DelegationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<DelegationOperation> delegations)
+        public static async Task<DelegationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new DelegationsCommit(protocol, commits) { Delegations = delegations };
-            return Task.FromResult(commit);
+            var commit = new DelegationsCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

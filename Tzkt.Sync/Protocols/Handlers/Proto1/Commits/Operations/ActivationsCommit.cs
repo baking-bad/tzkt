@@ -13,6 +13,17 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public ActivationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            Activations = await Db.ActivationOps.Where(x => x.Level == block.Level).ToListAsync();
+            foreach (var op in Activations)
+            {
+                op.Account ??= (User)await Cache.GetAccountAsync(op.AccountId);
+                op.Block = block;
+            }
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
@@ -27,12 +38,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     Activations.Add(new ActivationOperation
                     {
-                        Block = parsedBlock, 
+                        Block = parsedBlock,
                         Timestamp = parsedBlock.Timestamp,
-
                         OpHash = op.Hash,
-
-                        Account = (User)await Accounts.GetAccountAsync(activation.Address),
+                        Account = (User)await Cache.GetAccountAsync(activation.Address),
                         Balance = activation.Metadata.BalanceUpdates[0].Change
                     });
                 }
@@ -46,17 +55,20 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             foreach (var activation in Activations)
             {
-                #region balances
-                activation.Account.Balance = activation.Balance;
+                #region entities
+                var block = activation.Block;
+                var sender = activation.Account;
+
+                //Db.TryAttach(block);
+                Db.TryAttach(sender);
                 #endregion
 
-                #region counters
-                activation.Account.Operations |= Operations.Activations;
-                activation.Block.Operations |= Operations.Activations;
-                #endregion
+                #region apply operation
+                sender.Balance = activation.Balance;
 
-                if (Db.Entry(activation.Account).State != EntityState.Added)
-                    Db.Accounts.Update(activation.Account);
+                sender.Operations |= Operations.Activations;
+                block.Operations |= Operations.Activations;
+                #endregion
 
                 Db.ActivationOps.Add(activation);
             }
@@ -64,18 +76,24 @@ namespace Tzkt.Sync.Protocols.Proto1
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
             if (Activations == null)
                 throw new Exception("Commit is not initialized");
 
             foreach (var activation in Activations)
             {
-                var account = await Accounts.GetAccountAsync(activation.AccountId);
+                #region entities
+                var sender = activation.Account;
+                #endregion
 
-                Db.Accounts.Remove(account);
+                Db.Accounts.Remove(sender);
+                Cache.RemoveAccount(sender);
+
                 Db.ActivationOps.Remove(activation);
             }
+
+            return Task.CompletedTask;
         }
 
         #region static
@@ -86,10 +104,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<ActivationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<ActivationOperation> activations)
+        public static async Task<ActivationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new ActivationsCommit(protocol, commits) { Activations = activations };
-            return Task.FromResult(commit);
+            var commit = new ActivationsCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

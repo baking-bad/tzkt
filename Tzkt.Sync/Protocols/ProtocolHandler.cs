@@ -19,9 +19,6 @@ namespace Tzkt.Sync
         public readonly TezosNode Node;
         public readonly TzktContext Db;
         public readonly CacheService Cache;
-        public readonly AccountManager Accounts;
-        public readonly ProtocolManager Protocols;
-        public readonly StateManager State;
         public readonly ILogger Logger;
 
         public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, ILogger logger)
@@ -29,9 +26,6 @@ namespace Tzkt.Sync
             Node = node;
             Db = db;
             Cache = cache;
-            Accounts = cache.Accounts;
-            Protocols = cache.Protocols;
-            State = cache.State;
             Logger = logger;
         }
 
@@ -53,29 +47,114 @@ namespace Tzkt.Sync
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
 
-            return await State.GetAppStateAsync();
+            ClearCachedRelations();
+
+            return await Cache.GetAppStateAsync();
         }
         
         public virtual async Task<AppState> RevertLastBlock()
         {
-            Logger.LogDebug("Loading last block...");
-            var block = await State.GetCurrentBlock();
+            Logger.LogDebug("Init reverts...");
+            var commits = await GetReverts();
 
-            Logger.LogDebug("Init commits...");
-            var commits = await GetCommits(block);
-
-            Logger.LogDebug("Applying revert commits...");
+            Logger.LogDebug("Applying reverts...");
             foreach (var commit in commits)
                 await commit.Revert();
 
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
 
-            return await State.GetAppStateAsync();
+            ClearCachedRelations();
+
+            return await Cache.GetAppStateAsync();
         }
 
-        public abstract Task<List<ICommit>> GetCommits(Block block);
-
         public abstract Task<List<ICommit>> GetCommits(IBlock block);
+
+        public abstract Task<List<ICommit>> GetReverts();
+
+        void ClearCachedRelations()
+        {
+            foreach (var entry in Db.ChangeTracker.Entries())
+            {
+                if (entry.Entity is Delegate delegat)
+                {
+                    delegat.Activation = null;
+                    delegat.ActivationBlock = null;
+                    delegat.BakedBlocks = null;
+                    delegat.Ballots = null;
+                    delegat.DeactivationBlock = null;
+                    delegat.Delegate = null;
+                    delegat.DelegatedAccounts = null;
+                    delegat.DelegatedOriginations = null;
+                    delegat.Endorsements = null;
+                    delegat.ManagedContracts = null;
+                    delegat.ManagedOriginations = null;
+                    delegat.OriginatedContracts = null;
+                    delegat.Proposals = null;
+                    delegat.PushedProposals = null;
+                    delegat.ReceivedDelegations = null;
+                    delegat.ReceivedDoubleBakingAccusations = null;
+                    delegat.ReceivedDoubleEndorsingAccusations = null;
+                    delegat.ReceivedTransactions = null;
+                    delegat.Reveal = null;
+                    delegat.Revelations = null;
+                    delegat.SentDelegations = null;
+                    delegat.SentDoubleBakingAccusations = null;
+                    delegat.SentDoubleEndorsingAccusations = null;
+                    delegat.SentOriginations = null;
+                    delegat.SentTransactions = null;
+                }
+                else if (entry.Entity is User user)
+                {
+                    user.Activation = null;
+                    user.Delegate = null;
+                    user.ManagedContracts = null;
+                    user.ManagedOriginations = null;
+                    user.OriginatedContracts = null;
+                    user.ReceivedTransactions = null;
+                    user.Reveal = null;
+                    user.SentDelegations = null;
+                    user.SentOriginations = null;
+                    user.SentTransactions = null;
+                }
+                else if (entry.Entity is Contract contract)
+                {
+                    contract.Delegate = null;
+                    contract.Manager = null;
+                    contract.OriginatedContracts = null;
+                    contract.Origination = null;
+                    contract.Originator = null;
+                    contract.ReceivedTransactions = null;
+                    contract.Reveal = null;
+                    contract.SentDelegations = null;
+                    contract.SentOriginations = null;
+                    contract.SentTransactions = null;
+                }
+                else if (entry.Entity is Block b)
+                {
+                    b.ActivatedDelegates = null;
+                    b.Activations = null;
+                    b.Baker = null;
+                    b.Ballots = null;
+                    b.DeactivatedDelegates = null;
+                    b.Delegations = null;
+                    b.DoubleBakings = null;
+                    b.DoubleEndorsings = null;
+                    b.Endorsements = null;
+                    b.Originations = null;
+                    b.Proposals = null;
+                    b.Protocol = null;
+                    b.Reveals = null;
+                    b.Revelation = null;
+                    b.Revelations = null;
+                    b.Transactions = null;
+                }
+                else if (entry.Entity is Protocol p)
+                {
+                    p.Blocks = null;
+                }
+            }
+        }
     }
 }

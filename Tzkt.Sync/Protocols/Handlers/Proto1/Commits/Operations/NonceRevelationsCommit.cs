@@ -12,6 +12,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public NonceRevelationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override Task Init()
+        {
+            Revelations = new List<NonceRevelationOperation>();
+            return Task.CompletedTask;
+        }
+
         public override Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
@@ -48,10 +54,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<NonceRevelationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<NonceRevelationOperation> revelations)
+        public static async Task<NonceRevelationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new NonceRevelationsCommit(protocol, commits) { Revelations = revelations };
-            return Task.FromResult(commit);
+            var commit = new NonceRevelationsCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

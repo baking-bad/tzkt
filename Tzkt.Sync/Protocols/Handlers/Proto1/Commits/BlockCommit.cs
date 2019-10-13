@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -32,6 +33,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public BlockCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override async Task Init()
+        {
+            Block = await Cache.GetCurrentBlockAsync();
+        }
+
         public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
@@ -40,10 +46,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
-                Protocol = await Protocols.GetProtocolAsync(rawBlock.Protocol),
+                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol),
                 Timestamp = rawBlock.Header.Timestamp,
                 Priority = rawBlock.Header.Priority,
-                Baker = (Data.Models.Delegate)await Accounts.GetAccountAsync(rawBlock.Metadata.Baker)
+                Baker = (Data.Models.Delegate)await Cache.GetAccountAsync(rawBlock.Metadata.Baker)
             };
         }
 
@@ -52,16 +58,19 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (Block == null)
                 throw new Exception("Commit is not initialized");
 
-            #region balances
-            Block.Baker.Balance += BlockReward;
-            Block.Baker.FrozenRewards += BlockReward;
-            Block.Baker.FrozenDeposits += BlockDeposit;
+            #region entities
+            var baker = Block.Baker;
+
+            Db.TryAttach(baker);
             #endregion
 
-            Db.Delegates.Update(Block.Baker);
-            Db.Blocks.Add(Block);
-            Protocols.ProtocolUp(Block.Protocol);
+            #region balances
+            baker.Balance += BlockReward;
+            baker.FrozenRewards += BlockReward;
+            baker.FrozenDeposits += BlockDeposit;
+            #endregion
 
+            Db.Blocks.Add(Block);
             return Task.CompletedTask;
         }
 
@@ -70,16 +79,19 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (Block == null)
                 throw new Exception("Commit is not initialized");
 
-            #region balances
-            Block.Baker.Balance -= BlockReward;
-            Block.Baker.FrozenRewards -= BlockReward;
-            Block.Baker.FrozenDeposits -= BlockDeposit;
+            #region entities
+            var baker = Block.Baker;
+
+            Db.TryAttach(baker);
             #endregion
 
-            Db.Delegates.Update(Block.Baker);
-            Db.Blocks.Remove(Block);            
-            Protocols.ProtocolDown(Block.Protocol);
+            #region balances
+            baker.Balance -= BlockReward;
+            baker.FrozenRewards -= BlockReward;
+            baker.FrozenDeposits -= BlockDeposit;
+            #endregion
 
+            Db.Blocks.Remove(Block);            
             return Task.CompletedTask;
         }
 
@@ -91,10 +103,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<BlockCommit> Create(ProtocolHandler protocol, List<ICommit> commits, Block block)
+        public static async Task<BlockCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new BlockCommit(protocol, commits) { Block = block };
-            return Task.FromResult(commit);
+            var commit = new BlockCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

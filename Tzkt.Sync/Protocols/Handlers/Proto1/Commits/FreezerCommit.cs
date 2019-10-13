@@ -16,6 +16,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public FreezerCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
+        public override Task Init()
+        {
+            BalanceUpdates = new List<IBalanceUpdate>();
+            return Task.CompletedTask;
+        }
+
         public override Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
@@ -53,10 +59,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<FreezerCommit> Create(ProtocolHandler protocol, List<ICommit> commits, List<IBalanceUpdate> balanceUpdates)
+        public static async Task<FreezerCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
-            var commit = new FreezerCommit(protocol, commits) { BalanceUpdates = balanceUpdates };
-            return Task.FromResult(commit);
+            var commit = new FreezerCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

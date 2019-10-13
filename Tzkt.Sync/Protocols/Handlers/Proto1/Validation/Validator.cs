@@ -18,13 +18,11 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual int EndorsementReward => 0;
         #endregion
 
-        readonly AccountManager Accounts;
-        readonly StateManager State;
+        readonly CacheService Cache;
 
         public Validator(ProtocolHandler protocol)
         {
-            Accounts = protocol.Accounts;
-            State = protocol.State;
+            Cache = protocol.Cache;
         }
 
         public async Task<IBlock> ValidateBlock(IBlock block)
@@ -32,18 +30,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!(block is Proto1.RawBlock rawBlock))
                 throw new ValidationException("invalid raw block type");
 
-            if (rawBlock.Level != (await State.GetCurrentBlock()).Level + 1)
+            if (rawBlock.Level != (await Cache.GetCurrentBlockAsync()).Level + 1)
                 throw new ValidationException($"Invalid block level", true);
 
-            if (rawBlock.Protocol != (await State.GetAppStateAsync()).NextProtocol)
+            if (rawBlock.Protocol != (await Cache.GetAppStateAsync()).NextProtocol)
                 throw new ValidationException($"Invalid block protocol", true);
 
-            if (!await Accounts.ExistsAsync(rawBlock.Metadata.Baker, AccountType.Delegate))
+            if (!await Cache.AccountExistsAsync(rawBlock.Metadata.Baker, AccountType.Delegate))
                 throw new ValidationException($"Invalid block baker '{rawBlock.Metadata.Baker}'");
 
             foreach (var baker in rawBlock.Metadata.Deactivated)
             {
-                if (!await Accounts.ExistsAsync(baker, AccountType.Delegate))
+                if (!await Cache.AccountExistsAsync(baker, AccountType.Delegate))
                     throw new ValidationException($"Invalid deactivated baker {baker}");
             }
 
@@ -85,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateActivation(RawActivationContent activation)
         {
-            if (await Accounts.ExistsAsync(activation.Address, AccountType.User))
+            if (await Cache.AccountExistsAsync(activation.Address, AccountType.User))
                 throw new ValidationException("account is already activated");
 
             if ((activation.Metadata.BalanceUpdates[0] as ContractUpdate)?.Contract != activation.Address)
@@ -94,7 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateDelegation(RawDelegationContent delegation, RawBlock rawBlock)
         {
-            if (!await Accounts.ExistsAsync(delegation.Source))
+            if (!await Cache.AccountExistsAsync(delegation.Source))
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
@@ -106,19 +104,19 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (delegation.Delegate != null)
             {
-                if (delegation.Source != delegation.Delegate && !await Accounts.ExistsAsync(delegation.Delegate, AccountType.Delegate))
+                if (delegation.Source != delegation.Delegate && !await Cache.AccountExistsAsync(delegation.Delegate, AccountType.Delegate))
                     throw new ValidationException("unknown delegate account");
             }
         }
 
         protected async Task ValidateEndorsement(RawEndorsementContent endorsement, RawBlock rawBlock)
         {
-            var lastBlock = await State.GetCurrentBlock();
+            var lastBlock = await Cache.GetCurrentBlockAsync();
 
             if (endorsement.Level != lastBlock.Level)
                 throw new ValidationException("invalid endorsed block level");
 
-            if (!await Accounts.ExistsAsync(endorsement.Metadata.Delegate, AccountType.Delegate))
+            if (!await Cache.AccountExistsAsync(endorsement.Metadata.Delegate, AccountType.Delegate))
                 throw new ValidationException("invalid endorsement delegate");
 
             if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != 3)
@@ -161,7 +159,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateReveal(RawRevealContent reveal, RawBlock rawBlock)
         {
-            if (!await Accounts.ExistsAsync(reveal.Source))
+            if (!await Cache.AccountExistsAsync(reveal.Source))
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
@@ -174,7 +172,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateTransaction(RawTransactionContent transaction, RawBlock rawBlock)
         {
-            if (!await Accounts.ExistsAsync(transaction.Source))
+            if (!await Cache.AccountExistsAsync(transaction.Source))
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
@@ -198,7 +196,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     var internalTransaction = internalContent as RawInternalTransactionResult;
 
-                    if (!await Accounts.ExistsAsync(internalTransaction.Source, AccountType.Contract))
+                    if (!await Cache.AccountExistsAsync(internalTransaction.Source, AccountType.Contract))
                         throw new ValidationException("unknown source contract");
 
                     if (transaction.Metadata.Result.BalanceUpdates != null)

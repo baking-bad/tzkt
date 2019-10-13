@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
-using Tzkt.Data.Models;
 using Tzkt.Sync.Services;
 using Tzkt.Sync.Protocols.Genesis;
 
@@ -26,16 +25,18 @@ namespace Tzkt.Sync.Protocols
             var rawBlock = block as RawBlock;
 
             var commits = new List<ICommit>();
+            commits.Add(await ProtoCommit.Create(this, commits, rawBlock));
             commits.Add(await BlockCommit.Create(this, commits, rawBlock));
             commits.Add(await StateCommit.Create(this, commits, rawBlock));
 
             return commits;
         }
 
-        public override async Task<List<ICommit>> GetCommits(Block block)
+        public override async Task<List<ICommit>> GetReverts()
         {
             var commits = new List<ICommit>();
-            commits.Add(await BlockCommit.Create(this, commits, block));
+            commits.Add(await BlockCommit.Create(this, commits));
+            commits.Add(await ProtoCommit.Create(this, commits));
             commits.Add(await StateCommit.Create(this, commits));
 
             return commits;

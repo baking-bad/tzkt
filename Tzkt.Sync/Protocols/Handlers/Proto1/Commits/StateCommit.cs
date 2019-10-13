@@ -8,41 +8,79 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class StateCommit : ProtocolCommit
     {
+        public AppState AppState { get; private set; }
         public Block Block { get; private set; }
         public string NextProtocol { get; private set; }
 
         public StateCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
-        public override Task Init(IBlock block)
+        public override async Task Init()
+        {
+            Block = await Cache.GetCurrentBlockAsync();
+            Block.Protocol ??= await Cache.GetCurrentProtocolAsync();
+            NextProtocol = Block.Protocol.Hash;
+            AppState = await Cache.GetAppStateAsync();
+        }
+
+        public override async Task Init(IBlock block)
         {
             Block = FindCommit<BlockCommit>().Block;
+            Block.Protocol ??= await Cache.GetProtocolAsync(block.Protocol);
             NextProtocol = (block as RawBlock).Metadata.NextProtocol;
-            return Task.CompletedTask;
+            AppState = await Cache.GetAppStateAsync();
         }
 
         public override async Task Apply()
         {
-            if (Block == null || string.IsNullOrEmpty(NextProtocol))
+            if (AppState == null)
                 throw new Exception("Commit is not initialized");
 
-            var reveals = FindCommit<RevealsCommit>().Reveals.Count;
-            var delegations = FindCommit<DelegationsCommit>().Delegations.Count(x => x.Parent == null);
-            var originations = FindCommit<OriginationsCommit>().Originations.Count(x => x.Parent == null);
-            var transactions = FindCommit<TransactionsCommit>().Transactions.Count(x => x.Parent == null);
+            #region entities
+            var state = AppState;
 
-            await State.UpdateCounter(reveals + delegations + originations + transactions);
-            await State.SetAppStateAsync(Block, NextProtocol);
+            Db.TryAttach(state);
+            #endregion
+
+            state.Level = Block.Level;
+            state.Timestamp = Block.Timestamp;
+            state.Protocol = Block.Protocol.Hash;
+            state.NextProtocol = NextProtocol;
+            state.Hash = Block.Hash;
+            await Cache.PushBlock(Block);
+
+            var reveals = FindCommit<RevealsCommit>().Reveals.Count;
+            var delegations = FindCommit<DelegationsCommit>().Delegations.Count(x => x.Nonce == null);
+            var originations = FindCommit<OriginationsCommit>().Originations.Count(x => x.Nonce == null);
+            var transactions = FindCommit<TransactionsCommit>().Transactions.Count(x => x.Nonce == null);
+            state.Counter += reveals + delegations + originations + transactions;
         }
 
         public override async Task Revert()
         {
-            var reveals = FindCommit<RevealsCommit>().Reveals.Count;
-            var delegations = FindCommit<DelegationsCommit>().Delegations.Count(x => x.ParentId == null);
-            var originations = FindCommit<OriginationsCommit>().Originations.Count(x => x.ParentId == null);
-            var transactions = FindCommit<TransactionsCommit>().Transactions.Count(x => x.ParentId == null);
+            if (AppState == null)
+                throw new Exception("Commit is not initialized");
 
-            await State.UpdateCounter(-reveals - delegations - originations - transactions);
-            await State.ReduceAppStateAsync();
+            #region entities
+            var prevBlock = await Cache.GetPreviousBlockAsync();
+            if (prevBlock != null) prevBlock.Protocol ??= await Cache.GetProtocolAsync(prevBlock.ProtoCode);
+
+            var state = AppState;
+
+            Db.TryAttach(state);
+            #endregion
+
+            state.Level = prevBlock?.Level ?? -1;
+            state.Timestamp = prevBlock?.Timestamp ?? DateTime.MinValue;
+            state.Protocol = prevBlock?.Protocol.Hash ?? "";
+            state.NextProtocol = prevBlock == null ? "" : Block.Protocol.Hash;
+            state.Hash = prevBlock?.Hash ?? "";
+            await Cache.PopBlock();
+
+            var reveals = FindCommit<RevealsCommit>().Reveals.Count;
+            var delegations = FindCommit<DelegationsCommit>().Delegations.Count(x => x.Nonce == null);
+            var originations = FindCommit<OriginationsCommit>().Originations.Count(x => x.Nonce == null);
+            var transactions = FindCommit<TransactionsCommit>().Transactions.Count(x => x.Nonce == null);
+            state.Counter -= reveals + delegations + originations + transactions;
         }
 
         #region static
@@ -53,10 +91,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return commit;
         }
 
-        public static Task<StateCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<StateCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
         {
             var commit = new StateCommit(protocol, commits);
-            return Task.FromResult(commit);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

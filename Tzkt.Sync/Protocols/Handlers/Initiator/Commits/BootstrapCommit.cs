@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
-using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Initiator
 {
@@ -14,19 +13,20 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public BootstrapCommit(InitiatorHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
-        public override Task Init(IBlock block)
+        public override async Task Init()
         {
-            return Task.CompletedTask;
+            BootstrapedAccounts = await Db.Accounts.ToListAsync();
         }
 
-        public override async Task Apply()
+        public override async Task Init(IBlock block)
         {
+            BootstrapedAccounts = new List<Account>(65);
+
             var stream = await Proto.Node.GetContractsAsync(level: 1);
             var contracts = await (Proto.Serializer as Serializer).DeserializeContracts(stream);
             var delegates = new List<Data.Models.Delegate>(8);
-            var accounts = new List<Account>(64);
 
-            #region seed delegates
+            #region bootstrap delegates
             foreach (var data in contracts.Where(x => x.Delegate == x.Address))
             {
                 var baker = new Data.Models.Delegate
@@ -39,13 +39,13 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Staked = true,
                     Type = AccountType.Delegate
                 };
-                Accounts.AddAccount(baker);
+                Cache.AddAccount(baker);
+                BootstrapedAccounts.Add(baker);
                 delegates.Add(baker);
-                accounts.Add(baker);
             }
             #endregion
 
-            #region seed users
+            #region bootstrap users
             foreach (var data in contracts.Where(x => x.Address[0] == 't' && String.IsNullOrEmpty(x.Delegate)))
             {
                 var user = new User
@@ -55,12 +55,12 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Counter = data.Counter,
                     Type = AccountType.User,
                 };
-                Accounts.AddAccount(user);
-                accounts.Add(user);
+                Cache.AddAccount(user);
+                BootstrapedAccounts.Add(user);
             }
             #endregion
 
-            #region seed contracts
+            #region bootstrap contracts
             foreach (var data in contracts.Where(x => x.Address[0] == 'K'))
             {
                 var contract = new Contract
@@ -69,23 +69,23 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Balance = data.Balance,
                     Counter = data.Counter,
                     DelegationLevel = 1,
-                    Manager = (User)await Accounts.GetAccountAsync(data.Manager),
+                    Manager = (User)await Cache.GetAccountAsync(data.Manager),
                     Staked = !String.IsNullOrEmpty(data.Delegate),
                     Type = AccountType.Contract,
                 };
 
                 if (!String.IsNullOrEmpty(data.Delegate))
-                    contract.Delegate = (Data.Models.Delegate)await Accounts.GetAccountAsync(data.Delegate);
+                    contract.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(data.Delegate);
 
-                Accounts.AddAccount(contract);
-                accounts.Add(contract);
+                Cache.AddAccount(contract);
+                BootstrapedAccounts.Add(contract);
             }
             #endregion
 
             #region stats
             foreach (var baker in delegates)
             {
-                var delegators = accounts.Where(x => x.Delegate == baker);
+                var delegators = BootstrapedAccounts.Where(x => x.Delegate == baker);
 
                 baker.Delegators = delegators.Count();
                 baker.StakingBalance = baker.Balance
@@ -94,13 +94,23 @@ namespace Tzkt.Sync.Protocols.Initiator
             #endregion
         }
 
+        public override Task Apply()
+        {
+            if (BootstrapedAccounts == null)
+                throw new Exception("Commit is not initialized");
+
+            Db.Accounts.AddRange(BootstrapedAccounts);
+
+            return Task.CompletedTask;
+        }
+
         public override Task Revert()
         {
             if (BootstrapedAccounts == null)
                 throw new Exception("Commit is not initialized");
 
             Db.Accounts.RemoveRange(BootstrapedAccounts);
-            Accounts.Clear(true);
+            Cache.RemoveAccounts(BootstrapedAccounts);
 
             return Task.CompletedTask;
         }
@@ -113,10 +123,11 @@ namespace Tzkt.Sync.Protocols.Initiator
             return commit;
         }
 
-        public static Task<BootstrapCommit> Create(InitiatorHandler protocol, List<ICommit> commits, List<Account> accounts)
+        public static async Task<BootstrapCommit> Create(InitiatorHandler protocol, List<ICommit> commits)
         {
-            var commit = new BootstrapCommit(protocol, commits) { BootstrapedAccounts = accounts };
-            return Task.FromResult(commit);
+            var commit = new BootstrapCommit(protocol, commits);
+            await commit.Init();
+            return commit;
         }
         #endregion
     }

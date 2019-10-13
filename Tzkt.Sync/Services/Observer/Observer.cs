@@ -65,6 +65,23 @@ namespace Tzkt.Sync.Services
 
                     Logger.LogDebug($"Current head [{AppState.Level}:{AppState.Hash}]");
                 }
+                catch (BaseException ex) when (ex.RebaseRequired)
+                {
+                    Logger.LogError($"Failed to apply block: {ex.Message}. Rebase local branch...");
+
+                    try
+                    {
+                        if (!await RebaseLocalBranchAsync(cancelToken))
+                            break;
+                    }
+                    catch (Exception exx)
+                    {
+                        Logger.LogCritical($"Failed to rebase branch. {exx.Message}");
+                        AppState = await ResetState();
+                        await Task.Delay(5000);
+                        continue;
+                    }
+                }
                 catch (Exception ex)
                 {
                     Logger.LogCritical($"Failed to apply updates. {ex.Message}");
@@ -81,15 +98,10 @@ namespace Tzkt.Sync.Services
         private async Task<AppState> ResetState()
         {
             using var scope = Services.CreateScope();
-            var accountsCache = scope.ServiceProvider.GetRequiredService<AccountManager>();
-            var protocolsCache = scope.ServiceProvider.GetRequiredService<ProtocolManager>();
-            var stateCache = scope.ServiceProvider.GetRequiredService<StateManager>();
+            var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
+            cache.Clear();
 
-            accountsCache.Clear(true);
-            protocolsCache.Clear();
-            stateCache.Clear();
-
-            return await stateCache.GetAppStateAsync();
+            return await cache.GetAppStateAsync();
         }
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
@@ -104,7 +116,7 @@ namespace Tzkt.Sync.Services
             return true;
         }
 
-        private async Task<bool> RebaseLocalBranchAsync(IServiceScope scope, CancellationToken cancelToken)
+        private async Task<bool> RebaseLocalBranchAsync(CancellationToken cancelToken)
         {
             while (AppState.Level >= 0)
             //while (AppState.Level >= 0 && !await Node.ValidateBranchAsync(AppState.Level, AppState.Hash))
@@ -114,6 +126,7 @@ namespace Tzkt.Sync.Services
 
                 Logger.LogError($"Invalid head [{AppState.Level}:{AppState.Hash}]. Reverting...");
 
+                using var scope = Services.CreateScope();
                 var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Protocol);
                 AppState = await protoHandler.RevertLastBlock();
 
@@ -124,36 +137,22 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> ApplyUpdatesAsync(CancellationToken cancelToken)
         {
-            using (var scope = Services.CreateScope())
+            while (await Node.HasUpdatesAsync(AppState.Level))
             {
-                while (await Node.HasUpdatesAsync(AppState.Level))
-                {
-                    if (cancelToken.IsCancellationRequested)
-                        return false;
+                if (cancelToken.IsCancellationRequested)
+                    return false;
 
-                    Logger.LogDebug($"Loading block {AppState.Level + 1}...");
-                    using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
+                Logger.LogDebug($"Loading block {AppState.Level + 1}...");
+                using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
 
-                    try
-                    {
-                        if (AppState.Level == 108)
-                            throw new ValidationException("Test", true);
+                if (AppState.Level == 108)
+                    throw new ValidationException("Test", true);
 
-                        Logger.LogDebug($"Applying block...");
-                        var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
-                        AppState = await protocol.ApplyBlock(blockStream);
-                        Logger.LogDebug($"Applied");
-                    }
-                    catch (BaseException ex) when (ex.RebaseRequired)
-                    {
-                        Logger.LogError($"Failed to apply block: {ex.Message}. Rebase local branch...");
-
-                        if (!await RebaseLocalBranchAsync(scope, cancelToken))
-                            return false;
-
-                        continue;
-                    }
-                }
+                Logger.LogDebug($"Applying block...");
+                using var scope = Services.CreateScope();
+                var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
+                AppState = await protocol.ApplyBlock(blockStream);
+                Logger.LogDebug($"Applied");
             }
             return true;
         }
