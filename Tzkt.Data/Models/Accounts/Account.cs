@@ -32,7 +32,7 @@ namespace Tzkt.Data.Models
         public List<OriginationOperation> SentOriginations { get; set; }
         public List<TransactionOperation> SentTransactions { get; set; }
         public List<TransactionOperation> ReceivedTransactions { get; set; }
-        public RevealOperation Reveal { get; set; }
+        public List<RevealOperation> Reveals { get; set; }
         #endregion
     }
 

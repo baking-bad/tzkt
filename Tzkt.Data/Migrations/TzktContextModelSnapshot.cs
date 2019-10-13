@@ -806,8 +806,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("SenderId")
-                        .IsUnique();
+                    b.HasIndex("SenderId");
 
                     b.ToTable("RevealOps");
                 });
@@ -1349,8 +1348,8 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithOne("Reveal")
-                        .HasForeignKey("Tzkt.Data.Models.RevealOperation", "SenderId")
+                        .WithMany("Reveals")
+                        .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

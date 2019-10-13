@@ -97,7 +97,7 @@ namespace Tzkt.Sync
                     delegat.ReceivedDoubleBakingAccusations = null;
                     delegat.ReceivedDoubleEndorsingAccusations = null;
                     delegat.ReceivedTransactions = null;
-                    delegat.Reveal = null;
+                    delegat.Reveals = null;
                     delegat.Revelations = null;
                     delegat.SentDelegations = null;
                     delegat.SentDoubleBakingAccusations = null;
@@ -113,7 +113,7 @@ namespace Tzkt.Sync
                     user.ManagedOriginations = null;
                     user.OriginatedContracts = null;
                     user.ReceivedTransactions = null;
-                    user.Reveal = null;
+                    user.Reveals = null;
                     user.SentDelegations = null;
                     user.SentOriginations = null;
                     user.SentTransactions = null;
@@ -126,7 +126,7 @@ namespace Tzkt.Sync
                     contract.Origination = null;
                     contract.Originator = null;
                     contract.ReceivedTransactions = null;
-                    contract.Reveal = null;
+                    contract.Reveals = null;
                     contract.SentDelegations = null;
                     contract.SentOriginations = null;
                     contract.SentTransactions = null;

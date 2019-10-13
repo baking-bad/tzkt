@@ -987,8 +987,7 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_RevealOps_SenderId",
                 table: "RevealOps",
-                column: "SenderId",
-                unique: true);
+                column: "SenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_Level",
