@@ -149,7 +149,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 blockBaker.FrozenFees -= reveal.BakerFee;
 
                 if (!await Db.RevealOps.AnyAsync(x => x.SenderId == sender.Id && x.Counter < reveal.Counter))
-                    sender.Operations &= ~Operations.Delegations;
+                    sender.Operations &= ~Operations.Reveals;
 
                 sender.Counter = Math.Min(sender.Counter, reveal.Counter - 1);
                 #endregion

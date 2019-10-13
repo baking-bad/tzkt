@@ -64,7 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #endregion
 
                 #region apply operation
-                sender.Balance = activation.Balance;
+                sender.Balance += activation.Balance;
 
                 sender.Operations |= Operations.Activations;
                 block.Operations |= Operations.Activations;
@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public override async Task Revert()
         {
             if (Activations == null)
                 throw new Exception("Commit is not initialized");
@@ -85,15 +85,25 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 #region entities
                 var sender = activation.Account;
+
+                Db.TryAttach(sender);
                 #endregion
 
-                Db.Accounts.Remove(sender);
-                Cache.RemoveAccount(sender);
+                #region revert operation
+                sender.Balance -= activation.Balance;
+
+                if (!await Db.ActivationOps.AnyAsync(x => x.AccountId == sender.Id && x.Level < activation.Level))
+                    sender.Operations &= ~Operations.Activations;
+                #endregion
+
+                if (sender.Operations == Operations.None && sender.Counter > 0)
+                {
+                    Db.Accounts.Remove(sender);
+                    Cache.RemoveAccount(sender);
+                }
 
                 Db.ActivationOps.Remove(activation);
             }
-
-            return Task.CompletedTask;
         }
 
         #region static
