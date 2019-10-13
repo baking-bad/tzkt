@@ -53,7 +53,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
                     var manager = (User)await Cache.GetAccountAsync(origination.Manager);
-                    var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Delegate);
+                    var delegat = await Cache.GetAccountAsync(origination.Delegate) as Data.Models.Delegate;
+                    // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
                     var contract = origination.Metadata.Result.Status == "applied" ? 
                         new Contract
