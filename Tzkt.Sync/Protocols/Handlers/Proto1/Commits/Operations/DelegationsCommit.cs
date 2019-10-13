@@ -11,12 +11,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class DelegationsCommit : ProtocolCommit
     {
-        #region constants
-        const int BlocksPerCycle = 4096;
-        #endregion
-
         public List<DelegationOperation> Delegations { get; private set; }
         public HashSet<string> Activations { get; private set; }
+        public Protocol Protocol { get; private set; }
 
         public DelegationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
@@ -26,6 +23,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
 
             Activations = new HashSet<string>();
+            Protocol = await Cache.GetCurrentProtocolAsync();
             Delegations = await Db.DelegationOps.Include(x => x.Parent).Where(x => x.Level == block.Level).ToListAsync();
             foreach (var op in Delegations)
             {
@@ -50,6 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             parsedBlock.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(parsedBlock.BakerId);
 
             Activations = new HashSet<string>();
+            Protocol = await Cache.GetProtocolAsync(block.Protocol);
             Delegations = new List<DelegationOperation>();
             foreach (var op in rawBlock.Operations[3])
             {
@@ -208,7 +207,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         {
                             var prevState = await GetDelegateAsync(delegation.Level - 1, sender.Address);
                             if (prevState.Deactivated)
-                                await DeactivateDelegate(delegation, (prevState.GracePeriod + 1) * BlocksPerCycle);
+                                await DeactivateDelegate(delegation, (prevState.GracePeriod + 1) * Protocol.BlocksPerCycle);
                         }
                     }
                     else

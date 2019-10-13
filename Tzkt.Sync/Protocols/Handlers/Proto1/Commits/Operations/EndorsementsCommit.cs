@@ -9,18 +9,16 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class EndorsementsCommit : ProtocolCommit
     {
-        #region constants
-        protected virtual int EndorsementDeposit => 0;
-        protected virtual int EndorsementReward => 0;
-        #endregion
-
         public List<EndorsementOperation> Endorsements { get; protected set; }
+        public Protocol Protocol { get; private set; }
 
         public EndorsementsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
         public override async Task Init()
         {
             var block = await Cache.GetCurrentBlockAsync();
+
+            Protocol = await Cache.GetCurrentProtocolAsync();
             Endorsements = await Db.EndorsementOps.Where(x => x.Level == block.Level).ToListAsync();
             foreach (var op in Endorsements)
             {
@@ -34,6 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var rawBlock = block as RawBlock;
             var parsedBlock = FindCommit<BlockCommit>().Block;
 
+            Protocol = await Cache.GetProtocolAsync(block.Protocol);
             Endorsements = new List<EndorsementOperation>();
             foreach (var op in rawBlock.Operations[0])
             {
@@ -72,7 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #region apply operation
                 sender.Balance += endorsement.Reward;
                 sender.FrozenRewards += endorsement.Reward;
-                sender.FrozenDeposits += EndorsementDeposit * endorsement.Slots;
+                sender.FrozenDeposits += Protocol.EndorsementDeposit * endorsement.Slots;
 
                 sender.Operations |= Operations.Endorsements;
                 block.Operations |= Operations.Endorsements;
@@ -103,7 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #region apply operation
                 sender.Balance -= endorsement.Reward;
                 sender.FrozenRewards -= endorsement.Reward;
-                sender.FrozenDeposits -= EndorsementDeposit * endorsement.Slots;
+                sender.FrozenDeposits -= Protocol.EndorsementDeposit * endorsement.Slots;
 
                 if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Level < endorsement.Level))
                     sender.Operations &= ~Operations.Endorsements;

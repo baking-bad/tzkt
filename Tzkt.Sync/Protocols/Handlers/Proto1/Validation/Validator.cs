@@ -10,15 +10,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class Validator : IValidator
     {
-        #region constants
-        protected virtual int BlocksPerCycle => 4096;
-        protected virtual int ByteCost => 1000;
-        protected virtual int OriginationCost => 257_000;
-        protected virtual int EndorsementDeposit => 0;
-        protected virtual int EndorsementReward => 0;
-        #endregion
-
         readonly CacheService Cache;
+        Protocol Protocol;
 
         public Validator(ProtocolHandler protocol)
         {
@@ -27,6 +20,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task<IBlock> ValidateBlock(IBlock block)
         {
+            Protocol = await Cache.GetProtocolAsync(block.Protocol);
+
             if (!(block is Proto1.RawBlock rawBlock))
                 throw new ValidationException("invalid raw block type");
 
@@ -47,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (rawBlock.Metadata.BalanceUpdates.Count > 2)
             {
-                if (rawBlock.Level % BlocksPerCycle != 0)
+                if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
                     throw new ValidationException("Unexpected freezer updates");
 
                 throw new NotImplementedException();
@@ -134,11 +129,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ?? throw new ValidationException("invalid delegation fee balance updates");
 
                 if (contractUpdate.Contract != endorsement.Metadata.Delegate ||
-                    contractUpdate.Change != endorsement.Metadata.Slots.Count * EndorsementDeposit)
+                    contractUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
                     throw new ValidationException("invalid endorsement contract update");
 
                 if (depostisUpdate.Delegate != endorsement.Metadata.Delegate ||
-                    depostisUpdate.Change != endorsement.Metadata.Slots.Count * EndorsementDeposit)
+                    depostisUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
                     throw new ValidationException("invalid endorsement depostis update");
 
                 if (rewardsUpdate.Delegate != endorsement.Metadata.Delegate ||
@@ -188,7 +183,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     transaction.Source,
                     transaction.Destination,
                     transaction.Amount,
-                    transaction.Metadata.Result.PaidStorageSizeDiff * ByteCost);
+                    transaction.Metadata.Result.PaidStorageSizeDiff * Protocol.ByteCost);
 
             if (transaction.Metadata.InternalResults?.Count > 0)
             {
@@ -205,7 +200,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         internalTransaction.Source,
                         internalTransaction.Destination,
                         internalTransaction.Amount,
-                        internalTransaction.Result.PaidStorageSizeDiff * ByteCost,
+                        internalTransaction.Result.PaidStorageSizeDiff * Protocol.ByteCost,
                         transaction.Source);
                 }
             }
@@ -248,6 +243,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         }
 
         long GetEndorsementReward(int slots, int priority)
-            => (long)Math.Round(slots * EndorsementReward / (priority + 1.0));
+            => (long)Math.Round(slots * Protocol.EndorsementReward / (priority + 1.0));
     }
 }

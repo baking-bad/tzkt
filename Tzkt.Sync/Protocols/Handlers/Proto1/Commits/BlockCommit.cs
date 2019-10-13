@@ -8,33 +8,14 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class BlockCommit : ProtocolCommit
     {
-        #region constants
-        protected virtual int PreservedCycles => 5;
-
-        protected virtual int BlocksPerCycle => 4096;
-        protected virtual int BlocksPerCommitment => 32;
-        protected virtual int BlocksPerSnapshot => 256;
-        protected virtual int BlocksPerVoting => 32_768;
-
-        protected virtual int TokensPerRoll => 10_000;
-
-        protected virtual int ByteCost => 1000;
-        protected virtual int OriginationCost => 257_000;
-        protected virtual int NonceRevelationReward => 125_000;
-
-        protected virtual int BlockDeposit => 0;
-        protected virtual int EndorsementDeposit => 0;
-
-        protected virtual int BlockReward => 0;
-        protected virtual int EndorsementReward => 0;
-        #endregion
-
         public Block Block { get; protected set; }
+        public Protocol Protocol { get; private set; }
 
         public BlockCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
         public override async Task Init()
         {
+            Protocol = await Cache.GetCurrentProtocolAsync();
             Block = await Cache.GetCurrentBlockAsync();
         }
 
@@ -42,6 +23,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var rawBlock = block as RawBlock;
 
+            Protocol = await Cache.GetProtocolAsync(block.Protocol);
             Block = new Block
             {
                 Hash = rawBlock.Hash,
@@ -65,9 +47,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region balances
-            baker.Balance += BlockReward;
-            baker.FrozenRewards += BlockReward;
-            baker.FrozenDeposits += BlockDeposit;
+            baker.Balance += Protocol.BlockReward;
+            baker.FrozenRewards += Protocol.BlockReward;
+            baker.FrozenDeposits += Protocol.BlockDeposit;
             #endregion
 
             Db.Blocks.Add(Block);
@@ -86,9 +68,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region balances
-            baker.Balance -= BlockReward;
-            baker.FrozenRewards -= BlockReward;
-            baker.FrozenDeposits -= BlockDeposit;
+            baker.Balance -= Protocol.BlockReward;
+            baker.FrozenRewards -= Protocol.BlockReward;
+            baker.FrozenDeposits -= Protocol.BlockDeposit;
             #endregion
 
             Db.Blocks.Remove(Block);            

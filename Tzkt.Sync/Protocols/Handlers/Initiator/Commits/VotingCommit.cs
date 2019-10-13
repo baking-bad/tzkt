@@ -8,10 +8,6 @@ namespace Tzkt.Sync.Protocols.Initiator
 {
     class VotingCommit : ProtocolCommit
     {
-        #region constants
-        const int BlocksPerVotingPeriod = 32768;
-        #endregion
-
         public VotingPeriod VotingPeriod { get; private set; }
 
         public VotingCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
@@ -21,16 +17,17 @@ namespace Tzkt.Sync.Protocols.Initiator
             VotingPeriod = await Db.VotingPeriods.Include(x => x.Epoch).SingleAsync();
         }
 
-        public override Task Init(IBlock block)
+        public override async Task Init(IBlock block)
         {
+            var protocol = await Cache.GetProtocolAsync(block.Protocol);
+
             VotingPeriod = new ProposalPeriod
             {
                 Epoch = new VotingEpoch { Level = block.Level },
                 Kind = VotingPeriods.Proposal,
                 StartLevel = block.Level,
-                EndLevel = BlocksPerVotingPeriod
+                EndLevel = protocol.BlocksPerVoting
             };
-            return Task.CompletedTask;
         }
 
         public override Task Apply()

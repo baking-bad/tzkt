@@ -11,12 +11,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class TransactionsCommit : ProtocolCommit
     {
-        #region constants
-        protected virtual int ByteCost => 1000;
-        protected virtual int OriginationCost => 257_000;
-        #endregion
-
         public List<TransactionOperation> Transactions { get; protected set; }
+        public Protocol Protocol { get; private set; }
 
         public TransactionsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
@@ -25,6 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var block = await Cache.GetCurrentBlockAsync();
             block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
 
+            Protocol = await Cache.GetCurrentProtocolAsync();
             Transactions = await Db.TransactionOps.Where(x => x.Level == block.Level).ToListAsync();
             foreach (var op in Transactions)
             {
@@ -47,6 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var parsedBlock = FindCommit<BlockCommit>().Block;
             parsedBlock.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(parsedBlock.BakerId);
 
+            Protocol = await Cache.GetProtocolAsync(block.Protocol);
             Transactions = new List<TransactionOperation>();
             foreach (var op in rawBlock.Operations[3])
             {
@@ -94,7 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 GasUsed = content.Metadata.Result.ConsumedGas,
                 StorageUsed = content.Metadata.Result.PaidStorageSizeDiff,
                 StorageFee = content.Metadata.Result.PaidStorageSizeDiff > 0
-                    ? (int?)(content.Metadata.Result.PaidStorageSizeDiff * ByteCost)
+                    ? (int?)(content.Metadata.Result.PaidStorageSizeDiff * Protocol.ByteCost)
                     : null,
             };
         }
@@ -128,7 +126,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 },
                 GasUsed = content.Result.ConsumedGas,
                 StorageUsed = content.Result.PaidStorageSizeDiff,
-                StorageFee = content.Result.PaidStorageSizeDiff > 0 ? (int?)(content.Result.PaidStorageSizeDiff * ByteCost) : null,
+                StorageFee = content.Result.PaidStorageSizeDiff > 0 ? (int?)(content.Result.PaidStorageSizeDiff * Protocol.ByteCost) : null,
             };
         }
 

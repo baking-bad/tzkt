@@ -8,22 +8,34 @@ namespace Tzkt.Sync.Protocols.Genesis
     class ProtoCommit : ProtocolCommit
     {
         public Protocol Protocol { get; private set; }
+        public Protocol NextProtocol { get; private set; }
 
         public ProtoCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
         public override async Task Init()
         {
-            Protocol = await Cache.GetCurrentProtocolAsync();
+            var state = await Cache.GetAppStateAsync();
+
+            Protocol = await Cache.GetProtocolAsync(state.Protocol);
+            NextProtocol = await Cache.GetProtocolAsync(state.NextProtocol);
         }
 
         public override async Task Init(IBlock block)
         {
-            Protocol = await Cache.GetProtocolAsync(block.Protocol);
+            var rawBlock = block as RawBlock;
+
+            Protocol = await Cache.GetProtocolAsync(rawBlock.Metadata.Protocol);
+            NextProtocol = await Cache.GetProtocolAsync(rawBlock.Metadata.NextProtocol);
+            NextProtocol.Code++;
         }
 
         public override Task Apply()
         {
-            Db.Attach(Protocol);
+            if (Protocol == null)
+                throw new Exception("Commit is not initialized");
+
+            Db.Protocols.Add(Protocol);
+            Db.Protocols.Add(NextProtocol);
             Protocol.Weight++;
 
             return Task.CompletedTask;
@@ -31,13 +43,15 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         public override Task Revert()
         {
-            Db.Attach(Protocol);
+            if (Protocol == null)
+                throw new Exception("Commit is not initialized");
 
-            if (--Protocol.Weight == 0)
-            {
-                Db.Protocols.Remove(Protocol);
-                Cache.RemoveProtocol(Protocol);
-            }
+            Db.Protocols.Remove(Protocol);
+            Db.Protocols.Remove(NextProtocol);
+
+            Cache.RemoveProtocol(Protocol);
+            Cache.RemoveProtocol(NextProtocol);
+
             return Task.CompletedTask;
         }
 
