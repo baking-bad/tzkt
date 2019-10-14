@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class OriginationsCommit : ProtocolCommit
     {
-        public List<OriginationOperation> Originations { get; protected set; }
+        public List<OriginationOperation> Originations { get; private set; }
         public Protocol Protocol { get; private set; }
 
         public OriginationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
@@ -26,12 +26,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             foreach (var op in Originations)
             {
                 op.Block = block;
-                op.Sender = await Cache.GetAccountAsync(op.SenderId);
+                op.Sender ??= await Cache.GetAccountAsync(op.SenderId);
                 op.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(op.Sender.DelegateId);
 
-                op.Manager = (User)await Cache.GetAccountAsync(op.ManagerId);
-                op.Contract = (Contract)await Cache.GetAccountAsync(op.ContractId);
-                op.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(op.DelegateId);
+                op.Contract ??= (Contract)await Cache.GetAccountAsync(op.ContractId);
+                op.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(op.DelegateId);
             }
         }
 
@@ -52,7 +51,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var sender = await Cache.GetAccountAsync(origination.Source);
                     sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
-                    var manager = (User)await Cache.GetAccountAsync(origination.Manager);
                     var delegat = await Cache.GetAccountAsync(origination.Delegate) as Data.Models.Delegate;
                     // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
@@ -64,9 +62,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                             Counter = 0,
                             Delegate = delegat,
                             DelegationLevel = delegat != null ? (int?)parsedBlock.Level : null,
-                            Manager = manager,
+                            Manager = sender,
                             Operations = Operations.Originations,
-                            Originator = sender,
                             Staked = delegat?.Staked ?? false,
                             Type = AccountType.Contract
                         }
@@ -85,7 +82,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                         GasLimit = origination.GasLimit,
                         StorageLimit = origination.StorageLimit,
                         Sender = sender,
-                        Manager = manager,
                         Delegate = delegat,
                         Contract = contract,
 
@@ -134,6 +130,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.Balance -= origination.BakerFee;
                 if (senderDelegate != null) senderDelegate.StakingBalance -= origination.BakerFee;
                 blockBaker.FrozenFees += origination.BakerFee;
+                blockBaker.Balance += origination.BakerFee;
+                blockBaker.StakingBalance += origination.BakerFee;
 
                 sender.Operations |= Operations.Originations;
                 contract.Operations |= Operations.Originations;
@@ -158,6 +156,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (contractDelegate != null)
                     {
+                        contractDelegate.Delegators++;
                         contractDelegate.StakingBalance += contract.Balance;
                     }
                 }
@@ -210,6 +209,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (contractDelegate != null)
                     {
+                        contractDelegate.Delegators--;
                         contractDelegate.StakingBalance -= contract.Balance;
                     }
                 }
@@ -219,14 +219,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.Balance += origination.BakerFee;
                 if (senderDelegate != null) senderDelegate.StakingBalance += origination.BakerFee;
                 blockBaker.FrozenFees -= origination.BakerFee;
+                blockBaker.Balance -= origination.BakerFee;
+                blockBaker.StakingBalance -= origination.BakerFee;
 
-                if (!await Db.OriginationOps.AnyAsync(x => x.SenderId == sender.Id && x.Counter < origination.Counter))
+                if (!await Db.OriginationOps.AnyAsync(x => x.SenderId == sender.Id && x.Level < origination.Level))
                     sender.Operations &= ~Operations.Originations;
 
                 sender.Counter = Math.Min(sender.Counter, origination.Counter - 1);
                 #endregion
 
                 Db.Contracts.Remove(contract);
+                Cache.RemoveAccount(contract);
+
                 Db.OriginationOps.Remove(origination);
             }
         }

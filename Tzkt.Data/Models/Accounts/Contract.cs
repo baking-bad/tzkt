@@ -7,14 +7,10 @@ namespace Tzkt.Data.Models
     public class Contract : Account
     {
         public int? ManagerId { get; set; }
-        public int? OriginatorId { get; set; }
 
         #region relations
         [ForeignKey(nameof(ManagerId))]
-        public User Manager { get; set; }
-
-        [ForeignKey(nameof(OriginatorId))]
-        public Account Originator { get; set; }
+        public Account Manager { get; set; }
         #endregion
 
         #region indirect relations
@@ -29,13 +25,8 @@ namespace Tzkt.Data.Models
             #region relations
             modelBuilder.Entity<Contract>()
                 .HasOne(x => x.Manager)
-                .WithMany(x => x.ManagedContracts)
-                .HasForeignKey(x => x.ManagerId);
-
-            modelBuilder.Entity<Contract>()
-                .HasOne(x => x.Originator)
                 .WithMany(x => x.OriginatedContracts)
-                .HasForeignKey(x => x.OriginatorId);
+                .HasForeignKey(x => x.ManagerId);
             #endregion
         }
     }

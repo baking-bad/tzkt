@@ -11,8 +11,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class RevealsCommit : ProtocolCommit
     {
-        public List<RevealOperation> Reveals { get; protected set; }
-        public Dictionary<string, string> PubKeys { get; protected set; }
+        public List<RevealOperation> Reveals { get; private set; }
+        public Dictionary<string, string> PubKeys { get; private set; }
 
         public RevealsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
@@ -45,6 +45,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var reveal = content as RawRevealContent;
                     var sender = await Cache.GetAccountAsync(reveal.Source);
                     sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+
+                    if (Db.Entry(sender).State == EntityState.Added ||
+                        sender is User && !(sender is Data.Models.Delegate) && sender.Balance == 0)
+                        sender.Counter = reveal.GlobalCounter;
 
                     PubKeys[reveal.Source] = reveal.PublicKey;
 
@@ -93,6 +97,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.Balance -= reveal.BakerFee;
                 if (senderDelegate != null) senderDelegate.StakingBalance -= reveal.BakerFee;
                 blockBaker.FrozenFees += reveal.BakerFee;
+                blockBaker.Balance += reveal.BakerFee;
+                blockBaker.StakingBalance += reveal.BakerFee;
 
                 sender.Operations |= Operations.Reveals;
                 block.Operations |= Operations.Reveals;
@@ -147,8 +153,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.Balance += reveal.BakerFee;
                 if (senderDelegate != null) senderDelegate.StakingBalance += reveal.BakerFee;
                 blockBaker.FrozenFees -= reveal.BakerFee;
+                blockBaker.Balance -= reveal.BakerFee;
+                blockBaker.StakingBalance -= reveal.BakerFee;
 
-                if (!await Db.RevealOps.AnyAsync(x => x.SenderId == sender.Id && x.Counter < reveal.Counter))
+                if (!await Db.RevealOps.AnyAsync(x => x.SenderId == sender.Id && x.Level < reveal.Level))
                     sender.Operations &= ~Operations.Reveals;
 
                 sender.Counter = Math.Min(sender.Counter, reveal.Counter - 1);

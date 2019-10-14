@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class ActivationsCommit : ProtocolCommit
     {
-        public List<ActivationOperation> Activations { get; protected set; }
+        public List<ActivationOperation> Activations { get; private set; }
 
         public ActivationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 

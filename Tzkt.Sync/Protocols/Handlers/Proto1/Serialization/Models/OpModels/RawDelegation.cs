@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class RawDelegationContent : IOperationContent
+    class RawDelegationContent : IManagerOperationContent
     {
         [JsonPropertyName("source")]
         public string Source { get; set; }
@@ -26,6 +26,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         [JsonPropertyName("metadata")]
         public RawDelegationContentMetadata Metadata { get; set; }
+
+        [JsonIgnore]
+        public int GlobalCounter { get; set; }
 
         #region validation
         public bool IsValidFormat() =>

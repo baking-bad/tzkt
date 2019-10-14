@@ -20,6 +20,12 @@ namespace Tzkt.Sync.Protocols.Proto1
         #endregion
     }
 
+    public interface IManagerOperationContent : IOperationContent
+    {
+        [JsonIgnore]
+        int GlobalCounter { get; set; }
+    }
+
     public interface IOperationContent
     {
         bool IsValidFormat();

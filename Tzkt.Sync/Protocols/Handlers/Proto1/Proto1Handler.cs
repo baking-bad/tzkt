@@ -16,11 +16,19 @@ namespace Tzkt.Sync.Protocols
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
-        public Proto1Handler(TezosNode node, TzktContext db, CacheService cache, ILogger<Proto1Handler> logger)
-            : base(node, db, cache, logger)
+        public Proto1Handler(TezosNode node, TzktContext db, CacheService cache, DiagnosticService diagnostics, ILogger<Proto1Handler> logger)
+            : base(node, db, cache, diagnostics, logger)
         {
             Serializer = new Serializer();
             Validator = new Validator(this);
+        }
+
+        public override Task<List<IPreprocessor>> GetPreprocessors(IBlock block)
+        {
+            return Task.FromResult(new List<IPreprocessor>
+            { 
+                new CounterPreprocessor(this, block as RawBlock)
+            });
         }
 
         public override async Task<List<ICommit>> GetCommits(IBlock block)

@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class TransactionsCommit : ProtocolCommit
     {
-        public List<TransactionOperation> Transactions { get; protected set; }
+        public List<TransactionOperation> Transactions { get; private set; }
         public Protocol Protocol { get; private set; }
 
         public TransactionsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
@@ -56,7 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (txContent.Metadata.InternalResults?.Count > 0)
                         foreach (var internalContent in txContent.Metadata.InternalResults.Where(x => x is RawInternalTransactionResult))
-                            Transactions.Add(await ParseInternalTransaction(transaction, internalContent as RawInternalTransactionResult));
+                            Transactions.Add(await ParseInternalTransaction(transaction, txContent, internalContent as RawInternalTransactionResult));
                 }
             }
         }
@@ -68,6 +68,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var target = await Cache.GetAccountAsync(content.Destination);
             target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
+
+            if (Db.Entry(target).State == EntityState.Added ||
+                target is User && !(target is Data.Models.Delegate) && target.Balance == 0)
+                target.Counter = content.GlobalCounter;
 
             return new TransactionOperation
             {
@@ -97,13 +101,17 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
         }
 
-        async Task<TransactionOperation> ParseInternalTransaction(TransactionOperation parent, RawInternalTransactionResult content)
+        async Task<TransactionOperation> ParseInternalTransaction(TransactionOperation parent, RawTransactionContent parentContent, RawInternalTransactionResult content)
         {
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
             var target = await Cache.GetAccountAsync(content.Destination);
             target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
+
+            if (Db.Entry(target).State == EntityState.Added ||
+                target is User && !(target is Data.Models.Delegate) && target.Balance == 0)
+                target.Counter = parentContent.GlobalCounter;
 
             return new TransactionOperation
             {
@@ -170,6 +178,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.Balance -= transaction.BakerFee;
             if (senderDelegate != null) senderDelegate.StakingBalance -= transaction.BakerFee;
             blockBaker.FrozenFees += transaction.BakerFee;
+            blockBaker.Balance += transaction.BakerFee;
+            blockBaker.StakingBalance += transaction.BakerFee;
 
             sender.Operations |= Operations.Transactions;
             target.Operations |= Operations.Transactions;
@@ -347,11 +357,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.Balance += transaction.BakerFee;
             if (senderDelegate != null) senderDelegate.StakingBalance += transaction.BakerFee;
             blockBaker.FrozenFees -= transaction.BakerFee;
+            blockBaker.Balance -= transaction.BakerFee;
+            blockBaker.StakingBalance -= transaction.BakerFee;
 
-            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Counter < transaction.Counter))
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Level < transaction.Level))
                 sender.Operations &= ~Operations.Transactions;
 
-            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Counter < transaction.Counter))
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Level < transaction.Level))
                 target.Operations &= ~Operations.Transactions;
 
             sender.Counter = Math.Min(sender.Counter, transaction.Counter - 1);
@@ -359,6 +371,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (target.Operations == Operations.None && target.Counter > 0)
                 Db.Accounts.Remove(target);
+
+            var list = Db.ChangeTracker.Entries().ToList();
 
             Db.TransactionOps.Remove(transaction);
         }
@@ -418,10 +432,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Counter < transaction.Counter))
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Level < transaction.Level))
                 sender.Operations &= ~Operations.Transactions;
 
-            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Counter < transaction.Counter))
+            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Level < transaction.Level))
                 target.Operations &= ~Operations.Transactions;
             #endregion
 

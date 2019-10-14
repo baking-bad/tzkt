@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class RawOriginationContent : IOperationContent
+    class RawOriginationContent : IManagerOperationContent
     {
         [JsonPropertyName("source")]
         public string Source { get; set; }
@@ -21,8 +21,14 @@ namespace Tzkt.Sync.Protocols.Proto1
         [JsonPropertyName("storage_limit")]
         public int StorageLimit { get; set; }
 
+        [JsonPropertyName("managerPubkey")]
+        public string Manager1 { get; set; }
+
         [JsonPropertyName("manager_pubkey")]
-        public string Manager { get; set; }
+        public string Manager2 { get; set; }
+
+        public string Manager => Manager1 ?? Manager2;
+        // WTF: [level:109] - different nodes return different json
 
         [JsonPropertyName("balance")]
         public long Balance { get; set; }
@@ -32,6 +38,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         [JsonPropertyName("metadata")]
         public RawOriginationContentMetadata Metadata { get; set; }
+
+        [JsonIgnore]
+        public int GlobalCounter { get; set; }
 
         #region validation
         public bool IsValidFormat() =>

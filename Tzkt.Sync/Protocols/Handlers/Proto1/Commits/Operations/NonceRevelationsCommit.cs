@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class NonceRevelationsCommit : ProtocolCommit
     {
-        public List<NonceRevelationOperation> Revelations { get; protected set; }
+        public List<NonceRevelationOperation> Revelations { get; private set; }
 
         public NonceRevelationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 

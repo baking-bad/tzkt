@@ -118,6 +118,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.Balance -= delegation.BakerFee;
                 if (senderDelegate != null) senderDelegate.StakingBalance -= delegation.BakerFee;
                 blockBaker.FrozenFees += delegation.BakerFee;
+                blockBaker.Balance += delegation.BakerFee;
+                blockBaker.StakingBalance += delegation.BakerFee;
 
                 sender.Operations |= Operations.Delegations;
                 block.Operations |= Operations.Delegations;
@@ -213,7 +215,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     else
                     {
                         if (prevDelegate != null)
-                            await SetDelegate(sender, newDelegate, delegation.Level);
+                            await SetDelegate(sender, prevDelegate, delegation.Level);
                     }
                 }
                 #endregion
@@ -222,8 +224,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.Balance += delegation.BakerFee;
                 if (prevDelegate != null) prevDelegate.StakingBalance += delegation.BakerFee;
                 blockBaker.FrozenFees -= delegation.BakerFee;
+                blockBaker.Balance -= delegation.BakerFee;
+                blockBaker.StakingBalance -= delegation.BakerFee;
 
-                if (!await Db.DelegationOps.AnyAsync(x => x.SenderId == delegation.SenderId && x.Counter < delegation.Counter))
+                if (!await Db.DelegationOps.AnyAsync(x => x.SenderId == delegation.SenderId && x.Level < delegation.Level))
                     delegation.Sender.Operations &= ~Operations.Delegations;
 
                 sender.Counter = Math.Min(sender.Counter, delegation.Counter - 1);
@@ -251,13 +255,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = user.Id,
-                ManagedContracts = user.ManagedContracts,
-                ManagedOriginations = user.ManagedOriginations,
                 Operations = user.Operations,
                 OriginatedContracts = user.OriginatedContracts,
                 PublicKey = user.PublicKey,
                 ReceivedTransactions = user.ReceivedTransactions,
-                Reveals = user.Reveals,
+                SentReveals = user.SentReveals,
                 SentDelegations = user.SentDelegations,
                 SentOriginations = user.SentOriginations,
                 SentTransactions = user.SentTransactions,
@@ -315,13 +317,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = delegat.Id,
-                ManagedContracts = delegat.ManagedContracts,
-                ManagedOriginations = delegat.ManagedOriginations,
                 Operations = delegat.Operations,
                 OriginatedContracts = delegat.OriginatedContracts,
                 PublicKey = delegat.PublicKey,
                 ReceivedTransactions = delegat.ReceivedTransactions,
-                Reveals = delegat.Reveals,
+                SentReveals = delegat.SentReveals,
                 SentDelegations = delegat.SentDelegations,
                 SentOriginations = delegat.SentOriginations,
                 SentTransactions = delegat.SentTransactions,
@@ -361,9 +361,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (op.DelegateId == delegat.Id)
                     op.Delegate = null;
-
-                if (op.ManagerId == delegat.Id)
-                    op.Manager = user;
             }
             #endregion
 
@@ -385,7 +382,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Db.TransactionOps.Update(op);
 
             foreach (var op in FindCommit<OriginationsCommit>().Originations
-                .Where(x => x.SenderId == user.Id || x.DelegateId == null && x.Sender is User || x.ManagerId == user.Id))
+                .Where(x => x.SenderId == user.Id || x.DelegateId == null && x.Sender is User))
                 Db.OriginationOps.Update(op);
             #endregion
 

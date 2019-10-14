@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class EndorsementsCommit : ProtocolCommit
     {
-        public List<EndorsementOperation> Endorsements { get; protected set; }
+        public List<EndorsementOperation> Endorsements { get; private set; }
         public Protocol Protocol { get; private set; }
 
         public EndorsementsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }

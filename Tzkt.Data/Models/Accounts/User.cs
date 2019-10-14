@@ -8,10 +8,7 @@ namespace Tzkt.Data.Models
         public string PublicKey { get; set; }
 
         #region indirect relations
-        public List<Contract> ManagedContracts { get; set; }
-
         public ActivationOperation Activation { get; set; }
-        public List<OriginationOperation> ManagedOriginations { get; set; }
         #endregion
     }
 

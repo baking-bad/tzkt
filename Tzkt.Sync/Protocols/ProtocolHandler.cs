@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -20,12 +21,15 @@ namespace Tzkt.Sync
         public readonly TzktContext Db;
         public readonly CacheService Cache;
         public readonly ILogger Logger;
+        
+        readonly DiagnosticService Diagnostics;
 
-        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, ILogger logger)
+        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, DiagnosticService diagnostics, ILogger logger)
         {
             Node = node;
             Db = db;
             Cache = cache;
+            Diagnostics = diagnostics;
             Logger = logger;
         }
 
@@ -37,12 +41,19 @@ namespace Tzkt.Sync
             Logger.LogDebug("Validating block...");
             rawBlock = await Validator.ValidateBlock(rawBlock);
 
+            Logger.LogDebug("Preprocessing...");
+            foreach (var preprocessor in await GetPreprocessors(rawBlock))
+                await preprocessor.Run();
+
             Logger.LogDebug("Init commits...");
             var commits = await GetCommits(rawBlock);
 
             Logger.LogDebug("Applying commits...");
             foreach (var commit in commits)
                 await commit.Apply();
+
+            Logger.LogDebug("Diagnostics...");
+            await Diagnostics.Run(rawBlock.Level);
 
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
@@ -61,6 +72,9 @@ namespace Tzkt.Sync
             foreach (var commit in commits)
                 await commit.Revert();
 
+            Logger.LogDebug("Diagnostics...");
+            await Diagnostics.Run((await Cache.GetAppStateAsync()).Level);
+
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
 
@@ -68,6 +82,8 @@ namespace Tzkt.Sync
 
             return await Cache.GetAppStateAsync();
         }
+
+        public abstract Task<List<IPreprocessor>> GetPreprocessors(IBlock block);
 
         public abstract Task<List<ICommit>> GetCommits(IBlock block);
 
@@ -88,8 +104,6 @@ namespace Tzkt.Sync
                     delegat.DelegatedAccounts = null;
                     delegat.DelegatedOriginations = null;
                     delegat.Endorsements = null;
-                    delegat.ManagedContracts = null;
-                    delegat.ManagedOriginations = null;
                     delegat.OriginatedContracts = null;
                     delegat.Proposals = null;
                     delegat.PushedProposals = null;
@@ -97,7 +111,7 @@ namespace Tzkt.Sync
                     delegat.ReceivedDoubleBakingAccusations = null;
                     delegat.ReceivedDoubleEndorsingAccusations = null;
                     delegat.ReceivedTransactions = null;
-                    delegat.Reveals = null;
+                    delegat.SentReveals = null;
                     delegat.Revelations = null;
                     delegat.SentDelegations = null;
                     delegat.SentDoubleBakingAccusations = null;
@@ -109,11 +123,9 @@ namespace Tzkt.Sync
                 {
                     user.Activation = null;
                     user.Delegate = null;
-                    user.ManagedContracts = null;
-                    user.ManagedOriginations = null;
                     user.OriginatedContracts = null;
                     user.ReceivedTransactions = null;
-                    user.Reveals = null;
+                    user.SentReveals = null;
                     user.SentDelegations = null;
                     user.SentOriginations = null;
                     user.SentTransactions = null;
@@ -124,9 +136,8 @@ namespace Tzkt.Sync
                     contract.Manager = null;
                     contract.OriginatedContracts = null;
                     contract.Origination = null;
-                    contract.Originator = null;
                     contract.ReceivedTransactions = null;
-                    contract.Reveals = null;
+                    contract.SentReveals = null;
                     contract.SentDelegations = null;
                     contract.SentOriginations = null;
                     contract.SentTransactions = null;

@@ -10,15 +10,21 @@ using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols
 {
-    public class Proto3Handler : ProtocolHandler
+    class Proto3Handler : ProtocolHandler
     {
         public override string Protocol => throw new NotImplementedException();
         public override ISerializer Serializer => throw new NotImplementedException();
         public override IValidator Validator => throw new NotImplementedException();
 
-        public Proto3Handler(TezosNode node, TzktContext db, CacheService cache, ILogger<Proto3Handler> logger) : base(node, db, cache, logger)
+        public Proto3Handler(TezosNode node, TzktContext db, CacheService cache, DiagnosticService diagnostics, ILogger<Proto3Handler> logger)
+            : base(node, db, cache, diagnostics, logger)
         {
 
+        }
+
+        public override Task<List<IPreprocessor>> GetPreprocessors(IBlock block)
+        {
+            return Task.FromResult(new List<IPreprocessor>(0));
         }
 
         public override Task<List<ICommit>> GetReverts()

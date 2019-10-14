@@ -44,7 +44,7 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<RevealOperation>()
                 .HasOne(x => x.Sender)
-                .WithMany(x => x.Reveals)
+                .WithMany(x => x.SentReveals)
                 .HasForeignKey(x => x.SenderId);
             #endregion
         }

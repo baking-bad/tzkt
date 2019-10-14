@@ -32,8 +32,10 @@ namespace Tzkt.Data.Models
         public List<OriginationOperation> SentOriginations { get; set; }
         public List<TransactionOperation> SentTransactions { get; set; }
         public List<TransactionOperation> ReceivedTransactions { get; set; }
-        public List<RevealOperation> Reveals { get; set; }
+        public List<RevealOperation> SentReveals { get; set; }
         #endregion
+
+        public override string ToString() => Address;
     }
 
     public static class AccountModel

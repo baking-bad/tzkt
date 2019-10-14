@@ -38,9 +38,8 @@ namespace Tzkt.Sync
                                 hostContext.Configuration.GetConnectionString("DefaultConnection"));
                         });
 
-                    services.AddMemoryCache();
-
                     services.AddCaches();
+                    services.AddDiagnostics();
                     services.AddTezosNode();
                     services.AddTezosProtocols();
 

@@ -529,9 +529,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ManagerId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("Nonce")
                         .HasColumnType("integer");
 
@@ -570,8 +567,6 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("DelegateId");
 
                     b.HasIndex("Level");
-
-                    b.HasIndex("ManagerId");
 
                     b.HasIndex("OpHash");
 
@@ -943,12 +938,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ManagerId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("OriginatorId")
-                        .HasColumnType("integer");
-
                     b.HasIndex("ManagerId");
-
-                    b.HasIndex("OriginatorId");
 
                     b.HasDiscriminator().HasValue((byte)2);
                 });
@@ -1266,12 +1256,6 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.User", "Manager")
-                        .WithMany("ManagedOriginations")
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
                         .WithMany("InternalOriginations")
                         .HasForeignKey("ParentId");
@@ -1348,7 +1332,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany("Reveals")
+                        .WithMany("SentReveals")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1391,13 +1375,9 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
                 {
-                    b.HasOne("Tzkt.Data.Models.User", "Manager")
-                        .WithMany("ManagedContracts")
-                        .HasForeignKey("ManagerId");
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Originator")
+                    b.HasOne("Tzkt.Data.Models.Account", "Manager")
                         .WithMany("OriginatedContracts")
-                        .HasForeignKey("OriginatorId");
+                        .HasForeignKey("ManagerId");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Delegate", b =>
