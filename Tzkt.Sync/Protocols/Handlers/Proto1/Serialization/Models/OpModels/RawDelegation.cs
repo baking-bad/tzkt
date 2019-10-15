@@ -37,7 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Counter >= 0 &&
             GasLimit >= 0 &&
             StorageLimit >= 0 &&
-            !string.IsNullOrEmpty(Delegate) &&
+            (Delegate == null || Delegate != "") &&
             Metadata?.IsValidFormat() == true;
         #endregion
     }

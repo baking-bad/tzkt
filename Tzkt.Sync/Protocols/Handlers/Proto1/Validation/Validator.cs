@@ -79,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected async Task ValidateActivation(RawActivationContent activation)
         {
             if (await Cache.AccountExistsAsync(activation.Address, AccountType.User) &&
-                (await Cache.GetAccountAsync(activation.Address)).Counter > 0)
+                (await Cache.GetAccountAsync(activation.Address)).Operations.HasFlag(Operations.Activations))
                 throw new ValidationException("account is already activated");
 
             if ((activation.Metadata.BalanceUpdates[0] as ContractUpdate)?.Contract != activation.Address)

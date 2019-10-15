@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Services
 
         public async Task Run(int level)
         {
-            if (level == 0) return;
+            if (level < 4000) return;
 
             var state = Db.ChangeTracker.Entries()
                 .FirstOrDefault(x => x.Entity is AppState).Entity;

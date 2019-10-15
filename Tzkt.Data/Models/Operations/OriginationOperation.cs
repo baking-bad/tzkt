@@ -18,6 +18,10 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
         #endregion
+
+        #region indirect relations
+        public WeirdDelegation WeirdDelegation { get; set; }
+        #endregion
     }
 
     public static class OriginationOperationModel

@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
 
             Protocol = await Cache.GetCurrentProtocolAsync();
-            Originations = await Db.OriginationOps.Where(x => x.Level == block.Level).ToListAsync();
+            Originations = await Db.OriginationOps.Include(x => x.WeirdDelegation).Where(x => x.Level == block.Level).ToListAsync();
             foreach (var op in Originations)
             {
                 op.Block = block;
@@ -51,7 +51,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var sender = await Cache.GetAccountAsync(origination.Source);
                     sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
-                    var delegat = await Cache.GetAccountAsync(origination.Delegate) as Data.Models.Delegate;
+                    var originDelegate = await Cache.GetAccountAsync(origination.Delegate);
+                    var delegat = originDelegate as Data.Models.Delegate;
                     // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
                     var contract = origination.Metadata.Result.Status == "applied" ? 
@@ -95,6 +96,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                         StorageFee = origination.Metadata.Result.PaidStorageSizeDiff * Protocol.ByteCost,
                         AllocationFee = Protocol.OriginationSize * Protocol.ByteCost
                     };
+
+                    if (originDelegate != null && originDelegate.Type != AccountType.Delegate)
+                    {
+                        originationOp.WeirdDelegation = new WeirdDelegation
+                        {
+                            DelegateId = originDelegate.Id,
+                            Level = block.Level,
+                            Origination = originationOp
+                        };
+                    }
 
                     contract.Origination = originationOp;
                     Originations.Add(originationOp);

@@ -665,6 +665,27 @@ namespace Tzkt.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "WeirdDelegations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(nullable: false),
+                    DelegateId = table.Column<int>(nullable: false),
+                    OriginationId = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WeirdDelegations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WeirdDelegations_OriginationOps_OriginationId",
+                        column: x => x.OriginationId,
+                        principalTable: "OriginationOps",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "AppState",
                 columns: new[] { "Id", "Counter", "Hash", "Level", "NextProtocol", "Protocol", "Synced", "Timestamp" },
@@ -995,6 +1016,12 @@ namespace Tzkt.Data.Migrations
                 table: "VotingPeriods",
                 column: "EpochId");
 
+            migrationBuilder.CreateIndex(
+                name: "IX_WeirdDelegations_OriginationId",
+                table: "WeirdDelegations",
+                column: "OriginationId",
+                unique: true);
+
             migrationBuilder.AddForeignKey(
                 name: "FK_ActivationOps_Blocks_Level",
                 table: "ActivationOps",
@@ -1088,22 +1115,25 @@ namespace Tzkt.Data.Migrations
                 name: "EndorsementOps");
 
             migrationBuilder.DropTable(
-                name: "OriginationOps");
-
-            migrationBuilder.DropTable(
                 name: "ProposalOps");
 
             migrationBuilder.DropTable(
                 name: "RevealOps");
 
             migrationBuilder.DropTable(
-                name: "TransactionOps");
+                name: "WeirdDelegations");
 
             migrationBuilder.DropTable(
                 name: "Proposals");
 
             migrationBuilder.DropTable(
+                name: "OriginationOps");
+
+            migrationBuilder.DropTable(
                 name: "VotingPeriods");
+
+            migrationBuilder.DropTable(
+                name: "TransactionOps");
 
             migrationBuilder.DropTable(
                 name: "VotingEpoches");

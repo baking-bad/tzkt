@@ -933,6 +933,30 @@ namespace Tzkt.Data.Migrations
                     b.HasDiscriminator<int>("Kind");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.WeirdDelegation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("DelegateId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OriginationId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OriginationId")
+                        .IsUnique();
+
+                    b.ToTable("WeirdDelegations");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
                 {
                     b.HasBaseType("Tzkt.Data.Models.Account");
@@ -1371,6 +1395,15 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.VotingEpoch", "Epoch")
                         .WithMany("Periods")
                         .HasForeignKey("EpochId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.WeirdDelegation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.OriginationOperation", "Origination")
+                        .WithOne("WeirdDelegation")
+                        .HasForeignKey("Tzkt.Data.Models.WeirdDelegation", "OriginationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
