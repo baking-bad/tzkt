@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public int Level { get; set; }
 
         [JsonPropertyName("metadata")]
-        public RawEndorsementContentMetadata Metadata { get; set; }
+        public RawNonceRevelationContentMetadata Metadata { get; set; }
 
         #region validation
         public bool IsValidFormat() =>

@@ -12,6 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         readonly CacheService Cache;
         Protocol Protocol;
+        int Cycle;
 
         public Validator(ProtocolHandler protocol)
         {
@@ -21,6 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public async Task<IBlock> ValidateBlock(IBlock block)
         {
             Protocol = await Cache.GetProtocolAsync(block.Protocol);
+            Cycle = block.Level / Protocol.BlocksPerCycle;
 
             if (!(block is Proto1.RawBlock rawBlock))
                 throw new ValidationException("invalid raw block type");
@@ -40,8 +42,34 @@ namespace Tzkt.Sync.Protocols.Proto1
                     throw new ValidationException($"invalid deactivated baker {baker}");
             }
 
-            var cycle = rawBlock.Level / Protocol.BlocksPerCycle;
-            if (rawBlock.Metadata.BalanceUpdates.Count > (cycle < 7 ? 2 : 3))
+            if (rawBlock.Metadata.BalanceUpdates.Count > 0)
+            {
+                var contractUpdate = rawBlock.Metadata.BalanceUpdates.FirstOrDefault(x => x is ContractUpdate) as ContractUpdate
+                    ?? throw new ValidationException("invalid block contract balance updates");
+
+                var depostisUpdate = rawBlock.Metadata.BalanceUpdates.FirstOrDefault(x => x is DepositsUpdate) as DepositsUpdate
+                    ?? throw new ValidationException("invalid block depostis balance updates");
+
+                if (contractUpdate.Contract != rawBlock.Metadata.Baker ||
+                    contractUpdate.Change != -8_000_000 * Cycle)
+                    throw new ValidationException("invalid block contract update");
+
+                if (depostisUpdate.Delegate != rawBlock.Metadata.Baker ||
+                    depostisUpdate.Change != 8_000_000 * Cycle)
+                    throw new ValidationException("invalid block depostis update");
+
+                if (Cycle >= 7)
+                {
+                    var rewardsUpdate = rawBlock.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
+                        ?? throw new ValidationException("invalid block rewards updates");
+
+                    if (rewardsUpdate.Delegate != rawBlock.Metadata.Baker ||
+                        rewardsUpdate.Change != Protocol.BlockReward)
+                        throw new ValidationException("invalid block rewards update");
+                }
+            }
+
+            if (rawBlock.Metadata.BalanceUpdates.Count > (Cycle < 7 ? 2 : 3))
             {
                 if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
                     throw new ValidationException("unexpected freezer updates");
@@ -57,7 +85,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (!await Cache.AccountExistsAsync(freezerUpdate.Delegate, AccountType.Delegate))
                         throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
 
-                    if (freezerUpdate.Level != cycle - 5 && freezerUpdate.Level != cycle - 1)
+                    if (freezerUpdate.Level != Cycle - 5 && freezerUpdate.Level != Cycle - 1)
                         throw new ValidationException("invalid freezer updates cycle");
                 }
             }
@@ -129,31 +157,34 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!await Cache.AccountExistsAsync(endorsement.Metadata.Delegate, AccountType.Delegate))
                 throw new ValidationException("invalid endorsement delegate");
 
-            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != 3)
+            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Cycle < 7 ? 2 : 3))
                 throw new ValidationException("invalid endorsement balance updates count");
 
             if (endorsement.Metadata.BalanceUpdates.Count > 0)
             {
                 var contractUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is ContractUpdate) as ContractUpdate
-                    ?? throw new ValidationException("invalid delegation fee balance updates");
+                    ?? throw new ValidationException("invalid endorsement contract balance updates");
 
                 var depostisUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is DepositsUpdate) as DepositsUpdate
-                    ?? throw new ValidationException("invalid delegation fee balance updates");
-
-                var rewardsUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is FeesUpdate) as FeesUpdate
-                    ?? throw new ValidationException("invalid delegation fee balance updates");
+                    ?? throw new ValidationException("invalid endorsement depostis balance updates");
 
                 if (contractUpdate.Contract != endorsement.Metadata.Delegate ||
-                    contractUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
+                    contractUpdate.Change != -endorsement.Metadata.Slots.Count * 1_000_000 * Cycle)
                     throw new ValidationException("invalid endorsement contract update");
 
                 if (depostisUpdate.Delegate != endorsement.Metadata.Delegate ||
-                    depostisUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
+                    depostisUpdate.Change != endorsement.Metadata.Slots.Count * 1_000_000 * Cycle)
                     throw new ValidationException("invalid endorsement depostis update");
 
-                if (rewardsUpdate.Delegate != endorsement.Metadata.Delegate ||
-                    rewardsUpdate.Change != GetEndorsementReward(endorsement.Metadata.Slots.Count, lastBlock.Priority))
-                    throw new ValidationException("invalid endorsement depostis update");
+                if (Cycle >= 7)
+                {
+                    var rewardsUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
+                        ?? throw new ValidationException("invalidendorsement rewards updates");
+
+                    if (rewardsUpdate.Delegate != endorsement.Metadata.Delegate ||
+                        rewardsUpdate.Change != GetEndorsementReward(endorsement.Metadata.Slots.Count, lastBlock.Priority))
+                        throw new ValidationException("invalid endorsement rewards update");
+                }
             }
         }
 

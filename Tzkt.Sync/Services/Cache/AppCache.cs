@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Services.Cache
         static AppState AppState = null;
         static Block CurrentBlock = null;
         static Block PreviousBlock = null;
+        static VotingEpoch VotingEpoch = null;
 
         static readonly Dictionary<string, Account> Accounts = new Dictionary<string, Account>(_AccountsCapacity);
         static readonly Dictionary<string, Protocol> Protocols = new Dictionary<string, Protocol>(_ProtocolsCapacity);
@@ -68,6 +69,20 @@ namespace Tzkt.Sync.Services.Cache
 
         public static async Task<Block> GetOrSetPreviousBlock(Func<Task<Block>> creator)
             => GetPreviousBlock() ?? SetPreviousBlock(await creator());
+        #endregion
+
+        #region voting
+        public static VotingEpoch SetVotingEpoch(VotingEpoch epoch)
+        {
+            VotingEpoch = epoch;
+            return VotingEpoch;
+        }
+
+        public static VotingEpoch GetVotingEpoch()
+            => VotingEpoch;
+
+        public static async Task<VotingEpoch> GetOrSetVotingEpoch(Func<Task<VotingEpoch>> creator)
+            => GetVotingEpoch() ?? SetVotingEpoch(await creator());
         #endregion
 
         #region accounts

@@ -38,9 +38,7 @@ namespace Tzkt.Sync.Protocols
 
             commits.Add(await ProtoCommit.Create(this, commits, rawBlock));
             commits.Add(await BlockCommit.Create(this, commits, rawBlock));
-            commits.Add(await DeactivationCommit.Create(this, commits, rawBlock));
             commits.Add(await FreezerCommit.Create(this, commits, rawBlock));
-            commits.Add(await VotingCommit.Create(this, commits, rawBlock));
 
             commits.Add(await ActivationsCommit.Create(this, commits, rawBlock));
             commits.Add(await RevealsCommit.Create(this, commits, rawBlock));
@@ -69,9 +67,7 @@ namespace Tzkt.Sync.Protocols
             commits.Add(await RevealsCommit.Create(this, commits));
             commits.Add(await ActivationsCommit.Create(this, commits));
 
-            commits.Add(await VotingCommit.Create(this, commits));
             commits.Add(await FreezerCommit.Create(this, commits));
-            commits.Add(await DeactivationCommit.Create(this, commits));
             commits.Add(await BlockCommit.Create(this, commits));
             commits.Add(await ProtoCommit.Create(this, commits));
 

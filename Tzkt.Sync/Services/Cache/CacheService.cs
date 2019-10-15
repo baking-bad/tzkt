@@ -119,6 +119,21 @@ namespace Tzkt.Sync.Services
         }
         #endregion
 
+        #region voting
+        public Task<VotingEpoch> GetCurrentEpochAsync()
+        {
+            return AppCache.GetOrSetVotingEpoch(() =>
+                Db.VotingEpoches.Include(x => x.Periods).OrderByDescending(x => x.Level).FirstOrDefaultAsync()
+                    ?? throw new Exception("Failed to get voting epoch"));
+        }
+
+        public Task AddVotingEpoch(VotingEpoch epoch)
+        {
+            AppCache.SetVotingEpoch(epoch);
+            return Task.CompletedTask;
+        }
+        #endregion
+
         #region protocols
         public async Task<Protocol> GetCurrentProtocolAsync()
         {

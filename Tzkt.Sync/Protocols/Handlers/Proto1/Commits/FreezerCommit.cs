@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
@@ -34,6 +35,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public override async Task Apply()
         {
+            if (BalanceUpdates == null)
+                throw new Exception("Commit is not initialized");
+
             foreach (var update in BalanceUpdates)
             {
                 #region entities
@@ -59,6 +63,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async override Task Revert()
         {
+            if (BalanceUpdates == null)
+                throw new Exception("Commit is not initialized");
+
             foreach (var update in BalanceUpdates)
             {
                 #region entities

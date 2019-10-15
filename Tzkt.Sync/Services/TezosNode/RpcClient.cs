@@ -47,7 +47,7 @@ namespace Tzkt.Sync.Services
             if (!Uri.IsWellFormedUriString(baseUri, UriKind.Absolute))
                 throw new ArgumentException("Invalid URI");
 
-            BaseAddress = new Uri(baseUri);
+            BaseAddress = new Uri($"{baseUri.TrimEnd('/')}/");
             RequestTimeout = TimeSpan.FromSeconds(timeoutSec);
         }
 
