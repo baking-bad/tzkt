@@ -26,26 +26,40 @@ namespace Tzkt.Sync.Protocols.Proto1
                 throw new ValidationException("invalid raw block type");
 
             if (rawBlock.Level != (await Cache.GetCurrentBlockAsync()).Level + 1)
-                throw new ValidationException($"Invalid block level", true);
+                throw new ValidationException($"invalid block level", true);
 
             if (rawBlock.Protocol != (await Cache.GetAppStateAsync()).NextProtocol)
-                throw new ValidationException($"Invalid block protocol", true);
+                throw new ValidationException($"invalid block protocol", true);
 
             if (!await Cache.AccountExistsAsync(rawBlock.Metadata.Baker, AccountType.Delegate))
-                throw new ValidationException($"Invalid block baker '{rawBlock.Metadata.Baker}'");
+                throw new ValidationException($"invalid block baker '{rawBlock.Metadata.Baker}'");
 
             foreach (var baker in rawBlock.Metadata.Deactivated)
             {
                 if (!await Cache.AccountExistsAsync(baker, AccountType.Delegate))
-                    throw new ValidationException($"Invalid deactivated baker {baker}");
+                    throw new ValidationException($"invalid deactivated baker {baker}");
             }
 
-            if (rawBlock.Metadata.BalanceUpdates.Count > 2)
+            var cycle = rawBlock.Level / Protocol.BlocksPerCycle;
+            if (rawBlock.Metadata.BalanceUpdates.Count > (cycle < 7 ? 2 : 3))
             {
                 if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
-                    throw new ValidationException("Unexpected freezer updates");
+                    throw new ValidationException("unexpected freezer updates");
 
-                throw new NotImplementedException();
+                foreach (var update in rawBlock.Metadata.BalanceUpdates)
+                {
+                    if (update is ContractUpdate contractUpdate &&
+                        !await Cache.AccountExistsAsync(contractUpdate.Contract, AccountType.Delegate))
+                        throw new ValidationException($"unknown delegate {contractUpdate.Contract}");
+
+                    var freezerUpdate = update as FreezerUpdate;
+
+                    if (!await Cache.AccountExistsAsync(freezerUpdate.Delegate, AccountType.Delegate))
+                        throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
+
+                    if (freezerUpdate.Level != cycle - 5 && freezerUpdate.Level != cycle - 1)
+                        throw new ValidationException("invalid freezer updates cycle");
+                }
             }
 
             foreach (var opGroup in rawBlock.Operations)

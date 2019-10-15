@@ -5,6 +5,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     interface IBalanceUpdate
     {
         public long Change { get; }
+        public string Target { get; }
         bool IsValidFormat();
     }
 
@@ -15,6 +16,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         [JsonPropertyName("change")]
         public long Change { get; set; }
+
+        public string Target => Contract;
 
         #region validation
         public bool IsValidFormat() =>
@@ -33,6 +36,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         [JsonPropertyName("change")]
         public long Change { get; set; }
+
+        public string Target => Delegate;
 
         #region validation
         public bool IsValidFormat() =>

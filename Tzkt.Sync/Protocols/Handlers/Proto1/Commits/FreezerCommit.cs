@@ -1,54 +1,85 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-
-using Tzkt.Data;
 using Tzkt.Data.Models;
-using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
     class FreezerCommit : ProtocolCommit
     {
-        public List<IBalanceUpdate> BalanceUpdates { get; protected set; }
+        public IEnumerable<IBalanceUpdate> BalanceUpdates { get; private set; }
+        public Protocol Protocol { get; private set; }
 
         public FreezerCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
 
-        public override Task Init()
+        public override async Task Init()
         {
-            BalanceUpdates = new List<IBalanceUpdate>();
-            return Task.CompletedTask;
+            var block = await Cache.GetCurrentBlockAsync();
+            var stream = await Proto.Node.GetBlockAsync(block.Level);
+            var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
+
+            Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            var cycle = (rawBlock.Level - 1) * Protocol.BlocksPerCycle;
+            BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
         }
 
-        public override Task Init(IBlock block)
+        public override async Task Init(IBlock block)
         {
             var rawBlock = block as RawBlock;
 
-            BalanceUpdates = new List<IBalanceUpdate>();
-            BalanceUpdates.AddRange(rawBlock.Metadata.BalanceUpdates.Skip(2));
-            return Task.CompletedTask;
+            Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            var cycle = (rawBlock.Level - 1) * Protocol.BlocksPerCycle;
+            BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
         }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
             foreach (var update in BalanceUpdates)
             {
-                throw new NotImplementedException();
-            }
+                #region entities
+                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
 
-            return Task.CompletedTask;
+                Db.TryAttach(delegat);
+                #endregion
+
+                if (update is DepositsUpdate depositsFreezer)
+                {
+                    delegat.FrozenDeposits -= depositsFreezer.Change;
+                }
+                else if (update is RewardsUpdate rewardsFreezer)
+                {
+                    delegat.FrozenRewards -= rewardsFreezer.Change;
+                }
+                else if (update is FeesUpdate feesFreezer)
+                {
+                    delegat.FrozenFees -= feesFreezer.Change;
+                }
+            }
         }
 
-        public override Task Revert()
+        public async override Task Revert()
         {
             foreach (var update in BalanceUpdates)
             {
-                throw new NotImplementedException();
-            }
+                #region entities
+                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
 
-            return Task.CompletedTask;
+                Db.TryAttach(delegat);
+                #endregion
+
+                if (update is DepositsUpdate depositsFreezer)
+                {
+                    delegat.FrozenDeposits += depositsFreezer.Change;
+                }
+                else if (update is RewardsUpdate rewardsFreezer)
+                {
+                    delegat.FrozenRewards += rewardsFreezer.Change;
+                }
+                else if (update is FeesUpdate feesFreezer)
+                {
+                    delegat.FrozenFees += feesFreezer.Change;
+                }
+            }
         }
 
         #region static
