@@ -103,7 +103,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         else if (content is RawTransactionContent transaction)
                             await ValidateTransaction(transaction, rawBlock);
                         else if (content is RawNonceRevelationContent revelation)
-                            await ValidateNonceRevelation(revelation);
+                            await ValidateNonceRevelation(revelation, rawBlock);
                         else if (content is RawOriginationContent origination)
                             await ValidateOrigination(origination, rawBlock);
                         else if (content is RawDelegationContent delegation)
@@ -188,9 +188,23 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected Task ValidateNonceRevelation(RawNonceRevelationContent revelation)
+        protected async Task ValidateNonceRevelation(RawNonceRevelationContent revelation, RawBlock rawBlock)
         {
-            throw new NotImplementedException();
+            if (revelation.Level % Protocol.BlocksPerCommitment != 0)
+                throw new ValidationException("invalid seed nonce revelation level");
+
+            if (revelation.Metadata.BalanceUpdates.Count != 1)
+                throw new ValidationException("invalid seed nonce revelation balance updates count");
+
+            if (!(revelation.Metadata.BalanceUpdates[0] is RewardsUpdate))
+                throw new ValidationException("invalid seed nonce revelation balance update type");
+
+            if (revelation.Metadata.BalanceUpdates[0].Change != Protocol.RevelationReward)
+                throw new ValidationException("invalid seed nonce revelation balance update amount");
+
+            if (!await Cache.AccountExistsAsync(revelation.Metadata.BalanceUpdates[0].Target, AccountType.Delegate) ||
+                revelation.Metadata.BalanceUpdates[0].Target != rawBlock.Metadata.Baker)
+                throw new ValidationException("invalid seed nonce revelation baker");
         }
 
         protected async Task ValidateOrigination(RawOriginationContent origination, RawBlock rawBlock)

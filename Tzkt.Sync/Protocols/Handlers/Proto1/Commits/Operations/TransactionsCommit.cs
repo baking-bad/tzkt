@@ -69,8 +69,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             var target = await Cache.GetAccountAsync(content.Destination);
             target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
 
-            if (Db.Entry(target).State == EntityState.Added ||
-                target is User && !(target is Data.Models.Delegate) && target.Balance == 0)
+            if ((Db.Entry(target).State == EntityState.Added ||
+                target is User && !(target is Data.Models.Delegate) && target.Balance == 0) &&
+                target.Counter <= (await Cache.GetAppStateAsync()).Counter)
                 target.Counter = content.GlobalCounter;
 
             return new TransactionOperation
@@ -109,8 +110,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             var target = await Cache.GetAccountAsync(content.Destination);
             target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
 
-            if (Db.Entry(target).State == EntityState.Added ||
-                target is User && !(target is Data.Models.Delegate) && target.Balance == 0)
+            if ((Db.Entry(target).State == EntityState.Added ||
+                target is User && !(target is Data.Models.Delegate) && target.Balance == 0) &&
+                target.Counter <= (await Cache.GetAppStateAsync()).Counter)
                 target.Counter = parentContent.GlobalCounter;
 
             return new TransactionOperation

@@ -297,19 +297,37 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
 
             #region update relations
-            foreach (var op in FindCommit<RevealsCommit>().Reveals)
+            foreach (var op in FindCommit<ActivationsCommit>().Activations)
             {
-                if (op.SenderId == user.Id)
-                    op.Sender = delegat;
+                if (op.Account.Id == user.Id)
+                    op.Account = delegat;
             }
 
             foreach (var op in Delegations)
             {
-                if (op.SenderId == user.Id)
+                if (op.Sender.Id == user.Id)
+                    op.Sender = delegat;
+            }
+
+            foreach (var op in FindCommit<OriginationsCommit>().Originations)
+            {
+                if (op.Sender.Id == user.Id)
+                    op.Sender = delegat;
+            }
+
+            foreach (var op in FindCommit<RevealsCommit>().Reveals)
+            {
+                if (op.Sender.Id == user.Id)
+                    op.Sender = delegat;
+            }
+
+            foreach (var op in FindCommit<TransactionsCommit>().Transactions)
+            {
+                if (op.Sender.Id == user.Id)
                     op.Sender = delegat;
 
-                if (op.DelegateId == user.Id)
-                    op.Delegate = delegat;
+                if (op.Target.Id == user.Id)
+                    op.Target = delegat;
             }
             #endregion
 
@@ -318,13 +336,25 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.AddAccount(delegat);
 
             #region update graph
-            foreach (var op in FindCommit<RevealsCommit>().Reveals
-                .Where(x => x.SenderId == user.Id))
-                Db.RevealOps.Update(op);
+            foreach (var op in FindCommit<ActivationsCommit>().Activations
+                .Where(x => x.Account.Id == user.Id))
+                Db.ActivationOps.Update(op);
 
             foreach (var op in FindCommit<DelegationsCommit>().Delegations
-                .Where(x => x.SenderId == user.Id || x.DelegateId == user.Id))
+                .Where(x => x.Sender.Id == user.Id))
                 Db.DelegationOps.Update(op);
+
+            foreach (var op in FindCommit<OriginationsCommit>().Originations
+                .Where(x => x.Sender.Id == user.Id))
+                Db.OriginationOps.Update(op);
+
+            foreach (var op in FindCommit<RevealsCommit>().Reveals
+                .Where(x => x.Sender.Id == user.Id))
+                Db.RevealOps.Update(op);
+
+            foreach (var op in FindCommit<TransactionsCommit>().Transactions
+                .Where(x => x.Sender.Id == user.Id || x.Target.Id == user.Id))
+                Db.TransactionOps.Update(op);
             #endregion
 
             delegation.Sender = delegation.Delegate = delegat;
@@ -358,37 +388,43 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
 
             #region update relations
-            foreach (var op in FindCommit<RevealsCommit>().Reveals)
+            foreach (var op in FindCommit<ActivationsCommit>().Activations)
             {
-                if (op.SenderId == delegat.Id)
-                    op.Sender = user;
+                if (op.Account.Id == delegat.Id)
+                    op.Account = user;
             }
 
             foreach (var op in FindCommit<DelegationsCommit>().Delegations)
             {
-                if (op.SenderId == delegat.Id)
+                if (op.Sender.Id == delegat.Id)
                     op.Sender = user;
 
-                if (op.DelegateId == delegat.Id)
+                if (op.Delegate?.Id == delegat.Id)
                     op.Delegate = null;
-            }
-
-            foreach (var op in FindCommit<TransactionsCommit>().Transactions)
-            {
-                if (op.SenderId == delegat.Id)
-                    op.Sender = user;
-
-                if (op.TargetId == delegat.Id)
-                    op.Target = user;
             }
 
             foreach (var op in FindCommit<OriginationsCommit>().Originations)
             {
-                if (op.SenderId == delegat.Id)
+                if (op.Sender.Id == delegat.Id)
                     op.Sender = user;
 
-                if (op.DelegateId == delegat.Id)
+                if (op.Delegate?.Id == delegat.Id)
                     op.Delegate = null;
+            }
+
+            foreach (var op in FindCommit<RevealsCommit>().Reveals)
+            {
+                if (op.Sender.Id == delegat.Id)
+                    op.Sender = user;
+            }
+
+            foreach (var op in FindCommit<TransactionsCommit>().Transactions)
+            {
+                if (op.Sender.Id == delegat.Id)
+                    op.Sender = user;
+
+                if (op.Target.Id == delegat.Id)
+                    op.Target = user;
             }
             #endregion
 
@@ -397,21 +433,25 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.AddAccount(user);
 
             #region update graph
-            foreach (var op in FindCommit<RevealsCommit>().Reveals
-                .Where(x => x.SenderId == user.Id))
-                Db.RevealOps.Update(op);
+            foreach (var op in FindCommit<ActivationsCommit>().Activations
+                .Where(x => x.AccountId == user.Id))
+                Db.ActivationOps.Update(op);
 
             foreach (var op in FindCommit<DelegationsCommit>().Delegations
                 .Where(x => x.SenderId == user.Id || x.DelegateId == null && x.Sender is User))
                 Db.DelegationOps.Update(op);
 
-            foreach (var op in FindCommit<TransactionsCommit>().Transactions
-                .Where(x => x.SenderId == user.Id || x.TargetId == user.Id))
-                Db.TransactionOps.Update(op);
-
             foreach (var op in FindCommit<OriginationsCommit>().Originations
                 .Where(x => x.SenderId == user.Id || x.DelegateId == null && x.Sender is User))
                 Db.OriginationOps.Update(op);
+
+            foreach (var op in FindCommit<RevealsCommit>().Reveals
+                .Where(x => x.SenderId == user.Id))
+                Db.RevealOps.Update(op);
+
+            foreach (var op in FindCommit<TransactionsCommit>().Transactions
+                .Where(x => x.SenderId == user.Id || x.TargetId == user.Id))
+                Db.TransactionOps.Update(op);
             #endregion
 
             delegation.Sender = user;
