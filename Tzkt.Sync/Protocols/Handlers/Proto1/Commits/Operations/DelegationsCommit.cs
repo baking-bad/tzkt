@@ -146,7 +146,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                             {
                                 var weirdAccount = await Cache.GetAccountAsync(weirdDelegation.Origination.ContractId);
                                 if (!weirdAccount.Operations.HasFlag(Operations.Delegations))
+                                {
+                                    Db.TryAttach(weirdAccount);
                                     await SetDelegate(weirdAccount, newDelegate, delegation.Level);
+                                }
 
                                 Db.Entry(weirdDelegation.Origination).State = EntityState.Detached;
                                 Db.Entry(weirdDelegation).State = EntityState.Detached;
