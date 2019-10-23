@@ -7,33 +7,30 @@ namespace Tzkt.Sync.Protocols.Genesis
 {
     class StateCommit : ProtocolCommit
     {
-        public AppState AppState { get; private set; }
         public Block Block { get; private set; }
+        public AppState AppState { get; private set; }
         public string NextProtocol { get; private set; }
 
-        public StateCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        StateCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(Block block, RawBlock rawBlock)
+        {
+            Block = block;
+            //Block.Protocol ??= await Cache.GetProtocolAsync(rawBlock.Protocol);
+            AppState = await Cache.GetAppStateAsync();
+            NextProtocol = rawBlock.Metadata.NextProtocol;
+        }
+
+        public async Task Init(Block block)
         {
             Block = await Cache.GetCurrentBlockAsync();
-            Block.Protocol ??= await Cache.GetCurrentProtocolAsync();
-            NextProtocol = Block.Protocol.Hash;
+            Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
             AppState = await Cache.GetAppStateAsync();
+            NextProtocol = block.Protocol.Hash;
         }
 
-        public override async Task Init(IBlock block)
+        public override Task Apply()
         {
-            Block = FindCommit<BlockCommit>().Block;
-            Block.Protocol ??= await Cache.GetProtocolAsync(block.Protocol);
-            NextProtocol = (block as RawBlock).Metadata.NextProtocol;
-            AppState = await Cache.GetAppStateAsync();
-        }
-
-        public override async Task Apply()
-        {
-            if (AppState == null)
-                throw new Exception("Commit is not initialized");
-
             #region entities
             var state = AppState;
 
@@ -45,43 +42,44 @@ namespace Tzkt.Sync.Protocols.Genesis
             state.Protocol = Block.Protocol.Hash;
             state.NextProtocol = NextProtocol;
             state.Hash = Block.Hash;
-            await Cache.PushBlock(Block);
+            
+            return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
-            if (AppState == null)
-                throw new Exception("Commit is not initialized");
-
             #region entities
-            var prevBlock = await Cache.GetPreviousBlockAsync();
-            if (prevBlock != null) prevBlock.Protocol ??= await Cache.GetProtocolAsync(prevBlock.ProtoCode);
-
             var state = AppState;
 
             Db.TryAttach(state);
             #endregion
 
-            state.Level = prevBlock?.Level ?? -1;
-            state.Timestamp = prevBlock?.Timestamp ?? DateTime.MinValue;
-            state.Protocol = prevBlock?.Protocol.Hash ?? "";
-            state.NextProtocol = prevBlock == null ? "" : Block.Protocol.Hash;
-            state.Hash = prevBlock?.Hash ?? "";
-            await Cache.PopBlock();
+            state.Level = -1;
+            state.Timestamp = DateTime.MinValue;
+            state.Protocol = "";
+            state.NextProtocol = "";
+            state.Hash = "";
+
+            Cache.RemoveBlock(Block);
+            return Task.CompletedTask;
         }
 
         #region static
-        public static async Task<StateCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<StateCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
         {
-            var commit = new StateCommit(protocol, commits);
-            await commit.Init(rawBlock);
+            var commit = new StateCommit(proto);
+            await commit.Init(block, rawBlock);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<StateCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<StateCommit> Revert(ProtocolHandler proto, Block block)
         {
-            var commit = new StateCommit(protocol, commits);
-            await commit.Init();
+            var commit = new StateCommit(proto);
+            await commit.Init(block);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

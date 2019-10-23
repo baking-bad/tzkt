@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class RawOriginationContent : IManagerOperationContent
+    class RawOriginationContent : IOperationContent
     {
         [JsonPropertyName("source")]
         public string Source { get; set; }
@@ -38,9 +38,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         [JsonPropertyName("metadata")]
         public RawOriginationContentMetadata Metadata { get; set; }
-
-        [JsonIgnore]
-        public int GlobalCounter { get; set; }
 
         #region validation
         public bool IsValidFormat() =>
@@ -93,7 +90,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public bool IsValidFormat() =>
             !string.IsNullOrEmpty(Status) &&
             (BalanceUpdates == null || BalanceUpdates.All(x => x.IsValidFormat())) &&
-            OriginatedContracts?.Count == 1 &&
+            (OriginatedContracts == null || OriginatedContracts?.Count == 1) &&
             ConsumedGas >= 0 &&
             PaidStorageSizeDiff >= 0;
         #endregion

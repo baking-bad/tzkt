@@ -10,58 +10,62 @@ namespace Tzkt.Sync.Protocols.Initiator
     {
         public VotingPeriod VotingPeriod { get; private set; }
 
-        public VotingCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        VotingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(RawBlock rawBlock)
         {
-            VotingPeriod = await Db.VotingPeriods.Include(x => x.Epoch).SingleAsync();
-        }
-
-        public override async Task Init(IBlock block)
-        {
-            var protocol = await Cache.GetProtocolAsync(block.Protocol);
+            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
 
             VotingPeriod = new ProposalPeriod
             {
-                Epoch = new VotingEpoch { Level = block.Level },
+                Epoch = new VotingEpoch { Level = rawBlock.Level },
                 Kind = VotingPeriods.Proposal,
-                StartLevel = block.Level,
+                StartLevel = rawBlock.Level,
                 EndLevel = protocol.BlocksPerVoting
             };
         }
 
+        public async Task Init(Block block)
+        {
+            VotingPeriod = await Db.VotingPeriods.Include(x => x.Epoch).SingleAsync();
+        }
+
         public override Task Apply()
         {
-            if (VotingPeriod == null)
-                throw new Exception("Commit is not initialized");
-
             Db.VotingEpoches.Add(VotingPeriod.Epoch);
+
             Db.VotingPeriods.Add(VotingPeriod);
+            Cache.AddVotingPeriod(VotingPeriod);
+
             return Task.CompletedTask;
         }
 
         public override Task Revert()
         {
-            if (VotingPeriod == null)
-                throw new Exception("Commit is not initialized");
-
             Db.VotingEpoches.Remove(VotingPeriod.Epoch);
+
             Db.VotingPeriods.Remove(VotingPeriod);
+            Cache.RemoveVotingPeriod();
+
             return Task.CompletedTask;
         }
 
         #region static
-        public static async Task<VotingCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<VotingCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
         {
-            var commit = new VotingCommit(protocol, commits);
+            var commit = new VotingCommit(proto);
             await commit.Init(rawBlock);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<VotingCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<VotingCommit> Revert(ProtocolHandler proto, Block block)
         {
-            var commit = new VotingCommit(protocol, commits);
-            await commit.Init();
+            var commit = new VotingCommit(proto);
+            await commit.Init(block);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

@@ -8,14 +8,14 @@ namespace Tzkt.Sync.Services.Cache
 {
     static class AppCache
     {
-        const int _AccountsCapacity = 8192;
-        const int _ProtocolsCapacity = 8;
+        const int _BlocksCapacity = 3 * 4096;
+        const int _AccountsCapacity = 8 * 4096;
+        const int _ProtocolsCapacity = 16;
 
         static AppState AppState = null;
-        static Block CurrentBlock = null;
-        static Block PreviousBlock = null;
-        static VotingEpoch VotingEpoch = null;
+        static VotingPeriod VotingPeriod = null;
 
+        static readonly Dictionary<int, Block> Blocks = new Dictionary<int, Block>(_BlocksCapacity);
         static readonly Dictionary<string, Account> Accounts = new Dictionary<string, Account>(_AccountsCapacity);
         static readonly Dictionary<string, Protocol> Protocols = new Dictionary<string, Protocol>(_ProtocolsCapacity);
 
@@ -26,63 +26,45 @@ namespace Tzkt.Sync.Services.Cache
             return AppState;
         }
 
-        public static AppState GetAppState()
-            => AppState;
-
         public static async Task<AppState> GetOrSetAppState(Func<Task<AppState>> creator)
-            => GetAppState() ?? SetAppState(await creator());
+            => AppState ?? SetAppState(await creator());
         #endregion
 
         #region blocks
-        public static void PushBlock(Block block)
+        public static Block AddBlock(Block block)
         {
-            PreviousBlock = CurrentBlock;
-            CurrentBlock = block;
+            if (block == null) return null;
+
+            if (Blocks.Count >= _BlocksCapacity)
+                foreach (var key in Blocks.Keys.OrderBy(x => x).Take(_BlocksCapacity / 4).ToList())
+                    Blocks.Remove(key);
+
+            Blocks[block.Level] = block;
+            return block;
         }
 
-        public static void PushBlock(Block block, Block previous)
-        {
-            PreviousBlock = previous;
-            CurrentBlock = block;
-        }
+        public static Block GetBlock(int level)
+            => Blocks.ContainsKey(level) ? Blocks[level] : null;
 
-        public static Block SetCurrentBlock(Block block)
-        {
-            CurrentBlock = block;
-            return CurrentBlock;
-        }
+        public static async Task<Block> GetOrSetBlock(int level, Func<Task<Block>> creator)
+            => GetBlock(level) ?? AddBlock(await creator());
 
-        public static Block GetCurrentBlock()
-            => CurrentBlock;
-
-        public static async Task<Block> GetOrSetCurrentBlock(Func<Task<Block>> creator)
-            => GetCurrentBlock() ?? SetCurrentBlock(await creator());
-        
-        public static Block SetPreviousBlock(Block block)
-        {
-            PreviousBlock = block;
-            return PreviousBlock;
-        }
-
-        public static Block GetPreviousBlock()
-            => PreviousBlock;
-
-        public static async Task<Block> GetOrSetPreviousBlock(Func<Task<Block>> creator)
-            => GetPreviousBlock() ?? SetPreviousBlock(await creator());
+        public static void RemoveBlock(Block block)
+            => Blocks.Remove(block.Level);
         #endregion
 
         #region voting
-        public static VotingEpoch SetVotingEpoch(VotingEpoch epoch)
+        public static VotingPeriod SetVotingPeriod(VotingPeriod period)
         {
-            VotingEpoch = epoch;
-            return VotingEpoch;
+            VotingPeriod = period;
+            return VotingPeriod;
         }
 
-        public static VotingEpoch GetVotingEpoch()
-            => VotingEpoch;
+        public static async Task<VotingPeriod> GetOrSetVotingPeriod(Func<Task<VotingPeriod>> creator)
+            => VotingPeriod ?? SetVotingPeriod(await creator());
 
-        public static async Task<VotingEpoch> GetOrSetVotingEpoch(Func<Task<VotingEpoch>> creator)
-            => GetVotingEpoch() ?? SetVotingEpoch(await creator());
+        public static void RemoveVotingPeriod()
+            => VotingPeriod = null;
         #endregion
 
         #region accounts
@@ -121,6 +103,8 @@ namespace Tzkt.Sync.Services.Cache
         #region protocols
         public static Protocol AddProtocol(Protocol protocol)
         {
+            if (protocol == null) return null;
+
             if (Protocols.Count >= _ProtocolsCapacity)
                 foreach (var key in Protocols.Keys.Take(_ProtocolsCapacity / 4).ToList())
                     Protocols.Remove(key);
@@ -148,8 +132,9 @@ namespace Tzkt.Sync.Services.Cache
         public static void Clear()
         {
             AppState = null;
-            CurrentBlock = null;
-            PreviousBlock = null;
+            VotingPeriod = null;
+
+            Blocks.Clear();
             Accounts.Clear();
             Protocols.Clear();
         }

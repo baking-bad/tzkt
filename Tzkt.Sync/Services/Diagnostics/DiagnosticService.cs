@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Services
 
         public async Task Run(int level)
         {
-            if (level < 4000) return;
+            if (level < 2) return;
 
             var state = Db.ChangeTracker.Entries()
                 .FirstOrDefault(x => x.Entity is AppState).Entity;
@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Services
         {
             var globalCounter = await GetGlobalCounter(level);
 
-            if (globalCounter != state.Counter)
+            if (globalCounter != state.ManagerCounter)
                 throw new Exception($"Diagnostics failed: wrong global counter");
         }
 

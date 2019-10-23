@@ -14,7 +14,8 @@ namespace Tzkt.Data.Models
         public string NextProtocol { get; set; }
         public string Hash { get; set; }
 
-        public int Counter { get; set; }
+        public int GlobalCounter { get; set; }
+        public int ManagerCounter { get; set; }
     }
 
     public static class AppStateModel
@@ -31,7 +32,8 @@ namespace Tzkt.Data.Models
                     NextProtocol = "",
                     Hash = "",
 
-                    Counter = 0
+                    GlobalCounter = 0,
+                    ManagerCounter = 0
                 });
         }
     }

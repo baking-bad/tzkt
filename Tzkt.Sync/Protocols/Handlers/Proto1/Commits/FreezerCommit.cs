@@ -11,61 +11,27 @@ namespace Tzkt.Sync.Protocols.Proto1
         public IEnumerable<IBalanceUpdate> BalanceUpdates { get; private set; }
         public Protocol Protocol { get; private set; }
 
-        public FreezerCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(RawBlock rawBlock)
         {
-            var block = await Cache.GetCurrentBlockAsync();
+            Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
+            BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
+        }
+
+        public async Task Init(Block block)
+        {
             var stream = await Proto.Node.GetBlockAsync(block.Level);
             var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
 
             Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-            var cycle = (rawBlock.Level - 1) * Protocol.BlocksPerCycle;
-            BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
-        }
-
-        public override async Task Init(IBlock block)
-        {
-            var rawBlock = block as RawBlock;
-
-            Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-            var cycle = (rawBlock.Level - 1) * Protocol.BlocksPerCycle;
+            var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
             BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
         }
 
         public override async Task Apply()
         {
-            if (BalanceUpdates == null)
-                throw new Exception("Commit is not initialized");
-
-            foreach (var update in BalanceUpdates)
-            {
-                #region entities
-                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
-
-                Db.TryAttach(delegat);
-                #endregion
-
-                if (update is DepositsUpdate depositsFreezer)
-                {
-                    delegat.FrozenDeposits -= depositsFreezer.Change;
-                }
-                else if (update is RewardsUpdate rewardsFreezer)
-                {
-                    delegat.FrozenRewards -= rewardsFreezer.Change;
-                }
-                else if (update is FeesUpdate feesFreezer)
-                {
-                    delegat.FrozenFees -= feesFreezer.Change;
-                }
-            }
-        }
-
-        public async override Task Revert()
-        {
-            if (BalanceUpdates == null)
-                throw new Exception("Commit is not initialized");
-
             foreach (var update in BalanceUpdates)
             {
                 #region entities
@@ -89,18 +55,47 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        #region static
-        public static async Task<FreezerCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public async override Task Revert()
         {
-            var commit = new FreezerCommit(protocol, commits);
+            foreach (var update in BalanceUpdates)
+            {
+                #region entities
+                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
+
+                Db.TryAttach(delegat);
+                #endregion
+
+                if (update is DepositsUpdate depositsFreezer)
+                {
+                    delegat.FrozenDeposits -= depositsFreezer.Change;
+                }
+                else if (update is RewardsUpdate rewardsFreezer)
+                {
+                    delegat.FrozenRewards -= rewardsFreezer.Change;
+                }
+                else if (update is FeesUpdate feesFreezer)
+                {
+                    delegat.FrozenFees -= feesFreezer.Change;
+                }
+            }
+        }
+
+        #region static
+        public static async Task<FreezerCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
+        {
+            var commit = new FreezerCommit(proto);
             await commit.Init(rawBlock);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<FreezerCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<FreezerCommit> Revert(ProtocolHandler proto, Block block)
         {
-            var commit = new FreezerCommit(protocol, commits);
-            await commit.Init();
+            var commit = new FreezerCommit(proto);
+            await commit.Init(block);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

@@ -11,14 +11,9 @@ namespace Tzkt.Sync.Protocols.Initiator
     {
         public List<Account> BootstrapedAccounts { get; private set; }
 
-        public BootstrapCommit(InitiatorHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        BootstrapCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
-        {
-            BootstrapedAccounts = await Db.Accounts.ToListAsync();
-        }
-
-        public override async Task Init(IBlock block)
+        public async Task Init(RawBlock rawBlock)
         {
             BootstrapedAccounts = new List<Account>(65);
 
@@ -94,11 +89,13 @@ namespace Tzkt.Sync.Protocols.Initiator
             #endregion
         }
 
+        public async Task Init(Block block)
+        {
+            BootstrapedAccounts = await Db.Accounts.Where(x => x.Counter == 0).ToListAsync();
+        }
+
         public override Task Apply()
         {
-            if (BootstrapedAccounts == null)
-                throw new Exception("Commit is not initialized");
-
             Db.Accounts.AddRange(BootstrapedAccounts);
 
             return Task.CompletedTask;
@@ -106,9 +103,6 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public override Task Revert()
         {
-            if (BootstrapedAccounts == null)
-                throw new Exception("Commit is not initialized");
-
             Db.Accounts.RemoveRange(BootstrapedAccounts);
             Cache.RemoveAccounts(BootstrapedAccounts);
 
@@ -116,17 +110,21 @@ namespace Tzkt.Sync.Protocols.Initiator
         }
 
         #region static
-        public static async Task<BootstrapCommit> Create(InitiatorHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<BootstrapCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
         {
-            var commit = new BootstrapCommit(protocol, commits);
+            var commit = new BootstrapCommit(proto);
             await commit.Init(rawBlock);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<BootstrapCommit> Create(InitiatorHandler protocol, List<ICommit> commits)
+        public static async Task<BootstrapCommit> Revert(ProtocolHandler proto, Block block)
         {
-            var commit = new BootstrapCommit(protocol, commits);
-            await commit.Init();
+            var commit = new BootstrapCommit(proto);
+            await commit.Init(block);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

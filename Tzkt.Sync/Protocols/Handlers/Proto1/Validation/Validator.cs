@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public async Task<IBlock> ValidateBlock(IBlock block)
         {
             Protocol = await Cache.GetProtocolAsync(block.Protocol);
-            Cycle = block.Level / Protocol.BlocksPerCycle;
+            Cycle = (block.Level - 1) / Protocol.BlocksPerCycle;
 
             if (!(block is Proto1.RawBlock rawBlock))
                 throw new ValidationException("invalid raw block type");
@@ -74,19 +74,20 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
                     throw new ValidationException("unexpected freezer updates");
 
-                foreach (var update in rawBlock.Metadata.BalanceUpdates)
+                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Cycle < 7 ? 2 : 3))
                 {
                     if (update is ContractUpdate contractUpdate &&
                         !await Cache.AccountExistsAsync(contractUpdate.Contract, AccountType.Delegate))
                         throw new ValidationException($"unknown delegate {contractUpdate.Contract}");
 
-                    var freezerUpdate = update as FreezerUpdate;
+                    if (update is FreezerUpdate freezerUpdate)
+                    {
+                        if (!await Cache.AccountExistsAsync(freezerUpdate.Delegate, AccountType.Delegate))
+                            throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
 
-                    if (!await Cache.AccountExistsAsync(freezerUpdate.Delegate, AccountType.Delegate))
-                        throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
-
-                    if (freezerUpdate.Level != Cycle - 5 && freezerUpdate.Level != Cycle - 1)
-                        throw new ValidationException("invalid freezer updates cycle");
+                        if (freezerUpdate.Level != Cycle - 5 && freezerUpdate.Level != Cycle - 1)
+                            throw new ValidationException("invalid freezer updates cycle");
+                    }
                 }
             }
 
@@ -140,7 +141,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 delegation.Fee,
                 rawBlock.Metadata.LevelInfo.Cycle);
 
-            if (delegation.Delegate != null)
+            if (delegation.Metadata.Result.Status == "applied" && delegation.Delegate != null)
             {
                 if (delegation.Source != delegation.Delegate && !await Cache.AccountExistsAsync(delegation.Delegate, AccountType.Delegate))
                     throw new ValidationException("unknown delegate account");

@@ -21,35 +21,28 @@ namespace Tzkt.Sync.Protocols
             Validator = new Validator(this);
         }
 
-        public override Task<List<IPreprocessor>> GetPreprocessors(IBlock block)
-        {
-            return Task.FromResult(new List<IPreprocessor>(0));
-        }
-
-        public override async Task<List<ICommit>> GetCommits(IBlock block)
+        public override async Task Commit(IBlock block)
         {
             var rawBlock = block as RawBlock;
 
-            var commits = new List<ICommit>();
-            commits.Add(await ProtoCommit.Create(this, commits, rawBlock));
-            commits.Add(await BootstrapCommit.Create(this, commits, rawBlock));
-            commits.Add(await BlockCommit.Create(this, commits, rawBlock));
-            commits.Add(await VotingCommit.Create(this, commits, rawBlock));
-            commits.Add(await StateCommit.Create(this, commits, rawBlock));
+            await ProtoCommit.Apply(this, rawBlock);
+            await BootstrapCommit.Apply(this, rawBlock);
+            var blockCommit = await BlockCommit.Apply(this, rawBlock);
+            await VotingCommit.Apply(this, rawBlock);
 
-            return commits;
+            await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
-        public override async Task<List<ICommit>> GetReverts()
+        public override async Task Revert()
         {
-            var commits = new List<ICommit>();
-            commits.Add(await VotingCommit.Create(this, commits));
-            commits.Add(await BlockCommit.Create(this, commits));
-            commits.Add(await BootstrapCommit.Create(this, commits));
-            commits.Add(await ProtoCommit.Create(this, commits));
-            commits.Add(await StateCommit.Create(this, commits));
+            var currBlock = await Cache.GetCurrentBlockAsync();
 
-            return commits;
+            await VotingCommit.Revert(this, currBlock);
+            await BlockCommit.Revert(this, currBlock);
+            await BootstrapCommit.Revert(this, currBlock);
+            await ProtoCommit.Revert(this, currBlock);
+
+            await StateCommit.Revert(this, currBlock);
         }
 
         /*private async Task InitCycle(int cycle)

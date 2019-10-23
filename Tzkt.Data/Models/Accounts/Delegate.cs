@@ -44,7 +44,7 @@ namespace Tzkt.Data.Models
         public List<DoubleBakingOperation> ReceivedDoubleBakingAccusations { get; set; }
         public List<DoubleEndorsingOperation> SentDoubleEndorsingAccusations { get; set; }
         public List<DoubleEndorsingOperation> ReceivedDoubleEndorsingAccusations { get; set; }
-        public List<NonceRevelationOperation> Revelations { get; set; }
+        public List<NonceRevelationOperation> SentRevelations { get; set; }
 
         public List<DelegationOperation> ReceivedDelegations { get; set; }
         public List<OriginationOperation> DelegatedOriginations { get; set; }

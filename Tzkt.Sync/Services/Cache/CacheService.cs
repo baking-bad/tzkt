@@ -15,20 +15,14 @@ namespace Tzkt.Sync.Services
     {
         readonly TzktContext Db;
 
-        public CacheService(TzktContext db)
-        {
-            Db = db;
-        }
+        public CacheService(TzktContext db) => Db = db;
+
+        public void Clear() => AppCache.Clear();
 
         #region accounts
-        public void AddAccount(Account account)
-        {
-            AppCache.AddAccount(account);
-        }
-
         public async Task<bool> AccountExistsAsync(string address, AccountType? type = null)
         {
-            if (String.IsNullOrEmpty(address))
+            if (string.IsNullOrEmpty(address))
                 return false;
 
             var account = await AppCache.GetOrSetAccount(address, async () => type switch
@@ -42,6 +36,16 @@ namespace Tzkt.Sync.Services
             return account?.Type == type || type == null;
         }
 
+        public void AddAccount(Account account)
+        {
+            AppCache.AddAccount(account);
+        }
+
+        public Task<Account> GetAccountAsync(Account account)
+        {
+            return AppCache.GetOrSetAccount(account.Address, () => Task.FromResult(account));
+        }
+
         public async Task<Account> GetAccountAsync(int? id)
         {
             if (id == null) return null;
@@ -53,24 +57,27 @@ namespace Tzkt.Sync.Services
 
         public async Task<Account> GetAccountAsync(string address)
         {
-            if (String.IsNullOrEmpty(address))
+            if (string.IsNullOrEmpty(address))
                 return null;
 
-            return await AppCache.GetOrSetAccount(address, async () =>
+            var account = await AppCache.GetOrSetAccount(address, async () =>
                 await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
-                    ?? (address[0] != 't'
-                        ? throw new Exception($"Contract {address} doesn't exist")
-                        : new User
+                    ?? (address[0] == 't'
+                        ? new User
                         {
                             Address = address,
-                            Counter = (await GetAppStateAsync()).Counter,
+                            Counter = (await GetAppStateAsync()).ManagerCounter,
                             Type = AccountType.User
-                        }));
-        }
+                        }
+                        : null));
 
-        public Task<Account> GetAccountAsync(Account account)
-        {
-            return AppCache.GetOrSetAccount(account.Address, () => Task.FromResult(account));
+            if (account?.Type == AccountType.User && account.Balance == 0)
+            {
+                Db.TryAttach(account);
+                account.Counter = (await GetAppStateAsync()).ManagerCounter;
+            }
+
+            return account;
         }
 
         public void RemoveAccounts(IEnumerable<Account> accounts)
@@ -92,69 +99,88 @@ namespace Tzkt.Sync.Services
                 Db.AppState.FirstOrDefaultAsync() ?? throw new Exception("Failed to get app state"));
         }
 
+        public async Task<int> NextCounterAsync(bool manager = false)
+        {
+            var state = await GetAppStateAsync();
+
+            Db.TryAttach(state);
+            if (manager) ++state.ManagerCounter;
+            return ++state.GlobalCounter;
+        }
+
+        public async Task ReleaseCounterAsync(bool manager = false)
+        {
+            var state = await GetAppStateAsync();
+
+            Db.TryAttach(state);
+            if (manager) --state.ManagerCounter;
+            //--state.GlobalCounter;
+        }
+        #endregion
+
+        #region blocks
+        public void AddBlock(Block block)
+        {
+            AppCache.AddBlock(block);
+        }
+
         public async Task<Block> GetCurrentBlockAsync()
         {
             var state = await GetAppStateAsync();
-            return await AppCache.GetOrSetCurrentBlock(() =>
-                Db.Blocks.FirstOrDefaultAsync(x => x.Level == state.Level));
+            return await GetBlockAsync(state.Level);
         }
 
         public async Task<Block> GetPreviousBlockAsync()
         {
             var state = await GetAppStateAsync();
-            return await AppCache.GetOrSetPreviousBlock(() =>
-                Db.Blocks.FirstOrDefaultAsync(x => x.Level == state.Level - 1));
+            return await GetBlockAsync(state.Level - 1);
         }
 
-        public Task PushBlock(Block block)
+        public async Task<Block> GetBlockAsync(int level)
         {
-            AppCache.PushBlock(block);
-            return Task.CompletedTask;
+            return await AppCache.GetOrSetBlock(level, async () =>
+                await Db.Blocks.FirstOrDefaultAsync(x => x.Level == level)
+                    ?? throw new Exception($"Block #{level} doesn't exist"));
         }
 
-        public async Task PopBlock()
+        public void RemoveBlock(Block block)
         {
-            var prevBlock = await GetPreviousBlockAsync();
-            AppCache.PushBlock(prevBlock, null);
+            AppCache.RemoveBlock(block);
         }
         #endregion
 
         #region voting
-        public Task<VotingEpoch> GetCurrentEpochAsync()
+        public void AddVotingPeriod(VotingPeriod period)
         {
-            return AppCache.GetOrSetVotingEpoch(() =>
-                Db.VotingEpoches.Include(x => x.Periods).OrderByDescending(x => x.Level).FirstOrDefaultAsync()
+            AppCache.SetVotingPeriod(period);
+        }
+
+        public Task<VotingPeriod> GetCurrentVotingPeriodAsync()
+        {
+            return AppCache.GetOrSetVotingPeriod(() =>
+                Db.VotingPeriods.OrderByDescending(x => x.StartLevel).FirstOrDefaultAsync()
                     ?? throw new Exception("Failed to get voting epoch"));
         }
 
-        public Task AddVotingEpoch(VotingEpoch epoch)
+        public void RemoveVotingPeriod()
         {
-            AppCache.SetVotingEpoch(epoch);
-            return Task.CompletedTask;
+            AppCache.RemoveVotingPeriod();
         }
         #endregion
 
         #region protocols
-        public async Task<Protocol> GetCurrentProtocolAsync()
-        {
-            var block = await GetCurrentBlockAsync();
-            return await AppCache.GetOrSetProtocol(block.ProtoCode, () =>
-                Db.Protocols.FirstOrDefaultAsync(x => x.Code == block.ProtoCode)
-                        ?? throw new Exception($"Proto{block.ProtoCode} doesn't exist"));
-        }
-
         public async Task<Protocol> GetProtocolAsync(int code)
         {
             return await AppCache.GetOrSetProtocol(code, () =>
                 Db.Protocols.FirstOrDefaultAsync(x => x.Code == code)
-                        ?? throw new Exception($"Proto{code} doesn't exist"));
+                    ?? throw new Exception($"Proto{code} doesn't exist"));
         }
 
         public async Task<Protocol> GetProtocolAsync(string hash)
         {
             return await AppCache.GetOrSetProtocol(hash, async () =>
                 await Db.Protocols.FirstOrDefaultAsync(x => x.Hash == hash)
-                        ?? new Protocol { Hash = hash, Code = await Db.Protocols.CountAsync() - 1 });
+                    ?? new Protocol { Hash = hash, Code = await Db.Protocols.CountAsync() - 1 });
         }
 
         public void RemoveProtocol(Protocol protocol)
@@ -162,8 +188,6 @@ namespace Tzkt.Sync.Services
             AppCache.RemoveProtocol(protocol);
         }
         #endregion
-
-        public void Clear() => AppCache.Clear();
     }
 
     public static class CacheServiceExt

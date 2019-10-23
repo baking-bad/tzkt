@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
 {
     public class OriginationOperation : InternalOperation
     {
-        public int ContractId { get; set; }
+        public int? ContractId { get; set; }
         public int? DelegateId { get; set; }
 
         public long Balance { get; set; }

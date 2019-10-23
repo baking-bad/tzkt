@@ -11,179 +11,155 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class RevealsCommit : ProtocolCommit
     {
-        public List<RevealOperation> Reveals { get; private set; }
-        public Dictionary<string, string> PubKeys { get; private set; }
+        public RevealOperation Reveal { get; private set; }
+        public string PubKey { get; private set; }
 
-        public RevealsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        RevealsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(Block block, RawOperation op, RawRevealContent content)
         {
-            var block = await Cache.GetCurrentBlockAsync();
-            block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            var id = await Cache.NextCounterAsync(true);
 
-            Reveals = await Db.RevealOps.Where(x => x.Level == block.Level).ToListAsync();
-            foreach (var op in Reveals)
+            var sender = await Cache.GetAccountAsync(content.Source);
+            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+
+            PubKey = content.PublicKey;
+            Reveal = new RevealOperation
             {
-                op.Block = block;
-                op.Sender = await Cache.GetAccountAsync(op.SenderId);
-                op.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(op.Sender.DelegateId);
-            }
+                Id = id,
+                OpHash = op.Hash,
+                Block = block,
+                Timestamp = block.Timestamp,
+                BakerFee = content.Fee,
+                Counter = content.Counter,
+                GasLimit = content.GasLimit,
+                StorageLimit = content.StorageLimit,
+                Sender = sender,
+                Status = content.Metadata.Result.Status switch
+                {
+                    "applied" => OperationStatus.Applied,
+                    "backtracked" => OperationStatus.Backtracked,
+                    _ => throw new NotImplementedException()
+                }
+            };
         }
 
-        public override async Task Init(IBlock block)
+        public async Task Init(Block block, RevealOperation reveal)
         {
-            var rawBlock = block as RawBlock;
-            var parsedBlock = FindCommit<BlockCommit>().Block;
-            parsedBlock.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(parsedBlock.BakerId);
+            Reveal = reveal;
 
-            Reveals = new List<RevealOperation>();
-            PubKeys = new Dictionary<string, string>(4);
-            foreach (var op in rawBlock.Operations[3])
-            {
-                foreach (var content in op.Contents.Where(x => x is RawRevealContent))
-                {
-                    var reveal = content as RawRevealContent;
-                    var sender = await Cache.GetAccountAsync(reveal.Source);
-                    sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            Reveal.Block ??= block;
+            Reveal.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
 
-                    if (Db.Entry(sender).State == EntityState.Added ||
-                        sender is User && !(sender is Data.Models.Delegate) && sender.Balance == 0)
-                        sender.Counter = reveal.GlobalCounter;
-
-                    PubKeys[reveal.Source] = reveal.PublicKey;
-
-                    Reveals.Add(new RevealOperation
-                    {
-                        OpHash = op.Hash,
-                        Block = parsedBlock,
-                        Timestamp = parsedBlock.Timestamp,
-                        BakerFee = reveal.Fee,
-                        Counter = reveal.Counter,
-                        GasLimit = reveal.GasLimit,
-                        StorageLimit = reveal.StorageLimit,
-                        Sender = sender,
-                        Status = reveal.Metadata.Result.Status switch
-                        {
-                            "applied" => OperationStatus.Applied,
-                            _ => throw new NotImplementedException()
-                        }
-                    });
-                }
-            }
+            Reveal.Sender = await Cache.GetAccountAsync(reveal.SenderId);
+            Reveal.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(reveal.Sender.DelegateId);
         }
 
         public override Task Apply()
         {
-            if (Reveals == null)
-                throw new Exception("Commit is not initialized");
+            #region entities
+            var block = Reveal.Block;
+            var blockBaker = block.Baker;
 
-            foreach (var reveal in Reveals)
+            var sender = Reveal.Sender;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
+            //Db.TryAttach(block);
+            Db.TryAttach(blockBaker);
+
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
+            #endregion
+
+            #region apply operation
+            sender.Balance -= Reveal.BakerFee;
+            if (senderDelegate != null) senderDelegate.StakingBalance -= Reveal.BakerFee;
+            blockBaker.FrozenFees += Reveal.BakerFee;
+            blockBaker.Balance += Reveal.BakerFee;
+            blockBaker.StakingBalance += Reveal.BakerFee;
+
+            sender.Operations |= Operations.Reveals;
+            block.Operations |= Operations.Reveals;
+
+            sender.Counter = Math.Max(sender.Counter, Reveal.Counter);
+            #endregion
+
+            #region apply result
+            if (Reveal.Status == OperationStatus.Applied || Reveal.Status == OperationStatus.Backtracked)
             {
-                #region entities
-                var block = reveal.Block;
-                var blockBaker = block.Baker;
-
-                var sender = reveal.Sender;
-                var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-
-                //Db.TryAttach(block);
-                Db.TryAttach(blockBaker);
-
-                Db.TryAttach(sender);
-                Db.TryAttach(senderDelegate);
-                #endregion
-
-                #region apply operation
-                sender.Balance -= reveal.BakerFee;
-                if (senderDelegate != null) senderDelegate.StakingBalance -= reveal.BakerFee;
-                blockBaker.FrozenFees += reveal.BakerFee;
-                blockBaker.Balance += reveal.BakerFee;
-                blockBaker.StakingBalance += reveal.BakerFee;
-
-                sender.Operations |= Operations.Reveals;
-                block.Operations |= Operations.Reveals;
-                
-                sender.Counter = Math.Max(sender.Counter, reveal.Counter);
-                #endregion
-
-                #region apply result
-                if (reveal.Status == OperationStatus.Applied)
-                {
-                    if (sender is User user)
-                        user.PublicKey = PubKeys[sender.Address];
-                }
-                #endregion
-
-                Db.RevealOps.Add(reveal);
+                if (sender is User user)
+                    user.PublicKey = PubKey;
             }
+            #endregion
+
+            Db.RevealOps.Add(Reveal);
 
             return Task.CompletedTask;
         }
 
         public override async Task Revert()
         {
-            if (Reveals == null)
-                throw new Exception("Commit is not initialized");
+            #region entities
+            var block = Reveal.Block;
+            var blockBaker = block.Baker;
 
-            foreach (var reveal in Reveals)
+            var sender = Reveal.Sender;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
+            //Db.TryAttach(block);
+            Db.TryAttach(blockBaker);
+
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
+            #endregion
+
+            #region revert result
+            if (Reveal.Status == OperationStatus.Applied || Reveal.Status == OperationStatus.Backtracked)
             {
-                #region entities
-                var block = reveal.Block;
-                var blockBaker = block.Baker;
-
-                var sender = reveal.Sender;
-                var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-
-                //Db.TryAttach(block);
-                Db.TryAttach(blockBaker);
-
-                Db.TryAttach(sender);
-                Db.TryAttach(senderDelegate);
-                #endregion
-
-                #region revert result
-                if (reveal.Status == OperationStatus.Applied)
-                {
-                    if (sender is User user)
-                        user.PublicKey = null;
-                }
-                #endregion
-
-                #region revert operation
-                sender.Balance += reveal.BakerFee;
-                if (senderDelegate != null) senderDelegate.StakingBalance += reveal.BakerFee;
-                blockBaker.FrozenFees -= reveal.BakerFee;
-                blockBaker.Balance -= reveal.BakerFee;
-                blockBaker.StakingBalance -= reveal.BakerFee;
-
-                if (!await Db.RevealOps.AnyAsync(x => x.SenderId == sender.Id && x.Level < reveal.Level))
-                    sender.Operations &= ~Operations.Reveals;
-
-                sender.Counter = Math.Min(sender.Counter, reveal.Counter - 1);
-                #endregion
-
-                if (sender.Operations == Operations.None && sender.Counter > 0)
-                {
-                    Db.Accounts.Remove(sender);
-                    Cache.RemoveAccount(sender);
-                }
-
-                Db.RevealOps.Remove(reveal);
+                if (sender is User user)
+                    user.PublicKey = null;
             }
+            #endregion
+
+            #region revert operation
+            sender.Balance += Reveal.BakerFee;
+            if (senderDelegate != null) senderDelegate.StakingBalance += Reveal.BakerFee;
+            blockBaker.FrozenFees -= Reveal.BakerFee;
+            blockBaker.Balance -= Reveal.BakerFee;
+            blockBaker.StakingBalance -= Reveal.BakerFee;
+
+            if (!await Db.RevealOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < Reveal.Id))
+                sender.Operations &= ~Operations.Reveals;
+
+            sender.Counter = Math.Min(sender.Counter, Reveal.Counter - 1);
+            #endregion
+
+            if (sender.Operations == Operations.None && sender.Counter > 0)
+            {
+                Db.Accounts.Remove(sender);
+                Cache.RemoveAccount(sender);
+            }
+
+            Db.RevealOps.Remove(Reveal);
+            await Cache.ReleaseCounterAsync(true);
         }
 
         #region static
-        public static async Task<RevealsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<RevealsCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawRevealContent content)
         {
-            var commit = new RevealsCommit(protocol, commits);
-            await commit.Init(rawBlock);
+            var commit = new RevealsCommit(proto);
+            await commit.Init(block, op, content);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<RevealsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<RevealsCommit> Revert(ProtocolHandler proto, Block block, RevealOperation op)
         {
-            var commit = new RevealsCommit(protocol, commits);
-            await commit.Init();
+            var commit = new RevealsCommit(proto);
+            await commit.Init(block, op);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

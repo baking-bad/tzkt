@@ -22,17 +22,12 @@ namespace Tzkt.Sync.Protocols
 
         }
 
-        public override Task<List<IPreprocessor>> GetPreprocessors(IBlock block)
-        {
-            return Task.FromResult(new List<IPreprocessor>(0));
-        }
-
-        public override Task<List<ICommit>> GetReverts()
+        public override Task Revert()
         {
             throw new NotImplementedException();
         }
 
-        public override Task<List<ICommit>> GetCommits(IBlock block)
+        public override Task Commit(IBlock block)
         {
             throw new NotImplementedException();
         }

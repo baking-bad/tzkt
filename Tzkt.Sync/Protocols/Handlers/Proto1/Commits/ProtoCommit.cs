@@ -10,20 +10,10 @@ namespace Tzkt.Sync.Protocols.Proto1
         public Protocol Protocol { get; private set; }
         public Protocol NextProtocol { get; private set; }
 
-        public ProtoCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        public ProtoCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(RawBlock rawBlock)
         {
-            var state = await Cache.GetAppStateAsync();
-
-            Protocol = await Cache.GetProtocolAsync(state.Protocol);
-            NextProtocol = await Cache.GetProtocolAsync(state.NextProtocol);
-        }
-
-        public override async Task Init(IBlock block)
-        {
-            var rawBlock = block as RawBlock;
-
             Protocol = await Cache.GetProtocolAsync(rawBlock.Metadata.Protocol);
             NextProtocol = await Cache.GetProtocolAsync(rawBlock.Metadata.NextProtocol);
 
@@ -53,11 +43,16 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
+        public async Task Init(Block block)
+        {
+            var state = await Cache.GetAppStateAsync();
+
+            Protocol = await Cache.GetProtocolAsync(state.Protocol);
+            NextProtocol = await Cache.GetProtocolAsync(state.NextProtocol);
+        }
+
         public override Task Apply()
         {
-            if (Protocol == null)
-                throw new Exception("Commit is not initialized");
-
             Db.TryAttach(Protocol);
             Db.TryAttach(NextProtocol);
             Protocol.Weight++;
@@ -67,9 +62,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public override Task Revert()
         {
-            if (Protocol == null)
-                throw new Exception("Commit is not initialized");
-
             Db.TryAttach(Protocol);
             Db.TryAttach(NextProtocol);
 
@@ -85,17 +77,21 @@ namespace Tzkt.Sync.Protocols.Proto1
         }
 
         #region static
-        public static async Task<ProtoCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<ProtoCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
         {
-            var commit = new ProtoCommit(protocol, commits);
+            var commit = new ProtoCommit(proto);
             await commit.Init(rawBlock);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<ProtoCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<ProtoCommit> Revert(ProtocolHandler proto, Block block)
         {
-            var commit = new ProtoCommit(protocol, commits);
-            await commit.Init();
+            var commit = new ProtoCommit(proto);
+            await commit.Init(block);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

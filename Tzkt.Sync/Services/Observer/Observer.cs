@@ -118,7 +118,7 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> RebaseLocalBranchAsync(CancellationToken cancelToken)
         {
-            while (AppState.Level >= 2)
+            while (AppState.Level >= 0)
             //while (AppState.Level >= 0 && !await Node.ValidateBranchAsync(AppState.Level, AppState.Hash))
             {
                 if (cancelToken.IsCancellationRequested)
@@ -131,7 +131,7 @@ namespace Tzkt.Sync.Services
                 AppState = await protoHandler.RevertLastBlock();
 
                 Logger.LogDebug($"Reverted to [{AppState.Level}:{AppState.Hash}]");
-            }
+            }   
             return true;
         }
 
@@ -145,7 +145,7 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                 using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
 
-                if (AppState.Level >= 4095)
+                if (AppState.Level >= 0)
                     throw new ValidationException("Test", true);
 
                 Logger.LogDebug($"Applying block...");

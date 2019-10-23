@@ -41,16 +41,8 @@ namespace Tzkt.Sync
             Logger.LogDebug("Validating block...");
             rawBlock = await Validator.ValidateBlock(rawBlock);
 
-            Logger.LogDebug("Preprocessing...");
-            foreach (var preprocessor in await GetPreprocessors(rawBlock))
-                await preprocessor.Run();
-
-            Logger.LogDebug("Init commits...");
-            var commits = await GetCommits(rawBlock);
-
-            Logger.LogDebug("Applying commits...");
-            foreach (var commit in commits)
-                await commit.Apply();
+            Logger.LogDebug("Commiting...");
+            await Commit(rawBlock);
 
             Logger.LogDebug("Diagnostics...");
             await Diagnostics.Run(rawBlock.Level);
@@ -65,12 +57,8 @@ namespace Tzkt.Sync
         
         public virtual async Task<AppState> RevertLastBlock()
         {
-            Logger.LogDebug("Init reverts...");
-            var commits = await GetReverts();
-
-            Logger.LogDebug("Applying reverts...");
-            foreach (var commit in commits)
-                await commit.Revert();
+            Logger.LogDebug("Reverting...");
+            await Revert();
 
             Logger.LogDebug("Diagnostics...");
             await Diagnostics.Run((await Cache.GetAppStateAsync()).Level);
@@ -83,11 +71,9 @@ namespace Tzkt.Sync
             return await Cache.GetAppStateAsync();
         }
 
-        public abstract Task<List<IPreprocessor>> GetPreprocessors(IBlock block);
+        public abstract Task Commit(IBlock block);
 
-        public abstract Task<List<ICommit>> GetCommits(IBlock block);
-
-        public abstract Task<List<ICommit>> GetReverts();
+        public abstract Task Revert();
 
         void ClearCachedRelations()
         {
@@ -112,7 +98,7 @@ namespace Tzkt.Sync
                     delegat.ReceivedDoubleEndorsingAccusations = null;
                     delegat.ReceivedTransactions = null;
                     delegat.SentReveals = null;
-                    delegat.Revelations = null;
+                    delegat.SentRevelations = null;
                     delegat.SentDelegations = null;
                     delegat.SentDoubleBakingAccusations = null;
                     delegat.SentDoubleEndorsingAccusations = null;
@@ -164,6 +150,29 @@ namespace Tzkt.Sync
                 else if (entry.Entity is Protocol p)
                 {
                     p.Blocks = null;
+                }
+                else if (entry.Entity is VotingPeriod period)
+                {
+                    period.Epoch = null;
+                    period.Ballots = null;
+                    period.Proposals = null;
+
+                    if (period is ExplorationPeriod exploration)
+                    {
+                        exploration.Proposal = null;
+                    }
+                    else if (period is PromotionPeriod promotion)
+                    {
+                        promotion.Proposal = null;
+                    }
+                    else if (period is TestingPeriod testing)
+                    {
+                        testing.Proposal = null;
+                    }
+                    else if (period is ProposalPeriod proposal)
+                    {
+                        proposal.Candidates = null;
+                    }
                 }
             }
         }

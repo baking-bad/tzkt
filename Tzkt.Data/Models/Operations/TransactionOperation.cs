@@ -7,7 +7,7 @@ namespace Tzkt.Data.Models
 {
     public class TransactionOperation : InternalOperation
     {
-        public int TargetId { get; set; }
+        public int? TargetId { get; set; }
 
         public long Amount { get; set; }
 

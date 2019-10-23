@@ -9,128 +9,111 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class NonceRevelationsCommit : ProtocolCommit
     {
-        public List<NonceRevelationOperation> Revelations { get; private set; }
-        public Protocol Protocol { get; private set; }
+        public NonceRevelationOperation Revelation { get; private set; }
 
-        public NonceRevelationsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        NonceRevelationsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(Block block, RawOperation op, RawNonceRevelationContent content)
         {
-            var block = await Cache.GetCurrentBlockAsync();
-            Protocol = await Cache.GetCurrentProtocolAsync();
-            Revelations = await Db.NonceRevelationOps.Include(x => x.RevealedBlock).Where(x => x.Level == block.Level).ToListAsync();
-            foreach (var op in Revelations)
+            var revealedBlock = await Cache.GetBlockAsync(content.Level);
+
+            Revelation = new NonceRevelationOperation
             {
-                op.Block = block;
-                op.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(op.BakerId);
-            }
+                Id = await Cache.NextCounterAsync(),
+                Block = block,
+                Timestamp = block.Timestamp,
+                OpHash = op.Hash,
+                Sender = (Data.Models.Delegate)await Cache.GetAccountAsync(revealedBlock.BakerId),
+                RevealedBlock = revealedBlock,
+                RevealedLevel = content.Level
+            };
         }
 
-        public override async Task Init(IBlock block)
+        public async Task Init(Block block, NonceRevelationOperation revelation)
         {
-            var rawBlock = block as RawBlock;
-            var parsedBlock = FindCommit<BlockCommit>().Block;
-            parsedBlock.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(parsedBlock.BakerId);
+            Revelation = revelation;
 
-            Protocol = await Cache.GetProtocolAsync(block.Protocol);
-            Revelations = new List<NonceRevelationOperation>();
-            foreach (var op in rawBlock.Operations[2])
-            {
-                foreach (var content in op.Contents.Where(x => x is RawNonceRevelationContent))
-                {
-                    var revelation = content as RawNonceRevelationContent;
-                    var revealedBlock = await Db.Blocks.FirstAsync(x => x.Level == revelation.Level);
+            Revelation.Block ??= block;
+            Revelation.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
+            Revelation.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
 
-                    Revelations.Add(new NonceRevelationOperation
-                    {
-                        Baker = parsedBlock.Baker,
-                        Block = parsedBlock,
-                        Timestamp = parsedBlock.Timestamp,
-                        OpHash = op.Hash,
-                        RevealedBlock = revealedBlock,
-                        RevealedLevel = revealedBlock.Level
-                    });
-                }
-            }
+            Revelation.Sender ??= (Data.Models.Delegate)await Cache.GetAccountAsync(revelation.SenderId);
+            Revelation.RevealedBlock = await Cache.GetBlockAsync(Revelation.RevealedLevel);
         }
 
         public override Task Apply()
         {
-            if (Revelations == null)
-                throw new Exception("Commit is not initialized");
+            #region entities
+            var block = Revelation.Block;
+            var blockBaker = block.Baker;
+            var sender = Revelation.Sender;
+            var revealedBlock = Revelation.RevealedBlock;
 
-            foreach (var revelation in Revelations)
-            {
-                #region entities
-                var block = revelation.Block;
-                var blockBaker = block.Baker;
-                var revealedBlock = revelation.RevealedBlock;
+            //Db.TryAttach(block);
+            Db.TryAttach(blockBaker);
+            Db.TryAttach(sender);
+            Db.TryAttach(revealedBlock);
+            #endregion
 
-                //Db.TryAttach(block);
-                Db.TryAttach(blockBaker);
-                Db.TryAttach(revealedBlock);
-                #endregion
+            #region apply operation
+            blockBaker.Balance += block.Protocol.RevelationReward;
+            blockBaker.FrozenRewards += block.Protocol.RevelationReward;
 
-                #region apply operation
-                blockBaker.Balance += Protocol.RevelationReward;
-                blockBaker.FrozenRewards += Protocol.RevelationReward;
+            sender.Operations |= Operations.Revelations;
+            block.Operations |= Operations.Revelations;
 
-                blockBaker.Operations |= Operations.Revelations;
-                block.Operations |= Operations.Revelations;
+            revealedBlock.Revelation = Revelation;
+            #endregion
 
-                revealedBlock.Revelation = revelation;
-                #endregion
-
-                Db.NonceRevelationOps.Add(revelation);
-            }
+            Db.NonceRevelationOps.Add(Revelation);
 
             return Task.CompletedTask;
         }
 
         public override async Task Revert()
         {
-            if (Revelations == null)
-                throw new Exception("Commit is not initialized");
+            #region entities
+            var block = Revelation.Block;
+            var blockBaker = block.Baker;
+            var sender = Revelation.Sender;
+            var revealedBlock = Revelation.RevealedBlock;
 
-            foreach (var revelation in Revelations)
-            {
-                #region entities
-                var block = revelation.Block;
-                var blockBaker = block.Baker;
-                var revealedBlock = revelation.RevealedBlock;
+            //Db.TryAttach(block);
+            Db.TryAttach(blockBaker);
+            Db.TryAttach(sender);
+            Db.TryAttach(revealedBlock);
+            #endregion
 
-                //Db.TryAttach(block);
-                Db.TryAttach(blockBaker);
-                Db.TryAttach(revealedBlock);
-                #endregion
+            #region apply operation
+            blockBaker.Balance -= block.Protocol.RevelationReward;
+            blockBaker.FrozenRewards -= block.Protocol.RevelationReward;
 
-                #region apply operation
-                blockBaker.Balance -= Protocol.RevelationReward;
-                blockBaker.FrozenRewards -= Protocol.RevelationReward;
+            if (!await Db.NonceRevelationOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < Revelation.Id))
+                sender.Operations &= ~Operations.Revelations;
 
-                if (!await Db.NonceRevelationOps.AnyAsync(x => x.BakerId == blockBaker.Id && x.Level < revelation.Level))
-                    blockBaker.Operations &= ~Operations.Revelations;
+            revealedBlock.Revelation = null;
+            revealedBlock.RevelationId = null;
+            #endregion
 
-                revealedBlock.Revelation = null;
-                revealedBlock.RevelationId = null;
-                #endregion
-
-                Db.NonceRevelationOps.Remove(revelation);
-            }
+            Db.NonceRevelationOps.Remove(Revelation);
         }
 
         #region static
-        public static async Task<NonceRevelationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<NonceRevelationsCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawNonceRevelationContent content)
         {
-            var commit = new NonceRevelationsCommit(protocol, commits);
-            await commit.Init(rawBlock);
+            var commit = new NonceRevelationsCommit(proto);
+            await commit.Init(block, op, content);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<NonceRevelationsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<NonceRevelationsCommit> Revert(ProtocolHandler proto, Block block, NonceRevelationOperation op)
         {
-            var commit = new NonceRevelationsCommit(protocol, commits);
-            await commit.Init();
+            var commit = new NonceRevelationsCommit(proto);
+            await commit.Init(block, op);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

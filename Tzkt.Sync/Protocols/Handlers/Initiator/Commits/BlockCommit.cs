@@ -9,17 +9,10 @@ namespace Tzkt.Sync.Protocols.Initiator
     {
         public Block Block { get; private set; }
 
-        public BlockCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(RawBlock rawBlock)
         {
-            Block = await Cache.GetCurrentBlockAsync();
-        }
-
-        public override async Task Init(IBlock block)
-        {
-            var rawBlock = block as RawBlock;
-
             Block = new Block
             {
                 Hash = rawBlock.Hash,
@@ -29,36 +22,42 @@ namespace Tzkt.Sync.Protocols.Initiator
             };
         }
 
+        public Task Init(Block block)
+        {
+            Block = block;
+            return Task.CompletedTask;
+        }
+
         public override Task Apply()
         {
-            if (Block == null)
-                throw new Exception("Commit is not initialized");
-
             Db.Blocks.Add(Block);
+            Cache.AddBlock(Block);
+
             return Task.CompletedTask;
         }
 
         public override Task Revert()
         {
-            if (Block == null)
-                throw new Exception("Commit is not initialized");
-
             Db.Blocks.Remove(Block);
             return Task.CompletedTask;
         }
 
         #region static
-        public static async Task<BlockCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<BlockCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
         {
-            var commit = new BlockCommit(protocol, commits);
+            var commit = new BlockCommit(proto);
             await commit.Init(rawBlock);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<BlockCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<BlockCommit> Revert(ProtocolHandler proto, Block block)
         {
-            var commit = new BlockCommit(protocol, commits);
-            await commit.Init();
+            var commit = new BlockCommit(proto);
+            await commit.Init(block);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

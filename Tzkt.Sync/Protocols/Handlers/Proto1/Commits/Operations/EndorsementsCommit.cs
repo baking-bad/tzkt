@@ -9,121 +9,97 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class EndorsementsCommit : ProtocolCommit
     {
-        public List<EndorsementOperation> Endorsements { get; private set; }
-        public Protocol Protocol { get; private set; }
+        public EndorsementOperation Endorsement { get; private set; }
 
-        public EndorsementsCommit(ProtocolHandler protocol, List<ICommit> commits) : base(protocol, commits) { }
+        EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Init()
+        public async Task Init(Block block, RawOperation op, RawEndorsementContent content)
         {
-            var block = await Cache.GetCurrentBlockAsync();
-
-            Protocol = await Cache.GetCurrentProtocolAsync();
-            Endorsements = await Db.EndorsementOps.Where(x => x.Level == block.Level).ToListAsync();
-            foreach (var op in Endorsements)
+            Endorsement = new EndorsementOperation
             {
-                op.Block = block;
-                op.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(op.DelegateId);
-            }
+                Id = await Cache.NextCounterAsync(),
+                Block = block,
+                Timestamp = block.Timestamp,
+                OpHash = op.Hash,
+                Slots = content.Metadata.Slots.Count,
+                Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(content.Metadata.Delegate),
+                Reward = content.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate)?.Change ?? 0
+            };
         }
 
-        public override async Task Init(IBlock block)
+        public async Task Init(Block block, EndorsementOperation endorsement)
         {
-            var rawBlock = block as RawBlock;
-            var parsedBlock = FindCommit<BlockCommit>().Block;
+            Endorsement = endorsement;
 
-            Protocol = await Cache.GetProtocolAsync(block.Protocol);
-            Endorsements = new List<EndorsementOperation>();
-            foreach (var op in rawBlock.Operations[0])
-            {
-                foreach (var content in op.Contents.Where(x => x is RawEndorsementContent))
-                {
-                    var endorsement = content as RawEndorsementContent;
+            Endorsement.Block ??= block;
+            Endorsement.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
 
-                    Endorsements.Add(new EndorsementOperation
-                    {
-                        Block = parsedBlock,
-                        Timestamp = parsedBlock.Timestamp,
-                        OpHash = op.Hash,
-                        Slots = endorsement.Metadata.Slots.Count,
-                        Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(endorsement.Metadata.Delegate),
-                        Reward = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate)?.Change ?? 0
-                    });
-                }
-            }
+            Endorsement.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(endorsement.DelegateId);
         }
 
         public override Task Apply()
         {
-            if (Endorsements == null)
-                throw new Exception("Commit is not initialized");
+            #region entities
+            var block = Endorsement.Block;
+            var sender = Endorsement.Delegate;
 
-            foreach (var endorsement in Endorsements)
-            {
-                #region entities
-                var block = endorsement.Block;
-                var sender = endorsement.Delegate;
+            //Db.TryAttach(block);
+            Db.TryAttach(sender);
+            #endregion
 
-                //Db.TryAttach(block);
-                Db.TryAttach(sender);
-                #endregion
+            #region apply operation
+            sender.Balance += Endorsement.Reward;
+            sender.FrozenRewards += Endorsement.Reward;
+            sender.FrozenDeposits += 1_000_000 * ((Endorsement.Block.Level - 1) / block.Protocol.BlocksPerCycle) * Endorsement.Slots;
 
-                #region apply operation
-                sender.Balance += endorsement.Reward;
-                sender.FrozenRewards += endorsement.Reward;
-                sender.FrozenDeposits += 1_000_000 * ((endorsement.Block.Level - 1) / Protocol.BlocksPerCycle) * endorsement.Slots;
+            sender.Operations |= Operations.Endorsements;
+            block.Operations |= Operations.Endorsements;
 
-                sender.Operations |= Operations.Endorsements;
-                block.Operations |= Operations.Endorsements;
+            block.Validations++;
+            #endregion
 
-                block.Validations++;
-                #endregion
-
-                Db.EndorsementOps.Add(endorsement);
-            }
+            Db.EndorsementOps.Add(Endorsement);
             return Task.CompletedTask;
         }
 
         public override async Task Revert()
         {
-            if (Endorsements == null)
-                throw new Exception("Commit is not initialized");
+            #region entities
+            var block = Endorsement.Block;
+            var sender = Endorsement.Delegate;
 
-            foreach (var endorsement in Endorsements)
-            {
-                #region entities
-                var block = endorsement.Block;
-                var sender = endorsement.Delegate;
+            //Db.TryAttach(block);
+            Db.TryAttach(sender);
+            #endregion
 
-                //Db.TryAttach(block);
-                Db.TryAttach(sender);
-                #endregion
+            #region apply operation
+            sender.Balance -= Endorsement.Reward;
+            sender.FrozenRewards -= Endorsement.Reward;
+            sender.FrozenDeposits -= 1_000_000 * ((Endorsement.Block.Level - 1) / block.Protocol.BlocksPerCycle) * Endorsement.Slots;
 
-                #region apply operation
-                sender.Balance -= endorsement.Reward;
-                sender.FrozenRewards -= endorsement.Reward;
-                sender.FrozenDeposits -= 1_000_000 * ((endorsement.Block.Level - 1) / Protocol.BlocksPerCycle) * endorsement.Slots;
+            if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Id < Endorsement.Id))
+                sender.Operations &= ~Operations.Endorsements;
+            #endregion
 
-                if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Level < endorsement.Level))
-                    sender.Operations &= ~Operations.Endorsements;
-                #endregion
-
-                Db.EndorsementOps.Remove(endorsement);
-            }
+            Db.EndorsementOps.Remove(Endorsement);
         }
 
         #region static
-        public static async Task<EndorsementsCommit> Create(ProtocolHandler protocol, List<ICommit> commits, RawBlock rawBlock)
+        public static async Task<EndorsementsCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawEndorsementContent content)
         {
-            var commit = new EndorsementsCommit(protocol, commits);
-            await commit.Init(rawBlock);
+            var commit = new EndorsementsCommit(proto);
+            await commit.Init(block, op, content);
+            await commit.Apply();
+
             return commit;
         }
 
-        public static async Task<EndorsementsCommit> Create(ProtocolHandler protocol, List<ICommit> commits)
+        public static async Task<EndorsementsCommit> Revert(ProtocolHandler proto, Block block, EndorsementOperation op)
         {
-            var commit = new EndorsementsCommit(protocol, commits);
-            await commit.Init();
+            var commit = new EndorsementsCommit(proto);
+            await commit.Init(block, op);
+            await commit.Revert();
+
             return commit;
         }
         #endregion

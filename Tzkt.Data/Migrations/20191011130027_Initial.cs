@@ -20,7 +20,8 @@ namespace Tzkt.Data.Migrations
                     Protocol = table.Column<string>(nullable: true),
                     NextProtocol = table.Column<string>(nullable: true),
                     Hash = table.Column<string>(nullable: true),
-                    Counter = table.Column<int>(nullable: false)
+                    GlobalCounter = table.Column<int>(nullable: false),
+                    ManagerCounter = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -350,7 +351,7 @@ namespace Tzkt.Data.Migrations
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
-                    BakerId = table.Column<int>(nullable: false),
+                    SenderId = table.Column<int>(nullable: false),
                     RevealedLevel = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
@@ -358,16 +359,16 @@ namespace Tzkt.Data.Migrations
                     table.PrimaryKey("PK_NonceRevelationOps", x => x.Id);
                     table.UniqueConstraint("AK_NonceRevelationOps_RevealedLevel", x => x.RevealedLevel);
                     table.ForeignKey(
-                        name: "FK_NonceRevelationOps_Accounts_BakerId",
-                        column: x => x.BakerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "FK_NonceRevelationOps_Blocks_Level",
                         column: x => x.Level,
                         principalTable: "Blocks",
                         principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_NonceRevelationOps_Accounts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -478,7 +479,7 @@ namespace Tzkt.Data.Migrations
                     Status = table.Column<byte>(nullable: false),
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
-                    TargetId = table.Column<int>(nullable: false),
+                    TargetId = table.Column<int>(nullable: true),
                     Amount = table.Column<long>(nullable: false),
                     InternalOperations = table.Column<byte>(nullable: true)
                 },
@@ -508,7 +509,7 @@ namespace Tzkt.Data.Migrations
                         column: x => x.TargetId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -626,7 +627,7 @@ namespace Tzkt.Data.Migrations
                     Status = table.Column<byte>(nullable: false),
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
-                    ContractId = table.Column<int>(nullable: false),
+                    ContractId = table.Column<int>(nullable: true),
                     DelegateId = table.Column<int>(nullable: true),
                     Balance = table.Column<long>(nullable: false)
                 },
@@ -638,7 +639,7 @@ namespace Tzkt.Data.Migrations
                         column: x => x.ContractId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_OriginationOps_Accounts_DelegateId",
                         column: x => x.DelegateId,
@@ -688,8 +689,8 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "Counter", "Hash", "Level", "NextProtocol", "Protocol", "Synced", "Timestamp" },
-                values: new object[] { -1, 0, "", -1, "", "", false, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
+                columns: new[] { "Id", "GlobalCounter", "Hash", "Level", "ManagerCounter", "NextProtocol", "Protocol", "Synced", "Timestamp" },
+                values: new object[] { -1, 0, "", -1, 0, "", "", false, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",
@@ -873,11 +874,6 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_NonceRevelationOps_BakerId",
-                table: "NonceRevelationOps",
-                column: "BakerId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_NonceRevelationOps_Level",
                 table: "NonceRevelationOps",
                 column: "Level");
@@ -886,6 +882,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_NonceRevelationOps_OpHash",
                 table: "NonceRevelationOps",
                 column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NonceRevelationOps_SenderId",
+                table: "NonceRevelationOps",
+                column: "SenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_ContractId",
