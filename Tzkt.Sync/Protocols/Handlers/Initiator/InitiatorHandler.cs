@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
+using Tzkt.Data.Models;
 using Tzkt.Sync.Services;
 using Tzkt.Sync.Protocols.Initiator;
 
@@ -19,6 +21,44 @@ namespace Tzkt.Sync.Protocols
         {
             Serializer = new Serializer();
             Validator = new Validator(this);
+        }
+
+        public override async Task InitProtocol(IBlock block)
+        {
+            var stream = await Node.GetConstantsAsync(block.Level);
+            var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
+
+            var protocol = new Protocol
+            {
+                Hash = block.Protocol,
+                Code = await Db.Protocols.CountAsync() - 1,
+                BlockDeposit = rawConst.BlockDeposit,
+                BlockReward = rawConst.BlockReward,
+                BlocksPerCommitment = rawConst.BlocksPerCommitment,
+                BlocksPerCycle = rawConst.BlocksPerCycle,
+                BlocksPerSnapshot = rawConst.BlocksPerSnapshot,
+                BlocksPerVoting = rawConst.BlocksPerVoting,
+                ByteCost = rawConst.ByteCost,
+                EndorsementDeposit = rawConst.EndorsementDeposit,
+                EndorsementReward = rawConst.EndorsementReward,
+                EndorsersPerBlock = rawConst.EndorsersPerBlock,
+                HardBlockGasLimit = rawConst.HardBlockGasLimit,
+                HardOperationGasLimit = rawConst.HardOperationGasLimit,
+                HardOperationStorageLimit = rawConst.HardOperationStorageLimit,
+                OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost,
+                PreserverCycles = rawConst.PreserverCycles,
+                RevelationReward = rawConst.RevelationReward,
+                TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0],
+                TokensPerRoll = rawConst.TokensPerRoll
+            };
+
+            Db.Protocols.Add(protocol);
+            Cache.AddProtocol(protocol);
+        }
+
+        public override Task InitProtocol()
+        {
+            return Task.CompletedTask;
         }
 
         public override async Task Commit(IBlock block)

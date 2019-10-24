@@ -51,11 +51,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ?? throw new ValidationException("invalid block depostis balance updates");
 
                 if (contractUpdate.Contract != rawBlock.Metadata.Baker ||
-                    contractUpdate.Change != -8_000_000 * Cycle)
+                    contractUpdate.Change != -Protocol.BlockDeposit)
                     throw new ValidationException("invalid block contract update");
 
                 if (depostisUpdate.Delegate != rawBlock.Metadata.Baker ||
-                    depostisUpdate.Change != 8_000_000 * Cycle)
+                    depostisUpdate.Change != Protocol.BlockDeposit)
                     throw new ValidationException("invalid block depostis update");
 
                 if (Cycle >= 7)
@@ -170,11 +170,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ?? throw new ValidationException("invalid endorsement depostis balance updates");
 
                 if (contractUpdate.Contract != endorsement.Metadata.Delegate ||
-                    contractUpdate.Change != -endorsement.Metadata.Slots.Count * 1_000_000 * Cycle)
+                    contractUpdate.Change != -endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
                     throw new ValidationException("invalid endorsement contract update");
 
                 if (depostisUpdate.Delegate != endorsement.Metadata.Delegate ||
-                    depostisUpdate.Change != endorsement.Metadata.Slots.Count * 1_000_000 * Cycle)
+                    depostisUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
                     throw new ValidationException("invalid endorsement depostis update");
 
                 if (Cycle >= 7)

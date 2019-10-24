@@ -27,6 +27,88 @@ namespace Tzkt.Sync.Protocols
             Validator = new Validator(this);
         }
 
+        public override async Task InitProtocol(IBlock block)
+        {
+            var state = await Cache.GetAppStateAsync();
+            var currProtocol = await Cache.GetProtocolAsync(state.Protocol);
+
+            Protocol protocol = null;
+            if (state.Protocol != state.NextProtocol)
+            {
+                protocol = new Protocol
+                {
+                    Hash = block.Protocol,
+                    Code = await Db.Protocols.CountAsync() - 1,
+                };
+                Db.Protocols.Add(protocol);
+                Cache.AddProtocol(protocol);
+            }
+            else if (block.Level % currProtocol.BlocksPerCycle == 1)
+            {
+                protocol = await Cache.GetProtocolAsync(state.Protocol);
+                Db.TryAttach(protocol);
+            }
+
+            if (protocol != null)
+            {
+                var stream = await Node.GetConstantsAsync(block.Level);
+                var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
+
+                protocol.BlockDeposit = rawConst.BlockDeposit;
+                protocol.BlockReward = rawConst.BlockReward;
+                protocol.BlocksPerCommitment = rawConst.BlocksPerCommitment;
+                protocol.BlocksPerCycle = rawConst.BlocksPerCycle;
+                protocol.BlocksPerSnapshot = rawConst.BlocksPerSnapshot;
+                protocol.BlocksPerVoting = rawConst.BlocksPerVoting;
+                protocol.ByteCost = rawConst.ByteCost;
+                protocol.EndorsementDeposit = rawConst.EndorsementDeposit;
+                protocol.EndorsementReward = rawConst.EndorsementReward;
+                protocol.EndorsersPerBlock = rawConst.EndorsersPerBlock;
+                protocol.HardBlockGasLimit = rawConst.HardBlockGasLimit;
+                protocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;
+                protocol.HardOperationStorageLimit = rawConst.HardOperationStorageLimit;
+                protocol.OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost;
+                protocol.PreserverCycles = rawConst.PreserverCycles;
+                protocol.RevelationReward = rawConst.RevelationReward;
+                protocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
+                protocol.TokensPerRoll = rawConst.TokensPerRoll;
+            }
+        }
+
+        public override async Task InitProtocol()
+        {
+            var state = await Cache.GetAppStateAsync();
+            var currProtocol = await Cache.GetProtocolAsync(state.Protocol);
+
+            if (state.Protocol == state.NextProtocol &&
+                state.Level % currProtocol.BlocksPerCycle != 0)
+                return;
+
+            var stream = await Node.GetConstantsAsync(state.Level - 1);
+            var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
+
+            Db.TryAttach(currProtocol);
+
+            currProtocol.BlockDeposit = rawConst.BlockDeposit;
+            currProtocol.BlockReward = rawConst.BlockReward;
+            currProtocol.BlocksPerCommitment = rawConst.BlocksPerCommitment;
+            currProtocol.BlocksPerCycle = rawConst.BlocksPerCycle;
+            currProtocol.BlocksPerSnapshot = rawConst.BlocksPerSnapshot;
+            currProtocol.BlocksPerVoting = rawConst.BlocksPerVoting;
+            currProtocol.ByteCost = rawConst.ByteCost;
+            currProtocol.EndorsementDeposit = rawConst.EndorsementDeposit;
+            currProtocol.EndorsementReward = rawConst.EndorsementReward;
+            currProtocol.EndorsersPerBlock = rawConst.EndorsersPerBlock;
+            currProtocol.HardBlockGasLimit = rawConst.HardBlockGasLimit;
+            currProtocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;
+            currProtocol.HardOperationStorageLimit = rawConst.HardOperationStorageLimit;
+            currProtocol.OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost;
+            currProtocol.PreserverCycles = rawConst.PreserverCycles;
+            currProtocol.RevelationReward = rawConst.RevelationReward;
+            currProtocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
+            currProtocol.TokensPerRoll = rawConst.TokensPerRoll;
+        }
+
         public override async Task Commit(IBlock block)
         {
             var rawBlock = block as RawBlock;

@@ -8,31 +8,22 @@ namespace Tzkt.Sync.Protocols.Genesis
     class ProtoCommit : ProtocolCommit
     {
         public Protocol Protocol { get; private set; }
-        public Protocol NextProtocol { get; private set; }
 
         ProtoCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public async Task Init(RawBlock rawBlock)
         {
             Protocol = await Cache.GetProtocolAsync(rawBlock.Metadata.Protocol);
-            NextProtocol = await Cache.GetProtocolAsync(rawBlock.Metadata.NextProtocol);
-            NextProtocol.Code++;
         }
 
         public async Task Init(Block block)
         {
-            var state = await Cache.GetAppStateAsync();
-
-            Protocol = await Cache.GetProtocolAsync(state.Protocol);
-            NextProtocol = await Cache.GetProtocolAsync(state.NextProtocol);
+            Protocol = await Cache.GetProtocolAsync(block.ProtoCode);
         }
 
         public override Task Apply()
         {
-            Db.Protocols.Add(Protocol);
-            Db.Protocols.Add(NextProtocol);
             Protocol.Weight++;
-
             return Task.CompletedTask;
         }
 
@@ -40,10 +31,6 @@ namespace Tzkt.Sync.Protocols.Genesis
         {
             Db.Protocols.Remove(Protocol);
             Cache.RemoveProtocol(Protocol);
-
-            Db.Protocols.Remove(NextProtocol);
-            Cache.RemoveProtocol(NextProtocol);
-
             return Task.CompletedTask;
         }
 

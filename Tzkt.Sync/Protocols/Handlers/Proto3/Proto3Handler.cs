@@ -22,12 +22,22 @@ namespace Tzkt.Sync.Protocols
 
         }
 
-        public override Task Revert()
+        public override Task InitProtocol(IBlock block)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task InitProtocol()
         {
             throw new NotImplementedException();
         }
 
         public override Task Commit(IBlock block)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task Revert()
         {
             throw new NotImplementedException();
         }

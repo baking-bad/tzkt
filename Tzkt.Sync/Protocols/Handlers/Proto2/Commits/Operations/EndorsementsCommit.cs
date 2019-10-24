@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region apply operation
             sender.Balance += Endorsement.Reward;
             sender.FrozenRewards += Endorsement.Reward;
-            sender.FrozenDeposits += 1_000_000 * ((Endorsement.Block.Level - 1) / block.Protocol.BlocksPerCycle) * Endorsement.Slots;
+            sender.FrozenDeposits += block.Protocol.EndorsementDeposit * Endorsement.Slots;
 
             sender.Operations |= Operations.Endorsements;
             block.Operations |= Operations.Endorsements;
@@ -75,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region apply operation
             sender.Balance -= Endorsement.Reward;
             sender.FrozenRewards -= Endorsement.Reward;
-            sender.FrozenDeposits -= 1_000_000 * ((Endorsement.Block.Level - 1) / block.Protocol.BlocksPerCycle) * Endorsement.Slots;
+            sender.FrozenDeposits -= block.Protocol.EndorsementDeposit * Endorsement.Slots;
 
             if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Id < Endorsement.Id))
                 sender.Operations &= ~Operations.Endorsements;

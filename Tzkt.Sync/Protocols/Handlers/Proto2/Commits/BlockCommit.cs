@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region balances
             baker.Balance += Block.Protocol.BlockReward;
             baker.FrozenRewards += Block.Protocol.BlockReward;
-            baker.FrozenDeposits += 8_000_000 * ((Block.Level - 1) / Block.Protocol.BlocksPerCycle);
+            baker.FrozenDeposits += Block.Protocol.BlockDeposit;
             #endregion
 
             Db.Blocks.Add(Block);
@@ -63,7 +63,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region balances
             baker.Balance -= Block.Protocol.BlockReward;
             baker.FrozenRewards -= Block.Protocol.BlockReward;
-            baker.FrozenDeposits -= 8_000_000 * ((Block.Level - 1) / Block.Protocol.BlocksPerCycle);
+            baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
             #endregion
 
             Db.Blocks.Remove(Block);

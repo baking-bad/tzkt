@@ -169,6 +169,11 @@ namespace Tzkt.Sync.Services
         #endregion
 
         #region protocols
+        public void AddProtocol(Protocol protocol)
+        {
+            AppCache.AddProtocol(protocol);
+        }
+
         public async Task<Protocol> GetProtocolAsync(int code)
         {
             return await AppCache.GetOrSetProtocol(code, () =>
@@ -180,7 +185,7 @@ namespace Tzkt.Sync.Services
         {
             return await AppCache.GetOrSetProtocol(hash, async () =>
                 await Db.Protocols.FirstOrDefaultAsync(x => x.Hash == hash)
-                    ?? new Protocol { Hash = hash, Code = await Db.Protocols.CountAsync() - 1 });
+                    ?? throw new Exception($"Protocol {hash} doesn't exist"));
         }
 
         public void RemoveProtocol(Protocol protocol)

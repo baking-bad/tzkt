@@ -38,6 +38,9 @@ namespace Tzkt.Sync
             Logger.LogDebug("Deserializing block...");
             var rawBlock = await Serializer.DeserializeBlock(stream);
 
+            Logger.LogDebug("Init protocol...");
+            await InitProtocol(rawBlock);
+
             Logger.LogDebug("Validating block...");
             rawBlock = await Validator.ValidateBlock(rawBlock);
 
@@ -57,6 +60,9 @@ namespace Tzkt.Sync
         
         public virtual async Task<AppState> RevertLastBlock()
         {
+            Logger.LogDebug("Init protocol...");
+            await InitProtocol();
+
             Logger.LogDebug("Reverting...");
             await Revert();
 
@@ -70,6 +76,10 @@ namespace Tzkt.Sync
 
             return await Cache.GetAppStateAsync();
         }
+
+        public abstract Task InitProtocol();
+
+        public abstract Task InitProtocol(IBlock block);
 
         public abstract Task Commit(IBlock block);
 
