@@ -238,6 +238,12 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (!await Cache.AccountExistsAsync(origination.Source))
                 throw new ValidationException("unknown source account");
 
+            if (origination.Metadata.Result.Status == "applied" && origination.Delegate != null)
+            {
+                if (!await Cache.AccountExistsAsync(origination.Delegate, AccountType.Delegate))
+                    throw new ValidationException("unknown delegate");
+            }
+
             ValidateFeeBalanceUpdates(
                 origination.Metadata.BalanceUpdates,
                 rawBlock.Metadata.Baker,

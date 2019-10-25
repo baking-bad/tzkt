@@ -103,24 +103,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                     if (sender is User user)
                     {
                         await UpgradeUser(Delegation);
-                        sender = Delegation.Sender;
-                        newDelegate = Delegation.Delegate;
-
-                        #region weird delegations
-                        var weirdDelegations = await Db.WeirdDelegations.Include(x => x.Origination).Where(x => x.DelegateId == sender.Id).ToListAsync();
-                        foreach (var weirdDelegation in weirdDelegations)
-                        {
-                            var weirdAccount = await Cache.GetAccountAsync(weirdDelegation.Origination.ContractId);
-                            if (!weirdAccount.Operations.HasFlag(Operations.Delegations))
-                            {
-                                Db.TryAttach(weirdAccount);
-                                await SetDelegate(weirdAccount, newDelegate, Delegation.Block.Level);
-                            }
-
-                            Db.Entry(weirdDelegation.Origination).State = EntityState.Detached;
-                            Db.Entry(weirdDelegation).State = EntityState.Detached;
-                        }
-                        #endregion
                     }
                     else if (sender is Data.Models.Delegate)
                     {
@@ -157,12 +139,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                 var origination = await GetOriginationAsync(contract);
                 prevDelegate = origination.Delegate;
                 prevDelegationLevel = origination.Level;
-
-                if (origination.WeirdDelegation != null)
-                {
-                    prevDelegate = await Cache.GetAccountAsync(origination.WeirdDelegation.DelegateId) as Data.Models.Delegate;
-                    prevDelegationLevel = prevDelegate?.ActivationLevel;
-                }
             }
 
             //Db.TryAttach(block);
@@ -188,21 +164,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                     var prevActivation = await GetPrevActivationAsync(sender, Delegation.Counter);
                     if (prevActivation == null)
                     {
-                        #region weird delegations
-                        var weirdDelegations = await Db.WeirdDelegations.Include(x => x.Origination).Where(x => x.DelegateId == sender.Id).ToListAsync();
-                        foreach (var weirdDelegation in weirdDelegations)
-                        {
-                            var weirdAccount = await Cache.GetAccountAsync(weirdDelegation.Origination.ContractId);
-                            weirdAccount.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(weirdAccount.DelegateId);
-
-                            if (!weirdAccount.Operations.HasFlag(Operations.Delegations))
-                                await ResetDelegate(weirdAccount, newDelegate);
-
-                            Db.Entry(weirdDelegation.Origination).State = EntityState.Detached;
-                            Db.Entry(weirdDelegation).State = EntityState.Detached;
-                        }
-                        #endregion
-
                         await DowngradeDelegate(Delegation);
                         sender = Delegation.Sender;
                         newDelegate = Delegation.Delegate;
@@ -502,7 +463,6 @@ namespace Tzkt.Sync.Protocols.Proto2
         async Task<OriginationOperation> GetOriginationAsync(Contract contract)
         {
             var result = await Db.OriginationOps
-                .Include(x => x.WeirdDelegation)
                 .FirstOrDefaultAsync(x => x.Status == OperationStatus.Applied &&
                     x.ContractId == contract.Id);
 

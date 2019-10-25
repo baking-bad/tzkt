@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto2
     {
         public VotingPeriod CurrentPeriod { get; private set; }
         public VotingPeriod NextPeriod { get; private set; }
+        public VotingPeriod PrevPeriod { get; private set; }
 
         VotingCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -33,28 +34,28 @@ namespace Tzkt.Sync.Protocols.Proto2
                         Epoch = new VotingEpoch { Level = rawBlock.Level },
                         Kind = VotingPeriods.Proposal,
                         StartLevel = rawBlock.Level,
-                        EndLevel = protocol.BlocksPerVoting
+                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
                     },
                     "exploration" => new ExplorationPeriod
                     {
                         Epoch = CurrentPeriod.Epoch,
                         Kind = VotingPeriods.Exploration,
                         StartLevel = rawBlock.Level,
-                        EndLevel = protocol.BlocksPerVoting
+                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
                     },
                     "testing" => new TestingPeriod
                     {
                         Epoch = CurrentPeriod.Epoch,
                         Kind = VotingPeriods.Testing,
                         StartLevel = rawBlock.Level,
-                        EndLevel = protocol.BlocksPerVoting
+                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
                     },
                     "promotion" => new PromotionPeriod
                     {
                         Epoch = CurrentPeriod.Epoch,
                         Kind = VotingPeriods.Promotion,
                         StartLevel = rawBlock.Level,
-                        EndLevel = protocol.BlocksPerVoting
+                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
                     },
                     _ => throw new Exception("invalid voting period")
                 };
@@ -67,11 +68,13 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             if (CurrentPeriod.StartLevel == block.Level)
             {
-                NextPeriod = await Db.VotingPeriods.FirstOrDefaultAsync(x => x.EndLevel == block.Level - 1);
+                PrevPeriod = await Db.VotingPeriods.FirstOrDefaultAsync(x => x.EndLevel == block.Level - 1);
+                PrevPeriod.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == PrevPeriod.EpochId);
+                CurrentPeriod.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == CurrentPeriod.EpochId);
             }
             else
             {
-                NextPeriod = CurrentPeriod;
+                PrevPeriod = CurrentPeriod;
             }
         }
 
@@ -79,7 +82,17 @@ namespace Tzkt.Sync.Protocols.Proto2
         {
             if (CurrentPeriod != NextPeriod)
             {
-                throw new NotImplementedException();
+                #region entities
+                var epoch = CurrentPeriod.Epoch;
+                
+                Db.TryAttach(epoch);
+                #endregion
+
+                epoch.Progress++;
+
+                Db.VotingEpoches.Add(NextPeriod.Epoch);
+                Db.VotingPeriods.Add(NextPeriod);
+                Cache.AddVotingPeriod(NextPeriod);
             }
 
             return Task.CompletedTask;
@@ -87,9 +100,19 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public override Task Revert()
         {
-            if (CurrentPeriod != NextPeriod)
+            if (CurrentPeriod != PrevPeriod)
             {
-                throw new NotImplementedException();
+                #region entities
+                var epoch = PrevPeriod.Epoch;
+
+                Db.TryAttach(epoch);
+                #endregion
+
+                epoch.Progress--;
+
+                Db.VotingPeriods.Remove(CurrentPeriod);
+                Db.VotingEpoches.Remove(CurrentPeriod.Epoch);
+                Cache.RemoveVotingPeriod();
             }
 
             return Task.CompletedTask;

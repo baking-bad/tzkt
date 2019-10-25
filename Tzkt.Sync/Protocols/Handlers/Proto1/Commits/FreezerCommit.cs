@@ -47,6 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 else if (update is RewardsUpdate rewardsFreezer)
                 {
                     delegat.FrozenRewards += rewardsFreezer.Change;
+                    delegat.StakingBalance -= rewardsFreezer.Change;
                 }
                 else if (update is FeesUpdate feesFreezer)
                 {
@@ -72,6 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 else if (update is RewardsUpdate rewardsFreezer)
                 {
                     delegat.FrozenRewards -= rewardsFreezer.Change;
+                    delegat.StakingBalance += rewardsFreezer.Change;
                 }
                 else if (update is FeesUpdate feesFreezer)
                 {

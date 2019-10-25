@@ -20,9 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
-            var originDelegate = await Cache.GetAccountAsync(content.Delegate);
-            var delegat = originDelegate as Data.Models.Delegate;
-            // WTF: [level:635] - Tezos allows to set non-existent delegate.
+            var delegat = await Cache.GetAccountAsync(content.Delegate) as Data.Models.Delegate;
 
             var contract = content.Metadata.Result.Status == "applied" ?
                         new Contract
@@ -64,16 +62,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                 StorageFee = content.Metadata.Result.PaidStorageSizeDiff * block.Protocol.ByteCost,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
-
-            if (originDelegate != null && originDelegate.Type != AccountType.Delegate)
-            {
-                Origination.WeirdDelegation = new WeirdDelegation
-                {
-                    DelegateId = originDelegate.Id,
-                    Level = block.Level,
-                    Origination = Origination
-                };
-            }
 
             if (contract != null)
                 contract.Origination = Origination;

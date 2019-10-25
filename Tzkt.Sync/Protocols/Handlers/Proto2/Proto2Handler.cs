@@ -193,7 +193,7 @@ namespace Tzkt.Sync.Protocols
                 operations.AddRange(await Db.EndorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.Originations))
-                operations.AddRange(await Db.OriginationOps.Include(x => x.WeirdDelegation).Where(x => x.Level == currBlock.Level).ToListAsync());
+                operations.AddRange(await Db.OriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.Reveals))
                 operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
