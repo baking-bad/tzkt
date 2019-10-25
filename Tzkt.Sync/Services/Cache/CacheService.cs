@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Services
 
         public Task<Account> GetAccountAsync(Account account)
         {
-            return AppCache.GetOrSetAccount(account.Address, () => Task.FromResult(account));
+            return AppCache.GetOrSetAccount(account.Address, () => Task.FromResult(Db.SyncLocalAccount(account)));
         }
 
         public async Task<Account> GetAccountAsync(int? id)

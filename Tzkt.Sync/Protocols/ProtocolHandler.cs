@@ -47,6 +47,13 @@ namespace Tzkt.Sync
             Logger.LogDebug("Commiting...");
             await Commit(rawBlock);
 
+            var state = await Cache.GetAppStateAsync();
+            if (state.Protocol != state.NextProtocol)
+            {
+                Logger.LogDebug("Migrating context...");
+                await Migration();
+            }
+
             Logger.LogDebug("Diagnostics...");
             await Diagnostics.Run(rawBlock.Level);
 
@@ -60,6 +67,13 @@ namespace Tzkt.Sync
         
         public virtual async Task<AppState> RevertLastBlock()
         {
+            var state = await Cache.GetAppStateAsync();
+            if (state.Protocol != state.NextProtocol)
+            {
+                Logger.LogDebug("Cancelling context migration...");
+                await CancelMigration();
+            }
+
             Logger.LogDebug("Init protocol...");
             await InitProtocol();
 
@@ -76,6 +90,10 @@ namespace Tzkt.Sync
 
             return await Cache.GetAppStateAsync();
         }
+
+        public virtual Task Migration() => Task.CompletedTask;
+
+        public virtual Task CancelMigration() => Task.CompletedTask;
 
         public abstract Task InitProtocol();
 

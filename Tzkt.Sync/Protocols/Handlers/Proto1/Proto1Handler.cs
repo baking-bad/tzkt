@@ -27,6 +27,10 @@ namespace Tzkt.Sync.Protocols
             Validator = new Validator(this);
         }
 
+        public override Task Migration() => Proto2.DelegatesMigration.Apply(this);
+
+        public override Task CancelMigration() => Proto2.DelegatesMigration.Revert(this);
+
         public override async Task InitProtocol(IBlock block)
         {
             var state = await Cache.GetAppStateAsync();

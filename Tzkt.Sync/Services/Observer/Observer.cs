@@ -118,7 +118,7 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> RebaseLocalBranchAsync(CancellationToken cancelToken)
         {
-            while (AppState.Level >= 28_000)
+            while (AppState.Level > 28_000)
             //while (AppState.Level >= 0 && !await Node.ValidateBranchAsync(AppState.Level, AppState.Hash))
             {
                 if (cancelToken.IsCancellationRequested)
@@ -145,7 +145,7 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                 using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
 
-                if (AppState.Level >= 100000)
+                if (AppState.Level >= 28095)
                     throw new ValidationException("Test", true);
 
                 Logger.LogDebug($"Applying block...");

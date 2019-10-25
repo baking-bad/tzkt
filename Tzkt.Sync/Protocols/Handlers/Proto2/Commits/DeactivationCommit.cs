@@ -15,6 +15,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Init(RawBlock rawBlock)
         {
+            Delegates = new List<Data.Models.Delegate>(rawBlock.Metadata.Deactivated.Count);
+            
             foreach (var delegat in rawBlock.Metadata.Deactivated)
                 Delegates.Add((Data.Models.Delegate)await Cache.GetAccountAsync(delegat));
         }

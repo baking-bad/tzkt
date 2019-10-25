@@ -26,7 +26,7 @@ namespace Tzkt.Sync.Protocols
             Serializer = new Serializer();
             Validator = new Validator(this);
         }
-
+        
         public override async Task InitProtocol(IBlock block)
         {
             var state = await Cache.GetAppStateAsync();
@@ -51,6 +51,7 @@ namespace Tzkt.Sync.Protocols
 
             if (protocol != null)
             {
+                #region update constants
                 var stream = await Node.GetConstantsAsync(block.Level);
                 var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
 
@@ -72,6 +73,7 @@ namespace Tzkt.Sync.Protocols
                 protocol.RevelationReward = rawConst.RevelationReward;
                 protocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
                 protocol.TokensPerRoll = rawConst.TokensPerRoll;
+                #endregion
             }
         }
 
@@ -84,10 +86,11 @@ namespace Tzkt.Sync.Protocols
                 state.Level % currProtocol.BlocksPerCycle != 0)
                 return;
 
+            Db.TryAttach(currProtocol);
+
+            #region update constants
             var stream = await Node.GetConstantsAsync(state.Level - 1);
             var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
-
-            Db.TryAttach(currProtocol);
 
             currProtocol.BlockDeposit = rawConst.BlockDeposit;
             currProtocol.BlockReward = rawConst.BlockReward;
@@ -107,6 +110,7 @@ namespace Tzkt.Sync.Protocols
             currProtocol.RevelationReward = rawConst.RevelationReward;
             currProtocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
             currProtocol.TokensPerRoll = rawConst.TokensPerRoll;
+            #endregion
         }
 
         public override async Task Commit(IBlock block)
