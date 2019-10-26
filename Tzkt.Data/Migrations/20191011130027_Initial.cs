@@ -249,7 +249,9 @@ namespace Tzkt.Data.Migrations
                     AccuserId = table.Column<int>(nullable: false),
                     AccuserReward = table.Column<long>(nullable: false),
                     OffenderId = table.Column<int>(nullable: false),
-                    OffenderLoss = table.Column<long>(nullable: false)
+                    OffenderLostDeposit = table.Column<long>(nullable: false),
+                    OffenderLostReward = table.Column<long>(nullable: false),
+                    OffenderLostFee = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {

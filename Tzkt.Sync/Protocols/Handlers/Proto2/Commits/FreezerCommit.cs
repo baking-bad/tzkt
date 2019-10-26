@@ -8,7 +8,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 {
     class FreezerCommit : ProtocolCommit
     {
-        public IEnumerable<IBalanceUpdate> BalanceUpdates { get; private set; }
+        public IEnumerable<IBalanceUpdate> FreezerUpdates { get; private set; }
+        public IEnumerable<IBalanceUpdate> RevelationLosses { get; private set; }
         public Protocol Protocol { get; private set; }
 
         FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
@@ -17,7 +18,12 @@ namespace Tzkt.Sync.Protocols.Proto2
         {
             Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
             var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-            BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
+
+            FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreserverCycles);
+
+            RevelationLosses = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                .Where(x => x is FreezerUpdate fu && fu.Level != cycle - Protocol.PreserverCycles);
         }
 
         public async Task Init(Block block)
@@ -27,12 +33,17 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
             var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-            BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
+
+            FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreserverCycles);
+
+            RevelationLosses = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                .Where(x => x is FreezerUpdate fu && fu.Level != cycle - Protocol.PreserverCycles);
         }
 
         public override async Task Apply()
         {
-            foreach (var update in BalanceUpdates)
+            foreach (var update in FreezerUpdates)
             {
                 #region entities
                 var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
@@ -53,12 +64,41 @@ namespace Tzkt.Sync.Protocols.Proto2
                 {
                     delegat.FrozenFees += feesFreezer.Change;
                 }
+                else
+                {
+                    throw new Exception("unexpected freezer balance update type");
+                }
+            }
+
+            foreach (var loss in RevelationLosses)
+            {
+                #region entities
+                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(loss.Target);
+
+                Db.TryAttach(delegat);
+                #endregion
+
+                if (loss is RewardsUpdate rewardsFreezer)
+                {
+                    delegat.Balance += rewardsFreezer.Change;
+                    delegat.FrozenRewards += rewardsFreezer.Change;
+                }
+                else if (loss is FeesUpdate feesFreezer)
+                {
+                    delegat.Balance += feesFreezer.Change;
+                    delegat.FrozenFees += feesFreezer.Change;
+                    delegat.StakingBalance += feesFreezer.Change;
+                }
+                else
+                {
+                    throw new Exception("unexpected revelation loss balance update type");
+                }
             }
         }
 
         public async override Task Revert()
         {
-            foreach (var update in BalanceUpdates)
+            foreach (var update in FreezerUpdates)
             {
                 #region entities
                 var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
@@ -78,6 +118,35 @@ namespace Tzkt.Sync.Protocols.Proto2
                 else if (update is FeesUpdate feesFreezer)
                 {
                     delegat.FrozenFees -= feesFreezer.Change;
+                }
+                else
+                {
+                    throw new Exception("unexpected freezer balance update type");
+                }
+            }
+
+            foreach (var loss in RevelationLosses)
+            {
+                #region entities
+                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(loss.Target);
+
+                Db.TryAttach(delegat);
+                #endregion
+
+                if (loss is RewardsUpdate rewardsFreezer)
+                {
+                    delegat.Balance -= rewardsFreezer.Change;
+                    delegat.FrozenRewards -= rewardsFreezer.Change;
+                }
+                else if (loss is FeesUpdate feesFreezer)
+                {
+                    delegat.Balance -= feesFreezer.Change;
+                    delegat.FrozenFees -= feesFreezer.Change;
+                    delegat.StakingBalance -= feesFreezer.Change;
+                }
+                else
+                {
+                    throw new Exception("unexpected revelation loss balance update type");
                 }
             }
         }

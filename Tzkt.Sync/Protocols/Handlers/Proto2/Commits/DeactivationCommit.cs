@@ -23,7 +23,11 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Init(Block block)
         {
-            Delegates = await Db.Delegates.Where(x => x.DeactivationLevel == block.Level).ToListAsync();
+            var delegates = await Db.Delegates.Where(x => x.DeactivationLevel == block.Level).ToListAsync();
+            Delegates = new List<Data.Models.Delegate>(delegates.Count);
+
+            foreach (var delegat in delegates)
+                Delegates.Add((Data.Models.Delegate)await Cache.GetAccountAsync(delegat));
         }
 
         public override Task Apply()

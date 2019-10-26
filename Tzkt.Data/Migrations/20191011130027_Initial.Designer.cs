@@ -354,7 +354,13 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("OffenderId")
                         .HasColumnType("integer");
 
-                    b.Property<long>("OffenderLoss")
+                    b.Property<long>("OffenderLostDeposit")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OffenderLostFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OffenderLostReward")
                         .HasColumnType("bigint");
 
                     b.Property<string>("OpHash")

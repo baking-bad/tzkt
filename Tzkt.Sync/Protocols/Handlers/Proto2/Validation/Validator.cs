@@ -385,6 +385,6 @@ namespace Tzkt.Sync.Protocols.Proto2
         }
 
         long GetEndorsementReward(int slots, int priority)
-            => (long)Math.Round(slots * Protocol.EndorsementReward / (priority + 1.0));
+            => slots * (long)(Protocol.EndorsementReward / (priority + 1.0));
     }
 }

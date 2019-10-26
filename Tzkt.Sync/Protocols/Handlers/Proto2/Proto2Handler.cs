@@ -136,7 +136,7 @@ namespace Tzkt.Sync.Protocols
                             await ActivationsCommit.Apply(this, blockCommit.Block, operation, activation);
                             break;
                         case RawDoubleBakingEvidenceContent doubleBaking:
-                            throw new NotImplementedException($"{content.GetType()} is not implemented");
+                            await DoubleBakingCommit.Apply(this, blockCommit.Block, operation, doubleBaking);
                             break;
                         case RawNonceRevelationContent revelation:
                             await NonceRevelationsCommit.Apply(this, blockCommit.Block, operation, revelation);
@@ -219,7 +219,7 @@ namespace Tzkt.Sync.Protocols
                         await ActivationsCommit.Revert(this, currBlock, activation);
                         break;
                     case DoubleBakingOperation doubleBaking:
-                        throw new NotImplementedException($"{operation.GetType()} is not implemented");
+                        await DoubleBakingCommit.Revert(this, currBlock, doubleBaking);
                         break;
                     case NonceRevelationOperation revelation:
                         await NonceRevelationsCommit.Revert(this, currBlock, revelation);
