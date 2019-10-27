@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data.Models;
-using Tzkt.Sync.Protocols.Proto2.Migrations;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto2
 {
@@ -18,27 +17,32 @@ namespace Tzkt.Sync.Protocols.Proto2
         {
             var block = await Cache.GetCurrentBlockAsync();
 
-            using var stream = await Proto.Node.GetDelegatesAsync(block.Level);
-            var remoteDelegates = await JsonSerializer.DeserializeAsync<List<string>>(stream, SerializerOptions.Default);
+            var weirdDelegates = (await Db.WeirdDelegations
+                .AsNoTracking()
+                .Include(x => x.Delegate)
+                .Include(x => x.Origination)
+                .ThenInclude(x => x.Contract)
+                .Where(x =>
+                    x.Delegate.Balance > 0 &&
+                    x.Delegate.Type == AccountType.User &&
+                    x.Origination.Status == OperationStatus.Applied &&
+                    x.Origination.Contract.DelegateId == null)
+                .Select(x => new { x.Origination.Contract, x.Delegate })
+                .ToListAsync())
+                .GroupBy(x => x.Delegate.Id);
 
-            foreach (var delegateAddress in remoteDelegates)
+            foreach (var weirds in weirdDelegates)
             {
-                var account = await Cache.GetAccountAsync(delegateAddress);
-                if (account is Data.Models.Delegate) continue;
+                var delegat = await UpgradeUser(weirds.First().Delegate, block.Level);
                 
-                var delegat = await UpgradeUser(account as User, block.Level);
-
-                using var delegateStream = await Proto.Node.GetDelegateAsync(block.Level, delegateAddress);
-                var remoteDelegate = await JsonSerializer.DeserializeAsync<RemoteDelegate>(delegateStream, SerializerOptions.Default);
-
-                foreach (var delegatorAddress in remoteDelegate.Delegators)
+                foreach (var weird in weirds)
                 {
-                    var delegator = await Cache.GetAccountAsync(delegatorAddress);
-
+                    var delegator = weird.Contract;
                     if (delegator.DelegateId != null)
                         throw new Exception("migration error");
 
                     Db.TryAttach(delegator);
+                    Cache.AddAccount(delegator);
 
                     delegator.Delegate = delegat;
                     delegator.DelegateId = delegat.Id;
@@ -49,7 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     delegat.StakingBalance += delegator.Balance;
                 }
             }
-         }
+        }
 
         public override async Task Revert()
         {
@@ -63,26 +67,24 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             foreach (var delegat in delegates)
             {
-                var cachedDelegate = (Data.Models.Delegate)await Cache.GetAccountAsync(delegat);
-
                 foreach (var delegator in delegat.DelegatedAccounts.ToList())
                 {
-                    var cachedDelegator = await Cache.GetAccountAsync(delegator);
-                    Db.TryAttach(cachedDelegator);
+                    Db.TryAttach(delegator);
+                    Cache.AddAccount(delegator);
 
-                    cachedDelegator.Delegate = null;
-                    cachedDelegator.DelegateId = null;
-                    cachedDelegator.DelegationLevel = null;
-                    cachedDelegator.Staked = false;
+                    delegator.Delegate = null;
+                    delegator.DelegateId = null;
+                    delegator.DelegationLevel = null;
+                    delegator.Staked = false;
 
-                    cachedDelegate.Delegators--;
-                    cachedDelegate.StakingBalance -= delegator.Balance;
+                    delegat.Delegators--;
+                    delegat.StakingBalance -= delegator.Balance;
                 }
 
-                if (cachedDelegate.StakingBalance != cachedDelegate.Balance || cachedDelegate.Delegators > 0)
+                if (delegat.StakingBalance != delegat.Balance || delegat.Delegators > 0)
                     throw new Exception("migration error");
 
-                DowngradeDelegate(cachedDelegate);
+                DowngradeDelegate(delegat);
             }
         }
 
@@ -112,7 +114,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 SentTransactions = user.SentTransactions,
                 Staked = true,
                 StakingBalance = user.Balance,
-                Type = AccountType.Delegate
+                Type = AccountType.Delegate,
+                WeirdDelegations = user.WeirdDelegations
             };
 
             Db.Entry(user).State = EntityState.Detached;
@@ -143,7 +146,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 SentOriginations = delegat.SentOriginations,
                 SentTransactions = delegat.SentTransactions,
                 Staked = false,
-                Type = AccountType.User
+                Type = AccountType.User,
+                WeirdDelegations = delegat.WeirdDelegations
             };
 
             Db.Entry(delegat).State = EntityState.Detached;

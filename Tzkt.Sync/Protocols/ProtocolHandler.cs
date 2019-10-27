@@ -132,6 +132,7 @@ namespace Tzkt.Sync
                     delegat.SentDoubleEndorsingAccusations = null;
                     delegat.SentOriginations = null;
                     delegat.SentTransactions = null;
+                    delegat.WeirdDelegations = null;
                 }
                 else if (entry.Entity is User user)
                 {
@@ -143,6 +144,7 @@ namespace Tzkt.Sync
                     user.SentDelegations = null;
                     user.SentOriginations = null;
                     user.SentTransactions = null;
+                    user.WeirdDelegations = null;
                 }
                 else if (entry.Entity is Contract contract)
                 {

@@ -682,6 +682,12 @@ namespace Tzkt.Data.Migrations
                 {
                     table.PrimaryKey("PK_WeirdDelegations", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_WeirdDelegations_Accounts_DelegateId",
+                        column: x => x.DelegateId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_WeirdDelegations_OriginationOps_OriginationId",
                         column: x => x.OriginationId,
                         principalTable: "OriginationOps",
@@ -1018,6 +1024,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_VotingPeriods_EpochId",
                 table: "VotingPeriods",
                 column: "EpochId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WeirdDelegations_DelegateId",
+                table: "WeirdDelegations",
+                column: "DelegateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WeirdDelegations_OriginationId",

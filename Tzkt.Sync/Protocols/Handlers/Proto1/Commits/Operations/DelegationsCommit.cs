@@ -270,41 +270,42 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SentTransactions = user.SentTransactions,
                 Staked = true,
                 StakingBalance = user.Balance,
-                Type = AccountType.Delegate
+                Type = AccountType.Delegate,
+                WeirdDelegations = user.WeirdDelegations
             };
 
             #region update relations
-            var touched = new List<object>();
+            var touched = new List<(object entry, EntityState state)>();
             foreach (var entry in Db.ChangeTracker.Entries())
             {
-                switch(entry.Entity)
+                switch (entry.Entity)
                 {
                     case ActivationOperation op:
                         if (op.Account?.Id == user.Id)
                         {
                             op.Account = delegat;
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case DelegationOperation op:
                         if (op.Sender?.Id == user.Id)
                         {
                             op.Sender = delegat;
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case OriginationOperation op:
                         if (op.Sender?.Id == user.Id)
                         {
                             op.Sender = delegat;
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case RevealOperation op:
                         if (op.Sender?.Id == user.Id)
                         {
                             op.Sender = delegat;
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case TransactionOperation op:
@@ -316,7 +317,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Target?.Id == user.Id)
                                 op.Target = delegat;
 
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case WeirdDelegation op:
+                        if (op.Delegate?.Id == user.Id)
+                        {
+                            op.Delegate = delegat;
+                            touched.Add((op, entry.State));
                         }
                         break;
                 }
@@ -329,7 +337,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region update graph
             foreach (var obj in touched)
-                Db.Add(obj);
+                Db.Entry(obj.entry).State = obj.state;
             #endregion
 
             delegation.Sender = delegation.Delegate = delegat;
@@ -359,11 +367,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SentOriginations = delegat.SentOriginations,
                 SentTransactions = delegat.SentTransactions,
                 Staked = false,
-                Type = AccountType.User
+                Type = AccountType.User,
+                WeirdDelegations = delegat.WeirdDelegations
             };
 
             #region update relations
-            var touched = new List<object>();
+            var touched = new List<(object entry, EntityState state)>();
             foreach (var entry in Db.ChangeTracker.Entries())
             {
                 switch (entry.Entity)
@@ -371,8 +380,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case ActivationOperation op:
                         if (op.Account?.Id == delegat.Id)
                         {
-                            op.Account = delegat;
-                            touched.Add(op);
+                            op.Account = user;
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case DelegationOperation op:
@@ -384,7 +393,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
 
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case OriginationOperation op:
@@ -396,26 +405,33 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
 
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case RevealOperation op:
                         if (op.Sender?.Id == delegat.Id)
                         {
-                            op.Sender = delegat;
-                            touched.Add(op);
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
                         }
                         break;
                     case TransactionOperation op:
                         if (op.Sender?.Id == delegat.Id || op.Target?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
-                                op.Sender = delegat;
+                                op.Sender = user;
 
                             if (op.Target?.Id == delegat.Id)
-                                op.Target = delegat;
+                                op.Target = user;
 
-                            touched.Add(op);
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case WeirdDelegation op:
+                        if (op.Delegate?.Id == delegat.Id)
+                        {
+                            op.Delegate = user;
+                            touched.Add((op, entry.State));
                         }
                         break;
                 }
@@ -428,7 +444,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region update graph
             foreach (var obj in touched)
-                Db.Update(obj);
+                Db.Entry(obj.entry).State = obj.state;
             #endregion
 
             delegation.Sender = user;

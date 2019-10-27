@@ -253,15 +253,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
                 }
-
-                parentTx.GasUsed += Transaction.GasUsed;
-                parentTx.StorageUsed += Transaction.StorageUsed;
-
-                if (Transaction.AllocationFee != null)
-                    parentTx.AllocationFee = (parentTx.AllocationFee ?? 0) + Transaction.AllocationFee;
-
-                if (Transaction.StorageFee != null)
-                    parentTx.StorageFee = (parentTx.StorageFee ?? 0) + Transaction.StorageFee;
             }
             #endregion
 

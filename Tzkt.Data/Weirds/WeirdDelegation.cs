@@ -11,6 +11,9 @@ namespace Tzkt.Data.Models
         public int OriginationId { get; set; }
 
         #region relations
+        [ForeignKey(nameof(DelegateId))]
+        public User Delegate { get; set; }
+
         [ForeignKey(nameof(OriginationId))]
         public OriginationOperation Origination { get; set; }
         #endregion
@@ -26,6 +29,11 @@ namespace Tzkt.Data.Models
             #endregion
 
             #region relations
+            modelBuilder.Entity<WeirdDelegation>()
+                .HasOne(x => x.Delegate)
+                .WithMany(x => x.WeirdDelegations)
+                .HasForeignKey(x => x.DelegateId);
+
             modelBuilder.Entity<WeirdDelegation>()
                 .HasOne(x => x.Origination)
                 .WithOne(x => x.WeirdDelegation)

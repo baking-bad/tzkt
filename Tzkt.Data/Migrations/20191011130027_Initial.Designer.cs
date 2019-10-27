@@ -961,6 +961,8 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DelegateId");
+
                     b.HasIndex("OriginationId")
                         .IsUnique();
 
@@ -1407,6 +1409,12 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.WeirdDelegation", b =>
                 {
+                    b.HasOne("Tzkt.Data.Models.User", "Delegate")
+                        .WithMany("WeirdDelegations")
+                        .HasForeignKey("DelegateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Tzkt.Data.Models.OriginationOperation", "Origination")
                         .WithOne("WeirdDelegation")
                         .HasForeignKey("Tzkt.Data.Models.WeirdDelegation", "OriginationId")
