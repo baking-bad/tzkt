@@ -10,41 +10,81 @@ namespace Tzkt.Sync.Protocols.Proto2
     class DeactivationCommit : ProtocolCommit
     {
         public List<Data.Models.Delegate> Delegates { get; private set; }
+        public int DeactivationLevel { get; private set; }
 
         DeactivationCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public async Task Init(RawBlock rawBlock)
         {
-            Delegates = new List<Data.Models.Delegate>(rawBlock.Metadata.Deactivated.Count);
-            
-            foreach (var delegat in rawBlock.Metadata.Deactivated)
-                Delegates.Add((Data.Models.Delegate)await Cache.GetAccountAsync(delegat));
+            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            if (rawBlock.Level % protocol.BlocksPerCycle != 0 || rawBlock.Metadata.Deactivated.Count == 0)
+                return;
+
+            DeactivationLevel = rawBlock.Level;
+            Delegates = await Db.Delegates
+                .Include(x => x.DelegatedAccounts)
+                .Where(x => rawBlock.Metadata.Deactivated.Contains(x.Address) && x.Staked)
+                .ToListAsync();
         }
 
         public async Task Init(Block block)
         {
-            var delegates = await Db.Delegates.Where(x => x.DeactivationLevel == block.Level).ToListAsync();
-            Delegates = new List<Data.Models.Delegate>(delegates.Count);
+            var protocol = await Cache.GetProtocolAsync(block.ProtoCode);
+            if (block.Level % protocol.BlocksPerCycle != 0)
+                return;
 
-            foreach (var delegat in delegates)
-                Delegates.Add((Data.Models.Delegate)await Cache.GetAccountAsync(delegat));
+            DeactivationLevel = block.Level;
+            Delegates = await Db.Delegates
+                .Include(x => x.DelegatedAccounts)
+                .Where(x => x.DeactivationLevel == block.Level)
+                .ToListAsync();
         }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
-            foreach (var delegat in Delegates)
+            if (Delegates != null)
             {
-                throw new NotImplementedException();
-            }
+                foreach (var delegat in Delegates)
+                {
+                    Cache.AddAccount(delegat);
+                    Db.TryAttach(delegat);
 
-            return Task.CompletedTask;
+                    delegat.DeactivationBlock = await Cache.GetBlockAsync(DeactivationLevel);
+                    delegat.DeactivationLevel = DeactivationLevel;
+                    delegat.Staked = false;
+
+                    foreach (var delegator in delegat.DelegatedAccounts)
+                    {
+                        Cache.AddAccount(delegator);
+                        Db.TryAttach(delegator);
+
+                        delegator.Staked = false;
+                    }
+                }
+            }
         }
 
         public override Task Revert()
         {
-            foreach (var delegat in Delegates)
+            if (Delegates != null)
             {
-                throw new NotImplementedException();
+                foreach (var delegat in Delegates)
+                {
+                    Cache.AddAccount(delegat);
+                    Db.TryAttach(delegat);
+
+                    delegat.DeactivationBlock = null;
+                    delegat.DeactivationLevel = null;
+                    delegat.Staked = true;
+
+                    foreach (var delegator in delegat.DelegatedAccounts)
+                    {
+                        Cache.AddAccount(delegator);
+                        Db.TryAttach(delegator);
+
+                        delegator.Staked = true;
+                    }
+                }
             }
 
             return Task.CompletedTask;
