@@ -8,16 +8,16 @@ namespace Tzkt.Sync.Services.Cache
 {
     static class AppCache
     {
-        const int _BlocksCapacity = 3 * 4096;
-        const int _AccountsCapacity = 8 * 4096;
-        const int _ProtocolsCapacity = 16;
+        public const int BlocksCapacity = 3 * 4096;
+        public const int AccountsCapacity = 8 * 4096;
+        public const int ProtocolsCapacity = 16;
 
         static AppState AppState = null;
         static VotingPeriod VotingPeriod = null;
 
-        static readonly Dictionary<int, Block> Blocks = new Dictionary<int, Block>(_BlocksCapacity);
-        static readonly Dictionary<string, Account> Accounts = new Dictionary<string, Account>(_AccountsCapacity);
-        static readonly Dictionary<string, Protocol> Protocols = new Dictionary<string, Protocol>(_ProtocolsCapacity);
+        static readonly Dictionary<int, Block> Blocks = new Dictionary<int, Block>(BlocksCapacity);
+        static readonly Dictionary<string, Account> Accounts = new Dictionary<string, Account>(AccountsCapacity);
+        static readonly Dictionary<string, Protocol> Protocols = new Dictionary<string, Protocol>(ProtocolsCapacity);
 
         #region state
         public static AppState SetAppState(AppState appState)
@@ -35,8 +35,8 @@ namespace Tzkt.Sync.Services.Cache
         {
             if (block == null) return null;
 
-            if (Blocks.Count >= _BlocksCapacity)
-                foreach (var key in Blocks.Keys.OrderBy(x => x).Take(_BlocksCapacity / 4).ToList())
+            if (Blocks.Count >= BlocksCapacity)
+                foreach (var key in Blocks.Keys.OrderBy(x => x).Take(BlocksCapacity / 4).ToList())
                     Blocks.Remove(key);
 
             Blocks[block.Level] = block;
@@ -72,11 +72,11 @@ namespace Tzkt.Sync.Services.Cache
         {
             if (account == null) return null;
 
-            if (Accounts.Count >= _AccountsCapacity)
+            if (Accounts.Count >= AccountsCapacity)
                 foreach (var key in Accounts
                     .Where(x => x.Value.Type != AccountType.Delegate)
                     .Select(x => x.Key)
-                    .Take(_AccountsCapacity / 8)
+                    .Take(AccountsCapacity / 8)
                     .ToList())
                     Accounts.Remove(key);
 
@@ -105,8 +105,8 @@ namespace Tzkt.Sync.Services.Cache
         {
             if (protocol == null) return null;
 
-            if (Protocols.Count >= _ProtocolsCapacity)
-                foreach (var key in Protocols.Keys.Take(_ProtocolsCapacity / 4).ToList())
+            if (Protocols.Count >= ProtocolsCapacity)
+                foreach (var key in Protocols.Keys.Take(ProtocolsCapacity / 4).ToList())
                     Protocols.Remove(key);
 
             Protocols[protocol.Hash] = protocol;

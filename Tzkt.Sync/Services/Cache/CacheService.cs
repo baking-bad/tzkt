@@ -20,6 +20,12 @@ namespace Tzkt.Sync.Services
         public void Clear() => AppCache.Clear();
 
         #region accounts
+        public async Task LoadDelegates()
+        {
+            foreach (var delegat in await Db.Delegates.AsNoTracking().ToListAsync())
+                AddAccount(delegat);
+        }
+
         public async Task<bool> AccountExistsAsync(string address, AccountType? type = null)
         {
             if (string.IsNullOrEmpty(address))

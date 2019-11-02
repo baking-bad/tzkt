@@ -100,6 +100,7 @@ namespace Tzkt.Sync.Services
             using var scope = Services.CreateScope();
             var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
             cache.Clear();
+            await cache.LoadDelegates();
 
             return await cache.GetAppStateAsync();
         }
