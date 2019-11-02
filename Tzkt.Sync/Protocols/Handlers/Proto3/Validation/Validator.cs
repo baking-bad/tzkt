@@ -257,8 +257,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                     origination.Source,
                     origination.Metadata.Result.OriginatedContracts[0],
                     origination.Balance,
-                    (origination.Metadata.Result.PaidStorageSizeDiff + Protocol.OriginationSize) * Protocol.ByteCost,
-                    0);
+                    origination.Metadata.Result.PaidStorageSizeDiff * Protocol.ByteCost,
+                    Protocol.OriginationSize * Protocol.ByteCost);
         }
 
         protected async Task ValidateReveal(RawRevealContent reveal, RawBlock rawBlock)
