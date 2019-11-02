@@ -99,13 +99,20 @@ namespace Tzkt.Sync.Services
                 Db.AppState.FirstOrDefaultAsync() ?? throw new Exception("Failed to get app state"));
         }
 
-        public async Task<int> NextCounterAsync(bool manager = false)
+        public async Task<int> NextCounterAsync()
         {
             var state = await GetAppStateAsync();
 
             Db.TryAttach(state);
-            if (manager) ++state.ManagerCounter;
             return ++state.GlobalCounter;
+        }
+
+        public async Task IncreaseManagerCounter(int value)
+        {
+            var state = await GetAppStateAsync();
+
+            Db.TryAttach(state);
+            state.ManagerCounter += value;
         }
 
         public async Task ReleaseCounterAsync(bool manager = false)

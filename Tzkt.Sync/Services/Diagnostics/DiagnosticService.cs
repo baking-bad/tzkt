@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Tzkt.Data;
 using Tzkt.Data.Models;
+using Tzkt.Data.Models.Base;
 using Tzkt.Sync.Protocols;
 using Tzkt.Sync.Services.Diagnostics;
 
@@ -22,15 +23,19 @@ namespace Tzkt.Sync.Services
             Node = node;
         }
 
-        public async Task Run(int level)
+        public async Task Run(int level, int operations)
         {
-            if (level < 2) return;
+            if (level < 27000) return;
 
-            var state = Db.ChangeTracker.Entries()
-                .FirstOrDefault(x => x.Entity is AppState).Entity;
+            var entries = Db.ChangeTracker.Entries();
 
-            var accounts = Db.ChangeTracker.Entries()
-                .Where(x => x.Entity is Account &&
+            if (operations > entries.Count(x => x.Entity is BaseOperation && x.State == EntityState.Added))
+                throw new Exception($"Diagnostics failed: wrong operations count");
+
+            var state = entries.FirstOrDefault(x => x.Entity is AppState).Entity;
+
+            var accounts = entries.Where(x =>
+                x.Entity is Account &&
                 (x.State == EntityState.Modified ||
                 x.State == EntityState.Added))
                 .Select(x => x.Entity as Account);
@@ -42,6 +47,32 @@ namespace Tzkt.Sync.Services
                 if (account is Data.Models.Delegate delegat)
                     await TestDelegate(level, delegat);
                 
+                await TestAccount(level, account);
+            }
+        }
+
+        public async Task Run(int level)
+        {
+            if (level < 2) return;
+
+            var entries = Db.ChangeTracker.Entries();
+
+            var state = entries.FirstOrDefault(x => x.Entity is AppState).Entity;
+
+            var accounts = entries.Where(x =>
+                x.Entity is Account &&
+                (x.State == EntityState.Modified ||
+                x.State == EntityState.Added))
+                .Select(x => x.Entity as Account);
+
+            await TestState(level, state as AppState);
+
+            foreach (var account in accounts)
+            {
+                
+                if (account is Data.Models.Delegate delegat)
+                    await TestDelegate(level, delegat);
+
                 await TestAccount(level, account);
             }
         }

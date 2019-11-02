@@ -23,6 +23,7 @@ namespace Tzkt.Sync.Protocols.Genesis
         #region IBlock
         public int Level => Header.Level;
         public string Predecessor => Header.Predecessor;
+        public int OperationsCount => 0;
         #endregion
 
         #region validation

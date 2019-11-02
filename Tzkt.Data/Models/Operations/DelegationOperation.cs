@@ -7,10 +7,14 @@ namespace Tzkt.Data.Models
     public class DelegationOperation : InternalOperation
     {
         public int? DelegateId { get; set; }
+        public int? DelegateChangeId { get; set; }
 
         #region relations
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
+
+        [ForeignKey(nameof(DelegateChangeId))]
+        public DelegateChange DelegateChange { get; set; }
         #endregion
     }
 

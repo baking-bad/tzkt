@@ -119,11 +119,11 @@ namespace Tzkt.Sync.Protocols
 
             await ProtoCommit.Apply(this, rawBlock);
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
-            await FreezerCommit.Apply(this, rawBlock);
-            await VotingCommit.Apply(this, rawBlock);
-            await DeactivationCommit.Apply(this, rawBlock);
+            await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
+            await VotingCommit.Apply(this, blockCommit.Block, rawBlock);
+            await DeactivationCommit.Apply(this, blockCommit.Block, rawBlock);
 
-            foreach (var operation in rawBlock.Operations.SelectMany(x => x))
+            foreach (var operation in rawBlock.Operations[0])
             {
                 foreach (var content in operation.Contents)
                 {
@@ -132,6 +132,26 @@ namespace Tzkt.Sync.Protocols
                         case RawEndorsementContent endorsement:
                             await EndorsementsCommit.Apply(this, blockCommit.Block, operation, endorsement);
                             break;
+                        default:
+                            throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[0]");
+                    }
+                }
+            }
+
+            foreach (var operation in rawBlock.Operations[1])
+            {
+                foreach (var content in operation.Contents)
+                {
+                    throw new NotImplementedException($"'{content.GetType()}' is not implemented");
+                }
+            }
+
+            foreach (var operation in rawBlock.Operations[2])
+            {
+                foreach (var content in operation.Contents)
+                {
+                    switch (content)
+                    {
                         case RawActivationContent activation:
                             await ActivationsCommit.Apply(this, blockCommit.Block, operation, activation);
                             break;
@@ -141,6 +161,20 @@ namespace Tzkt.Sync.Protocols
                         case RawNonceRevelationContent revelation:
                             await NonceRevelationsCommit.Apply(this, blockCommit.Block, operation, revelation);
                             break;
+                        default:
+                            throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[2]");
+                    }
+                }
+            }
+
+            foreach (var operation in rawBlock.Operations[3])
+            {
+                await Cache.IncreaseManagerCounter(operation.Contents.Count);
+
+                foreach (var content in operation.Contents)
+                {
+                    switch (content)
+                    {
                         case RawRevealContent reveal:
                             await RevealsCommit.Apply(this, blockCommit.Block, operation, reveal);
                             break;
@@ -168,7 +202,7 @@ namespace Tzkt.Sync.Protocols
                             }
                             break;
                         default:
-                            throw new NotImplementedException($"'{content.GetType()}' is not implemented");
+                            throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[3]");
                     }
                 }
             }
@@ -179,33 +213,61 @@ namespace Tzkt.Sync.Protocols
         public override async Task Revert()
         {
             var currBlock = await Cache.GetCurrentBlockAsync();
-            
+
             #region load operations
-            var operations = new List<BaseOperation>(40);
+            var query = Db.Blocks.AsQueryable();
 
             if (currBlock.Operations.HasFlag(Operations.Activations))
-                operations.AddRange(await Db.ActivationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.Activations);
 
             if (currBlock.Operations.HasFlag(Operations.Delegations))
-                operations.AddRange(await Db.DelegationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.Delegations).ThenInclude(x => x.DelegateChange);
 
             if (currBlock.Operations.HasFlag(Operations.Endorsements))
-                operations.AddRange(await Db.EndorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.Endorsements);
 
             if (currBlock.Operations.HasFlag(Operations.Originations))
-                operations.AddRange(await Db.OriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.Originations);
 
             if (currBlock.Operations.HasFlag(Operations.Reveals))
-                operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.Reveals);
 
             if (currBlock.Operations.HasFlag(Operations.Revelations))
-                operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.Revelations);
 
             if (currBlock.Operations.HasFlag(Operations.Transactions))
-                operations.AddRange(await Db.TransactionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.Transactions);
 
             if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
-                operations.AddRange(await Db.DoubleBakingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+                query = query.Include(x => x.DoubleBakings);
+
+            currBlock = await query.FirstOrDefaultAsync(x => x.Level == currBlock.Level);
+            Cache.AddBlock(currBlock);
+
+            var operations = new List<BaseOperation>(40);
+            if (currBlock.Activations != null)
+                operations.AddRange(currBlock.Activations);
+
+            if (currBlock.Delegations != null)
+                operations.AddRange(currBlock.Delegations);
+
+            if (currBlock.Endorsements != null)
+                operations.AddRange(currBlock.Endorsements);
+
+            if (currBlock.Originations != null)
+                operations.AddRange(currBlock.Originations);
+
+            if (currBlock.Reveals != null)
+                operations.AddRange(currBlock.Reveals);
+
+            if (currBlock.Revelations != null)
+                operations.AddRange(currBlock.Revelations);
+
+            if (currBlock.Transactions != null)
+                operations.AddRange(currBlock.Transactions);
+
+            if (currBlock.DoubleBakings != null)
+                operations.AddRange(currBlock.DoubleBakings);
             #endregion
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))

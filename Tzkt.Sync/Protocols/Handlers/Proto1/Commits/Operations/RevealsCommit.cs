@@ -18,15 +18,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task Init(Block block, RawOperation op, RawRevealContent content)
         {
-            var id = await Cache.NextCounterAsync(true);
-
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
             PubKey = content.PublicKey;
             Reveal = new RevealOperation
             {
-                Id = id,
+                Id = await Cache.NextCounterAsync(),
                 OpHash = op.Hash,
                 Block = block,
                 Timestamp = block.Timestamp,

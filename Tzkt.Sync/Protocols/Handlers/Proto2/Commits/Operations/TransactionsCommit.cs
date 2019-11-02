@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Init(Block block, RawOperation op, RawTransactionContent content)
         {
-            var id = await Cache.NextCounterAsync(true);
+            var id = await Cache.NextCounterAsync();
 
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
@@ -43,7 +43,9 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Status = content.Metadata.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
+                    "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
+                    "skipped" => OperationStatus.Skipped,
                     _ => throw new NotImplementedException()
                 },
                 GasUsed = content.Metadata.Result.ConsumedGas,
@@ -81,7 +83,9 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Status = content.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
+                    "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
+                    "skipped" => OperationStatus.Skipped,
                     _ => throw new NotImplementedException()
                 },
                 GasUsed = content.Result.ConsumedGas,
@@ -128,7 +132,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 await RevertInternalTransaction();
         }
 
-        public Task ApplyTransaction()
+        public async Task ApplyTransaction()
         {
             #region entities
             var block = Transaction.Block;
@@ -181,18 +185,35 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 target.Balance += Transaction.Amount;
 
+                if (target is Data.Models.Delegate tDelegat && !tDelegat.Staked)
+                {
+                    await ReactivateDelegate(tDelegat);
+
+                    Transaction.TargetChange = new DelegateChange
+                    {
+                        Delegate = tDelegat,
+                        Level = block.Level,
+                        Type = DelegateChangeType.Reactivated
+                    };
+                }
+
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
+                }
+
+                // WTF: [level:53726] - Tezos reset account during transaction.
+                if (sender == target && sender.Balance == Transaction.Amount && sender.Type == AccountType.User)
+                {
+                    sender.Counter = (await Cache.GetAppStateAsync()).ManagerCounter;
                 }
             }
             #endregion
 
             Db.TransactionOps.Add(Transaction);
-            return Task.CompletedTask;
         }
 
-        public Task ApplyInternalTransaction()
+        public async Task ApplyInternalTransaction()
         {
             #region entities
             var block = Transaction.Block;
@@ -249,6 +270,18 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 target.Balance += Transaction.Amount;
 
+                if (target is Data.Models.Delegate tDelegat && !tDelegat.Staked)
+                {
+                    await ReactivateDelegate(tDelegat);
+
+                    Transaction.TargetChange = new DelegateChange
+                    {
+                        Delegate = tDelegat,
+                        Level = block.Level,
+                        Type = DelegateChangeType.Reactivated
+                    };
+                }
+
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
@@ -257,7 +290,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             Db.TransactionOps.Add(Transaction);
-            return Task.CompletedTask;
         }
 
         public async Task RevertTransaction()
@@ -297,6 +329,24 @@ namespace Tzkt.Sync.Protocols.Proto2
                 }
 
                 target.Balance -= Transaction.Amount;
+
+                if (Transaction.TargetChangeId != null)
+                {
+                    var prevChange = await Db.DelegateChanges
+                        .Where(x => x.DelegateId == target.Id && x.Level < Transaction.Level)
+                        .OrderByDescending(x => x.Level)
+                        .FirstOrDefaultAsync();
+
+                    if (prevChange.Type != DelegateChangeType.Deactivated)
+                        throw new Exception("unexpected delegate change type");
+
+                    await DeactivateDelegate(target as Data.Models.Delegate, prevChange.Level);
+
+                    Db.DelegateChanges.Remove(new DelegateChange
+                    {
+                        Id = (int)Transaction.TargetChangeId
+                    });
+                }
 
                 if (targetDelegate != null)
                 {
@@ -379,6 +429,24 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 target.Balance -= Transaction.Amount;
 
+                if (Transaction.TargetChangeId != null)
+                {
+                    var prevChange = await Db.DelegateChanges
+                        .Where(x => x.DelegateId == target.Id && x.Level < Transaction.Level)
+                        .OrderByDescending(x => x.Level)
+                        .FirstOrDefaultAsync();
+
+                    if (prevChange.Type != DelegateChangeType.Deactivated)
+                        throw new Exception("unexpected delegate change type");
+
+                    await DeactivateDelegate(target as Data.Models.Delegate, prevChange.Level);
+
+                    Db.DelegateChanges.Remove(new DelegateChange
+                    {
+                        Id = (int)Transaction.TargetChangeId
+                    });
+                }
+
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance -= Transaction.Amount;
@@ -402,6 +470,36 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
 
             Db.TransactionOps.Remove(Transaction);
+        }
+
+        async Task DeactivateDelegate(Data.Models.Delegate delegat, int deactivationLevel)
+        {
+            delegat.DeactivationBlock = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == deactivationLevel);
+            delegat.DeactivationLevel = deactivationLevel;
+            delegat.Staked = false;
+
+            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
+            {
+                Cache.AddAccount(delegator);
+                Db.TryAttach(delegator);
+
+                delegator.Staked = false;
+            }
+        }
+
+        async Task ReactivateDelegate(Data.Models.Delegate delegat)
+        {
+            delegat.DeactivationBlock = null;
+            delegat.DeactivationLevel = null;
+            delegat.Staked = true;
+
+            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
+            {
+                Cache.AddAccount(delegator);
+                Db.TryAttach(delegator);
+
+                delegator.Staked = true;
+            }
         }
 
         #region static

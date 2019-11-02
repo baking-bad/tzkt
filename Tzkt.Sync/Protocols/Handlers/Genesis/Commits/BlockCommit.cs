@@ -18,7 +18,8 @@ namespace Tzkt.Sync.Protocols.Genesis
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol),
-                Timestamp = rawBlock.Header.Timestamp
+                Timestamp = rawBlock.Header.Timestamp,
+                Events = BlockEvents.ProtocolBegin | BlockEvents.ProtocolEnd
             };
         }
 

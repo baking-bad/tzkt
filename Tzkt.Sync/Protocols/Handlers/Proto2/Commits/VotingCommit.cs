@@ -9,25 +9,28 @@ namespace Tzkt.Sync.Protocols.Proto2
 {
     class VotingCommit : ProtocolCommit
     {
-        public VotingPeriod CurrentPeriod { get; private set; }
-        public VotingPeriod NextPeriod { get; private set; }
-        public VotingPeriod PrevPeriod { get; private set; }
+        public BlockEvents Event { get; private set; }
+        public VotingPeriod Period { get; private set; }
 
         VotingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(RawBlock rawBlock)
+        public async Task Init(Block block, RawBlock rawBlock)
         {
-            CurrentPeriod = await Cache.GetCurrentVotingPeriodAsync();
-
-            if (CurrentPeriod.EndLevel >= rawBlock.Level)
+            if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
             {
-                NextPeriod = CurrentPeriod;
+                Event = BlockEvents.VotingPeriodEnd;
+                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
-            else
+            else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
             {
+                Event = BlockEvents.VotingPeriodBegin;
                 var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-                CurrentPeriod.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == CurrentPeriod.EpochId);
-                NextPeriod = rawBlock.Metadata.VotingPeriod switch
+
+                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
+
+                Period = rawBlock.Metadata.VotingPeriod switch
                 {
                     "proposal" => new ProposalPeriod
                     {
@@ -38,21 +41,21 @@ namespace Tzkt.Sync.Protocols.Proto2
                     },
                     "exploration" => new ExplorationPeriod
                     {
-                        Epoch = CurrentPeriod.Epoch,
+                        Epoch = Period.Epoch,
                         Kind = VotingPeriods.Exploration,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
                     },
                     "testing" => new TestingPeriod
                     {
-                        Epoch = CurrentPeriod.Epoch,
+                        Epoch = Period.Epoch,
                         Kind = VotingPeriods.Testing,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
                     },
                     "promotion" => new PromotionPeriod
                     {
-                        Epoch = CurrentPeriod.Epoch,
+                        Epoch = Period.Epoch,
                         Kind = VotingPeriods.Promotion,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
@@ -64,35 +67,36 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Init(Block block)
         {
-            CurrentPeriod = await Cache.GetCurrentVotingPeriodAsync();
-
-            if (CurrentPeriod.StartLevel == block.Level)
+            if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
             {
-                PrevPeriod = await Db.VotingPeriods.FirstOrDefaultAsync(x => x.EndLevel == block.Level - 1);
-                PrevPeriod.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == PrevPeriod.EpochId);
-                CurrentPeriod.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == CurrentPeriod.EpochId);
+                Event = BlockEvents.VotingPeriodEnd;
+                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
-            else
+            else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
             {
-                PrevPeriod = CurrentPeriod;
+                Event = BlockEvents.VotingPeriodBegin;
+                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
         }
 
         public override Task Apply()
         {
-            if (CurrentPeriod != NextPeriod)
+            if (Event == BlockEvents.VotingPeriodEnd)
             {
                 #region entities
-                var epoch = CurrentPeriod.Epoch;
-                
+                var epoch = Period.Epoch;
+
                 Db.TryAttach(epoch);
                 #endregion
 
                 epoch.Progress++;
-
-                Db.VotingEpoches.Add(NextPeriod.Epoch);
-                Db.VotingPeriods.Add(NextPeriod);
-                Cache.AddVotingPeriod(NextPeriod);
+            }
+            else if (Event == BlockEvents.VotingPeriodBegin)
+            {
+                Db.VotingPeriods.Add(Period);
+                Cache.AddVotingPeriod(Period);
             }
 
             return Task.CompletedTask;
@@ -100,18 +104,22 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public override Task Revert()
         {
-            if (CurrentPeriod != PrevPeriod)
+            if (Event == BlockEvents.VotingPeriodEnd)
             {
                 #region entities
-                var epoch = PrevPeriod.Epoch;
+                var epoch = Period.Epoch;
 
                 Db.TryAttach(epoch);
                 #endregion
 
                 epoch.Progress--;
+            }
+            else if (Event == BlockEvents.VotingPeriodBegin)
+            {
+                if (Period.Epoch.Progress == 0)
+                    Db.VotingEpoches.Remove(Period.Epoch);
 
-                Db.VotingPeriods.Remove(CurrentPeriod);
-                Db.VotingEpoches.Remove(CurrentPeriod.Epoch);
+                Db.VotingPeriods.Remove(Period);
                 Cache.RemoveVotingPeriod();
             }
 
@@ -119,10 +127,10 @@ namespace Tzkt.Sync.Protocols.Proto2
         }
 
         #region static
-        public static async Task<VotingCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
+        public static async Task<VotingCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
         {
             var commit = new VotingCommit(proto);
-            await commit.Init(rawBlock);
+            await commit.Init(block, rawBlock);
             await commit.Apply();
 
             return commit;

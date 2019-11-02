@@ -25,6 +25,7 @@ namespace Tzkt.Data.Models
         #endregion
 
         #region indirect relations
+        public List<DelegateChange> DelegateChanges { get; set; }
         public List<Account> DelegatedAccounts { get; set; }
 
         public List<Block> BakedBlocks { get; set; }

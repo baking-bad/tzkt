@@ -55,7 +55,7 @@ namespace Tzkt.Sync
             }
 
             Logger.LogDebug("Diagnostics...");
-            await Diagnostics.Run(rawBlock.Level);
+            await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
 
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
@@ -87,7 +87,7 @@ namespace Tzkt.Sync
             await Db.SaveChangesAsync();
 
             ClearCachedRelations();
-
+            
             return await Cache.GetAppStateAsync();
         }
 
@@ -115,6 +115,7 @@ namespace Tzkt.Sync
                     delegat.Ballots = null;
                     delegat.DeactivationBlock = null;
                     delegat.Delegate = null;
+                    delegat.DelegateChanges = null;
                     delegat.DelegatedAccounts = null;
                     delegat.DelegatedOriginations = null;
                     delegat.Endorsements = null;
@@ -163,6 +164,7 @@ namespace Tzkt.Sync
                     b.ActivatedDelegates = null;
                     b.Activations = null;
                     b.Baker = null;
+                    b.BakerChange = null;
                     b.Ballots = null;
                     b.DeactivatedDelegates = null;
                     b.Delegations = null;

@@ -14,14 +14,28 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task Init(RawBlock rawBlock)
         {
+            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            var events = BlockEvents.None;
+
+            if (rawBlock.Level % protocol.BlocksPerCycle == 1)
+                events |= BlockEvents.CycleBegin;
+            else if (rawBlock.Level % protocol.BlocksPerCycle == 0)
+                events |= BlockEvents.CycleEnd;
+
+            if (protocol.Weight == 1)
+                events |= BlockEvents.ProtocolBegin;
+            else if (rawBlock.Metadata.Protocol != rawBlock.Metadata.NextProtocol)
+                events |= BlockEvents.ProtocolEnd;
+
             Block = new Block
             {
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
-                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol),
+                Protocol = protocol,
                 Timestamp = rawBlock.Header.Timestamp,
                 Priority = rawBlock.Header.Priority,
-                Baker = (Data.Models.Delegate)await Cache.GetAccountAsync(rawBlock.Metadata.Baker)
+                Baker = (Data.Models.Delegate)await Cache.GetAccountAsync(rawBlock.Metadata.Baker),
+                Events = events
             };
         }
 

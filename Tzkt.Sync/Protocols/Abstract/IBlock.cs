@@ -7,5 +7,8 @@
         string Chain { get; }
         string Protocol { get; }
         string Predecessor { get; }
+
+        // for diagnostics
+        int OperationsCount { get; }
     }
 }

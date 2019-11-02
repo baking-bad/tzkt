@@ -28,6 +28,15 @@ namespace Tzkt.Sync.Protocols.Proto2
         #region IBlock
         public int Level => Header.Level;
         public string Predecessor => Header.Predecessor;
+        public int OperationsCount =>
+            Operations[0].Count +
+            Operations[1].Count +
+            Operations[2].Count +
+            Operations[3].SelectMany(x => x.Contents).Count() +
+            Operations[3].SelectMany(x => x.Contents)
+                .Where(x => x is RawTransactionContent tx && tx.Metadata.InternalResults != null)
+                .SelectMany(x => (x as RawTransactionContent).Metadata.InternalResults)
+                .Count();
         #endregion
 
         #region validation

@@ -13,10 +13,13 @@ namespace Tzkt.Data.Models
         public DateTime Timestamp { get; set; }
         public int ProtoCode { get; set; }
 
-        public int? BakerId { get; set; }
         public int Priority { get; set; }
         public int Validations { get; set; }
+        public BlockEvents Events { get; set; }
         public Operations Operations { get; set; }
+
+        public int? BakerId { get; set; }
+        public int? BakerChangeId { get; set; }
         public int? RevelationId { get; set; }
 
         #region relations
@@ -25,6 +28,9 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(BakerId))]
         public Delegate Baker { get; set; }
+
+        [ForeignKey(nameof(BakerChangeId))]
+        public DelegateChange BakerChange { get; set; }
 
         [ForeignKey(nameof(RevelationId))]
         public NonceRevelationOperation Revelation { get; set; }

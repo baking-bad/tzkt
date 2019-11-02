@@ -165,10 +165,12 @@ namespace Tzkt.Data.Migrations
                     Hash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     ProtoCode = table.Column<int>(nullable: false),
-                    BakerId = table.Column<int>(nullable: true),
                     Priority = table.Column<int>(nullable: false),
                     Validations = table.Column<int>(nullable: false),
+                    Events = table.Column<int>(nullable: false),
                     Operations = table.Column<int>(nullable: false),
+                    BakerId = table.Column<int>(nullable: true),
+                    BakerChangeId = table.Column<int>(nullable: true),
                     RevelationId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
@@ -234,6 +236,27 @@ namespace Tzkt.Data.Migrations
                         principalTable: "Blocks",
                         principalColumn: "Level",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DelegateChanges",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(nullable: false),
+                    DelegateId = table.Column<int>(nullable: false),
+                    Type = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DelegateChanges", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DelegateChanges_Accounts_DelegateId",
+                        column: x => x.DelegateId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -311,36 +334,6 @@ namespace Tzkt.Data.Migrations
                         column: x => x.OffenderId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EndorsementOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
-                    DelegateId = table.Column<int>(nullable: false),
-                    Slots = table.Column<int>(nullable: false),
-                    Reward = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EndorsementOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_EndorsementOps_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_EndorsementOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -461,6 +454,43 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EndorsementOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    DelegateId = table.Column<int>(nullable: false),
+                    Slots = table.Column<int>(nullable: false),
+                    Reward = table.Column<long>(nullable: false),
+                    DelegateChangeId = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EndorsementOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EndorsementOps_DelegateChanges_DelegateChangeId",
+                        column: x => x.DelegateChangeId,
+                        principalTable: "DelegateChanges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EndorsementOps_Accounts_DelegateId",
+                        column: x => x.DelegateId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EndorsementOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TransactionOps",
                 columns: table => new
                 {
@@ -482,6 +512,7 @@ namespace Tzkt.Data.Migrations
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
                     TargetId = table.Column<int>(nullable: true),
+                    TargetChangeId = table.Column<int>(nullable: true),
                     Amount = table.Column<long>(nullable: false),
                     InternalOperations = table.Column<byte>(nullable: true)
                 },
@@ -506,6 +537,12 @@ namespace Tzkt.Data.Migrations
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TransactionOps_DelegateChanges_TargetChangeId",
+                        column: x => x.TargetChangeId,
+                        principalTable: "DelegateChanges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_TransactionOps_Accounts_TargetId",
                         column: x => x.TargetId,
@@ -577,11 +614,18 @@ namespace Tzkt.Data.Migrations
                     Status = table.Column<byte>(nullable: false),
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
-                    DelegateId = table.Column<int>(nullable: true)
+                    DelegateId = table.Column<int>(nullable: true),
+                    DelegateChangeId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DelegationOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_DelegateChanges_DelegateChangeId",
+                        column: x => x.DelegateChangeId,
+                        principalTable: "DelegateChanges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_DelegationOps_Accounts_DelegateId",
                         column: x => x.DelegateId,
@@ -774,6 +818,11 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Blocks_BakerChangeId",
+                table: "Blocks",
+                column: "BakerChangeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Blocks_BakerId",
                 table: "Blocks",
                 column: "BakerId");
@@ -800,6 +849,21 @@ namespace Tzkt.Data.Migrations
                 table: "Blocks",
                 column: "RevelationId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DelegateChanges_DelegateId",
+                table: "DelegateChanges",
+                column: "DelegateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DelegateChanges_Level",
+                table: "DelegateChanges",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DelegationOps_DelegateChangeId",
+                table: "DelegationOps",
+                column: "DelegateChangeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DelegationOps_DelegateId",
@@ -865,6 +929,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_DoubleEndorsingOps_OpHash",
                 table: "DoubleEndorsingOps",
                 column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EndorsementOps_DelegateChangeId",
+                table: "EndorsementOps",
+                column: "DelegateChangeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EndorsementOps_DelegateId",
@@ -1016,6 +1085,11 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TransactionOps_TargetChangeId",
+                table: "TransactionOps",
+                column: "TargetChangeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_TargetId",
                 table: "TransactionOps",
                 column: "TargetId");
@@ -1081,6 +1155,14 @@ namespace Tzkt.Data.Migrations
                 table: "Blocks",
                 column: "BakerId",
                 principalTable: "Accounts",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Blocks_DelegateChanges_BakerChangeId",
+                table: "Blocks",
+                column: "BakerChangeId",
+                principalTable: "DelegateChanges",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
 
@@ -1154,6 +1236,9 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Blocks");
+
+            migrationBuilder.DropTable(
+                name: "DelegateChanges");
 
             migrationBuilder.DropTable(
                 name: "Protocols");

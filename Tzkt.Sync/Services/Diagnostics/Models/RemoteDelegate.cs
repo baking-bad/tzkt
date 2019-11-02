@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Services.Diagnostics
         public long? StakingBalance { get; set; }
 
         [JsonPropertyName("delegated_contracts")]
-        public List<string> Delegators { get; set; }
+        public List<int> Delegators { get; set; }
 
         [JsonPropertyName("deactivated")]
         public bool? Deactivated { get; set; }

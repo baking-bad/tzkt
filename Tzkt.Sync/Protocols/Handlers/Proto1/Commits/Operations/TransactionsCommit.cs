@@ -17,8 +17,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task Init(Block block, RawOperation op, RawTransactionContent content)
         {
-            var id = await Cache.NextCounterAsync(true);
-
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
@@ -29,7 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Transaction = new TransactionOperation
             {
-                Id = id,
+                Id = await Cache.NextCounterAsync(),
                 Block = block,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,

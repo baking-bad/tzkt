@@ -14,35 +14,43 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(RawBlock rawBlock)
+        public async Task Init(Block block, RawBlock rawBlock)
         {
-            Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-            var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
+            if (block.Events.HasFlag(BlockEvents.CycleEnd))
+            {
+                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
 
-            FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
-                .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreserverCycles);
+                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                    .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreserverCycles);
 
-            RevelationLosses = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
-                .Where(x => x is FreezerUpdate fu && fu.Level != cycle - Protocol.PreserverCycles);
+                RevelationLosses = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                    .Where(x => x is FreezerUpdate fu && fu.Level != cycle - Protocol.PreserverCycles);
+            }
         }
 
         public async Task Init(Block block)
         {
-            var stream = await Proto.Node.GetBlockAsync(block.Level);
-            var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
+            if (block.Events.HasFlag(BlockEvents.CycleEnd))
+            {
+                var stream = await Proto.Node.GetBlockAsync(block.Level);
+                var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
 
-            Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-            var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
+                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
 
-            FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
-                .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreserverCycles);
+                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                    .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreserverCycles);
 
-            RevelationLosses = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
-                .Where(x => x is FreezerUpdate fu && fu.Level != cycle - Protocol.PreserverCycles);
+                RevelationLosses = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3)
+                    .Where(x => x is FreezerUpdate fu && fu.Level != cycle - Protocol.PreserverCycles);
+            }
         }
 
         public override async Task Apply()
         {
+            if (FreezerUpdates == null) return;
+
             foreach (var update in FreezerUpdates)
             {
                 #region entities
@@ -98,6 +106,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async override Task Revert()
         {
+            if (FreezerUpdates == null) return;
+
             foreach (var update in FreezerUpdates)
             {
                 #region entities
@@ -152,10 +162,10 @@ namespace Tzkt.Sync.Protocols.Proto2
         }
 
         #region static
-        public static async Task<FreezerCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
+        public static async Task<FreezerCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
         {
             var commit = new FreezerCommit(proto);
-            await commit.Init(rawBlock);
+            await commit.Init(block, rawBlock);
             await commit.Apply();
 
             return commit;

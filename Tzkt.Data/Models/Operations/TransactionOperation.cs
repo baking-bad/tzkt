@@ -8,6 +8,7 @@ namespace Tzkt.Data.Models
     public class TransactionOperation : InternalOperation
     {
         public int? TargetId { get; set; }
+        public int? TargetChangeId { get; set; }
 
         public long Amount { get; set; }
 
@@ -16,6 +17,9 @@ namespace Tzkt.Data.Models
         #region relations
         [ForeignKey(nameof(TargetId))]
         public Account Target { get; set; }
+
+        [ForeignKey(nameof(TargetChangeId))]
+        public DelegateChange TargetChange { get; set; }
         #endregion
 
         #region indirect relations

@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         static Serializer()
         {
-            Options = new JsonSerializerOptions();
+            Options = new JsonSerializerOptions { MaxDepth = 128 };
             Options.Converters.Add(new JsonInt32Converter());
             Options.Converters.Add(new JsonInt64Converter());
             Options.Converters.Add(new RawBalanceUpdateConverter());
@@ -48,23 +48,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                     throw new SerializationException($"invalid format");
 
                 return rawConstants;
-            }
-            catch (JsonException ex)
-            {
-                throw new SerializationException($"[{ex.Path}] {ex.Message}");
-            }
-        }
-
-        public async Task<RawDelegate> DeserializeDelegate(Stream stream)
-        {
-            try
-            {
-                var rawContracts = await JsonSerializer.DeserializeAsync<RawDelegate>(stream, Options);
-
-                if (!rawContracts.IsValidFormat())
-                    throw new SerializationException($"invalid format");
-
-                return rawContracts;
             }
             catch (JsonException ex)
             {

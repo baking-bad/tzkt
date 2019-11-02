@@ -35,6 +35,13 @@ namespace Tzkt.Sync.Protocols.Proto2
             {
                 var delegat = await UpgradeUser(weirds.First().Delegate, block.Level);
                 
+                Db.DelegateChanges.Add(new DelegateChange
+                {
+                    Delegate = delegat,
+                    Level = block.Level,
+                    Type = DelegateChangeType.Activated
+                });
+                
                 foreach (var weird in weirds)
                 {
                     var delegator = weird.Contract;
@@ -61,6 +68,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             var delegates = await Db.Delegates
                 .AsNoTracking()
+                .Include(x => x.DelegateChanges)
                 .Include(x => x.DelegatedAccounts)
                 .Where(x => x.ActivationLevel == block.Level)
                 .ToListAsync();
@@ -84,6 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 if (delegat.StakingBalance != delegat.Balance || delegat.Delegators > 0)
                     throw new Exception("migration error");
 
+                Db.DelegateChanges.RemoveRange(delegat.DelegateChanges);
                 DowngradeDelegate(delegat);
             }
         }

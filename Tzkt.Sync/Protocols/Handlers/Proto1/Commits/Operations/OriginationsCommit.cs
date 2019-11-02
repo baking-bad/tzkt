@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Origination = new OriginationOperation
             {
-                Id = await Cache.NextCounterAsync(true),
+                Id = await Cache.NextCounterAsync(),
                 Block = block,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,

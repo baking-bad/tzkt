@@ -37,7 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             Endorsement.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(endorsement.DelegateId);
         }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
             #region entities
             var block = Endorsement.Block;
@@ -56,10 +56,21 @@ namespace Tzkt.Sync.Protocols.Proto2
             block.Operations |= Operations.Endorsements;
 
             block.Validations++;
+
+            if (!sender.Staked)
+            {
+                await ReactivateDelegate(sender);
+
+                Endorsement.DelegateChange = new DelegateChange
+                {
+                    Delegate = sender,
+                    Level = block.Level,
+                    Type = DelegateChangeType.Reactivated
+                };
+            }
             #endregion
 
             Db.EndorsementOps.Add(Endorsement);
-            return Task.CompletedTask;
         }
 
         public override async Task Revert()
@@ -81,7 +92,55 @@ namespace Tzkt.Sync.Protocols.Proto2
                 sender.Operations &= ~Operations.Endorsements;
             #endregion
 
+            if (Endorsement.DelegateChangeId != null)
+            {
+                var prevChange = await Db.DelegateChanges
+                    .Where(x => x.DelegateId == sender.Id && x.Level < Endorsement.Level)
+                    .OrderByDescending(x => x.Level)
+                    .FirstOrDefaultAsync();
+
+                if (prevChange.Type != DelegateChangeType.Deactivated)
+                    throw new Exception("unexpected delegate change type");
+
+                await DeactivateDelegate(sender, prevChange.Level);
+
+                Db.DelegateChanges.Remove(new DelegateChange
+                {
+                    Id = (int)Endorsement.DelegateChangeId
+                });
+            }
+
             Db.EndorsementOps.Remove(Endorsement);
+        }
+
+        async Task DeactivateDelegate(Data.Models.Delegate delegat, int deactivationLevel)
+        {
+            delegat.DeactivationBlock = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == deactivationLevel);
+            delegat.DeactivationLevel = deactivationLevel;
+            delegat.Staked = false;
+
+            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
+            {
+                Cache.AddAccount(delegator);
+                Db.TryAttach(delegator);
+
+                delegator.Staked = false;
+            }
+        }
+
+        async Task ReactivateDelegate(Data.Models.Delegate delegat)
+        {
+            delegat.DeactivationBlock = null;
+            delegat.DeactivationLevel = null;
+            delegat.Staked = true;
+
+            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
+            {
+                Cache.AddAccount(delegator);
+                Db.TryAttach(delegator);
+
+                delegator.Staked = true;
+            }
         }
 
         #region static

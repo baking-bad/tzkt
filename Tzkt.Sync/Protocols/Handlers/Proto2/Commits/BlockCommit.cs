@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto2
@@ -14,14 +15,37 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Init(RawBlock rawBlock)
         {
+            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            var votingPeriod = await Cache.GetCurrentVotingPeriodAsync();
+            var events = BlockEvents.None;
+
+            if (rawBlock.Level % protocol.BlocksPerCycle == 1)
+                events |= BlockEvents.CycleBegin;
+            else if (rawBlock.Level % protocol.BlocksPerCycle == 0)
+                events |= BlockEvents.CycleEnd;
+
+            if (protocol.Weight == 1)
+                events |= BlockEvents.ProtocolBegin;
+            else if (rawBlock.Metadata.Protocol != rawBlock.Metadata.NextProtocol)
+                events |= BlockEvents.ProtocolEnd;
+
+            if (rawBlock.Level == votingPeriod.EndLevel)
+                events |= BlockEvents.VotingPeriodEnd;
+            else if (rawBlock.Level > votingPeriod.EndLevel)
+                events |= BlockEvents.VotingPeriodBegin;
+
+            if (rawBlock.Metadata.Deactivated.Count > 0)
+                events |= BlockEvents.Deactivations;
+
             Block = new Block
             {
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
-                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol),
+                Protocol = protocol,
                 Timestamp = rawBlock.Header.Timestamp,
                 Priority = rawBlock.Header.Priority,
-                Baker = (Data.Models.Delegate)await Cache.GetAccountAsync(rawBlock.Metadata.Baker)
+                Baker = (Data.Models.Delegate)await Cache.GetAccountAsync(rawBlock.Metadata.Baker),
+                Events = events
             };
         }
 
@@ -32,9 +56,10 @@ namespace Tzkt.Sync.Protocols.Proto2
             Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
         }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
             #region entities
+            var block = Block;
             var baker = Block.Baker;
 
             Db.TryAttach(baker);
@@ -46,13 +71,23 @@ namespace Tzkt.Sync.Protocols.Proto2
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
             #endregion
 
+            if (!baker.Staked)
+            {
+                await ReactivateDelegate(baker);
+                
+                block.BakerChange = new DelegateChange
+                {
+                    Delegate = baker,
+                    Level = Block.Level,
+                    Type = DelegateChangeType.Reactivated
+                };
+            }
+
             Db.Blocks.Add(Block);
             Cache.AddBlock(Block);
-
-            return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public override async Task Revert()
         {
             #region entities
             var baker = Block.Baker;
@@ -66,9 +101,56 @@ namespace Tzkt.Sync.Protocols.Proto2
             baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
             #endregion
 
-            Db.Blocks.Remove(Block);
+            if (Block.BakerChangeId != null)
+            {
+                var prevChange = await Db.DelegateChanges
+                    .Where(x => x.DelegateId == baker.Id && x.Level < Block.Level)
+                    .OrderByDescending(x => x.Level)
+                    .FirstOrDefaultAsync();
 
-            return Task.CompletedTask;
+                if (prevChange.Type != DelegateChangeType.Deactivated)
+                    throw new Exception("unexpected delegate change type");
+
+                await DeactivateDelegate(baker, prevChange.Level);
+
+                Db.DelegateChanges.Remove(new DelegateChange
+                {
+                    Id = (int)Block.BakerChangeId
+                });
+            }
+
+            Db.Blocks.Remove(Block);
+            //Cache.RemoveBlock(Block); //see state commit
+        }
+
+        async Task DeactivateDelegate(Data.Models.Delegate delegat, int deactivationLevel)
+        {
+            delegat.DeactivationBlock = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == deactivationLevel);
+            delegat.DeactivationLevel = deactivationLevel;
+            delegat.Staked = false;
+
+            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
+            {
+                Cache.AddAccount(delegator);
+                Db.TryAttach(delegator);
+
+                delegator.Staked = false;
+            }
+        }
+
+        async Task ReactivateDelegate(Data.Models.Delegate delegat)
+        {
+            delegat.DeactivationBlock = null;
+            delegat.DeactivationLevel = null;
+            delegat.Staked = true;
+
+            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
+            {
+                Cache.AddAccount(delegator);
+                Db.TryAttach(delegator);
+
+                delegator.Staked = true;
+            }
         }
 
         #region static
