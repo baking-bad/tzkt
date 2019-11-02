@@ -49,16 +49,18 @@ namespace Tzkt.Sync.Protocols.Proto1
         public override Task Apply()
         {
             #region entities
+            var proto = Block.Protocol;
             var baker = Block.Baker;
 
+            Db.TryAttach(proto);
             Db.TryAttach(baker);
             #endregion
 
-            #region balances
+            proto.Weight++;
+
             baker.Balance += Block.Protocol.BlockReward;
             baker.FrozenRewards += Block.Protocol.BlockReward;
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
-            #endregion
 
             Db.Blocks.Add(Block);
             Cache.AddBlock(Block);
@@ -69,16 +71,22 @@ namespace Tzkt.Sync.Protocols.Proto1
         public override Task Revert()
         {
             #region entities
+            var proto = Block.Protocol;
             var baker = Block.Baker;
 
+            Db.TryAttach(proto);
             Db.TryAttach(baker);
             #endregion
 
-            #region balances
             baker.Balance -= Block.Protocol.BlockReward;
             baker.FrozenRewards -= Block.Protocol.BlockReward;
             baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
-            #endregion
+
+            if (--proto.Weight == 0)
+            {
+                Db.Protocols.Remove(proto);
+                Cache.RemoveProtocol(proto);
+            }
 
             Db.Blocks.Remove(Block);
 

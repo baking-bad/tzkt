@@ -44,7 +44,6 @@ namespace Tzkt.Sync.Protocols
         {
             var rawBlock = block as RawBlock;
 
-            await ProtoCommit.Apply(this, rawBlock);
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
 
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
@@ -55,7 +54,6 @@ namespace Tzkt.Sync.Protocols
             var currBlock = await Cache.GetCurrentBlockAsync();
 
             await BlockCommit.Revert(this, currBlock);
-            await ProtoCommit.Revert(this, currBlock);
 
             await StateCommit.Revert(this, currBlock);
         }

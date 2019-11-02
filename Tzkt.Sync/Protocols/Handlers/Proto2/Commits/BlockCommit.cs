@@ -60,16 +60,18 @@ namespace Tzkt.Sync.Protocols.Proto2
         {
             #region entities
             var block = Block;
+            var proto = Block.Protocol;
             var baker = Block.Baker;
 
+            Db.TryAttach(proto);
             Db.TryAttach(baker);
             #endregion
 
-            #region balances
+            proto.Weight++;
+
             baker.Balance += Block.Protocol.BlockReward;
             baker.FrozenRewards += Block.Protocol.BlockReward;
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
-            #endregion
 
             if (!baker.Staked)
             {
@@ -90,16 +92,22 @@ namespace Tzkt.Sync.Protocols.Proto2
         public override async Task Revert()
         {
             #region entities
+            var proto = Block.Protocol;
             var baker = Block.Baker;
 
+            Db.TryAttach(proto);
             Db.TryAttach(baker);
             #endregion
 
-            #region balances
             baker.Balance -= Block.Protocol.BlockReward;
             baker.FrozenRewards -= Block.Protocol.BlockReward;
             baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
-            #endregion
+
+            if (--proto.Weight == 0)
+            {
+                Db.Protocols.Remove(proto);
+                Cache.RemoveProtocol(proto);
+            }
 
             if (Block.BakerChangeId != null)
             {
@@ -120,7 +128,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
 
             Db.Blocks.Remove(Block);
-            //Cache.RemoveBlock(Block); //see state commit
         }
 
         async Task DeactivateDelegate(Data.Models.Delegate delegat, int deactivationLevel)

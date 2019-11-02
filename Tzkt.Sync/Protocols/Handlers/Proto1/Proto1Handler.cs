@@ -117,9 +117,7 @@ namespace Tzkt.Sync.Protocols
         {
             var rawBlock = block as RawBlock;
 
-            await ProtoCommit.Apply(this, rawBlock);
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
-
             await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
 
             #region operations 0
@@ -300,7 +298,6 @@ namespace Tzkt.Sync.Protocols
 
             await FreezerCommit.Revert(this, currBlock);
             await BlockCommit.Revert(this, currBlock);
-            await ProtoCommit.Revert(this, currBlock);
 
             await StateCommit.Revert(this, currBlock);
         }

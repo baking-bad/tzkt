@@ -117,12 +117,12 @@ namespace Tzkt.Sync.Protocols
         {
             var rawBlock = block as RawBlock;
 
-            await ProtoCommit.Apply(this, rawBlock);
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
             await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
             await VotingCommit.Apply(this, blockCommit.Block, rawBlock);
             await DeactivationCommit.Apply(this, blockCommit.Block, rawBlock);
 
+            #region operations 0
             foreach (var operation in rawBlock.Operations[0])
             {
                 foreach (var content in operation.Contents)
@@ -137,7 +137,9 @@ namespace Tzkt.Sync.Protocols
                     }
                 }
             }
+            #endregion
 
+            #region operations 1
             foreach (var operation in rawBlock.Operations[1])
             {
                 foreach (var content in operation.Contents)
@@ -145,7 +147,9 @@ namespace Tzkt.Sync.Protocols
                     throw new NotImplementedException($"'{content.GetType()}' is not implemented");
                 }
             }
+            #endregion
 
+            #region operations 2
             foreach (var operation in rawBlock.Operations[2])
             {
                 foreach (var content in operation.Contents)
@@ -166,7 +170,9 @@ namespace Tzkt.Sync.Protocols
                     }
                 }
             }
+            #endregion
 
+            #region operations 3
             foreach (var operation in rawBlock.Operations[3])
             {
                 await Cache.IncreaseManagerCounter(operation.Contents.Count);
@@ -206,6 +212,7 @@ namespace Tzkt.Sync.Protocols
                     }
                 }
             }
+            #endregion
 
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
@@ -307,7 +314,6 @@ namespace Tzkt.Sync.Protocols
             await VotingCommit.Revert(this, currBlock);
             await FreezerCommit.Revert(this, currBlock);
             await BlockCommit.Revert(this, currBlock);
-            await ProtoCommit.Revert(this, currBlock);
 
             await StateCommit.Revert(this, currBlock);
         }

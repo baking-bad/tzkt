@@ -23,14 +23,18 @@ namespace Tzkt.Sync.Protocols.Genesis
             };
         }
 
-        public Task Init(Block block)
+        public async Task Init(Block block)
         {
             Block = block;
-            return Task.CompletedTask;
+            Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
         }
 
         public override Task Apply()
         {
+            Db.TryAttach(Block.Protocol);
+
+            Block.Protocol.Weight++;
+
             Db.Blocks.Add(Block);
             Cache.AddBlock(Block);
 
@@ -39,6 +43,9 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         public override Task Revert()
         {
+            Db.Protocols.Remove(Block.Protocol);
+            Cache.RemoveProtocol(Block.Protocol);
+
             Db.Blocks.Remove(Block);
             return Task.CompletedTask;
         }
