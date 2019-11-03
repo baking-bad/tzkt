@@ -9,7 +9,6 @@ namespace Tzkt.Data.Models
 
         #region indirect relations
         public ActivationOperation Activation { get; set; }
-        public List<WeirdDelegation> WeirdDelegations { get; set; }
         #endregion
     }
 

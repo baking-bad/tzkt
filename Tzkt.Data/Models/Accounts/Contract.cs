@@ -7,10 +7,14 @@ namespace Tzkt.Data.Models
     public class Contract : Account
     {
         public int? ManagerId { get; set; }
+        public int? WeirdDelegateId { get; set; }
 
         #region relations
         [ForeignKey(nameof(ManagerId))]
         public Account Manager { get; set; }
+
+        [ForeignKey(nameof(WeirdDelegateId))]
+        public User WeirdDelegate { get; set; }
         #endregion
 
         #region indirect relations

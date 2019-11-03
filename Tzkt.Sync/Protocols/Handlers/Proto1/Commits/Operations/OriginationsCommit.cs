@@ -32,6 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             Counter = 0,
                             Delegate = delegat,
                             DelegationLevel = delegat != null ? (int?)block.Level : null,
+                            WeirdDelegate = originDelegate?.Type == AccountType.User ? (User)originDelegate : null, 
                             Manager = sender,
                             Operations = Operations.None,
                             Staked = delegat?.Staked ?? false,
@@ -66,16 +67,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
 
-            if (originDelegate != null && originDelegate.Type != AccountType.Delegate)
-            {
-                Origination.WeirdDelegation = new WeirdDelegation
-                {
-                    DelegateId = originDelegate.Id,
-                    Level = block.Level,
-                    Origination = Origination
-                };
-            }
-
             if (contract != null)
                 contract.Origination = Origination;
         }
@@ -92,7 +83,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             Origination.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Sender.DelegateId);
             Origination.Contract ??= (Contract)await Cache.GetAccountAsync(origination.ContractId);
             Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
-
         }
 
         public override Task Apply()

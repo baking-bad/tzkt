@@ -46,10 +46,6 @@ namespace Tzkt.Data
         public DbSet<PromotionPeriod> PromotionPeriods { get; set; }
         #endregion
 
-        #region weirds
-        public DbSet<WeirdDelegation> WeirdDelegations { get; set; }
-        #endregion
-
         //public DbSet<Cycle> Cycles { get; set; }
         //public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
         //public DbSet<BakingRight> BakingRights { get; set; }
@@ -99,10 +95,6 @@ namespace Tzkt.Data
             modelBuilder.BuildExplorationPeriodModel();
             modelBuilder.BuildTestingPeriodModel();
             modelBuilder.BuildPromotionPeriodModel();
-            #endregion
-
-            #region weirds
-            modelBuilder.BuildWeirdDelegationModel();
             #endregion
         }
     }

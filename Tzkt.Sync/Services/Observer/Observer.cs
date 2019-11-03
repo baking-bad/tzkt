@@ -148,7 +148,7 @@ namespace Tzkt.Sync.Services
                     Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                     using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
 
-                    if (AppState.Level >= 490_000)
+                    if (AppState.Level >= 200_000)
                         throw new ValidationException("Test", true);
 
                     Logger.LogDebug($"Applying block...");

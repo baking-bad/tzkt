@@ -956,32 +956,6 @@ namespace Tzkt.Data.Migrations
                     b.HasDiscriminator<int>("Kind");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.WeirdDelegation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
-
-                    b.Property<int>("DelegateId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OriginationId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DelegateId");
-
-                    b.HasIndex("OriginationId")
-                        .IsUnique();
-
-                    b.ToTable("WeirdDelegations");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
                 {
                     b.HasBaseType("Tzkt.Data.Models.Account");
@@ -989,7 +963,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ManagerId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("WeirdDelegateId")
+                        .HasColumnType("integer");
+
                     b.HasIndex("ManagerId");
+
+                    b.HasIndex("WeirdDelegateId");
 
                     b.HasDiscriminator().HasValue((byte)2);
                 });
@@ -1416,26 +1395,15 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.WeirdDelegation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.User", "Delegate")
-                        .WithMany("WeirdDelegations")
-                        .HasForeignKey("DelegateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.OriginationOperation", "Origination")
-                        .WithOne("WeirdDelegation")
-                        .HasForeignKey("Tzkt.Data.Models.WeirdDelegation", "OriginationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Account", "Manager")
                         .WithMany("OriginatedContracts")
                         .HasForeignKey("ManagerId");
+
+                    b.HasOne("Tzkt.Data.Models.User", "WeirdDelegate")
+                        .WithMany()
+                        .HasForeignKey("WeirdDelegateId");
                 });
 #pragma warning restore 612, 618
         }

@@ -23,6 +23,7 @@ namespace Tzkt.Data.Migrations
                     DelegationLevel = table.Column<int>(nullable: true),
                     Staked = table.Column<bool>(nullable: false),
                     ManagerId = table.Column<int>(nullable: true),
+                    WeirdDelegateId = table.Column<int>(nullable: true),
                     PublicKey = table.Column<string>(maxLength: 55, nullable: true),
                     ActivationLevel = table.Column<int>(nullable: true),
                     DeactivationLevel = table.Column<int>(nullable: true),
@@ -44,6 +45,12 @@ namespace Tzkt.Data.Migrations
                     table.ForeignKey(
                         name: "FK_Accounts_Accounts_ManagerId",
                         column: x => x.ManagerId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Accounts_Accounts_WeirdDelegateId",
+                        column: x => x.WeirdDelegateId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -685,33 +692,6 @@ namespace Tzkt.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "WeirdDelegations",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(nullable: false),
-                    DelegateId = table.Column<int>(nullable: false),
-                    OriginationId = table.Column<int>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_WeirdDelegations", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_WeirdDelegations_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_WeirdDelegations_OriginationOps_OriginationId",
-                        column: x => x.OriginationId,
-                        principalTable: "OriginationOps",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.InsertData(
                 table: "AppState",
                 columns: new[] { "Id", "GlobalCounter", "Hash", "Level", "ManagerCounter", "NextProtocol", "Protocol", "Synced", "Timestamp" },
@@ -738,6 +718,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_Accounts_ManagerId",
                 table: "Accounts",
                 column: "ManagerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_WeirdDelegateId",
+                table: "Accounts",
+                column: "WeirdDelegateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ActivationOps_AccountId",
@@ -1032,17 +1017,6 @@ namespace Tzkt.Data.Migrations
                 table: "VotingPeriods",
                 column: "EpochId");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_WeirdDelegations_DelegateId",
-                table: "WeirdDelegations",
-                column: "DelegateId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_WeirdDelegations_OriginationId",
-                table: "WeirdDelegations",
-                column: "OriginationId",
-                unique: true);
-
             migrationBuilder.AddForeignKey(
                 name: "FK_ActivationOps_Blocks_Level",
                 table: "ActivationOps",
@@ -1104,25 +1078,22 @@ namespace Tzkt.Data.Migrations
                 name: "EndorsementOps");
 
             migrationBuilder.DropTable(
+                name: "OriginationOps");
+
+            migrationBuilder.DropTable(
                 name: "ProposalOps");
 
             migrationBuilder.DropTable(
                 name: "RevealOps");
 
             migrationBuilder.DropTable(
-                name: "WeirdDelegations");
+                name: "TransactionOps");
 
             migrationBuilder.DropTable(
                 name: "Proposals");
 
             migrationBuilder.DropTable(
-                name: "OriginationOps");
-
-            migrationBuilder.DropTable(
                 name: "VotingPeriods");
-
-            migrationBuilder.DropTable(
-                name: "TransactionOps");
 
             migrationBuilder.DropTable(
                 name: "VotingEpoches");
