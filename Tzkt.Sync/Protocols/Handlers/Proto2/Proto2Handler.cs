@@ -26,7 +26,45 @@ namespace Tzkt.Sync.Protocols
             Serializer = new Serializer();
             Validator = new Validator(this);
         }
-        
+
+        public override Task LoadEntities(IBlock block)
+        {
+            var rawBlock = block as RawBlock;
+            var accounts = new List<string>(64);
+
+            foreach (var op in rawBlock.Operations[1])
+            {
+                if (op.Contents[0] is RawActivationContent activation)
+                    accounts.Add(activation.Address);
+            }
+
+            foreach (var op in rawBlock.Operations[3])
+            {
+                foreach (var content in op.Contents)
+                {
+                    switch (content)
+                    {
+                        case RawRevealContent reveal:
+                            accounts.Add(reveal.Source);
+                            break;
+                        case RawDelegationContent delegation:
+                            accounts.Add(delegation.Source);
+                            break;
+                        case RawTransactionContent transaction:
+                            accounts.Add(transaction.Source);
+                            if (transaction.Metadata.Result.Status == "applied")
+                                accounts.Add(transaction.Destination);
+                            break;
+                        case RawOriginationContent origination:
+                            accounts.Add(origination.Source);
+                            break;
+                    }
+                }
+            }
+
+            return Cache.PrepareAccounts(accounts);
+        }
+
         public override async Task InitProtocol(IBlock block)
         {
             var state = await Cache.GetAppStateAsync();

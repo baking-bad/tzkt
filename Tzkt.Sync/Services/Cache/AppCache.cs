@@ -68,6 +68,20 @@ namespace Tzkt.Sync.Services.Cache
         #endregion
 
         #region accounts
+        public static bool HasAccount(string address)
+            => Accounts.ContainsKey(address);
+
+        public static void EnsureAccountsCap(int count)
+        {
+            if (Accounts.Count + count >= AccountsCapacity)
+                foreach (var key in Accounts
+                    .Where(x => x.Value.Type != AccountType.Delegate)
+                    .Select(x => x.Key)
+                    .Take(AccountsCapacity / 4)
+                    .ToList())
+                    Accounts.Remove(key);
+        }
+
         public static Account AddAccount(Account account)
         {
             if (account == null) return null;
@@ -76,7 +90,7 @@ namespace Tzkt.Sync.Services.Cache
                 foreach (var key in Accounts
                     .Where(x => x.Value.Type != AccountType.Delegate)
                     .Select(x => x.Key)
-                    .Take(AccountsCapacity / 8)
+                    .Take(AccountsCapacity / 4)
                     .ToList())
                     Accounts.Remove(key);
 

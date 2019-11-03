@@ -38,6 +38,9 @@ namespace Tzkt.Sync
             Logger.LogDebug("Deserializing block...");
             var rawBlock = await Serializer.DeserializeBlock(stream);
 
+            Logger.LogDebug("Load entities...");
+            await LoadEntities(rawBlock);
+
             Logger.LogDebug("Init protocol...");
             await InitProtocol(rawBlock);
 
@@ -90,6 +93,8 @@ namespace Tzkt.Sync
             
             return await Cache.GetAppStateAsync();
         }
+
+        public virtual Task LoadEntities(IBlock block) => Task.CompletedTask;
 
         public virtual Task Migration() => Task.CompletedTask;
 

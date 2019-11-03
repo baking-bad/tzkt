@@ -26,6 +26,30 @@ namespace Tzkt.Sync.Services
                 AddAccount(delegat);
         }
 
+        public async Task PrepareAccounts(List<string> addresses)
+        {
+            AppCache.EnsureAccountsCap(addresses.Count);
+
+            var missed = addresses.Where(x => !AppCache.HasAccount(x)).ToList();
+            if (missed.Count > 0)
+            {
+                var accounts = await Db.Accounts.Where(x => missed.Contains(x.Address)).ToListAsync();
+
+                foreach (var account in accounts)
+                    AddAccount(account);
+
+                if (accounts.Count < missed.Count)
+                {
+                    foreach (var account in missed.Where(x => !AppCache.HasAccount(x) && x[0] == 't'))
+                        AddAccount(new User
+                        {
+                            Address = account,
+                            Type = AccountType.User
+                        });
+                }
+            }
+        }
+
         public async Task<bool> AccountExistsAsync(string address, AccountType? type = null)
         {
             if (string.IsNullOrEmpty(address))
