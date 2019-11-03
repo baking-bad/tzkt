@@ -223,7 +223,7 @@ namespace Tzkt.Sync.Protocols
                 query = query.Include(x => x.Activations);
 
             if (currBlock.Operations.HasFlag(Operations.Delegations))
-                query = query.Include(x => x.Delegations).ThenInclude(x => x.DelegateChange);
+                query = query.Include(x => x.Delegations);
 
             if (currBlock.Operations.HasFlag(Operations.Endorsements))
                 query = query.Include(x => x.Endorsements);

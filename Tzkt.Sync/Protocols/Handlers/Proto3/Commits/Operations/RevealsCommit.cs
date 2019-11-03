@@ -29,6 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Id = id,
                 OpHash = op.Hash,
                 Block = block,
+                Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.Fee,
                 Counter = content.Counter,

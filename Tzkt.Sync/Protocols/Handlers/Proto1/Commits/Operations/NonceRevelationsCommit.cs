@@ -21,6 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Id = await Cache.NextCounterAsync(),
                 Block = block,
+                Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Sender = (Data.Models.Delegate)await Cache.GetAccountAsync(revealedBlock.BakerId),

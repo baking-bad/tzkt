@@ -10,14 +10,11 @@ namespace Tzkt.Data.Models
         public int Slots { get; set; }
         public long Reward { get; set; }
 
-        public int? DelegateChangeId { get; set; }
+        public int? ResetDeactivation { get; set; }
 
         #region relations
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
-
-        [ForeignKey(nameof(DelegateChangeId))]
-        public DelegateChange DelegateChange { get; set; }
         #endregion
     }
 

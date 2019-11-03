@@ -110,12 +110,9 @@ namespace Tzkt.Sync
                 if (entry.Entity is Delegate delegat)
                 {
                     delegat.Activation = null;
-                    delegat.ActivationBlock = null;
                     delegat.BakedBlocks = null;
                     delegat.Ballots = null;
-                    delegat.DeactivationBlock = null;
                     delegat.Delegate = null;
-                    delegat.DelegateChanges = null;
                     delegat.DelegatedAccounts = null;
                     delegat.DelegatedOriginations = null;
                     delegat.Endorsements = null;
@@ -161,12 +158,9 @@ namespace Tzkt.Sync
                 }
                 else if (entry.Entity is Block b)
                 {
-                    b.ActivatedDelegates = null;
                     b.Activations = null;
                     b.Baker = null;
-                    b.BakerChange = null;
                     b.Ballots = null;
-                    b.DeactivatedDelegates = null;
                     b.Delegations = null;
                     b.DoubleBakings = null;
                     b.DoubleEndorsings = null;

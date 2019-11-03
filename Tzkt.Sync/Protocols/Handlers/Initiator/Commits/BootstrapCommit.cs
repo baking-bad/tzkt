@@ -15,6 +15,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public async Task Init(RawBlock rawBlock)
         {
+            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
             BootstrapedAccounts = new List<Account>(65);
 
             var stream = await Proto.Node.GetContractsAsync(level: 1);
@@ -28,6 +29,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                 {
                     Address = data.Address,
                     ActivationLevel = 1,
+                    DeactivationLevel = GracePeriod.Init(1, protocol.BlocksPerCycle, protocol.PreserverCycles),
                     Balance = data.Balance,
                     Counter = data.Counter,
                     PublicKey = data.Manager,

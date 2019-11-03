@@ -29,6 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Id = await Cache.NextCounterAsync(),
                 Block = block,
+                Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Amount = content.Amount,
@@ -69,6 +70,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Id = id,
                 Parent = parent,
                 Block = parent.Block,
+                Level = parent.Block.Level,
                 Timestamp = parent.Timestamp,
                 OpHash = parent.OpHash,
                 Counter = parent.Counter,
@@ -183,6 +185,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
                 }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(Transaction.Block) : GracePeriod.Init(Transaction.Block);
+                    if (delegat.DeactivationLevel < newDeactivationLevel)
+                    {
+                        Transaction.ResetDeactivation = delegat.DeactivationLevel;
+                        delegat.DeactivationLevel = newDeactivationLevel;
+                    }
+                }
             }
             #endregion
 
@@ -251,6 +263,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
                 }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(Transaction.Block) : GracePeriod.Init(Transaction.Block);
+                    if (delegat.DeactivationLevel < newDeactivationLevel)
+                    {
+                        Transaction.ResetDeactivation = delegat.DeactivationLevel;
+                        delegat.DeactivationLevel = newDeactivationLevel;
+                    }
+                }
             }
             #endregion
 
@@ -299,6 +321,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance -= Transaction.Amount;
+                }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    if (Transaction.ResetDeactivation != null)
+                    {
+                        delegat.DeactivationLevel = (int)Transaction.ResetDeactivation;
+                    }
                 }
             }
             #endregion
@@ -356,7 +386,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(targetDelegate);
             #endregion
 
-            #region apply result
+            #region revert result
             if (Transaction.Status == OperationStatus.Applied)
             {
                 sender.Balance += Transaction.Amount;
@@ -380,6 +410,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance -= Transaction.Amount;
+                }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    if (Transaction.ResetDeactivation != null)
+                    {
+                        delegat.DeactivationLevel = (int)Transaction.ResetDeactivation;
+                    }
                 }
             }
             #endregion

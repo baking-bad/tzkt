@@ -17,8 +17,6 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Init(Block block, RawOperation op, RawTransactionContent content)
         {
-            var id = await Cache.NextCounterAsync();
-
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
@@ -29,8 +27,9 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             Transaction = new TransactionOperation
             {
-                Id = id,
+                Id = await Cache.NextCounterAsync(),
                 Block = block,
+                Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Amount = content.Amount,
@@ -73,6 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Id = id,
                 Parent = parent,
                 Block = parent.Block,
+                Level = parent.Block.Level,
                 Timestamp = parent.Timestamp,
                 OpHash = parent.OpHash,
                 Counter = parent.Counter,
@@ -185,21 +185,22 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 target.Balance += Transaction.Amount;
 
-                if (target is Data.Models.Delegate tDelegat && !tDelegat.Staked)
-                {
-                    await ReactivateDelegate(tDelegat);
-
-                    Transaction.TargetChange = new DelegateChange
-                    {
-                        Delegate = tDelegat,
-                        Level = block.Level,
-                        Type = DelegateChangeType.Reactivated
-                    };
-                }
-
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
+                }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(Transaction.Block) : GracePeriod.Init(Transaction.Block);
+                    if (delegat.DeactivationLevel < newDeactivationLevel)
+                    {
+                        if (delegat.DeactivationLevel <= Transaction.Level)
+                            await UpdateDelegate(delegat, true);
+
+                        Transaction.ResetDeactivation = delegat.DeactivationLevel;
+                        delegat.DeactivationLevel = newDeactivationLevel;
+                    }
                 }
 
                 // WTF: [level:53726] - Tezos reset account during transaction.
@@ -270,21 +271,22 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 target.Balance += Transaction.Amount;
 
-                if (target is Data.Models.Delegate tDelegat && !tDelegat.Staked)
-                {
-                    await ReactivateDelegate(tDelegat);
-
-                    Transaction.TargetChange = new DelegateChange
-                    {
-                        Delegate = tDelegat,
-                        Level = block.Level,
-                        Type = DelegateChangeType.Reactivated
-                    };
-                }
-
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
+                }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(Transaction.Block) : GracePeriod.Init(Transaction.Block);
+                    if (delegat.DeactivationLevel < newDeactivationLevel)
+                    {
+                        if (delegat.DeactivationLevel <= Transaction.Level)
+                            await UpdateDelegate(delegat, true);
+
+                        Transaction.ResetDeactivation = delegat.DeactivationLevel;
+                        delegat.DeactivationLevel = newDeactivationLevel;
+                    }
                 }
             }
             #endregion
@@ -330,27 +332,20 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 target.Balance -= Transaction.Amount;
 
-                if (Transaction.TargetChangeId != null)
-                {
-                    var prevChange = await Db.DelegateChanges
-                        .Where(x => x.DelegateId == target.Id && x.Level < Transaction.Level)
-                        .OrderByDescending(x => x.Level)
-                        .FirstOrDefaultAsync();
-
-                    if (prevChange.Type != DelegateChangeType.Deactivated)
-                        throw new Exception("unexpected delegate change type");
-
-                    await DeactivateDelegate(target as Data.Models.Delegate, prevChange.Level);
-
-                    Db.DelegateChanges.Remove(new DelegateChange
-                    {
-                        Id = (int)Transaction.TargetChangeId
-                    });
-                }
-
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance -= Transaction.Amount;
+                }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    if (Transaction.ResetDeactivation != null)
+                    {
+                        if (Transaction.ResetDeactivation <= Transaction.Level)
+                            await UpdateDelegate(delegat, false);
+
+                        delegat.DeactivationLevel = (int)Transaction.ResetDeactivation;
+                    }
                 }
             }
             #endregion
@@ -408,7 +403,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             Db.TryAttach(targetDelegate);
             #endregion
 
-            #region apply result
+            #region revert result
             if (Transaction.Status == OperationStatus.Applied)
             {
                 sender.Balance += Transaction.Amount;
@@ -429,27 +424,20 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 target.Balance -= Transaction.Amount;
 
-                if (Transaction.TargetChangeId != null)
-                {
-                    var prevChange = await Db.DelegateChanges
-                        .Where(x => x.DelegateId == target.Id && x.Level < Transaction.Level)
-                        .OrderByDescending(x => x.Level)
-                        .FirstOrDefaultAsync();
-
-                    if (prevChange.Type != DelegateChangeType.Deactivated)
-                        throw new Exception("unexpected delegate change type");
-
-                    await DeactivateDelegate(target as Data.Models.Delegate, prevChange.Level);
-
-                    Db.DelegateChanges.Remove(new DelegateChange
-                    {
-                        Id = (int)Transaction.TargetChangeId
-                    });
-                }
-
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance -= Transaction.Amount;
+                }
+
+                if (target is Data.Models.Delegate delegat)
+                {
+                    if (Transaction.ResetDeactivation != null)
+                    {
+                        if (Transaction.ResetDeactivation <= Transaction.Level)
+                            await UpdateDelegate(delegat, false);
+
+                        delegat.DeactivationLevel = (int)Transaction.ResetDeactivation;
+                    }
                 }
             }
             #endregion
@@ -472,33 +460,16 @@ namespace Tzkt.Sync.Protocols.Proto2
             Db.TransactionOps.Remove(Transaction);
         }
 
-        async Task DeactivateDelegate(Data.Models.Delegate delegat, int deactivationLevel)
+        async Task UpdateDelegate(Data.Models.Delegate delegat, bool staked)
         {
-            delegat.DeactivationBlock = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == deactivationLevel);
-            delegat.DeactivationLevel = deactivationLevel;
-            delegat.Staked = false;
+            delegat.Staked = staked;
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
                 Cache.AddAccount(delegator);
                 Db.TryAttach(delegator);
 
-                delegator.Staked = false;
-            }
-        }
-
-        async Task ReactivateDelegate(Data.Models.Delegate delegat)
-        {
-            delegat.DeactivationBlock = null;
-            delegat.DeactivationLevel = null;
-            delegat.Staked = true;
-
-            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
-            {
-                Cache.AddAccount(delegator);
-                Db.TryAttach(delegator);
-
-                delegator.Staked = true;
+                delegator.Staked = staked;
             }
         }
 

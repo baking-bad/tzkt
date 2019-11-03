@@ -211,9 +211,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("BakerChangeId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("BakerId")
                         .HasColumnType("integer");
 
@@ -238,6 +235,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ProtoCode")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ResetDeactivation")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("RevelationId")
                         .HasColumnType("integer");
 
@@ -248,8 +248,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BakerChangeId");
 
                     b.HasIndex("BakerId");
 
@@ -267,31 +265,6 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Blocks");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DelegateChange", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
-
-                    b.Property<int>("DelegateId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DelegateId");
-
-                    b.HasIndex("Level");
-
-                    b.ToTable("DelegateChanges");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
                 {
                     b.Property<int>("Id")
@@ -306,9 +279,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<int>("Counter")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("DelegateChangeId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("DelegateId")
@@ -335,6 +305,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ResetDeactivation")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
@@ -354,8 +327,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DelegateChangeId");
 
                     b.HasIndex("DelegateId");
 
@@ -477,9 +448,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("DelegateChangeId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("DelegateId")
                         .HasColumnType("integer");
 
@@ -492,6 +460,9 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
+                    b.Property<int?>("ResetDeactivation")
+                        .HasColumnType("integer");
+
                     b.Property<long>("Reward")
                         .HasColumnType("bigint");
 
@@ -502,8 +473,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DelegateChangeId");
 
                     b.HasIndex("DelegateId");
 
@@ -904,6 +873,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ResetDeactivation")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
@@ -917,9 +889,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("StorageUsed")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TargetChangeId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TargetId")
@@ -937,8 +906,6 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ParentId");
 
                     b.HasIndex("SenderId");
-
-                    b.HasIndex("TargetChangeId");
 
                     b.HasIndex("TargetId");
 
@@ -1125,10 +1092,10 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.User");
 
-                    b.Property<int?>("ActivationLevel")
+                    b.Property<int>("ActivationLevel")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("DeactivationLevel")
+                    b.Property<int>("DeactivationLevel")
                         .HasColumnType("integer");
 
                     b.Property<int>("Delegators")
@@ -1145,10 +1112,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("StakingBalance")
                         .HasColumnType("bigint");
-
-                    b.HasIndex("ActivationLevel");
-
-                    b.HasIndex("DeactivationLevel");
 
                     b.HasDiscriminator().HasValue((byte)1);
                 });
@@ -1206,10 +1169,6 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.Block", b =>
                 {
-                    b.HasOne("Tzkt.Data.Models.DelegateChange", "BakerChange")
-                        .WithMany()
-                        .HasForeignKey("BakerChangeId");
-
                     b.HasOne("Tzkt.Data.Models.Delegate", "Baker")
                         .WithMany("BakedBlocks")
                         .HasForeignKey("BakerId");
@@ -1227,21 +1186,8 @@ namespace Tzkt.Data.Migrations
                         .HasPrincipalKey("Tzkt.Data.Models.NonceRevelationOperation", "RevealedLevel");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DelegateChange", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany("DelegateChanges")
-                        .HasForeignKey("DelegateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
                 {
-                    b.HasOne("Tzkt.Data.Models.DelegateChange", "DelegateChange")
-                        .WithMany()
-                        .HasForeignKey("DelegateChangeId");
-
                     b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
                         .WithMany("ReceivedDelegations")
                         .HasForeignKey("DelegateId");
@@ -1310,10 +1256,6 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.EndorsementOperation", b =>
                 {
-                    b.HasOne("Tzkt.Data.Models.DelegateChange", "DelegateChange")
-                        .WithMany()
-                        .HasForeignKey("DelegateChangeId");
-
                     b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
                         .WithMany("Endorsements")
                         .HasForeignKey("DelegateId")
@@ -1462,10 +1404,6 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.DelegateChange", "TargetChange")
-                        .WithMany()
-                        .HasForeignKey("TargetChangeId");
-
                     b.HasOne("Tzkt.Data.Models.Account", "Target")
                         .WithMany("ReceivedTransactions")
                         .HasForeignKey("TargetId");
@@ -1500,21 +1438,6 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.Account", "Manager")
                         .WithMany("OriginatedContracts")
                         .HasForeignKey("ManagerId");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.Delegate", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "ActivationBlock")
-                        .WithMany("ActivatedDelegates")
-                        .HasForeignKey("ActivationLevel")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Tzkt.Data.Models.Block", "DeactivationBlock")
-                        .WithMany("DeactivatedDelegates")
-                        .HasForeignKey("DeactivationLevel")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.SetNull);
                 });
 #pragma warning restore 612, 618
         }

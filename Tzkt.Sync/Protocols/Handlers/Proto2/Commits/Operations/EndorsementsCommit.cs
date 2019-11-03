@@ -19,6 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             {
                 Id = await Cache.NextCounterAsync(),
                 Block = block,
+                Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Slots = content.Metadata.Slots.Count,
@@ -57,16 +58,14 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             block.Validations++;
 
-            if (!sender.Staked)
+            var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(Endorsement.Block) : GracePeriod.Init(Endorsement.Block);
+            if (sender.DeactivationLevel < newDeactivationLevel)
             {
-                await ReactivateDelegate(sender);
-
-                Endorsement.DelegateChange = new DelegateChange
-                {
-                    Delegate = sender,
-                    Level = block.Level,
-                    Type = DelegateChangeType.Reactivated
-                };
+                if (sender.DeactivationLevel <= Endorsement.Level)
+                    await UpdateDelegate(sender, true);
+                
+                Endorsement.ResetDeactivation = sender.DeactivationLevel;
+                sender.DeactivationLevel = newDeactivationLevel;
             }
             #endregion
 
@@ -90,56 +89,29 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Id < Endorsement.Id))
                 sender.Operations &= ~Operations.Endorsements;
-            #endregion
 
-            if (Endorsement.DelegateChangeId != null)
+            if (Endorsement.ResetDeactivation != null)
             {
-                var prevChange = await Db.DelegateChanges
-                    .Where(x => x.DelegateId == sender.Id && x.Level < Endorsement.Level)
-                    .OrderByDescending(x => x.Level)
-                    .FirstOrDefaultAsync();
+                if (Endorsement.ResetDeactivation <= Endorsement.Level)
+                    await UpdateDelegate(sender, false);
 
-                if (prevChange.Type != DelegateChangeType.Deactivated)
-                    throw new Exception("unexpected delegate change type");
-
-                await DeactivateDelegate(sender, prevChange.Level);
-
-                Db.DelegateChanges.Remove(new DelegateChange
-                {
-                    Id = (int)Endorsement.DelegateChangeId
-                });
+                sender.DeactivationLevel = (int)Endorsement.ResetDeactivation;
             }
+            #endregion
 
             Db.EndorsementOps.Remove(Endorsement);
         }
 
-        async Task DeactivateDelegate(Data.Models.Delegate delegat, int deactivationLevel)
+        async Task UpdateDelegate(Data.Models.Delegate delegat, bool staked)
         {
-            delegat.DeactivationBlock = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == deactivationLevel);
-            delegat.DeactivationLevel = deactivationLevel;
-            delegat.Staked = false;
+            delegat.Staked = staked;
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
                 Cache.AddAccount(delegator);
                 Db.TryAttach(delegator);
 
-                delegator.Staked = false;
-            }
-        }
-
-        async Task ReactivateDelegate(Data.Models.Delegate delegat)
-        {
-            delegat.DeactivationBlock = null;
-            delegat.DeactivationLevel = null;
-            delegat.Staked = true;
-
-            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
-            {
-                Cache.AddAccount(delegator);
-                Db.TryAttach(delegator);
-
-                delegator.Staked = true;
+                delegator.Staked = staked;
             }
         }
 

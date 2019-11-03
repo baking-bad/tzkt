@@ -22,10 +22,6 @@ namespace Tzkt.Data
         public DbSet<Protocol> Protocols { get; set; }
         #endregion
 
-        #region delegation
-        public DbSet<DelegateChange> DelegateChanges { get; set; }
-        #endregion
-
         #region operations
         public DbSet<ActivationOperation> ActivationOps { get; set; }
         public DbSet<BallotOperation> BallotOps { get; set; }
@@ -79,10 +75,6 @@ namespace Tzkt.Data
             #region block
             modelBuilder.BuildBlockModel();
             modelBuilder.BuildProtocolModel();
-            #endregion
-
-            #region delegation
-            modelBuilder.BuildDelegateChangeModel();
             #endregion
 
             #region operations

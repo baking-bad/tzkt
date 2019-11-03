@@ -73,16 +73,14 @@ namespace Tzkt.Sync.Protocols.Proto3
             baker.FrozenRewards += Block.Protocol.BlockReward;
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
 
-            if (!baker.Staked)
+            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            if (baker.DeactivationLevel < newDeactivationLevel)
             {
-                await ReactivateDelegate(baker);
-                
-                block.BakerChange = new DelegateChange
-                {
-                    Delegate = baker,
-                    Level = Block.Level,
-                    Type = DelegateChangeType.Reactivated
-                };
+                if (baker.DeactivationLevel <= Block.Level)
+                    await UpdateDelegate(baker, true);
+
+                Block.ResetDeactivation = baker.DeactivationLevel;
+                baker.DeactivationLevel = newDeactivationLevel;
             }
 
             Db.Blocks.Add(Block);
@@ -109,54 +107,27 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Cache.RemoveProtocol(proto);
             }
 
-            if (Block.BakerChangeId != null)
+            if (Block.ResetDeactivation != null)
             {
-                var prevChange = await Db.DelegateChanges
-                    .Where(x => x.DelegateId == baker.Id && x.Level < Block.Level)
-                    .OrderByDescending(x => x.Level)
-                    .FirstOrDefaultAsync();
+                if (Block.ResetDeactivation <= Block.Level)
+                    await UpdateDelegate(baker, false);
 
-                if (prevChange.Type != DelegateChangeType.Deactivated)
-                    throw new Exception("unexpected delegate change type");
-
-                await DeactivateDelegate(baker, prevChange.Level);
-
-                Db.DelegateChanges.Remove(new DelegateChange
-                {
-                    Id = (int)Block.BakerChangeId
-                });
+                baker.DeactivationLevel = (int)Block.ResetDeactivation;
             }
 
             Db.Blocks.Remove(Block);
         }
 
-        async Task DeactivateDelegate(Data.Models.Delegate delegat, int deactivationLevel)
+        async Task UpdateDelegate(Data.Models.Delegate delegat, bool staked)
         {
-            delegat.DeactivationBlock = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == deactivationLevel);
-            delegat.DeactivationLevel = deactivationLevel;
-            delegat.Staked = false;
+            delegat.Staked = staked;
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
                 Cache.AddAccount(delegator);
                 Db.TryAttach(delegator);
 
-                delegator.Staked = false;
-            }
-        }
-
-        async Task ReactivateDelegate(Data.Models.Delegate delegat)
-        {
-            delegat.DeactivationBlock = null;
-            delegat.DeactivationLevel = null;
-            delegat.Staked = true;
-
-            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
-            {
-                Cache.AddAccount(delegator);
-                Db.TryAttach(delegator);
-
-                delegator.Staked = true;
+                delegator.Staked = staked;
             }
         }
 

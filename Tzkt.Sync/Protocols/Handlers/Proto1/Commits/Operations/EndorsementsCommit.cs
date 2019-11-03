@@ -19,6 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Id = await Cache.NextCounterAsync(),
                 Block = block,
+                Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Slots = content.Metadata.Slots.Count,
@@ -56,6 +57,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Endorsements;
 
             block.Validations++;
+
+            var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(Endorsement.Block) : GracePeriod.Init(Endorsement.Block);
+            if (sender.DeactivationLevel < newDeactivationLevel)
+            {
+                Endorsement.ResetDeactivation = sender.DeactivationLevel;
+                sender.DeactivationLevel = newDeactivationLevel;
+            }
             #endregion
 
             Db.EndorsementOps.Add(Endorsement);
@@ -79,6 +87,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Id < Endorsement.Id))
                 sender.Operations &= ~Operations.Endorsements;
+
+            if (Endorsement.ResetDeactivation != null)
+                sender.DeactivationLevel = (int)Endorsement.ResetDeactivation;
             #endregion
 
             Db.EndorsementOps.Remove(Endorsement);

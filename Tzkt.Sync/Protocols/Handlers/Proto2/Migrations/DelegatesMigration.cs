@@ -16,6 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public override async Task Apply()
         {
             var block = await Cache.GetCurrentBlockAsync();
+            var protocol = await Cache.GetProtocolAsync(block.ProtoCode);
 
             var weirdDelegates = (await Db.WeirdDelegations
                 .AsNoTracking()
@@ -33,14 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             foreach (var weirds in weirdDelegates)
             {
-                var delegat = await UpgradeUser(weirds.First().Delegate, block.Level);
-                
-                Db.DelegateChanges.Add(new DelegateChange
-                {
-                    Delegate = delegat,
-                    Level = block.Level,
-                    Type = DelegateChangeType.Activated
-                });
+                var delegat = await UpgradeUser(weirds.First().Delegate, block.Level, protocol);
                 
                 foreach (var weird in weirds)
                 {
@@ -68,7 +62,6 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             var delegates = await Db.Delegates
                 .AsNoTracking()
-                .Include(x => x.DelegateChanges)
                 .Include(x => x.DelegatedAccounts)
                 .Where(x => x.ActivationLevel == block.Level)
                 .ToListAsync();
@@ -92,23 +85,20 @@ namespace Tzkt.Sync.Protocols.Proto2
                 if (delegat.StakingBalance != delegat.Balance || delegat.Delegators > 0)
                     throw new Exception("migration error");
 
-                Db.DelegateChanges.RemoveRange(delegat.DelegateChanges);
                 DowngradeDelegate(delegat);
             }
         }
 
-        async Task<Data.Models.Delegate> UpgradeUser(User user, int level)
+        Task<Data.Models.Delegate> UpgradeUser(User user, int level, Protocol proto)
         {
             var delegat = new Data.Models.Delegate
             {
-                ActivationBlock = await Cache.GetBlockAsync(level),
                 ActivationLevel = level,
                 Activation = user.Activation,
                 Address = user.Address,
                 Balance = user.Balance,
                 Counter = user.Counter,
-                DeactivationBlock = null,
-                DeactivationLevel = null,
+                DeactivationLevel = GracePeriod.Init(level, proto.BlocksPerCycle, proto.PreserverCycles),
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
@@ -131,7 +121,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             Db.Entry(delegat).State = EntityState.Modified;
             Cache.AddAccount(delegat);
 
-            return delegat;
+            return Task.FromResult(delegat);
         }
 
         void DowngradeDelegate(Data.Models.Delegate delegat)

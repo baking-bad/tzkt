@@ -19,8 +19,8 @@ namespace Tzkt.Data.Models
         public Operations Operations { get; set; }
 
         public int? BakerId { get; set; }
-        public int? BakerChangeId { get; set; }
         public int? RevelationId { get; set; }
+        public int? ResetDeactivation { get; set; }
 
         #region relations
         [ForeignKey(nameof(ProtoCode))]
@@ -29,17 +29,11 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(BakerId))]
         public Delegate Baker { get; set; }
 
-        [ForeignKey(nameof(BakerChangeId))]
-        public DelegateChange BakerChange { get; set; }
-
         [ForeignKey(nameof(RevelationId))]
         public NonceRevelationOperation Revelation { get; set; }
         #endregion
 
         #region indirect relations
-        public List<Delegate> ActivatedDelegates { get; set; }
-        public List<Delegate> DeactivatedDelegates { get; set; }
-
         public List<EndorsementOperation> Endorsements { get; set; }
 
         public List<BallotOperation> Ballots { get; set; }

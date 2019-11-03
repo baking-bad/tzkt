@@ -62,6 +62,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             baker.FrozenRewards += Block.Protocol.BlockReward;
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
 
+            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            if (baker.DeactivationLevel < newDeactivationLevel)
+            {
+                Block.ResetDeactivation = baker.DeactivationLevel;
+                baker.DeactivationLevel = newDeactivationLevel;
+            }
+
             Db.Blocks.Add(Block);
             Cache.AddBlock(Block);
 
@@ -87,6 +94,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Db.Protocols.Remove(proto);
                 Cache.RemoveProtocol(proto);
             }
+
+            if (Block.ResetDeactivation != null)
+                baker.DeactivationLevel = (int)Block.ResetDeactivation;
 
             Db.Blocks.Remove(Block);
 

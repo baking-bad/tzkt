@@ -25,7 +25,7 @@ namespace Tzkt.Sync.Services
 
         public async Task Run(int level, int operations)
         {
-            if (level < 27000) return;
+            if (level < 2) return;
 
             var entries = Db.ChangeTracker.Entries();
 
@@ -33,6 +33,7 @@ namespace Tzkt.Sync.Services
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
             var state = entries.FirstOrDefault(x => x.Entity is AppState).Entity;
+            var proto = entries.FirstOrDefault(x => x.Entity is Protocol).Entity as Protocol;
 
             var accounts = entries.Where(x =>
                 x.Entity is Account &&
@@ -45,7 +46,7 @@ namespace Tzkt.Sync.Services
             foreach (var account in accounts)
             {
                 if (account is Data.Models.Delegate delegat)
-                    await TestDelegate(level, delegat);
+                    await TestDelegate(level, delegat, proto);
                 
                 await TestAccount(level, account);
             }
@@ -58,6 +59,7 @@ namespace Tzkt.Sync.Services
             var entries = Db.ChangeTracker.Entries();
 
             var state = entries.FirstOrDefault(x => x.Entity is AppState).Entity;
+            var proto = entries.FirstOrDefault(x => x.Entity is Protocol).Entity as Protocol;
 
             var accounts = entries.Where(x =>
                 x.Entity is Account &&
@@ -71,7 +73,7 @@ namespace Tzkt.Sync.Services
             {
                 
                 if (account is Data.Models.Delegate delegat)
-                    await TestDelegate(level, delegat);
+                    await TestDelegate(level, delegat, proto);
 
                 await TestAccount(level, account);
             }
@@ -85,7 +87,7 @@ namespace Tzkt.Sync.Services
                 throw new Exception($"Diagnostics failed: wrong global counter");
         }
 
-        async Task TestDelegate(int level, Data.Models.Delegate delegat)
+        async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
         {
             var remote = await GetRemoteDelegate(level, delegat.Address);
 
@@ -94,6 +96,9 @@ namespace Tzkt.Sync.Services
 
             if (remote.Deactivated != !delegat.Staked)
                 throw new Exception($"Diagnostics failed: wrong delegate state {delegat.Address}");
+
+            if (remote.GracePeriod != (delegat.DeactivationLevel - 2) / proto.BlocksPerCycle)
+                throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
 
             if (remote.Delegators.Count != delegat.Delegators)
                 throw new Exception($"Diagnostics failed: wrong delegators count {delegat.Address}");

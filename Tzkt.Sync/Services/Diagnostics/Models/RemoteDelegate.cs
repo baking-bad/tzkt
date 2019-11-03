@@ -21,13 +21,17 @@ namespace Tzkt.Sync.Services.Diagnostics
         [JsonPropertyName("deactivated")]
         public bool? Deactivated { get; set; }
 
+        [JsonPropertyName("grace_period")]
+        public int? GracePeriod { get; set; }
+
         #region validation
         public bool IsValidFormat() =>
             Balance != null &&
             FrozenBalances.All(x => x.IsValidFormat()) &&
             StakingBalance != null &&
             Delegators != null &&
-            Deactivated != null;
+            Deactivated != null &&
+            GracePeriod != null;
         #endregion
     }
 

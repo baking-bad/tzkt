@@ -27,6 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Id = await Cache.NextCounterAsync(),
                 OpHash = op.Hash,
                 Block = block,
+                Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.Fee,
                 Counter = content.Counter,
