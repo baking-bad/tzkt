@@ -21,9 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
-            var delegat = !string.IsNullOrEmpty(content.Delegate) && content.Source != content.Delegate && content.Metadata.Result.Status == "applied"
-                ? (Data.Models.Delegate)await Cache.GetAccountAsync(content.Delegate)
-                : null;
+            var delegat = await Cache.GetDelegateOrDefaultAsync(content.Delegate);
 
             IsSelfDelegation = content.Source == content.Delegate;
             Delegation = new DelegationOperation

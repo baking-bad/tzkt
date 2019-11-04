@@ -20,22 +20,22 @@ namespace Tzkt.Sync.Protocols.Proto3
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
-            var delegat = await Cache.GetAccountAsync(content.Delegate) as Data.Models.Delegate;
+            var delegat = await Cache.GetDelegateOrDefaultAsync(content.Delegate);
 
             var contract = content.Metadata.Result.Status == "applied" ?
-                        new Contract
-                        {
-                            Address = content.Metadata.Result.OriginatedContracts[0],
-                            Balance = content.Balance,
-                            Counter = 0,
-                            Delegate = delegat,
-                            DelegationLevel = delegat != null ? (int?)block.Level : null,
-                            Manager = sender,
-                            Operations = Operations.None,
-                            Staked = delegat?.Staked ?? false,
-                            Type = AccountType.Contract
-                        }
-                        : null;
+                new Contract
+                {
+                    Address = content.Metadata.Result.OriginatedContracts[0],
+                    Balance = content.Balance,
+                    Counter = 0,
+                    Delegate = delegat,
+                    DelegationLevel = delegat != null ? (int?)block.Level : null,
+                    Manager = sender,
+                    Operations = Operations.None,
+                    Staked = delegat?.Staked ?? false,
+                    Type = AccountType.Contract
+                }
+                : null;
 
             Origination = new OriginationOperation
             {

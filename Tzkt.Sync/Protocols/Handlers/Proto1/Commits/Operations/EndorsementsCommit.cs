@@ -23,7 +23,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Slots = content.Metadata.Slots.Count,
-                Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(content.Metadata.Delegate),
+                Delegate = await Cache.GetDelegateAsync(content.Metadata.Delegate),
                 Reward = content.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate)?.Change ?? 0
             };
         }

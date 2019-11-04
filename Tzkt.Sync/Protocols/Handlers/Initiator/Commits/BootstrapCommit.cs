@@ -66,13 +66,11 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Balance = data.Balance,
                     Counter = data.Counter,
                     DelegationLevel = 1,
+                    Delegate = await Cache.GetDelegateAsync(data.Delegate),
                     Manager = (User)await Cache.GetAccountAsync(data.Manager),
                     Staked = !String.IsNullOrEmpty(data.Delegate),
                     Type = AccountType.Contract,
                 };
-
-                if (!String.IsNullOrEmpty(data.Delegate))
-                    contract.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(data.Delegate);
 
                 Cache.AddAccount(contract);
                 BootstrapedAccounts.Add(contract);

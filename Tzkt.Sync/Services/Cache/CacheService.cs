@@ -110,6 +110,23 @@ namespace Tzkt.Sync.Services
             return account;
         }
 
+        public async Task<Data.Models.Delegate> GetDelegateAsync(string address)
+        {
+            var delegat = await AppCache.GetOrSetAccount(address, async () =>
+                await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address)) as Data.Models.Delegate;
+
+            return delegat ?? throw new Exception($"unknown delegate '{address}'");
+        }
+
+        public async Task<Data.Models.Delegate> GetDelegateOrDefaultAsync(string address)
+        {
+            if (string.IsNullOrEmpty(address))
+                return null;
+
+            return await AppCache.GetOrSetAccount(address, async () =>
+                await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address)) as Data.Models.Delegate;
+        }
+
         public void RemoveAccounts(IEnumerable<Account> accounts)
         {
             foreach (var account in accounts)

@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Protocol = protocol,
                 Timestamp = rawBlock.Header.Timestamp,
                 Priority = rawBlock.Header.Priority,
-                Baker = (Data.Models.Delegate)await Cache.GetAccountAsync(rawBlock.Metadata.Baker),
+                Baker = await Cache.GetDelegateAsync(rawBlock.Metadata.Baker),
                 Events = events
             };
         }

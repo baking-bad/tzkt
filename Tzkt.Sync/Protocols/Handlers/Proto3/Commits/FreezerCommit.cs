@@ -54,7 +54,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             foreach (var update in FreezerUpdates)
             {
                 #region entities
-                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
+                var delegat = await Cache.GetDelegateAsync(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -81,7 +81,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             foreach (var loss in RevelationLosses)
             {
                 #region entities
-                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(loss.Target);
+                var delegat = await Cache.GetDelegateAsync(loss.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -111,7 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             foreach (var update in FreezerUpdates)
             {
                 #region entities
-                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
+                var delegat = await Cache.GetDelegateAsync(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -138,7 +138,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             foreach (var loss in RevelationLosses)
             {
                 #region entities
-                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(loss.Target);
+                var delegat = await Cache.GetDelegateAsync(loss.Target);
 
                 Db.TryAttach(delegat);
                 #endregion

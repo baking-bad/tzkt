@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             foreach (var update in BalanceUpdates)
             {
                 #region entities
-                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
+                var delegat = await Cache.GetDelegateAsync(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -71,7 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             foreach (var update in BalanceUpdates)
             {
                 #region entities
-                var delegat = (Data.Models.Delegate)await Cache.GetAccountAsync(update.Target);
+                var delegat = await Cache.GetDelegateAsync(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion

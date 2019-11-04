@@ -25,8 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 AccusedLevel = content.Block1.Level,
                 Accuser = block.Baker,
-                Offender = (Data.Models.Delegate)await Cache.GetAccountAsync(
-                      content.Metadata.BalanceUpdates.First(x => x.Change < 0).Target),
+                Offender = await Cache.GetDelegateAsync(content.Metadata.BalanceUpdates.First(x => x.Change < 0).Target),
                 
                 AccuserReward = content.Metadata.BalanceUpdates.Where(x => x.Change > 0).Sum(x => x.Change),
                 OffenderLostDeposit = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is DepositsUpdate).Sum(x => -x.Change),
