@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Services.Cache
         public const int BlocksCapacity = 3 * 4096;
         public const int AccountsCapacity = 8 * 4096;
         public const int ProtocolsCapacity = 16;
+        public const int ProposalsCapacity = 16;
 
         static AppState AppState = null;
         static VotingPeriod VotingPeriod = null;
@@ -18,6 +19,7 @@ namespace Tzkt.Sync.Services.Cache
         static readonly Dictionary<int, Block> Blocks = new Dictionary<int, Block>(BlocksCapacity);
         static readonly Dictionary<string, Account> Accounts = new Dictionary<string, Account>(AccountsCapacity);
         static readonly Dictionary<string, Protocol> Protocols = new Dictionary<string, Protocol>(ProtocolsCapacity);
+        static readonly Dictionary<string, Proposal> Proposals = new Dictionary<string, Proposal>(ProposalsCapacity);
 
         #region state
         public static AppState SetAppState(AppState appState)
@@ -141,6 +143,35 @@ namespace Tzkt.Sync.Services.Cache
 
         public static void RemoveProtocol(Protocol protocol)
             => Protocols.Remove(protocol.Hash);
+        #endregion
+
+        #region proposals
+        public static Proposal AddProposal(Proposal proposal)
+        {
+            if (proposal == null) return null;
+
+            if (Proposals.Count >= ProposalsCapacity)
+                foreach (var key in Proposals.Keys.Take(ProposalsCapacity / 4).ToList())
+                    Proposals.Remove(key);
+
+            Proposals[proposal.Hash] = proposal;
+            return proposal;
+        }
+
+        public static Proposal GetProposal(int id)
+            => Proposals.Values.FirstOrDefault(x => x.Id == id);
+
+        public static Proposal GetProposal(string hash)
+            => Proposals.ContainsKey(hash) ? Proposals[hash] : null;
+
+        public static async Task<Proposal> GetOrSetProposal(int id, Func<Task<Proposal>> creator)
+            => GetProposal(id) ?? AddProposal(await creator());
+
+        public static async Task<Proposal> GetOrSetProposal(string hash, Func<Task<Proposal>> creator)
+            => GetProposal(hash) ?? AddProposal(await creator());
+
+        public static void RemoveProposal(Proposal proposal)
+            => Proposals.Remove(proposal.Hash);
         #endregion
 
         public static void Clear()

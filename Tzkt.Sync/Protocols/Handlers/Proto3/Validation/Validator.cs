@@ -122,22 +122,36 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     foreach (var content in op.Contents)
                     {
-                        if (content is RawEndorsementContent endorsement)
-                            await ValidateEndorsement(endorsement, rawBlock);
-                        else if (content is RawTransactionContent transaction)
-                            await ValidateTransaction(transaction, rawBlock);
-                        else if (content is RawNonceRevelationContent revelation)
-                            await ValidateNonceRevelation(revelation, rawBlock);
-                        else if (content is RawOriginationContent origination)
-                            await ValidateOrigination(origination, rawBlock);
-                        else if (content is RawDelegationContent delegation)
-                            await ValidateDelegation(delegation, rawBlock);
-                        else if (content is RawActivationContent activation)
-                            await ValidateActivation(activation);
-                        else if (content is RawRevealContent reveal)
-                            await ValidateReveal(reveal, rawBlock);
-                        else if (content is RawDoubleBakingEvidenceContent db)
-                            await ValidateDoubleBaking(db, rawBlock);
+                        switch (content)
+                        {
+                            case RawEndorsementContent endorsement:
+                                await ValidateEndorsement(endorsement, rawBlock);
+                                break;
+                            case RawTransactionContent transaction:
+                                await ValidateTransaction(transaction, rawBlock);
+                                break;
+                            case RawNonceRevelationContent revelation:
+                                await ValidateNonceRevelation(revelation, rawBlock);
+                                break;
+                            case RawOriginationContent origination:
+                                await ValidateOrigination(origination, rawBlock);
+                                break;
+                            case RawDelegationContent delegation:
+                                await ValidateDelegation(delegation, rawBlock);
+                                break;
+                            case RawActivationContent activation:
+                                await ValidateActivation(activation);
+                                break;
+                            case RawRevealContent reveal:
+                                await ValidateReveal(reveal, rawBlock);
+                                break;
+                            case RawDoubleBakingEvidenceContent db:
+                                await ValidateDoubleBaking(db, rawBlock);
+                                break;
+                            case RawProposalContent proposal:
+                                await ValidateProposal(proposal, rawBlock);
+                                break;
+                        }
                     }
                 }
 
@@ -349,6 +363,15 @@ namespace Tzkt.Sync.Protocols.Proto3
                 (lostRewardsUpdate?.Level ?? accusedCycle) != accusedCycle ||
                 (lostFeesUpdate?.Level ?? accusedCycle) != accusedCycle)
                 throw new ValidationException("invalid double baking freezer level");
+        }
+
+        protected async Task ValidateProposal(RawProposalContent proposal, RawBlock rawBlock)
+        {
+            if (!await Cache.AccountExistsAsync(proposal.Source, AccountType.Delegate))
+                throw new ValidationException("invalid proposal sender");
+
+            if (proposal.Period != rawBlock.Metadata.LevelInfo.VotingPeriod)
+                throw new ValidationException("invalid proposal voting period");
         }
 
         void ValidateFeeBalanceUpdates(List<IBalanceUpdate> updates, string baker, string sender, long fee, int cycle)

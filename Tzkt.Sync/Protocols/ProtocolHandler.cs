@@ -204,6 +204,16 @@ namespace Tzkt.Sync
                         proposal.Candidates = null;
                     }
                 }
+                else if (entry.Entity is Proposal proposal)
+                {
+                    proposal.Ballots = null;
+                    proposal.ExplorationPeriod = null;
+                    proposal.Initiator = null;
+                    proposal.PromotionPeriod = null;
+                    proposal.ProposalPeriod = null;
+                    proposal.Proposings = null;
+                    proposal.TestingPeriod = null;
+                }
             }
         }
     }

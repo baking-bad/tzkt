@@ -11,6 +11,7 @@ namespace Tzkt.Data.Models
         public ProposalStatus Status { get; set; }
 
         public int InitiatorId { get; set; }
+        public int Likes { get; set; }
 
         public int ProposalPeriodId { get; set; }
         public int? ExplorationPeriodId { get; set; }

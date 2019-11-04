@@ -182,7 +182,10 @@ namespace Tzkt.Sync.Protocols
             {
                 foreach (var content in operation.Contents)
                 {
-                    throw new NotImplementedException($"'{content.GetType()}' is not implemented");
+                    if (content is RawProposalContent proposal)
+                        await ProposalsCommit.Apply(this, blockCommit.Block, operation, proposal);
+                    else 
+                        throw new NotImplementedException($"'{content.GetType()}' is not implemented");
                 }
             }
             #endregion
@@ -286,6 +289,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
                 query = query.Include(x => x.DoubleBakings);
 
+            if (currBlock.Operations.HasFlag(Operations.Proposals))
+                query = query.Include(x => x.Proposals);
+
             currBlock = await query.FirstOrDefaultAsync(x => x.Level == currBlock.Level);
             Cache.AddBlock(currBlock);
 
@@ -313,6 +319,9 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.DoubleBakings != null)
                 operations.AddRange(currBlock.DoubleBakings);
+
+            if (currBlock.Proposals != null)
+                operations.AddRange(currBlock.Proposals);
             #endregion
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
@@ -321,6 +330,9 @@ namespace Tzkt.Sync.Protocols
                 {
                     case EndorsementOperation endorsement:
                         await EndorsementsCommit.Revert(this, currBlock, endorsement);
+                        break;
+                    case ProposalOperation proposal:
+                        await ProposalsCommit.Revert(this, currBlock, proposal);
                         break;
                     case ActivationOperation activation:
                         await ActivationsCommit.Revert(this, currBlock, activation);

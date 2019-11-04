@@ -247,6 +247,34 @@ namespace Tzkt.Sync.Services
             AppCache.RemoveProtocol(protocol);
         }
         #endregion
+
+        #region protocols
+        public async Task<Proposal> GetProposalAsync(int id)
+        {
+            return await AppCache.GetOrSetProposal(id, () =>
+                Db.Proposals.FirstOrDefaultAsync(x => x.Id == id)
+                    ?? throw new Exception($"Proposal {id} doesn't exist"));
+        }
+
+        public async Task<Proposal> GetProposalAsync(string hash)
+        {
+            return await AppCache.GetOrSetProposal(hash, async () =>
+                await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash)
+                    ?? throw new Exception($"Proposal {hash} doesn't exist"));
+        }
+
+        public async Task<Proposal> GetOrSetProposalAsync(string hash, Func<Task<Proposal>> createProposal)
+        {
+            return await AppCache.GetOrSetProposal(hash, async () =>
+                await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash)
+                    ?? await createProposal());
+        }
+
+        public void RemoveProposal(Proposal proposal)
+        {
+            AppCache.RemoveProposal(proposal);
+        }
+        #endregion
     }
 
     public static class CacheServiceExt
