@@ -304,15 +304,15 @@ namespace Tzkt.Sync.Protocols.Proto3
                     if (!await Cache.AccountExistsAsync(internalTransaction.Source, AccountType.Contract))
                         throw new ValidationException("unknown source contract");
 
-                    if (transaction.Metadata.Result.BalanceUpdates != null)
+                    if (internalTransaction.Result.BalanceUpdates != null)
                         ValidateTransferBalanceUpdates(
-                        internalTransaction.Result.BalanceUpdates,
-                        internalTransaction.Source,
-                        internalTransaction.Destination,
-                        internalTransaction.Amount,
-                        internalTransaction.Result.PaidStorageSizeDiff * Protocol.ByteCost,
-                        internalTransaction.Result.AllocatedDestinationContract ? Protocol.OriginationSize * Protocol.ByteCost : 0,
-                        transaction.Source);
+                            internalTransaction.Result.BalanceUpdates,
+                            internalTransaction.Source,
+                            internalTransaction.Destination,
+                            internalTransaction.Amount,
+                            internalTransaction.Result.PaidStorageSizeDiff * Protocol.ByteCost,
+                            internalTransaction.Result.AllocatedDestinationContract ? Protocol.OriginationSize * Protocol.ByteCost : 0,
+                            transaction.Source);
                 }
             }
         }

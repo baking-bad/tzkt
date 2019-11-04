@@ -57,6 +57,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     "applied" => OperationStatus.Applied,
                     "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
+                    "skipped" => OperationStatus.Skipped,
                     _ => throw new NotImplementedException()
                 },
                 GasUsed = content.Metadata.Result.ConsumedGas,
