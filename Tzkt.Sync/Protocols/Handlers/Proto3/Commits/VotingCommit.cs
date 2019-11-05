@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto3
     {
         public BlockEvents Event { get; private set; }
         public VotingPeriod Period { get; private set; }
+        public List<VotingSnapshot> Rolls { get; private set; }
 
         VotingCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -27,41 +28,94 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Event = BlockEvents.VotingPeriodBegin;
                 var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
 
-                Period = await Cache.GetCurrentVotingPeriodAsync();
-                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
+                var currentPeriod = await Cache.GetCurrentVotingPeriodAsync();
+                var currentEpoch = await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == currentPeriod.EpochId);
 
-                Period = rawBlock.Metadata.VotingPeriod switch
+                if (rawBlock.Metadata.VotingPeriod == "proposal")
                 {
-                    "proposal" => new ProposalPeriod
+                    #region start proposal period
+                    Period = new ProposalPeriod
                     {
                         Epoch = new VotingEpoch { Level = rawBlock.Level },
                         Kind = VotingPeriods.Proposal,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
-                    },
-                    "exploration" => new ExplorationPeriod
+                    };
+                    #endregion
+                }
+                else if (rawBlock.Metadata.VotingPeriod == "testing_vote")
+                {
+                    #region start exploration period
+                    var proposal = await Db.Proposals
+                        .Where(x => x.ProposalPeriodId == currentPeriod.Id)
+                        .OrderByDescending(x => x.Likes)
+                        .FirstAsync();
+
+                    Cache.AddProposal(proposal);
+
+                    Period = new ExplorationPeriod
                     {
-                        Epoch = Period.Epoch,
+                        Epoch = currentEpoch,
                         Kind = VotingPeriods.Exploration,
                         StartLevel = rawBlock.Level,
-                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
-                    },
-                    "testing" => new TestingPeriod
+                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
+                        Proposal = proposal,
+                    };
+                    #endregion
+                }
+                else if (rawBlock.Metadata.VotingPeriod == "testing")
+                {
+                    #region start testing period
+                    Period = new TestingPeriod
                     {
-                        Epoch = Period.Epoch,
+                        Epoch = currentEpoch,
                         Kind = VotingPeriods.Testing,
                         StartLevel = rawBlock.Level,
-                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
-                    },
-                    "promotion" => new PromotionPeriod
+                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
+                        Proposal = (currentPeriod as ExplorationPeriod).Proposal
+                    };
+                    #endregion
+                }
+                else if (rawBlock.Metadata.VotingPeriod == "promotion")
+                {
+                    #region start promotion period
+                    Period = new PromotionPeriod
                     {
-                        Epoch = Period.Epoch,
+                        Epoch = currentEpoch,
                         Kind = VotingPeriods.Promotion,
                         StartLevel = rawBlock.Level,
-                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
-                    },
-                    _ => throw new Exception("invalid voting period")
-                };
+                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
+                        Proposal = (currentPeriod as TestingPeriod).Proposal
+                    };
+                    #endregion
+                }
+                else
+                {
+                    throw new Exception("invalid voting period");
+                }
+
+                var gracePeriod = GracePeriod.Init(block); // TODO: fix crutch
+                var delegates = await Db.Delegates
+                    .AsNoTracking()
+                    .Where(x => x.Staked && x.DeactivationLevel < gracePeriod && x.StakingBalance >= protocol.TokensPerRoll)
+                    .ToListAsync();
+
+                Rolls = new List<VotingSnapshot>(delegates.Count);
+                foreach (var delegat in delegates)
+                {
+                    Rolls.Add(new VotingSnapshot
+                    {
+                        Level = block.Level - 1,
+                        Period = Period,
+                        DelegateId = delegat.Id,
+                        Rolls = (int)(delegat.StakingBalance / block.Protocol.TokensPerRoll)
+                    });
+                }
+
+                if (Period is ExplorationPeriod exploration)
+                    exploration.TotalStake = Rolls.Sum(x => x.Rolls);
+                else if (Period is PromotionPeriod promotion)
+                    promotion.TotalStake = Rolls.Sum(x => x.Rolls);
             }
         }
 
@@ -78,6 +132,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Event = BlockEvents.VotingPeriodBegin;
                 Period = await Cache.GetCurrentVotingPeriodAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
+                Rolls = await Db.VotingSnapshots.Where(x => x.Level == block.Level - 1).ToListAsync();
             }
         }
 
@@ -95,8 +150,13 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
             else if (Event == BlockEvents.VotingPeriodBegin)
             {
+                if (Period is ExplorationPeriod exploration)
+                    Db.TryAttach(exploration.Proposal);
+
                 Db.VotingPeriods.Add(Period);
                 Cache.AddVotingPeriod(Period);
+
+                Db.VotingSnapshots.AddRange(Rolls);
             }
 
             return Task.CompletedTask;
@@ -121,6 +181,8 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                 Db.VotingPeriods.Remove(Period);
                 Cache.RemoveVotingPeriod();
+
+                Db.VotingSnapshots.RemoveRange(Rolls);
             }
 
             return Task.CompletedTask;

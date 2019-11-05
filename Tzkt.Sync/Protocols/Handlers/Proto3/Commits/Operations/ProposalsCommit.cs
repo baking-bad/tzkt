@@ -10,11 +10,16 @@ namespace Tzkt.Sync.Protocols.Proto3
     class ProposalsCommit : ProtocolCommit
     {
         public List<ProposalOperation> ProposalOperations { get; private set; }
+        public int SenderRolls { get; set; }
 
         ProposalsCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public async Task Init(Block block, RawOperation op, RawProposalContent content)
         {
+            var period = (ProposalPeriod)await Cache.GetCurrentVotingPeriodAsync();
+            var sender = await Cache.GetDelegateAsync(content.Source);
+
+            SenderRolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
             ProposalOperations = new List<ProposalOperation>(4);
             foreach (var proposal in content.Proposals)
             {
@@ -25,15 +30,16 @@ namespace Tzkt.Sync.Protocols.Proto3
                     Level = block.Level,
                     Timestamp = block.Timestamp,
                     OpHash = op.Hash,
-                    Sender = await Cache.GetDelegateAsync(content.Source),
-                    Period = await Cache.GetCurrentVotingPeriodAsync(),
-                    Proposal = await Cache.GetOrSetProposalAsync(proposal, async () => new Proposal
-                    {
-                        Hash = proposal,
-                        Initiator = await Cache.GetDelegateAsync(content.Source),
-                        ProposalPeriod = (ProposalPeriod)await Cache.GetCurrentVotingPeriodAsync(),
-                        Status = ProposalStatus.Active
-                    })
+                    Sender = sender,
+                    Period = period,
+                    Proposal = await Cache.GetOrSetProposalAsync(proposal, () =>
+                        Task.FromResult(new Proposal
+                        {
+                            Hash = proposal,
+                            Initiator = sender,
+                            ProposalPeriod = period,
+                            Status = ProposalStatus.Active
+                        }))
                 });
             }
         }
@@ -54,16 +60,18 @@ namespace Tzkt.Sync.Protocols.Proto3
             {
                 #region entities
                 var block = proposalOp.Block;
+                var period = proposalOp.Period;
                 var sender = proposalOp.Sender;
                 var proposal = proposalOp.Proposal;
 
                 //Db.TryAttach(block);
+                Db.TryAttach(period);
                 Db.TryAttach(sender);
                 Db.TryAttach(proposal);
                 #endregion
 
                 #region apply operation
-                proposal.Likes++;
+                proposal.Likes += SenderRolls;
 
                 sender.Operations |= Operations.Proposals;
                 block.Operations |= Operations.Proposals;
@@ -90,7 +98,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 #endregion
 
                 #region revert operation
-                proposal.Likes--;
+                proposal.Likes -= SenderRolls;
 
                 if (!await Db.ProposalOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < proposalOp.Id))
                     sender.Operations &= ~Operations.Proposals;

@@ -40,13 +40,14 @@ namespace Tzkt.Sync.Protocols.Proto3
             var kind = rawBlock.Metadata.VotingPeriod switch
             {
                 "proposal" => VotingPeriods.Proposal,
-                "exploration" => VotingPeriods.Exploration,
+                "testing_vote" => VotingPeriods.Exploration,
                 "testing" => VotingPeriods.Testing,
                 "promotion" => VotingPeriods.Promotion,
                 _ => throw new ValidationException("invalid voting period kind")
             };
 
-            if (block.Level <= period.EndLevel)
+            // WTF: [level:360448] - Exploration period started before the proposals period ended.
+            if (block.Level < period.EndLevel)
             {
                 if (period.Kind != kind)
                     throw new ValidationException("unexpected voting period");

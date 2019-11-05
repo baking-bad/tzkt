@@ -186,6 +186,7 @@ namespace Tzkt.Sync
                     period.Epoch = null;
                     period.Ballots = null;
                     period.Proposals = null;
+                    period.Snapshots = null;
 
                     if (period is ExplorationPeriod exploration)
                     {

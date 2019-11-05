@@ -20,6 +20,7 @@ namespace Tzkt.Data.Models
         #region indirect relations
         public List<BallotOperation> Ballots { get; set; }
         public List<ProposalOperation> Proposals { get; set; }
+        public List<VotingSnapshot> Snapshots { get; set; }
         #endregion
     }
 

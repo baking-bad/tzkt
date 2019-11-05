@@ -184,6 +184,12 @@ namespace Tzkt.Sync.Protocols.Proto3
                 sender.Balance -= Transaction.StorageFee ?? 0;
                 sender.Balance -= Transaction.AllocationFee ?? 0;
 
+                // WTF: [level:349408] - Tezos reset account during transaction.
+                if (sender.Balance <= 0 && sender.Type == AccountType.User)
+                {
+                    sender.Counter = (await Cache.GetAppStateAsync()).ManagerCounter;
+                }
+
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance -= Transaction.Amount;
@@ -211,11 +217,6 @@ namespace Tzkt.Sync.Protocols.Proto3
                     }
                 }
 
-                // WTF: [level:53726] - Tezos reset account during transaction.
-                if (sender == target && sender.Balance == Transaction.Amount && sender.Type == AccountType.User)
-                {
-                    sender.Counter = (await Cache.GetAppStateAsync()).ManagerCounter;
-                }
             }
             #endregion
 

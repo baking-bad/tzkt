@@ -44,6 +44,7 @@ namespace Tzkt.Data
         public DbSet<ExplorationPeriod> ExplorationPeriods { get; set; }
         public DbSet<TestingPeriod> TestingPeriods { get; set; }
         public DbSet<PromotionPeriod> PromotionPeriods { get; set; }
+        public DbSet<VotingSnapshot> VotingSnapshots { get; set; }
         #endregion
 
         //public DbSet<Cycle> Cycles { get; set; }
@@ -95,6 +96,7 @@ namespace Tzkt.Data
             modelBuilder.BuildExplorationPeriodModel();
             modelBuilder.BuildTestingPeriodModel();
             modelBuilder.BuildPromotionPeriodModel();
+            modelBuilder.BuildVotingSnapshotModel();
             #endregion
         }
     }

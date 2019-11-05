@@ -249,6 +249,11 @@ namespace Tzkt.Sync.Services
         #endregion
 
         #region protocols
+        public void AddProposal(Proposal proposal)
+        {
+            AppCache.AddProposal(proposal);
+        }
+
         public async Task<Proposal> GetProposalAsync(int id)
         {
             return await AppCache.GetOrSetProposal(id, () =>
