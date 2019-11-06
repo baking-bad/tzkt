@@ -60,6 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
                         Proposal = proposal,
+                        ProposalId = proposal.Id
                     };
                     #endregion
                 }
@@ -72,7 +73,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                         Kind = VotingPeriods.Testing,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
-                        Proposal = (currentPeriod as ExplorationPeriod).Proposal
+                        Proposal = await Cache.GetProposalAsync((currentPeriod as ExplorationPeriod).ProposalId),
+                        ProposalId = (currentPeriod as ExplorationPeriod).ProposalId
                     };
                     #endregion
                 }
@@ -85,7 +87,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                         Kind = VotingPeriods.Promotion,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
-                        Proposal = (currentPeriod as TestingPeriod).Proposal
+                        Proposal = await Cache.GetProposalAsync((currentPeriod as TestingPeriod).ProposalId),
+                        ProposalId = (currentPeriod as TestingPeriod).ProposalId
                     };
                     #endregion
                 }
@@ -94,28 +97,31 @@ namespace Tzkt.Sync.Protocols.Proto3
                     throw new Exception("invalid voting period");
                 }
 
-                var gracePeriod = GracePeriod.Init(block); // TODO: fix crutch
-                var delegates = await Db.Delegates
-                    .AsNoTracking()
-                    .Where(x => x.Staked && x.DeactivationLevel < gracePeriod && x.StakingBalance >= protocol.TokensPerRoll)
-                    .ToListAsync();
-
-                Rolls = new List<VotingSnapshot>(delegates.Count);
-                foreach (var delegat in delegates)
+                if (!(Period is TestingPeriod))
                 {
-                    Rolls.Add(new VotingSnapshot
-                    {
-                        Level = block.Level - 1,
-                        Period = Period,
-                        DelegateId = delegat.Id,
-                        Rolls = (int)(delegat.StakingBalance / block.Protocol.TokensPerRoll)
-                    });
-                }
+                    var gracePeriod = GracePeriod.Init(block); // TODO: fix crutch
+                    var delegates = await Db.Delegates
+                        .AsNoTracking()
+                        .Where(x => x.Staked && x.DeactivationLevel < gracePeriod && x.StakingBalance >= protocol.TokensPerRoll)
+                        .ToListAsync();
 
-                if (Period is ExplorationPeriod exploration)
-                    exploration.TotalStake = Rolls.Sum(x => x.Rolls);
-                else if (Period is PromotionPeriod promotion)
-                    promotion.TotalStake = Rolls.Sum(x => x.Rolls);
+                    Rolls = new List<VotingSnapshot>(delegates.Count);
+                    foreach (var delegat in delegates)
+                    {
+                        Rolls.Add(new VotingSnapshot
+                        {
+                            Level = block.Level - 1,
+                            Period = Period,
+                            DelegateId = delegat.Id,
+                            Rolls = (int)(delegat.StakingBalance / block.Protocol.TokensPerRoll)
+                        });
+                    }
+
+                    if (Period is ExplorationPeriod exploration)
+                        exploration.TotalStake = Rolls.Sum(x => x.Rolls);
+                    else if (Period is PromotionPeriod promotion)
+                        promotion.TotalStake = Rolls.Sum(x => x.Rolls);
+                }
             }
         }
 
@@ -132,7 +138,15 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Event = BlockEvents.VotingPeriodBegin;
                 Period = await Cache.GetCurrentVotingPeriodAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
-                Rolls = await Db.VotingSnapshots.Where(x => x.Level == block.Level - 1).ToListAsync();
+                if (Period is ExplorationPeriod exploration)
+                    exploration.Proposal ??= await Cache.GetProposalAsync(exploration.ProposalId);
+                if (Period is TestingPeriod testing)
+                    testing.Proposal ??= await Cache.GetProposalAsync(testing.ProposalId);
+                else if (Period is PromotionPeriod promotion)
+                    promotion.Proposal ??= await Cache.GetProposalAsync(promotion.ProposalId);
+
+                if (!(Period is TestingPeriod))
+                    Rolls = await Db.VotingSnapshots.Where(x => x.Level == block.Level - 1).ToListAsync();
             }
         }
 
@@ -150,13 +164,20 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
             else if (Event == BlockEvents.VotingPeriodBegin)
             {
+                #region entities
                 if (Period is ExplorationPeriod exploration)
                     Db.TryAttach(exploration.Proposal);
+                else if (Period is TestingPeriod testing)
+                    Db.TryAttach(testing.Proposal);
+                else if (Period is PromotionPeriod promotion)
+                    Db.TryAttach(promotion.Proposal);
+                #endregion
 
                 Db.VotingPeriods.Add(Period);
                 Cache.AddVotingPeriod(Period);
 
-                Db.VotingSnapshots.AddRange(Rolls);
+                if (Rolls != null)
+                    Db.VotingSnapshots.AddRange(Rolls);
             }
 
             return Task.CompletedTask;
@@ -176,13 +197,23 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
             else if (Event == BlockEvents.VotingPeriodBegin)
             {
+                #region entities
+                if (Period is ExplorationPeriod exploration)
+                    Db.TryAttach(exploration.Proposal);
+                else if (Period is TestingPeriod testing)
+                    Db.TryAttach(testing.Proposal);
+                else if (Period is PromotionPeriod promotion)
+                    Db.TryAttach(promotion.Proposal);
+                #endregion
+
                 if (Period.Epoch.Progress == 0)
                     Db.VotingEpoches.Remove(Period.Epoch);
 
                 Db.VotingPeriods.Remove(Period);
                 Cache.RemoveVotingPeriod();
 
-                Db.VotingSnapshots.RemoveRange(Rolls);
+                if (Rolls != null)
+                    Db.VotingSnapshots.RemoveRange(Rolls);
             }
 
             return Task.CompletedTask;

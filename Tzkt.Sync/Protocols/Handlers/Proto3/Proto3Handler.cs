@@ -184,8 +184,10 @@ namespace Tzkt.Sync.Protocols
                 {
                     if (content is RawProposalContent proposal)
                         await ProposalsCommit.Apply(this, blockCommit.Block, operation, proposal);
+                    else if (content is RawBallotContent ballot)
+                        await BallotsCommit.Apply(this, blockCommit.Block, operation, ballot);
                     else 
-                        throw new NotImplementedException($"'{content.GetType()}' is not implemented");
+                        throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[1]");
                 }
             }
             #endregion
@@ -292,6 +294,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Proposals))
                 query = query.Include(x => x.Proposals);
 
+            if (currBlock.Operations.HasFlag(Operations.Ballots))
+                query = query.Include(x => x.Ballots);
+
             currBlock = await query.FirstOrDefaultAsync(x => x.Level == currBlock.Level);
             Cache.AddBlock(currBlock);
 
@@ -322,6 +327,9 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.Proposals != null)
                 operations.AddRange(currBlock.Proposals);
+
+            if (currBlock.Ballots != null)
+                operations.AddRange(currBlock.Ballots);
             #endregion
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
@@ -333,6 +341,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case ProposalOperation proposal:
                         await ProposalsCommit.Revert(this, currBlock, proposal);
+                        break;
+                    case BallotOperation ballot:
+                        await BallotsCommit.Revert(this, currBlock, ballot);
                         break;
                     case ActivationOperation activation:
                         await ActivationsCommit.Revert(this, currBlock, activation);

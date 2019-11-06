@@ -152,6 +152,9 @@ namespace Tzkt.Sync.Protocols.Proto3
                             case RawProposalContent proposal:
                                 await ValidateProposal(proposal, rawBlock);
                                 break;
+                            case RawBallotContent ballot:
+                                await ValidateBallot(ballot, rawBlock);
+                                break;
                         }
                     }
                 }
@@ -372,6 +375,21 @@ namespace Tzkt.Sync.Protocols.Proto3
                 throw new ValidationException("invalid proposal sender");
 
             if (proposal.Period != rawBlock.Metadata.LevelInfo.VotingPeriod)
+                throw new ValidationException("invalid proposal voting period");
+        }
+
+        protected async Task ValidateBallot(RawBallotContent ballot, RawBlock rawBlock)
+        {
+            var period = await Cache.GetCurrentVotingPeriodAsync();
+            var proposal = await Cache.GetProposalAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
+
+            if (proposal.Hash != ballot.Proposal)
+                throw new ValidationException("invalid ballot proposal");
+
+            if (!await Cache.AccountExistsAsync(ballot.Source, AccountType.Delegate))
+                throw new ValidationException("invalid proposal sender");
+
+            if (ballot.Period != rawBlock.Metadata.LevelInfo.VotingPeriod)
                 throw new ValidationException("invalid proposal voting period");
         }
 
