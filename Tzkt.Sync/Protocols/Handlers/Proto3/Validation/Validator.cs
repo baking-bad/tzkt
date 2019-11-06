@@ -42,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 "proposal" => VotingPeriods.Proposal,
                 "testing_vote" => VotingPeriods.Exploration,
                 "testing" => VotingPeriods.Testing,
-                "promotion" => VotingPeriods.Promotion,
+                "promotion_vote" => VotingPeriods.Promotion,
                 _ => throw new ValidationException("invalid voting period kind")
             };
 

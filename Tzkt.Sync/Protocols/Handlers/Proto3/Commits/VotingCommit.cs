@@ -78,7 +78,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     };
                     #endregion
                 }
-                else if (rawBlock.Metadata.VotingPeriod == "promotion")
+                else if (rawBlock.Metadata.VotingPeriod == "promotion_vote")
                 {
                     #region start promotion period
                     Period = new PromotionPeriod
