@@ -103,6 +103,22 @@ namespace Tzkt.Sync.Protocols.Proto3
                     {
                         await ResetDelegate(sender, senderDelegate);
                         await UpgradeUser(Delegation);
+
+                        #region weird delegators
+                        var delegat = (Data.Models.Delegate)Delegation.Sender;
+
+                        var weirdDelegators = await Db.Contracts
+                            .Where(x => x.WeirdDelegateId == delegat.Id && !x.Operations.HasFlag(Operations.Delegations))
+                            .ToListAsync();
+
+                        foreach (var weirdDelegator in weirdDelegators)
+                        {
+                            Db.TryAttach(weirdDelegator);
+                            Cache.AddAccount(weirdDelegator);
+
+                            await SetDelegate(weirdDelegator, delegat, Delegation.Level);
+                        }
+                        #endregion
                     }
                     else if (sender is Data.Models.Delegate delegat)
                     {
