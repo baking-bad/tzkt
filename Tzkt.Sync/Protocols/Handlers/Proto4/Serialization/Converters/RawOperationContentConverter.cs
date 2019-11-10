@@ -24,6 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto4.Serialization
                 "origination" => JsonSerializer.Deserialize<RawOriginationContent>(ref reader, options),
                 "seed_nonce_revelation" => JsonSerializer.Deserialize<RawNonceRevelationContent>(ref reader, options),
                 "double_baking_evidence" => JsonSerializer.Deserialize<RawDoubleBakingEvidenceContent>(ref reader, options),
+                "double_endorsement_evidence" => JsonSerializer.Deserialize<RawDoubleEndorsingEvidenceContent>(ref reader, options),
                 "proposals" => JsonSerializer.Deserialize<RawProposalContent>(ref reader, options),
                 "ballot" => JsonSerializer.Deserialize<RawBallotContent>(ref reader, options),
                 _ => throw new JsonException()

@@ -149,6 +149,9 @@ namespace Tzkt.Sync.Protocols.Proto4
                             case RawDoubleBakingEvidenceContent db:
                                 await ValidateDoubleBaking(db, rawBlock);
                                 break;
+                            case RawDoubleEndorsingEvidenceContent de:
+                                await ValidateDoubleEndorsing(de, rawBlock);
+                                break;
                             case RawProposalContent proposal:
                                 await ValidateProposal(proposal, rawBlock);
                                 break;
@@ -367,6 +370,43 @@ namespace Tzkt.Sync.Protocols.Proto4
                 (lostRewardsUpdate?.Cycle ?? accusedCycle) != accusedCycle ||
                 (lostFeesUpdate?.Cycle ?? accusedCycle) != accusedCycle)
                 throw new ValidationException("invalid double baking freezer level");
+        }
+
+        protected async Task ValidateDoubleEndorsing(RawDoubleEndorsingEvidenceContent de, RawBlock rawBlock)
+        {
+            if (de.Op1.Operations.Kind != "endorsement" || de.Op2.Operations.Kind != "endorsement")
+                throw new ValidationException("inconsistent double endorsing operations kind");
+
+            if (de.Op1.Operations.Level != de.Op2.Operations.Level)
+                throw new ValidationException("inconsistent double endorsing levels");
+
+            var rewardUpdate = de.Metadata.BalanceUpdates.FirstOrDefault(x => x.Change > 0) as RewardsUpdate
+                ?? throw new ValidationException("double endorsing reward is missed");
+
+            if (rewardUpdate.Delegate != rawBlock.Metadata.Baker)
+                throw new ValidationException("invalid double endorsing reward recipient");
+
+            var lostDepositsUpdate = de.Metadata.BalanceUpdates.FirstOrDefault(x => x is DepositsUpdate && x.Change < 0) as DepositsUpdate;
+            var lostRewardsUpdate = de.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate && x.Change < 0) as RewardsUpdate;
+            var lostFeesUpdate = de.Metadata.BalanceUpdates.FirstOrDefault(x => x is FeesUpdate && x.Change < 0) as FeesUpdate;
+
+            var offender = lostDepositsUpdate?.Delegate ?? lostRewardsUpdate?.Delegate ?? lostFeesUpdate?.Delegate;
+            if (!await Cache.AccountExistsAsync(offender, AccountType.Delegate))
+                throw new ValidationException("invalid double endorsing offender");
+
+            if ((lostDepositsUpdate?.Delegate ?? offender) != offender ||
+                (lostRewardsUpdate?.Delegate ?? offender) != offender ||
+                (lostFeesUpdate?.Delegate ?? offender) != offender)
+                throw new ValidationException("invalid double endorsing offender updates");
+
+            if (rewardUpdate.Change != -((lostDepositsUpdate?.Change ?? 0) + (lostFeesUpdate?.Change ?? 0)) / 2)
+                throw new ValidationException("invalid double endorsing reward amount");
+
+            var accusedCycle = (de.Op1.Operations.Level - 1) / Protocol.BlocksPerCycle;
+            if ((lostDepositsUpdate?.Cycle ?? accusedCycle) != accusedCycle ||
+                (lostRewardsUpdate?.Cycle ?? accusedCycle) != accusedCycle ||
+                (lostFeesUpdate?.Cycle ?? accusedCycle) != accusedCycle)
+                throw new ValidationException("invalid double endorsing freezer level");
         }
 
         protected async Task ValidateProposal(RawProposalContent proposal, RawBlock rawBlock)

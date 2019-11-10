@@ -205,6 +205,9 @@ namespace Tzkt.Sync.Protocols
                         case RawDoubleBakingEvidenceContent doubleBaking:
                             await DoubleBakingCommit.Apply(this, blockCommit.Block, operation, doubleBaking);
                             break;
+                        case RawDoubleEndorsingEvidenceContent doubleEndorsing:
+                            await DoubleEndorsingCommit.Apply(this, blockCommit.Block, operation, doubleEndorsing);
+                            break;
                         case RawNonceRevelationContent revelation:
                             await NonceRevelationsCommit.Apply(this, blockCommit.Block, operation, revelation);
                             break;
@@ -291,6 +294,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
                 query = query.Include(x => x.DoubleBakings);
 
+            if (currBlock.Operations.HasFlag(Operations.DoubleEndorsings))
+                query = query.Include(x => x.DoubleEndorsings);
+
             if (currBlock.Operations.HasFlag(Operations.Proposals))
                 query = query.Include(x => x.Proposals);
 
@@ -325,6 +331,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.DoubleBakings != null)
                 operations.AddRange(currBlock.DoubleBakings);
 
+            if (currBlock.DoubleEndorsings != null)
+                operations.AddRange(currBlock.DoubleEndorsings);
+
             if (currBlock.Proposals != null)
                 operations.AddRange(currBlock.Proposals);
 
@@ -350,6 +359,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case DoubleBakingOperation doubleBaking:
                         await DoubleBakingCommit.Revert(this, currBlock, doubleBaking);
+                        break;
+                    case DoubleEndorsingOperation doubleEndorsing:
+                        await DoubleEndorsingCommit.Revert(this, currBlock, doubleEndorsing);
                         break;
                     case NonceRevelationOperation revelation:
                         await NonceRevelationsCommit.Revert(this, currBlock, revelation);
