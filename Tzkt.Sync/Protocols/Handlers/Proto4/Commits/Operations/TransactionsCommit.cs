@@ -204,26 +204,14 @@ namespace Tzkt.Sync.Protocols.Proto4
                     targetDelegate.StakingBalance += Transaction.Amount;
                 }
 
-                if (target is Data.Models.Delegate delegat)
-                {
-                    var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(Transaction.Block) : GracePeriod.Init(Transaction.Block);
-                    if (delegat.DeactivationLevel < newDeactivationLevel)
-                    {
-                        if (delegat.DeactivationLevel <= Transaction.Level)
-                            await UpdateDelegate(delegat, true);
-
-                        Transaction.ResetDeactivation = delegat.DeactivationLevel;
-                        delegat.DeactivationLevel = newDeactivationLevel;
-                    }
-                }
-
+                // WTF: [level:463226] - Receiving a transaction doesn't update grace period anymore
             }
             #endregion
 
             Db.TransactionOps.Add(Transaction);
         }
 
-        public async Task ApplyInternalTransaction()
+        public Task ApplyInternalTransaction()
         {
             #region entities
             var block = Transaction.Block;
@@ -284,23 +272,11 @@ namespace Tzkt.Sync.Protocols.Proto4
                 {
                     targetDelegate.StakingBalance += Transaction.Amount;
                 }
-
-                if (target is Data.Models.Delegate delegat)
-                {
-                    var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(Transaction.Block) : GracePeriod.Init(Transaction.Block);
-                    if (delegat.DeactivationLevel < newDeactivationLevel)
-                    {
-                        if (delegat.DeactivationLevel <= Transaction.Level)
-                            await UpdateDelegate(delegat, true);
-
-                        Transaction.ResetDeactivation = delegat.DeactivationLevel;
-                        delegat.DeactivationLevel = newDeactivationLevel;
-                    }
-                }
             }
             #endregion
 
             Db.TransactionOps.Add(Transaction);
+            return Task.CompletedTask;
         }
 
         public async Task RevertTransaction()
