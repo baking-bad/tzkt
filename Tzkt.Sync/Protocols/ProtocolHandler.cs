@@ -38,16 +38,16 @@ namespace Tzkt.Sync
             Logger.LogDebug("Deserializing block...");
             var rawBlock = await Serializer.DeserializeBlock(stream);
 
-            Logger.LogDebug("Load entities...");
+            Logger.LogDebug("Loading entities...");
             await LoadEntities(rawBlock);
 
-            Logger.LogDebug("Init protocol...");
+            Logger.LogDebug("Loading constants...");
             await InitProtocol(rawBlock);
 
             Logger.LogDebug("Validating block...");
             rawBlock = await Validator.ValidateBlock(rawBlock);
 
-            Logger.LogDebug("Commiting...");
+            Logger.LogDebug("Committing block...");
             await Commit(rawBlock);
 
             var state = await Cache.GetAppStateAsync();
@@ -73,11 +73,11 @@ namespace Tzkt.Sync
             var state = await Cache.GetAppStateAsync();
             if (state.Protocol != state.NextProtocol)
             {
-                Logger.LogDebug("Cancelling context migration...");
+                Logger.LogDebug("Migrating context...");
                 await CancelMigration();
             }
 
-            Logger.LogDebug("Init protocol...");
+            Logger.LogDebug("Loading protocol...");
             await InitProtocol();
 
             Logger.LogDebug("Reverting...");

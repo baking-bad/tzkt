@@ -139,6 +139,9 @@ namespace Tzkt.Sync.Services
 
         async Task<RemoteContract> GetRemoteContract(int level, string address)
         {
+            if (level >= 655360)
+                return await GetRemoteContractBaby(level, address);
+
             try
             {
                 var stream = await Node.GetContractAsync(level, address);
@@ -148,6 +151,33 @@ namespace Tzkt.Sync.Services
                     throw new SerializationException($"invalid format");
 
                 return contract;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
+
+        async Task<RemoteContract> GetRemoteContractBaby(int level, string address)
+        {
+            try
+            {
+                var stream = await Node.GetContractAsync(level, address);
+                var contract = await JsonSerializer.DeserializeAsync<RemoteContractBaby>(stream, SerializerOptions.Default);
+
+                if (!contract.IsValidFormat())
+                    throw new SerializationException($"invalid format");
+
+                return new RemoteContract
+                {
+                    Balance = contract.Balance,
+                    Counter = contract.Counter,
+                    Delegate = new RemoteContractDelegate
+                    {
+                        Setable = true,
+                        Value = contract.Delegate
+                    }
+                };
             }
             catch (JsonException ex)
             {
