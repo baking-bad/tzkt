@@ -27,6 +27,10 @@ namespace Tzkt.Sync.Protocols
             Validator = new Validator(this);
         }
 
+        public override Task Migration() => Proto5.ManagersMigration.Apply(this);
+
+        public override Task CancelMigration() => Proto5.ManagersMigration.Revert(this);
+
         public override Task LoadEntities(IBlock block)
         {
             var rawBlock = block as RawBlock;

@@ -33,7 +33,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Manager = sender,
                     Operations = Operations.None,
                     Staked = delegat?.Staked ?? false,
-                    Type = AccountType.Contract
+                    Type = AccountType.Contract,
+                    Kind = content.Script == null ? ContractKind.DelegatorContract : ContractKind.SmartContract
                 }
                 : null;
 

@@ -27,6 +27,9 @@ namespace Tzkt.Sync.Protocols.Proto5
         [JsonPropertyName("delegate")]
         public string Delegate { get; set; }
 
+        [JsonPropertyName("script")]
+        public RawOriginationScript Script { get; set; }
+
         [JsonPropertyName("metadata")]
         public RawOriginationContentMetadata Metadata { get; set; }
 
@@ -39,7 +42,23 @@ namespace Tzkt.Sync.Protocols.Proto5
             StorageLimit >= 0 &&
             Balance >= 0 &&
             (Delegate == null || Delegate != "") &&
+            (Script == null || Script.IsValidFormat()) &&
             Metadata?.IsValidFormat() == true;
+        #endregion
+    }
+
+    class RawOriginationScript
+    {
+        [JsonPropertyName("code")]
+        public object Code { get; set; }
+
+        [JsonPropertyName("storage")]
+        public object Storage { get; set; }
+
+        #region validation
+        public bool IsValidFormat() =>
+            Code != null &&
+            Storage != null;
         #endregion
     }
 

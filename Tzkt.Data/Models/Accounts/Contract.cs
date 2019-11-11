@@ -6,6 +6,8 @@ namespace Tzkt.Data.Models
 {
     public class Contract : Account
     {
+        public ContractKind Kind { get; set; }
+
         public int? ManagerId { get; set; }
         public int? WeirdDelegateId { get; set; }
 
@@ -20,6 +22,12 @@ namespace Tzkt.Data.Models
         #region indirect relations
         public OriginationOperation Origination { get; set; }
         #endregion
+    }
+
+    public enum ContractKind : byte
+    {
+        DelegatorContract,
+        SmartContract
     }
 
     public static class ContractModel

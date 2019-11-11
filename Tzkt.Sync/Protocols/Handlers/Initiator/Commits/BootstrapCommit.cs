@@ -70,6 +70,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Manager = (User)await Cache.GetAccountAsync(data.Manager),
                     Staked = !String.IsNullOrEmpty(data.Delegate),
                     Type = AccountType.Contract,
+                    Kind = ContractKind.SmartContract,
                 };
 
                 Cache.AddAccount(contract);

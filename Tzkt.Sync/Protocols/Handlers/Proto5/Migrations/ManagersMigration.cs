@@ -12,14 +12,47 @@ namespace Tzkt.Sync.Protocols.Proto5
     {
         ManagersMigration(ProtocolHandler protocol) : base(protocol) { }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
-            throw new NotImplementedException();
+            var emptiedManagers = await Db.Contracts
+                .AsNoTracking()
+                .Include(x => x.Manager)
+                .Where(x => x.Kind == ContractKind.DelegatorContract &&
+                            x.Manager.Type == AccountType.User &&
+                            x.Manager.Balance == 0 &&
+                            x.Manager.Counter > 0)
+                .Select(x => x.Manager)
+                .ToListAsync();
+
+            var dict = new Dictionary<string, User>(8000);
+            foreach (var manager in emptiedManagers)
+                dict[manager.Address] = manager as User;
+
+            foreach (var manager in dict.Values)
+            {
+                Db.TryAttach(manager);
+                Cache.AddAccount(manager);
+
+                manager.Balance = 1;
+                manager.AirDrop = true;
+            }
         }
 
-        public override Task Revert()
+        public override async Task Revert()
         {
-            throw new NotImplementedException();
+            var airDropManagers = await Db.Users
+                .AsNoTracking()
+                .Where(x => x.AirDrop == true)
+                .ToListAsync();
+
+            foreach (var manager in airDropManagers)
+            {
+                Db.TryAttach(manager);
+                Cache.AddAccount(manager);
+
+                manager.Balance = 0;
+                manager.AirDrop = null;
+            }
         }
 
         #region static

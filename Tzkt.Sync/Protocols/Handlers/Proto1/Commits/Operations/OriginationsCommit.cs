@@ -35,11 +35,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Counter = 0,
                     Delegate = delegat,
                     DelegationLevel = delegat != null ? (int?)block.Level : null,
-                    WeirdDelegate = originDelegate?.Type == AccountType.User ? (User)originDelegate : null, 
+                    WeirdDelegate = originDelegate?.Type == AccountType.User ? (User)originDelegate : null,
                     Manager = manager,
                     Operations = Operations.None,
                     Staked = delegat?.Staked ?? false,
-                    Type = AccountType.Contract
+                    Type = AccountType.Contract,
+                    Kind = content.Script == null ? ContractKind.DelegatorContract : ContractKind.SmartContract
                 }
                 : null;
 
