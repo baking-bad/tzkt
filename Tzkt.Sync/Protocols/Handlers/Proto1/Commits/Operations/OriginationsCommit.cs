@@ -20,25 +20,28 @@ namespace Tzkt.Sync.Protocols.Proto1
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
+            // WTF: [level:25054] - Manager and sender are not equal.
+            var manager = await Cache.GetAccountAsync(content.Manager);
+
             var originDelegate = await Cache.GetAccountAsync(content.Delegate);
             var delegat = originDelegate as Data.Models.Delegate;
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
             var contract = content.Metadata.Result.Status == "applied" ?
-                        new Contract
-                        {
-                            Address = content.Metadata.Result.OriginatedContracts[0],
-                            Balance = content.Balance,
-                            Counter = 0,
-                            Delegate = delegat,
-                            DelegationLevel = delegat != null ? (int?)block.Level : null,
-                            WeirdDelegate = originDelegate?.Type == AccountType.User ? (User)originDelegate : null, 
-                            Manager = sender,
-                            Operations = Operations.None,
-                            Staked = delegat?.Staked ?? false,
-                            Type = AccountType.Contract
-                        }
-                        : null;
+                new Contract
+                {
+                    Address = content.Metadata.Result.OriginatedContracts[0],
+                    Balance = content.Balance,
+                    Counter = 0,
+                    Delegate = delegat,
+                    DelegationLevel = delegat != null ? (int?)block.Level : null,
+                    WeirdDelegate = originDelegate?.Type == AccountType.User ? (User)originDelegate : null, 
+                    Manager = manager,
+                    Operations = Operations.None,
+                    Staked = delegat?.Staked ?? false,
+                    Type = AccountType.Contract
+                }
+                : null;
 
             Origination = new OriginationOperation
             {

@@ -238,6 +238,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (!await Cache.AccountExistsAsync(origination.Source))
                 throw new ValidationException("unknown source account");
 
+            if (!await Cache.AccountExistsAsync(origination.Manager))
+                throw new ValidationException("unknown manager account");
+
             if (origination.Metadata.Result.Status == "applied" && origination.Delegate != null)
             {
                 if (!await Cache.AccountExistsAsync(origination.Delegate, AccountType.Delegate))

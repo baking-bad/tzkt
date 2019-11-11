@@ -149,7 +149,11 @@ namespace Tzkt.Sync.Services
                     using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
 
                     if (AppState.Level >= 655_355)
+                    {
+                        Console.WriteLine("Done");
+                        await Task.Delay(TimeSpan.FromDays(100));
                         throw new ValidationException("Test", true);
+                    }
 
                     Logger.LogDebug($"Applying block...");
                     using var scope = Services.CreateScope();
@@ -159,6 +163,8 @@ namespace Tzkt.Sync.Services
                 }
                 catch(OperationCanceledException)
                 {
+                    Console.WriteLine("Error");
+                    await Task.Delay(TimeSpan.FromDays(100));
                     await Task.Delay(1000 * 180);
                 }
             }

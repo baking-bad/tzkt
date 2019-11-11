@@ -20,6 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
+            var manager = await Cache.GetAccountAsync(content.Manager);
             var delegat = await Cache.GetDelegateOrDefaultAsync(content.Delegate);
 
             var contract = content.Metadata.Result.Status == "applied" ?
@@ -30,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                     Counter = 0,
                     Delegate = delegat,
                     DelegationLevel = delegat != null ? (int?)block.Level : null,
-                    Manager = sender,
+                    Manager = manager,
                     Operations = Operations.None,
                     Staked = delegat?.Staked ?? false,
                     Type = AccountType.Contract
