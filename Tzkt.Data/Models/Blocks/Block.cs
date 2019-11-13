@@ -34,6 +34,8 @@ namespace Tzkt.Data.Models
         #endregion
 
         #region indirect relations
+        public List<Account> CreatedAccounts { get; set; }
+
         public List<EndorsementOperation> Endorsements { get; set; }
 
         public List<BallotOperation> Ballots { get; set; }

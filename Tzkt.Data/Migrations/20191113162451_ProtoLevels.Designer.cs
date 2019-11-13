@@ -47,6 +47,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("DelegationLevel")
                         .HasColumnType("integer");
 
+                    b.Property<int>("FirstLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LastLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Operations")
                         .HasColumnType("integer");
 
@@ -62,6 +68,8 @@ namespace Tzkt.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("DelegateId");
+
+                    b.HasIndex("FirstLevel");
 
                     b.HasIndex("Id")
                         .IsUnique();
@@ -1149,6 +1157,13 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
                         .WithMany("DelegatedAccounts")
                         .HasForeignKey("DelegateId");
+
+                    b.HasOne("Tzkt.Data.Models.Block", "FirstBlock")
+                        .WithMany("CreatedAccounts")
+                        .HasForeignKey("FirstLevel")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.ActivationOperation", b =>

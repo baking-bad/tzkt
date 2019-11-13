@@ -367,12 +367,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             sender.Counter = Math.Min(sender.Counter, Transaction.Counter - 1);
             #endregion
 
-            if (target != null && target.Operations == Operations.None && target.Counter > 0)
-            {
-                Db.Accounts.Remove(target);
-                Cache.RemoveAccount(target);
-            }
-
             Db.TransactionOps.Remove(Transaction);
             await Cache.ReleaseCounterAsync(true);
         }
@@ -450,12 +444,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                 if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Id < Transaction.Id))
                     target.Operations &= ~Operations.Transactions;
             #endregion
-
-            if (target != null && target.Operations == Operations.None && target.Counter > 0)
-            {
-                Db.Accounts.Remove(target);
-                Cache.RemoveAccount(target);
-            }
 
             Db.TransactionOps.Remove(Transaction);
         }

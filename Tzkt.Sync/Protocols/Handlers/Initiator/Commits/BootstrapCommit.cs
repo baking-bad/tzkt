@@ -28,6 +28,8 @@ namespace Tzkt.Sync.Protocols.Initiator
                 var baker = new Data.Models.Delegate
                 {
                     Address = data.Address,
+                    FirstLevel = rawBlock.Level,
+                    LastLevel = rawBlock.Level,
                     ActivationLevel = 1,
                     DeactivationLevel = GracePeriod.Init(1, protocol.BlocksPerCycle, protocol.PreserverCycles),
                     Balance = data.Balance,
@@ -48,6 +50,8 @@ namespace Tzkt.Sync.Protocols.Initiator
                 var user = new User
                 {
                     Address = data.Address,
+                    FirstLevel = rawBlock.Level,
+                    LastLevel = rawBlock.Level,
                     Balance = data.Balance,
                     Counter = data.Counter,
                     Type = AccountType.User,
@@ -63,6 +67,8 @@ namespace Tzkt.Sync.Protocols.Initiator
                 var contract = new Contract
                 {
                     Address = data.Address,
+                    FirstLevel = rawBlock.Level,
+                    LastLevel = rawBlock.Level,
                     Balance = data.Balance,
                     Counter = data.Counter,
                     DelegationLevel = 1,

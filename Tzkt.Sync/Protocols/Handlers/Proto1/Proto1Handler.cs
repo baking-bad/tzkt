@@ -242,6 +242,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Transactions))
                 query = query.Include(x => x.Transactions);
 
+            if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
+                query = query.Include(x => x.CreatedAccounts);
+
             currBlock = await query.FirstOrDefaultAsync(x => x.Level == currBlock.Level);
             Cache.AddBlock(currBlock);
 
@@ -266,6 +269,10 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.Transactions != null)
                 operations.AddRange(currBlock.Transactions);
+
+            if (currBlock.CreatedAccounts != null)
+                foreach (var account in currBlock.CreatedAccounts)
+                    Cache.AddAccount(account);
             #endregion
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))

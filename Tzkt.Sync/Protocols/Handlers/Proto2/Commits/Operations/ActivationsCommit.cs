@@ -73,12 +73,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                 sender.Operations &= ~Operations.Activations;
             #endregion
 
-            if (sender.Operations == Operations.None && sender.Counter > 0)
-            {
-                Db.Accounts.Remove(sender);
-                Cache.RemoveAccount(sender);
-            }
-
             Db.ActivationOps.Remove(Activation);
         }
 

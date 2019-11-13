@@ -137,12 +137,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.Counter = Math.Min(sender.Counter, Reveal.Counter - 1);
             #endregion
 
-            if (sender.Operations == Operations.None && sender.Counter > 0)
-            {
-                Db.Accounts.Remove(sender);
-                Cache.RemoveAccount(sender);
-            }
-
             Db.RevealOps.Remove(Reveal);
             await Cache.ReleaseCounterAsync(true);
         }

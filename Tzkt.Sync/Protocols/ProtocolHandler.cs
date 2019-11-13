@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
@@ -57,6 +58,9 @@ namespace Tzkt.Sync
                 await Migration();
             }
 
+            Logger.LogDebug("Touch accounts...");
+            TouchAccounts(rawBlock.Level);
+
             Logger.LogDebug("Diagnostics...");
             await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
 
@@ -83,6 +87,9 @@ namespace Tzkt.Sync
             Logger.LogDebug("Reverting...");
             await Revert();
 
+            Logger.LogDebug("Clear accounts...");
+            ClearAccounts(state.Level + 1);
+
             Logger.LogDebug("Diagnostics...");
             await Diagnostics.Run((await Cache.GetAppStateAsync()).Level);
 
@@ -92,6 +99,45 @@ namespace Tzkt.Sync
             ClearCachedRelations();
             
             return await Cache.GetAppStateAsync();
+        }
+
+        public virtual void TouchAccounts(int level)
+        {
+            var block = Db.ChangeTracker.Entries()
+                .First(x => x.Entity is Block block && block.Level == level).Entity as Block;
+
+            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
+            {
+                var account = entry.Entity as Account;
+
+                if (entry.State == EntityState.Modified)
+                {
+                    account.LastLevel = level;
+                }
+                else if (entry.State == EntityState.Added)
+                {
+                    account.FirstLevel = level;
+                    account.LastLevel = level;
+                    block.Events |= BlockEvents.NewAccounts;
+                }
+            }
+        }
+
+        public virtual void ClearAccounts(int level)
+        {
+            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
+            {
+                var account = entry.Entity as Account;
+
+                if (entry.State == EntityState.Modified)
+                    account.LastLevel = level;
+                
+                if (account.FirstLevel == level)
+                {
+                    Db.Remove(account);
+                    Cache.RemoveAccount(account);
+                }
+            }
         }
 
         public virtual Task LoadEntities(IBlock block) => Task.CompletedTask;
@@ -135,6 +181,7 @@ namespace Tzkt.Sync
                     delegat.SentDoubleEndorsingAccusations = null;
                     delegat.SentOriginations = null;
                     delegat.SentTransactions = null;
+                    delegat.FirstBlock = null;
                 }
                 else if (entry.Entity is User user)
                 {
@@ -146,6 +193,7 @@ namespace Tzkt.Sync
                     user.SentDelegations = null;
                     user.SentOriginations = null;
                     user.SentTransactions = null;
+                    user.FirstBlock = null;
                 }
                 else if (entry.Entity is Contract contract)
                 {
@@ -159,6 +207,7 @@ namespace Tzkt.Sync
                     contract.SentDelegations = null;
                     contract.SentOriginations = null;
                     contract.SentTransactions = null;
+                    contract.FirstBlock = null;
                 }
                 else if (entry.Entity is Block b)
                 {
@@ -176,6 +225,7 @@ namespace Tzkt.Sync
                     b.Revelation = null;
                     b.Revelations = null;
                     b.Transactions = null;
+                    b.CreatedAccounts = null;
                 }
                 else if (entry.Entity is Protocol p)
                 {

@@ -9,6 +9,8 @@ namespace Tzkt.Data.Models
         public int Id { get; set; }
         public string Address { get; set; }
         public AccountType Type { get; set; }
+        public int FirstLevel { get; set; }
+        public int LastLevel { get; set; }
 
         public long Balance { get; set; }
         public int Counter { get; set; }
@@ -21,6 +23,9 @@ namespace Tzkt.Data.Models
         #region relations
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
+
+        [ForeignKey(nameof(FirstLevel))]
+        public Block FirstBlock { get; set; }
         #endregion
 
         #region indirect relations
@@ -72,6 +77,12 @@ namespace Tzkt.Data.Models
             #endregion
 
             #region relations
+            modelBuilder.Entity<Account>()
+                .HasOne(x => x.FirstBlock)
+                .WithMany(x => x.CreatedAccounts)
+                .HasForeignKey(x => x.FirstLevel)
+                .HasPrincipalKey(x => x.Level);
+
             modelBuilder.Entity<Account>()
                 .HasOne(x => x.Delegate)
                 .WithMany(x => x.DelegatedAccounts)
