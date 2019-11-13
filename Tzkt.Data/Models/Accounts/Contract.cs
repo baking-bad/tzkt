@@ -19,10 +19,6 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(WeirdDelegateId))]
         public User WeirdDelegate { get; set; }
         #endregion
-
-        #region indirect relations
-        public OriginationOperation Origination { get; set; }
-        #endregion
     }
 
     public enum ContractKind : byte
@@ -35,12 +31,7 @@ namespace Tzkt.Data.Models
     { 
         public static void BuildContractModel(this ModelBuilder modelBuilder)
         {
-            #region relations
-            modelBuilder.Entity<Contract>()
-                .HasOne(x => x.Manager)
-                .WithMany(x => x.OriginatedContracts)
-                .HasForeignKey(x => x.ManagerId);
-            #endregion
+
         }
     }
 }

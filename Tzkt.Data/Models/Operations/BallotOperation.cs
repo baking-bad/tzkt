@@ -58,21 +58,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.Ballots)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<BallotOperation>()
-                .HasOne(x => x.Sender)
-                .WithMany(x => x.Ballots)
-                .HasForeignKey(x => x.SenderId);
-
-            modelBuilder.Entity<BallotOperation>()
-                .HasOne(x => x.Proposal)
-                .WithMany(x => x.Ballots)
-                .HasForeignKey(x => x.ProposalId);
-
-            modelBuilder.Entity<BallotOperation>()
-                .HasOne(x => x.Period)
-                .WithMany(x => x.Ballots)
-                .HasForeignKey(x => x.PeriodId);
             #endregion
         }
     }

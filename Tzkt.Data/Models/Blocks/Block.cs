@@ -86,14 +86,9 @@ namespace Tzkt.Data.Models
             #region relations
             modelBuilder.Entity<Block>()
                 .HasOne(x => x.Protocol)
-                .WithMany(x => x.Blocks)
+                .WithMany()
                 .HasForeignKey(x => x.ProtoCode)
                 .HasPrincipalKey(x => x.Code);
-
-            modelBuilder.Entity<Block>()
-                .HasOne(x => x.Baker)
-                .WithMany(x => x.BakedBlocks)
-                .HasForeignKey(x => x.BakerId);
 
             modelBuilder.Entity<Block>()
                 .HasOne(x => x.Revelation)

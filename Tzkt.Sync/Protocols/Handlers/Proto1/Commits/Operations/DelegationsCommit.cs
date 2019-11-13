@@ -249,7 +249,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             var delegat = new Data.Models.Delegate
             {
                 ActivationLevel = delegation.Level,
-                Activation = user.Activation,
                 Address = user.Address,
                 AirDrop = user.AirDrop,
                 FirstLevel = user.FirstLevel,
@@ -262,13 +261,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 DelegationLevel = null,
                 Id = user.Id,
                 Operations = user.Operations,
-                OriginatedContracts = user.OriginatedContracts,
                 PublicKey = user.PublicKey,
-                ReceivedTransactions = user.ReceivedTransactions,
-                SentReveals = user.SentReveals,
-                SentDelegations = user.SentDelegations,
-                SentOriginations = user.SentOriginations,
-                SentTransactions = user.SentTransactions,
                 Staked = true,
                 StakingBalance = user.Balance,
                 Type = AccountType.Delegate,
@@ -350,7 +343,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var user = new User
             {                
-                Activation = delegat.Activation,
                 Address = delegat.Address,
                 AirDrop = delegat.AirDrop,
                 FirstLevel = delegat.FirstLevel,
@@ -362,13 +354,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 DelegationLevel = null,
                 Id = delegat.Id,
                 Operations = delegat.Operations,
-                OriginatedContracts = delegat.OriginatedContracts,
                 PublicKey = delegat.PublicKey,
-                ReceivedTransactions = delegat.ReceivedTransactions,
-                SentReveals = delegat.SentReveals,
-                SentDelegations = delegat.SentDelegations,
-                SentOriginations = delegat.SentOriginations,
-                SentTransactions = delegat.SentTransactions,
                 Staked = false,
                 Type = AccountType.User,
             };

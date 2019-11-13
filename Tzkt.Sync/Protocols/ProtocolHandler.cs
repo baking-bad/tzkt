@@ -158,112 +158,56 @@ namespace Tzkt.Sync
         {
             foreach (var entry in Db.ChangeTracker.Entries())
             {
-                if (entry.Entity is Delegate delegat)
+                switch(entry.Entity)
                 {
-                    delegat.Activation = null;
-                    delegat.BakedBlocks = null;
-                    delegat.Ballots = null;
-                    delegat.Delegate = null;
-                    delegat.DelegatedAccounts = null;
-                    delegat.DelegatedOriginations = null;
-                    delegat.Endorsements = null;
-                    delegat.OriginatedContracts = null;
-                    delegat.Proposals = null;
-                    delegat.PushedProposals = null;
-                    delegat.ReceivedDelegations = null;
-                    delegat.ReceivedDoubleBakingAccusations = null;
-                    delegat.ReceivedDoubleEndorsingAccusations = null;
-                    delegat.ReceivedTransactions = null;
-                    delegat.SentReveals = null;
-                    delegat.SentRevelations = null;
-                    delegat.SentDelegations = null;
-                    delegat.SentDoubleBakingAccusations = null;
-                    delegat.SentDoubleEndorsingAccusations = null;
-                    delegat.SentOriginations = null;
-                    delegat.SentTransactions = null;
-                    delegat.FirstBlock = null;
-                }
-                else if (entry.Entity is User user)
-                {
-                    user.Activation = null;
-                    user.Delegate = null;
-                    user.OriginatedContracts = null;
-                    user.ReceivedTransactions = null;
-                    user.SentReveals = null;
-                    user.SentDelegations = null;
-                    user.SentOriginations = null;
-                    user.SentTransactions = null;
-                    user.FirstBlock = null;
-                }
-                else if (entry.Entity is Contract contract)
-                {
-                    contract.Delegate = null;
-                    contract.WeirdDelegate = null;
-                    contract.Manager = null;
-                    contract.OriginatedContracts = null;
-                    contract.Origination = null;
-                    contract.ReceivedTransactions = null;
-                    contract.SentReveals = null;
-                    contract.SentDelegations = null;
-                    contract.SentOriginations = null;
-                    contract.SentTransactions = null;
-                    contract.FirstBlock = null;
-                }
-                else if (entry.Entity is Block b)
-                {
-                    b.Activations = null;
-                    b.Baker = null;
-                    b.Ballots = null;
-                    b.Delegations = null;
-                    b.DoubleBakings = null;
-                    b.DoubleEndorsings = null;
-                    b.Endorsements = null;
-                    b.Originations = null;
-                    b.Proposals = null;
-                    b.Protocol = null;
-                    b.Reveals = null;
-                    b.Revelation = null;
-                    b.Revelations = null;
-                    b.Transactions = null;
-                    b.CreatedAccounts = null;
-                }
-                else if (entry.Entity is Protocol p)
-                {
-                    p.Blocks = null;
-                }
-                else if (entry.Entity is VotingPeriod period)
-                {
-                    period.Epoch = null;
-                    period.Ballots = null;
-                    period.Proposals = null;
-                    period.Snapshots = null;
-
-                    if (period is ExplorationPeriod exploration)
-                    {
-                        exploration.Proposal = null;
-                    }
-                    else if (period is PromotionPeriod promotion)
-                    {
-                        promotion.Proposal = null;
-                    }
-                    else if (period is TestingPeriod testing)
-                    {
-                        testing.Proposal = null;
-                    }
-                    else if (period is ProposalPeriod proposal)
-                    {
-                        proposal.Candidates = null;
-                    }
-                }
-                else if (entry.Entity is Proposal proposal)
-                {
-                    proposal.Ballots = null;
-                    proposal.ExplorationPeriod = null;
-                    proposal.Initiator = null;
-                    proposal.PromotionPeriod = null;
-                    proposal.ProposalPeriod = null;
-                    proposal.Proposings = null;
-                    proposal.TestingPeriod = null;
+                    case Delegate delegat:
+                        delegat.Delegate = null;
+                        delegat.DelegatedAccounts = null;
+                        delegat.FirstBlock = null;
+                        break;
+                    case User user:
+                        user.Delegate = null;
+                        user.FirstBlock = null;
+                        break;
+                    case Contract contract:
+                        contract.Delegate = null;
+                        contract.WeirdDelegate = null;
+                        contract.Manager = null;
+                        contract.FirstBlock = null;
+                        break;
+                    case Block b:
+                        b.Activations = null;
+                        b.Baker = null;
+                        b.Ballots = null;
+                        b.CreatedAccounts = null;
+                        b.Delegations = null;
+                        b.DoubleBakings = null;
+                        b.DoubleEndorsings = null;
+                        b.Endorsements = null;
+                        b.Originations = null;
+                        b.Proposals = null;
+                        b.Protocol = null;
+                        b.Reveals = null;
+                        b.Revelation = null;
+                        b.Revelations = null;
+                        b.Transactions = null;
+                        break;
+                    case VotingPeriod period:
+                        period.Epoch = null;
+                        if (period is ExplorationPeriod exploration)
+                            exploration.Proposal = null;
+                        else if (period is PromotionPeriod promotion)
+                            promotion.Proposal = null;
+                        else if (period is TestingPeriod testing)
+                            testing.Proposal = null;
+                        break;
+                    case Proposal proposal:
+                        proposal.ExplorationPeriod = null;
+                        proposal.Initiator = null;
+                        proposal.PromotionPeriod = null;
+                        proposal.ProposalPeriod = null;
+                        proposal.TestingPeriod = null;
+                        break;
                 }
             }
         }

@@ -41,11 +41,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.Reveals)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<RevealOperation>()
-                .HasOne(x => x.Sender)
-                .WithMany(x => x.SentReveals)
-                .HasForeignKey(x => x.SenderId);
             #endregion
         }
     }

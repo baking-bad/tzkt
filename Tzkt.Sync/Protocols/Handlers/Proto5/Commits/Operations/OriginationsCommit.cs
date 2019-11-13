@@ -66,9 +66,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                 StorageFee = content.Metadata.Result.PaidStorageSizeDiff * block.Protocol.ByteCost,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
-
-            if (contract != null)
-                contract.Origination = Origination;
         }
 
         public async Task Init(Block block, OriginationOperation origination)

@@ -60,26 +60,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.Originations)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<OriginationOperation>()
-                .HasOne(x => x.Sender)
-                .WithMany(x => x.SentOriginations)
-                .HasForeignKey(x => x.SenderId);
-
-            modelBuilder.Entity<OriginationOperation>()
-                .HasOne(x => x.Parent)
-                .WithMany(x => x.InternalOriginations)
-                .HasForeignKey(x => x.ParentId);
-
-            modelBuilder.Entity<OriginationOperation>()
-                .HasOne(x => x.Contract)
-                .WithOne(x => x.Origination)
-                .HasForeignKey<OriginationOperation>(x => x.ContractId);
-
-            modelBuilder.Entity<OriginationOperation>()
-                .HasOne(x => x.Delegate)
-                .WithMany(x => x.DelegatedOriginations)
-                .HasForeignKey(x => x.DelegateId);
             #endregion
         }
     }

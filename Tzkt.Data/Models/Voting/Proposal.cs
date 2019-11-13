@@ -34,11 +34,6 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(PromotionPeriodId))]
         public PromotionPeriod PromotionPeriod { get; set; }
         #endregion
-
-        #region indirect relations
-        public List<BallotOperation> Ballots { get; set; }
-        public List<ProposalOperation> Proposings { get; set; }
-        #endregion
     }
 
     public static class ProposalModel
@@ -58,16 +53,6 @@ namespace Tzkt.Data.Models
             #endregion
 
             #region relations
-            modelBuilder.Entity<Proposal>()
-                .HasOne(x => x.Initiator)
-                .WithMany(x => x.PushedProposals)
-                .HasForeignKey(x => x.InitiatorId);
-
-            modelBuilder.Entity<Proposal>()
-                .HasOne(x => x.ProposalPeriod)
-                .WithMany(x => x.Candidates)
-                .HasForeignKey(x => x.ProposalPeriodId);
-
             modelBuilder.Entity<Proposal>()
                 .HasOne(x => x.ExplorationPeriod)
                 .WithOne(x => x.Proposal)

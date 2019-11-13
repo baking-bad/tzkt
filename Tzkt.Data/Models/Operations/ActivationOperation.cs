@@ -50,11 +50,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.Activations)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<ActivationOperation>()
-                .HasOne(x => x.Account)
-                .WithOne(x => x.Activation)
-                .HasForeignKey<ActivationOperation>(x => x.AccountId);
             #endregion
         }
     }

@@ -52,21 +52,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.Delegations)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<DelegationOperation>()
-                .HasOne(x => x.Sender)
-                .WithMany(x => x.SentDelegations)
-                .HasForeignKey(x => x.SenderId);
-
-            modelBuilder.Entity<DelegationOperation>()
-                .HasOne(x => x.Delegate)
-                .WithMany(x => x.ReceivedDelegations)
-                .HasForeignKey(x => x.DelegateId);
-
-            modelBuilder.Entity<DelegationOperation>()
-                .HasOne(x => x.Parent)
-                .WithMany(x => x.InternalDelegations)
-                .HasForeignKey(x => x.ParentId);
             #endregion
         }
     }

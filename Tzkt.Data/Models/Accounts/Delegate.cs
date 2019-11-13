@@ -18,28 +18,6 @@ namespace Tzkt.Data.Models
 
         #region indirect relations
         public List<Account> DelegatedAccounts { get; set; }
-
-        public List<Block> BakedBlocks { get; set; }
-        public List<Proposal> PushedProposals { get; set; }
-
-        //public List<BakingRight> BakingRights { get; set; }
-        //public List<EndorsingRight> EndorsingRights { get; set; }
-        //public List<BakingCycle> BakingCycles { get; set; }
-        //public List<DelegatorSnapshot> DelegatorsSnapshots { get; set; }
-
-        public List<EndorsementOperation> Endorsements { get; set; }
-
-        public List<BallotOperation> Ballots { get; set; }
-        public List<ProposalOperation> Proposals { get; set; }
-
-        public List<DoubleBakingOperation> SentDoubleBakingAccusations { get; set; }
-        public List<DoubleBakingOperation> ReceivedDoubleBakingAccusations { get; set; }
-        public List<DoubleEndorsingOperation> SentDoubleEndorsingAccusations { get; set; }
-        public List<DoubleEndorsingOperation> ReceivedDoubleEndorsingAccusations { get; set; }
-        public List<NonceRevelationOperation> SentRevelations { get; set; }
-
-        public List<DelegationOperation> ReceivedDelegations { get; set; }
-        public List<OriginationOperation> DelegatedOriginations { get; set; }
         #endregion
     }
 

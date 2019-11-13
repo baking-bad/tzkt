@@ -52,11 +52,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.Endorsements)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<EndorsementOperation>()
-                .HasOne(x => x.Delegate)
-                .WithMany(x => x.Endorsements)
-                .HasForeignKey(x => x.DelegateId);
             #endregion
         }
     }

@@ -7,10 +7,6 @@ namespace Tzkt.Data.Models
     {
         public string PublicKey { get; set; }
         public bool? AirDrop { get; set; }
-
-        #region indirect relations
-        public ActivationOperation Activation { get; set; }
-        #endregion
     }
 
     public static class UserModel

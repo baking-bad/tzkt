@@ -18,12 +18,6 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(TargetId))]
         public Account Target { get; set; }
         #endregion
-
-        #region indirect relations
-        public List<DelegationOperation> InternalDelegations { get; set; }
-        public List<OriginationOperation> InternalOriginations { get; set; }
-        public List<TransactionOperation> InternalTransactions { get; set; }
-        #endregion
     }
 
     public static class TransactionOperationModel
@@ -63,21 +57,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.Transactions)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<TransactionOperation>()
-                .HasOne(x => x.Parent)
-                .WithMany(x => x.InternalTransactions)
-                .HasForeignKey(x => x.ParentId);
-
-            modelBuilder.Entity<TransactionOperation>()
-                .HasOne(x => x.Sender)
-                .WithMany(x => x.SentTransactions)
-                .HasForeignKey(x => x.SenderId);
-
-            modelBuilder.Entity<TransactionOperation>()
-                .HasOne(x => x.Target)
-                .WithMany(x => x.ReceivedTransactions)
-                .HasForeignKey(x => x.TargetId);
             #endregion
         }
     }

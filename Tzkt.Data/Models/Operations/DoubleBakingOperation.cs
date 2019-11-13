@@ -62,16 +62,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.DoubleBakings)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<DoubleBakingOperation>()
-                .HasOne(x => x.Accuser)
-                .WithMany(x => x.SentDoubleBakingAccusations)
-                .HasForeignKey(x => x.AccuserId);
-
-            modelBuilder.Entity<DoubleBakingOperation>()
-                .HasOne(x => x.Offender)
-                .WithMany(x => x.ReceivedDoubleBakingAccusations)
-                .HasForeignKey(x => x.OffenderId);
             #endregion
         }
     }

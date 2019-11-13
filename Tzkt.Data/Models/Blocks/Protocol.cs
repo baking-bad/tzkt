@@ -36,10 +36,6 @@ namespace Tzkt.Data.Models
 
         public int OriginationSize { get; set; }
         public int ByteCost { get; set; }
-
-        #region relations
-        public List<Block> Blocks { get; set; }
-        #endregion
     }
 
     public static class ProtocolModel

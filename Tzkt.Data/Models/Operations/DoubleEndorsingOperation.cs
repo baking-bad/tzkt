@@ -62,16 +62,6 @@ namespace Tzkt.Data.Models
                 .WithMany(x => x.DoubleEndorsings)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<DoubleEndorsingOperation>()
-                .HasOne(x => x.Accuser)
-                .WithMany(x => x.SentDoubleEndorsingAccusations)
-                .HasForeignKey(x => x.AccuserId);
-
-            modelBuilder.Entity<DoubleEndorsingOperation>()
-                .HasOne(x => x.Offender)
-                .WithMany(x => x.ReceivedDoubleEndorsingAccusations)
-                .HasForeignKey(x => x.OffenderId);
             #endregion
         }
     }

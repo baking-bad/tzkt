@@ -16,12 +16,6 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(EpochId))]
         public VotingEpoch Epoch { get; set; }
         #endregion
-
-        #region indirect relations
-        public List<BallotOperation> Ballots { get; set; }
-        public List<ProposalOperation> Proposals { get; set; }
-        public List<VotingSnapshot> Snapshots { get; set; }
-        #endregion
     }
 
     public static class VotingPeriodModel
@@ -40,13 +34,6 @@ namespace Tzkt.Data.Models
                 .HasValue<ExplorationPeriod>(VotingPeriods.Exploration)
                 .HasValue<TestingPeriod>(VotingPeriods.Testing)
                 .HasValue<PromotionPeriod>(VotingPeriods.Promotion);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<VotingPeriod>()
-                .HasOne(x => x.Epoch)
-                .WithMany(x => x.Periods)
-                .HasForeignKey(x => x.EpochId);
             #endregion
         }
     }

@@ -11,8 +11,8 @@ using Tzkt.Data.Models;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20191112064812_Spendable")]
-    partial class Spendable
+    [Migration("20191113225956_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -47,6 +47,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("DelegationLevel")
                         .HasColumnType("integer");
 
+                    b.Property<int>("FirstLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LastLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Operations")
                         .HasColumnType("integer");
 
@@ -62,6 +68,8 @@ namespace Tzkt.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("DelegateId");
+
+                    b.HasIndex("FirstLevel");
 
                     b.HasIndex("Id")
                         .IsUnique();
@@ -591,8 +599,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContractId")
-                        .IsUnique();
+                    b.HasIndex("ContractId");
 
                     b.HasIndex("DelegateId");
 
@@ -741,6 +748,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("EndorsersPerBlock")
                         .HasColumnType("integer");
 
+                    b.Property<int>("FirstLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int>("HardBlockGasLimit")
                         .HasColumnType("integer");
 
@@ -756,6 +766,9 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
+                    b.Property<int>("LastLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OriginationSize")
                         .HasColumnType("integer");
 
@@ -770,9 +783,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("TokensPerRoll")
                         .HasColumnType("bigint");
-
-                    b.Property<int>("Weight")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1146,13 +1156,20 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
                         .WithMany("DelegatedAccounts")
                         .HasForeignKey("DelegateId");
+
+                    b.HasOne("Tzkt.Data.Models.Block", "FirstBlock")
+                        .WithMany("CreatedAccounts")
+                        .HasForeignKey("FirstLevel")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.ActivationOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.User", "Account")
-                        .WithOne("Activation")
-                        .HasForeignKey("Tzkt.Data.Models.ActivationOperation", "AccountId")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1174,19 +1191,19 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
-                        .WithMany("Ballots")
+                        .WithMany()
                         .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
-                        .WithMany("Ballots")
+                        .WithMany()
                         .HasForeignKey("ProposalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Delegate", "Sender")
-                        .WithMany("Ballots")
+                        .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1195,7 +1212,7 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.Block", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Delegate", "Baker")
-                        .WithMany("BakedBlocks")
+                        .WithMany()
                         .HasForeignKey("BakerId");
 
                     b.HasOne("Tzkt.Data.Models.Protocol", "Protocol")
@@ -1214,7 +1231,7 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany("ReceivedDelegations")
+                        .WithMany()
                         .HasForeignKey("DelegateId");
 
                     b.HasOne("Tzkt.Data.Models.Block", "Block")
@@ -1225,11 +1242,11 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
-                        .WithMany("InternalDelegations")
+                        .WithMany()
                         .HasForeignKey("ParentId");
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany("SentDelegations")
+                        .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1238,7 +1255,7 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.DoubleBakingOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Delegate", "Accuser")
-                        .WithMany("SentDoubleBakingAccusations")
+                        .WithMany()
                         .HasForeignKey("AccuserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1251,7 +1268,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Delegate", "Offender")
-                        .WithMany("ReceivedDoubleBakingAccusations")
+                        .WithMany()
                         .HasForeignKey("OffenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1260,7 +1277,7 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.DoubleEndorsingOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Delegate", "Accuser")
-                        .WithMany("SentDoubleEndorsingAccusations")
+                        .WithMany()
                         .HasForeignKey("AccuserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1273,7 +1290,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Delegate", "Offender")
-                        .WithMany("ReceivedDoubleEndorsingAccusations")
+                        .WithMany()
                         .HasForeignKey("OffenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1282,7 +1299,7 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.EndorsementOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany("Endorsements")
+                        .WithMany()
                         .HasForeignKey("DelegateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1305,7 +1322,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Delegate", "Sender")
-                        .WithMany("SentRevelations")
+                        .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1314,11 +1331,11 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.OriginationOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Contract", "Contract")
-                        .WithOne("Origination")
-                        .HasForeignKey("Tzkt.Data.Models.OriginationOperation", "ContractId");
+                        .WithMany()
+                        .HasForeignKey("ContractId");
 
                     b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany("DelegatedOriginations")
+                        .WithMany()
                         .HasForeignKey("DelegateId");
 
                     b.HasOne("Tzkt.Data.Models.Block", "Block")
@@ -1329,11 +1346,11 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
-                        .WithMany("InternalOriginations")
+                        .WithMany()
                         .HasForeignKey("ParentId");
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany("SentOriginations")
+                        .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1346,7 +1363,7 @@ namespace Tzkt.Data.Migrations
                         .HasForeignKey("Tzkt.Data.Models.Proposal", "ExplorationPeriodId");
 
                     b.HasOne("Tzkt.Data.Models.Delegate", "Initiator")
-                        .WithMany("PushedProposals")
+                        .WithMany()
                         .HasForeignKey("InitiatorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1356,7 +1373,7 @@ namespace Tzkt.Data.Migrations
                         .HasForeignKey("Tzkt.Data.Models.Proposal", "PromotionPeriodId");
 
                     b.HasOne("Tzkt.Data.Models.ProposalPeriod", "ProposalPeriod")
-                        .WithMany("Candidates")
+                        .WithMany()
                         .HasForeignKey("ProposalPeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1376,19 +1393,19 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
-                        .WithMany("Proposals")
+                        .WithMany()
                         .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
-                        .WithMany("Proposings")
+                        .WithMany()
                         .HasForeignKey("ProposalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Delegate", "Sender")
-                        .WithMany("Proposals")
+                        .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1404,7 +1421,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany("SentReveals")
+                        .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1420,24 +1437,24 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
-                        .WithMany("InternalTransactions")
+                        .WithMany()
                         .HasForeignKey("ParentId");
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany("SentTransactions")
+                        .WithMany()
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Tzkt.Data.Models.Account", "Target")
-                        .WithMany("ReceivedTransactions")
+                        .WithMany()
                         .HasForeignKey("TargetId");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.VotingPeriod", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.VotingEpoch", "Epoch")
-                        .WithMany("Periods")
+                        .WithMany()
                         .HasForeignKey("EpochId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1446,7 +1463,7 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.VotingSnapshot", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
-                        .WithMany("Snapshots")
+                        .WithMany()
                         .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1455,7 +1472,7 @@ namespace Tzkt.Data.Migrations
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Account", "Manager")
-                        .WithMany("OriginatedContracts")
+                        .WithMany()
                         .HasForeignKey("ManagerId");
 
                     b.HasOne("Tzkt.Data.Models.User", "WeirdDelegate")
