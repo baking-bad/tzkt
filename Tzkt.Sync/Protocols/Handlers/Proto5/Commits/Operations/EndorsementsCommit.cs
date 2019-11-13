@@ -56,7 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.Operations |= Operations.Endorsements;
             block.Operations |= Operations.Endorsements;
 
-            block.Validations++;
+            block.Validations += Endorsement.Slots;
 
             var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(Endorsement.Block) : GracePeriod.Init(Endorsement.Block);
             if (sender.DeactivationLevel < newDeactivationLevel)
