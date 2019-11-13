@@ -27,7 +27,9 @@ namespace Tzkt.Sync.Protocols
             var protocol = new Protocol
             {
                 Hash = block.Protocol,
-                Code = -1
+                Code = -1,
+                FirstLevel = block.Level,
+                LastLevel = block.Level
             };
 
             Db.Protocols.Add(protocol);

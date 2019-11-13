@@ -150,8 +150,6 @@ namespace Tzkt.Sync.Services
 
                     if (AppState.Level >= 755_355)
                     {
-                        Console.WriteLine("Done");
-                        await Task.Delay(TimeSpan.FromDays(100));
                         throw new ValidationException("Test", true);
                     }
 
@@ -164,7 +162,6 @@ namespace Tzkt.Sync.Services
                 catch(OperationCanceledException)
                 {
                     Console.WriteLine("Error");
-                    await Task.Delay(TimeSpan.FromDays(100));
                     await Task.Delay(1000 * 180);
                 }
             }

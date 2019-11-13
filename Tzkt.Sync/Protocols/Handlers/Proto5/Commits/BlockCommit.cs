@@ -25,7 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             else if (rawBlock.Level % protocol.BlocksPerCycle == 0)
                 events |= BlockEvents.CycleEnd;
 
-            if (protocol.Weight == 1)
+            if (protocol.FirstLevel == rawBlock.Level)
                 events |= BlockEvents.ProtocolBegin;
             else if (rawBlock.Metadata.Protocol != rawBlock.Metadata.NextProtocol)
                 events |= BlockEvents.ProtocolEnd;
@@ -70,8 +70,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             Db.TryAttach(baker);
             #endregion
 
-            proto.Weight++;
-
             var reward = proto.BlockReward * (8 + 2 * EndorsedSlots / proto.EndorsersPerBlock) / 10 / (block.Priority + 1);
 
             baker.Balance += reward;
@@ -87,6 +85,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Block.ResetDeactivation = baker.DeactivationLevel;
                 baker.DeactivationLevel = newDeactivationLevel;
             }
+
+            if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
+                proto.LastLevel = Block.Level;
 
             Db.Blocks.Add(Block);
             Cache.AddBlock(Block);
@@ -108,10 +109,14 @@ namespace Tzkt.Sync.Protocols.Proto5
             baker.FrozenRewards -= reward;
             baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
 
-            if (--proto.Weight == 0)
+            if (Block.Events.HasFlag(BlockEvents.ProtocolBegin))
             {
                 Db.Protocols.Remove(proto);
                 Cache.RemoveProtocol(proto);
+            }
+            else if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
+            {
+                proto.LastLevel = -1;
             }
 
             if (Block.ResetDeactivation != null)

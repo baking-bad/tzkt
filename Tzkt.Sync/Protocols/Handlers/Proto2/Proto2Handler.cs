@@ -77,6 +77,8 @@ namespace Tzkt.Sync.Protocols
                 {
                     Hash = block.Protocol,
                     Code = await Db.Protocols.CountAsync() - 1,
+                    FirstLevel = block.Level,
+                    LastLevel = -1
                 };
                 Db.Protocols.Add(protocol);
                 Cache.AddProtocol(protocol);

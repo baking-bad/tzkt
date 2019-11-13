@@ -32,6 +32,8 @@ namespace Tzkt.Sync.Protocols
             {
                 Hash = block.Protocol,
                 Code = await Db.Protocols.CountAsync() - 1,
+                FirstLevel = block.Level,
+                LastLevel = block.Level,
                 BlockDeposit = rawConst.BlockDeposit,
                 BlockReward = rawConst.BlockReward,
                 BlocksPerCommitment = rawConst.BlocksPerCommitment,

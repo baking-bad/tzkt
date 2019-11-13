@@ -33,8 +33,6 @@ namespace Tzkt.Sync.Protocols.Genesis
         {
             Db.TryAttach(Block.Protocol);
 
-            Block.Protocol.Weight++;
-
             Db.Blocks.Add(Block);
             Cache.AddBlock(Block);
 
