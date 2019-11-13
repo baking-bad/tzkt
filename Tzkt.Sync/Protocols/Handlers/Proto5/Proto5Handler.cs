@@ -247,8 +247,11 @@ namespace Tzkt.Sync.Protocols
                                         case RawInternalTransactionResult internalTransaction:
                                             await TransactionsCommit.Apply(this, blockCommit.Block, parent.Transaction, internalTransaction);
                                             break;
+                                        case RawInternalDelegationResult internalDelegation:
+                                            await DelegationsCommit.Apply(this, blockCommit.Block, parent.Transaction, internalDelegation);
+                                            break;
                                         default:
-                                            throw new NotImplementedException($"internal '{content.GetType()}' is not implemented");
+                                            throw new NotImplementedException($"internal '{internalContent.GetType()}' is not implemented");
                                     }
                                 }
                             }

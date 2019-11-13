@@ -7,6 +7,7 @@ namespace Tzkt.Data.Models
     public class Contract : Account
     {
         public ContractKind Kind { get; set; }
+        public bool? Spendable { get; set; }
 
         public int? ManagerId { get; set; }
         public int? WeirdDelegateId { get; set; }

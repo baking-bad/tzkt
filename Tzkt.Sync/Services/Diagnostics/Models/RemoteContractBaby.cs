@@ -15,8 +15,7 @@ namespace Tzkt.Sync.Services.Diagnostics
 
         #region validation
         public bool IsValidFormat() =>
-            Balance != null &&
-            Counter != null;
+            Balance != null;
         #endregion
     }
 }

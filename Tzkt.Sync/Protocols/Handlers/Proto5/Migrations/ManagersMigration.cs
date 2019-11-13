@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             var emptiedManagers = await Db.Contracts
                 .AsNoTracking()
                 .Include(x => x.Manager)
-                .Where(x => x.Kind == ContractKind.DelegatorContract &&
+                .Where(x => x.Spendable == true &&
                             x.Manager.Type == AccountType.User &&
                             x.Manager.Balance == 0 &&
                             x.Manager.Counter > 0)
@@ -35,6 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 manager.Balance = 1;
                 manager.AirDrop = true;
+                manager.Counter = (await Cache.GetAppStateAsync()).ManagerCounter;
             }
         }
 

@@ -148,7 +148,7 @@ namespace Tzkt.Sync.Services
                     Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                     using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
 
-                    if (AppState.Level >= 655_355)
+                    if (AppState.Level >= 755_355)
                     {
                         Console.WriteLine("Done");
                         await Task.Delay(TimeSpan.FromDays(100));

@@ -128,13 +128,13 @@ namespace Tzkt.Sync.Protocols.Proto5
         public string Delegate { get; set; }
 
         [JsonPropertyName("result")]
-        public RawTransactionContentResult Result { get; set; }
+        public RawDelegationContentResult Result { get; set; }
 
         #region validation
         public bool IsValidFormat() =>
             !string.IsNullOrEmpty(Source) &&
             Nonce >= 0 &&
-            !string.IsNullOrEmpty(Delegate) &&
+            (Delegate == null || Delegate != "") &&
             Result?.IsValidFormat() == true;
         #endregion
     }

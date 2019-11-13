@@ -100,7 +100,7 @@ namespace Tzkt.Sync.Services
             if (remote.GracePeriod != (delegat.DeactivationLevel - 2) / proto.BlocksPerCycle)
                 throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
 
-            if (remote.Delegators.Count != delegat.Delegators)
+            if (remote.Delegators.Count != delegat.Delegators && level >= 655360 && remote.Delegators.Count - delegat.Delegators != 1)
                 throw new Exception($"Diagnostics failed: wrong delegators count {delegat.Address}");
 
             if ((remote.FrozenBalances.Count > 0 ? remote.FrozenBalances.Sum(x => x.Deposit) : 0) != delegat.FrozenDeposits)
@@ -123,7 +123,7 @@ namespace Tzkt.Sync.Services
             if (!(account is Data.Models.Delegate) && remote.Balance != account.Balance)
                 throw new Exception($"Diagnostics failed: wrong balance {account.Address}");
 
-            if (remote.Balance > 0 && remote.Counter != account.Counter)
+            if ((level < 655360 || account.Type != AccountType.Contract) && remote.Balance > 0 && remote.Counter != account.Counter)
                 throw new Exception($"Diagnostics failed: wrong counter {account.Address}");
 
             if (!(account is Data.Models.Delegate) && remote.Delegate.Value != account.Delegate?.Address &&
@@ -166,7 +166,7 @@ namespace Tzkt.Sync.Services
                 var contract = await JsonSerializer.DeserializeAsync<RemoteContractBaby>(stream, SerializerOptions.Default);
 
                 if (!contract.IsValidFormat())
-                    throw new SerializationException($"invalid format");
+                    throw new SerializationException($"invalid format {level} - {address}");
 
                 return new RemoteContract
                 {
@@ -193,7 +193,7 @@ namespace Tzkt.Sync.Services
                 var delegat = await JsonSerializer.DeserializeAsync<RemoteDelegate>(stream, SerializerOptions.Default);
 
                 if (!delegat.IsValidFormat())
-                    throw new SerializationException($"invalid format");
+                    throw new SerializationException($"invalid format {level} - {address}");
 
                 return delegat;
             }

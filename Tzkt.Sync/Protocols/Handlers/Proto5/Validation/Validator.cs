@@ -229,7 +229,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         ?? throw new ValidationException("invalidendorsement rewards updates");
 
                     if (rewardsUpdate.Delegate != endorsement.Metadata.Delegate ||
-                        rewardsUpdate.Change != GetEndorsementReward(endorsement.Metadata.Slots.Count, lastBlock.Priority))
+                        rewardsUpdate.Change != GetEndorsementReward(endorsement.Metadata.Slots.Count, rawBlock.Level < 655360 ? lastBlock.Priority : rawBlock.Header.Priority))
                         throw new ValidationException("invalid endorsement rewards update");
                 }
             }

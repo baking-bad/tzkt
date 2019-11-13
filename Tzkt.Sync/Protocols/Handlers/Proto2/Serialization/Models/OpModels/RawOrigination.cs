@@ -39,6 +39,9 @@ namespace Tzkt.Sync.Protocols.Proto2
         [JsonPropertyName("script")]
         public RawOriginationScript Script { get; set; }
 
+        [JsonPropertyName("spendable")]
+        public bool? Spendable { get; set; }
+
         [JsonPropertyName("metadata")]
         public RawOriginationContentMetadata Metadata { get; set; }
 
