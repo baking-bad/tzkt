@@ -71,6 +71,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     LastLevel = rawBlock.Level,
                     Balance = data.Balance,
                     Counter = data.Counter,
+                    Spendable = false,
                     DelegationLevel = 1,
                     Delegate = await Cache.GetDelegateAsync(data.Delegate),
                     Manager = (User)await Cache.GetAccountAsync(data.Manager),

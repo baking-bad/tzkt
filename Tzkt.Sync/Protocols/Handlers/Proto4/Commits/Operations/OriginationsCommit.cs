@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                     Staked = delegat?.Staked ?? false,
                     Type = AccountType.Contract,
                     Kind = content.Script == null ? ContractKind.DelegatorContract : ContractKind.SmartContract,
-                    Spendable = content.Spendable == true ? content.Spendable : null
+                    Spendable = content.Spendable == false ? content.Spendable : null
                 }
                 : null;
 

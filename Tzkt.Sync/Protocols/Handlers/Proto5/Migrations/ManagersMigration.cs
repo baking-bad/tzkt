@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             var emptiedManagers = await Db.Contracts
                 .AsNoTracking()
                 .Include(x => x.Manager)
-                .Where(x => x.Spendable == true &&
+                .Where(x => x.Spendable == null &&
                             x.Manager.Type == AccountType.User &&
                             x.Manager.Balance == 0 &&
                             x.Manager.Counter > 0)
