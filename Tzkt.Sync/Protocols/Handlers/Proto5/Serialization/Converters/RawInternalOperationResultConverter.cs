@@ -16,8 +16,9 @@ namespace Tzkt.Sync.Protocols.Proto5.Serialization
 
             return kind switch
             {
-                "transaction" => JsonSerializer.Deserialize<RawInternalTransactionResult>(ref reader, options),
                 "delegation" => JsonSerializer.Deserialize<RawInternalDelegationResult>(ref reader, options),
+                "origination" => JsonSerializer.Deserialize<RawInternalOriginationResult>(ref reader, options),
+                "transaction" => JsonSerializer.Deserialize<RawInternalTransactionResult>(ref reader, options),
                 _ => throw new JsonException()
             };
         }

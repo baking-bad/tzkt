@@ -40,9 +40,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Status = content.Metadata.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
+                    "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
                     "skipped" => OperationStatus.Skipped,
-                    _ => throw new NotImplementedException()
+                    _ => throw new Exception($"Invalid status '{content.Metadata.Result.Status}'")
                 },
                 GasUsed = content.Metadata.Result.ConsumedGas
             };
@@ -71,9 +72,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Status = content.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
+                    "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
                     "skipped" => OperationStatus.Skipped,
-                    _ => throw new NotImplementedException()
+                    _ => throw new Exception($"Invalid status '{content.Result.Status}'")
                 },
                 GasUsed = content.Result.ConsumedGas
             };

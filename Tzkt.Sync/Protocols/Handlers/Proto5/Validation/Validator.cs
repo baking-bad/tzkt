@@ -347,6 +347,28 @@ namespace Tzkt.Sync.Protocols.Proto5
                         if (!await Cache.AccountExistsAsync(internalDelegation.Delegate, AccountType.Delegate))
                             throw new ValidationException("unknown delegate account");
                 }
+
+                foreach (var internalContent in transaction.Metadata.InternalResults.Where(x => x is RawInternalOriginationResult))
+                {
+                    var internalOrigination = internalContent as RawInternalOriginationResult;
+
+                    if (!await Cache.AccountExistsAsync(internalOrigination.Source, AccountType.Contract))
+                        throw new ValidationException("unknown source contract");
+
+                    if (internalOrigination.Result.Status == "applied" && internalOrigination.Delegate != null)
+                        if (!await Cache.AccountExistsAsync(internalOrigination.Delegate, AccountType.Delegate))
+                            throw new ValidationException("unknown delegate account");
+
+                    if (internalOrigination.Result.BalanceUpdates != null)
+                        ValidateTransferBalanceUpdates(
+                            internalOrigination.Result.BalanceUpdates,
+                            internalOrigination.Source,
+                            internalOrigination.Result.OriginatedContracts[0],
+                            internalOrigination.Balance,
+                            internalOrigination.Result.PaidStorageSizeDiff * Protocol.ByteCost,
+                            Protocol.OriginationSize * Protocol.ByteCost,
+                            transaction.Source);
+                }
             }
         }
 

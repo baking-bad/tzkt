@@ -84,11 +84,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply result
-            if (Reveal.Status == OperationStatus.Applied || Reveal.Status == OperationStatus.Backtracked)
-            {
-                if (sender is User user)
-                    user.PublicKey = PubKey;
-            }
+            if (sender is User user)
+                user.PublicKey = PubKey;
             #endregion
 
             Db.RevealOps.Add(Reveal);
@@ -112,14 +109,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(senderDelegate);
             #endregion
 
-            #region revert result
-            if (Reveal.Status == OperationStatus.Applied || Reveal.Status == OperationStatus.Backtracked)
-            {
-                if (sender is User user)
-                    user.PublicKey = null;
-            }
-            #endregion
-
             #region revert operation
             sender.Balance += Reveal.BakerFee;
             if (senderDelegate != null) senderDelegate.StakingBalance += Reveal.BakerFee;
@@ -131,6 +120,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.Operations &= ~Operations.Reveals;
 
             sender.Counter = Math.Min(sender.Counter, Reveal.Counter - 1);
+            #endregion
+
+            #region revert result
+            if (!sender.Operations.HasFlag(Operations.Reveals))
+            {
+                if (sender is User user)
+                    user.PublicKey = null;
+            }
             #endregion
 
             Db.RevealOps.Remove(Reveal);

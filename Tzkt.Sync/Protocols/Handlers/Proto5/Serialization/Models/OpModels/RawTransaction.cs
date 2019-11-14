@@ -138,4 +138,35 @@ namespace Tzkt.Sync.Protocols.Proto5
             Result?.IsValidFormat() == true;
         #endregion
     }
+
+    class RawInternalOriginationResult : IInternalOperationResult
+    {
+        [JsonPropertyName("source")]
+        public string Source { get; set; }
+
+        [JsonPropertyName("nonce")]
+        public int Nonce { get; set; }
+
+        [JsonPropertyName("balance")]
+        public long Balance { get; set; }
+
+        [JsonPropertyName("delegate")]
+        public string Delegate { get; set; }
+
+        [JsonPropertyName("script")]
+        public RawOriginationScript Script { get; set; }
+
+        [JsonPropertyName("result")]
+        public RawOriginationContentResult Result { get; set; }
+
+        #region validation
+        public bool IsValidFormat() =>
+            !string.IsNullOrEmpty(Source) &&
+            Nonce >= 0 &&
+            Balance >= 0 &&
+            (Delegate == null || Delegate != "") &&
+            (Script == null || Script.IsValidFormat()) &&
+            Result?.IsValidFormat() == true;
+        #endregion
+    }
 }

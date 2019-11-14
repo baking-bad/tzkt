@@ -173,7 +173,7 @@ namespace Tzkt.Sync.Protocols
                             await EndorsementsCommit.Apply(this, blockCommit.Block, operation, endorsement);
                             break;
                         default:
-                            throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[0]");
+                            throw new Exception($"'{content.GetType()}' is not expected in operations[0]");
                     }
                 }
             }
@@ -189,7 +189,7 @@ namespace Tzkt.Sync.Protocols
                     else if (content is RawBallotContent ballot)
                         await BallotsCommit.Apply(this, blockCommit.Block, operation, ballot);
                     else 
-                        throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[1]");
+                        throw new Exception($"'{content.GetType()}' is not expected in operations[1]");
                 }
             }
             #endregion
@@ -214,7 +214,7 @@ namespace Tzkt.Sync.Protocols
                             await NonceRevelationsCommit.Apply(this, blockCommit.Block, operation, revelation);
                             break;
                         default:
-                            throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[2]");
+                            throw new Exception($"'{content.GetType()}' is not expected in operations[2]");
                     }
                 }
             }
@@ -252,14 +252,17 @@ namespace Tzkt.Sync.Protocols
                                         case RawInternalDelegationResult internalDelegation:
                                             await DelegationsCommit.Apply(this, blockCommit.Block, parent.Transaction, internalDelegation);
                                             break;
+                                        case RawInternalOriginationResult internalOrigination:
+                                            await OriginationsCommit.Apply(this, blockCommit.Block, parent.Transaction, internalOrigination);
+                                            break;
                                         default:
-                                            throw new NotImplementedException($"internal '{internalContent.GetType()}' is not implemented");
+                                            throw new Exception($"internal '{internalContent.GetType()}' is not expected");
                                     }
                                 }
                             }
                             break;
                         default:
-                            throw new NotImplementedException($"'{content.GetType()}' is not expected in operations[3]");
+                            throw new Exception($"'{content.GetType()}' is not expected in operations[3]");
                     }
                 }
             }

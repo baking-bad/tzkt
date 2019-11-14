@@ -59,11 +59,63 @@ namespace Tzkt.Sync.Protocols.Proto5
                     "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
                     "skipped" => OperationStatus.Skipped,
-                    _ => throw new NotImplementedException()
+                    _ => throw new Exception($"Invalid status '{content.Metadata.Result.Status}'")
                 },
                 GasUsed = content.Metadata.Result.ConsumedGas,
                 StorageUsed = content.Metadata.Result.PaidStorageSizeDiff,
                 StorageFee = content.Metadata.Result.PaidStorageSizeDiff * block.Protocol.ByteCost,
+                AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
+            };
+        }
+
+        public async Task Init(Block block, TransactionOperation parent, RawInternalOriginationResult content)
+        {
+            var sender = await Cache.GetAccountAsync(content.Source);
+            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+
+            var delegat = await Cache.GetDelegateOrDefaultAsync(content.Delegate);
+
+            var contract = content.Result.Status == "applied" ?
+                new Contract
+                {
+                    Address = content.Result.OriginatedContracts[0],
+                    Balance = content.Balance,
+                    Counter = 0,
+                    Delegate = delegat,
+                    DelegationLevel = delegat != null ? (int?)block.Level : null,
+                    Manager = sender,
+                    Operations = Operations.None,
+                    Staked = delegat?.Staked ?? false,
+                    Type = AccountType.Contract,
+                    Kind = ContractKind.SmartContract
+                }
+                : null;
+
+            Origination = new OriginationOperation
+            {
+                Id = await Cache.NextCounterAsync(),
+                Parent = parent,
+                Block = parent.Block,
+                Level = parent.Block.Level,
+                Timestamp = parent.Timestamp,
+                OpHash = parent.OpHash,
+                Counter = parent.Counter,
+                Nonce = content.Nonce,
+                Balance = content.Balance,
+                Sender = sender,
+                Delegate = delegat,
+                Contract = contract,
+                Status = content.Result.Status switch
+                {
+                    "applied" => OperationStatus.Applied,
+                    "backtracked" => OperationStatus.Backtracked,
+                    "failed" => OperationStatus.Failed,
+                    "skipped" => OperationStatus.Skipped,
+                    _ => throw new Exception($"Invalid status '{content.Result.Status}'")
+                },
+                GasUsed = content.Result.ConsumedGas,
+                StorageUsed = content.Result.PaidStorageSizeDiff,
+                StorageFee = content.Result.PaidStorageSizeDiff * block.Protocol.ByteCost,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
         }
@@ -83,7 +135,23 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         }
 
-        public override Task Apply()
+        public override async Task Apply()
+        {
+            if (Origination.Parent == null)
+                await ApplyOrigination();
+            else
+                await ApplyInternalOrigination();
+        }
+
+        public override async Task Revert()
+        {
+            if (Origination.ParentId == null)
+                await RevertOrigination();
+            else
+                await RevertInternalOrigination();
+        }
+
+        public Task ApplyOrigination()
         {
             #region entities
             var block = Origination.Block;
@@ -147,7 +215,74 @@ namespace Tzkt.Sync.Protocols.Proto5
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public Task ApplyInternalOrigination()
+        {
+            #region entities
+            var block = Origination.Block;
+
+            var parentTx = Origination.Parent;
+            var parentSender = parentTx.Sender;
+            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
+
+            var sender = Origination.Sender;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
+            var contract = Origination.Contract;
+            var contractDelegate = Origination.Delegate;
+
+            //Db.TryAttach(parentTx);
+            //Db.TryAttach(parentSender);
+            //Db.TryAttach(parentDelegate);
+
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
+
+            Db.TryAttach(contract);
+            Db.TryAttach(contractDelegate);
+            #endregion
+
+            #region apply operation
+            parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Originations;
+
+            sender.Operations |= Operations.Originations;
+            block.Operations |= Operations.Originations;
+            #endregion
+
+            #region apply result
+            if (Origination.Status == OperationStatus.Applied)
+            {
+                sender.Balance -= Origination.Balance;
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance -= Origination.Balance;
+                }
+
+                parentSender.Balance -= Origination.StorageFee ?? 0;
+                parentSender.Balance -= Origination.AllocationFee ?? 0;
+
+                if (parentDelegate != null)
+                {
+                    parentDelegate.StakingBalance -= Origination.StorageFee ?? 0;
+                    parentDelegate.StakingBalance -= Origination.AllocationFee ?? 0;
+                }
+
+                if (contractDelegate != null)
+                {
+                    contractDelegate.Delegators++;
+                    contractDelegate.StakingBalance += contract.Balance;
+                }
+
+                Db.Contracts.Add(contract);
+            }
+            #endregion
+
+            Db.OriginationOps.Add(Origination);
+
+            return Task.CompletedTask;
+        }
+
+        public async Task RevertOrigination()
         {
             #region entities
             var block = Origination.Block;
@@ -211,11 +346,83 @@ namespace Tzkt.Sync.Protocols.Proto5
             await Cache.ReleaseCounterAsync(true);
         }
 
+        public async Task RevertInternalOrigination()
+        {
+            #region entities
+            var parentTx = Origination.Parent;
+            var parentSender = parentTx.Sender;
+            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
+
+            var sender = Origination.Sender;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
+            var contract = Origination.Contract;
+            var contractDelegate = Origination.Delegate;
+
+            //Db.TryAttach(parentTx);
+            //Db.TryAttach(parentSender);
+            //Db.TryAttach(parentDelegate);
+
+            Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
+
+            Db.TryAttach(contract);
+            Db.TryAttach(contractDelegate);
+            #endregion
+
+            #region revert result
+            if (Origination.Status == OperationStatus.Applied)
+            {
+                sender.Balance += Origination.Balance;
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance += Origination.Balance;
+                }
+
+                parentSender.Balance += Origination.StorageFee ?? 0;
+                parentSender.Balance += Origination.AllocationFee ?? 0;
+
+                if (parentDelegate != null)
+                {
+                    parentDelegate.StakingBalance += Origination.StorageFee ?? 0;
+                    parentDelegate.StakingBalance += Origination.AllocationFee ?? 0;
+                }
+
+                if (contractDelegate != null)
+                {
+                    contractDelegate.Delegators--;
+                    contractDelegate.StakingBalance -= contract.Balance;
+                }
+
+                Db.Contracts.Remove(contract);
+                Cache.RemoveAccount(contract);
+            }
+            #endregion
+
+            #region revert operation
+            if (!await Db.OriginationOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < Origination.Id))
+                sender.Operations &= ~Operations.Originations;
+            #endregion
+
+            Db.OriginationOps.Remove(Origination);
+            await Cache.ReleaseCounterAsync(true);
+        }
+
         #region static
         public static async Task<OriginationsCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawOriginationContent content)
         {
             var commit = new OriginationsCommit(proto);
             await commit.Init(block, op, content);
+            await commit.Apply();
+
+            return commit;
+        }
+
+        public static async Task<OriginationsCommit> Apply(ProtocolHandler proto, Block block, TransactionOperation parent, RawInternalOriginationResult content)
+        {
+            var commit = new OriginationsCommit(proto);
+            await commit.Init(block, parent, content);
             await commit.Apply();
 
             return commit;

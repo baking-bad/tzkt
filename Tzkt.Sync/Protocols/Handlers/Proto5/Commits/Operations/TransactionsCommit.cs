@@ -45,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
                     "skipped" => OperationStatus.Skipped,
-                    _ => throw new NotImplementedException()
+                    _ => throw new Exception($"Invalid status '{content.Metadata.Result.Status}'")
                 },
                 GasUsed = content.Metadata.Result.ConsumedGas,
                 StorageUsed = content.Metadata.Result.PaidStorageSizeDiff,
@@ -89,7 +89,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     "backtracked" => OperationStatus.Backtracked,
                     "failed" => OperationStatus.Failed,
                     "skipped" => OperationStatus.Skipped,
-                    _ => throw new NotImplementedException()
+                    _ => throw new Exception($"Invalid status '{content.Result.Status}'")
                 },
                 GasUsed = content.Result.ConsumedGas,
                 StorageUsed = content.Result.PaidStorageSizeDiff,

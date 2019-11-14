@@ -140,30 +140,22 @@ namespace Tzkt.Sync.Services
         {
             while (await Node.HasUpdatesAsync(AppState.Level))
             {
-                try
+                if (cancelToken.IsCancellationRequested)
+                    return false;
+
+                Logger.LogDebug($"Loading block {AppState.Level + 1}...");
+                using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
+
+                if (AppState.Level >= 755_355)
                 {
-                    if (cancelToken.IsCancellationRequested)
-                        return false;
-
-                    Logger.LogDebug($"Loading block {AppState.Level + 1}...");
-                    using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
-
-                    if (AppState.Level >= 755_355)
-                    {
-                        throw new ValidationException("Test", true);
-                    }
-
-                    Logger.LogDebug($"Applying block...");
-                    using var scope = Services.CreateScope();
-                    var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
-                    AppState = await protocol.ApplyBlock(blockStream);
-                    Logger.LogInformation($"Applied {AppState.Level}");
+                    throw new ValidationException("Test", true);
                 }
-                catch(OperationCanceledException)
-                {
-                    Console.WriteLine("Error");
-                    await Task.Delay(1000 * 180);
-                }
+
+                Logger.LogDebug($"Applying block...");
+                using var scope = Services.CreateScope();
+                var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
+                AppState = await protocol.ApplyBlock(blockStream);
+                Logger.LogInformation($"Applied {AppState.Level}");
             }
             return true;
         }
