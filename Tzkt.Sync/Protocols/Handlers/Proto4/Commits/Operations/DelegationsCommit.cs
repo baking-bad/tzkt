@@ -314,6 +314,18 @@ namespace Tzkt.Sync.Protocols.Proto4
                             touched.Add((op, entry.State));
                         }
                         break;
+                    case Contract contract:
+                        if (contract.WeirdDelegate?.Id == user.Id || contract.Manager?.Id == user.Id)
+                        {
+                            if (contract.WeirdDelegate?.Id == user.Id)
+                                contract.WeirdDelegate = delegat;
+
+                            if (contract.Manager?.Id == user.Id)
+                                contract.Manager = delegat;
+
+                            touched.Add((contract, entry.State));
+                        }
+                        break;
                 }
             }
             #endregion
@@ -407,6 +419,18 @@ namespace Tzkt.Sync.Protocols.Proto4
                                 op.Target = user;
 
                             touched.Add((op, entry.State));
+                        }
+                        break;
+                    case Contract contract:
+                        if (contract.WeirdDelegate?.Id == delegat.Id || contract.Manager?.Id == delegat.Id)
+                        {
+                            if (contract.WeirdDelegate?.Id == delegat.Id)
+                                contract.WeirdDelegate = user;
+
+                            if (contract.Manager?.Id == delegat.Id)
+                                contract.Manager = user;
+
+                            touched.Add((contract, entry.State));
                         }
                         break;
                 }
