@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-using Tzkt.Data;
-using Tzkt.Data.Models;
+using Tzkt.Api.Models;
+using Tzkt.Api.Repositories;
 
 namespace Tzkt.Api.Controllers
 {
@@ -14,22 +13,16 @@ namespace Tzkt.Api.Controllers
     [Route("api/[controller]")]
     public class StateController : ControllerBase
     {
-        private readonly ApiContext Db;
-        public StateController(ApiContext db)
+        private readonly StateRepository State;
+        public StateController(StateRepository state)
         {
-            Db = db;
+            State = state;
         }
 
         [HttpGet]
-        public async Task<ActionResult<object>> Get()
+        public Task<State> Get()
         {
-            var state = await Db.AppState.FirstOrDefaultAsync();
-            return new
-            {
-                hash = state.Hash,
-                level = state.Level,
-                timestamp = state.Timestamp,
-            };
+            return State.Get();
         }
     }
 }

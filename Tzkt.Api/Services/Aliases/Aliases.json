@@ -1,0 +1,1214 @@
+﻿[
+  {
+    "address": "tz1TcH4Nb3aHNDJ7CGZhU7jgAK1BkSP4Lxds",
+    "alias": "XTZ Antipodes",
+    "logo": "xtz-antipodes.png",
+    "site": "https://xtzantipodes.org"
+  },
+  {
+    "address": "tz1iLbZZ9uoRuVJCrZ9ZwiJMpfzhy3c67mav",
+    "alias": "AirBie Delegate",
+    "logo": "airbie-delegate.png",
+    "site": "http://airbie.io"
+  },
+  {
+    "address": "tz1WCd2jm4uSt4vntk4vSuUWoZQGhLcDuR9q",
+    "alias": "Happy Tezos",
+    "logo": "happy_tezos.png",
+    "site": "https://www.happytezos.com"
+  },
+  {
+    "address": "tz1Z1WwoqgRFbLE3YNdYRpCx44NSfiMJzeAG",
+    "alias": "Bakemon",
+    "logo": "bakemon.png",
+    "site": "https://bakemon.me"
+  },
+  {
+    "address": "tz1YdCPrYbksK7HCoYKDyzgfXwY16Fy9rrGa",
+    "alias": "Norn Delegate",
+    "logo": "norn-delegate.png",
+    "site": "http://tezos.norn.fund"
+  },
+  {
+    "address": "tz3adcvQaKXTCg12zbninqo3q8ptKKtDFTLv",
+    "alias": "Tezzigator",
+    "logo": "tezzigator.png",
+    "site": "https://www.tezzigator.com"
+  },
+  {
+    "address": "tz1iZEKy4LaAjnTmn2RuGDf2iqdAQKnRi8kY",
+    "alias": "Tezzigator Legacy",
+    "logo": "tezzigator.png",
+    "site": ""
+  },
+  {
+    "address": "tz1YKh8T79LAtWxX29N5VedCSmaZGw9LNVxQ",
+    "alias": "Tezos Brazil",
+    "logo": "tezos-brazil.png",
+    "site": "https://tezosbr.com"
+  },
+  {
+    "address": "tz1LesY3S4wfe15SNm1W3qJmQzWxLqVjTruH",
+    "alias": "Xtez",
+    "logo": "xtez.png",
+    "site": ""
+  },
+  {
+    "address": "tz1b3SaPHFSw51r92ARcV5mGyYbSSsdFd5Gz",
+    "alias": "Tezos MX",
+    "logo": "tezos-mx.png",
+    "site": ""
+  },
+  {
+    "address": "tz1S1Aew75hMrPUymqenKfHo8FspppXKpW7h",
+    "alias": "Tezos Mars",
+    "logo": "tezosmars.png",
+    "site": "https://tezosmars.com"
+  },
+  {
+    "address": "tz1Lhf4J9Qxoe3DZ2nfe8FGDnvVj7oKjnMY6",
+    "alias": "Tez Baker",
+    "logo": "tez-baker2.png",
+    "site": "https://www.tezbaker.io"
+  },
+  {
+    "address": "KT1TUi7KGFcTLku6niB2iGqzkv49ZLYxLRy1",
+    "alias": "Tez Baker Payments 1",
+    "logo": "tez-baker2.png",
+    "site": ""
+  },
+  {
+    "address": "KT1Q6YAVkqcEmXAM7SUcQS9YSbLwbqMaVe3Z",
+    "alias": "Tez Baker Payments 2",
+    "logo": "tez-baker2.png",
+    "site": ""
+  },
+  {
+    "address": "KT1KcLH9Qz6QJucvajEdXQvcSHgxfwuwDjNe",
+    "alias": "Tez Baker Payments 3",
+    "logo": "tez-baker2.png",
+    "site": ""
+  },
+  {
+    "address": "KT1V86WP8CuxAtQ4xkpZ5fVtXv5XzK2F81mp",
+    "alias": "Tez Baker Payments 4",
+    "logo": "tez-baker2.png",
+    "site": ""
+  },
+  {
+    "address": "tz1ZTG13gkvouxSANka3HG3uys8C5gu3DPXZ",
+    "alias": "Just a Baker",
+    "logo": "just-a-baker.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Tnjaxk6tbAeC2TmMApPh8UsrEVQvhHvx5",
+    "alias": "CryptoDelegate",
+    "logo": "CryptoDelegate.png",
+    "site": "http://cryptodelegate.com"
+  },
+  {
+    "address": "tz1MyXTZmeMCM4yFnrER9LNYDZ9t2rHYDvcH",
+    "alias": "CryptoDelegate Payout",
+    "logo": "CryptoDelegate.png",
+    "site": ""
+  },
+  {
+    "address": "tz1TDSmoZXwVevLTEvKCTHWpomG76oC9S2fJ",
+    "alias": "Tezos Capital Legacy",
+    "logo": "tezos-capital.png",
+    "site": "https://www.tezos.capital"
+  },
+  {
+    "address": "tz2PdGc7U5tiyqPgTSgqCDct94qd6ovQwP6u",
+    "alias": "Tezos Capital",
+    "logo": "tezos-capital.png",
+    "site": "https://www.tezos.capital"
+  },
+  {
+    "address": "tz3bEQoFCZEEfZMskefZ8q8e4eiHH1pssRax",
+    "alias": "Ceibo XTZ",
+    "logo": "ceibo-xtz.png",
+    "site": "https://www.ceiboxtz.com"
+  },
+  {
+    "address": "tz1NRGxXV9h6SdNaZLcgmjuLx3hyy2f8YoGN",
+    "alias": "Bake ꜩ For Me",
+    "logo": "bake-tz-for-me.png",
+    "site": "https://baketzfor.me"
+  },
+  {
+    "address": "tz1PYLN9TsKZHfn2GtrXnxkeGvahmYdBTG5v",
+    "alias": "Tezos Bakes 2",
+    "logo": "tezosbakes2.png",
+    "site": "https://www.tezosbakes.com"
+  },
+  {
+    "address": "tz1Ldzz6k1BHdhuKvAtMRX7h5kJSMHESMHLC",
+    "alias": "PayTezos",
+    "logo": "paytezos.png",
+    "site": "https://paytezos.com"
+  },
+  {
+    "address": "KT1JjzGWesNFaHv9iyBwLBzLyTpTZ3HeBf7o",
+    "alias": "PayTezos Payouts",
+    "logo": "paytezos.png",
+    "site": ""
+  },
+  {
+    "address": "tz1YBne4GAeBuNVEjkzTMmnavmX6Tgn5NoMq",
+    "alias": "Tezosbakes Payouts",
+    "logo": "tezosbakes2.png",
+    "site": ""
+  },
+  {
+    "address": "KT1CFftpC6AmRZ3ahzkSwQSQUeC96H811PNN",
+    "alias": "Tezosbakes Payouts",
+    "logo": "tezosbakes2.png",
+    "site": ""
+  },
+  {
+    "address": "tz1bkg7rynMXVcjomoe3diB4URfv8GU2GAcw",
+    "alias": "Tz Bank",
+    "logo": "tz-bank.png",
+    "site": "https://tzbank.io"
+  },
+  {
+    "address": "tz1XQ7SRj4QQWjaeebNd8dFwuTrCot3GGDRF",
+    "alias": "Tz Baker",
+    "logo": "tz-baker.png",
+    "site": ""
+  },
+  {
+    "address": "tz1YvG6poSGhPLTdzbzCmqShMndzoyhyVg7J",
+    "alias": "tezosbaking.club",
+    "logo": "tezosbaking-club.png",
+    "site": ""
+  },
+  {
+    "address": "tz1hThMBD8jQjFt78heuCnKxJnJtQo9Ao25X",
+    "alias": "Tezos Chef",
+    "logo": "tezos-chef.png",
+    "site": "https://tezoschef.com"
+  },
+  {
+    "address": "tz1aCJuxfZPsXZ3PmfA6MvjsRTpGVVDMmb8X",
+    "alias": "Tezos Chef Payouts",
+    "logo": "tezos-chef.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Xek93iSXXckyQ6aYLVS5Rr2tge2en7ZxS",
+    "alias": "XTZ Delegate",
+    "logo": "xtz-delegate.png",
+    "site": "https://xtzdelegate.io"
+  },
+  {
+    "address": "tz1L3vFD8mFzBaS8yLHFsd7qDJY1t276Dh8i",
+    "alias": "Zed Node",
+    "logo": "zed-node.png",
+    "site": "https://zednode.com"
+  },
+  {
+    "address": "tz1TaLYBeGZD3yKVHQGBM857CcNnFFNceLYh",
+    "alias": "Tezocracy",
+    "logo": "tezocracy.png",
+    "site": "https://tezocracy.com"
+  },
+  {
+    "address": "KT1CthjeJp2pLbSdo6xZR1VfgUD44QYDNmSZ",
+    "alias": "Tezocracy Payouts",
+    "logo": "tezocracy.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Zhv3RkfU2pHrmaiDyxp7kFZpZrUCu1CiF",
+    "alias": "TzBake",
+    "logo": "tz-bake.png",
+    "site": "http://www.tzbake.com"
+  },
+  {
+    "address": "tz1bHzftcTKZMTZgLLtnrXydCm6UEqf4ivca",
+    "alias": "Tezos Vote",
+    "logo": "tezos-vote.png",
+    "site": "http://tezos.vote"
+  },
+  {
+    "address": "tz1ggJg924JdWdww6oLGFksRgKctfrDMUNfE",
+    "alias": "Tezos Vote Payment",
+    "logo": "tezos-vote.png",
+    "site": ""
+  },
+  {
+    "address": "tz1cX93Q3KsiTADpCC4f12TBvAmS5tw7CW19",
+    "alias": "Tz Bakery",
+    "logo": "tzbakery.png",
+    "site": "https://www.tzbakery.com"
+  },
+  {
+    "address": "tz1WpeqFaBG9Jm73Dmgqamy8eF8NWLz9JCoY",
+    "alias": "Staking Facilities",
+    "logo": "staking-facilities.png",
+    "site": "http://stakingfacilities.com"
+  },
+  {
+    "address": "tz1LLNkQK4UQV6QcFShiXJ2vT2ELw449MzAA",
+    "alias": "Tezosteam",
+    "logo": "tezos-team.png",
+    "site": "https://tezosteam.com"
+  },
+  {
+    "address": "tz1YrmJw6Lje27gWqZ94gU9mNavEjkHu1xGc",
+    "alias": "Tezosteam Payout",
+    "logo": "tezos-team.png",
+    "site": ""
+  },
+  {
+    "address": "tz1eEnQhbwf6trb8Q8mPb2RaPkNk2rN7BKi8",
+    "alias": "Cryptium Labs",
+    "logo": "cryptium-labs.png",
+    "site": "https://tezos.cryptium.ch"
+  },
+  {
+    "address": "tz1NortRftucvAkD1J58L32EhSVrQEWJCEnB",
+    "alias": "Bake’n’Rolls",
+    "logo": "bake-n-rolls.png",
+    "site": "https://bakenrolls.com"
+  },
+  {
+    "address": "tz1Zrqm4TkJwqTxm5TiyVFh6taXG4Wrq7tko",
+    "alias": "Bake’n’Rolls Payouts",
+    "logo": "bake-n-rolls.png",
+    "site": ""
+  },
+  {
+    "address": "KT1RCAETpkm9z44MW7Cph3mrWshqVURPubT4",
+    "alias": "Bake’n’Rolls Payouts",
+    "logo": "bake-n-rolls.png",
+    "site": ""
+  },
+  {
+    "address": "tz1VYQpZvjVhv1CdcENuCNWJQXu1TWBJ8KTD",
+    "alias": "TezosTokyo",
+    "logo": "tezos-tokyo.png",
+    "site": "https://www.tezostokyo.com"
+  },
+  {
+    "address": "tz1RCFbB9GpALpsZtu6J58sb74dm8qe6XBzv",
+    "alias": "Staked",
+    "logo": "staked.png",
+    "site": "https://staked.us"
+  },
+  {
+    "address": "tz1hAYfexyzPGG6RhZZMpDvAHifubsbb6kgn",
+    "alias": "Tezos Suisse",
+    "logo": "tezos-suisse.png",
+    "site": "https://www.tezos-suisse.com"
+  },
+  {
+    "address": "tz1YTyvABUyhE7JHpxMVBVqjZnZM4ofMrWKE",
+    "alias": "Tezos Delegate EU",
+    "logo": "tezos-delegate-eu.png",
+    "site": "https://www.tezosdelegate.eu"
+  },
+  {
+    "address": "tz1fZ767VDbqx4DeKiFswPSHh513f51mKEUZ",
+    "alias": "TezosBakery",
+    "logo": "tezosbakery.png",
+    "site": "https://tezosbakery.ch"
+  },
+  {
+    "address": "tz1eZwq8b5cvE2bPKokatLkVMzkxz24z3Don",
+    "alias": "You loaf We bake",
+    "logo": "youloafwebake.png",
+    "site": "https://youloafwebake.io"
+  },
+  {
+    "address": "tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV",
+    "alias": "Hayek Lab",
+    "logo": "hayeklab2.png",
+    "site": "https://hayeklab.com"
+  },
+  {
+    "address": "tz1Vd1rXpV8hTHbFXCXN3c3qzCsgcU5BZw1e",
+    "alias": "TzNode",
+    "logo": "tznode.png",
+    "site": "http://tznode.io"
+  },
+  {
+    "address": "tz1aRhFErGMgL57DYHMT1vYwv7PzsJN1chrk",
+    "alias": "Baked Tezos",
+    "logo": "bakedtezos.png",
+    "site": "https://www.bakedtezos.com"
+  },
+  {
+    "address": "tz1VceyYUpq1gk5dtp6jXQRtCtY8hm5DKt72",
+    "alias": "TeZetetic",
+    "logo": "tezetetic.png",
+    "site": "https://tezetetic.com"
+  },
+  {
+    "address": "tz1UUgPwikRHW1mEyVZfGYy6QaxrY6Y7WaG5",
+    "alias": "TezPatisserie",
+    "logo": "tezpatisserie.png",
+    "site": "https://tezpatisserie.com"
+  },
+  {
+    "address": "tz1Suih9uWEnubDeqCTCEfueSCGWYohjyaA5",
+    "alias": "XTZ.Black",
+    "logo": "xtzblack.png",
+    "site": ""
+  },
+  {
+    "address": "tz1LBEKXaxQbd5Gtzbc1ATCwc3pppu81aWGc",
+    "alias": "Tez-Baking",
+    "logo": "tez-baking.png",
+    "site": "https://tez-baking.com"
+  },
+  {
+    "address": "tz1Lh9jeLSWDHYy8AshvG2dpNQseDaHg7cms",
+    "alias": "TezosSpanish",
+    "logo": "tezosspanish.png",
+    "site": ""
+  },
+  {
+    "address": "tz1PesW5khQNhy4revu2ETvMtWPtuVyH2XkZ",
+    "alias": "TzDutch",
+    "logo": "tzdutch.png",
+    "site": "https://www.tzdutch.com"
+  },
+  {
+    "address": "tz1abTjX2tjtMdaq5VCzkDtBnMSCFPW2oRPa",
+    "alias": "TEZ Rocket",
+    "logo": "tezrocket.png",
+    "site": "https://tezrocket.com"
+  },
+  {
+    "address": "tz1VHFxUuBhwopxC9YC9gm5s2MHBHLyCtvN1",
+    "alias": "Hyper Blocks Pro",
+    "logo": "hyperblocks.png",
+    "site": "https://hyperblocks.pro"
+  },
+  {
+    "address": "tz1WnfXMPaNTBmH7DBPwqCWs9cPDJdkGBTZ8",
+    "alias": "TezosHODL",
+    "logo": "tezoshodl.png",
+    "site": "https://tezoshodl.me"
+  },
+  {
+    "address": "tz1TzHDLTNK1J1fCotGBLuE43DoogC5pHGyT",
+    "alias": "TezosHODL Payouts",
+    "logo": "tezoshodl.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Yc6ATtfUJyDjHwJ8WoVL22sJueDenueke",
+    "alias": "TezDele Baker A",
+    "logo": "tezdele.png",
+    "site": ""
+  },
+  {
+    "address": "tz1SdwBHocSrcuMFNLPUg4LPRfx9eaqjVUEL",
+    "alias": "TezDele Baker B",
+    "logo": "tezdele.png",
+    "site": ""
+  },
+  {
+    "address": "tz1go7f6mEQfT2xX2LuHAqgnRGN6c2zHPf5c",
+    "alias": "Stakery",
+    "logo": "stakery.png",
+    "site": "https://stakery.io"
+  },
+  {
+    "address": "tz1gs78wrxS34XhGPECmN5fABKpEuhUGwAXS",
+    "alias": "Stakery Payments 1",
+    "logo": "stakery.png",
+    "site": ""
+  },
+  {
+    "address": "tz1eFXLaCUcKbhXkLBGUGMGNY9tKHjWGG25V",
+    "alias": "Tezos Node Spain",
+    "logo": "tezosnodespain.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Z3KCf8CLGAYfvVWPEr562jDDyWkwNF7sT",
+    "alias": "HotStake",
+    "logo": "hotstake.png",
+    "site": "https://hotstake.com"
+  },
+  {
+    "address": "tz2LBtbMMvvguWQupgEmtfjtXy77cHgdr5TE",
+    "alias": "Tezcentral",
+    "logo": "tezcentral_logo-kb.png",
+    "site": ""
+  },
+  {
+    "address": "tz1TgvirXEwVJPg1cCrxT9zFubdzw7Ng6Ke9",
+    "alias": "Tezos Moon",
+    "logo": "tezosmoon.png",
+    "site": "https://tezosmoon.com"
+  },
+  {
+    "address": "tz1d2EwsrmoCPmhNUjt7unCQ8a9RwVsVXEmd",
+    "alias": "BTFD",
+    "logo": "btfd.png",
+    "site": "http://btfd.net"
+  },
+  {
+    "address": "tz1QGZ3dD2YpRKZ4APeso6EXTeyCUUkw6MQC",
+    "alias": "TezosBC_old",
+    "logo": "tezosbc.png",
+    "site": ""
+  },
+  {
+    "address": "tz1c3Wh8gNMMsYwZd67JndQpYxdaaPUV27E7",
+    "alias": "TezosBC",
+    "logo": "tezosbc.png",
+    "site": "https://tezosbc.yolasite.com"
+  },
+  {
+    "address": "KT1E5rWDHRA679Q98Tks3DppCqvBLUzmnBEe",
+    "alias": "TezosBC Payout",
+    "logo": "tezosbc.png",
+    "site": ""
+  },
+  {
+    "address": "tz1bakeKFwqmtLBzghw8CFnqFvRxLj849Vfg",
+    "alias": "TezMilk",
+    "logo": "tezmilk.png",
+    "site": "http://www.tezmilk.com"
+  },
+  {
+    "address": "tz1MowoYvqgxhKToQMAmGgTtjfZcRfS733JY",
+    "alias": "StakeBake",
+    "logo": "stakebake.png",
+    "site": "https://www.stakebake.com"
+  },
+  {
+    "address": "tz1iMAHAVpkCVegF9FLGWUpQQeiAHh4ffdLQ",
+    "alias": "Wetez",
+    "logo": "wetez.png",
+    "site": "http://www.wetez.io"
+  },
+  {
+    "address": "tz1RV1MBbZMR68tacosb7Mwj6LkbPSUS1er1",
+    "alias": "Baking Tacos",
+    "logo": "bakingtacos.png",
+    "site": "https://bakingtacos.com"
+  },
+  {
+    "address": "tz1PeZx7FXy7QRuMREGXGxeipb24RsMMzUNe",
+    "alias": "Tezos Panda",
+    "logo": "tezospanda.png",
+    "site": "https://tezospanda.com"
+  },
+  {
+    "address": "KT1PnRgUjx7dD4xrnXnpJHz9MfnCWoeT6UBr",
+    "alias": "Tezos Panda Payouts",
+    "logo": "tezospanda.png",
+    "site": ""
+  },
+  {
+    "address": "tz1aiYKXmSRckyJ9EybKmpVry373rfyngJU8",
+    "alias": "ViewNodes",
+    "logo": "viewnodestezos.png",
+    "site": "https://viewnodes.com"
+  },
+  {
+    "address": "tz1d6Fx42mYgVFnHUW8T8A7WBfJ6nD9pVok8",
+    "alias": "Mytezosbaking",
+    "logo": "mytezosbaking.png",
+    "site": "https://mytezosbaking.com"
+  },
+  {
+    "address": "tz1ZKi4VrDMEQpypn2NTn9pPbZL3xLRkETLA",
+    "alias": "XTZ-Baker",
+    "logo": "xtzbaker.png",
+    "site": "https://xtz-baker.com"
+  },
+  {
+    "address": "tz1MDKr36woXfVtrtXfV1ppPJERxPcm2wU6V",
+    "alias": "StackTezos",
+    "logo": "stacktezos.png",
+    "site": "https://www.stacktezos.com"
+  },
+  {
+    "address": "tz1P9GwUWeAyPoT3ZwBc6gWCTP9exEPaVU3w",
+    "alias": "XTZBakery",
+    "logo": "xtzbakery.png",
+    "site": "https://xtzbakery.com"
+  },
+  {
+    "address": "tz1TnYeuR4HhUTapQiXvzcjmcpvZYwR1B5S3",
+    "alias": "XTZBakery II",
+    "logo": "xtzbakery.png",
+    "site": "https://xtzbakery.com"
+  },
+  {
+    "address": "tz1Z1tMai15JWUWeN2PKL9faXXVPMuWamzJj",
+    "alias": "TezosLand",
+    "logo": "tezosland.png",
+    "site": "https://tezosland.github.io"
+  },
+  {
+    "address": "tz1V4qCyvPKZ5UeqdH14HN42rxvNPQfc9UZg",
+    "alias": "Shake 'n Bake",
+    "logo": "shakenbake.png",
+    "site": "http://youshakewebake.com"
+  },
+  {
+    "address": "tz1KfEsrtDaA1sX7vdM4qmEPWuSytuqCDp5j",
+    "alias": "XTZMaster",
+    "logo": "xtzmaster.png",
+    "site": "https://www.xtzmaster.com"
+  },
+  {
+    "address": "tz1XTZMBAARXu3zmFno6SMT88MvqSvbD5qrh",
+    "alias": "XTZMaster Payouts",
+    "logo": "xtzmaster.png",
+    "site": ""
+  },
+  {
+    "address": "tz1ei4WtWEMEJekSv8qDnu9PExG6Q8HgRGr3",
+    "alias": "BakeTz",
+    "logo": "baketz.png",
+    "site": "https://www.baketz.com"
+  },
+  {
+    "address": "tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC",
+    "alias": "At James",
+    "logo": "atjames.png",
+    "site": "https://atjames.io"
+  },
+  {
+    "address": "tz1LmaFsWRkjr7QMCx5PtV6xTUz3AmEpKQiF",
+    "alias": "Blockpower Staking",
+    "logo": "blockpowerstaking.png",
+    "site": "http://www.blockpower.capital"
+  },
+  {
+    "address": "tz1Scdr2HsZiQjc7bHMeBbmDRXYVvdhjJbBh",
+    "alias": "Figment Networks",
+    "logo": "figment.png",
+    "site": "https://figment.network"
+  },
+  {
+    "address": "tz1Ryat7ZuRapjGUgsPym9DuMGrTYYyDBJoq",
+    "alias": "Illuminarean",
+    "logo": "illuminarean.png",
+    "site": "https://illuminarean.com"
+  },
+  {
+    "address": "tz1NqKH9D5HdfvoEQssMS5Up13CVypVxLA1k",
+    "alias": "Cypher-Baker",
+    "logo": "cypher.png",
+    "site": ""
+  },
+  {
+    "address": "tz1KtvGSYU5hdKD288a1koTBURWYuADJGrLE",
+    "alias": "ØCrypto Pool",
+    "logo": "ocryptopool.png",
+    "site": ""
+  },
+  {
+    "address": "tz1QLXqnfN51dkjeghXvKHkJfhvGiM5gK4tc",
+    "alias": "FreshTezos",
+    "logo": "freshtezos.png",
+    "site": ""
+  },
+  {
+    "address": "tz1R6Ej25VSerE3MkSoEEeBjKHCDTFbpKuSX",
+    "alias": "TezosSEAsia",
+    "logo": "tezosseasia.png",
+    "site": "https://twitter.com"
+  },
+  {
+    "address": "tz1LH4L6XYT2JNPhvWYC4Zq3XEiGgEwzNRvo",
+    "alias": "Stir Delegate",
+    "logo": "stirdelegate.png",
+    "site": "https://stir.network"
+  },
+  {
+    "address": "tz1djEKk6j1FqigTgbRsunbnY9BB7qsn1aAQ",
+    "alias": "Tezos-Ninja",
+    "logo": "tezosninja.png",
+    "site": "https://www.tezosninja.com"
+  },
+  {
+    "address": "tz1fUjvVhJrHLZCbhPNvDRckxApqbkievJHN",
+    "alias": "Tezzieland",
+    "logo": "tezzieland.png",
+    "site": "http://www.tezzieland.com"
+  },
+  {
+    "address": "tz1VmiY38m3y95HqQLjMwqnMS7sdMfGomzKi",
+    "alias": "Lucid Mining",
+    "logo": "lucid-mining.png",
+    "site": "https://lucidmining.com"
+  },
+  {
+    "address": "KT1THshzbGq3NJfL8w9j3ppbUSCfy5tQvWch",
+    "alias": "Lucid Mining Payouts",
+    "logo": "lucid-mining-payouts.png",
+    "site": ""
+  },
+  {
+    "address": "tz1LsnEuv4fLsgxU9HJK21v8zHwcuBjb99Cd",
+    "alias": "Lucid Mining Payouts",
+    "logo": "lucid-mining-payouts.png",
+    "site": ""
+  },
+  {
+    "address": "tz1V2FYediKBAEaTpXXJBSjuQpjkyCzrTSiE",
+    "alias": "Stake House",
+    "logo": "stakehouse.png",
+    "site": "https://www.stakehouse.org"
+  },
+  {
+    "address": "tz1b9MYGrbN1NAxphLEsPPNT9JC7aNFc5nA4",
+    "alias": "Tezos R Us",
+    "logo": "tezosrus.png",
+    "site": "https://tezosrus.com"
+  },
+  {
+    "address": "tz1cYufsxHXJcvANhvS55h3aY32a9BAFB494",
+    "alias": "Bakery-IL",
+    "logo": "bakery-il.png",
+    "site": "https://tezos.co.il"
+  },
+  {
+    "address": "tz1iVCqjMRG7MfBoFnVjbLQyeLAeJQfLxXze",
+    "alias": "Bakery-IL Payouts",
+    "logo": "bakery-il.png",
+    "site": ""
+  },
+  {
+    "address": "tz1XXayQohB8XRXN7kMoHbf2NFwNiH3oMRQQ",
+    "alias": "Bit Cat",
+    "logo": "tezos-cat.png",
+    "site": "https://www.bitcat365.com"
+  },
+  {
+    "address": "tz1SkU5S3dDRi6f8LHCvYeK3H3Mjq4MS8uHW",
+    "alias": "Tezos OTC",
+    "logo": "tezos-otc.png",
+    "site": ""
+  },
+  {
+    "address": "tz1P6kxtzRrJ8KfXE4kKqR1RBiSpEgimxN5o",
+    "alias": "Fractalide",
+    "logo": "fractalide.png",
+    "site": ""
+  },
+  {
+    "address": "tz1MXFrtZoaXckE41bjUCSjAjAap3AFDSr3N",
+    "alias": "Everstake",
+    "logo": "atticpool.png",
+    "site": "https://tezos.atticpool.com"
+  },
+  {
+    "address": "tz1P2Po7YM526ughEsRbY4oR9zaUPDZjxFrb",
+    "alias": "P2P Validator",
+    "logo": "p2p-validator.png",
+    "site": "https://p2p.org"
+  },
+  {
+    "address": "tz1dp3tScJZy8Go3byPdioSujgDi5CdemiuZ",
+    "alias": "iBakeTezos",
+    "logo": "ibaketezos.png",
+    "site": ""
+  },
+  {
+    "address": "tz1VQq41XksF8oJ4ntxbh99g5wrqcreVf7e1",
+    "alias": "iBakeTezos Payment",
+    "logo": "ibaketezos.png",
+    "site": ""
+  },
+  {
+    "address": "tz1ZePm7HyANf3P9hZfhmm8ShbrbCP1nYwT5",
+    "alias": "iBakeTezos Payment",
+    "logo": "ibaketezos.png",
+    "site": ""
+  },
+  {
+    "address": "tz1isXamBXpTUgbByQ6gXgZQg4GWNW7r6rKE",
+    "alias": "TezWhale",
+    "logo": "tezwhale.png",
+    "site": "https://tezwhale.com"
+  },
+  {
+    "address": "tz1WHALEP56kjCTuUFLWjcBkfFpyevC4xo3t",
+    "alias": "TezWhale payout",
+    "logo": "tezwhale.png",
+    "site": ""
+  },
+  {
+    "address": "tz1UJvHTgpVzcKWhTazGxVcn5wsHru5Gietg",
+    "alias": "Tezry",
+    "logo": "tezry.png",
+    "site": "http://www.tezry.com"
+  },
+  {
+    "address": "tz1WBfwbT66FC6BTLexc2BoyCCBM9LG7pnVW",
+    "alias": "888XTZ",
+    "logo": "888xtz.png",
+    "site": "https://888xtz.xyz"
+  },
+  {
+    "address": "tz1U638Z3xWRiXDDKx2S125MCCaAeGDdA896",
+    "alias": "Tezos France",
+    "logo": "tezos-france2.png",
+    "site": "https://tezos.fr"
+  },
+  {
+    "address": "tz1YgNQBeLTgbwRb7QiyvHrx7hwN7AUbdqpB",
+    "alias": "Baker Avenue",
+    "logo": "baker-avenue.png",
+    "site": ""
+  },
+  {
+    "address": "tz1b2mCFQm8isfJRGUctgyxHhHcmTNTRPdps",
+    "alias": "Tezos Barcelona",
+    "logo": "tezos-barcelona.png",
+    "site": "https://tezentralice.com"
+  },
+  {
+    "address": "tz1Vm5cfHncKGBo7YvZfHc4mmudY4qpWzvSB",
+    "alias": "Tezos Istanbul",
+    "logo": "tezos-istanbul.png",
+    "site": "https://tezos.istanbul"
+  },
+  {
+    "address": "tz1Uf4Raxz7JzNdpAyM3893qLtqTRwNrdKVK",
+    "alias": "Tezos Istanbul Payout",
+    "logo": "tezos-istanbul.png",
+    "site": ""
+  },
+  {
+    "address": "tz1MBERDzXMvMQPCMWBCEgxyKrdU71HgXaM8",
+    "alias": "Tezos Istanbul Payout",
+    "logo": "tezos-istanbul.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Y42aKCk53vMbaJNpf1hBg1rznGdBxHJ5C",
+    "alias": "Tezos Berlin",
+    "logo": "tezos-berlin.png",
+    "site": "https://tezos-berlin.com"
+  },
+  {
+    "address": "tz1gfipKzYrNRT14oSNQJMCdRRsUtcbZoKsd",
+    "alias": "Tezos.Rio_old",
+    "logo": "tezosrio.png",
+    "site": ""
+  },
+  {
+    "address": "tz1cZfFQpcYhwDp7y1njZXDsZqCrn2NqmVof",
+    "alias": "Tezos.Rio",
+    "logo": "tezosrio.png",
+    "site": "https://tezos.rio"
+  },
+  {
+    "address": "tz1LsuPvP2u63nouVGAPi13AYqqB2VQjhoSF",
+    "alias": "Drunk Tortuga Bakery",
+    "logo": "drunk-tortuga.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Vyuu4EJ5Nym4JcrfRLnp3hpaq1DSEp1Ke",
+    "alias": "PoSBakerz",
+    "logo": "pos_bakerz.png",
+    "site": "https://posbakerz.com"
+  },
+  {
+    "address": "tz1Nn14BBsDULrPXtkM9UQeXaE4iqJhmqmK5",
+    "alias": "Tezos.Kitchen",
+    "logo": "tezos-kitchen.png",
+    "site": "https://www.tezos.kitchen"
+  },
+  {
+    "address": "tz1TzaNn7wSQSP5gYPXCnNzBCpyMiidCq1PX",
+    "alias": "Flippin Tacos",
+    "logo": "flippin-tacos.png",
+    "site": "https://www.flippintacos.com"
+  },
+  {
+    "address": "tz1TacosCtikEQCJWYDZZ9MuA42sVpbbKZFF",
+    "alias": "Flippin Tacos Payout",
+    "logo": "flippin-tacos.png",
+    "site": ""
+  },
+  {
+    "address": "KT1GJBSMRGApA2DnSivs73Fhau6dbfP1Sntd",
+    "alias": "Flippin Tacos Payout",
+    "logo": "flippin-tacos.png",
+    "site": ""
+  },
+  {
+    "address": "tz1MQJPGNMijnXnVoBENFz9rUhaPt3S7rWoz",
+    "alias": "Tezmania",
+    "logo": "tez_mania.png",
+    "site": "https://tezmania.jp/"
+  },
+  {
+    "address": "tz1X1fpAZtwQk94QXUgZwfgsvkQgyc2KHp9d",
+    "alias": "Own Block",
+    "logo": "own_block.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Zcxkfa5jKrRbBThG765GP29bUCU3C4ok5",
+    "alias": "Tezz City",
+    "logo": "tezz_city.png",
+    "site": ""
+  },
+  {
+    "address": "tz1awXW7wuXy21c66vBudMXQVAPgRnqqwgTH",
+    "alias": "Infinity Stones",
+    "logo": "infinity_stones.png",
+    "site": ""
+  },
+  {
+    "address": "tz1iJ4qgGTzyhaYEzd1RnC6duEkLBd1nzexh",
+    "alias": "Tz Envoy",
+    "logo": "tz_envoy.png",
+    "site": ""
+  },
+  {
+    "address": "tz1bLwpPfr3xqy1gWBF4sGvv8bLJyPHR11kx",
+    "alias": "Tezos Hot Bakery",
+    "logo": "tezoshotbakery.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Pv7ha8wzAyRHkR9RahWapdopK1tt6nVz1",
+    "alias": "Baking co-operative",
+    "logo": "",
+    "site": ""
+  },
+  {
+    "address": "tz1bkKTY9Y3rTsHbpr2fbGUCRm736LLquQfM",
+    "alias": "Tezos Tacos",
+    "logo": "tezostacos.png",
+    "site": "https://tezostacos.com"
+  },
+  {
+    "address": "tz1gk3TDbU7cJuiBRMhwQXVvgDnjsxuWhcEA",
+    "alias": "Airfoil",
+    "logo": "airfoil.png",
+    "site": "https://airfoil.services"
+  },
+  {
+    "address": "tz1QH3G2btaWc1vRLNsEfx2gHM7Ad81TeRit",
+    "alias": "Airfoil Payouts",
+    "logo": "airfoil.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Yh1nLXfwqVpP8btykuRguu61n3veVmADa",
+    "alias": "TzBakeOven",
+    "logo": "tzbakeoven.png",
+    "site": ""
+  },
+  {
+    "address": "tz1W1qbXXJrtLWwaaoXhe8LYGZqmNnpKaH9q",
+    "alias": "01No.de",
+    "logo": "01node.png",
+    "site": "https://01no.de"
+  },
+  {
+    "address": "tz1ZQppA6UerMz5CJtGvZmmB6z8L9syq7ixu",
+    "alias": "First Block",
+    "logo": "first_block.png",
+    "site": ""
+  },
+  {
+    "address": "tz1TAzNBtnq6vF6kg34ApectxXoxZVTyapq3",
+    "alias": "Tezos Gold",
+    "logo": "tezos_gold.png",
+    "site": ""
+  },
+  {
+    "address": "tz1WtkJEkKjHX3bMDYwJoDVC4gPksNPUa3v7",
+    "alias": "BakeMyStake Old",
+    "logo": "bakemystake.png",
+    "site": ""
+  },
+  {
+    "address": "tz1NkFRjmkqqcGkAhqe78fdgemDNKXvL7Bod",
+    "alias": "BakeMyStake",
+    "logo": "bakemystake.png",
+    "site": "http://bakemystake.com"
+  },
+  {
+    "address": "tz1PPUo28B8BroqmVCMMNDudG4ShA2bzicrU",
+    "alias": "Tezos Korea",
+    "logo": "tezos_korea.png",
+    "site": ""
+  },
+  {
+    "address": "tz1b7YSEeNRqgmjuX4d4aiai2sQTF4A7WBZf",
+    "alias": "Tezos Japan",
+    "logo": "tezosjapanbakery.png",
+    "site": "https://tezosjapan.info"
+  },
+  {
+    "address": "tz1Yju7jmmsaUiG9qQLoYv35v5pHgnWoLWbt",
+    "alias": "Polychain Labs",
+    "logo": "polychainlabs.png",
+    "site": "https://tezos.polychainlabs.com"
+  },
+  {
+    "address": "tz2TSvNTh2epDMhZHrw73nV9piBX7kLZ9K9m",
+    "alias": "Polychain Labs 2",
+    "logo": "polychainlabs.png",
+    "site": "https://tezos.polychainlabs.com"
+  },
+  {
+    "address": "tz1PK8bNrfPbc73BtHH1A63jfU5UtbRFkvU4",
+    "alias": "EON Staking",
+    "logo": "eon-staking.png",
+    "site": "https://eon.capital"
+  },
+  {
+    "address": "tz1MJx9vhaNRSimcuXPK2rW4fLccQnDAnVKJ",
+    "alias": "TezosAirGap",
+    "logo": "airgap.png",
+    "site": "https://airgap.it"
+  },
+  {
+    "address": "tz1Vtimi84kLh9RANfRVX2JvYtP4NPCT1aFm",
+    "alias": "TezTech Labs",
+    "logo": "teztechlabs.png",
+    "site": "https://delegate.teztech.io"
+  },
+  {
+    "address": "tz1e2meErj7eEfXwqr7bDK6N1YatmLaugfMp",
+    "alias": "STB",
+    "logo": "STB.png",
+    "site": ""
+  },
+  {
+    "address": "tz1aqcYgG6NuViML5vdWhohHJBYxcDVLNUsE",
+    "alias": "LetzBake!",
+    "logo": "letzbake.png",
+    "site": "https://letzbake.com"
+  },
+  {
+    "address": "tz1MTAmuFmKu3MoxnkVsMj7xvSScj6d83hu5",
+    "alias": "LetzBake! Payouts",
+    "logo": "letzbake.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Pwgj6j55akKCyvTwwr9X4np1RskSXpQY4",
+    "alias": "Validators.com",
+    "logo": "validators.png",
+    "site": "https://validators.com"
+  },
+  {
+    "address": "tz1W1f1JrE7VsqgpUpj1iiDobqP5TixgZhDk",
+    "alias": "Elite Tezos",
+    "logo": "elite_tezos.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Lc87p6zRaDwzJs9kHvdpm7XzeWE8QTwVB",
+    "alias": "Dashmaster",
+    "logo": "dashmaster.png",
+    "site": "https://dashmaster.io"
+  },
+  {
+    "address": "KT1A13N5XXJLgD9rQ6BF6xg71yhNhQhrCxia",
+    "alias": "Dashmaster Payouts",
+    "logo": "dashmaster.png",
+    "site": ""
+  },
+  {
+    "address": "tz1NpWrAyDL9k2Lmnyxcgr9xuJakbBxdq7FB",
+    "alias": "Gate.io",
+    "logo": "gateio.png",
+    "site": ""
+  },
+  {
+    "address": "tz1irJKkXS2DBWkU1NnmFQx1c1L7pbGg4yhk",
+    "alias": "Coinbase",
+    "logo": "coinbase.png",
+    "site": ""
+  },
+  {
+    "address": "tz1KzSC1J9aBxKp7u8TUnpN8L7S65PBRkgdF",
+    "alias": "HashQuark",
+    "logo": "hashquark.png",
+    "site": ""
+  },
+  {
+    "address": "tz1SYq214SCBy9naR6cvycQsYcUGpBqQAE8d",
+    "alias": "Coinone",
+    "logo": "coinone.png",
+    "site": ""
+  },
+  {
+    "address": "tz1c7pVR4w3KSQarJdBeh4NS2WxMUFBy1rHQ",
+    "alias": "MyBakerSpace",
+    "logo": "my_baker_space.png",
+    "site": ""
+  },
+  {
+    "address": "tz1ZRWFLgT9sz8iFi1VYWPfRYeUvUSFAaDao",
+    "alias": "Delegated Capital",
+    "logo": "delegated_capital.png",
+    "site": "https://www.delegated.capital"
+  },
+  {
+    "address": "tz2FCNBrERXtaTtNX6iimR1UJ5JSDxvdHM93",
+    "alias": "Stake.fish",
+    "logo": "stakedotfish.png",
+    "site": "https://stake.fish"
+  },
+  {
+    "address": "tz1WJpSCYdQE9merfftanA8eFsqUPTpwAt8a",
+    "alias": "Tezos China",
+    "logo": "tezos_china.png",
+    "site": ""
+  },
+  {
+    "address": "tz1ZuxNqUk7odhMC4Bfx2NXXeej9ReXKewa8",
+    "alias": "SNZ Holding",
+    "logo": "snzholding.png",
+    "site": "https://snzholding.com"
+  },
+  {
+    "address": "tz1MkaTVYdM9QvXxKvYEwG9BPN2XxriTs7Jh",
+    "alias": "Tezos.bi23",
+    "logo": "bi23.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Z2jXfEXL7dXhs6bsLmyLFLfmAkXBzA9WE",
+    "alias": "Tezos Boutique",
+    "logo": "tezos-boutique.png",
+    "site": ""
+  },
+  {
+    "address": "tz1YQCVjyfVwtiPCDPR8JP4TA9G9H5Y3dkup",
+    "alias": "Tezos Turtle",
+    "logo": "tezos_turtle.png",
+    "site": ""
+  },
+  {
+    "address": "tz1aKxnrzx5PXZJe7unufEswVRCMU9yafmfb",
+    "alias": "Tezos Canada",
+    "logo": "tezos_canada.png",
+    "site": "http://tezoscanada.azurewebsites.net"
+  },
+  {
+    "address": "tz1coHzgoQYRu1Ezn5QChfFEjwTrBzGNQT6U",
+    "alias": "Clutch Oven",
+    "logo": "clutch_oven.png",
+    "site": ""
+  },
+  {
+    "address": "tz1bRaSjKZrSrSeQHBDiCqjKXqtZYZM1t8FW",
+    "alias": "Imma Baker",
+    "logo": "imma_baker.png",
+    "site": ""
+  },
+  {
+    "address": "tz1Z7bxn1M4ewEWUekPaZfiwtKQRFroezUjY",
+    "alias": "TezosBay",
+    "logo": "tezosbay.png",
+    "site": "https://www.tezosbay.com"
+  },
+  {
+    "address": "tz1KksC8RvjUWAbXYJuNrUbontHGor26Cztk",
+    "alias": "Bakednode",
+    "logo": "bakednode.png",
+    "site": ""
+  },
+  {
+    "address": "tz1PYF2Fcqk7YjZGquNy8bFznhCLhyi9PpVz",
+    "alias": "Sanka Network",
+    "logo": "sanka_network.png",
+    "site": ""
+  },
+  {
+    "address": "tz1dhwJY5B1jKdkF7zcyu1v6EBEQjpGmAp1E",
+    "alias": "Tezzz",
+    "logo": "tezzz.png",
+    "site": ""
+  },
+  {
+    "address": "tz1cb8xcmJWcdVU7cNAd93MfEReorvP52P8x",
+    "alias": "Mint Capital",
+    "logo": "mint_capital.png",
+    "site": ""
+  },
+  {
+    "address": "tz1RAzdkp1x5ZDqms4ZUrSdfJuUYGH9JTPK2",
+    "alias": "Tezos Spanish Node",
+    "logo": "tezos_spanish_node.png",
+    "site": ""
+  },
+  {
+    "address": "tz1g8vkmcde6sWKaG2NN9WKzCkDM6Rziq194",
+    "alias": "StakeNow",
+    "logo": "stakenow.png",
+    "site": "https://stakenow.de/"
+  },
+  {
+    "address": "tz1W5VkdB5s7ENMESVBtwyt9kyvLqPcUczRT",
+    "alias": "Tezgate",
+    "logo": "tezgate.png",
+    "site": "https://www.tezgate.com/"
+  },
+  {
+    "address": "tz1V3yg82mcrPJbegqVCPn6bC8w1CSTRp3f8",
+    "alias": "TezoShop",
+    "logo": "tezoshop.png",
+    "site": "https://tezoshop.art/"
+  },
+  {
+    "address": "tz1YhNsiRRU8aHNGg7NK3uuP6UDAyacJernB",
+    "alias": "Tezbaguette",
+    "logo": "tezbaguette.png",
+    "site": "https://blog.naver.com/tezbaguette"
+  },
+  {
+    "address": "tz1PWCDnz783NNGGQjEFFsHtrcK5yBW4E2rm",
+    "alias": "Melange",
+    "logo": "melange.png",
+    "site": "https://spiiice.wixsite.com/melange"
+  },
+  {
+    "address": "tz1XhnCdVENzgko5x1MMswLHSoQbJ5NPwLZ6",
+    "alias": "Anonstake",
+    "logo": "anonstake.png",
+    "site": "https://www.anonstake.com/bake-tezos"
+  },
+  {
+    "address": "tz1gg5bjopPcr9agjamyu9BbXKLibNc2rbAq",
+    "alias": "hodl.farm",
+    "logo": "hodlfarm.png",
+    "site": "https://hodl.farm/"
+  },
+  {
+    "address": "tz1Kf25fX1VdmYGSEzwFy1wNmkbSEZ2V83sY",
+    "alias": "Tezos Seoul",
+    "logo": "tezos_seul.png",
+    "site": ""
+  },
+  {
+    "address": "tz1fb7c66UwePkkfDXz4ajFaBP9hVNLdS7JJ",
+    "alias": "Tezos.nu",
+    "logo": "tezos_nu.png",
+    "site": "https://tezos.nu/"
+  },
+  {
+    "address": "tz1fvBC1cHJzPtUW3ZKd2GZDj7P4XVuLk9vW",
+    "alias": "Steaker",
+    "logo": "steaker.png",
+    "site": ""
+  }
+]

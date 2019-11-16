@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using Tzkt.Data;
+using Tzkt.Api.Repositories;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -25,13 +25,19 @@ namespace Tzkt.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddEntityFrameworkNpgsql()
-                .AddDbContext<ApiContext>(options =>
-                {
-                    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
-                });
+            services.AddAliases();
+            services.AddStateService();
+            services.AddTransient<AccountRepository>();
+            services.AddTransient<ContractRepository>();
+            services.AddTransient<DelegateRepository>();
+            services.AddTransient<UserRepository>();
+            services.AddTransient<StateRepository>();
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.IgnoreNullValues = true;
+                });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -42,8 +48,6 @@ namespace Tzkt.Api
             }
 
             app.UseRouting();
-
-            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
