@@ -153,18 +153,28 @@ namespace Tzkt.Sync.Protocols.Proto3
             var prevDelegationLevel = prevDelegation?.Level;
             var prevDelegate = prevDelegation?.Delegate;
 
-            if (prevDelegation == null && sender is Contract contract)
+            if (prevDelegation == null)
             {
-                if (contract.WeirdDelegateId != null)
+                if (sender is Contract contract)
                 {
-                    prevDelegate = await Cache.GetAccountAsync(contract.WeirdDelegateId) as Data.Models.Delegate;
-                    prevDelegationLevel = prevDelegate?.ActivationLevel;
+                    if (contract.WeirdDelegateId != null)
+                    {
+                        prevDelegate = await Cache.GetAccountAsync(contract.WeirdDelegateId) as Data.Models.Delegate;
+                        prevDelegationLevel = prevDelegate?.ActivationLevel;
+                    }
+                    else
+                    {
+                        var origination = await GetOriginationAsync(contract);
+                        prevDelegate = origination.Delegate;
+                        prevDelegationLevel = origination.Level;
+                    }
                 }
-                else
+                else if (sender is Data.Models.Delegate delegat)
                 {
-                    var origination = await GetOriginationAsync(contract);
-                    prevDelegate = origination.Delegate;
-                    prevDelegationLevel = origination.Level;
+                    if (delegat.ActivationLevel < block.Level)
+                    {
+                        prevDelegate = delegat;
+                    }
                 }
             }
 
@@ -209,7 +219,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                         sender = Delegation.Sender;
 
-                        if (prevDelegate != null)
+                        if (prevDelegate != null && prevDelegate.Id != sender.Id)
                             await SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
                     }
                     else
@@ -220,7 +230,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 else
                 {
                     await ResetDelegate(sender, senderDelegate);
-                    if (prevDelegate != null)
+                    if (prevDelegate != null && prevDelegate.Id != sender.Id)
                         await SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
                 }
             }

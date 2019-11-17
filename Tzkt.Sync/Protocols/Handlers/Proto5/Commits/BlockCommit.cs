@@ -56,7 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             Block = block;
             Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
             Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
-            EndorsedSlots = block.Endorsements.Count;
+            EndorsedSlots = block.Endorsements?.Count > 0 ? block.Endorsements.Sum(x => x.Slots) : 0;
         }
 
         public override async Task Apply()

@@ -10,7 +10,7 @@ using Tzkt.Api.Repositories;
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("v1/[controller]")]
     public class StateController : ControllerBase
     {
         private readonly StateRepository State;

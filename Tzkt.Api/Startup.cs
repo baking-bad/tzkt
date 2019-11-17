@@ -32,6 +32,7 @@ namespace Tzkt.Api
             services.AddTransient<DelegateRepository>();
             services.AddTransient<UserRepository>();
             services.AddTransient<StateRepository>();
+            services.AddTransient<OperationRepository>();
 
             services.AddControllers()
                 .AddJsonOptions(options =>

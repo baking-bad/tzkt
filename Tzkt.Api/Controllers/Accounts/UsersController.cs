@@ -12,7 +12,7 @@ using Tzkt.Api.Repositories;
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("v1/[controller]")]
     public class UsersController : ControllerBase
     {
         private readonly UserRepository Users;
