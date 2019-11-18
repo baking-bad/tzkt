@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
@@ -39,6 +40,22 @@ namespace Tzkt.Api
                 {
                     options.JsonSerializerOptions.IgnoreNullValues = true;
                 });
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "TzKT API",
+                    Description = "Early version of TzKT API",
+                    Version = "v1",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Baking Bad",
+                        Email = "hello@baking-bad.org",
+                        Url = new Uri("https://baking-bad.org/docs")
+                    }
+                });
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -47,6 +64,13 @@ namespace Tzkt.Api
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TzKT API V1");
+                c.RoutePrefix = string.Empty;
+            });
 
             app.UseRouting();
 
