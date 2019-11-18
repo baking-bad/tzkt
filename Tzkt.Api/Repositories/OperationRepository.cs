@@ -20,7 +20,7 @@ namespace Tzkt.Api.Repositories
         }
 
         #region endorsements
-        public async Task<EndorsementOperation> GetEndorsement(string hash)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash)
         {
             var sql = @"
                 SELECT   ""Level"", ""Timestamp"", ""DelegateId"", ""Slots""
@@ -30,15 +30,17 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var item = await db.QueryFirstOrDefaultAsync(sql, new { hash });
-            if (item == null) return null;
+            if (item == null) return new List<EndorsementOperation>(0);
 
-            return new EndorsementOperation
-            {
-                Level = item.Level,
-                Timestamp = item.Timestamp,
-                Hash = hash,
-                Delegate = Aliases[(int)item.DelegateId],
-                Slots = item.Slots
+            return new List<EndorsementOperation> {
+                new EndorsementOperation
+                {
+                    Level = item.Level,
+                    Timestamp = item.Timestamp,
+                    Hash = hash,
+                    Delegate = Aliases[(int)item.DelegateId],
+                    Slots = item.Slots
+                }
             };
         }
 

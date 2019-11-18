@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,35 +22,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Contract>>> Get(int p = 0, int n = 100)
+        public Task<IEnumerable<Contract>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
-            if (n > 1000)
-            {
-                return BadRequest(new
-                {
-                    Code = "400",
-                    Field = nameof(n),
-                    Message = "Maximum number of items is 1000"
-                });
-            }
-
-            return Ok(await Contracts.Get(n, p * n));
+            return Contracts.Get(n, p * n);
         }
 
         [HttpGet("{address}")]
-        public async Task<ActionResult<Contract>> Get(string address)
+        public Task<Contract> Get([KT1Address] string address)
         {
-            if (!Regex.IsMatch(address, "^KT1[0-9A-z]{33}$"))
-            {
-                return BadRequest(new
-                {
-                    Code = "400",
-                    Field = nameof(address),
-                    Message = "Invalid KT1 address"
-                });
-            }
-
-            return await Contracts.Get(address);
+            return Contracts.Get(address);
         }
     }
 }

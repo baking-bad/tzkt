@@ -7,11 +7,12 @@ namespace Microsoft.AspNetCore.Mvc
 {
     public class BadRequest : BadRequestObjectResult
     {
-        public BadRequest(string field, string message) : base(new
+        public BadRequest(ActionContext context) : base(new
         {
-            Code = "400",
-            Field = field,
-            Message = message
+            Code = 400,
+            Errors = new Dictionary<string, string>(
+                context.ModelState.Where(x => x.Value.Errors.Count > 0).Select(x => 
+                    new KeyValuePair<string, string>(x.Key, x.Value.Errors[0].ErrorMessage)))
         }) { }
     }
 }

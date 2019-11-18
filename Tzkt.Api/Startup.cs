@@ -39,6 +39,10 @@ namespace Tzkt.Api
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.IgnoreNullValues = true;
+                })
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context => new BadRequest(context);
                 });
 
             services.AddSwaggerGen(c =>
