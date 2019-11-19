@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
             var sql = @"
                 SELECT  ""Id"", ""FirstLevel"", ""LastLevel"", ""Balance"", ""Counter"", ""DelegateId"", ""Staked"", ""PublicKey""
                 FROM    ""Accounts""
-                WHERE   ""Address"" = @address
+                WHERE   ""Address"" = @address::character(36)
                 LIMIT   1";
 
             using var db = GetConnection();

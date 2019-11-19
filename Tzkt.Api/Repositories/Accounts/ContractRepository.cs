@@ -27,7 +27,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""Accounts"" as acc
                 LEFT JOIN   ""Accounts"" as mgr
                 ON          mgr.""Id"" = acc.""ManagerId""
-                WHERE       acc.""Address"" = @address
+                WHERE       acc.""Address"" = @address::character(36)
                 LIMIT       1";
 
             using var db = GetConnection();

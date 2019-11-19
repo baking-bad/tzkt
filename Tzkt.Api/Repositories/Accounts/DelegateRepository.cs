@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
                 SELECT  ""Id"", ""FirstLevel"", ""LastLevel"", ""Balance"", ""Counter"", ""PublicKey"", ""ActivationLevel"", ""DeactivationLevel"",
                         ""FrozenDeposits"", ""FrozenRewards"", ""FrozenFees"", ""Delegators"", ""StakingBalance""
                 FROM    ""Accounts""
-                WHERE   ""Address"" = @address AND ""Type"" = 1
+                WHERE   ""Address"" = @address::character(36) AND ""Type"" = 1
                 LIMIT   1";
 
             using var db = GetConnection();

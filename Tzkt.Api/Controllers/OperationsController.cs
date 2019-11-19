@@ -32,6 +32,12 @@ namespace Tzkt.Api.Controllers
         {
             return Operations.GetEndorsements(hash);
         }
+
+        [HttpGet("endorsements/count")]
+        public Task<int> GetEndorsementsCount()
+        {
+            return Operations.GetEndorsementsCount();
+        }
         #endregion
 
         #region proposals
@@ -42,9 +48,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("proposals/{hash}")]
-        public Task<ProposalOperation> GetProposal([OpHash] string hash)
+        public Task<IEnumerable<ProposalOperation>> GetProposal([OpHash] string hash)
         {
-            return Operations.GetProposal(hash);
+            return Operations.GetProposals(hash);
+        }
+
+        [HttpGet("proposals/count")]
+        public Task<int> GetProposalsCount()
+        {
+            return Operations.GetProposalsCount();
         }
         #endregion
 
@@ -56,9 +68,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("ballots/{hash}")]
-        public Task<BallotOperation> GetBallot([OpHash] string hash)
+        public Task<IEnumerable<BallotOperation>> GetBallot([OpHash] string hash)
         {
-            return Operations.GetBallot(hash);
+            return Operations.GetBallots(hash);
+        }
+
+        [HttpGet("ballots/count")]
+        public Task<int> GetBallotsCount()
+        {
+            return Operations.GetBallotsCount();
         }
         #endregion
 
@@ -70,9 +88,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("activations/{hash}")]
-        public Task<ActivationOperation> GetActivation([OpHash] string hash)
+        public Task<IEnumerable<ActivationOperation>> GetActivation([OpHash] string hash)
         {
-            return Operations.GetActivation(hash);
+            return Operations.GetActivations(hash);
+        }
+
+        [HttpGet("activations/count")]
+        public Task<int> GetActivationsCount()
+        {
+            return Operations.GetActivationsCount();
         }
         #endregion
 
@@ -84,9 +108,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("double_baking/{hash}")]
-        public Task<DoubleBakingOperation> GetDoubleBaking([OpHash] string hash)
+        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBaking([OpHash] string hash)
         {
-            return Operations.GetDoubleBaking(hash);
+            return Operations.GetDoubleBakings(hash);
+        }
+
+        [HttpGet("double_baking/count")]
+        public Task<int> GetDoubleBakingsCount()
+        {
+            return Operations.GetDoubleBakingsCount();
         }
         #endregion
 
@@ -98,9 +128,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("double_endorsing/{hash}")]
-        public Task<DoubleEndorsingOperation> GetDoubleEndorsing([OpHash] string hash)
+        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsing([OpHash] string hash)
         {
-            return Operations.GetDoubleEndorsing(hash);
+            return Operations.GetDoubleEndorsings(hash);
+        }
+
+        [HttpGet("double_endorsing/count")]
+        public Task<int> GetDoubleEndorsingsCount()
+        {
+            return Operations.GetDoubleEndorsingsCount();
         }
         #endregion
 
@@ -112,9 +148,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("nonce_revelations/{hash}")]
-        public Task<NonceRevelationOperation> GetNonceRevelation([OpHash] string hash)
+        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelation([OpHash] string hash)
         {
-            return Operations.GetNonceRevelation(hash);
+            return Operations.GetNonceRevelations(hash);
+        }
+
+        [HttpGet("nonce_revelations/count")]
+        public Task<int> GetNonceRevelationsCount()
+        {
+            return Operations.GetNonceRevelationsCount();
         }
         #endregion
 
@@ -126,9 +168,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("delegations/{hash}")]
-        public Task<DelegationOperation> GetDelegation([OpHash] string hash)
+        public Task<IEnumerable<DelegationOperation>> GetDelegation([OpHash] string hash)
         {
-            return Operations.GetDelegation(hash);
+            return Operations.GetDelegations(hash);
+        }
+
+        [HttpGet("delegations/count")]
+        public Task<int> GetDelegationsCount()
+        {
+            return Operations.GetDelegationsCount();
         }
         #endregion
 
@@ -140,9 +188,47 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("originations/{hash}")]
-        public Task<OriginationOperation> GetOrigination([OpHash] string hash)
+        public Task<IEnumerable<OriginationOperation>> GetOrigination([OpHash] string hash)
         {
-            return Operations.GetOrigination(hash);
+            return Operations.GetOriginations(hash);
+        }
+
+        [HttpGet("originations/count")]
+        public Task<int> GetOriginationsCount()
+        {
+            return Operations.GetOriginationsCount();
+        }
+        #endregion
+
+        #region transactions
+        [HttpGet("transactions")]
+        public Task<IEnumerable<TransactionOperation>> GetTransactions([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        {
+            return Operations.GetTransactions(n, p * n);
+        }
+
+        [HttpGet("transactions/{hash}")]
+        public Task<IEnumerable<TransactionOperation>> GetTransaction([OpHash] string hash)
+        {
+            return Operations.GetTransactions(hash);
+        }
+
+        [HttpGet("transactions/{hash}/{counter}")]
+        public Task<IEnumerable<TransactionOperation>> GetTransaction([OpHash] string hash, [Min(0)] int counter)
+        {
+            return Operations.GetTransactions(hash, counter);
+        }
+
+        [HttpGet("transactions/{hash}/{counter}/{nonce}")]
+        public Task<IEnumerable<TransactionOperation>> GetTransaction([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce)
+        {
+            return Operations.GetTransactions(hash, counter, nonce);
+        }
+
+        [HttpGet("transactions/count")]
+        public Task<int> GetTransactionsCount()
+        {
+            return Operations.GetTransactionsCount();
         }
         #endregion
 
@@ -154,9 +240,15 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("reveals/{hash}")]
-        public Task<RevealOperation> GetReveal([OpHash] string hash)
+        public Task<IEnumerable<RevealOperation>> GetReveal([OpHash] string hash)
         {
-            return Operations.GetReveal(hash);
+            return Operations.GetReveals(hash);
+        }
+
+        [HttpGet("reveals/count")]
+        public Task<int> GetRevealsCount()
+        {
+            return Operations.GetRevealsCount();
         }
         #endregion
     }

@@ -18,6 +18,8 @@ namespace Tzkt.Api.Models
 
         public int Counter { get; set; }
 
+        public int? Nonce { get; set; }
+
         public int GasLimit { get; set; }
 
         public int GasUsed { get; set; }
@@ -35,8 +37,6 @@ namespace Tzkt.Api.Models
         public long ContractBalance { get; set; }
 
         public Alias ContractDelegate { get; set; }
-
-        public bool Internal { get; set; }
 
         public string Status { get; set; }
 
