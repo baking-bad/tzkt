@@ -39,6 +39,7 @@ namespace Tzkt.Api
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.IgnoreNullValues = true;
+                    options.JsonSerializerOptions.Converters.Add(new OperationConverter());
                 })
                 .ConfigureApiBehaviorOptions(options =>
                 {

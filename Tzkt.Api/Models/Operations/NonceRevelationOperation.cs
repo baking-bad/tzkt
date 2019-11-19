@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class NonceRevelationOperation
+    public class NonceRevelationOperation : IOperation
     {
+        [JsonIgnore]
+        public int Id { get; set; }
+
+        public string Type => "nonce_revelation";
+
         public int Level { get; set; }
 
         public DateTime Timestamp { get; set; }

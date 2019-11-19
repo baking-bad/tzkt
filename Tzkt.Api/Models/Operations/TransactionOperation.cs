@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class TransactionOperation
+    public class TransactionOperation : IOperation
     {
+        [JsonIgnore]
+        public int Id { get; set; }
+
+        public string Type => "transaction";
+
         public int Level { get; set; }
 
         public DateTime Timestamp { get; set; }
@@ -39,11 +44,5 @@ namespace Tzkt.Api.Models
         public long Amount { get; set; }
 
         public string Status { get; set; }
-
-        public IEnumerable<InternalDelegationOperation> InternalDelegations { get; set; }
-
-        public IEnumerable<InternalOriginationOperation> InternalOriginations { get; set; }
-
-        public IEnumerable<InternalTransactionOperation> InternalTransactions { get; set; }
     }
 }

@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class DelegationOperation
+    public class DelegationOperation : IOperation
     {
+        [JsonIgnore]
+        public int Id { get; set; }
+
+        public string Type => "delegation";
+
         public int Level { get; set; }
 
         public DateTime Timestamp { get; set; }

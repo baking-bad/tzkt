@@ -6,8 +6,13 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class BallotOperation
+    public class BallotOperation : IOperation
     {
+        [JsonIgnore]
+        public int Id { get; set; }
+
+        public string Type => "ballot";
+
         public int Level { get; set; }
 
         public DateTime Timestamp { get; set; }

@@ -19,6 +19,110 @@ namespace Tzkt.Api.Repositories
             Aliases = aliases;
         }
 
+        #region operations
+        public async Task<IEnumerable<IOperation>> Get(string hash)
+        {
+            #region test manager operations
+            var delegations = GetDelegations(hash);
+            var originations = GetOriginations(hash);
+            var transactions = GetTransactions(hash);
+            var reveals = GetReveals(hash);
+
+            await Task.WhenAll(delegations, originations, transactions, reveals);
+
+            var managerOps = ((IEnumerable<IOperation>)delegations.Result)
+                .Concat(originations.Result)
+                .Concat(transactions.Result)
+                .Concat(reveals.Result);
+
+            if (managerOps.Any())
+                return managerOps.OrderBy(x => x.Id);
+            #endregion
+
+            #region less likely
+            var activations = GetActivations(hash);
+            var proposals = GetProposals(hash);
+            var ballots = GetBallots(hash);
+
+            await Task.WhenAll(activations, proposals, ballots);
+
+            if (activations.Result.Any())
+                return activations.Result;
+
+            if (proposals.Result.Any())
+                return proposals.Result;
+
+            if (ballots.Result.Any())
+                return ballots.Result;
+            #endregion
+
+            #region very unlikely
+            var endorsements = GetEndorsements(hash);
+            var dobleBaking = GetDoubleBakings(hash);
+            var doubleEndorsing = GetDoubleEndorsings(hash);
+            var nonceRevelation = GetNonceRevelations(hash);
+
+            await Task.WhenAll(endorsements, dobleBaking, doubleEndorsing, nonceRevelation);
+
+            if (endorsements.Result.Any())
+                return endorsements.Result;
+
+            if (dobleBaking.Result.Any())
+                return dobleBaking.Result;
+
+            if (doubleEndorsing.Result.Any())
+                return doubleEndorsing.Result;
+
+            if (nonceRevelation.Result.Any())
+                return nonceRevelation.Result;
+            #endregion
+
+            return new List<IOperation>(0);
+        }
+
+        public async Task<IEnumerable<IOperation>> Get(string hash, int counter)
+        {
+            var delegations = GetDelegations(hash, counter);
+            var originations = GetOriginations(hash, counter);
+            var transactions = GetTransactions(hash, counter);
+            var reveals = GetReveals(hash, counter);
+
+            await Task.WhenAll(delegations, originations, transactions, reveals);
+
+            if (reveals.Result.Any())
+                return reveals.Result;
+
+            var managerOps = ((IEnumerable<IOperation>)delegations.Result)
+                .Concat(originations.Result)
+                .Concat(transactions.Result);
+
+            if (managerOps.Any())
+                return managerOps.OrderBy(x => x.Id);
+
+            return new List<IOperation>(0);
+        }
+
+        public async Task<IEnumerable<IOperation>> Get(string hash, int counter, int nonce)
+        {
+            var delegations = GetDelegations(hash, counter, nonce);
+            var originations = GetOriginations(hash, counter, nonce);
+            var transactions = GetTransactions(hash, counter, nonce);
+
+            await Task.WhenAll(delegations, originations, transactions);
+
+            if (delegations.Result.Any())
+                return delegations.Result;
+
+            if (originations.Result.Any())
+                return originations.Result;
+
+            if (transactions.Result.Any())
+                return transactions.Result;
+
+            return new List<IOperation>(0);
+        }
+        #endregion
+
         #region endorsements
         public async Task<int> GetEndorsementsCount()
         {
@@ -33,7 +137,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash)
         {
             var sql = @"
-                SELECT   ""Level"", ""Timestamp"", ""DelegateId"", ""Slots""
+                SELECT   ""Id"", ""Level"", ""Timestamp"", ""DelegateId"", ""Slots""
                 FROM     ""EndorsementOps""
                 WHERE    ""OpHash"" = @hash::character(51)
                 LIMIT    1";
@@ -43,6 +147,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new EndorsementOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -54,7 +159,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(int level)
         {
             var sql = @"
-                SELECT   ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots""
+                SELECT   ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots""
                 FROM     ""EndorsementOps""
                 WHERE    ""Level"" = @level
                 ORDER BY ""Id""";
@@ -64,6 +169,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new EndorsementOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -75,7 +181,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT   ""Level"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots""
+                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots""
                 FROM     ""EndorsementOps""
                 ORDER BY ""Id""
                 OFFSET   @offset
@@ -86,6 +192,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new EndorsementOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -109,7 +216,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash)
         {
             var sql = @"
-                SELECT    op.""Level"", op.""Timestamp"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
                 FROM      ""ProposalOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
                 WHERE     op.""OpHash"" = @hash::character(51)
@@ -120,6 +227,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new ProposalOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -132,7 +240,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(int level)
         {
             var sql = @"
-                SELECT    op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
                 FROM      ""ProposalOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
                 WHERE     op.""Level"" = level
@@ -143,6 +251,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new ProposalOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -155,7 +264,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
                 FROM      ""ProposalOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
                 ORDER BY  op.""Id""
@@ -167,6 +276,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new ProposalOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -191,7 +301,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(string hash)
         {
             var sql = @"
-                SELECT    op.""Level"", op.""Timestamp"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
                 FROM      ""BallotOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
                 WHERE     op.""OpHash"" = @hash::character(51)
@@ -202,6 +312,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new BallotOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -215,7 +326,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(int level)
         {
             var sql = @"
-                SELECT    op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
                 FROM      ""BallotOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
                 WHERE     op.""Level"" = @level
@@ -226,6 +337,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new BallotOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -239,7 +351,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
                 FROM      ""BallotOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
                 ORDER BY  op.""Id""
@@ -251,6 +363,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new BallotOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -276,7 +389,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ActivationOperation>> GetActivations(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""AccountId"", ""Balance""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccountId"", ""Balance""
                 FROM      ""ActivationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 LIMIT     1";
@@ -286,6 +399,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new ActivationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -297,7 +411,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ActivationOperation>> GetActivations(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""AccountId"", ""Balance""
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""AccountId"", ""Balance""
                 FROM      ""ActivationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -307,6 +421,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new ActivationOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -318,7 +433,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ActivationOperation>> GetActivations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""AccountId"", ""Balance""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccountId"", ""Balance""
                 FROM      ""ActivationOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -329,6 +444,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new ActivationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -352,7 +468,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleBakingOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -363,6 +479,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DoubleBakingOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -379,7 +496,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleBakingOps""
                 WHERE     ""Level"" = @level
@@ -390,6 +507,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DoubleBakingOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -406,7 +524,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleBakingOps""
                 ORDER BY  ""Id""
@@ -418,6 +536,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DoubleBakingOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -446,7 +565,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleEndorsingOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -457,6 +576,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DoubleEndorsingOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -473,7 +593,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleEndorsingOps""
                 WHERE     ""Level"" = @level
@@ -484,6 +604,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DoubleEndorsingOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -500,7 +621,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleEndorsingOps""
                 ORDER BY  ""Id""
@@ -512,6 +633,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DoubleEndorsingOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -540,7 +662,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""RevealedLevel""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 LIMIT     1";
@@ -550,6 +672,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new NonceRevelationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -561,7 +684,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""SenderId"", ""RevealedLevel""
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -571,6 +694,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new NonceRevelationOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -582,7 +706,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""RevealedLevel""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -593,6 +717,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new NonceRevelationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -616,7 +741,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -627,6 +752,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DelegationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -644,7 +770,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
@@ -655,6 +781,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DelegationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -672,7 +799,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""DelegateId""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
@@ -683,6 +810,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DelegationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -700,7 +828,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
                 FROM      ""DelegationOps""
                 WHERE     ""Level"" = @level
@@ -711,6 +839,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DelegationOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -728,7 +857,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
                 FROM      ""DelegationOps""
                 ORDER BY  ""Id""
@@ -740,6 +869,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DelegationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -769,7 +899,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -780,6 +910,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new OriginationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -803,7 +934,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
@@ -814,6 +945,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new OriginationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -837,7 +969,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""ContractId"", ""DelegateId"", ""Balance""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
@@ -848,6 +980,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new OriginationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -871,7 +1004,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
                 FROM      ""OriginationOps""
                 WHERE     ""Level"" = @level
@@ -882,6 +1015,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new OriginationOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -905,7 +1039,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
                 FROM      ""OriginationOps""
                 ORDER BY  ""Id""
@@ -917,6 +1051,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new OriginationOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -952,7 +1087,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -963,6 +1098,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new TransactionOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -985,7 +1121,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
@@ -996,6 +1132,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new TransactionOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -1018,7 +1155,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""TargetId"", ""Amount""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
@@ -1029,6 +1166,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new TransactionOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -1051,7 +1189,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
                 FROM      ""TransactionOps""
                 WHERE     ""Level"" = @level
@@ -1062,6 +1200,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new TransactionOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -1084,7 +1223,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
                 FROM      ""TransactionOps""
                 ORDER BY  ""Id""
@@ -1096,6 +1235,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new TransactionOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -1130,7 +1270,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
                 FROM      ""RevealOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 ORDER BY  ""Id""";
@@ -1140,6 +1280,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new RevealOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -1155,7 +1296,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, int counter)
         {
             var sql = @"
-                SELECT  ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT  ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
                 FROM    ""RevealOps""
                 WHERE   ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
                 LIMIT   1";
@@ -1165,6 +1306,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new RevealOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
@@ -1180,7 +1322,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(int level)
         {
             var sql = @"
-                SELECT    ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
                 FROM      ""RevealOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -1190,6 +1332,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new RevealOperation
             {
+                Id = row.Id,
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
@@ -1205,7 +1348,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
                 FROM      ""RevealOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -1216,6 +1359,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new RevealOperation
             {
+                Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
