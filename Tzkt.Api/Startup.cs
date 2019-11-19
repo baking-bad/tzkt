@@ -36,6 +36,7 @@ namespace Tzkt.Api
             services.AddTransient<UserRepository>();
             services.AddTransient<StateRepository>();
             services.AddTransient<OperationRepository>();
+            services.AddTransient<VotingRepository>();
 
             services.AddControllers()
                 .AddJsonOptions(options =>

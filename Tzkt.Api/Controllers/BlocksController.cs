@@ -33,7 +33,7 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet]
-        public Task<IEnumerable<Block>> GetEndorsements([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<Block>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
             return Blocks.Get(n, p * n);
         }

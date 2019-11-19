@@ -33,7 +33,7 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet]
-        public Task<IEnumerable<Protocol>> GetEndorsements([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<Protocol>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
             return Protocols.Get(n, p * n);
         }
