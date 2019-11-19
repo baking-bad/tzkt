@@ -27,7 +27,7 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("{hash}")]
-        public Task<Block> Get([Min(0)] string hash, bool operations = false)
+        public Task<Block> Get([BlockHash] string hash, bool operations = false)
         {
             return Blocks.Get(hash, operations);
         }

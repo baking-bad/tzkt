@@ -29,6 +29,7 @@ namespace Tzkt.Api
             services.AddAliases();
             services.AddStateService();
             services.AddTransient<BlockRepository>();
+            services.AddTransient<ProtocolRepository>();
             services.AddTransient<AccountRepository>();
             services.AddTransient<ContractRepository>();
             services.AddTransient<DelegateRepository>();
