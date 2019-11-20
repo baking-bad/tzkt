@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class Delegate
+    public class Delegate : IAccount
     {
+        public string Type => "delegate";
+
         public bool Active { get; set; }
 
         public string Alias { get; set; }

@@ -8,19 +8,16 @@ namespace Tzkt.Api.Models
 {
     public class DelegateInfo
     {
-        [JsonPropertyName("alias")]
-        public string Name { get; set; }
+        public string Alias { get; set; }
 
-        [JsonPropertyName("address")]
         public string Address { get; set; }
 
-        [JsonPropertyName("active")]
         public bool Active { get; set; }
 
         public DelegateInfo(Alias delegat, bool staked)
         {
             Active = staked;
-            Name = delegat.Name;
+            Alias = delegat.Name;
             Address = delegat.Address;
         }
     }

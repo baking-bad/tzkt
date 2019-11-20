@@ -1,20 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+
+using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Models
 {
-    public interface IOperation
+    public interface IAccount
     {
-        int Id { get; }
-
         string Type { get; }
 
-        int Level { get; }
-
-        DateTime Timestamp { get; }
-
-        string Hash { get; }
+        string Address { get; }
     }
 }

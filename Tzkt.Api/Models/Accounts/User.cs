@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class User
+    public class User : IAccount
     {
+        public string Type => "user";
+
         public string Alias { get; set; }
 
         public string Address { get; set; }

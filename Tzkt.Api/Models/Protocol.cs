@@ -15,6 +15,6 @@ namespace Tzkt.Api.Models
 
         public int LastLevel { get; set; }
 
-        public ProtoConstants Constants { get; set; }
+        public ProtocolConstants Constants { get; set; }
     }
 }

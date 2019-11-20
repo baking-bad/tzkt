@@ -34,7 +34,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.Hash,
                 FirstLevel = row.FirstLevel,
                 LastLevel = row.LastLevel,
-                Constants = new ProtoConstants
+                Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward,
@@ -76,7 +76,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 FirstLevel = row.FirstLevel,
                 LastLevel = row.LastLevel,
-                Constants = new ProtoConstants
+                Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward,
@@ -119,7 +119,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.Hash,
                 FirstLevel = row.FirstLevel,
                 LastLevel = row.LastLevel,
-                Constants = new ProtoConstants
+                Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward,

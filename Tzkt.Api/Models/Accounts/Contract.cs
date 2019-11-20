@@ -4,10 +4,14 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+using Tzkt.Data.Models;
+
 namespace Tzkt.Api.Models
 {
-    public class Contract
+    public class Contract : IAccount
     {
+        public string Type => "contract";
+
         public string Kind { get; set; }
 
         public string Alias { get; set; }

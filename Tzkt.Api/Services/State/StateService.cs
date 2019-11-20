@@ -9,22 +9,26 @@ using Microsoft.Extensions.Logging;
 using Dapper;
 
 using Tzkt.Data.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Services
 {
     public class StateService : DbConnection
     {
+        readonly static SemaphoreSlim Sema = new SemaphoreSlim(1, 1);
+
         AppState AppState;
         DateTime NextSyncTime;
         int Attempts;
 
         readonly AliasService Aliases;
+        readonly AccountsCache Accounts;
         readonly ILogger Logger;
         readonly int TimeBetweenBlocks;
-        readonly static SemaphoreSlim Sema = new SemaphoreSlim(1, 1);
 
-        public StateService(AliasService aliases, IConfiguration config, ILogger<StateService> logger) : base(config)
+        public StateService(AliasService aliases, AccountsCache accounts, IConfiguration config, ILogger<StateService> logger) : base(config)
         {
+            Accounts = accounts;
             Aliases = aliases;
             Logger = logger;
 
@@ -46,7 +50,7 @@ namespace Tzkt.Api.Services
 
             logger.LogInformation($"Current state: {AppState.Level}");
         }
-
+        
         public async Task<AppState> GetState()
         {
             if (DateTime.UtcNow > NextSyncTime)
@@ -64,7 +68,7 @@ namespace Tzkt.Api.Services
                     {
                         Logger.LogDebug($"New state detected: {AppState.Level} -> {newState.Level}");
 
-                        var changedAccounts = await LoadChangedAccounts(AppState.Level);
+                        var changedAccounts = await Accounts.GetChangedAccounts(AppState.Level);
 
                         Logger.LogDebug($"Changed accounts: {changedAccounts.Count()}");
 
@@ -81,7 +85,7 @@ namespace Tzkt.Api.Services
 
             return AppState;
         }
-
+        
         public async Task<int> GetCounter()
         {
             return (await GetState()).ManagerCounter;
@@ -107,17 +111,6 @@ namespace Tzkt.Api.Services
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<AppState>(sql);
-        }
-
-        async Task<IEnumerable<(int, string)>> LoadChangedAccounts(int fromLevel)
-        {
-            var sql = @"
-                SELECT  ""Id"", ""Address""
-                FROM    ""Accounts""
-                WHERE   ""LastLevel"" > @fromLevel";
-
-            using var db = GetConnection();
-            return await db.QueryAsync<(int Id, string Address)>(sql, new { fromLevel });
         }
     }
 

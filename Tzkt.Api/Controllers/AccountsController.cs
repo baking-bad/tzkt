@@ -21,16 +21,16 @@ namespace Tzkt.Api.Controllers
             Accounts = accounts;
         }
 
-        [HttpGet]
-        public Task<IEnumerable<Account>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
-        {
-            return Accounts.Get(n, p * n);
-        }
-
         [HttpGet("{address}")]
-        public Task<Account> Get([Address] string address)
+        public Task<IAccount> Get([Address] string address)
         {
             return Accounts.Get(address);
+        }
+
+        [HttpGet]
+        public Task<IEnumerable<IAccount>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        {
+            return Accounts.Get(n, p * n);
         }
     }
 }

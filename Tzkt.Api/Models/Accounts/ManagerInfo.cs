@@ -8,18 +8,15 @@ namespace Tzkt.Api.Models
 {
     public class ManagerInfo
     {
-        [JsonPropertyName("alias")]
-        public string Name { get; set; }
+        public string Alias { get; set; }
 
-        [JsonPropertyName("address")]
         public string Address { get; set; }
 
-        [JsonPropertyName("publicKey")]
         public string PublicKey { get; set; }
 
         public ManagerInfo(Alias manager, string publicKey)
         {
-            Name = manager.Name;
+            Alias = manager.Name;
             Address = manager.Address;
             PublicKey = publicKey;
         }

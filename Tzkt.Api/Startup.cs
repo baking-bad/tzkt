@@ -13,6 +13,7 @@ using Microsoft.OpenApi.Models;
 
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api
 {
@@ -26,22 +27,21 @@ namespace Tzkt.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAccountsCache();
             services.AddAliases();
             services.AddStateService();
-            services.AddTransient<BlockRepository>();
-            services.AddTransient<ProtocolRepository>();
-            services.AddTransient<AccountRepository>();
-            services.AddTransient<ContractRepository>();
-            services.AddTransient<DelegateRepository>();
-            services.AddTransient<UserRepository>();
             services.AddTransient<StateRepository>();
+            services.AddTransient<AccountRepository>();
             services.AddTransient<OperationRepository>();
+            services.AddTransient<BlockRepository>();
             services.AddTransient<VotingRepository>();
+            services.AddTransient<ProtocolRepository>();
 
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.IgnoreNullValues = true;
+                    options.JsonSerializerOptions.Converters.Add(new AccountConverter());
                     options.JsonSerializerOptions.Converters.Add(new OperationConverter());
                 })
                 .ConfigureApiBehaviorOptions(options =>
@@ -76,7 +76,7 @@ namespace Tzkt.Api
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TzKT API V1");
+                c.SwaggerEndpoint("/v1/swagger.json", "TzKT API V1");
                 c.RoutePrefix = string.Empty;
             });
 

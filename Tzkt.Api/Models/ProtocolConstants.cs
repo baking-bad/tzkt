@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class ProtoConstants
+    public class ProtocolConstants
     {
         public int PreserverCycles { get; set; }
 
