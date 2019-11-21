@@ -8,8 +8,8 @@ namespace Tzkt.Api.Services
 {
     public class CacheConfig
     {
-        public double LoadRate = 0.75;
-        public int MaxAccounts = 32_000;
+        public double LoadRate { get; set; } = 0.75;
+        public int MaxAccounts { get; set; } = 32_000;
     }
 
     public static class CacheConfigExt
