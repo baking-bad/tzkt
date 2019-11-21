@@ -40,6 +40,8 @@ namespace Tzkt.Api.Models
 
         public int LastActivity { get; set; }
 
+        public IEnumerable<IAccount> Contracts { get; set; }
+
         public IEnumerable<DelegatorInfo> Delegators { get; set; }
 
         public IEnumerable<IOperation> Operations { get; set; }

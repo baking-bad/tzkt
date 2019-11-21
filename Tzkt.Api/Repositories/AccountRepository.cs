@@ -100,6 +100,7 @@ namespace Tzkt.Api.Repositories
             switch (account)
             {
                 case Models.Delegate delegat:
+                    delegat.Contracts = await GetContracts(address, 5);
                     delegat.Delegators = await GetDelegators(address, 20);
                     delegat.Operations = await GetOperations(address,
                         Data.Models.Operations.All &
@@ -107,11 +108,13 @@ namespace Tzkt.Api.Repositories
                         ~Data.Models.Operations.Revelations, 20);
                     break;
                 case User user when user.FirstActivity != null:
+                    user.Contracts = await GetContracts(address, 5);
                     user.Operations = await GetOperations(address,
                         Data.Models.Operations.Manager |
                         Data.Models.Operations.Activations, 20);
                     break;
                 case Contract contract:
+                    contract.Contracts = await GetContracts(address, 5);
                     contract.Operations = await GetOperations(address,
                         Data.Models.Operations.Manager, 20);
                     break;
@@ -192,6 +195,35 @@ namespace Tzkt.Api.Repositories
             return accounts;
         }
 
+        public async Task<IEnumerable<Contract>> GetContracts(string address, int limit = 100, int offset = 0)
+        {
+            var account = await Accounts.Get(address);
+
+            var sql = @"
+                SELECT      account.*, manager.""PublicKey"" as ""ManagerPublicKey""
+                FROM        ""Accounts"" as account
+                LEFT JOIN   ""Accounts"" as manager ON manager.""Id"" = account.""ManagerId""
+                WHERE       account.""ManagerId"" = @accountId
+                ORDER BY    account.""FirstLevel"" DESC
+                OFFSET      @offset
+                LIMIT       @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit, offset });
+
+            return rows.Select(row => new Contract
+            {
+                Kind = KindToString(row.Kind),
+                Alias = Aliases[row.Id].Name,
+                Address = row.Address,
+                Balance = row.Balance,
+                Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null,
+                Manager = new ManagerInfo(Aliases[row.ManagerId], row.ManagerPublicKey),
+                FirstActivity = row.FirstLevel,
+                LastActivity = row.LastLevel
+            });
+        }
+
         public async Task<IEnumerable<DelegatorInfo>> GetDelegators(string address, int limit = 100, int offset = 0)
         {
             var delegat = await Accounts.Get(address);
@@ -209,7 +241,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DelegatorInfo
             {
-                Alias = Aliases[row.Id].Name, 
+                Alias = Aliases[row.Id].Name,
                 Address = Aliases[row.Id].Address,
                 Balance = row.Balance,
                 DelegationLevel = row.DelegationLevel
