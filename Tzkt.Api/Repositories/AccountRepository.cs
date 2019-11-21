@@ -15,9 +15,9 @@ namespace Tzkt.Api.Repositories
     {
         readonly AccountsCache Accounts;
         readonly AliasService Aliases;
-        readonly StateService State;
+        readonly StateCache State;
 
-        public AccountRepository(AccountsCache accounts, AliasService aliases, StateService state, IConfiguration config) : base(config)
+        public AccountRepository(AccountsCache accounts, AliasService aliases, StateCache state, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Aliases = aliases;
@@ -33,7 +33,7 @@ namespace Tzkt.Api.Repositories
                     ? new User
                     {
                         Address = address,
-                        Counter = await State.GetCounter(),
+                        Counter = State.GetCounter(),
                     }
                     : null;
 
@@ -41,7 +41,7 @@ namespace Tzkt.Api.Repositories
             {
                 case RawDelegate delegat:
                     var deactivation = (int?)delegat.DeactivationLevel;
-                    var active = deactivation > (await State.GetState()).Level;
+                    var active = deactivation > State.GetLevel();
                     return new Models.Delegate
                     {
                         Active = active,
@@ -66,7 +66,7 @@ namespace Tzkt.Api.Repositories
                         Alias = Aliases[user.Id].Name,
                         Address = address,
                         Balance = user.Balance,
-                        Counter = user.Balance > 0 ? user.Counter : await State.GetCounter(),
+                        Counter = user.Balance > 0 ? user.Counter : State.GetCounter(),
                         FirstActivity = user.FirstLevel,
                         LastActivity = user.LastLevel,
                         PublicKey = user.PublicKey,
@@ -115,7 +115,7 @@ namespace Tzkt.Api.Repositories
                             Alias = Aliases[row.Id].Name,
                             Address = row.Address,
                             Balance = row.Balance,
-                            Counter = row.Balance > 0 ? row.Counter : await State.GetCounter(),
+                            Counter = row.Balance > 0 ? row.Counter : State.GetCounter(),
                             FirstActivity = row.FirstLevel,
                             LastActivity = row.LastLevel,
                             PublicKey = row.PublicKey,
@@ -124,7 +124,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case 1:
                         var deactivation = (int?)row.DeactivationLevel;
-                        var active = deactivation > (await State.GetState()).Level;
+                        var active = deactivation > State.GetLevel();
                         accounts.Add(new Models.Delegate
                         {
                             Active = active,

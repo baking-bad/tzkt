@@ -14,6 +14,7 @@ using Microsoft.OpenApi.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Sync;
 
 namespace Tzkt.Api
 {
@@ -27,15 +28,18 @@ namespace Tzkt.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAccountsCache();
             services.AddAliases();
-            services.AddStateService();
+            services.AddAccountsCache();
+            services.AddStateCache();
+
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();
             services.AddTransient<OperationRepository>();
             services.AddTransient<BlockRepository>();
             services.AddTransient<VotingRepository>();
             services.AddTransient<ProtocolRepository>();
+
+            services.AddSynchronization();
 
             services.AddControllers()
                 .AddJsonOptions(options =>

@@ -6,29 +6,29 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 
 using Tzkt.Api.Models;
-using Tzkt.Api.Services;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public class StateRepository : DbConnection
     {
-        readonly StateService StateService;
+        readonly StateCache State;
 
-        public StateRepository(StateService stateService, IConfiguration config) : base(config)
+        public StateRepository(StateCache state, IConfiguration config) : base(config)
         {
-            StateService = stateService;
+            State = state;
         }
 
-        public async Task<State> Get()
+        public Task<State> Get()
         {
-            var appState = await StateService.GetState();
+            var appState = State.GetState();
             
-            return new State
+            return Task.FromResult(new State
             {
                 Hash = appState.Hash,
                 Level = appState.Level,
                 Timestamp = appState.Timestamp
-            };
+            });
         }
     }
 }

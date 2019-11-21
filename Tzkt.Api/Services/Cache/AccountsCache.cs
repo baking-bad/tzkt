@@ -47,7 +47,7 @@ namespace Tzkt.Api.Services.Cache
             return account;
         }
 
-        public async Task<List<(int Id, string Address)>> GetChangedAccounts(int fromLevel)
+        public async Task<List<(int Id, string Address)>> Update(int fromLevel)
         {
             var sql = @"
                 SELECT   *
