@@ -28,6 +28,8 @@ namespace Tzkt.Api.Models
 
         public int Counter { get; set; }
 
+        public int OpMask { get; set; }
+
         public int ActivationLevel { get; set; }
 
         public int? DeactivationLevel { get; set; }

@@ -20,6 +20,8 @@ namespace Tzkt.Api.Models
 
         public int Counter { get; set; }
 
+        public int OpMask { get; set; }
+
         public DelegateInfo Delegate { get; set; }
 
         public int? FirstActivity { get; set; }

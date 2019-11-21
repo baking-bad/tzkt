@@ -20,6 +20,8 @@ namespace Tzkt.Api.Models
 
         public long Balance { get; set; }
 
+        public int OpMask { get; set; }
+
         public DelegateInfo Delegate { get; set; }
 
         public ManagerInfo Manager { get; set; }
