@@ -16,12 +16,14 @@ namespace Tzkt.Api.Repositories
         readonly AccountsCache Accounts;
         readonly AliasService Aliases;
         readonly StateCache State;
+        readonly OperationRepository Operations;
 
-        public AccountRepository(AccountsCache accounts, AliasService aliases, StateCache state, IConfiguration config) : base(config)
+        public AccountRepository(AccountsCache accounts, AliasService aliases, StateCache state, OperationRepository operations, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Aliases = aliases;
             State = state;
+            Operations = operations;
         }
 
         public async Task<IAccount> Get(string address)
@@ -90,7 +92,34 @@ namespace Tzkt.Api.Repositories
                     throw new Exception($"Invalid raw account type");
             }
         }
-        
+
+        public async Task<IAccount> GetProfile(string address)
+        {
+            var account = await Get(address);
+
+            switch (account)
+            {
+                case Models.Delegate delegat:
+                    delegat.Delegators = await GetDelegators(address, 20);
+                    delegat.Operations = await GetOperations(address,
+                        Data.Models.Operations.All &
+                        ~Data.Models.Operations.Endorsements &
+                        ~Data.Models.Operations.Revelations, 20);
+                    break;
+                case User user when user.FirstActivity != null:
+                    user.Operations = await GetOperations(address,
+                        Data.Models.Operations.Manager |
+                        Data.Models.Operations.Activations, 20);
+                    break;
+                case Contract contract:
+                    contract.Operations = await GetOperations(address,
+                        Data.Models.Operations.Manager, 20);
+                    break;
+            }
+
+            return account;
+        }
+
         public async Task<IEnumerable<IAccount>> Get(int limit = 100, int offset = 0)
         {
             var sql = @"
@@ -161,6 +190,332 @@ namespace Tzkt.Api.Repositories
             }
 
             return accounts;
+        }
+
+        public async Task<IEnumerable<DelegatorInfo>> GetDelegators(string address, int limit = 100, int offset = 0)
+        {
+            var delegat = await Accounts.Get(address);
+
+            var sql = @"
+                SELECT      ""Id"", ""Balance"", ""DelegationLevel""
+                FROM        ""Accounts""
+                WHERE       ""DelegateId"" = @delegateId
+                ORDER BY    ""DelegationLevel"" DESC
+                OFFSET      @offset
+                LIMIT       @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { delegateId = delegat.Id, limit, offset });
+
+            return rows.Select(row => new DelegatorInfo
+            {
+                Alias = Aliases[row.Id].Name, 
+                Address = Aliases[row.Id].Address,
+                Balance = row.Balance,
+                DelegationLevel = row.DelegationLevel
+            });
+        }
+
+        public async Task<IEnumerable<IOperation>> GetOperations(string address, Data.Models.Operations operations, int limit = 100)
+        {
+            var account = await Accounts.Get(address);
+            var resultOps = account.Operations & operations;
+            var result = new List<IOperation>(limit * 2);
+
+            switch (account)
+            {
+                case RawDelegate delegat:
+
+                    var endorsements = resultOps.HasFlag(Data.Models.Operations.Endorsements)
+                        ? Operations.GetLastEndorsements(account, limit)
+                        : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
+
+                    var proposals = resultOps.HasFlag(Data.Models.Operations.Proposals)
+                        ? Operations.GetLastProposals(account, limit)
+                        : Task.FromResult(Enumerable.Empty<ProposalOperation>());
+
+                    var ballots = resultOps.HasFlag(Data.Models.Operations.Ballots)
+                        ? Operations.GetLastBallots(account, limit)
+                        : Task.FromResult(Enumerable.Empty<BallotOperation>());
+
+                    var activations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                        ? Operations.GetLastActivations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
+
+                    var doubleBaking = resultOps.HasFlag(Data.Models.Operations.DoubleBakings)
+                        ? Operations.GetLastDoubleBakings(account, limit)
+                        : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
+
+                    var doubleEndorsing = resultOps.HasFlag(Data.Models.Operations.DoubleEndorsings)
+                        ? Operations.GetLastDoubleEndorsings(account, limit)
+                        : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
+
+                    var nonceRevelations = resultOps.HasFlag(Data.Models.Operations.Revelations)
+                        ? Operations.GetLastNonceRevelations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
+
+                    var delegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                        ? Operations.GetLastDelegations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+                    var originations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                        ? Operations.GetLastOriginations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+                    var transactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                        ? Operations.GetLastTransactions(account, limit)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var reveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                        ? Operations.GetLastReveals(account, limit)
+                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+                    await Task.WhenAll(
+                        endorsements,
+                        proposals,
+                        ballots,
+                        activations,
+                        doubleBaking,
+                        doubleEndorsing,
+                        nonceRevelations,
+                        delegations,
+                        originations,
+                        transactions,
+                        reveals);
+
+                    result.AddRange(endorsements.Result);
+                    result.AddRange(proposals.Result);
+                    result.AddRange(ballots.Result);
+                    result.AddRange(activations.Result);
+                    result.AddRange(doubleBaking.Result);
+                    result.AddRange(doubleEndorsing.Result);
+                    result.AddRange(nonceRevelations.Result);
+                    result.AddRange(delegations.Result);
+                    result.AddRange(originations.Result);
+                    result.AddRange(transactions.Result);
+                    result.AddRange(reveals.Result);
+
+                    break;
+                case RawUser user:
+
+                    var userActivations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                        ? Operations.GetLastActivations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
+
+                    var userDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                        ? Operations.GetLastDelegations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+                    var userOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                        ? Operations.GetLastOriginations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+                    var userTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                        ? Operations.GetLastTransactions(account, limit)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var userReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                        ? Operations.GetLastReveals(account, limit)
+                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+                    await Task.WhenAll(
+                        userActivations,
+                        userDelegations,
+                        userOriginations,
+                        userTransactions,
+                        userReveals);
+
+                    result.AddRange(userActivations.Result);
+                    result.AddRange(userDelegations.Result);
+                    result.AddRange(userOriginations.Result);
+                    result.AddRange(userTransactions.Result);
+                    result.AddRange(userReveals.Result);
+
+                    break;
+                case RawContract contract:
+
+                    var contractDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                        ? Operations.GetLastDelegations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+                    var contractOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                        ? Operations.GetLastOriginations(account, limit)
+                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+                    var contractTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                        ? Operations.GetLastTransactions(account, limit)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var contractReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                        ? Operations.GetLastReveals(account, limit)
+                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+                    await Task.WhenAll(
+                        contractDelegations,
+                        contractOriginations,
+                        contractTransactions,
+                        contractReveals);
+
+                    result.AddRange(contractDelegations.Result);
+                    result.AddRange(contractOriginations.Result);
+                    result.AddRange(contractTransactions.Result);
+                    result.AddRange(contractReveals.Result);
+
+                    break;
+            }
+
+            return result.OrderByDescending(x => x.Id).Take(limit);
+        }
+
+        public async Task<IEnumerable<IOperation>> GetOperations(string address, Data.Models.Operations operations, int fromLevel, int limit = 100)
+        {
+            var account = await Accounts.Get(address);
+            var resultOps = account.Operations & operations;
+            var result = new List<IOperation>(limit * 2);
+
+            switch (account)
+            {
+                case RawDelegate delegat:
+
+                    var endorsements = resultOps.HasFlag(Data.Models.Operations.Endorsements)
+                        ? Operations.GetLastEndorsements(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
+
+                    var proposals = resultOps.HasFlag(Data.Models.Operations.Proposals)
+                        ? Operations.GetLastProposals(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<ProposalOperation>());
+
+                    var ballots = resultOps.HasFlag(Data.Models.Operations.Ballots)
+                        ? Operations.GetLastBallots(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<BallotOperation>());
+
+                    var activations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                        ? Operations.GetLastActivations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
+
+                    var doubleBaking = resultOps.HasFlag(Data.Models.Operations.DoubleBakings)
+                        ? Operations.GetLastDoubleBakings(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
+
+                    var doubleEndorsing = resultOps.HasFlag(Data.Models.Operations.DoubleEndorsings)
+                        ? Operations.GetLastDoubleEndorsings(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
+
+                    var nonceRevelations = resultOps.HasFlag(Data.Models.Operations.Revelations)
+                        ? Operations.GetLastNonceRevelations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
+
+                    var delegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                        ? Operations.GetLastDelegations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+                    var originations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                        ? Operations.GetLastOriginations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+                    var transactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                        ? Operations.GetLastTransactions(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var reveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                        ? Operations.GetLastReveals(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+                    await Task.WhenAll(
+                        endorsements,
+                        proposals,
+                        ballots,
+                        activations,
+                        doubleBaking,
+                        doubleEndorsing,
+                        nonceRevelations,
+                        delegations,
+                        originations,
+                        transactions,
+                        reveals);
+
+                    result.AddRange(endorsements.Result);
+                    result.AddRange(proposals.Result);
+                    result.AddRange(ballots.Result);
+                    result.AddRange(activations.Result);
+                    result.AddRange(doubleBaking.Result);
+                    result.AddRange(doubleEndorsing.Result);
+                    result.AddRange(nonceRevelations.Result);
+                    result.AddRange(delegations.Result);
+                    result.AddRange(originations.Result);
+                    result.AddRange(transactions.Result);
+                    result.AddRange(reveals.Result);
+
+                    break;
+                case RawUser user:
+
+                    var userActivations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                        ? Operations.GetLastActivations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
+
+                    var userDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                        ? Operations.GetLastDelegations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+                    var userOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                        ? Operations.GetLastOriginations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+                    var userTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                        ? Operations.GetLastTransactions(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var userReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                        ? Operations.GetLastReveals(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+                    await Task.WhenAll(
+                        userActivations,
+                        userDelegations,
+                        userOriginations,
+                        userTransactions,
+                        userReveals);
+
+                    result.AddRange(userActivations.Result);
+                    result.AddRange(userDelegations.Result);
+                    result.AddRange(userOriginations.Result);
+                    result.AddRange(userTransactions.Result);
+                    result.AddRange(userReveals.Result);
+
+                    break;
+                case RawContract contract:
+
+                    var contractDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                        ? Operations.GetLastDelegations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+                    var contractOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                        ? Operations.GetLastOriginations(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+                    var contractTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                        ? Operations.GetLastTransactions(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var contractReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                        ? Operations.GetLastReveals(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+                    await Task.WhenAll(
+                        contractDelegations,
+                        contractOriginations,
+                        contractTransactions,
+                        contractReveals);
+
+                    result.AddRange(contractDelegations.Result);
+                    result.AddRange(contractOriginations.Result);
+                    result.AddRange(contractTransactions.Result);
+                    result.AddRange(contractReveals.Result);
+
+                    break;
+            }
+
+            return result.OrderByDescending(x => x.Id).Take(limit);
         }
 
         string KindToString(int kind) => kind switch

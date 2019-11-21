@@ -6,6 +6,10 @@ namespace Tzkt.Data.Models
     public enum Operations
     {
         None                = 0b_0000_0000_0000,
+        Voting              = 0b_0000_0000_0110,
+        Anonymous           = 0b_0000_0111_1000,
+        Manager             = 0b_0111_1000_0000,
+        All                 = 0b_0111_1111_1111,
 
         Endorsements        = 0b_0000_0000_0001,
 

@@ -27,5 +27,7 @@ namespace Tzkt.Api.Models
         public int FirstActivity { get; set; }
 
         public int LastActivity { get; set; }
+
+        public IEnumerable<IOperation> Operations { get; set; }
     }
 }
