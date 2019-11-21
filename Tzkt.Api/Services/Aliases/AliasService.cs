@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,12 +16,12 @@ namespace Tzkt.Api.Services
 {
     public class AliasService : DbConnection
     {
-        const string Path = "Services\\Aliases\\Aliases.json";
+        const string Path = "Services/Aliases/Aliases.json";
 
         readonly Dictionary<int, Alias> Aliases;
         readonly ILogger Logger;
 
-        public AliasService(IConfiguration config, ILogger<AliasService> logger) : base(config)
+        public AliasService(IConfiguration config, IWebHostEnvironment env, ILogger<AliasService> logger) : base(config)
         {
             Logger = logger;
 
@@ -28,9 +29,10 @@ namespace Tzkt.Api.Services
             logger.LogDebug("Loading known aliases...");
             
             var known = new Dictionary<string, string>();
-            if (File.Exists(Path))
+            
+            if (File.Exists(System.IO.Path.Combine(env.ContentRootPath, Path)))
             {
-                var json = File.ReadAllText(Path);
+                var json = File.ReadAllText(System.IO.Path.Combine(env.ContentRootPath, Path));
                 var aliases = JsonSerializer.Deserialize<List<Alias>>(json);
                 known = aliases.ToDictionary(x => x.Address, x => x.Name);
 

@@ -80,7 +80,7 @@ namespace Tzkt.Api
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/v1/swagger.json", "TzKT API V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TzKT API V1");
                 c.RoutePrefix = string.Empty;
             });
 
