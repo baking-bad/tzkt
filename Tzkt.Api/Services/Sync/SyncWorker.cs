@@ -56,36 +56,44 @@ namespace Tzkt.Api.Services.Sync
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (DateTime.UtcNow > NextSyncTime)
+                try
                 {
-                    var currentState = await GetCurrentState();
-                    if (currentState.Hash != LastState.Hash)
+                    if (DateTime.UtcNow > NextSyncTime)
                     {
-                        Logger.LogDebug($"New state detected [{currentState.Level}:{currentState.Hash}]");
+                        var currentState = await GetCurrentState();
+                        if (currentState.Hash != LastState.Hash)
+                        {
+                            Logger.LogDebug($"New state detected [{currentState.Level}:{currentState.Hash}]");
 
-                        var updateLevel = await IsStateValid(LastState)
-                            ? LastState.Level + 1
-                            : Math.Min(LastState.Level, currentState.Level) - 5;
+                            var updateLevel = await IsStateValid(LastState)
+                                ? LastState.Level + 1
+                                : Math.Min(LastState.Level, currentState.Level) - 5;
 
-                        Logger.LogDebug($"Updating cache from {updateLevel} level...");
+                            Logger.LogDebug($"Updating cache from {updateLevel} level...");
 
-                        var changedAccounts = await Accounts.Update(updateLevel);
+                            var changedAccounts = await Accounts.Update(updateLevel);
 
-                        Aliases.Update(changedAccounts);
+                            Aliases.Update(changedAccounts);
 
-                        State.Update(currentState);
+                            State.Update(currentState);
 
-                        LastState = currentState;
+                            LastState = currentState;
 
-                        Logger.LogDebug("State updated");
+                            Logger.LogDebug("State updated");
+                        }
+
+                        NextSyncTime = DateTimeExt.Min(
+                            DateTimeExt.Max(currentState.Timestamp.AddSeconds(BlocksTime), DateTime.UtcNow.AddSeconds(Config.UpdateInterval)),
+                            DateTime.UtcNow.AddSeconds(Config.CheckInterval));
                     }
 
-                    NextSyncTime = DateTimeExt.Min(
-                        DateTimeExt.Max(currentState.Timestamp.AddSeconds(BlocksTime), DateTime.UtcNow.AddSeconds(Config.UpdateInterval)),
-                        DateTime.UtcNow.AddSeconds(Config.CheckInterval));
+                    await Task.Delay(500);
                 }
-
-                await Task.Delay(500);
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Failed to sync state: {ex.Message}");
+                    await Task.Delay(5000);
+                }
             }
 
             Logger.LogInformation("Syncronization stoped");

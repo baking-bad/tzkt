@@ -61,7 +61,7 @@ namespace Tzkt.Api.Services.Cache
             var delegateParser = reader.GetRowParser<RawDelegate>();
             var contractParser = reader.GetRowParser<RawContract>();
 
-            var accounts = new List<(int Id, string Address)>(reader.RecordsAffected);
+            var accounts = new List<(int Id, string Address)>(64);
 
             await Sema.WaitAsync();
 
