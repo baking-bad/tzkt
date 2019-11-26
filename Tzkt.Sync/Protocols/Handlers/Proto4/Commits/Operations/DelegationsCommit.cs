@@ -44,6 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                     "skipped" => OperationStatus.Skipped,
                     _ => throw new NotImplementedException()
                 },
+                Errors = OperationErrors.Parse(content.Metadata.Result.Errors),
                 GasUsed = content.Metadata.Result.ConsumedGas
             };
         }

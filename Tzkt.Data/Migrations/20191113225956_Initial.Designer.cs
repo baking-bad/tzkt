@@ -304,6 +304,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("DelegateId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
                     b.Property<int>("GasLimit")
                         .HasColumnType("integer");
 
@@ -570,6 +573,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("DelegateId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
                     b.Property<int>("GasLimit")
                         .HasColumnType("integer");
 
@@ -822,6 +828,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Counter")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
                     b.Property<int>("GasLimit")
                         .HasColumnType("integer");
 
@@ -884,6 +893,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("Counter")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
 
                     b.Property<int>("GasLimit")
                         .HasColumnType("integer");

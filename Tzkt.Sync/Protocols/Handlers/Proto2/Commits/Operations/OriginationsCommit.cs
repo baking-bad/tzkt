@@ -62,6 +62,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     "failed" => OperationStatus.Failed,
                     _ => throw new NotImplementedException()
                 },
+                Errors = OperationErrors.Parse(content.Metadata.Result.Errors),
                 GasUsed = content.Metadata.Result.ConsumedGas,
                 StorageUsed = content.Metadata.Result.PaidStorageSizeDiff,
                 StorageFee = content.Metadata.Result.PaidStorageSizeDiff * block.Protocol.ByteCost,

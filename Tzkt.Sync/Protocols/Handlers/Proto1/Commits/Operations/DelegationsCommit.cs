@@ -42,7 +42,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     "applied" => OperationStatus.Applied,
                     "failed" => OperationStatus.Failed,
                     _ => throw new NotImplementedException()
-                }
+                },
+                Errors = OperationErrors.Parse(content.Metadata.Result.Errors)
             };
         }
 

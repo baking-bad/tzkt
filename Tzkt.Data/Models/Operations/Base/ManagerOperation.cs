@@ -19,6 +19,7 @@ namespace Tzkt.Data.Models.Base
         public int StorageUsed { get; set; }
 
         public OperationStatus Status { get; set; }
+        public string Errors { get; set; }
 
         #region relations
         [ForeignKey(nameof(SenderId))]

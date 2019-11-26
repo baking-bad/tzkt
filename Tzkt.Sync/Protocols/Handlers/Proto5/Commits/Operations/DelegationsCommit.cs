@@ -45,6 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     "skipped" => OperationStatus.Skipped,
                     _ => throw new Exception($"Invalid status '{content.Metadata.Result.Status}'")
                 },
+                Errors = OperationErrors.Parse(content.Metadata.Result.Errors),
                 GasUsed = content.Metadata.Result.ConsumedGas
             };
         }
@@ -77,6 +78,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     "skipped" => OperationStatus.Skipped,
                     _ => throw new Exception($"Invalid status '{content.Result.Status}'")
                 },
+                Errors = OperationErrors.Parse(content.Result.Errors),
                 GasUsed = content.Result.ConsumedGas
             };
         }

@@ -43,6 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                     "failed" => OperationStatus.Failed,
                     _ => throw new NotImplementedException()
                 },
+                Errors = OperationErrors.Parse(content.Metadata.Result.Errors),
                 GasUsed = content.Metadata.Result.ConsumedGas
             };
         }

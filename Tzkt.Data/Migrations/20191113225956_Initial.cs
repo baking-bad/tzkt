@@ -495,7 +495,8 @@ namespace Tzkt.Data.Migrations
                     GasUsed = table.Column<int>(nullable: false),
                     StorageLimit = table.Column<int>(nullable: false),
                     StorageUsed = table.Column<int>(nullable: false),
-                    Status = table.Column<byte>(nullable: false)
+                    Status = table.Column<byte>(nullable: false),
+                    Errors = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -533,6 +534,7 @@ namespace Tzkt.Data.Migrations
                     StorageLimit = table.Column<int>(nullable: false),
                     StorageUsed = table.Column<int>(nullable: false),
                     Status = table.Column<byte>(nullable: false),
+                    Errors = table.Column<string>(nullable: true),
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
                     TargetId = table.Column<int>(nullable: true),
@@ -630,6 +632,7 @@ namespace Tzkt.Data.Migrations
                     StorageLimit = table.Column<int>(nullable: false),
                     StorageUsed = table.Column<int>(nullable: false),
                     Status = table.Column<byte>(nullable: false),
+                    Errors = table.Column<string>(nullable: true),
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
                     DelegateId = table.Column<int>(nullable: true),
@@ -683,6 +686,7 @@ namespace Tzkt.Data.Migrations
                     StorageLimit = table.Column<int>(nullable: false),
                     StorageUsed = table.Column<int>(nullable: false),
                     Status = table.Column<byte>(nullable: false),
+                    Errors = table.Column<string>(nullable: true),
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
                     ManagerId = table.Column<int>(nullable: true),

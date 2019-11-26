@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Protocols.Proto3
@@ -107,6 +108,9 @@ namespace Tzkt.Sync.Protocols.Proto3
 
         [JsonPropertyName("paid_storage_size_diff")]
         public int PaidStorageSizeDiff { get; set; }
+
+        [JsonPropertyName("errors")]
+        public JsonElement Errors { get; set; }
 
         #region validation
         public bool IsValidFormat() =>

@@ -47,6 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     "skipped" => OperationStatus.Skipped,
                     _ => throw new NotImplementedException()
                 },
+                Errors = OperationErrors.Parse(content.Metadata.Result.Errors),
                 GasUsed = content.Metadata.Result.ConsumedGas,
                 StorageUsed = content.Metadata.Result.PaidStorageSizeDiff,
                 StorageFee = content.Metadata.Result.PaidStorageSizeDiff > 0
@@ -91,6 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     "skipped" => OperationStatus.Skipped,
                     _ => throw new NotImplementedException()
                 },
+                Errors = OperationErrors.Parse(content.Result.Errors),
                 GasUsed = content.Result.ConsumedGas,
                 StorageUsed = content.Result.PaidStorageSizeDiff,
                 StorageFee = content.Result.PaidStorageSizeDiff > 0

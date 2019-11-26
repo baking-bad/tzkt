@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Protocols.Proto2
@@ -59,6 +60,9 @@ namespace Tzkt.Sync.Protocols.Proto2
     {
         [JsonPropertyName("status")]
         public string Status { get; set; }
+
+        [JsonPropertyName("errors")]
+        public JsonElement Errors { get; set; }
 
         #region validation
         public bool IsValidFormat() =>

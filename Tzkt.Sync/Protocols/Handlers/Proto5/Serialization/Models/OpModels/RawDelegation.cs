@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Protocols.Proto5
@@ -62,6 +63,9 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         [JsonPropertyName("consumed_gas")]
         public int ConsumedGas { get; set; }
+
+        [JsonPropertyName("errors")]
+        public JsonElement Errors { get; set; }
 
         #region validation
         public bool IsValidFormat() =>
