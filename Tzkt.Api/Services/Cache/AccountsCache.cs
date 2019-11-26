@@ -52,7 +52,7 @@ namespace Tzkt.Api.Services.Cache
             var sql = @"
                 SELECT   *
                 FROM     ""Accounts""
-                WHERE    ""LastLevel"" > @fromLevel";
+                WHERE    ""LastLevel"" >= @fromLevel";
 
             using var db = GetConnection();
             using var reader = await db.ExecuteReaderAsync(sql, new { fromLevel });
