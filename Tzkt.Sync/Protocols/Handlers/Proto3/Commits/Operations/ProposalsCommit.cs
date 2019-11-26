@@ -73,7 +73,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 #region apply operation
                 proposal.Likes += SenderRolls;
 
-                sender.Operations |= Operations.Proposals;
+                sender.ProposalsCount++;
+
                 block.Operations |= Operations.Proposals;
                 #endregion
 
@@ -83,7 +84,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
             foreach (var proposalOp in ProposalOperations)
             {
@@ -100,8 +101,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 #region revert operation
                 proposal.Likes -= SenderRolls;
 
-                if (!await Db.ProposalOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < proposalOp.Id))
-                    sender.Operations &= ~Operations.Proposals;
+                sender.ProposalsCount--;
                 #endregion
 
                 if (proposal.Likes == 0)
@@ -112,6 +112,8 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                 Db.ProposalOps.Remove(proposalOp);
             }
+
+            return Task.CompletedTask;
         }
 
         #region static

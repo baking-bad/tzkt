@@ -81,7 +81,8 @@ namespace Tzkt.Sync.Protocols.Proto3
             blockBaker.Balance += Reveal.BakerFee;
             blockBaker.StakingBalance += Reveal.BakerFee;
 
-            sender.Operations |= Operations.Reveals;
+            sender.RevealsCount++;
+
             block.Operations |= Operations.Reveals;
 
             sender.Counter = Math.Max(sender.Counter, Reveal.Counter);
@@ -120,14 +121,13 @@ namespace Tzkt.Sync.Protocols.Proto3
             blockBaker.Balance -= Reveal.BakerFee;
             blockBaker.StakingBalance -= Reveal.BakerFee;
 
-            if (!await Db.RevealOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < Reveal.Id))
-                sender.Operations &= ~Operations.Reveals;
+            sender.RevealsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Reveal.Counter - 1);
             #endregion
 
             #region revert result
-            if (!sender.Operations.HasFlag(Operations.Reveals))
+            if (sender.RevealsCount == 0)
             {
                 if (sender is User user)
                     user.PublicKey = null;

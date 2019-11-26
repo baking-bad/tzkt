@@ -72,8 +72,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             offender.FrozenFees -= DoubleBaking.OffenderLostFee;
             offender.StakingBalance -= DoubleBaking.OffenderLostFee;
 
-            accuser.Operations |= Operations.DoubleBakings;
-            offender.Operations |= Operations.DoubleBakings;
+            accuser.DoubleBakingCount++;
+            offender.DoubleBakingCount++;
+
             block.Operations |= Operations.DoubleBakings;
             #endregion
 
@@ -82,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
             #region entities
             var block = DoubleBaking.Block;
@@ -109,14 +110,13 @@ namespace Tzkt.Sync.Protocols.Proto4
             offender.FrozenFees += DoubleBaking.OffenderLostFee;
             offender.StakingBalance += DoubleBaking.OffenderLostFee;
 
-            if (!await Db.DoubleBakingOps.AnyAsync(x => (x.AccuserId == accuser.Id || x.OffenderId == accuser.Id) && x.Id < DoubleBaking.Id))
-                accuser.Operations &= ~Operations.DoubleBakings;
-
-            if (!await Db.DoubleBakingOps.AnyAsync(x => (x.AccuserId == offender.Id || x.OffenderId == offender.Id) && x.Id < DoubleBaking.Id))
-                offender.Operations &= ~Operations.DoubleBakings;
+            accuser.DoubleBakingCount--;
+            offender.DoubleBakingCount--;
             #endregion
 
             Db.DoubleBakingOps.Remove(DoubleBaking);
+
+            return Task.CompletedTask;
         }
 
         #region static

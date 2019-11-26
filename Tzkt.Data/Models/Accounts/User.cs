@@ -6,6 +6,7 @@ namespace Tzkt.Data.Models
     public class User : Account
     {
         public string PublicKey { get; set; }
+        public bool? Activation { get; set; }
         public bool? AirDrop { get; set; }
     }
 

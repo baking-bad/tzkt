@@ -16,6 +16,13 @@ namespace Tzkt.Data.Models
         public int Delegators { get; set; }
         public long StakingBalance { get; set; }
 
+        public int EndorsementsCount { get; set; }
+        public int BallotsCount { get; set; }
+        public int ProposalsCount { get; set; }
+        public int DoubleBakingCount { get; set; }
+        public int DoubleEndorsingCount { get; set; }
+        public int NonceRevelationsCount { get; set; }
+
         #region indirect relations
         public List<Account> DelegatedAccounts { get; set; }
         #endregion

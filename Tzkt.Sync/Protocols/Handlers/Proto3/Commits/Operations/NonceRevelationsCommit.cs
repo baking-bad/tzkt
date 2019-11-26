@@ -60,7 +60,8 @@ namespace Tzkt.Sync.Protocols.Proto3
             blockBaker.Balance += block.Protocol.RevelationReward;
             blockBaker.FrozenRewards += block.Protocol.RevelationReward;
 
-            sender.Operations |= Operations.Revelations;
+            sender.NonceRevelationsCount++;
+
             block.Operations |= Operations.Revelations;
 
             revealedBlock.Revelation = Revelation;
@@ -71,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
             #region entities
             var block = Revelation.Block;
@@ -89,14 +90,15 @@ namespace Tzkt.Sync.Protocols.Proto3
             blockBaker.Balance -= block.Protocol.RevelationReward;
             blockBaker.FrozenRewards -= block.Protocol.RevelationReward;
 
-            if (!await Db.NonceRevelationOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < Revelation.Id))
-                sender.Operations &= ~Operations.Revelations;
+            sender.NonceRevelationsCount--;
 
             revealedBlock.Revelation = null;
             revealedBlock.RevelationId = null;
             #endregion
 
             Db.NonceRevelationOps.Remove(Revelation);
+
+            return Task.CompletedTask;
         }
 
         #region static

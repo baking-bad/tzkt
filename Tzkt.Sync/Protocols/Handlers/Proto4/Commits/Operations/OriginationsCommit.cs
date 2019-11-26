@@ -32,7 +32,6 @@ namespace Tzkt.Sync.Protocols.Proto4
                     Delegate = delegat,
                     DelegationLevel = delegat != null ? (int?)block.Level : null,
                     Manager = manager,
-                    Operations = Operations.None,
                     Staked = delegat?.Staked ?? false,
                     Type = AccountType.Contract,
                     Kind = content.Script == null ? ContractKind.DelegatorContract : ContractKind.SmartContract,
@@ -114,7 +113,10 @@ namespace Tzkt.Sync.Protocols.Proto4
             blockBaker.Balance += Origination.BakerFee;
             blockBaker.StakingBalance += Origination.BakerFee;
 
-            sender.Operations |= Operations.Originations;
+            sender.OriginationsCount++;
+            contract.OriginationsCount++;
+            if (contractDelegate != null) contractDelegate.OriginationsCount++;
+
             block.Operations |= Operations.Originations;
 
             sender.Counter = Math.Max(sender.Counter, Origination.Counter);
@@ -203,8 +205,8 @@ namespace Tzkt.Sync.Protocols.Proto4
             blockBaker.Balance -= Origination.BakerFee;
             blockBaker.StakingBalance -= Origination.BakerFee;
 
-            if (!await Db.OriginationOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < Origination.Id))
-                sender.Operations &= ~Operations.Originations;
+            sender.OriginationsCount--;
+            if (contractDelegate != null) contractDelegate.OriginationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Origination.Counter - 1);
             #endregion

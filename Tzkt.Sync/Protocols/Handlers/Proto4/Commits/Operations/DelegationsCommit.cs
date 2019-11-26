@@ -88,7 +88,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             blockBaker.Balance += Delegation.BakerFee;
             blockBaker.StakingBalance += Delegation.BakerFee;
 
-            sender.Operations |= Operations.Delegations;
+            sender.DelegationsCount++;
+            if (newDelegate != null) newDelegate.DelegationsCount++;
+
             block.Operations |= Operations.Delegations;
 
             sender.Counter = Math.Max(sender.Counter, Delegation.Counter);
@@ -108,7 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         var delegat = (Data.Models.Delegate)Delegation.Sender;
 
                         var weirdDelegators = await Db.Contracts
-                            .Where(x => x.WeirdDelegateId == delegat.Id && !x.Operations.HasFlag(Operations.Delegations))
+                            .Where(x => x.WeirdDelegateId == delegat.Id && x.DelegationsCount == 0)
                             .ToListAsync();
 
                         foreach (var weirdDelegator in weirdDelegators)
@@ -202,7 +204,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         var delegat = (Data.Models.Delegate)Delegation.Sender;
 
                         var weirdDelegators = await Db.Contracts
-                            .Where(x => x.WeirdDelegateId == delegat.Id && !x.Operations.HasFlag(Operations.Delegations))
+                            .Where(x => x.WeirdDelegateId == delegat.Id && x.DelegationsCount == 0)
                             .ToListAsync();
 
                         foreach (var weirdDelegator in weirdDelegators)
@@ -243,8 +245,8 @@ namespace Tzkt.Sync.Protocols.Proto4
             blockBaker.Balance -= Delegation.BakerFee;
             blockBaker.StakingBalance -= Delegation.BakerFee;
 
-            if (!await Db.DelegationOps.AnyAsync(x => x.SenderId == Delegation.SenderId && x.Id < Delegation.Id))
-                Delegation.Sender.Operations &= ~Operations.Delegations;
+            sender.DelegationsCount--;
+            if (newDelegate != null) newDelegate.DelegationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Delegation.Counter - 1);
             #endregion
@@ -271,7 +273,11 @@ namespace Tzkt.Sync.Protocols.Proto4
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = user.Id,
-                Operations = user.Operations,
+                Activation = user.Activation,
+                DelegationsCount = user.DelegationsCount,
+                OriginationsCount = user.OriginationsCount,
+                TransactionsCount = user.TransactionsCount,
+                RevealsCount = user.RevealsCount,
                 PublicKey = user.PublicKey,
                 Staked = true,
                 StakingBalance = user.Balance,
@@ -369,7 +375,11 @@ namespace Tzkt.Sync.Protocols.Proto4
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = delegat.Id,
-                Operations = delegat.Operations,
+                Activation = delegat.Activation,
+                DelegationsCount = delegat.DelegationsCount,
+                OriginationsCount = delegat.OriginationsCount,
+                TransactionsCount = delegat.TransactionsCount,
+                RevealsCount = delegat.RevealsCount,
                 PublicKey = delegat.PublicKey,
                 Staked = false,
                 Type = AccountType.User,

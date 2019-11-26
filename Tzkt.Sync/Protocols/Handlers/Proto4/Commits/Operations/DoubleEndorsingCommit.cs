@@ -72,8 +72,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             offender.FrozenFees -= DoubleEndorsing.OffenderLostFee;
             offender.StakingBalance -= DoubleEndorsing.OffenderLostFee;
 
-            accuser.Operations |= Operations.DoubleEndorsings;
-            offender.Operations |= Operations.DoubleEndorsings;
+            accuser.DoubleEndorsingCount++;
+            offender.DoubleEndorsingCount++;
+
             block.Operations |= Operations.DoubleEndorsings;
             #endregion
 
@@ -82,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
             #region entities
             var block = DoubleEndorsing.Block;
@@ -109,14 +110,13 @@ namespace Tzkt.Sync.Protocols.Proto4
             offender.FrozenFees += DoubleEndorsing.OffenderLostFee;
             offender.StakingBalance += DoubleEndorsing.OffenderLostFee;
 
-            if (!await Db.DoubleEndorsingOps.AnyAsync(x => (x.AccuserId == accuser.Id || x.OffenderId == accuser.Id) && x.Id < DoubleEndorsing.Id))
-                accuser.Operations &= ~Operations.DoubleEndorsings;
-
-            if (!await Db.DoubleEndorsingOps.AnyAsync(x => (x.AccuserId == offender.Id || x.OffenderId == offender.Id) && x.Id < DoubleEndorsing.Id))
-                offender.Operations &= ~Operations.DoubleEndorsings;
+            accuser.DoubleEndorsingCount--;
+            offender.DoubleEndorsingCount--;
             #endregion
 
             Db.DoubleEndorsingOps.Remove(DoubleEndorsing);
+
+            return Task.CompletedTask;
         }
 
         #region static

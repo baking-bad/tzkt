@@ -169,9 +169,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             blockBaker.Balance += Transaction.BakerFee;
             blockBaker.StakingBalance += Transaction.BakerFee;
 
-            sender.Operations |= Operations.Transactions;
-            if (target != null)
-                target.Operations |= Operations.Transactions;
+            sender.TransactionsCount++;
+            if (target != null) target.TransactionsCount++;
+
             block.Operations |= Operations.Transactions;
 
             sender.Counter = Math.Max(sender.Counter, Transaction.Counter);
@@ -241,9 +241,10 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             #region apply operation
             parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Transactions;
-            sender.Operations |= Operations.Transactions;
-            if (target != null)
-                target.Operations |= Operations.Transactions;
+
+            sender.TransactionsCount++;
+            if (target != null) target.TransactionsCount++;
+
             block.Operations |= Operations.Transactions;
             #endregion
 
@@ -342,12 +343,8 @@ namespace Tzkt.Sync.Protocols.Proto4
             blockBaker.Balance -= Transaction.BakerFee;
             blockBaker.StakingBalance -= Transaction.BakerFee;
 
-            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Id < Transaction.Id))
-                sender.Operations &= ~Operations.Transactions;
-
-            if (target != null)
-                if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Id < Transaction.Id))
-                    target.Operations &= ~Operations.Transactions;
+            sender.TransactionsCount--;
+            if (target != null) target.TransactionsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Transaction.Counter - 1);
             #endregion
@@ -422,12 +419,8 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             #region revert operation
-            if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == sender.Id || x.TargetId == sender.Id) && x.Id < Transaction.Id))
-                sender.Operations &= ~Operations.Transactions;
-
-            if (target != null)
-                if (!await Db.TransactionOps.AnyAsync(x => (x.SenderId == target.Id || x.TargetId == target.Id) && x.Id < Transaction.Id))
-                    target.Operations &= ~Operations.Transactions;
+            sender.TransactionsCount--;
+            if (target != null) target.TransactionsCount--;
             #endregion
 
             Db.TransactionOps.Remove(Transaction);

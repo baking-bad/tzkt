@@ -47,17 +47,26 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("DelegationLevel")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DelegationsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("FirstLevel")
                         .HasColumnType("integer");
 
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Operations")
+                    b.Property<int>("OriginationsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RevealsCount")
                         .HasColumnType("integer");
 
                     b.Property<bool>("Staked")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("TransactionsCount")
+                        .HasColumnType("integer");
 
                     b.Property<byte>("Type")
                         .HasColumnType("smallint");
@@ -1032,6 +1041,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.Account");
 
+                    b.Property<int>("ActivationsCount")
+                        .HasColumnType("integer");
+
                     b.Property<bool?>("AirDrop")
                         .HasColumnType("boolean");
 
@@ -1130,10 +1142,22 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ActivationLevel")
                         .HasColumnType("integer");
 
+                    b.Property<int>("BallotsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DeactivationLevel")
                         .HasColumnType("integer");
 
                     b.Property<int>("Delegators")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DoubleBakingCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DoubleEndorsingCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EndorsementsCount")
                         .HasColumnType("integer");
 
                     b.Property<long>("FrozenDeposits")
@@ -1144,6 +1168,12 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("FrozenRewards")
                         .HasColumnType("bigint");
+
+                    b.Property<int>("NonceRevelationsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProposalsCount")
+                        .HasColumnType("integer");
 
                     b.Property<long>("StakingBalance")
                         .HasColumnType("bigint");
@@ -1216,7 +1246,7 @@ namespace Tzkt.Data.Migrations
                         .HasForeignKey("BakerId");
 
                     b.HasOne("Tzkt.Data.Models.Protocol", "Protocol")
-                        .WithMany("Blocks")
+                        .WithMany()
                         .HasForeignKey("ProtoCode")
                         .HasPrincipalKey("Code")
                         .OnDelete(DeleteBehavior.Cascade)

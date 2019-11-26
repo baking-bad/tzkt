@@ -47,7 +47,8 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region apply operation
             sender.Balance += Activation.Balance;
 
-            sender.Operations |= Operations.Activations;
+            sender.Activation = true;
+
             block.Operations |= Operations.Activations;
             #endregion
 
@@ -56,7 +57,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
             #region entities
             //var block = Activation.Block;
@@ -69,11 +70,12 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region revert operation
             sender.Balance -= Activation.Balance;
 
-            if (!await Db.ActivationOps.AnyAsync(x => x.AccountId == sender.Id && x.Id < Activation.Id))
-                sender.Operations &= ~Operations.Activations;
+            sender.Activation = null;
             #endregion
 
             Db.ActivationOps.Remove(Activation);
+
+            return Task.CompletedTask;
         }
 
         #region static

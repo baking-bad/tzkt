@@ -53,9 +53,9 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.FrozenRewards += Endorsement.Reward;
             sender.FrozenDeposits += block.Protocol.EndorsementDeposit * Endorsement.Slots;
 
-            sender.Operations |= Operations.Endorsements;
-            block.Operations |= Operations.Endorsements;
+            sender.EndorsementsCount++;
 
+            block.Operations |= Operations.Endorsements;
             block.Validations += Endorsement.Slots;
 
             var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(Endorsement.Block) : GracePeriod.Init(Endorsement.Block);
@@ -87,8 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.FrozenRewards -= Endorsement.Reward;
             sender.FrozenDeposits -= block.Protocol.EndorsementDeposit * Endorsement.Slots;
 
-            if (!await Db.EndorsementOps.AnyAsync(x => x.DelegateId == sender.Id && x.Id < Endorsement.Id))
-                sender.Operations &= ~Operations.Endorsements;
+            sender.EndorsementsCount--;
 
             if (Endorsement.ResetDeactivation != null)
             {

@@ -80,7 +80,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 promotion.Participation += SenderRolls;
             }
 
-            sender.Operations |= Operations.Ballots;
+            sender.BallotsCount++;
+
             block.Operations |= Operations.Ballots;
             #endregion
 
@@ -89,7 +90,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public override Task Revert()
         {
             #region entities
             //var block = proposal.Block;
@@ -119,11 +120,12 @@ namespace Tzkt.Sync.Protocols.Proto3
                 promotion.Participation -= SenderRolls;
             }
 
-            if (!await Db.BallotOps.AnyAsync(x => x.SenderId == sender.Id && x.Id < Ballot.Id))
-                sender.Operations &= ~Operations.Ballots;
+            sender.BallotsCount--;
             #endregion
 
             Db.BallotOps.Remove(Ballot);
+
+            return Task.CompletedTask;
         }
 
         #region static

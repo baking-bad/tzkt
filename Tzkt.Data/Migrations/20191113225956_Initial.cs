@@ -220,7 +220,10 @@ namespace Tzkt.Data.Migrations
                     LastLevel = table.Column<int>(nullable: false),
                     Balance = table.Column<long>(nullable: false),
                     Counter = table.Column<int>(nullable: false),
-                    Operations = table.Column<int>(nullable: false),
+                    DelegationsCount = table.Column<int>(nullable: false),
+                    OriginationsCount = table.Column<int>(nullable: false),
+                    TransactionsCount = table.Column<int>(nullable: false),
+                    RevealsCount = table.Column<int>(nullable: false),
                     DelegateId = table.Column<int>(nullable: true),
                     DelegationLevel = table.Column<int>(nullable: true),
                     Staked = table.Column<bool>(nullable: false),
@@ -230,13 +233,20 @@ namespace Tzkt.Data.Migrations
                     WeirdDelegateId = table.Column<int>(nullable: true),
                     PublicKey = table.Column<string>(maxLength: 55, nullable: true),
                     AirDrop = table.Column<bool>(nullable: true),
+                    ActivationsCount = table.Column<int>(nullable: true),
                     ActivationLevel = table.Column<int>(nullable: true),
                     DeactivationLevel = table.Column<int>(nullable: true),
                     FrozenDeposits = table.Column<long>(nullable: true),
                     FrozenRewards = table.Column<long>(nullable: true),
                     FrozenFees = table.Column<long>(nullable: true),
                     Delegators = table.Column<int>(nullable: true),
-                    StakingBalance = table.Column<long>(nullable: true)
+                    StakingBalance = table.Column<long>(nullable: true),
+                    EndorsementsCount = table.Column<int>(nullable: true),
+                    BallotsCount = table.Column<int>(nullable: true),
+                    ProposalsCount = table.Column<int>(nullable: true),
+                    DoubleBakingCount = table.Column<int>(nullable: true),
+                    DoubleEndorsingCount = table.Column<int>(nullable: true),
+                    NonceRevelationsCount = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
