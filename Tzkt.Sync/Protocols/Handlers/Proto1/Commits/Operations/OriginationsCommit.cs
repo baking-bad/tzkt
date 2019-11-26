@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
             // WTF: [level:25054] - Manager and sender are not equal.
-            var manager = await Cache.GetAccountAsync(content.Manager);
+            var manager = (User)await Cache.GetAccountAsync(content.Manager);
 
             var originDelegate = await Cache.GetAccountAsync(content.Delegate);
             var delegat = originDelegate as Data.Models.Delegate;
@@ -36,6 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Delegate = delegat,
                     DelegationLevel = delegat != null ? (int?)block.Level : null,
                     WeirdDelegate = originDelegate?.Type == AccountType.User ? (User)originDelegate : null,
+                    Creator = sender,
                     Manager = manager,
                     Staked = delegat?.Staked ?? false,
                     Type = AccountType.Contract,
@@ -57,6 +58,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 GasLimit = content.GasLimit,
                 StorageLimit = content.StorageLimit,
                 Sender = sender,
+                Manager = manager,
                 Delegate = delegat,
                 Contract = contract,
                 Status = content.Metadata.Result.Status switch
@@ -84,6 +86,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Origination.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Sender.DelegateId);
             Origination.Contract ??= (Contract)await Cache.GetAccountAsync(origination.ContractId);
             Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
+            Origination.Manager ??= (User)await Cache.GetAccountAsync(origination.ManagerId);
         }
 
         public override Task Apply()
@@ -97,6 +100,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var contract = Origination.Contract;
             var contractDelegate = Origination.Delegate;
+            var contractManager = Origination.Manager;
 
             //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
@@ -106,6 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.TryAttach(contract);
             Db.TryAttach(contractDelegate);
+            Db.TryAttach(contractManager);
             #endregion
 
             #region apply operation
@@ -116,8 +121,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             blockBaker.StakingBalance += Origination.BakerFee;
 
             sender.OriginationsCount++;
-            contract.OriginationsCount++;
+            contractManager.OriginationsCount++;
             if (contractDelegate != null) contractDelegate.OriginationsCount++;
+            contract.OriginationsCount++;
 
             block.Operations |= Operations.Originations;
 
@@ -164,6 +170,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var contract = Origination.Contract;
             var contractDelegate = Origination.Delegate;
+            var contractManager = Origination.Manager;
 
             //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
@@ -173,6 +180,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.TryAttach(contract);
             Db.TryAttach(contractDelegate);
+            Db.TryAttach(contractManager);
             #endregion
 
             #region revert result
@@ -208,6 +216,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             blockBaker.StakingBalance -= Origination.BakerFee;
 
             sender.OriginationsCount--;
+            contractManager.OriginationsCount--;
             if (contractDelegate != null) contractDelegate.OriginationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Origination.Counter - 1);

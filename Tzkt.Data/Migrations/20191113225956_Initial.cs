@@ -229,11 +229,12 @@ namespace Tzkt.Data.Migrations
                     Staked = table.Column<bool>(nullable: false),
                     Kind = table.Column<byte>(nullable: true),
                     Spendable = table.Column<bool>(nullable: true),
+                    CreatorId = table.Column<int>(nullable: true),
                     ManagerId = table.Column<int>(nullable: true),
                     WeirdDelegateId = table.Column<int>(nullable: true),
                     PublicKey = table.Column<string>(maxLength: 55, nullable: true),
+                    Activation = table.Column<bool>(nullable: true),
                     AirDrop = table.Column<bool>(nullable: true),
-                    ActivationsCount = table.Column<int>(nullable: true),
                     ActivationLevel = table.Column<int>(nullable: true),
                     DeactivationLevel = table.Column<int>(nullable: true),
                     FrozenDeposits = table.Column<long>(nullable: true),
@@ -263,6 +264,12 @@ namespace Tzkt.Data.Migrations
                         principalTable: "Blocks",
                         principalColumn: "Level",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Accounts_Accounts_CreatorId",
+                        column: x => x.CreatorId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Accounts_Accounts_ManagerId",
                         column: x => x.ManagerId,
@@ -676,8 +683,9 @@ namespace Tzkt.Data.Migrations
                     Status = table.Column<byte>(nullable: false),
                     ParentId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
-                    ContractId = table.Column<int>(nullable: true),
+                    ManagerId = table.Column<int>(nullable: true),
                     DelegateId = table.Column<int>(nullable: true),
+                    ContractId = table.Column<int>(nullable: true),
                     Balance = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
@@ -701,6 +709,12 @@ namespace Tzkt.Data.Migrations
                         principalTable: "Blocks",
                         principalColumn: "Level",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_Accounts_ManagerId",
+                        column: x => x.ManagerId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_OriginationOps_TransactionOps_ParentId",
                         column: x => x.ParentId,
@@ -741,6 +755,11 @@ namespace Tzkt.Data.Migrations
                 table: "Accounts",
                 column: "Id",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_CreatorId",
+                table: "Accounts",
+                column: "CreatorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_ManagerId",
@@ -930,6 +949,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_OriginationOps_Level",
                 table: "OriginationOps",
                 column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OriginationOps_ManagerId",
+                table: "OriginationOps",
+                column: "ManagerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_OpHash",

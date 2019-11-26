@@ -6,8 +6,9 @@ namespace Tzkt.Data.Models
 {
     public class OriginationOperation : InternalOperation
     {
-        public int? ContractId { get; set; }
+        public int? ManagerId { get; set; }
         public int? DelegateId { get; set; }
+        public int? ContractId { get; set; }
 
         public long Balance { get; set; }
 
@@ -17,6 +18,9 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
+
+        [ForeignKey(nameof(ManagerId))]
+        public User Manager { get; set; }
         #endregion
     }
 
@@ -35,12 +39,15 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<OriginationOperation>()
-                .HasIndex(x => x.ContractId);
+                .HasIndex(x => x.ManagerId);
 
             modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.DelegateId);
+
+            modelBuilder.Entity<OriginationOperation>()
+                .HasIndex(x => x.ContractId);
             #endregion
-            
+
             #region keys
             modelBuilder.Entity<OriginationOperation>()
                 .HasKey(x => x.Id);

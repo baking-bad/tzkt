@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Counter = 0,
                     Delegate = delegat,
                     DelegationLevel = delegat != null ? (int?)block.Level : null,
-                    Manager = sender,
+                    Creator = sender,
                     Staked = delegat?.Staked ?? false,
                     Type = AccountType.Contract,
                     Kind = content.Script == null ? ContractKind.DelegatorContract : ContractKind.SmartContract
@@ -82,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Counter = 0,
                     Delegate = delegat,
                     DelegationLevel = delegat != null ? (int?)block.Level : null,
-                    Manager = sender,
+                    Creator = sender,
                     Staked = delegat?.Staked ?? false,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract
@@ -130,7 +130,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             Origination.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Sender.DelegateId);
             Origination.Contract ??= (Contract)await Cache.GetAccountAsync(origination.ContractId);
             Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
-
         }
 
         public override async Task Apply()

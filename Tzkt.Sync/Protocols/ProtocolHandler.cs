@@ -173,6 +173,7 @@ namespace Tzkt.Sync
                         contract.Delegate = null;
                         contract.WeirdDelegate = null;
                         contract.Manager = null;
+                        contract.Creator = null;
                         contract.FirstBlock = null;
                         break;
                     case Block b:

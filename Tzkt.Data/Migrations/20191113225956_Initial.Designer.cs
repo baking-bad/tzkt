@@ -576,6 +576,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ManagerId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("Nonce")
                         .HasColumnType("integer");
 
@@ -613,6 +616,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("DelegateId");
 
                     b.HasIndex("Level");
+
+                    b.HasIndex("ManagerId");
 
                     b.HasIndex("OpHash");
 
@@ -1018,6 +1023,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.Account");
 
+                    b.Property<int?>("CreatorId")
+                        .HasColumnType("integer");
+
                     b.Property<byte>("Kind")
                         .HasColumnType("smallint");
 
@@ -1030,6 +1038,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("WeirdDelegateId")
                         .HasColumnType("integer");
 
+                    b.HasIndex("CreatorId");
+
                     b.HasIndex("ManagerId");
 
                     b.HasIndex("WeirdDelegateId");
@@ -1041,8 +1051,8 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.Account");
 
-                    b.Property<int>("ActivationsCount")
-                        .HasColumnType("integer");
+                    b.Property<bool?>("Activation")
+                        .HasColumnType("boolean");
 
                     b.Property<bool?>("AirDrop")
                         .HasColumnType("boolean");
@@ -1375,6 +1385,10 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Tzkt.Data.Models.User", "Manager")
+                        .WithMany()
+                        .HasForeignKey("ManagerId");
+
                     b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
                         .WithMany()
                         .HasForeignKey("ParentId");
@@ -1501,7 +1515,11 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
                 {
-                    b.HasOne("Tzkt.Data.Models.Account", "Manager")
+                    b.HasOne("Tzkt.Data.Models.Account", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId");
+
+                    b.HasOne("Tzkt.Data.Models.User", "Manager")
                         .WithMany()
                         .HasForeignKey("ManagerId");
 

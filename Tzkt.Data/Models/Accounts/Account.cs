@@ -15,9 +15,9 @@ namespace Tzkt.Data.Models
         public long Balance { get; set; }
         public int Counter { get; set; }
 
-        public int TransactionsCount { get; set; }
         public int DelegationsCount { get; set; }
         public int OriginationsCount { get; set; }
+        public int TransactionsCount { get; set; }
         public int RevealsCount { get; set; }
 
         public int? DelegateId { get; set; }
@@ -47,6 +47,9 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Account>()
                 .HasIndex(x => x.Address)
                 .IsUnique();
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.DelegateId);
             #endregion
 
             #region keys

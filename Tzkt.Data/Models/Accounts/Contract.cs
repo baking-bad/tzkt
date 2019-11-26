@@ -9,12 +9,16 @@ namespace Tzkt.Data.Models
         public ContractKind Kind { get; set; }
         public bool? Spendable { get; set; }
 
+        public int? CreatorId { get; set; }
         public int? ManagerId { get; set; }
         public int? WeirdDelegateId { get; set; }
 
         #region relations
+        [ForeignKey(nameof(CreatorId))]
+        public Account Creator { get; set; }
+
         [ForeignKey(nameof(ManagerId))]
-        public Account Manager { get; set; }
+        public User Manager { get; set; }
 
         [ForeignKey(nameof(WeirdDelegateId))]
         public User WeirdDelegate { get; set; }
@@ -31,7 +35,13 @@ namespace Tzkt.Data.Models
     { 
         public static void BuildContractModel(this ModelBuilder modelBuilder)
         {
+            #region indexes
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.CreatorId);
 
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.ManagerId);
+            #endregion
         }
     }
 }

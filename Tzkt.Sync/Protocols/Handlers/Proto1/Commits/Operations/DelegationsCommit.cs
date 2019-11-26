@@ -294,9 +294,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                         }
                         break;
                     case OriginationOperation op:
-                        if (op.Sender?.Id == user.Id)
+                        if (op.Sender?.Id == user.Id || op.Manager?.Id == user.Id)
                         {
-                            op.Sender = delegat;
+                            if (op.Sender?.Id == user.Id)
+                                op.Sender = delegat;
+
+                            if (op.Manager?.Id == user.Id)
+                                op.Manager = delegat;
+
                             touched.Add((op, entry.State));
                         }
                         break;
@@ -320,10 +325,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                         }
                         break;
                     case Contract contract:
-                        if (contract.WeirdDelegate?.Id == user.Id || contract.Manager?.Id == user.Id)
+                        if (contract.WeirdDelegate?.Id == user.Id || contract.Creator?.Id == user.Id || contract.Manager?.Id == user.Id)
                         {
                             if (contract.WeirdDelegate?.Id == user.Id)
                                 contract.WeirdDelegate = delegat;
+
+                            if (contract.Creator?.Id == user.Id)
+                                contract.Creator = delegat;
 
                             if (contract.Manager?.Id == user.Id)
                                 contract.Manager = delegat;
@@ -400,10 +408,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                         }
                         break;
                     case OriginationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Manager?.Id == delegat.Id || op.Delegate?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
+
+                            if (op.Manager?.Id == delegat.Id)
+                                op.Manager = user;
 
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
@@ -431,10 +442,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                         }
                         break;
                     case Contract contract:
-                        if (contract.WeirdDelegate?.Id == delegat.Id || contract.Manager?.Id == delegat.Id)
+                        if (contract.WeirdDelegate?.Id == delegat.Id || contract.Creator?.Id == delegat.Id || contract.Manager?.Id == delegat.Id)
                         {
                             if (contract.WeirdDelegate?.Id == delegat.Id)
                                 contract.WeirdDelegate = user;
+
+                            if (contract.Creator?.Id == delegat.Id)
+                                contract.Creator = user;
 
                             if (contract.Manager?.Id == delegat.Id)
                                 contract.Manager = user;
