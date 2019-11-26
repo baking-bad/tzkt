@@ -36,6 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     #region start proposal period
                     Period = new ProposalPeriod
                     {
+                        Code = currentPeriod.Code + 1,
                         Epoch = new VotingEpoch { Level = rawBlock.Level },
                         Kind = VotingPeriods.Proposal,
                         StartLevel = rawBlock.Level,
@@ -55,6 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     Period = new ExplorationPeriod
                     {
+                        Code = currentPeriod.Code + 1,
                         Epoch = currentEpoch,
                         Kind = VotingPeriods.Exploration,
                         StartLevel = rawBlock.Level,
@@ -69,6 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     #region start testing period
                     Period = new TestingPeriod
                     {
+                        Code = currentPeriod.Code + 1,
                         Epoch = currentEpoch,
                         Kind = VotingPeriods.Testing,
                         StartLevel = rawBlock.Level,
@@ -83,6 +86,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     #region start promotion period
                     Period = new PromotionPeriod
                     {
+                        Code = currentPeriod.Code + 1,
                         Epoch = currentEpoch,
                         Kind = VotingPeriods.Promotion,
                         StartLevel = rawBlock.Level,

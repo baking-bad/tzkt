@@ -83,6 +83,7 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Code = table.Column<int>(nullable: false),
                     EpochId = table.Column<int>(nullable: false),
                     Kind = table.Column<int>(nullable: false),
                     StartLevel = table.Column<int>(nullable: false),

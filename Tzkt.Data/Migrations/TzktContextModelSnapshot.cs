@@ -971,6 +971,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<int>("Code")
+                        .HasColumnType("integer");
+
                     b.Property<int>("EndLevel")
                         .HasColumnType("integer");
 

@@ -34,6 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 {
                     "proposal" => new ProposalPeriod
                     {
+                        Code = Period.Code + 1,
                         Epoch = new VotingEpoch { Level = rawBlock.Level },
                         Kind = VotingPeriods.Proposal,
                         StartLevel = rawBlock.Level,
@@ -41,6 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     },
                     "exploration" => new ExplorationPeriod
                     {
+                        Code = Period.Code + 1,
                         Epoch = Period.Epoch,
                         Kind = VotingPeriods.Exploration,
                         StartLevel = rawBlock.Level,
@@ -48,6 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     },
                     "testing" => new TestingPeriod
                     {
+                        Code = Period.Code + 1,
                         Epoch = Period.Epoch,
                         Kind = VotingPeriods.Testing,
                         StartLevel = rawBlock.Level,
@@ -55,6 +58,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     },
                     "promotion" => new PromotionPeriod
                     {
+                        Code = Period.Code + 1,
                         Epoch = Period.Epoch,
                         Kind = VotingPeriods.Promotion,
                         StartLevel = rawBlock.Level,

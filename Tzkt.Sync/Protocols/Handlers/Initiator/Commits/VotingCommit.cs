@@ -18,6 +18,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
             VotingPeriod = new ProposalPeriod
             {
+                Code = 0,
                 Epoch = new VotingEpoch { Level = rawBlock.Level },
                 Kind = VotingPeriods.Proposal,
                 StartLevel = rawBlock.Level,
