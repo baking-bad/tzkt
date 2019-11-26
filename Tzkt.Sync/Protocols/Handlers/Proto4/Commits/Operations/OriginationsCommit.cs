@@ -84,7 +84,6 @@ namespace Tzkt.Sync.Protocols.Proto4
             Origination.Contract ??= (Contract)await Cache.GetAccountAsync(origination.ContractId);
             Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
             Origination.Manager ??= (User)await Cache.GetAccountAsync(origination.ManagerId);
-
         }
 
         public override Task Apply()
@@ -148,6 +147,9 @@ namespace Tzkt.Sync.Protocols.Proto4
                     contractDelegate.StakingBalance += contract.Balance;
                 }
 
+                sender.Contracts++;
+                contractManager.Contracts++;
+
                 Db.Contracts.Add(contract);
             }
             #endregion
@@ -200,6 +202,9 @@ namespace Tzkt.Sync.Protocols.Proto4
                     contractDelegate.Delegators--;
                     contractDelegate.StakingBalance -= contract.Balance;
                 }
+
+                sender.Contracts--;
+                contractManager.Contracts--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);

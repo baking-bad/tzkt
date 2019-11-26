@@ -64,6 +64,9 @@ namespace Tzkt.Sync.Protocols.Initiator
             #region bootstrap contracts
             foreach (var data in contracts.Where(x => x.Address[0] == 'K'))
             {
+                var manager = (User)await Cache.GetAccountAsync(data.Manager);
+                manager.Contracts++;
+
                 var contract = new Contract
                 {
                     Address = data.Address,
@@ -74,7 +77,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Spendable = false,
                     DelegationLevel = 1,
                     Delegate = await Cache.GetDelegateAsync(data.Delegate),
-                    Manager = (User)await Cache.GetAccountAsync(data.Manager),
+                    Manager = manager,
                     Staked = !String.IsNullOrEmpty(data.Delegate),
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,

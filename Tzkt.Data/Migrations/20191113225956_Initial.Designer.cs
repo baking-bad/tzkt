@@ -38,6 +38,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("Balance")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("Contracts")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Counter")
                         .HasColumnType("integer");
 

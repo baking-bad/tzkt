@@ -150,6 +150,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     contractDelegate.StakingBalance += contract.Balance;
                 }
 
+                sender.Contracts++;
+                contractManager.Contracts++;
+
                 Db.Contracts.Add(contract);
             }
             #endregion
@@ -202,6 +205,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     contractDelegate.Delegators--;
                     contractDelegate.StakingBalance -= contract.Balance;
                 }
+
+                sender.Contracts--;
+                contractManager.Contracts--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);

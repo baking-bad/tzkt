@@ -206,6 +206,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                     contractDelegate.StakingBalance += contract.Balance;
                 }
 
+                sender.Contracts++;
+
                 Db.Contracts.Add(contract);
             }
             #endregion
@@ -276,6 +278,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                     contractDelegate.StakingBalance += contract.Balance;
                 }
 
+                sender.Contracts++;
+
                 Db.Contracts.Add(contract);
             }
             #endregion
@@ -326,6 +330,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                     contractDelegate.Delegators--;
                     contractDelegate.StakingBalance -= contract.Balance;
                 }
+
+                sender.Contracts--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);
@@ -397,6 +403,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                     contractDelegate.Delegators--;
                     contractDelegate.StakingBalance -= contract.Balance;
                 }
+
+                sender.Contracts--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);

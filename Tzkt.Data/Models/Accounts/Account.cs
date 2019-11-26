@@ -15,6 +15,7 @@ namespace Tzkt.Data.Models
         public long Balance { get; set; }
         public int Counter { get; set; }
 
+        public int Contracts { get; set; }
         public int DelegationsCount { get; set; }
         public int OriginationsCount { get; set; }
         public int TransactionsCount { get; set; }

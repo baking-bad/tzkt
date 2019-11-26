@@ -220,6 +220,7 @@ namespace Tzkt.Data.Migrations
                     LastLevel = table.Column<int>(nullable: false),
                     Balance = table.Column<long>(nullable: false),
                     Counter = table.Column<int>(nullable: false),
+                    Contracts = table.Column<int>(nullable: false),
                     DelegationsCount = table.Column<int>(nullable: false),
                     OriginationsCount = table.Column<int>(nullable: false),
                     TransactionsCount = table.Column<int>(nullable: false),
