@@ -47,7 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region apply operation
             sender.Balance += Activation.Balance;
 
-            sender.Activation = true;
+            sender.Activated = true;
 
             block.Operations |= Operations.Activations;
             #endregion
@@ -70,7 +70,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region revert operation
             sender.Balance -= Activation.Balance;
 
-            sender.Activation = null;
+            sender.Activated = null;
             #endregion
 
             Db.ActivationOps.Remove(Activation);

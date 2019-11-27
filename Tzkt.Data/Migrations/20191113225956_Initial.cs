@@ -226,6 +226,7 @@ namespace Tzkt.Data.Migrations
                     OriginationsCount = table.Column<int>(nullable: false),
                     TransactionsCount = table.Column<int>(nullable: false),
                     RevealsCount = table.Column<int>(nullable: false),
+                    SystemOpsCount = table.Column<int>(nullable: false),
                     DelegateId = table.Column<int>(nullable: true),
                     DelegationLevel = table.Column<int>(nullable: true),
                     Staked = table.Column<bool>(nullable: false),
@@ -234,9 +235,8 @@ namespace Tzkt.Data.Migrations
                     CreatorId = table.Column<int>(nullable: true),
                     ManagerId = table.Column<int>(nullable: true),
                     WeirdDelegateId = table.Column<int>(nullable: true),
+                    Activated = table.Column<bool>(nullable: true),
                     PublicKey = table.Column<string>(maxLength: 55, nullable: true),
-                    Activation = table.Column<bool>(nullable: true),
-                    AirDrop = table.Column<bool>(nullable: true),
                     ActivationLevel = table.Column<int>(nullable: true),
                     DeactivationLevel = table.Column<int>(nullable: true),
                     FrozenDeposits = table.Column<long>(nullable: true),
@@ -517,6 +517,28 @@ namespace Tzkt.Data.Migrations
                     table.ForeignKey(
                         name: "FK_RevealOps_Accounts_SenderId",
                         column: x => x.SenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SystemOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    AccountId = table.Column<int>(nullable: false),
+                    Event = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SystemOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SystemOps_Accounts_AccountId",
+                        column: x => x.AccountId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -1057,6 +1079,16 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SystemOps_AccountId",
+                table: "SystemOps",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SystemOps_Level",
+                table: "SystemOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_Level",
                 table: "TransactionOps",
                 column: "Level");
@@ -1192,6 +1224,9 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "RevealOps");
+
+            migrationBuilder.DropTable(
+                name: "SystemOps");
 
             migrationBuilder.DropTable(
                 name: "VotingSnapshots");

@@ -68,6 +68,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<bool>("Staked")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("SystemOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TransactionsCount")
                         .HasColumnType("integer");
 
@@ -880,6 +883,34 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("RevealOps");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.SystemOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Event")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("Level");
+
+                    b.ToTable("SystemOps");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.TransactionOperation", b =>
                 {
                     b.Property<int>("Id")
@@ -1074,10 +1105,7 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.Account");
 
-                    b.Property<bool?>("Activation")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool?>("AirDrop")
+                    b.Property<bool?>("Activated")
                         .HasColumnType("boolean");
 
                     b.Property<string>("PublicKey")
@@ -1496,6 +1524,15 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
                         .WithMany()
                         .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.SystemOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

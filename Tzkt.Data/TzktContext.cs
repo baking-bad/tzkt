@@ -34,6 +34,7 @@ namespace Tzkt.Data
         public DbSet<ProposalOperation> ProposalOps { get; set; }
         public DbSet<RevealOperation> RevealOps { get; set; }
         public DbSet<TransactionOperation> TransactionOps { get; set; }
+        public DbSet<SystemOperation> SystemOps { get; set; }
         #endregion
 
         #region voting
@@ -86,6 +87,7 @@ namespace Tzkt.Data
             modelBuilder.BuildProposalOperationModel();
             modelBuilder.BuildRevealOperationModel();
             modelBuilder.BuildTransactionOperationModel();
+            modelBuilder.BuildSystemOperationModel();
             #endregion
 
             #region voting

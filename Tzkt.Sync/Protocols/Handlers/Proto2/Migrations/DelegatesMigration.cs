@@ -36,6 +36,16 @@ namespace Tzkt.Sync.Protocols.Proto2
             foreach (var weirds in weirdDelegates)
             {
                 var delegat = await UpgradeUser(weirds.First().Delegate, block.Level, protocol);
+
+                delegat.SystemOpsCount++;
+                Db.SystemOps.Add(new SystemOperation
+                {
+                    Id = await Cache.NextCounterAsync(),
+                    Level = block.Level,
+                    Timestamp = block.Timestamp,
+                    Account = delegat,
+                    Event = SystemEvent.ActivateDelegate
+                });
                 
                 foreach (var weird in weirds)
                 {
@@ -92,10 +102,16 @@ namespace Tzkt.Sync.Protocols.Proto2
                     throw new Exception("migration error");
 
                 var user = DowngradeDelegate(delegat);
+                user.SystemOpsCount--;
 
                 foreach (var delegator in delegators)
                     (delegator as Contract).WeirdDelegate = user;
             }
+            
+            Db.RemoveRange(await Db.SystemOps
+                .AsNoTracking()
+                .Where(x => x.Event == SystemEvent.ActivateDelegate)
+                .ToListAsync());
         }
 
         Task<Data.Models.Delegate> UpgradeUser(User user, int level, Protocol proto)
@@ -104,7 +120,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             {
                 ActivationLevel = level,
                 Address = user.Address,
-                AirDrop = user.AirDrop,
                 FirstLevel = user.FirstLevel,
                 LastLevel = user.LastLevel,
                 Balance = user.Balance,
@@ -114,7 +129,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = user.Id,
-                Activation = user.Activation,
+                Activated = user.Activated,
                 DelegationsCount = user.DelegationsCount,
                 OriginationsCount = user.OriginationsCount,
                 TransactionsCount = user.TransactionsCount,
@@ -137,7 +152,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             var user = new User
             {
                 Address = delegat.Address,
-                AirDrop = delegat.AirDrop,
                 FirstLevel = delegat.FirstLevel,
                 LastLevel = delegat.LastLevel,
                 Balance = delegat.Balance,
@@ -146,7 +160,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = delegat.Id,
-                Activation = delegat.Activation,
+                Activated = delegat.Activated,
                 DelegationsCount = delegat.DelegationsCount,
                 OriginationsCount = delegat.OriginationsCount,
                 TransactionsCount = delegat.TransactionsCount,

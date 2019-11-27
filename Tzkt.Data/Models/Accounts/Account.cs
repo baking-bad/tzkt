@@ -20,6 +20,7 @@ namespace Tzkt.Data.Models
         public int OriginationsCount { get; set; }
         public int TransactionsCount { get; set; }
         public int RevealsCount { get; set; }
+        public int SystemOpsCount { get; set; }
 
         public int? DelegateId { get; set; }
         public int? DelegationLevel { get; set; }

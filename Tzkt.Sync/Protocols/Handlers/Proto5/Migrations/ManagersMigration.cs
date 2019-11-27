@@ -14,6 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Apply()
         {
+            var state = await Cache.GetAppStateAsync();
+
             var emptiedManagers = await Db.Contracts
                 .AsNoTracking()
                 .Include(x => x.Manager)
@@ -34,26 +36,38 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Cache.AddAccount(manager);
 
                 manager.Balance = 1;
-                manager.AirDrop = true;
-                manager.Counter = (await Cache.GetAppStateAsync()).ManagerCounter;
+                manager.Counter = state.ManagerCounter;
+                manager.SystemOpsCount++;
+
+                Db.SystemOps.Add(new SystemOperation
+                {
+                    Id = await Cache.NextCounterAsync(),
+                    Level = state.Level,
+                    Timestamp = state.Timestamp,
+                    Account = manager,
+                    Event = SystemEvent.AirDrop
+                });
             }
         }
 
         public override async Task Revert()
         {
-            var airDropManagers = await Db.Users
+            var airDrops = await Db.SystemOps
                 .AsNoTracking()
-                .Where(x => x.AirDrop == true)
+                .Include(x => x.Account)
+                .Where(x => x.Event == SystemEvent.AirDrop)
                 .ToListAsync();
 
-            foreach (var manager in airDropManagers)
+            foreach (var airDrop in airDrops)
             {
-                Db.TryAttach(manager);
-                Cache.AddAccount(manager);
+                Db.TryAttach(airDrop.Account);
+                Cache.AddAccount(airDrop.Account);
 
-                manager.Balance = 0;
-                manager.AirDrop = null;
+                airDrop.Account.Balance = 0;
+                airDrop.Account.SystemOpsCount--;
             }
+
+            Db.SystemOps.RemoveRange(airDrops);
         }
 
         #region static
