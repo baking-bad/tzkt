@@ -118,7 +118,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             (BalanceUpdates == null || BalanceUpdates.All(x => x.IsValidFormat())) &&
             (OriginatedContracts == null || OriginatedContracts?.Count == 1) &&
             ConsumedGas >= 0 &&
-            PaidStorageSizeDiff >= 0;
+            PaidStorageSizeDiff >= 0 &&
+            (Errors.ValueKind == JsonValueKind.Array ||
+            Errors.ValueKind == JsonValueKind.Undefined);
         #endregion
     }
 }

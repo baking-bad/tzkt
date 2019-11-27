@@ -118,9 +118,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             blockBaker.StakingBalance += Origination.BakerFee;
 
             sender.OriginationsCount++;
-            contractManager.OriginationsCount++;
-            if (contractDelegate != null) contractDelegate.OriginationsCount++;
-            contract.OriginationsCount++;
+            if (contractManager != sender) contractManager.OriginationsCount++;
+            if (contractDelegate != null && contractDelegate != sender && contractDelegate != contractManager) contractDelegate.OriginationsCount++;
+            if (contract != null) contract.OriginationsCount++;
 
             block.Operations |= Operations.Originations;
 
@@ -148,7 +148,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 }
 
                 sender.Contracts++;
-                contractManager.Contracts++;
+                if (contractManager != sender) contractManager.Contracts++;
 
                 Db.Contracts.Add(contract);
             }
@@ -204,7 +204,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 }
 
                 sender.Contracts--;
-                contractManager.Contracts--;
+                if (contractManager != sender) contractManager.Contracts--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);
@@ -219,8 +219,8 @@ namespace Tzkt.Sync.Protocols.Proto2
             blockBaker.StakingBalance -= Origination.BakerFee;
 
             sender.OriginationsCount--;
-            contractManager.OriginationsCount--;
-            if (contractDelegate != null) contractDelegate.OriginationsCount--;
+            if (contractManager != sender) contractManager.OriginationsCount--;
+            if (contractDelegate != null && contractDelegate != sender && contractDelegate != contractManager) contractDelegate.OriginationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Origination.Counter - 1);
             #endregion

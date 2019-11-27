@@ -73,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             offender.StakingBalance -= DoubleBaking.OffenderLostFee;
 
             accuser.DoubleBakingCount++;
-            offender.DoubleBakingCount++;
+            if (offender != accuser) offender.DoubleBakingCount++;
 
             block.Operations |= Operations.DoubleBakings;
             #endregion
@@ -111,7 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             offender.StakingBalance += DoubleBaking.OffenderLostFee;
 
             accuser.DoubleBakingCount--;
-            offender.DoubleBakingCount--;
+            if (offender != accuser) offender.DoubleBakingCount--;
             #endregion
 
             Db.DoubleBakingOps.Remove(DoubleBaking);

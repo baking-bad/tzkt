@@ -9,12 +9,15 @@ namespace Tzkt.Sync.Protocols
     {
         public static string Parse(JsonElement errors)
         {
+            if (errors.ValueKind == JsonValueKind.Undefined)
+                return null;
+
             var res = new List<object>();
             
             foreach (var error in errors.EnumerateArray())
             {
                 var id = error.GetProperty("id").GetString();
-                var code = id.Substring(id.IndexOf('.', id.IndexOf('.') + 1));
+                var code = id.Substring(id.IndexOf('.', id.IndexOf('.') + 1) + 1);
 
                 res.Add(code switch
                 {
@@ -37,7 +40,7 @@ namespace Tzkt.Sync.Protocols
                 });
             }
 
-            return res.Count > 0 ? JsonSerializer.Serialize(res) : null;
+            return JsonSerializer.Serialize(res);
         }
     }
 }

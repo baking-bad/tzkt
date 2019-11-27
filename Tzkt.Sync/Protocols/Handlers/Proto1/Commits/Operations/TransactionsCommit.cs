@@ -159,7 +159,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             blockBaker.StakingBalance += Transaction.BakerFee;
 
             sender.TransactionsCount++;
-            if (target != null) target.TransactionsCount++;
+            if (target != null && target != sender) target.TransactionsCount++;
 
             block.Operations |= Operations.Transactions;
 
@@ -235,7 +235,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Transactions;
 
             sender.TransactionsCount++;
-            if (target != null) target.TransactionsCount++;
+            if (target != null && target != sender) target.TransactionsCount++;
 
             block.Operations |= Operations.Transactions;
             #endregion
@@ -343,7 +343,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             blockBaker.StakingBalance -= Transaction.BakerFee;
 
             sender.TransactionsCount--;
-            if (target != null) target.TransactionsCount--;
+            if (target != null && target != sender) target.TransactionsCount--;
             
             sender.Counter = Math.Min(sender.Counter, Transaction.Counter - 1);
             #endregion
@@ -416,7 +416,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region revert operation
             sender.TransactionsCount--;
-            if (target != null) target.TransactionsCount--;
+            if (target != null && target != sender) target.TransactionsCount--;
             #endregion
 
             Db.TransactionOps.Remove(Transaction);

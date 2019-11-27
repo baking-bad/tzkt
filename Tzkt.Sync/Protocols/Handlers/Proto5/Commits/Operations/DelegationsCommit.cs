@@ -140,7 +140,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             blockBaker.StakingBalance += Delegation.BakerFee;
 
             sender.DelegationsCount++;
-            if (newDelegate != null) newDelegate.DelegationsCount++;
+            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount++;
 
             block.Operations |= Operations.Delegations;
 
@@ -212,7 +212,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Delegations;
 
             sender.DelegationsCount++;
-            if (newDelegate != null) newDelegate.DelegationsCount++;
+            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount++;
 
             block.Operations |= Operations.Delegations;
             #endregion
@@ -335,7 +335,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             blockBaker.StakingBalance -= Delegation.BakerFee;
 
             sender.DelegationsCount--;
-            if (newDelegate != null) newDelegate.DelegationsCount--;
+            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Delegation.Counter - 1);
             #endregion
@@ -393,7 +393,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region revert operation
             sender.DelegationsCount--;
-            if (newDelegate != null) newDelegate.DelegationsCount--;
+            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount--;
             #endregion
 
             Db.DelegationOps.Remove(Delegation);

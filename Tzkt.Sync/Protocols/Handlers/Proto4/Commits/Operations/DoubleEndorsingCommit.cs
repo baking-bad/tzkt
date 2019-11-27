@@ -73,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             offender.StakingBalance -= DoubleEndorsing.OffenderLostFee;
 
             accuser.DoubleEndorsingCount++;
-            offender.DoubleEndorsingCount++;
+            if (offender != accuser) offender.DoubleEndorsingCount++;
 
             block.Operations |= Operations.DoubleEndorsings;
             #endregion
@@ -111,7 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             offender.StakingBalance += DoubleEndorsing.OffenderLostFee;
 
             accuser.DoubleEndorsingCount--;
-            offender.DoubleEndorsingCount--;
+            if (offender != accuser) offender.DoubleEndorsingCount--;
             #endregion
 
             Db.DoubleEndorsingOps.Remove(DoubleEndorsing);

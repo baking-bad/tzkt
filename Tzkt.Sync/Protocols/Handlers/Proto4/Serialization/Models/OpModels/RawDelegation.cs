@@ -69,7 +69,9 @@ namespace Tzkt.Sync.Protocols.Proto4
 
         #region validation
         public bool IsValidFormat() =>
-            !string.IsNullOrEmpty(Status);
+            !string.IsNullOrEmpty(Status) &&
+            (Errors.ValueKind == JsonValueKind.Array ||
+            Errors.ValueKind == JsonValueKind.Undefined);
         #endregion
     }
 }

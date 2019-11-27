@@ -89,7 +89,9 @@ namespace Tzkt.Sync.Protocols.Proto5
             !string.IsNullOrEmpty(Status) &&
             (BalanceUpdates == null || BalanceUpdates.All(x => x.IsValidFormat())) &&
             ConsumedGas >= 0 &&
-            PaidStorageSizeDiff >= 0;
+            PaidStorageSizeDiff >= 0 &&
+            (Errors.ValueKind == JsonValueKind.Array ||
+            Errors.ValueKind == JsonValueKind.Undefined);
         #endregion
     }
 

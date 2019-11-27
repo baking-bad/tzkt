@@ -88,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             blockBaker.StakingBalance += Delegation.BakerFee;
 
             sender.DelegationsCount++;
-            if (newDelegate != null) newDelegate.DelegationsCount++;
+            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount++;
 
             block.Operations |= Operations.Delegations;
 
@@ -219,7 +219,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             blockBaker.StakingBalance -= Delegation.BakerFee;
 
             sender.DelegationsCount--;
-            if (newDelegate != null) newDelegate.DelegationsCount--;
+            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Delegation.Counter - 1);
             #endregion

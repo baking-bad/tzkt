@@ -180,8 +180,8 @@ namespace Tzkt.Sync.Protocols.Proto5
             blockBaker.StakingBalance += Origination.BakerFee;
 
             sender.OriginationsCount++;
-            contract.OriginationsCount++;
-            if (contractDelegate != null) contractDelegate.OriginationsCount++;
+            if (contractDelegate != null && contractDelegate != sender) contractDelegate.OriginationsCount++;
+            if (contract != null) contract.OriginationsCount++;
 
             block.Operations |= Operations.Originations;
 
@@ -249,8 +249,8 @@ namespace Tzkt.Sync.Protocols.Proto5
             parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Originations;
 
             sender.OriginationsCount++;
-            contract.OriginationsCount++;
-            if (contractDelegate != null) contractDelegate.OriginationsCount++;
+            if (contractDelegate != null && contractDelegate != sender) contractDelegate.OriginationsCount++;
+            if (contract != null) contract.OriginationsCount++;
 
             block.Operations |= Operations.Originations;
             #endregion
@@ -348,7 +348,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             blockBaker.StakingBalance -= Origination.BakerFee;
 
             sender.OriginationsCount--;
-            if (contractDelegate != null) contractDelegate.OriginationsCount--;
+            if (contractDelegate != null && contractDelegate != sender) contractDelegate.OriginationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Origination.Counter - 1);
             #endregion
@@ -415,7 +415,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region revert operation
             sender.OriginationsCount--;
-            if (contractDelegate != null) contractDelegate.OriginationsCount--;
+            if (contractDelegate != null && contractDelegate != sender) contractDelegate.OriginationsCount--;
             #endregion
 
             Db.OriginationOps.Remove(Origination);
