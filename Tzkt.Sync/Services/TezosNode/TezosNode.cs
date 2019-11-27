@@ -81,6 +81,22 @@ namespace Tzkt.Sync.Services
             return Header;
         }
 
+        public async Task<bool> CheckHeadAsync()
+        {
+            var header1 = await Rpc.GetObjectAsync<Header>(
+                "chains/main/blocks/head/header",
+                DefaultSerializer);
+
+            if (header1.ChainId != ChainId)
+                throw new Exception("Invalid chain");
+
+            var header2 = await Rpc.GetObjectAsync<Header>(
+                "https://rpc.tzkt.io/mainnet/chains/main/blocks/head/header/shell",
+                DefaultSerializer);
+
+            return header1.ChainId != "NetXdQprcVkpaWU" || Math.Abs(header1.Level - header2.Level) < 8;
+        }
+
         public async Task<bool> HasUpdatesAsync(int level)
         {
             var header = await GetHeaderAsync();

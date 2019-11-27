@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -29,6 +30,8 @@ namespace Tzkt.Sync.Services
                         _HttpClient.BaseAddress = BaseAddress;
                         _HttpClient.DefaultRequestHeaders.Accept.Add(
                             new MediaTypeWithQualityHeaderValue("application/json"));
+                        _HttpClient.DefaultRequestHeaders.UserAgent.Add(
+                            new ProductInfoHeaderValue("TzKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version.ToString()));
                         _HttpClient.Timeout = RequestTimeout;
 
                         _Expiration = DateTime.UtcNow.AddMinutes(120);

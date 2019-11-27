@@ -32,6 +32,7 @@ namespace Tzkt.Sync.Services
         protected override async Task ExecuteAsync(CancellationToken cancelToken)
         {
             #region init state
+            await CheckHeadAsync();
             AppState = await ResetState();
             Logger.LogDebug($"State initialized: [{AppState.Level}:{AppState.Hash}]");
             #endregion
@@ -93,6 +94,19 @@ namespace Tzkt.Sync.Services
             }
 
             Logger.LogWarning("Observer is stoped");
+        }
+
+        private async Task CheckHeadAsync()
+        {
+            try
+            {
+                if (!await Node.CheckHeadAsync())
+                    Logger.LogWarning($"Node is not synchronized!");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug($"Failed to check node. {ex.Message}");
+            }
         }
 
         private async Task<AppState> ResetState()
