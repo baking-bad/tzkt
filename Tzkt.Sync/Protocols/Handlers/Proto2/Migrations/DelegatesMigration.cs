@@ -33,9 +33,12 @@ namespace Tzkt.Sync.Protocols.Proto2
                 .ToListAsync())
                 .GroupBy(x => x.Delegate.Id);
 
+            var activatedDelegates = new Dictionary<int, Data.Models.Delegate>(weirdDelegates.Count());
+
             foreach (var weirds in weirdDelegates)
             {
                 var delegat = await UpgradeUser(weirds.First().Delegate, block.Level, protocol);
+                activatedDelegates.Add(delegat.Id, delegat);
 
                 delegat.SystemOpsCount++;
                 Db.SystemOps.Add(new SystemOperation
@@ -61,12 +64,32 @@ namespace Tzkt.Sync.Protocols.Proto2
                     delegator.WeirdDelegate = delegat;
                     delegator.Delegate = delegat;
                     delegator.DelegateId = delegat.Id;
-                    delegator.DelegationLevel = block.Level;
+                    delegator.DelegationLevel = delegator.FirstLevel;
                     delegator.Staked = true;
 
                     delegat.Delegators++;
                     delegat.StakingBalance += delegator.Balance;
                 }
+            }
+
+            var ids = activatedDelegates.Keys.ToList();
+            var weirdOriginations = await Db.OriginationOps
+                .AsNoTracking()
+                .Where(x => x.Contract != null && ids.Contains((int)x.Contract.WeirdDelegateId))
+                .Select(x => new
+                {
+                    x.Contract.WeirdDelegateId,
+                    Origination = x
+                })
+                .ToListAsync();
+
+            foreach (var op in weirdOriginations)
+            {
+                var delegat = activatedDelegates[(int)op.WeirdDelegateId];
+
+                Db.TryAttach(op.Origination);
+                op.Origination.Delegate = delegat;
+                if (delegat.Id != op.Origination.SenderId && delegat.Id != op.Origination.ManagerId) delegat.OriginationsCount++;
             }
         }
 
@@ -112,6 +135,26 @@ namespace Tzkt.Sync.Protocols.Proto2
                 .AsNoTracking()
                 .Where(x => x.Event == SystemEvent.ActivateDelegate)
                 .ToListAsync());
+
+            var ids = delegates.Select(x => x.Id).ToList();
+            var weirdOriginations = await Db.OriginationOps
+                .AsNoTracking()
+                .Where(x => x.Contract != null && ids.Contains((int)x.Contract.WeirdDelegateId))
+                .Select(x => new
+                {
+                    x.Contract.WeirdDelegateId,
+                    Origination = x
+                })
+                .ToListAsync();
+
+            foreach (var op in weirdOriginations)
+            {
+                var delegat = delegates.First(x => x.Id == op.WeirdDelegateId);
+
+                Db.TryAttach(op.Origination);
+                op.Origination.DelegateId = null;
+                if (delegat.Id != op.Origination.SenderId && delegat.Id != op.Origination.ManagerId) delegat.OriginationsCount--;
+            }
         }
 
         Task<Data.Models.Delegate> UpgradeUser(User user, int level, Protocol proto)
@@ -134,6 +177,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 OriginationsCount = user.OriginationsCount,
                 TransactionsCount = user.TransactionsCount,
                 RevealsCount = user.RevealsCount,
+                Contracts = user.Contracts,
+                SystemOpsCount = user.SystemOpsCount,
                 PublicKey = user.PublicKey,
                 Staked = true,
                 StakingBalance = user.Balance,
@@ -165,6 +210,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 OriginationsCount = delegat.OriginationsCount,
                 TransactionsCount = delegat.TransactionsCount,
                 RevealsCount = delegat.RevealsCount,
+                Contracts = delegat.Contracts,
+                SystemOpsCount = delegat.SystemOpsCount,
                 PublicKey = delegat.PublicKey,
                 Staked = false,
                 Type = AccountType.User,

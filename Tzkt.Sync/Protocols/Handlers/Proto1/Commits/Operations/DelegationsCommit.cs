@@ -108,16 +108,24 @@ namespace Tzkt.Sync.Protocols.Proto1
                         #region weird delegators
                         var delegat = (Data.Models.Delegate)Delegation.Sender;
 
-                        var weirdDelegators = await Db.Contracts
-                            .Where(x => x.WeirdDelegateId == delegat.Id && x.DelegationsCount == 0)
+                        var weirdOriginations = await Db.OriginationOps
+                            .Include(x => x.Contract)
+                            .Where(x => x.Contract != null && x.Contract.WeirdDelegateId == delegat.Id)
                             .ToListAsync();
 
-                        foreach (var weirdDelegator in weirdDelegators)
+                        foreach (var origination in weirdOriginations)
                         {
-                            Db.TryAttach(weirdDelegator);
-                            Cache.AddAccount(weirdDelegator);
+                            Db.TryAttach(origination);
+                            origination.Delegate = delegat;
+                            if (delegat.Id != origination.SenderId && delegat.Id != origination.ManagerId) delegat.OriginationsCount++;
 
-                            await SetDelegate(weirdDelegator, delegat, Delegation.Level);
+                            if (origination.Contract.DelegationsCount == 0)
+                            {
+                                Db.TryAttach(origination.Contract);
+                                Cache.AddAccount(origination.Contract);
+
+                                await SetDelegate(origination.Contract, delegat, origination.Level);
+                            }
                         }
                         #endregion
                     }
@@ -192,16 +200,24 @@ namespace Tzkt.Sync.Protocols.Proto1
                         #region weird delegations
                         var delegat = (Data.Models.Delegate)Delegation.Sender;
 
-                        var weirdDelegators = await Db.Contracts
-                            .Where(x => x.WeirdDelegateId == delegat.Id && x.DelegationsCount == 0)
+                        var weirdOriginations = await Db.OriginationOps
+                            .Include(x => x.Contract)
+                            .Where(x => x.Contract != null && x.Contract.WeirdDelegateId == delegat.Id)
                             .ToListAsync();
 
-                        foreach (var weirdDelegator in weirdDelegators)
+                        foreach (var origination in weirdOriginations)
                         {
-                            Db.TryAttach(weirdDelegator);
-                            Cache.AddAccount(weirdDelegator);
+                            Db.TryAttach(origination);
+                            origination.Delegate = null;
+                            if (delegat.Id != origination.SenderId && delegat.Id != origination.ManagerId) delegat.OriginationsCount--;
 
-                            await ResetDelegate(weirdDelegator, delegat);
+                            if (origination.Contract.DelegationsCount == 0)
+                            {
+                                Db.TryAttach(origination.Contract);
+                                Cache.AddAccount(origination.Contract);
+
+                                await ResetDelegate(origination.Contract, delegat);
+                            }
                         }
                         #endregion
 
