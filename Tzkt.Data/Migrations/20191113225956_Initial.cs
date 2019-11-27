@@ -406,6 +406,7 @@ namespace Tzkt.Data.Migrations
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    BakerId = table.Column<int>(nullable: false),
                     SenderId = table.Column<int>(nullable: false),
                     RevealedLevel = table.Column<int>(nullable: false)
                 },
@@ -413,6 +414,12 @@ namespace Tzkt.Data.Migrations
                 {
                     table.PrimaryKey("PK_NonceRevelationOps", x => x.Id);
                     table.UniqueConstraint("AK_NonceRevelationOps_RevealedLevel", x => x.RevealedLevel);
+                    table.ForeignKey(
+                        name: "FK_NonceRevelationOps_Accounts_BakerId",
+                        column: x => x.BakerId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_NonceRevelationOps_Blocks_Level",
                         column: x => x.Level,
@@ -925,6 +932,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_EndorsementOps_OpHash",
                 table: "EndorsementOps",
                 column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NonceRevelationOps_BakerId",
+                table: "NonceRevelationOps",
+                column: "BakerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_NonceRevelationOps_Level",

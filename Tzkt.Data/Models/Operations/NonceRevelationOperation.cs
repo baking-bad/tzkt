@@ -6,10 +6,14 @@ namespace Tzkt.Data.Models
 {
     public class NonceRevelationOperation : BaseOperation
     {
+        public int BakerId { get; set; }
         public int SenderId { get; set; }
         public int RevealedLevel { get; set; }
 
         #region relations
+        [ForeignKey(nameof(BakerId))]
+        public Delegate Baker { get; set; }
+
         [ForeignKey(nameof(SenderId))]
         public Delegate Sender { get; set; }
         #endregion
@@ -29,6 +33,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasIndex(x => x.OpHash);
+
+            modelBuilder.Entity<NonceRevelationOperation>()
+                .HasIndex(x => x.BakerId);
 
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasIndex(x => x.SenderId);

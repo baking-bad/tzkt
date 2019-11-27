@@ -19,7 +19,7 @@ namespace Tzkt.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.0.0")
+                .HasAnnotation("ProductVersion", "3.1.0-preview3.19554.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("Tzkt.Data.Models.Account", b =>
@@ -519,6 +519,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -538,6 +541,8 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BakerId");
 
                     b.HasIndex("Level");
 
@@ -1372,6 +1377,12 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
                 {
+                    b.HasOne("Tzkt.Data.Models.Delegate", "Baker")
+                        .WithMany()
+                        .HasForeignKey("BakerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Tzkt.Data.Models.Block", "Block")
                         .WithMany("Revelations")
                         .HasForeignKey("Level")

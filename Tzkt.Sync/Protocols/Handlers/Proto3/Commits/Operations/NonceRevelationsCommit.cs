@@ -24,6 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
+                Baker = block.Baker,
                 Sender = (Data.Models.Delegate)await Cache.GetAccountAsync(revealedBlock.BakerId),
                 RevealedBlock = revealedBlock,
                 RevealedLevel = content.Level
@@ -38,6 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             Revelation.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
             Revelation.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
 
+            Revelation.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(revelation.BakerId);
             Revelation.Sender ??= (Data.Models.Delegate)await Cache.GetAccountAsync(revelation.SenderId);
             Revelation.RevealedBlock = await Cache.GetBlockAsync(Revelation.RevealedLevel);
         }
@@ -61,6 +63,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             blockBaker.FrozenRewards += block.Protocol.RevelationReward;
 
             sender.NonceRevelationsCount++;
+            if (blockBaker != sender) blockBaker.NonceRevelationsCount++;
 
             block.Operations |= Operations.Revelations;
 
@@ -91,6 +94,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             blockBaker.FrozenRewards -= block.Protocol.RevelationReward;
 
             sender.NonceRevelationsCount--;
+            if (blockBaker != sender) blockBaker.NonceRevelationsCount--;
 
             revealedBlock.Revelation = null;
             revealedBlock.RevelationId = null;
