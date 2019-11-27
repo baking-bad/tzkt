@@ -45,7 +45,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Level = state.Level,
                     Timestamp = state.Timestamp,
                     Account = manager,
-                    Event = SystemEvent.AirDrop
+                    Event = SystemEvent.AirDrop,
+                    BalanceChange = 1
                 });
             }
         }

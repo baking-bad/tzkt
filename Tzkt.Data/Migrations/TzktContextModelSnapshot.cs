@@ -891,6 +891,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("integer");
 
+                    b.Property<long>("BalanceChange")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Event")
                         .HasColumnType("integer");
 

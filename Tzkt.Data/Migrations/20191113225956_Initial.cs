@@ -531,7 +531,8 @@ namespace Tzkt.Data.Migrations
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     AccountId = table.Column<int>(nullable: false),
-                    Event = table.Column<int>(nullable: false)
+                    Event = table.Column<int>(nullable: false),
+                    BalanceChange = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {

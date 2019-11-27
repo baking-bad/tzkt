@@ -9,6 +9,8 @@ namespace Tzkt.Sync.Protocols.Initiator
 {
     class BootstrapCommit : ProtocolCommit
     {
+        public int Level { get; private set; }
+        public DateTime Timestamp { get; private set; }
         public List<Account> BootstrapedAccounts { get; private set; }
 
         BootstrapCommit(ProtocolHandler protocol) : base(protocol) { }
@@ -17,6 +19,8 @@ namespace Tzkt.Sync.Protocols.Initiator
         {
             var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
             BootstrapedAccounts = new List<Account>(65);
+            Timestamp = rawBlock.Header.Timestamp;
+            Level = rawBlock.Level;
 
             var stream = await Proto.Node.GetContractsAsync(level: 1);
             var contracts = await (Proto.Serializer as Serializer).DeserializeContracts(stream);
@@ -102,22 +106,39 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public async Task Init(Block block)
         {
+            Level = block.Level;
+            Timestamp = block.Timestamp;
             BootstrapedAccounts = await Db.Accounts.Where(x => x.Counter == 0).ToListAsync();
         }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
             Db.Accounts.AddRange(BootstrapedAccounts);
 
-            return Task.CompletedTask;
+            foreach (var account in BootstrapedAccounts)
+            {
+                account.SystemOpsCount++;
+                Db.SystemOps.Add(new SystemOperation
+                {
+                    Id = await Cache.NextCounterAsync(),
+                    Level = Level,
+                    Timestamp = Timestamp,
+                    Account = account,
+                    Event = SystemEvent.Bootstrap,
+                    BalanceChange = account.Balance
+                });
+            }
         }
 
-        public override Task Revert()
+        public override async Task Revert()
         {
             Db.Accounts.RemoveRange(BootstrapedAccounts);
             Cache.RemoveAccounts(BootstrapedAccounts);
 
-            return Task.CompletedTask;
+            Db.SystemOps.RemoveRange(await Db.SystemOps
+                .AsNoTracking()
+                .Where(x => x.Event == SystemEvent.Bootstrap)
+                .ToListAsync());
         }
 
         #region static

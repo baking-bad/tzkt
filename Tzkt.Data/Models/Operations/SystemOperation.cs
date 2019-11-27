@@ -12,6 +12,7 @@ namespace Tzkt.Data.Models
 
         public int AccountId { get; set; }
         public SystemEvent Event { get; set; }
+        public long BalanceChange { get; set; }
 
         #region relations
         [ForeignKey(nameof(AccountId))]
@@ -21,6 +22,7 @@ namespace Tzkt.Data.Models
 
     public enum SystemEvent
     {
+        Bootstrap,
         ActivateDelegate,
         AirDrop
     }
