@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class DelegatorInfo
+    public class CreatorInfo
     {
         public string Type { get; set; }
 
@@ -13,8 +14,11 @@ namespace Tzkt.Api.Models
 
         public string Address { get; set; }
 
-        public long Balance { get; set; }
-
-        public int DelegationLevel { get; set; }
+        public CreatorInfo(Alias manager, string type)
+        {
+            Type = type;
+            Alias = manager.Name;
+            Address = manager.Address;
+        }
     }
 }

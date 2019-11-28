@@ -176,7 +176,7 @@ namespace Tzkt.Api.Repositories
             block.Delegations = delegations.Result;
             block.Originations = originations.Result;
             block.Transactions = transactions.Result;
-            block.Reveeals = reveals.Result;
+            block.Reveals = reveals.Result;
         }
     }
 }

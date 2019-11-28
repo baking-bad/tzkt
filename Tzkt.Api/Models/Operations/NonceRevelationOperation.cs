@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class NonceRevelationOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "nonce_revelation";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 
@@ -19,7 +18,9 @@ namespace Tzkt.Api.Models
 
         public string Hash { get; set; }
 
-        public Alias Delegate { get; set; }
+        public Alias Baker { get; set; }
+
+        public Alias Sender { get; set; }
 
         public int RevealedLevel { get; set; }
     }

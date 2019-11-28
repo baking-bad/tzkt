@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class ActivationOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "activation";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 

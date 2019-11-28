@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class OriginationOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "origination";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 
@@ -41,9 +40,13 @@ namespace Tzkt.Api.Models
 
         public long ContractBalance { get; set; }
 
+        public Alias ContractManager { get; set; }
+
         public Alias ContractDelegate { get; set; }
 
         public string Status { get; set; }
+
+        public List<IOperationError> Errors { get; set; }
 
         public Alias OriginatedContract { get; set; }
     }

@@ -36,6 +36,6 @@ namespace Tzkt.Api.Models
         public IEnumerable<DelegationOperation> Delegations { get; set; }
         public IEnumerable<OriginationOperation> Originations { get; set; }
         public IEnumerable<TransactionOperation> Transactions { get; set; }
-        public IEnumerable<RevealOperation> Reveeals { get; set; }
+        public IEnumerable<RevealOperation> Reveals { get; set; }
     }
 }

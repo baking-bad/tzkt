@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class EndorsementOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "endorsement";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 
@@ -22,5 +21,7 @@ namespace Tzkt.Api.Models
         public Alias Delegate { get; set; }
 
         public int Slots { get; set; }
+
+        public long Rewards { get; set; }
     }
 }

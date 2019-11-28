@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
@@ -138,7 +139,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash)
         {
             var sql = @"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""DelegateId"", ""Slots""
+                SELECT   ""Id"", ""Level"", ""Timestamp"", ""DelegateId"", ""Slots"", ""Reward""
                 FROM     ""EndorsementOps""
                 WHERE    ""OpHash"" = @hash::character(51)
                 LIMIT    1";
@@ -153,14 +154,15 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Delegate = Aliases[row.DelegateId],
-                Slots = row.Slots
+                Slots = row.Slots,
+                Rewards = row.Reward
             });
         }
 
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(int level)
         {
             var sql = @"
-                SELECT   ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots""
+                SELECT   ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward""
                 FROM     ""EndorsementOps""
                 WHERE    ""Level"" = @level
                 ORDER BY ""Id""";
@@ -175,14 +177,15 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Aliases[row.DelegateId],
-                Slots = row.Slots
+                Slots = row.Slots,
+                Rewards = row.Reward
             });
         }
 
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots""
+                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward""
                 FROM     ""EndorsementOps""
                 ORDER BY ""Id""
                 OFFSET   @offset
@@ -198,17 +201,18 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Aliases[row.DelegateId],
-                Slots = row.Slots
+                Slots = row.Slots,
+                Rewards = row.Reward
             });
         }
 
         public async Task<IEnumerable<EndorsementOperation>> GetLastEndorsements(RawAccount account, int limit = 100)
         {
             var sql = $@"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots""
+                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots"", ""Reward""
                 FROM     ""EndorsementOps""
                 WHERE    ""DelegateId"" = @accountId
-                ORDER BY ""Id"" DESC
+                ORDER BY ""Id"" DESC NULLS LAST
                 LIMIT    @limit";
 
             using var db = GetConnection();
@@ -221,18 +225,19 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Aliases[account.Id],
-                Slots = row.Slots
+                Slots = row.Slots,
+                Rewards = row.Reward
             });
         }
 
         public async Task<IEnumerable<EndorsementOperation>> GetLastEndorsements(RawAccount account, int fromLevel, int limit = 100)
         {
             var sql = $@"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots""
+                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots"", ""Reward""
                 FROM     ""EndorsementOps""
                 WHERE    ""DelegateId"" = @accountId
                 AND      ""Level"" < @fromLevel
-                ORDER BY ""Id"" DESC
+                ORDER BY ""Id"" DESC NULLS LAST
                 LIMIT    @limit";
 
             using var db = GetConnection();
@@ -245,143 +250,8 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Aliases[account.Id],
-                Slots = row.Slots
-            });
-        }
-        #endregion
-
-        #region proposals
-        public async Task<int> GetProposalsCount()
-        {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""ProposalOps""";
-
-            using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
-        }
-
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash)
-        {
-            var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
-                WHERE     op.""OpHash"" = @hash::character(51)
-                ORDER BY  op.""Id""";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { hash });
-
-            return rows.Select(row => new ProposalOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = hash,
-                Delegate = Aliases[row.SenderId],
-                Period = row.PeriodId,
-                Proposal = row.Hash
-            });
-        }
-
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(int level)
-        {
-            var sql = @"
-                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
-                WHERE     op.""Level"" = level
-                ORDER BY  op.""Id""";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
-
-            return rows.Select(row => new ProposalOperation
-            {
-                Id = row.Id,
-                Level = level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Delegate = Aliases[row.SenderId],
-                Period = row.PeriodId,
-                Proposal = row.Hash
-            });
-        }
-
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(int limit = 100, int offset = 0)
-        {
-            var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", proposal.""Hash""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
-                ORDER BY  op.""Id""
-                OFFSET    @offset
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { limit, offset });
-
-            return rows.Select(row => new ProposalOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Delegate = Aliases[row.SenderId],
-                Period = row.PeriodId,
-                Proposal = row.Hash
-            });
-        }
-
-        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, int limit = 100)
-        {
-            var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""PeriodId"", proposal.""Hash""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                WHERE     ""SenderId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new ProposalOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
-                Period = row.PeriodId,
-                Proposal = row.Hash
-            });
-        }
-
-        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""PeriodId"", proposal.""Hash""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                WHERE     ""SenderId"" = @accountId
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
-
-            return rows.Select(row => new ProposalOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
-                Period = row.PeriodId,
-                Proposal = row.Hash
+                Slots = row.Slots,
+                Rewards = row.Reward
             });
         }
         #endregion
@@ -400,9 +270,11 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(string hash)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", op.""Vote"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     op.""OpHash"" = @hash::character(51)
                 LIMIT     1";
 
@@ -415,9 +287,15 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Delegate = Aliases[row.SenderId],
-                Period = row.PeriodId,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
                 Proposal = row.Hash,
+                Delegate = Aliases[row.SenderId],
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -425,9 +303,11 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(int level)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""Vote"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     op.""Level"" = @level
                 ORDER BY  ""Id""";
 
@@ -440,9 +320,15 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[row.SenderId],
-                Period = row.PeriodId,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
                 Proposal = row.Hash,
+                Delegate = Aliases[row.SenderId],
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -450,9 +336,11 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""Vote"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId"" 
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 ORDER BY  op.""Id""
                 OFFSET    @offset
                 LIMIT     @limit";
@@ -466,9 +354,15 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[row.SenderId],
-                Period = row.PeriodId,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
                 Proposal = row.Hash,
+                Delegate = Aliases[row.SenderId],
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -476,9 +370,11 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetLastBallots(RawAccount account, int limit = 100)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""Vote"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM      ""BallotOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     ""SenderId"" = @accountId
                 ORDER BY  ""Id"" DESC
                 LIMIT     @limit";
@@ -492,9 +388,15 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
-                Period = row.PeriodId,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
                 Proposal = row.Hash,
+                Delegate = Aliases[account.Id],
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -502,9 +404,11 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetLastBallots(RawAccount account, int fromLevel, int limit = 100)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""PeriodId"", op.""Vote"", proposal.""Hash""
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""Vote"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM      ""BallotOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     ""SenderId"" = @accountId
                 AND       ""Level"" < @fromLevel
                 ORDER BY  ""Id"" DESC
@@ -519,10 +423,192 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
-                Period = row.PeriodId,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
                 Proposal = row.Hash,
+                Delegate = Aliases[account.Id],
                 Vote = VoteToString(row.Vote)
+            });
+        }
+        #endregion
+
+        #region proposals
+        public async Task<int> GetProposalsCount()
+        {
+            var sql = @"
+                SELECT   COUNT(*)
+                FROM     ""ProposalOps""";
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql);
+        }
+
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash)
+        {
+            var sql = @"
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM      ""ProposalOps"" as op
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
+                WHERE     op.""OpHash"" = @hash::character(51)
+                ORDER BY  op.""Id""";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { hash });
+
+            return rows.Select(row => new ProposalOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Hash = hash,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
+                Proposal = row.Hash,
+                Delegate = Aliases[row.SenderId]
+            });
+        }
+
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(int level)
+        {
+            var sql = @"
+                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM      ""ProposalOps"" as op
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
+                WHERE     op.""Level"" = @level
+                ORDER BY  op.""Id""";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { level });
+
+            return rows.Select(row => new ProposalOperation
+            {
+                Id = row.Id,
+                Level = level,
+                Timestamp = row.Timestamp,
+                Hash = row.OpHash,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
+                Proposal = row.Hash,
+                Delegate = Aliases[row.SenderId]
+            });
+        }
+
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(int limit = 100, int offset = 0)
+        {
+            var sql = @"
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM      ""ProposalOps"" as op
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
+                ORDER BY  op.""Id""
+                OFFSET    @offset
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { limit, offset });
+
+            return rows.Select(row => new ProposalOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Hash = row.OpHash,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
+                Proposal = row.Hash,
+                Delegate = Aliases[row.SenderId]
+            });
+        }
+
+        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, int limit = 100)
+        {
+            var sql = @"
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM      ""ProposalOps"" as op
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
+                WHERE     ""SenderId"" = @accountId
+                ORDER BY  ""Id"" DESC
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
+
+            return rows.Select(row => new ProposalOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Hash = row.OpHash,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
+                Proposal = row.Hash,
+                Delegate = Aliases[account.Id]
+            });
+        }
+
+        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, int fromLevel, int limit = 100)
+        {
+            var sql = @"
+                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", proposal.""Hash"",
+                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM      ""ProposalOps"" as op
+                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
+                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
+                WHERE     ""SenderId"" = @accountId
+                AND       ""Level"" < @fromLevel
+                ORDER BY  ""Id"" DESC
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+
+            return rows.Select(row => new ProposalOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Hash = row.OpHash,
+                Period = new PeriodInfo
+                {
+                    Id = row.Code,
+                    Kind = PeriodToString(row.Kind),
+                    StartLevel = row.StartLevel,
+                    EndLevel = row.EndLevel
+                },
+                Proposal = row.Hash,
+                Delegate = Aliases[account.Id]
             });
         }
         #endregion
@@ -983,7 +1069,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""RevealedLevel""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 LIMIT     1";
@@ -997,7 +1083,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Delegate = Aliases[row.SenderId],
+                Baker = Aliases[row.BakerId],
+                Sender = Aliases[row.SenderId],
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1005,7 +1092,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(int level)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""RevealedLevel""
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -1019,7 +1106,8 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[row.SenderId],
+                Baker = Aliases[row.BakerId],
+                Sender = Aliases[row.SenderId],
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1027,7 +1115,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""RevealedLevel""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -1042,7 +1130,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[row.SenderId],
+                Baker = Aliases[row.BakerId],
+                Sender = Aliases[row.SenderId],
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1050,9 +1139,10 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetLastNonceRevelations(RawAccount account, int limit = 100)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""RevealedLevel""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
-                WHERE     ""SenderId"" = @accountId
+                WHERE     ""BakerId"" = @accountId
+                OR        ""SenderId"" = @accountId
                 ORDER BY  ""Id"" DESC
                 LIMIT     @limit";
 
@@ -1065,7 +1155,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
+                Baker = Aliases[row.BakerId],
+                Sender = Aliases[row.SenderId],
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1073,9 +1164,10 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetLastNonceRevelations(RawAccount account, int fromLevel, int limit = 100)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""RevealedLevel""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
-                WHERE     ""SenderId"" = @accountId
+                WHERE     (""BakerId"" = @accountId
+                OR        ""SenderId"" = @accountId)
                 AND       ""Level"" < @fromLevel
                 ORDER BY  ""Id"" DESC
                 LIMIT     @limit";
@@ -1089,7 +1181,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
+                Baker = Aliases[row.BakerId],
+                Sender = Aliases[row.SenderId],
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1110,7 +1203,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 ORDER BY  ""Id""";
@@ -1131,7 +1224,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1139,7 +1233,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
                 ORDER BY  ""Id""";
@@ -1160,7 +1254,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1168,7 +1263,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""DelegateId""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
                 LIMIT     1";
@@ -1189,7 +1284,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1197,7 +1293,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -1218,7 +1314,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1226,7 +1323,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -1248,7 +1345,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1256,7 +1354,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""SenderId"" = @accountId
                 OR        ""DelegateId"" = @accountId
@@ -1279,7 +1377,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1287,7 +1386,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""DelegateId"" = @accountId)
@@ -1311,7 +1410,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
         #endregion
@@ -1331,7 +1431,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 ORDER BY  ""Id""";
@@ -1358,7 +1458,9 @@ namespace Tzkt.Api.Repositories
                 ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null
+                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
+                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1366,7 +1468,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
                 ORDER BY  ""Id""";
@@ -1393,7 +1495,9 @@ namespace Tzkt.Api.Repositories
                 ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null
+                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
+                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1401,7 +1505,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""ContractId"", ""DelegateId"", ""Balance""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
                 LIMIT     1";
@@ -1428,7 +1532,9 @@ namespace Tzkt.Api.Repositories
                 ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null
+                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
+                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1436,7 +1542,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -1463,7 +1569,9 @@ namespace Tzkt.Api.Repositories
                 ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null
+                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
+                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1471,7 +1579,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -1499,7 +1607,9 @@ namespace Tzkt.Api.Repositories
                 ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null
+                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
+                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1507,7 +1617,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""SenderId"" = @accountId
                 OR        ""DelegateId"" = @accountId
@@ -1537,7 +1647,9 @@ namespace Tzkt.Api.Repositories
                 ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null
+                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
+                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
@@ -1545,7 +1657,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""DelegateId"" = @accountId
@@ -1576,7 +1688,9 @@ namespace Tzkt.Api.Repositories
                 ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null
+                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
+                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
         #endregion
@@ -1596,7 +1710,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 ORDER BY  ""Id""";
@@ -1622,7 +1736,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Aliases[row.TargetId] : null,
                 Amount = row.Amount,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                HasInternals = row.InternalOperations > 0
             });
         }
 
@@ -1630,7 +1746,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
                 ORDER BY  ""Id""";
@@ -1656,7 +1772,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Aliases[row.TargetId] : null,
                 Amount = row.Amount,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                HasInternals = row.InternalOperations > 0
             });
         }
 
@@ -1664,7 +1782,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""TargetId"", ""Amount""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
                 LIMIT     1";
@@ -1690,7 +1808,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Aliases[row.TargetId] : null,
                 Amount = row.Amount,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                HasInternals = row.InternalOperations > 0
             });
         }
 
@@ -1698,7 +1818,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -1724,7 +1844,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Aliases[row.TargetId] : null,
                 Amount = row.Amount,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                HasInternals = row.InternalOperations > 0
             });
         }
 
@@ -1732,7 +1854,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -1759,7 +1881,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Aliases[row.TargetId] : null,
                 Amount = row.Amount,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                HasInternals = row.InternalOperations > 0
             });
         }
 
@@ -1767,7 +1891,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""SenderId"" = @accountId
                 OR        ""TargetId"" = @accountId
@@ -1795,7 +1919,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Aliases[row.TargetId] : null,
                 Amount = row.Amount,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                HasInternals = row.InternalOperations > 0
             });
         }
 
@@ -1803,7 +1929,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""TargetId"" = @accountId)
@@ -1832,7 +1958,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Aliases[row.TargetId] : null,
                 Amount = row.Amount,
-                Status = StatusToString(row.Status)
+                Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                HasInternals = row.InternalOperations > 0
             });
         }
         #endregion
@@ -1851,7 +1979,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
                 FROM      ""RevealOps""
                 WHERE     ""OpHash"" = @hash::character(51)
                 ORDER BY  ""Id""";
@@ -1871,13 +1999,14 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, int counter)
         {
             var sql = @"
-                SELECT  ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT  ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
                 FROM    ""RevealOps""
                 WHERE   ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
                 LIMIT   1";
@@ -1897,13 +2026,14 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
         public async Task<IEnumerable<RevealOperation>> GetReveals(int level)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
                 FROM      ""RevealOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -1923,13 +2053,14 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
         public async Task<IEnumerable<RevealOperation>> GetReveals(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
                 FROM      ""RevealOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -1950,13 +2081,14 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
         public async Task<IEnumerable<RevealOperation>> GetLastReveals(RawAccount account, int limit = 100)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
                 FROM      ""RevealOps""
                 WHERE     ""SenderId"" = @accountId
                 ORDER BY  ""Id"" DESC
@@ -1977,13 +2109,14 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
 
         public async Task<IEnumerable<RevealOperation>> GetLastReveals(RawAccount account, int fromLevel, int limit = 100)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
                 FROM      ""RevealOps""
                 WHERE     ""SenderId"" = @accountId
                 AND       ""Level"" < @fromLevel
@@ -2005,9 +2138,19 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
         #endregion
+
+        string PeriodToString(int period) => period switch
+        {
+            0 => "proposal",
+            1 => "exploration",
+            2 => "testing",
+            3 => "promotion",
+            _ => "unknown"
+        };
 
         string VoteToString(int vote) => vote switch
         {

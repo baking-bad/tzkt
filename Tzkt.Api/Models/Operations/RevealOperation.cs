@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class RevealOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "reveal";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 
@@ -30,5 +29,7 @@ namespace Tzkt.Api.Models
         public long BakerFee { get; set; }
 
         public string Status { get; set; }
+
+        public List<IOperationError> Errors { get; set; }
     }
 }

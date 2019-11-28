@@ -17,26 +17,27 @@ namespace Tzkt.Sync.Protocols
             foreach (var error in errors.EnumerateArray())
             {
                 var id = error.GetProperty("id").GetString();
-                var code = id.Substring(id.IndexOf('.', id.IndexOf('.') + 1) + 1);
+                var type = id.Substring(id.IndexOf('.', id.IndexOf('.') + 1) + 1);
 
-                res.Add(code switch
+                res.Add(type switch
                 {
-                    "contract.balance_too_low" => new 
-                    { 
-                        code,
-                        balance = long.Parse(error.GetProperty("balance").GetString())
+                    "contract.balance_too_low" => new
+                    {
+                        type,
+                        balance = long.Parse(error.GetProperty("balance").GetString()),
+                        required = long.Parse(error.GetProperty("amount").GetString())
                     },
                     "contract.manager.unregistered_delegate" => new
                     {
-                        code,
+                        type,
                         @delegate = error.GetProperty("hash").GetString()
                     },
                     "contract.non_existing_contract" => new
                     {
-                        code,
+                        type,
                         contract = error.GetProperty("contract").GetString()
                     },
-                    _ => new { code }
+                    _ => new { type }
                 });
             }
 

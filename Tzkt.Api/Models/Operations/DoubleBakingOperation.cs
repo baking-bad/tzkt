@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class DoubleBakingOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "double_baking";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 

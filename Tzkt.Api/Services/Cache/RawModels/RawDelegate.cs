@@ -7,6 +7,8 @@ namespace Tzkt.Api.Services.Cache
 {
     public class RawDelegate : RawUser
     {
+        public override string Type => "delegate";
+
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }
 
@@ -16,5 +18,12 @@ namespace Tzkt.Api.Services.Cache
 
         public int Delegators { get; set; }
         public long StakingBalance { get; set; }
+
+        public int EndorsementsCount { get; set; }
+        public int BallotsCount { get; set; }
+        public int ProposalsCount { get; set; }
+        public int DoubleBakingCount { get; set; }
+        public int DoubleEndorsingCount { get; set; }
+        public int NonceRevelationsCount { get; set; }
     }
 }

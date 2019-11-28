@@ -20,11 +20,23 @@ namespace Tzkt.Api.Models
 
         public long Balance { get; set; }
 
-        public int OpMask { get; set; }
+        public CreatorInfo Creator { get; set; }
+
+        public ManagerInfo Manager { get; set; }
 
         public DelegateInfo Delegate { get; set; }
 
-        public ManagerInfo Manager { get; set; }
+        public int NumContracts { get; set; }
+
+        public int NumDelegations { get; set; }
+
+        public int NumOriginations { get; set; }
+
+        public int NumTransactions { get; set; }
+
+        public int NumReveals { get; set; }
+
+        public int NumSystem { get; set; }
 
         public int FirstActivity { get; set; }
 

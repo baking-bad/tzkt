@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class DoubleEndorsingOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "double_endorsing";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 

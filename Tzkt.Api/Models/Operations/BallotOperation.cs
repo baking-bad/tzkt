@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class BallotOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "ballot";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 
@@ -19,11 +18,11 @@ namespace Tzkt.Api.Models
 
         public string Hash { get; set; }
 
-        public Alias Delegate { get; set; }
-
-        public int Period { get; set; }
+        public PeriodInfo Period { get; set; }
 
         public string Proposal { get; set; }
+
+        public Alias Delegate { get; set; }
 
         public string Vote { get; set; }
     }

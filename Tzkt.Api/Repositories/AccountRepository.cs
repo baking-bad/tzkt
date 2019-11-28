@@ -55,13 +55,25 @@ namespace Tzkt.Api.Repositories
                         FrozenRewards = delegat.FrozenRewards,
                         FrozenFees = delegat.FrozenFees,
                         Counter = delegat.Counter,
-                        OpMask = (int)delegat.Operations,
                         ActivationLevel = delegat.ActivationLevel,
                         DeactivationLevel = active ? null : deactivation,
-                        DelegatorsCount = delegat.Delegators,
                         StakingBalance = delegat.StakingBalance,
                         FirstActivity = delegat.FirstLevel,
-                        LastActivity = delegat.LastLevel
+                        LastActivity = delegat.LastLevel,
+                        NumActivations = delegat.Activated == true ? 1 : 0,
+                        NumBallots = delegat.BallotsCount,
+                        NumContracts = delegat.Contracts,
+                        NumDelegators = delegat.Delegators,
+                        NumDelegations = delegat.DelegationsCount,
+                        NumDoubleBaking = delegat.DoubleBakingCount,
+                        NumDoubleEndorsing = delegat.DoubleEndorsingCount,
+                        NumEndorsements = delegat.EndorsementsCount,
+                        NumNonceRevelations = delegat.NonceRevelationsCount,
+                        NumOriginations = delegat.OriginationsCount,
+                        NumProposals = delegat.ProposalsCount,
+                        NumReveals = delegat.RevealsCount,
+                        NumSystem = delegat.SystemOpsCount,
+                        NumTransactions = delegat.TransactionsCount,
                     };
                 case RawUser user:
                     return new User
@@ -70,26 +82,52 @@ namespace Tzkt.Api.Repositories
                         Address = address,
                         Balance = user.Balance,
                         Counter = user.Balance > 0 ? user.Counter : State.GetCounter(),
-                        OpMask = (int)user.Operations,
                         FirstActivity = user.FirstLevel,
                         LastActivity = user.LastLevel,
                         PublicKey = user.PublicKey,
-                        Delegate = user.DelegateId != null ? new DelegateInfo(Aliases[(int)user.DelegateId], user.Staked) : null
+                        Delegate = user.DelegateId != null ? new DelegateInfo(Aliases[(int)user.DelegateId], user.Staked) : null,
+                        NumActivations = user.Activated == true ? 1 : 0,
+                        NumContracts = user.Contracts,
+                        NumDelegations = user.DelegationsCount,
+                        NumOriginations = user.OriginationsCount,
+                        NumReveals = user.RevealsCount,
+                        NumSystem = user.SystemOpsCount,
+                        NumTransactions = user.TransactionsCount
                     };
                 case RawContract contract:
-                    var managerAlias = Aliases[contract.ManagerId];
-                    var manager = (RawUser)await Accounts.Get(managerAlias.Address);
+                    var creatorAlias = contract.CreatorId != null
+                        ? Aliases[(int)contract.CreatorId]
+                        : null;
+
+                    var creator = contract.CreatorId != null
+                        ? await Accounts.Get(creatorAlias.Address)
+                        : null;
+                    
+                    var managerAlias = contract.ManagerId != null
+                        ? Aliases[(int)contract.ManagerId]
+                        : null;
+
+                    var manager = contract.ManagerId != null
+                        ? (RawUser)await Accounts.Get(managerAlias.Address)
+                        : null; ;
+
                     return new Contract
                     {
                         Kind = KindToString(contract.Kind),
                         Alias = Aliases[contract.Id].Name,
                         Address = address,
                         Balance = contract.Balance,
-                        OpMask = (int)contract.Operations,
+                        Creator = contract.CreatorId != null ? new CreatorInfo(creatorAlias, creator.Type) : null,
+                        Manager = contract.ManagerId != null ? new ManagerInfo(managerAlias, manager.PublicKey, manager.Type) : null,
                         Delegate = contract.DelegateId != null ? new DelegateInfo(Aliases[(int)contract.DelegateId], contract.Staked) : null,
-                        Manager = new ManagerInfo(managerAlias, manager.PublicKey),
                         FirstActivity = contract.FirstLevel,
-                        LastActivity = contract.LastLevel
+                        LastActivity = contract.LastLevel,
+                        NumContracts = contract.Contracts,
+                        NumDelegations = contract.DelegationsCount,
+                        NumOriginations = contract.OriginationsCount,
+                        NumReveals = contract.RevealsCount,
+                        NumSystem = contract.SystemOpsCount,
+                        NumTransactions = contract.TransactionsCount
                     };
                 default:
                     throw new Exception($"Invalid raw account type");
@@ -129,10 +167,9 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<IAccount>> Get(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT      account.*, manager.""PublicKey"" as ""ManagerPublicKey""
-                FROM        ""Accounts"" as account
-                LEFT JOIN   ""Accounts"" as manager ON manager.""Id"" = account.""ManagerId""
-                ORDER BY    account.""Id""
+                SELECT      *
+                FROM        ""Accounts""
+                ORDER BY    ""Id""
                 OFFSET      @offset
                 LIMIT       @limit";
 
@@ -151,11 +188,17 @@ namespace Tzkt.Api.Repositories
                             Address = row.Address,
                             Balance = row.Balance,
                             Counter = row.Balance > 0 ? row.Counter : State.GetCounter(),
-                            OpMask = row.Operations,
                             FirstActivity = row.FirstLevel,
                             LastActivity = row.LastLevel,
                             PublicKey = row.PublicKey,
-                            Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null
+                            Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null,
+                            NumActivations = row.Activated == true ? 1 : 0,
+                            NumContracts = row.Contracts,
+                            NumDelegations = row.DelegationsCount,
+                            NumOriginations = row.OriginationsCount,
+                            NumReveals = row.RevealsCount,
+                            NumSystem = row.SystemOpsCount,
+                            NumTransactions = row.TransactionsCount
                         });
                         break;
                     case 1:
@@ -172,13 +215,25 @@ namespace Tzkt.Api.Repositories
                             FrozenRewards = row.FrozenRewards,
                             FrozenFees = row.FrozenFees,
                             Counter = row.Counter,
-                            OpMask = row.Operations,
                             ActivationLevel = row.ActivationLevel,
                             DeactivationLevel = active ? null : deactivation,
-                            DelegatorsCount = row.Delegators,
                             StakingBalance = row.StakingBalance,
                             FirstActivity = row.FirstLevel,
-                            LastActivity = row.LastLevel
+                            LastActivity = row.LastLevel,
+                            NumActivations = row.Activated == true ? 1 : 0,
+                            NumBallots = row.BallotsCount,
+                            NumContracts = row.Contracts,
+                            NumDelegators = row.Delegators,
+                            NumDelegations = row.DelegationsCount,
+                            NumDoubleBaking = row.DoubleBakingCount,
+                            NumDoubleEndorsing = row.DoubleEndorsingCount,
+                            NumEndorsements = row.EndorsementsCount,
+                            NumNonceRevelations = row.NonceRevelationsCount,
+                            NumOriginations = row.OriginationsCount,
+                            NumProposals = row.ProposalsCount,
+                            NumReveals = row.RevealsCount,
+                            NumSystem = row.SystemOpsCount,
+                            NumTransactions = row.TransactionsCount,
                         });
                         break;
                     case 2:
@@ -188,11 +243,17 @@ namespace Tzkt.Api.Repositories
                             Alias = Aliases[row.Id].Name,
                             Address = row.Address,
                             Balance = row.Balance,
-                            OpMask = row.Operations,
+                            Creator = row.CreatorId != null ? new CreatorInfo(Aliases[row.CreatorId], null) : null,
+                            Manager = row.ManagerId != null ? new ManagerInfo(Aliases[row.ManagerId], null, null) : null,
                             Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null,
-                            Manager = new ManagerInfo(Aliases[row.ManagerId], row.ManagerPublicKey),
                             FirstActivity = row.FirstLevel,
-                            LastActivity = row.LastLevel
+                            LastActivity = row.LastLevel,
+                            NumContracts = row.Contracts,
+                            NumDelegations = row.DelegationsCount,
+                            NumOriginations = row.OriginationsCount,
+                            NumReveals = row.RevealsCount,
+                            NumSystem = row.SystemOpsCount,
+                            NumTransactions = row.TransactionsCount
                         });
                         break;
                 }
@@ -223,11 +284,17 @@ namespace Tzkt.Api.Repositories
                 Alias = Aliases[row.Id].Name,
                 Address = row.Address,
                 Balance = row.Balance,
-                OpMask = row.Operations,
+                Creator = row.CreatorId != null ? new CreatorInfo(Aliases[row.CreatorId], null) : null,
+                Manager = row.ManagerId != null ? new ManagerInfo(Aliases[row.ManagerId], null, null) : null,
                 Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null,
-                Manager = new ManagerInfo(Aliases[row.ManagerId], row.ManagerPublicKey),
                 FirstActivity = row.FirstLevel,
-                LastActivity = row.LastLevel
+                LastActivity = row.LastLevel,
+                NumContracts = row.Contracts,
+                NumDelegations = row.DelegationsCount,
+                NumOriginations = row.OriginationsCount,
+                NumReveals = row.RevealsCount,
+                NumSystem = row.SystemOpsCount,
+                NumTransactions = row.TransactionsCount
             });
         }
 
@@ -236,7 +303,7 @@ namespace Tzkt.Api.Repositories
             var delegat = await Accounts.Get(address);
 
             var sql = @"
-                SELECT      ""Id"", ""Balance"", ""DelegationLevel""
+                SELECT      ""Id"", ""Type"", ""Balance"", ""DelegationLevel""
                 FROM        ""Accounts""
                 WHERE       ""DelegateId"" = @delegateId
                 ORDER BY    ""DelegationLevel"" DESC
@@ -248,6 +315,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new DelegatorInfo
             {
+                Type = TypeToString(row.Type),
                 Alias = Aliases[row.Id].Name,
                 Address = Aliases[row.Id].Address,
                 Balance = row.Balance,
@@ -258,54 +326,53 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<IOperation>> GetOperations(string address, Data.Models.Operations operations, int limit = 100)
         {
             var account = await Accounts.Get(address);
-            var resultOps = account.Operations & operations;
             var result = new List<IOperation>(limit * 2);
 
             switch (account)
             {
                 case RawDelegate delegat:
 
-                    var endorsements = resultOps.HasFlag(Data.Models.Operations.Endorsements)
+                    var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements) && delegat.EndorsementsCount > 0
                         ? Operations.GetLastEndorsements(account, limit)
                         : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
-                    var proposals = resultOps.HasFlag(Data.Models.Operations.Proposals)
+                    var proposals = operations.HasFlag(Data.Models.Operations.Proposals) && delegat.ProposalsCount > 0
                         ? Operations.GetLastProposals(account, limit)
                         : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
-                    var ballots = resultOps.HasFlag(Data.Models.Operations.Ballots)
+                    var ballots = operations.HasFlag(Data.Models.Operations.Ballots) && delegat.BallotsCount > 0
                         ? Operations.GetLastBallots(account, limit)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
-                    var activations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                    var activations = operations.HasFlag(Data.Models.Operations.Activations) && delegat.Activated == true
                         ? Operations.GetLastActivations(account, limit)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
-                    var doubleBaking = resultOps.HasFlag(Data.Models.Operations.DoubleBakings)
+                    var doubleBaking = operations.HasFlag(Data.Models.Operations.DoubleBakings) && delegat.DoubleBakingCount > 0
                         ? Operations.GetLastDoubleBakings(account, limit)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
-                    var doubleEndorsing = resultOps.HasFlag(Data.Models.Operations.DoubleEndorsings)
+                    var doubleEndorsing = operations.HasFlag(Data.Models.Operations.DoubleEndorsings) && delegat.DoubleEndorsingCount > 0
                         ? Operations.GetLastDoubleEndorsings(account, limit)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
-                    var nonceRevelations = resultOps.HasFlag(Data.Models.Operations.Revelations)
+                    var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations) && delegat.NonceRevelationsCount > 0
                         ? Operations.GetLastNonceRevelations(account, limit)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
-                    var delegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                    var delegations = operations.HasFlag(Data.Models.Operations.Delegations) && delegat.DelegationsCount > 0
                         ? Operations.GetLastDelegations(account, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
-                    var originations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                    var originations = operations.HasFlag(Data.Models.Operations.Originations) && delegat.OriginationsCount > 0
                         ? Operations.GetLastOriginations(account, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
-                    var transactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                    var transactions = operations.HasFlag(Data.Models.Operations.Transactions) && delegat.TransactionsCount > 0
                         ? Operations.GetLastTransactions(account, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
-                    var reveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                    var reveals = operations.HasFlag(Data.Models.Operations.Reveals) && delegat.RevealsCount > 0
                         ? Operations.GetLastReveals(account, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
@@ -337,23 +404,23 @@ namespace Tzkt.Api.Repositories
                     break;
                 case RawUser user:
 
-                    var userActivations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                    var userActivations = operations.HasFlag(Data.Models.Operations.Activations) && user.Activated == true
                         ? Operations.GetLastActivations(account, limit)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
-                    var userDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                    var userDelegations = operations.HasFlag(Data.Models.Operations.Delegations) && user.DelegationsCount > 0
                         ? Operations.GetLastDelegations(account, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
-                    var userOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                    var userOriginations = operations.HasFlag(Data.Models.Operations.Originations) && user.OriginationsCount > 0
                         ? Operations.GetLastOriginations(account, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
-                    var userTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                    var userTransactions = operations.HasFlag(Data.Models.Operations.Transactions) && user.TransactionsCount > 0
                         ? Operations.GetLastTransactions(account, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
-                    var userReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                    var userReveals = operations.HasFlag(Data.Models.Operations.Reveals) && user.RevealsCount > 0
                         ? Operations.GetLastReveals(account, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
@@ -373,19 +440,19 @@ namespace Tzkt.Api.Repositories
                     break;
                 case RawContract contract:
 
-                    var contractDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                    var contractDelegations = operations.HasFlag(Data.Models.Operations.Delegations) && contract.DelegationsCount > 0
                         ? Operations.GetLastDelegations(account, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
-                    var contractOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                    var contractOriginations = operations.HasFlag(Data.Models.Operations.Originations) && contract.OriginationsCount > 0
                         ? Operations.GetLastOriginations(account, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
-                    var contractTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                    var contractTransactions = operations.HasFlag(Data.Models.Operations.Transactions) && contract.TransactionsCount > 0
                         ? Operations.GetLastTransactions(account, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
-                    var contractReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                    var contractReveals = operations.HasFlag(Data.Models.Operations.Reveals) && contract.RevealsCount > 0
                         ? Operations.GetLastReveals(account, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
@@ -409,54 +476,53 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<IOperation>> GetOperations(string address, Data.Models.Operations operations, int fromLevel, int limit = 100)
         {
             var account = await Accounts.Get(address);
-            var resultOps = account.Operations & operations;
             var result = new List<IOperation>(limit * 2);
 
             switch (account)
             {
                 case RawDelegate delegat:
 
-                    var endorsements = resultOps.HasFlag(Data.Models.Operations.Endorsements)
+                    var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements) && delegat.EndorsementsCount > 0
                         ? Operations.GetLastEndorsements(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
-                    var proposals = resultOps.HasFlag(Data.Models.Operations.Proposals)
+                    var proposals = operations.HasFlag(Data.Models.Operations.Proposals) && delegat.ProposalsCount > 0
                         ? Operations.GetLastProposals(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
-                    var ballots = resultOps.HasFlag(Data.Models.Operations.Ballots)
+                    var ballots = operations.HasFlag(Data.Models.Operations.Ballots) && delegat.BallotsCount > 0
                         ? Operations.GetLastBallots(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
-                    var activations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                    var activations = operations.HasFlag(Data.Models.Operations.Activations) && delegat.Activated == true
                         ? Operations.GetLastActivations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
-                    var doubleBaking = resultOps.HasFlag(Data.Models.Operations.DoubleBakings)
+                    var doubleBaking = operations.HasFlag(Data.Models.Operations.DoubleBakings) && delegat.DoubleBakingCount > 0
                         ? Operations.GetLastDoubleBakings(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
-                    var doubleEndorsing = resultOps.HasFlag(Data.Models.Operations.DoubleEndorsings)
+                    var doubleEndorsing = operations.HasFlag(Data.Models.Operations.DoubleEndorsings) && delegat.DoubleEndorsingCount > 0
                         ? Operations.GetLastDoubleEndorsings(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
-                    var nonceRevelations = resultOps.HasFlag(Data.Models.Operations.Revelations)
+                    var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations) && delegat.NonceRevelationsCount > 0
                         ? Operations.GetLastNonceRevelations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
-                    var delegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                    var delegations = operations.HasFlag(Data.Models.Operations.Delegations) && delegat.DelegationsCount > 0
                         ? Operations.GetLastDelegations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
-                    var originations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                    var originations = operations.HasFlag(Data.Models.Operations.Originations) && delegat.OriginationsCount > 0
                         ? Operations.GetLastOriginations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
-                    var transactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                    var transactions = operations.HasFlag(Data.Models.Operations.Transactions) && delegat.TransactionsCount > 0
                         ? Operations.GetLastTransactions(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
-                    var reveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                    var reveals = operations.HasFlag(Data.Models.Operations.Reveals) && delegat.RevealsCount > 0
                         ? Operations.GetLastReveals(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
@@ -488,23 +554,23 @@ namespace Tzkt.Api.Repositories
                     break;
                 case RawUser user:
 
-                    var userActivations = resultOps.HasFlag(Data.Models.Operations.Activations)
+                    var userActivations = operations.HasFlag(Data.Models.Operations.Activations) && user.Activated == true
                         ? Operations.GetLastActivations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
-                    var userDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                    var userDelegations = operations.HasFlag(Data.Models.Operations.Delegations) && user.DelegationsCount > 0
                         ? Operations.GetLastDelegations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
-                    var userOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                    var userOriginations = operations.HasFlag(Data.Models.Operations.Originations) && user.OriginationsCount > 0
                         ? Operations.GetLastOriginations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
-                    var userTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                    var userTransactions = operations.HasFlag(Data.Models.Operations.Transactions) && user.TransactionsCount > 0
                         ? Operations.GetLastTransactions(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
-                    var userReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                    var userReveals = operations.HasFlag(Data.Models.Operations.Reveals) && user.RevealsCount > 0
                         ? Operations.GetLastReveals(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
@@ -524,19 +590,19 @@ namespace Tzkt.Api.Repositories
                     break;
                 case RawContract contract:
 
-                    var contractDelegations = resultOps.HasFlag(Data.Models.Operations.Delegations)
+                    var contractDelegations = operations.HasFlag(Data.Models.Operations.Delegations) && contract.DelegationsCount > 0
                         ? Operations.GetLastDelegations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
-                    var contractOriginations = resultOps.HasFlag(Data.Models.Operations.Originations)
+                    var contractOriginations = operations.HasFlag(Data.Models.Operations.Originations) && contract.OriginationsCount > 0
                         ? Operations.GetLastOriginations(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
-                    var contractTransactions = resultOps.HasFlag(Data.Models.Operations.Transactions)
+                    var contractTransactions = operations.HasFlag(Data.Models.Operations.Transactions) && contract.TransactionsCount > 0
                         ? Operations.GetLastTransactions(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
-                    var contractReveals = resultOps.HasFlag(Data.Models.Operations.Reveals)
+                    var contractReveals = operations.HasFlag(Data.Models.Operations.Reveals) && contract.RevealsCount > 0
                         ? Operations.GetLastReveals(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
@@ -556,6 +622,14 @@ namespace Tzkt.Api.Repositories
 
             return result.OrderByDescending(x => x.Id).Take(limit);
         }
+
+        string TypeToString(int type) => type switch
+        {
+            0 => "user",
+            1 => "delegate",
+            2 => "contract",
+            _ => "unknown"
+        };
 
         string KindToString(int kind) => kind switch
         {

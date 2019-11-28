@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class ProposalOperation : IOperation
+    public class SystemOperation : IOperation
     {
-        public string Type => "proposal";
+        public string Type => "system";
 
         public int Id { get; set; }
 
@@ -18,10 +18,10 @@ namespace Tzkt.Api.Models
 
         public string Hash { get; set; }
 
-        public PeriodInfo Period { get; set; }
+        public string Kind { get; set; }
 
-        public string Proposal { get; set; }
+        public Alias Account { get; set; }
 
-        public Alias Delegate { get; set; }
+        public long BalanceChange { get; set; }
     }
 }

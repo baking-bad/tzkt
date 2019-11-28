@@ -8,10 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class DelegationOperation : IOperation
     {
-        [JsonIgnore]
-        public int Id { get; set; }
-
         public string Type => "delegation";
+
+        public int Id { get; set; }
 
         public int Level { get; set; }
 
@@ -34,5 +33,7 @@ namespace Tzkt.Api.Models
         public Alias Delegate { get; set; }
 
         public string Status { get; set; }
+
+        public List<IOperationError> Errors { get; set; }
     }
 }
