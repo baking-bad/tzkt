@@ -11,6 +11,7 @@ namespace Tzkt.Api.Services.Cache
         public virtual string Type => "account";
 
         public int Id { get; set; }
+        public string Address { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
 
