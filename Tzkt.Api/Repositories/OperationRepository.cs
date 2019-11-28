@@ -2143,6 +2143,96 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
+        #region system
+        public async Task<int> GetSystemOpsCount()
+        {
+            var sql = @"
+                SELECT   COUNT(*)
+                FROM     ""SystemOps""";
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql);
+        }
+
+        public async Task<IEnumerable<SystemOperation>> GetSystemOps(int limit = 100, int offset = 0)
+        {
+            var sql = @"
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccountId"", ""Event"", ""BalanceChange""
+                FROM      ""SystemOps""
+                ORDER BY  ""Id""
+                OFFSET    @offset
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { limit, offset });
+
+            return rows.Select(row => new SystemOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Account = Aliases[row.AccountId],
+                Kind = SystemEventToString(row.Event),
+                BalanceChange = row.BalanceChange
+            });
+        }
+
+        public async Task<IEnumerable<SystemOperation>> GetLastSystemOps(RawAccount account, int limit = 100)
+        {
+            var sql = @"
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
+                FROM      ""SystemOps""
+                WHERE     ""AccountId"" = @accountId
+                ORDER BY  ""Id"" DESC
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
+
+            return rows.Select(row => new SystemOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Account = Aliases[account.Id],
+                Kind = SystemEventToString(row.Event),
+                BalanceChange = row.BalanceChange
+            });
+        }
+
+        public async Task<IEnumerable<SystemOperation>> GetLastSystemOps(RawAccount account, int fromLevel, int limit = 100)
+        {
+            var sql = @"
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
+                FROM      ""SystemOps""
+                WHERE     ""AccountId"" = @accountId
+                AND       ""Level"" < @fromLevel
+                ORDER BY  ""Id"" DESC
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+
+            return rows.Select(row => new SystemOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Account = Aliases[account.Id],
+                Kind = SystemEventToString(row.Event),
+                BalanceChange = row.BalanceChange
+            });
+        }
+        #endregion
+
+        string SystemEventToString(int sysEvent) => sysEvent switch
+        {
+            0 => "bootstrap",
+            1 => "activate_delegate",
+            2 => "airdrop",
+            _ => "unknown"
+        };
+
         string PeriodToString(int period) => period switch
         {
             0 => "proposal",

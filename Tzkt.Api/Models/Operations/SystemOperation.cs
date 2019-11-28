@@ -16,12 +16,12 @@ namespace Tzkt.Api.Models
 
         public DateTime Timestamp { get; set; }
 
-        public string Hash { get; set; }
-
         public string Kind { get; set; }
 
         public Alias Account { get; set; }
 
         public long BalanceChange { get; set; }
+
+        public string Hash => null;
     }
 }
