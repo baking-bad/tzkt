@@ -8,8 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 
-using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Services.Cache
 {
@@ -109,7 +109,7 @@ namespace Tzkt.Api.Services.Cache
 
             Sema.Release();
 
-            await CheckCacheSizeAsync();
+            CheckCacheSize();
 
             return accounts;
         }

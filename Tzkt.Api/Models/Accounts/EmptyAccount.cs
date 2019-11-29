@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class DelegateInfo
+    public class EmptyAccount : IAccount
     {
-        public string Alias { get; set; }
+        public string Type => "empty";
 
         public string Address { get; set; }
 
-        public bool Active { get; set; }
+        public int Counter { get; set; }
     }
 }

@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class DelegatorInfo
+    public class RelatedContract
     {
-        public string Type { get; set; }
+        public string Kind { get; set; }
 
         public string Alias { get; set; }
 
@@ -15,6 +16,6 @@ namespace Tzkt.Api.Models
 
         public long Balance { get; set; }
 
-        public int DelegationLevel { get; set; }
+        public DelegateInfo Delegate { get; set; }
     }
 }

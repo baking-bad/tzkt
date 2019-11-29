@@ -40,27 +40,25 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("{address}/contracts")]
-        public Task<IEnumerable<Contract>> GetContracts([Address] string address, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<RelatedContract>> GetContracts([Address] string address, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
             return Accounts.GetContracts(address, n, p * n);
         }
 
         [HttpGet("{address}/delegators")]
-        public Task<IEnumerable<DelegatorInfo>> GetDelegators([Address] string address, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<Delegator>> GetDelegators([Address] string address, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
             return Accounts.GetDelegators(address, n, p * n);
         }
 
         [HttpGet("{address}/operations")]
-        public Task<IEnumerable<IOperation>> GetOperations([Address] string address, Data.Models.Operations? mask, [Min(0)] int from = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<IOperation>> GetOperations([Address] string address, string type, [Min(0)] int from = 0, [Range(0, 1000)] int n = 100)
         {
-            mask ??= Data.Models.Operations.All &
-                ~Data.Models.Operations.Endorsements &
-                ~Data.Models.Operations.Revelations;
+            var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
             return from == 0
-                ? Accounts.GetOperations(address, mask.Value, n)
-                : Accounts.GetOperations(address, mask.Value, from, n);
+                ? Accounts.GetOperations(address, types, n)
+                : Accounts.GetOperations(address, types, from, n);
         }
     }
 }

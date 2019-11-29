@@ -12,22 +12,6 @@ namespace Tzkt.Api.Models
     {
         string Type { get; }
 
-        string Alias { get; }
-
         string Address { get; }
-
-        long Balance { get; set; }
-
-        int NumContracts { get; }
-
-        int NumDelegations { get; }
-
-        int NumOriginations { get; }
-
-        int NumTransactions { get; }
-
-        int NumReveals { get; }
-
-        int NumSystem { get; }
     }
 }
