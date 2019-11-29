@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 
 using Tzkt.Api.Models;
-using Tzkt.Api.Services;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
@@ -14,21 +13,19 @@ namespace Tzkt.Api.Repositories
     public class AccountRepository : DbConnection
     {
         readonly AccountsCache Accounts;
-        readonly AliasService Aliases;
         readonly StateCache State;
         readonly OperationRepository Operations;
 
-        public AccountRepository(AccountsCache accounts, AliasService aliases, StateCache state, OperationRepository operations, IConfiguration config) : base(config)
+        public AccountRepository(AccountsCache accounts, StateCache state, OperationRepository operations, IConfiguration config) : base(config)
         {
             Accounts = accounts;
-            Aliases = aliases;
             State = state;
             Operations = operations;
         }
 
         public async Task<IAccount> Get(string address)
         {
-            var rawAccount = await Accounts.Get(address);
+            var rawAccount = await Accounts.GetAsync(address);
 
             if (rawAccount == null)
                 return address[0] == 't'
@@ -47,7 +44,7 @@ namespace Tzkt.Api.Repositories
                     return new Models.Delegate
                     {
                         Active = active,
-                        Alias = Aliases[delegat.Id].Name,
+                        Alias = Accounts.GetAliasName(delegat.Id),
                         Address = address,
                         PublicKey = delegat.PublicKey,
                         Balance = delegat.Balance,
@@ -78,14 +75,14 @@ namespace Tzkt.Api.Repositories
                 case RawUser user:
                     return new User
                     {
-                        Alias = Aliases[user.Id].Name,
+                        Alias = Accounts.GetAliasName(user.Id),
                         Address = address,
                         Balance = user.Balance,
                         Counter = user.Balance > 0 ? user.Counter : State.GetCounter(),
                         FirstActivity = user.FirstLevel,
                         LastActivity = user.LastLevel,
                         PublicKey = user.PublicKey,
-                        Delegate = user.DelegateId != null ? new DelegateInfo(Aliases[(int)user.DelegateId], user.Staked) : null,
+                        Delegate = user.DelegateId != null ? new DelegateInfo(await Accounts.GetAliasAsync((int)user.DelegateId), user.Staked) : null,
                         NumActivations = user.Activated == true ? 1 : 0,
                         NumContracts = user.Contracts,
                         NumDelegations = user.DelegationsCount,
@@ -96,30 +93,30 @@ namespace Tzkt.Api.Repositories
                     };
                 case RawContract contract:
                     var creatorAlias = contract.CreatorId != null
-                        ? Aliases[(int)contract.CreatorId]
+                        ? await Accounts.GetAliasAsync((int)contract.CreatorId)
                         : null;
 
                     var creator = contract.CreatorId != null
-                        ? await Accounts.Get(creatorAlias.Address)
+                        ? await Accounts.GetAsync(creatorAlias.Address)
                         : null;
                     
                     var managerAlias = contract.ManagerId != null
-                        ? Aliases[(int)contract.ManagerId]
+                        ? await Accounts.GetAliasAsync((int)contract.ManagerId)
                         : null;
 
                     var manager = contract.ManagerId != null
-                        ? (RawUser)await Accounts.Get(managerAlias.Address)
+                        ? (RawUser)await Accounts.GetAsync(managerAlias.Address)
                         : null; ;
 
                     return new Contract
                     {
                         Kind = KindToString(contract.Kind),
-                        Alias = Aliases[contract.Id].Name,
+                        Alias = Accounts.GetAliasName(contract.Id),
                         Address = address,
                         Balance = contract.Balance,
                         Creator = contract.CreatorId != null ? new CreatorInfo(creatorAlias, creator.Type) : null,
                         Manager = contract.ManagerId != null ? new ManagerInfo(managerAlias, manager.PublicKey, manager.Type) : null,
-                        Delegate = contract.DelegateId != null ? new DelegateInfo(Aliases[(int)contract.DelegateId], contract.Staked) : null,
+                        Delegate = contract.DelegateId != null ? new DelegateInfo(await Accounts.GetAliasAsync((int)contract.DelegateId), contract.Staked) : null,
                         FirstActivity = contract.FirstLevel,
                         LastActivity = contract.LastLevel,
                         NumContracts = contract.Contracts,
@@ -184,14 +181,14 @@ namespace Tzkt.Api.Repositories
                     case 0:
                         accounts.Add(new User
                         {
-                            Alias = Aliases[row.Id].Name,
+                            Alias = Accounts.GetAliasName(row.Id),
                             Address = row.Address,
                             Balance = row.Balance,
                             Counter = row.Balance > 0 ? row.Counter : State.GetCounter(),
                             FirstActivity = row.FirstLevel,
                             LastActivity = row.LastLevel,
                             PublicKey = row.PublicKey,
-                            Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null,
+                            Delegate = row.DelegateId != null ? new DelegateInfo(await Accounts.GetAliasAsync(row.DelegateId), row.Staked) : null,
                             NumActivations = row.Activated == true ? 1 : 0,
                             NumContracts = row.Contracts,
                             NumDelegations = row.DelegationsCount,
@@ -207,7 +204,7 @@ namespace Tzkt.Api.Repositories
                         accounts.Add(new Models.Delegate
                         {
                             Active = active,
-                            Alias = Aliases[row.Id].Name,
+                            Alias = Accounts.GetAliasName(row.Id),
                             Address = row.Address,
                             PublicKey = row.PublicKey,
                             Balance = row.Balance,
@@ -240,12 +237,12 @@ namespace Tzkt.Api.Repositories
                         accounts.Add(new Contract
                         {
                             Kind = KindToString(row.Kind),
-                            Alias = Aliases[row.Id].Name,
+                            Alias = Accounts.GetAliasName(row.Id),
                             Address = row.Address,
                             Balance = row.Balance,
-                            Creator = row.CreatorId != null ? new CreatorInfo(Aliases[row.CreatorId], null) : null,
-                            Manager = row.ManagerId != null ? new ManagerInfo(Aliases[row.ManagerId], null, null) : null,
-                            Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null,
+                            Creator = row.CreatorId != null ? new CreatorInfo(await Accounts.GetAliasAsync(row.CreatorId), null) : null,
+                            Manager = row.ManagerId != null ? new ManagerInfo(await Accounts.GetAliasAsync(row.ManagerId), null, null) : null,
+                            Delegate = row.DelegateId != null ? new DelegateInfo(await Accounts.GetAliasAsync(row.DelegateId), row.Staked) : null,
                             FirstActivity = row.FirstLevel,
                             LastActivity = row.LastLevel,
                             NumContracts = row.Contracts,
@@ -264,7 +261,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Contract>> GetContracts(string address, int limit = 100, int offset = 0)
         {
-            var account = await Accounts.Get(address);
+            var account = await Accounts.GetAsync(address);
 
             var sql = @"
                 SELECT      account.*, manager.""PublicKey"" as ""ManagerPublicKey""
@@ -281,12 +278,12 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => new Contract
             {
                 Kind = KindToString(row.Kind),
-                Alias = Aliases[row.Id].Name,
+                Alias = Accounts.GetAliasName(row.Id),
                 Address = row.Address,
                 Balance = row.Balance,
-                Creator = row.CreatorId != null ? new CreatorInfo(Aliases[row.CreatorId], null) : null,
-                Manager = row.ManagerId != null ? new ManagerInfo(Aliases[row.ManagerId], null, null) : null,
-                Delegate = row.DelegateId != null ? new DelegateInfo(Aliases[row.DelegateId], row.Staked) : null,
+                Creator = row.CreatorId != null ? new CreatorInfo(Accounts.GetAlias(row.CreatorId), null) : null,
+                Manager = row.ManagerId != null ? new ManagerInfo(Accounts.GetAlias(row.ManagerId), null, null) : null,
+                Delegate = row.DelegateId != null ? new DelegateInfo(Accounts.GetAlias(row.DelegateId), row.Staked) : null,
                 FirstActivity = row.FirstLevel,
                 LastActivity = row.LastLevel,
                 NumContracts = row.Contracts,
@@ -300,7 +297,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<DelegatorInfo>> GetDelegators(string address, int limit = 100, int offset = 0)
         {
-            var delegat = await Accounts.Get(address);
+            var delegat = await Accounts.GetAsync(address);
 
             var sql = @"
                 SELECT      ""Id"", ""Type"", ""Balance"", ""DelegationLevel""
@@ -316,8 +313,8 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => new DelegatorInfo
             {
                 Type = TypeToString(row.Type),
-                Alias = Aliases[row.Id].Name,
-                Address = Aliases[row.Id].Address,
+                Alias = Accounts.GetAliasName(row.Id),
+                Address = Accounts.Get(row.Id).Address,
                 Balance = row.Balance,
                 DelegationLevel = row.DelegationLevel
             });
@@ -325,7 +322,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<IOperation>> GetOperations(string address, Data.Models.Operations operations, int limit = 100)
         {
-            var account = await Accounts.Get(address);
+            var account = await Accounts.GetAsync(address);
             var result = new List<IOperation>(limit * 2);
 
             switch (account)
@@ -475,7 +472,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<IOperation>> GetOperations(string address, Data.Models.Operations operations, int fromLevel, int limit = 100)
         {
-            var account = await Accounts.Get(address);
+            var account = await Accounts.GetAsync(address);
             var result = new List<IOperation>(limit * 2);
 
             switch (account)

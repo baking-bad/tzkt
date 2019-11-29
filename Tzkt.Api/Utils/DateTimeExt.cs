@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Tzkt.Api.Utils
+namespace Tzkt.Api
 {
     public static class DateTimeExt
     {

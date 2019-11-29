@@ -7,18 +7,17 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 
 using Tzkt.Api.Models;
-using Tzkt.Api.Services;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public class OperationRepository : DbConnection
     {
-        readonly AliasService Aliases;
+        readonly AccountsCache Accounts;
 
-        public OperationRepository(AliasService aliases, IConfiguration config) : base(config)
+        public OperationRepository(AccountsCache accounts, IConfiguration config) : base(config)
         {
-            Aliases = aliases;
+            Accounts = accounts;
         }
 
         #region operations
@@ -153,7 +152,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Delegate = Aliases[row.DelegateId],
+                Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
                 Rewards = row.Reward
             });
@@ -176,7 +175,7 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[row.DelegateId],
+                Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
                 Rewards = row.Reward
             });
@@ -200,7 +199,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[row.DelegateId],
+                Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
                 Rewards = row.Reward
             });
@@ -224,7 +223,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
+                Delegate = Accounts.GetAlias(account.Id),
                 Slots = row.Slots,
                 Rewards = row.Reward
             });
@@ -249,7 +248,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Delegate = Aliases[account.Id],
+                Delegate = Accounts.GetAlias(account.Id),
                 Slots = row.Slots,
                 Rewards = row.Reward
             });
@@ -295,7 +294,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[row.SenderId],
+                Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -328,7 +327,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[row.SenderId],
+                Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -362,7 +361,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[row.SenderId],
+                Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -396,7 +395,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[account.Id],
+                Delegate = Accounts.GetAlias(account.Id),
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -431,7 +430,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[account.Id],
+                Delegate = Accounts.GetAlias(account.Id),
                 Vote = VoteToString(row.Vote)
             });
         }
@@ -476,7 +475,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[row.SenderId]
+                Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
 
@@ -508,7 +507,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[row.SenderId]
+                Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
 
@@ -541,7 +540,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[row.SenderId]
+                Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
 
@@ -574,7 +573,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[account.Id]
+                Delegate = Accounts.GetAlias(account.Id)
             });
         }
 
@@ -608,7 +607,7 @@ namespace Tzkt.Api.Repositories
                     EndLevel = row.EndLevel
                 },
                 Proposal = row.Hash,
-                Delegate = Aliases[account.Id]
+                Delegate = Accounts.GetAlias(account.Id)
             });
         }
         #endregion
@@ -641,7 +640,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Account = Aliases[row.AccountId],
+                Account = Accounts.GetAlias(row.AccountId),
                 Balance = row.Balance
             });
         }
@@ -663,7 +662,7 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Account = Aliases[row.AccountId],
+                Account = Accounts.GetAlias(row.AccountId),
                 Balance = row.Balance
             });
         }
@@ -686,7 +685,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Account = Aliases[row.AccountId],
+                Account = Accounts.GetAlias(row.AccountId),
                 Balance = row.Balance
             });
         }
@@ -709,7 +708,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Account = Aliases[account.Id],
+                Account = Accounts.GetAlias(account.Id),
                 Balance = row.Balance
             });
         }
@@ -733,7 +732,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Account = Aliases[account.Id],
+                Account = Accounts.GetAlias(account.Id),
                 Balance = row.Balance
             });
         }
@@ -769,9 +768,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -797,9 +796,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -826,9 +825,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -856,9 +855,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -887,9 +886,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -927,9 +926,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -955,9 +954,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -984,9 +983,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -1014,9 +1013,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -1045,9 +1044,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
-                Accuser = Aliases[row.AccuserId],
+                Accuser = Accounts.GetAlias(row.AccuserId),
                 AccuserRewards = row.AccuserReward,
-                Offender = Aliases[row.OffenderId],
+                Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
                 OffenderLostFees = row.OffenderLostFee
@@ -1083,8 +1082,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Baker = Aliases[row.BakerId],
-                Sender = Aliases[row.SenderId],
+                Baker = Accounts.GetAlias(row.BakerId),
+                Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1106,8 +1105,8 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Baker = Aliases[row.BakerId],
-                Sender = Aliases[row.SenderId],
+                Baker = Accounts.GetAlias(row.BakerId),
+                Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1130,8 +1129,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Baker = Aliases[row.BakerId],
-                Sender = Aliases[row.SenderId],
+                Baker = Accounts.GetAlias(row.BakerId),
+                Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1155,8 +1154,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Baker = Aliases[row.BakerId],
-                Sender = Aliases[row.SenderId],
+                Baker = Accounts.GetAlias(row.BakerId),
+                Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1181,8 +1180,8 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Baker = Aliases[row.BakerId],
-                Sender = Aliases[row.SenderId],
+                Baker = Accounts.GetAlias(row.BakerId),
+                Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
         }
@@ -1217,13 +1216,13 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
@@ -1247,13 +1246,13 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
@@ -1277,13 +1276,13 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
@@ -1307,13 +1306,13 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
@@ -1338,13 +1337,13 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
@@ -1370,13 +1369,13 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
@@ -1403,13 +1402,13 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
@@ -1445,7 +1444,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1455,11 +1454,11 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
-                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
+                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
@@ -1482,7 +1481,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1492,11 +1491,11 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
-                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
+                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
@@ -1519,7 +1518,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = nonce,
                 GasLimit = row.GasLimit,
@@ -1529,11 +1528,11 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
-                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
+                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
@@ -1556,7 +1555,7 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1566,11 +1565,11 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
-                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
+                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
@@ -1594,7 +1593,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1604,11 +1603,11 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
-                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
+                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
@@ -1634,7 +1633,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1644,11 +1643,11 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
-                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
+                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
@@ -1675,7 +1674,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1685,11 +1684,11 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Aliases[row.DelegateId] : null,
+                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 ContractBalance = row.Balance,
                 Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Aliases[row.ContractId] : null,
-                ContractManager = row.ManagerId != null ? Aliases[row.ManagerId] : null,
+                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
+                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
             });
         }
@@ -1724,7 +1723,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1734,7 +1733,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Aliases[row.TargetId] : null,
+                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -1760,7 +1759,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1770,7 +1769,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Aliases[row.TargetId] : null,
+                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -1796,7 +1795,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = nonce,
                 GasLimit = row.GasLimit,
@@ -1806,7 +1805,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Aliases[row.TargetId] : null,
+                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -1832,7 +1831,7 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1842,7 +1841,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Aliases[row.TargetId] : null,
+                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -1869,7 +1868,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1879,7 +1878,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Aliases[row.TargetId] : null,
+                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -1907,7 +1906,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1917,7 +1916,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Aliases[row.TargetId] : null,
+                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -1946,7 +1945,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -1956,7 +1955,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Aliases[row.TargetId] : null,
+                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -1993,7 +1992,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
@@ -2020,7 +2019,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
@@ -2047,7 +2046,7 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
@@ -2075,7 +2074,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
@@ -2103,7 +2102,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
@@ -2132,7 +2131,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Sender = Aliases[row.SenderId],
+                Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
@@ -2171,7 +2170,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
-                Account = Aliases[row.AccountId],
+                Account = Accounts.GetAlias(row.AccountId),
                 Kind = SystemEventToString(row.Event),
                 BalanceChange = row.BalanceChange
             });
@@ -2194,7 +2193,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
-                Account = Aliases[account.Id],
+                Account = Accounts.GetAlias(account.Id),
                 Kind = SystemEventToString(row.Event),
                 BalanceChange = row.BalanceChange
             });
@@ -2218,7 +2217,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
-                Account = Aliases[account.Id],
+                Account = Accounts.GetAlias(account.Id),
                 Kind = SystemEventToString(row.Event),
                 BalanceChange = row.BalanceChange
             });

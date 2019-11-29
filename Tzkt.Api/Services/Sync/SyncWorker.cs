@@ -12,8 +12,6 @@ using Npgsql;
 using Dapper;
 
 using Tzkt.Api.Services.Cache;
-using Tzkt.Data.Models;
-using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Services.Sync
 {
@@ -22,20 +20,18 @@ namespace Tzkt.Api.Services.Sync
         readonly SyncConfig Config;
         readonly string ConnectionString;
         readonly AccountsCache Accounts;
-        readonly AliasService Aliases;
         readonly StateCache State;
         readonly ILogger Logger;
 
         int BlocksTime;
-        AppState LastState;
+        RawState LastState;
         DateTime NextSyncTime;
 
-        public SyncWorker(AccountsCache accounts, AliasService aliases, StateCache state, IConfiguration config, ILogger<SyncWorker> logger)
+        public SyncWorker(AccountsCache accounts, StateCache state, IConfiguration config, ILogger<SyncWorker> logger)
         {
             Config = config.GetSyncConfig();
             ConnectionString = config.GetConnectionString("DefaultConnection");
             Accounts = accounts;
-            Aliases = aliases;
             State = state;
             Logger = logger;
         }
@@ -46,7 +42,7 @@ namespace Tzkt.Api.Services.Sync
             Logger.LogDebug("Initializing sync worker...");
             
             BlocksTime = await GetBlocksTime();
-            LastState = await GetCurrentState();
+            LastState = await State.LoadStateAsync();
             NextSyncTime = DateTime.UtcNow.AddSeconds(Config.CheckInterval);
 
             Logger.LogInformation($"Sync worker initialized with level {LastState.Level} and blocks time {BlocksTime}s");
@@ -60,7 +56,7 @@ namespace Tzkt.Api.Services.Sync
                 {
                     if (DateTime.UtcNow > NextSyncTime)
                     {
-                        var currentState = await GetCurrentState();
+                        var currentState = await State.LoadStateAsync();
                         if (currentState.Hash != LastState.Hash)
                         {
                             Logger.LogDebug($"New state detected [{currentState.Level}:{currentState.Hash}]");
@@ -72,8 +68,6 @@ namespace Tzkt.Api.Services.Sync
                             Logger.LogDebug($"Updating cache from {updateLevel} level...");
 
                             var changedAccounts = await Accounts.Update(updateLevel);
-
-                            Aliases.Update(changedAccounts);
 
                             State.Update(currentState);
 
@@ -101,7 +95,7 @@ namespace Tzkt.Api.Services.Sync
 
         IDbConnection GetConnection() => new NpgsqlConnection(ConnectionString);
 
-        async Task<bool> IsStateValid(AppState state)
+        async Task<bool> IsStateValid(RawState state)
         {
             var sql = @"
                 SELECT  ""Hash""
@@ -113,17 +107,6 @@ namespace Tzkt.Api.Services.Sync
             var hash = await db.QueryFirstOrDefaultAsync<string>(sql, new { level = state.Level });
 
             return state.Hash == hash;
-        }
-
-        async Task<AppState> GetCurrentState()
-        {
-            var sql = @"
-                SELECT  ""Level"", ""Hash"", ""Timestamp"", ""ManagerCounter""
-                FROM    ""AppState""
-                LIMIT   1";
-
-            using var db = GetConnection();
-            return await db.QueryFirstAsync<AppState>(sql);
         }
 
         async Task<int> GetBlocksTime()

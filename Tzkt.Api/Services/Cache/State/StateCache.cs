@@ -8,13 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 
-using Tzkt.Data.Models;
-
 namespace Tzkt.Api.Services.Cache
 {
     public class StateCache : DbConnection
     {
-        AppState State;
+        RawState State;
 
         readonly CacheConfig Config;
         readonly ILogger Logger;
@@ -26,24 +24,40 @@ namespace Tzkt.Api.Services.Cache
 
             Logger.LogDebug("Initializing state cache...");
 
+            State = LoadState();
+
+            Logger.LogDebug($"State cache initialized at {State.Level} level");
+        }
+
+        public RawState GetState() => State;
+
+        public RawState LoadState()
+        {
             var sql = @"
                 SELECT  ""Level"", ""Hash"", ""Timestamp"", ""ManagerCounter""
                 FROM    ""AppState""
                 LIMIT   1";
 
             using var db = GetConnection();
-            State = db.QueryFirst<AppState>(sql);
-
-            Logger.LogDebug($"State cache initialized at {State.Level} level");
+            return db.QueryFirst<RawState>(sql);
         }
 
-        public AppState GetState() => State;
+        public async Task<RawState> LoadStateAsync()
+        {
+            var sql = @"
+                SELECT  ""Level"", ""Hash"", ""Timestamp"", ""ManagerCounter""
+                FROM    ""AppState""
+                LIMIT   1";
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<RawState>(sql);
+        }
 
         public int GetLevel() => State.Level;
 
         public int GetCounter() => State.ManagerCounter;
 
-        public void Update(AppState state) => State = state;
+        public void Update(RawState state) => State = state;
     }
 
     public static class StateCacheExt

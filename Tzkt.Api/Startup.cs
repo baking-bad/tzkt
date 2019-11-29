@@ -12,8 +12,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 
 using Tzkt.Api.Repositories;
-using Tzkt.Api.Services;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
 
 namespace Tzkt.Api
@@ -28,7 +28,7 @@ namespace Tzkt.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAliases();
+            services.AddAccountMetadata();
             services.AddAccountsCache();
             services.AddStateCache();
 

@@ -6,18 +6,18 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 
 using Tzkt.Api.Models;
-using Tzkt.Api.Services;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public class BlockRepository : DbConnection
     {
-        readonly AliasService Aliases;
+        readonly AccountsCache Accounts;
         readonly OperationRepository Operations;
 
-        public BlockRepository(AliasService aliases, OperationRepository operations, IConfiguration config) : base(config)
+        public BlockRepository(AccountsCache accounts, OperationRepository operations, IConfiguration config) : base(config)
         {
-            Aliases = aliases;
+            Accounts = accounts;
             Operations = operations;
         }
 
@@ -42,7 +42,7 @@ namespace Tzkt.Api.Repositories
                 Priority = row.Priority,
                 Validations = row.Validations,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? Aliases[row.BakerId] : null
+                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null
             };
 
             if (operations)
@@ -72,7 +72,7 @@ namespace Tzkt.Api.Repositories
                 Priority = row.Priority,
                 Validations = row.Validations,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? Aliases[row.BakerId] : null
+                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null
             };
 
             if (operations)
@@ -103,7 +103,7 @@ namespace Tzkt.Api.Repositories
                 Priority = row.Priority,
                 Validations = row.Validations,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? Aliases[row.BakerId] : null
+                Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null
             });
         }
 
