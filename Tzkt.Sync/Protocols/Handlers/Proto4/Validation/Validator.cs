@@ -30,6 +30,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             if (rawBlock.Level != (await Cache.GetCurrentBlockAsync()).Level + 1)
                 throw new ValidationException($"invalid block level", true);
 
+            if (rawBlock.Predecessor != (await Cache.GetCurrentBlockAsync()).Hash)
+                throw new ValidationException($"Invalid block predecessor", true);
+
             if (rawBlock.Protocol != (await Cache.GetAppStateAsync()).NextProtocol)
                 throw new ValidationException($"invalid block protocol", true);
 
