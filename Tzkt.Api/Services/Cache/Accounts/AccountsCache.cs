@@ -19,6 +19,7 @@ namespace Tzkt.Api.Services.Cache
 
         readonly Dictionary<int, RawAccount> AccountsById;
         readonly Dictionary<string, RawAccount> AccountsByAddress;
+
         readonly AccountMetadataService Metadata;
         readonly CacheConfig Config;
         readonly ILogger Logger;
@@ -113,13 +114,41 @@ namespace Tzkt.Api.Services.Cache
             return accounts;
         }
 
-        #region sync
+        #region metadata
+        public AccountMetadata GetMetadata(int id) => Metadata[id];
+
+        public string GetAliasName(int id) => Metadata[id]?.Alias;
+
+        public Alias GetAlias(int id) => new Alias
+        {
+            Address = Get(id).Address,
+            Name = Metadata[id]?.Alias
+        };
+
+        public async Task<Alias> GetAliasAsync(int id) => new Alias
+        {
+            Address = (await GetAsync(id)).Address,
+            Name = Metadata[id]?.Alias
+        };
+        #endregion
+
         public RawAccount Get(int id)
         {
             if (!AccountsById.TryGetValue(id, out var account))
             {
                 account = GetRawAccount(id);
-                AddAccount(account);
+                if (account != null) AddAccount(account);
+            }
+
+            return account;
+        }
+
+        public async Task<RawAccount> GetAsync(int id)
+        {
+            if (!AccountsById.TryGetValue(id, out var account))
+            {
+                account = await GetRawAccountAsync(id);
+                if (account != null) AddAccount(account);
             }
 
             return account;
@@ -130,7 +159,18 @@ namespace Tzkt.Api.Services.Cache
             if (!AccountsByAddress.TryGetValue(address, out var account))
             {
                 account = GetRawAccount(address);
-                AddAccount(account);
+                if (account != null) AddAccount(account);
+            }
+
+            return account;
+        }
+
+        public async Task<RawAccount> GetAsync(string address)
+        {
+            if (!AccountsByAddress.TryGetValue(address, out var account))
+            {
+                account = await GetRawAccountAsync(address);
+                if (account != null) AddAccount(account);
             }
 
             return account;
@@ -147,6 +187,17 @@ namespace Tzkt.Api.Services.Cache
             return GetRawAccount(sql, new { id });
         }
 
+        Task<RawAccount> GetRawAccountAsync(int id)
+        {
+            var sql = @"
+                SELECT  *
+                FROM    ""Accounts""
+                WHERE   ""Id"" = @id
+                LIMIT   1";
+
+            return GetRawAccountAsync(sql, new { id });
+        }
+
         RawAccount GetRawAccount(string address)
         {
             var sql = @"
@@ -156,6 +207,17 @@ namespace Tzkt.Api.Services.Cache
                 LIMIT   1";
 
             return GetRawAccount(sql, new { address });
+        }
+
+        Task<RawAccount> GetRawAccountAsync(string address)
+        {
+            var sql = @"
+                SELECT  *
+                FROM    ""Accounts""
+                WHERE   ""Address"" = @address::character(36)
+                LIMIT   1";
+
+            return GetRawAccountAsync(sql, new { address });
         }
 
         RawAccount GetRawAccount(string sql, object param)
@@ -172,6 +234,32 @@ namespace Tzkt.Api.Services.Cache
                 2 => reader.GetRowParser<RawContract>()(reader),
                 _ => throw new Exception($"Invalid raw account type")
             };
+        }
+
+        async Task<RawAccount> GetRawAccountAsync(string sql, object param)
+        {
+            using var db = GetConnection();
+            using var reader = await db.ExecuteReaderAsync(sql, param);
+
+            if (!reader.Read()) return null;
+
+            return reader.GetInt32(2) switch
+            {
+                0 => reader.GetRowParser<RawUser>()(reader),
+                1 => reader.GetRowParser<RawDelegate>()(reader),
+                2 => reader.GetRowParser<RawContract>()(reader),
+                _ => throw new Exception($"Invalid raw account type")
+            };
+        }
+
+        void AddAccount(RawAccount account)
+        {
+            CheckCacheSize();
+
+            AccountsById[account.Id] = account;
+            AccountsByAddress[account.Address] = account;
+
+            Logger.LogDebug($"Account {account.Address} cached [{AccountsByAddress.Count}/{Config.MaxAccounts}]");
         }
 
         void CheckCacheSize()
@@ -208,142 +296,6 @@ namespace Tzkt.Api.Services.Cache
                 Sema.Release();
             }
         }
-
-        void AddAccount(RawAccount account)
-        {
-            CheckCacheSize();
-
-            AccountsById[account.Id] = account;
-            AccountsByAddress[account.Address] = account;
-
-            Logger.LogDebug($"Account {account.Address} cached [{AccountsByAddress.Count}/{Config.MaxAccounts}]");
-        }
-        #endregion
-
-        #region async
-        public async Task<RawAccount> GetAsync(int id)
-        {
-            if (!AccountsById.TryGetValue(id, out var account))
-            {
-                account = await GetRawAccountAsync(id);
-                await AddAccountAsync(account);
-            }
-
-            return account;
-        }
-
-        public async Task<RawAccount> GetAsync(string address)
-        {
-            if (!AccountsByAddress.TryGetValue(address, out var account))
-            {
-                account = await GetRawAccountAsync(address);
-                await AddAccountAsync(account);
-            }
-
-            return account;
-        }
-
-        Task<RawAccount> GetRawAccountAsync(int id)
-        {
-            var sql = @"
-                SELECT  *
-                FROM    ""Accounts""
-                WHERE   ""Id"" = @id
-                LIMIT   1";
-
-            return GetRawAccountAsync(sql, new { id });
-        }
-
-        Task<RawAccount> GetRawAccountAsync(string address)
-        {
-            var sql = @"
-                SELECT  *
-                FROM    ""Accounts""
-                WHERE   ""Address"" = @address::character(36)
-                LIMIT   1";
-
-            return GetRawAccountAsync(sql, new { address });
-        }
-
-        async Task<RawAccount> GetRawAccountAsync(string sql, object param)
-        {
-            using var db = GetConnection();
-            using var reader = await db.ExecuteReaderAsync(sql, param);
-
-            if (!reader.Read()) return null;
-
-            return reader.GetInt32(2) switch
-            {
-                0 => reader.GetRowParser<RawUser>()(reader),
-                1 => reader.GetRowParser<RawDelegate>()(reader),
-                2 => reader.GetRowParser<RawContract>()(reader),
-                _ => throw new Exception($"Invalid raw account type")
-            };
-        }
-
-        async Task CheckCacheSizeAsync()
-        {
-            if (AccountsByAddress.Count >= Config.MaxAccounts)
-            {
-                await Sema.WaitAsync();
-
-                if (AccountsByAddress.Count >= Config.MaxAccounts)
-                {
-                    Logger.LogDebug($"Clearing accounts cache [{AccountsByAddress.Count}/{Config.MaxAccounts}]...");
-
-                    #region clear addresses
-                    var toRemoveByAddress = AccountsByAddress.Keys
-                        .Take((int)(Config.MaxAccounts * (1 - Config.LoadRate)))
-                        .ToList();
-
-                    foreach (var key in toRemoveByAddress)
-                        AccountsByAddress.Remove(key);
-                    #endregion
-
-                    #region clear ids
-                    var toRemoveById = AccountsById.Keys
-                        .Take((int)(Config.MaxAccounts * (1 - Config.LoadRate)))
-                        .ToList();
-
-                    foreach (var key in toRemoveById)
-                        AccountsById.Remove(key);
-                    #endregion
-
-                    Logger.LogInformation($"Accounts cache cleared [{AccountsByAddress.Count}/{Config.MaxAccounts}]");
-                }
-
-                Sema.Release();
-            }
-        }
-
-        async Task AddAccountAsync(RawAccount account)
-        {
-            await CheckCacheSizeAsync();
-
-            AccountsById[account.Id] = account;
-            AccountsByAddress[account.Address] = account;
-
-            Logger.LogDebug($"Account {account.Address} cached [{AccountsByAddress.Count}/{Config.MaxAccounts}]");
-        }
-        #endregion
-
-        #region metadata
-        public AccountMetadata GetMetadata(int id) => Metadata[id];
-
-        public string GetAliasName(int id) => Metadata[id]?.Alias;
-
-        public Alias GetAlias(int id) => new Alias
-        {
-            Address = Get(id).Address,
-            Name = Metadata[id]?.Alias
-        };
-
-        public async Task<Alias> GetAliasAsync(int id) => new Alias
-        {
-            Address = (await GetAsync(id)).Address,
-            Name = Metadata[id]?.Alias
-        };
-        #endregion
     }
 
     public static class AccountsCacheExt
