@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class SystemOperation : Operation
     {
-        public override string Type => "system";
+        public override string Type => OpTypes.System;
 
         public override int Id { get; set; }
 

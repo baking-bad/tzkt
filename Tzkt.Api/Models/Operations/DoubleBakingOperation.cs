@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class DoubleBakingOperation : Operation
     {
-        public override string Type => "double_baking";
+        public override string Type => OpTypes.DoubleBaking;
 
         public override int Id { get; set; }
 

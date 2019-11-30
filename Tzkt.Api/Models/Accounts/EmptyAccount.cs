@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class EmptyAccount : Account
     {
-        public override string Type => "empty";
+        public override string Type => AccountTypes.Empty;
 
         public string Address { get; set; }
 

@@ -7,7 +7,7 @@ namespace Tzkt.Api.Services.Cache
 {
     public class RawContract : RawAccount
     {
-        public override string Type => "contract";
+        public override string Type => AccountTypes.Contract;
 
         public int Kind { get; set; }
 

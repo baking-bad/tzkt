@@ -7,7 +7,7 @@ namespace Tzkt.Api.Services.Cache
 {
     public class RawDelegate : RawUser
     {
-        public override string Type => "delegate";
+        public override string Type => AccountTypes.Delegate;
 
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }

@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class ActivationOperation : Operation
     {
-        public override string Type => "activation";
+        public override string Type => OpTypes.Activation;
 
         public override int Id { get; set; }
 

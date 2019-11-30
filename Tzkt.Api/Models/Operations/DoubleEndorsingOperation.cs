@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class DoubleEndorsingOperation : Operation
     {
-        public override string Type => "double_endorsing";
+        public override string Type => OpTypes.DoubleEndorsing;
 
         public override int Id { get; set; }
 

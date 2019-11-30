@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class NonceRevelationOperation : Operation
     {
-        public override string Type => "nonce_revelation";
+        public override string Type => OpTypes.NonceRevelation;
 
         public override int Id { get; set; }
 

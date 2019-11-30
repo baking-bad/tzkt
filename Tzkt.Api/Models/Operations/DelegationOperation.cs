@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class DelegationOperation : Operation
     {
-        public override string Type => "delegation";
+        public override string Type => OpTypes.Delegation;
 
         public override int Id { get; set; }
 

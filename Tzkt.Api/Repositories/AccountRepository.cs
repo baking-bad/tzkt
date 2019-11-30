@@ -760,9 +760,9 @@ namespace Tzkt.Api.Repositories
 
         string TypeToString(int type) => type switch
         {
-            0 => "user",
-            1 => "delegate",
-            2 => "contract",
+            0 => AccountTypes.User,
+            1 => AccountTypes.Delegate,
+            2 => AccountTypes.Contract,
             _ => "unknown"
         };
 

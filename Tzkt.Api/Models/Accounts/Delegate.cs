@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class Delegate : Account
     {
-        public override string Type => "delegate";
+        public override string Type => AccountTypes.Delegate;
 
         public bool Active { get; set; }
 

@@ -25,16 +25,16 @@ namespace Tzkt.Api.Models
         public override string GetDiscriminatorValue(Type type)
         {
             if (type == typeof(Delegate))
-                return "delegate";
+                return AccountTypes.Delegate;
 
             if (type == typeof(User))
-                return "user";
+                return AccountTypes.User;
 
             if (type == typeof(Contract))
-                return "contract";
+                return AccountTypes.Contract;
 
             if (type == typeof(EmptyAccount))
-                return "empty";
+                return AccountTypes.Empty;
 
             return base.GetDiscriminatorValue(type);
         }

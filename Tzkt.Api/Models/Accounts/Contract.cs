@@ -10,7 +10,7 @@ namespace Tzkt.Api.Models
 {
     public class Contract : Account
     {
-        public override string Type => "contract";
+        public override string Type => AccountTypes.Contract;
 
         public string Kind { get; set; }
 

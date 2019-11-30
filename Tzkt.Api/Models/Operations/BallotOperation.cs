@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class BallotOperation : Operation
     {
-        public override string Type => "ballot";
+        public override string Type => OpTypes.Ballot;
 
         public override int Id { get; set; }
 

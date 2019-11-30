@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class RevealOperation : Operation
     {
-        public override string Type => "reveal";
+        public override string Type => OpTypes.Reveal;
 
         public override int Id { get; set; }
 

@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
 {
     public class User : Account
     {
-        public override string Type => "user";
+        public override string Type => AccountTypes.User;
 
         public string Alias { get; set; }
 
