@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Tzkt.Data;
 using Tzkt.Data.Models;
@@ -18,11 +19,11 @@ namespace Tzkt.Sync.Services
         readonly TezosNode Node;
         readonly DiagnosticServiceConfig Config;
 
-        public DiagnosticService(TzktContext db, TezosNode node, DiagnosticServiceConfig config)
+        public DiagnosticService(TzktContext db, TezosNode node, IConfiguration config)
         {
             Db = db;
             Node = node;
-            Config = config;
+            Config = config.GetDiagnosticServiceConfig();
         }
 
         public async Task Run(int level, int operations)
