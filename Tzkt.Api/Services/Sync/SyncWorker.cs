@@ -21,18 +21,20 @@ namespace Tzkt.Api.Services.Sync
         readonly string ConnectionString;
         readonly AccountsCache Accounts;
         readonly StateCache State;
+        readonly TimeCache Times;
         readonly ILogger Logger;
 
         int BlocksTime;
         RawState LastState;
         DateTime NextSyncTime;
 
-        public SyncWorker(AccountsCache accounts, StateCache state, IConfiguration config, ILogger<SyncWorker> logger)
+        public SyncWorker(AccountsCache accounts, StateCache state, TimeCache times, IConfiguration config, ILogger<SyncWorker> logger)
         {
             Config = config.GetSyncConfig();
             ConnectionString = config.GetConnectionString("DefaultConnection");
             Accounts = accounts;
             State = state;
+            Times = times;
             Logger = logger;
         }
 
@@ -68,6 +70,8 @@ namespace Tzkt.Api.Services.Sync
                             Logger.LogDebug($"Updating cache from {updateLevel} level...");
 
                             var changedAccounts = await Accounts.Update(updateLevel);
+
+                            await Times.UpdateAsync();
 
                             State.Update(currentState);
 

@@ -30,6 +30,7 @@ namespace Tzkt.Api
             services.AddAccountMetadata();
             services.AddAccountsCache();
             services.AddStateCache();
+            services.AddTimeCache();
 
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();
