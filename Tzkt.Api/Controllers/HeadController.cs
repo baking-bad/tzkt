@@ -11,10 +11,10 @@ namespace Tzkt.Api.Controllers
 {
     [ApiController]
     [Route("v1/[controller]")]
-    public class StateController : ControllerBase
+    public class HeadController : ControllerBase
     {
         private readonly StateRepository State;
-        public StateController(StateRepository state)
+        public HeadController(StateRepository state)
         {
             State = state;
         }
