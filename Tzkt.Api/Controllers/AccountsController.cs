@@ -51,13 +51,16 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("{address}/operations")]
-        public Task<IEnumerable<Operation>> GetOperations([Address] string address, string type, [Min(0)] int from = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<Operation>> GetOperations(
+            [Address] string address,
+            string type,
+            [Min(0)] int lastId = 0,
+            [Range(0, 1000)] int limit = 100,
+            SortMode sort = SortMode.Descending)
         {
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
-            return from == 0
-                ? Accounts.GetOperations(address, types, n)
-                : Accounts.GetOperations(address, types, from, n);
+            return Accounts.GetOperations(address, types, sort, lastId, limit);
         }
     }
 }

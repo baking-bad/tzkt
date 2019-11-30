@@ -30,7 +30,11 @@ namespace Tzkt.Api.Models
 
         public int ActivationLevel { get; set; }
 
+        public DateTime ActivationTime { get; set; }
+
         public int? DeactivationLevel { get; set; }
+
+        public DateTime? DeactivationTime { get; set; }
 
         public long StakingBalance { get; set; }
 

@@ -56,7 +56,9 @@ namespace Tzkt.Api.Repositories
                         FrozenFees = delegat.FrozenFees,
                         Counter = delegat.Counter,
                         ActivationLevel = delegat.ActivationLevel,
+                        ActivationTime = Time[delegat.ActivationLevel],
                         DeactivationLevel = delegat.Staked ? null : (int?)delegat.DeactivationLevel,
+                        DeactivationTime = delegat.Staked ? null : (DateTime?)Time[delegat.DeactivationLevel],
                         StakingBalance = delegat.StakingBalance,
                         FirstActivity = delegat.FirstLevel,
                         FirstActivityTime = Time[delegat.FirstLevel],
@@ -185,15 +187,15 @@ namespace Tzkt.Api.Repositories
                 case Models.Delegate delegat:
                     delegat.Contracts = await GetContracts(address, 10);
                     delegat.Delegators = await GetDelegators(address, 20);
-                    delegat.Operations = await GetOperations(address, OpTypes.DefaultSet, 20);
+                    delegat.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
                     break;
                 case User user when user.FirstActivity != null:
                     user.Contracts = await GetContracts(address, 10);
-                    user.Operations = await GetOperations(address, OpTypes.DefaultSet, 20);
+                    user.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
                     break;
                 case Contract contract:
                     contract.Contracts = await GetContracts(address, 10);
-                    contract.Operations = await GetOperations(address, OpTypes.DefaultSet, 20);
+                    contract.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
                     break;
             }
 
@@ -269,7 +271,9 @@ namespace Tzkt.Api.Repositories
                             FrozenFees = row.FrozenFees,
                             Counter = row.Counter,
                             ActivationLevel = row.ActivationLevel,
+                            ActivationTime = Time[row.ActivationLevel],
                             DeactivationLevel = row.Staked ? null : (int?)row.DeactivationLevel,
+                            DeactivationTime = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel],
                             StakingBalance = row.StakingBalance,
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
@@ -437,7 +441,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<Operation>> GetOperations(string address, HashSet<string> types, int limit = 100)
+        public async Task<IEnumerable<Operation>> GetOperations(string address, HashSet<string> types, SortMode sort, int offset, int limit)
         {
             var account = await Accounts.GetAsync(address);
             var result = new List<Operation>(limit * 2);
@@ -447,51 +451,51 @@ namespace Tzkt.Api.Repositories
                 case RawDelegate delegat:
 
                     var endorsements = delegat.EndorsementsCount > 0 && types.Contains(OpTypes.Endorsement)
-                        ? Operations.GetLastEndorsements(account, limit)
+                        ? Operations.GetEndorsements(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
                     var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
-                        ? Operations.GetLastBallots(account, limit)
+                        ? Operations.GetLastBallots(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
                     var proposals = delegat.ProposalsCount > 0 && types.Contains(OpTypes.Proposal)
-                        ? Operations.GetLastProposals(account, limit)
+                        ? Operations.GetLastProposals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
                     var activations = delegat.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetLastActivations(account, limit)
+                        ? Operations.GetLastActivations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetLastDoubleBakings(account, limit)
+                        ? Operations.GetLastDoubleBakings(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetLastDoubleEndorsings(account, limit)
+                        ? Operations.GetLastDoubleEndorsings(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetLastNonceRevelations(account, limit)
+                        ? Operations.GetLastNonceRevelations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetLastDelegations(account, limit)
+                        ? Operations.GetLastDelegations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetLastOriginations(account, limit)
+                        ? Operations.GetLastOriginations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetLastTransactions(account, limit)
+                        ? Operations.GetLastTransactions(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetLastReveals(account, limit)
+                        ? Operations.GetLastReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetLastSystemOps(account, limit)
+                        ? Operations.GetLastSystemOps(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<SystemOperation>());
 
                     await Task.WhenAll(
@@ -525,27 +529,27 @@ namespace Tzkt.Api.Repositories
                 case RawUser user:
 
                     var userActivations = user.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetLastActivations(account, limit)
+                        ? Operations.GetLastActivations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetLastDelegations(account, limit)
+                        ? Operations.GetLastDelegations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetLastOriginations(account, limit)
+                        ? Operations.GetLastOriginations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetLastTransactions(account, limit)
+                        ? Operations.GetLastTransactions(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetLastReveals(account, limit)
+                        ? Operations.GetLastReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetLastSystemOps(account, limit)
+                        ? Operations.GetLastSystemOps(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<SystemOperation>());
 
                     await Task.WhenAll(
@@ -567,23 +571,23 @@ namespace Tzkt.Api.Repositories
                 case RawContract contract:
 
                     var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetLastDelegations(account, limit)
+                        ? Operations.GetLastDelegations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetLastOriginations(account, limit)
+                        ? Operations.GetLastOriginations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetLastTransactions(account, limit)
+                        ? Operations.GetLastTransactions(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetLastReveals(account, limit)
+                        ? Operations.GetLastReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetLastSystemOps(account, limit)
+                        ? Operations.GetLastSystemOps(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<SystemOperation>());
 
                     await Task.WhenAll(
@@ -602,175 +606,9 @@ namespace Tzkt.Api.Repositories
                     break;
             }
 
-            return result.OrderByDescending(x => x.Id).Take(limit);
-        }
-
-        public async Task<IEnumerable<Operation>> GetOperations(string address, HashSet<string> types, int fromLevel, int limit = 100)
-        {
-            var account = await Accounts.GetAsync(address);
-            var result = new List<Operation>(limit * 2);
-
-            switch (account)
-            {
-                case RawDelegate delegat:
-
-                    var endorsements = delegat.EndorsementsCount > 0 && types.Contains(OpTypes.Endorsement)
-                        ? Operations.GetLastEndorsements(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
-
-                    var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
-                        ? Operations.GetLastBallots(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<BallotOperation>());
-
-                    var proposals = delegat.ProposalsCount > 0 && types.Contains(OpTypes.Proposal)
-                        ? Operations.GetLastProposals(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<ProposalOperation>());
-
-                    var activations = delegat.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetLastActivations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
-
-                    var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetLastDoubleBakings(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
-
-                    var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetLastDoubleEndorsings(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
-
-                    var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetLastNonceRevelations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
-
-                    var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetLastDelegations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
-
-                    var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetLastOriginations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
-
-                    var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetLastTransactions(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetLastReveals(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
-
-                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetLastSystemOps(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
-
-                    await Task.WhenAll(
-                        endorsements,
-                        proposals,
-                        ballots,
-                        activations,
-                        doubleBaking,
-                        doubleEndorsing,
-                        nonceRevelations,
-                        delegations,
-                        originations,
-                        transactions,
-                        reveals,
-                        system);
-
-                    result.AddRange(endorsements.Result);
-                    result.AddRange(proposals.Result);
-                    result.AddRange(ballots.Result);
-                    result.AddRange(activations.Result);
-                    result.AddRange(doubleBaking.Result);
-                    result.AddRange(doubleEndorsing.Result);
-                    result.AddRange(nonceRevelations.Result);
-                    result.AddRange(delegations.Result);
-                    result.AddRange(originations.Result);
-                    result.AddRange(transactions.Result);
-                    result.AddRange(reveals.Result);
-                    result.AddRange(system.Result);
-
-                    break;
-                case RawUser user:
-
-                    var userActivations = user.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetLastActivations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
-
-                    var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetLastDelegations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
-
-                    var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetLastOriginations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
-
-                    var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetLastTransactions(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetLastReveals(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
-
-                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetLastSystemOps(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
-
-                    await Task.WhenAll(
-                        userActivations,
-                        userDelegations,
-                        userOriginations,
-                        userTransactions,
-                        userReveals,
-                        userSystem);
-
-                    result.AddRange(userActivations.Result);
-                    result.AddRange(userDelegations.Result);
-                    result.AddRange(userOriginations.Result);
-                    result.AddRange(userTransactions.Result);
-                    result.AddRange(userReveals.Result);
-                    result.AddRange(userSystem.Result);
-
-                    break;
-                case RawContract contract:
-
-                    var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetLastDelegations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
-
-                    var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetLastOriginations(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
-
-                    var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetLastTransactions(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetLastReveals(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
-
-                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetLastSystemOps(account, fromLevel, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
-
-                    await Task.WhenAll(
-                        contractDelegations,
-                        contractOriginations,
-                        contractTransactions,
-                        contractReveals,
-                        contractSystem);
-
-                    result.AddRange(contractDelegations.Result);
-                    result.AddRange(contractOriginations.Result);
-                    result.AddRange(contractTransactions.Result);
-                    result.AddRange(contractReveals.Result);
-                    result.AddRange(contractSystem.Result);
-
-                    break;
-            }
-
-            return result.OrderByDescending(x => x.Id).Take(limit);
+            return sort == SortMode.Ascending
+                ? result.OrderBy(x => x.Id).Take(limit)
+                : result.OrderByDescending(x => x.Id).Take(limit);
         }
 
         string TypeToString(int type) => type switch

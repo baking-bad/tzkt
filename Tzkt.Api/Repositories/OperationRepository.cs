@@ -205,42 +205,16 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<EndorsementOperation>> GetLastEndorsements(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots"", ""Reward""
                 FROM     ""EndorsementOps""
                 WHERE    ""DelegateId"" = @accountId
-                ORDER BY ""Id"" DESC NULLS LAST
-                LIMIT    @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new EndorsementOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Delegate = Accounts.GetAlias(account.Id),
-                Slots = row.Slots,
-                Rewards = row.Reward
-            });
-        }
-
-        public async Task<IEnumerable<EndorsementOperation>> GetLastEndorsements(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = $@"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots"", ""Reward""
-                FROM     ""EndorsementOps""
-                WHERE    ""DelegateId"" = @accountId
-                AND      ""Level"" < @fromLevel
-                ORDER BY ""Id"" DESC NULLS LAST
-                LIMIT    @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new EndorsementOperation
             {
@@ -366,55 +340,19 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetLastBallots(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<BallotOperation>> GetLastBallots(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""Vote"", proposal.""Hash"",
                           period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM      ""BallotOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
                 LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     ""SenderId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new BallotOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Period = new PeriodInfo
-                {
-                    Id = row.Code,
-                    Kind = PeriodToString(row.Kind),
-                    StartLevel = row.StartLevel,
-                    EndLevel = row.EndLevel
-                },
-                Proposal = row.Hash,
-                Delegate = Accounts.GetAlias(account.Id),
-                Vote = VoteToString(row.Vote)
-            });
-        }
-
-        public async Task<IEnumerable<BallotOperation>> GetLastBallots(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""Vote"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     ""SenderId"" = @accountId
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new BallotOperation
             {
@@ -544,54 +482,19 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", proposal.""Hash"",
                           period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM      ""ProposalOps"" as op
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
                 LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     ""SenderId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new ProposalOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Period = new PeriodInfo
-                {
-                    Id = row.Code,
-                    Kind = PeriodToString(row.Kind),
-                    StartLevel = row.StartLevel,
-                    EndLevel = row.EndLevel
-                },
-                Proposal = row.Hash,
-                Delegate = Accounts.GetAlias(account.Id)
-            });
-        }
-
-        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     ""SenderId"" = @accountId
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new ProposalOperation
             {
@@ -690,41 +593,16 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetLastActivations(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<ActivationOperation>> GetLastActivations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Balance""
                 FROM      ""ActivationOps""
                 WHERE     ""AccountId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new ActivationOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Account = Accounts.GetAlias(account.Id),
-                Balance = row.Balance
-            });
-        }
-
-        public async Task<IEnumerable<ActivationOperation>> GetLastActivations(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Balance""
-                FROM      ""ActivationOps""
-                WHERE     ""AccountId"" = @accountId
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new ActivationOperation
             {
@@ -834,50 +712,18 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetLastDoubleBakings(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetLastDoubleBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleBakingOps""
-                WHERE     ""AccuserId"" = @accountId
-                OR        ""OffenderId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new DoubleBakingOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                AccusedLevel = row.AccusedLevel,
-                Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserRewards = row.AccuserReward,
-                Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLostDeposits = row.OffenderLostDeposit,
-                OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
-            });
-        }
-
-        public async Task<IEnumerable<DoubleBakingOperation>> GetLastDoubleBakings(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleBakingOps""
                 WHERE     (""AccuserId"" = @accountId
                 OR        ""OffenderId"" = @accountId)
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new DoubleBakingOperation
             {
@@ -992,50 +838,18 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetLastDoubleEndorsings(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetLastDoubleEndorsings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleEndorsingOps""
-                WHERE     ""AccuserId"" = @accountId
-                OR        ""OffenderId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new DoubleEndorsingOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                AccusedLevel = row.AccusedLevel,
-                Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserRewards = row.AccuserReward,
-                Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLostDeposits = row.OffenderLostDeposit,
-                OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
-            });
-        }
-
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetLastDoubleEndorsings(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
                           ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
                 FROM      ""DoubleEndorsingOps""
                 WHERE     (""AccuserId"" = @accountId
                 OR        ""OffenderId"" = @accountId)
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new DoubleEndorsingOperation
             {
@@ -1135,44 +949,17 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetLastNonceRevelations(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetLastNonceRevelations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
-                FROM      ""NonceRevelationOps""
-                WHERE     ""BakerId"" = @accountId
-                OR        ""SenderId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new NonceRevelationOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Baker = Accounts.GetAlias(row.BakerId),
-                Sender = Accounts.GetAlias(row.SenderId),
-                RevealedLevel = row.RevealedLevel
-            });
-        }
-
-        public async Task<IEnumerable<NonceRevelationOperation>> GetLastNonceRevelations(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
                 FROM      ""NonceRevelationOps""
                 WHERE     (""BakerId"" = @accountId
                 OR        ""SenderId"" = @accountId)
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new NonceRevelationOperation
             {
@@ -1349,52 +1136,18 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetLastDelegations(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<DelegationOperation>> GetLastDelegations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
-                FROM      ""DelegationOps""
-                WHERE     ""SenderId"" = @accountId
-                OR        ""DelegateId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new DelegationOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                BakerFee = row.BakerFee,
-                Delegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
-            });
-        }
-
-        public async Task<IEnumerable<DelegationOperation>> GetLastDelegations(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""DelegateId"" = @accountId)
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new DelegationOperation
             {
@@ -1687,76 +1440,19 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetLastOriginations(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<OriginationOperation>> GetLastOriginations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
-                FROM      ""OriginationOps""
-                WHERE     ""SenderId"" = @accountId
-                OR        ""DelegateId"" = @accountId
-                OR        ""ContractId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row =>
-            {
-                var contract = row.ContractId == null ? null
-                    : (RawContract)Accounts.Get((int)row.ContractId);
-
-                var contractMetadata = contract == null ? null
-                    : Accounts.GetMetadata(contract.Id);
-
-                return new OriginationOperation
-                {
-                    Id = row.Id,
-                    Level = row.Level,
-                    Timestamp = row.Timestamp,
-                    Hash = row.OpHash,
-                    Sender = Accounts.GetAlias(row.SenderId),
-                    Counter = row.Counter,
-                    Nonce = row.Nonce,
-                    GasLimit = row.GasLimit,
-                    GasUsed = row.GasUsed,
-                    StorageLimit = row.StorageLimit,
-                    StorageUsed = row.StorageUsed,
-                    BakerFee = row.BakerFee,
-                    StorageFee = row.StorageFee ?? 0,
-                    AllocationFee = row.AllocationFee ?? 0,
-                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                    ContractBalance = row.Balance,
-                    Status = StatusToString(row.Status),
-                    OriginatedContract = contract == null ? null :
-                        new OriginatedContract
-                        {
-                            Alias = contractMetadata?.Alias,
-                            Address = contract.Address,
-                            Kind = contract.KindString
-                        },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
-                };
-            });
-        }
-
-        public async Task<IEnumerable<OriginationOperation>> GetLastOriginations(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""DelegateId"" = @accountId
                 OR        ""ContractId"" = @accountId)
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row =>
             {
@@ -1991,58 +1687,18 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetLastTransactions(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<TransactionOperation>> GetLastTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
-                FROM      ""TransactionOps""
-                WHERE     ""SenderId"" = @accountId
-                OR        ""TargetId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new TransactionOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
-                Amount = row.Amount,
-                Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
-            });
-        }
-
-        public async Task<IEnumerable<TransactionOperation>> GetLastTransactions(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""TargetId"" = @accountId)
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new TransactionOperation
             {
@@ -2189,46 +1845,16 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetLastReveals(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<RevealOperation>> GetLastReveals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
                 FROM      ""RevealOps""
                 WHERE     ""SenderId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new RevealOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                BakerFee = row.BakerFee,
-                Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
-            });
-        }
-
-        public async Task<IEnumerable<RevealOperation>> GetLastReveals(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
-                FROM      ""RevealOps""
-                WHERE     ""SenderId"" = @accountId
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new RevealOperation
             {
@@ -2281,41 +1907,16 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<SystemOperation>> GetLastSystemOps(RawAccount account, int limit = 100)
+        public async Task<IEnumerable<SystemOperation>> GetLastSystemOps(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
                 FROM      ""SystemOps""
                 WHERE     ""AccountId"" = @accountId
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
+                {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
-
-            return rows.Select(row => new SystemOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Account = Accounts.GetAlias(account.Id),
-                Kind = SystemEventToString(row.Event),
-                BalanceChange = row.BalanceChange
-            });
-        }
-
-        public async Task<IEnumerable<SystemOperation>> GetLastSystemOps(RawAccount account, int fromLevel, int limit = 100)
-        {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
-                FROM      ""SystemOps""
-                WHERE     ""AccountId"" = @accountId
-                AND       ""Level"" < @fromLevel
-                ORDER BY  ""Id"" DESC
-                LIMIT     @limit";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
             return rows.Select(row => new SystemOperation
             {
@@ -2328,6 +1929,38 @@ namespace Tzkt.Api.Repositories
             });
         }
         #endregion
+
+        public string Pagination(SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        {
+            var sortMode = sort == SortMode.Ascending ? "" : "DESC";
+
+            if (offset == 0)
+            {
+                return $@"
+                    ORDER BY ""Id"" {sortMode} NULLS LAST
+                    LIMIT    {limit}";
+            }
+
+            if (offsetMode == OffsetMode.Id)
+            {
+                return sort == SortMode.Ascending
+                    ? $@"
+                        AND      ""Id"" > {offset}
+                        ORDER BY ""Id"" {sortMode} NULLS LAST
+                        LIMIT    {limit}"
+                    : $@"
+                        AND      ""Id"" < {offset}
+                        ORDER BY ""Id"" {sortMode} NULLS LAST
+                        LIMIT    {limit}";
+            }
+
+            var offsetValue = offsetMode == OffsetMode.Page ? limit * offset : offset;
+
+            return $@"
+                ORDER BY ""Id"" {sortMode} NULLS LAST
+                OFFSET   {offsetValue}
+                LIMIT    {limit}";
+        }
 
         string SystemEventToString(int sysEvent) => sysEvent switch
         {
