@@ -48,6 +48,6 @@ namespace Tzkt.Api.Models
 
         public List<OperationError> Errors { get; set; }
 
-        public Alias OriginatedContract { get; set; }
+        public OriginatedContract OriginatedContract { get; set; }
     }
 }

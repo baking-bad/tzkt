@@ -1438,28 +1438,43 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
 
-            return rows.Select(row => new OriginationOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = hash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                ContractBalance = row.Balance,
-                Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
-                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                var contract = row.ContractId == null ? null
+                    : (RawContract)Accounts.Get((int)row.ContractId);
+
+                var contractMetadata = contract == null ? null
+                    : Accounts.GetMetadata(contract.Id);
+
+                return new OriginationOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Timestamp = row.Timestamp,
+                    Hash = hash,
+                    Sender = Accounts.GetAlias(row.SenderId),
+                    Counter = row.Counter,
+                    Nonce = row.Nonce,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    StorageUsed = row.StorageUsed,
+                    BakerFee = row.BakerFee,
+                    StorageFee = row.StorageFee ?? 0,
+                    AllocationFee = row.AllocationFee ?? 0,
+                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
+                    ContractBalance = row.Balance,
+                    Status = StatusToString(row.Status),
+                    OriginatedContract = contract == null ? null :
+                        new OriginatedContract
+                        {
+                            Alias = contractMetadata?.Alias,
+                            Address = contract.Address,
+                            Kind = contract.KindString
+                        },
+                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                };
             });
         }
 
@@ -1475,28 +1490,43 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
 
-            return rows.Select(row => new OriginationOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = hash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                ContractBalance = row.Balance,
-                Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
-                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                var contract = row.ContractId == null ? null
+                    : (RawContract)Accounts.Get((int)row.ContractId);
+
+                var contractMetadata = contract == null ? null
+                    : Accounts.GetMetadata(contract.Id);
+
+                return new OriginationOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Timestamp = row.Timestamp,
+                    Hash = hash,
+                    Sender = Accounts.GetAlias(row.SenderId),
+                    Counter = counter,
+                    Nonce = row.Nonce,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    StorageUsed = row.StorageUsed,
+                    BakerFee = row.BakerFee,
+                    StorageFee = row.StorageFee ?? 0,
+                    AllocationFee = row.AllocationFee ?? 0,
+                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
+                    ContractBalance = row.Balance,
+                    Status = StatusToString(row.Status),
+                    OriginatedContract = contract == null ? null :
+                        new OriginatedContract
+                        {
+                            Alias = contractMetadata?.Alias,
+                            Address = contract.Address,
+                            Kind = contract.KindString
+                        },
+                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                };
             });
         }
 
@@ -1512,28 +1542,43 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
 
-            return rows.Select(row => new OriginationOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = hash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = counter,
-                Nonce = nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                ContractBalance = row.Balance,
-                Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
-                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                var contract = row.ContractId == null ? null
+                    : (RawContract)Accounts.Get((int)row.ContractId);
+
+                var contractMetadata = contract == null ? null
+                    : Accounts.GetMetadata(contract.Id);
+
+                return new OriginationOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Timestamp = row.Timestamp,
+                    Hash = hash,
+                    Sender = Accounts.GetAlias(row.SenderId),
+                    Counter = counter,
+                    Nonce = nonce,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    StorageUsed = row.StorageUsed,
+                    BakerFee = row.BakerFee,
+                    StorageFee = row.StorageFee ?? 0,
+                    AllocationFee = row.AllocationFee ?? 0,
+                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
+                    ContractBalance = row.Balance,
+                    Status = StatusToString(row.Status),
+                    OriginatedContract = contract == null ? null :
+                        new OriginatedContract
+                        {
+                            Alias = contractMetadata?.Alias,
+                            Address = contract.Address,
+                            Kind = contract.KindString
+                        },
+                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                };
             });
         }
 
@@ -1549,28 +1594,43 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { level });
 
-            return rows.Select(row => new OriginationOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                ContractBalance = row.Balance,
-                Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
-                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                var contract = row.ContractId == null ? null
+                    : (RawContract)Accounts.Get((int)row.ContractId);
+
+                var contractMetadata = contract == null ? null
+                    : Accounts.GetMetadata(contract.Id);
+
+                return new OriginationOperation
+                {
+                    Id = row.Id,
+                    Level = level,
+                    Timestamp = row.Timestamp,
+                    Hash = row.OpHash,
+                    Sender = Accounts.GetAlias(row.SenderId),
+                    Counter = row.Counter,
+                    Nonce = row.Nonce,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    StorageUsed = row.StorageUsed,
+                    BakerFee = row.BakerFee,
+                    StorageFee = row.StorageFee ?? 0,
+                    AllocationFee = row.AllocationFee ?? 0,
+                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
+                    ContractBalance = row.Balance,
+                    Status = StatusToString(row.Status),
+                    OriginatedContract = contract == null ? null :
+                        new OriginatedContract
+                        {
+                            Alias = contractMetadata?.Alias,
+                            Address = contract.Address,
+                            Kind = contract.KindString
+                        },
+                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                };
             });
         }
 
@@ -1587,28 +1647,43 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { limit, offset });
 
-            return rows.Select(row => new OriginationOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                ContractBalance = row.Balance,
-                Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
-                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                var contract = row.ContractId == null ? null
+                    : (RawContract)Accounts.Get((int)row.ContractId);
+
+                var contractMetadata = contract == null ? null
+                    : Accounts.GetMetadata(contract.Id);
+
+                return new OriginationOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Timestamp = row.Timestamp,
+                    Hash = row.OpHash,
+                    Sender = Accounts.GetAlias(row.SenderId),
+                    Counter = row.Counter,
+                    Nonce = row.Nonce,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    StorageUsed = row.StorageUsed,
+                    BakerFee = row.BakerFee,
+                    StorageFee = row.StorageFee ?? 0,
+                    AllocationFee = row.AllocationFee ?? 0,
+                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
+                    ContractBalance = row.Balance,
+                    Status = StatusToString(row.Status),
+                    OriginatedContract = contract == null ? null :
+                        new OriginatedContract
+                        {
+                            Alias = contractMetadata?.Alias,
+                            Address = contract.Address,
+                            Kind = contract.KindString
+                        },
+                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                };
             });
         }
 
@@ -1627,28 +1702,43 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit });
 
-            return rows.Select(row => new OriginationOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                ContractBalance = row.Balance,
-                Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
-                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                var contract = row.ContractId == null ? null
+                    : (RawContract)Accounts.Get((int)row.ContractId);
+
+                var contractMetadata = contract == null ? null
+                    : Accounts.GetMetadata(contract.Id);
+
+                return new OriginationOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Timestamp = row.Timestamp,
+                    Hash = row.OpHash,
+                    Sender = Accounts.GetAlias(row.SenderId),
+                    Counter = row.Counter,
+                    Nonce = row.Nonce,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    StorageUsed = row.StorageUsed,
+                    BakerFee = row.BakerFee,
+                    StorageFee = row.StorageFee ?? 0,
+                    AllocationFee = row.AllocationFee ?? 0,
+                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
+                    ContractBalance = row.Balance,
+                    Status = StatusToString(row.Status),
+                    OriginatedContract = contract == null ? null :
+                        new OriginatedContract
+                        {
+                            Alias = contractMetadata?.Alias,
+                            Address = contract.Address,
+                            Kind = contract.KindString
+                        },
+                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                };
             });
         }
 
@@ -1668,28 +1758,43 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, fromLevel, limit });
 
-            return rows.Select(row => new OriginationOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = row.Level,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                Nonce = row.Nonce,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
-                BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee ?? 0,
-                AllocationFee = row.AllocationFee ?? 0,
-                ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
-                ContractBalance = row.Balance,
-                Status = StatusToString(row.Status),
-                OriginatedContract = row.ContractId != null ? Accounts.GetAlias(row.ContractId) : null,
-                ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                var contract = row.ContractId == null ? null
+                    : (RawContract)Accounts.Get((int)row.ContractId);
+
+                var contractMetadata = contract == null ? null
+                    : Accounts.GetMetadata(contract.Id);
+
+                return new OriginationOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Timestamp = row.Timestamp,
+                    Hash = row.OpHash,
+                    Sender = Accounts.GetAlias(row.SenderId),
+                    Counter = row.Counter,
+                    Nonce = row.Nonce,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    StorageUsed = row.StorageUsed,
+                    BakerFee = row.BakerFee,
+                    StorageFee = row.StorageFee ?? 0,
+                    AllocationFee = row.AllocationFee ?? 0,
+                    ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
+                    ContractBalance = row.Balance,
+                    Status = StatusToString(row.Status),
+                    OriginatedContract = contract == null ? null :
+                        new OriginatedContract
+                        {
+                            Alias = contractMetadata?.Alias,
+                            Address = contract.Address,
+                            Kind = contract.KindString
+                        },
+                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                };
             });
         }
         #endregion

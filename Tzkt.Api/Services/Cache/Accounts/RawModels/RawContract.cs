@@ -13,5 +13,12 @@ namespace Tzkt.Api.Services.Cache
 
         public int? CreatorId { get; set; }
         public int? ManagerId { get; set; }
+
+        public string KindString => Kind switch
+        {
+            0 => "delegator_contract",
+            1 => "smart_contract",
+            _ => "unknown"
+        };
     }
 }
