@@ -57,7 +57,7 @@ namespace Tzkt.Api.Services.Cache
             var sql = @"
                 SELECT    ""Timestamp""
                 FROM      ""Blocks""
-                WHERE     ""Level"" > @fromLevel
+                WHERE     ""Level"" >= @fromLevel
                 ORDER BY  ""Level""";
 
             using var db = GetConnection();
@@ -73,7 +73,7 @@ namespace Tzkt.Api.Services.Cache
             var sql = @"
                 SELECT    ""Timestamp""
                 FROM      ""Blocks""
-                WHERE     ""Level"" > @fromLevel
+                WHERE     ""Level"" >= @fromLevel
                 ORDER BY  ""Level""";
 
             using var db = GetConnection();
