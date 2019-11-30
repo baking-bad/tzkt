@@ -16,16 +16,18 @@ namespace Tzkt.Sync.Services
     {
         readonly TzktContext Db;
         readonly TezosNode Node;
+        readonly DiagnosticServiceConfig Config;
 
-        public DiagnosticService(TzktContext db, TezosNode node)
+        public DiagnosticService(TzktContext db, TezosNode node, DiagnosticServiceConfig config)
         {
             Db = db;
             Node = node;
+            Config = config;
         }
 
         public async Task Run(int level, int operations)
         {
-            if (level < 2) return;
+            if (!Config.Enabled || level < 2) return;
 
             var entries = Db.ChangeTracker.Entries();
 
@@ -54,7 +56,7 @@ namespace Tzkt.Sync.Services
 
         public async Task Run(int level)
         {
-            if (level < 2) return;
+            if (!Config.Enabled || level < 2) return;
 
             var entries = Db.ChangeTracker.Entries();
 
