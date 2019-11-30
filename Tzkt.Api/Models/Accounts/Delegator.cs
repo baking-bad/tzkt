@@ -16,5 +16,7 @@ namespace Tzkt.Api.Models
         public long Balance { get; set; }
 
         public int DelegationLevel { get; set; }
+
+        public DateTime DelegationTime { get; set; }
     }
 }

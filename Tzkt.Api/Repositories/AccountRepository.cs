@@ -14,12 +14,14 @@ namespace Tzkt.Api.Repositories
     {
         readonly AccountsCache Accounts;
         readonly StateCache State;
+        readonly TimeCache Time;
         readonly OperationRepository Operations;
 
-        public AccountRepository(AccountsCache accounts, StateCache state, OperationRepository operations, IConfiguration config) : base(config)
+        public AccountRepository(AccountsCache accounts, StateCache state, TimeCache time, OperationRepository operations, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             State = state;
+            Time = time;
             Operations = operations;
         }
 
@@ -57,7 +59,9 @@ namespace Tzkt.Api.Repositories
                         DeactivationLevel = delegat.Staked ? null : (int?)delegat.DeactivationLevel,
                         StakingBalance = delegat.StakingBalance,
                         FirstActivity = delegat.FirstLevel,
+                        FirstActivityTime = Time[delegat.FirstLevel],
                         LastActivity = delegat.LastLevel,
+                        LastActivityTime = Time[delegat.LastLevel],
                         NumActivations = delegat.Activated == true ? 1 : 0,
                         NumBallots = delegat.BallotsCount,
                         NumContracts = delegat.Contracts,
@@ -89,7 +93,9 @@ namespace Tzkt.Api.Repositories
                         Balance = user.Balance,
                         Counter = user.Balance > 0 ? user.Counter : State.GetCounter(),
                         FirstActivity = user.FirstLevel,
+                        FirstActivityTime = Time[user.FirstLevel],
                         LastActivity = user.LastLevel,
+                        LastActivityTime = Time[user.LastLevel],
                         PublicKey = user.PublicKey,
                         Delegate = userDelegate == null ? null
                             : new DelegateInfo
@@ -154,7 +160,9 @@ namespace Tzkt.Api.Repositories
                                 Active = contractDelegate.Staked
                             },
                         FirstActivity = contract.FirstLevel,
+                        FirstActivityTime = Time[contract.FirstLevel],
                         LastActivity = contract.LastLevel,
+                        LastActivityTime = Time[contract.LastLevel],
                         NumContracts = contract.Contracts,
                         NumDelegations = contract.DelegationsCount,
                         NumOriginations = contract.OriginationsCount,
@@ -226,7 +234,9 @@ namespace Tzkt.Api.Repositories
                             Balance = row.Balance,
                             Counter = row.Balance > 0 ? row.Counter : State.GetCounter(),
                             FirstActivity = row.FirstLevel,
+                            FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
+                            LastActivityTime = Time[row.LastLevel],
                             PublicKey = row.PublicKey,
                             Delegate = userDelegate == null ? null
                             : new DelegateInfo
@@ -262,7 +272,9 @@ namespace Tzkt.Api.Repositories
                             DeactivationLevel = row.Staked ? null : (int?)row.DeactivationLevel,
                             StakingBalance = row.StakingBalance,
                             FirstActivity = row.FirstLevel,
+                            FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
+                            LastActivityTime = Time[row.LastLevel],
                             NumActivations = row.Activated == true ? 1 : 0,
                             NumBallots = row.BallotsCount,
                             NumContracts = row.Contracts,
@@ -327,7 +339,9 @@ namespace Tzkt.Api.Repositories
                                 Active = contractDelegate.Staked
                             },
                             FirstActivity = row.FirstLevel,
+                            FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
+                            LastActivityTime = Time[row.LastLevel],
                             NumContracts = row.Contracts,
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
@@ -417,7 +431,8 @@ namespace Tzkt.Api.Repositories
                     Alias = metadata?.Alias,
                     Address = row.Address,
                     Balance = row.Balance,
-                    DelegationLevel = row.DelegationLevel
+                    DelegationLevel = row.DelegationLevel,
+                    DelegationTime = Time[row.DelegationLevel]
                 };
             });
         }

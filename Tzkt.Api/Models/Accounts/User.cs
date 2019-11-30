@@ -38,7 +38,11 @@ namespace Tzkt.Api.Models
 
         public int? FirstActivity { get; set; }
 
+        public DateTime? FirstActivityTime { get; set; }
+
         public int? LastActivity { get; set; }
+
+        public DateTime? LastActivityTime { get; set; }
 
         public IEnumerable<RelatedContract> Contracts { get; set; }
 
