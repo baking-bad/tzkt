@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class BaseOperationError : IOperationError
+    public class BaseOperationError : OperationError
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; }
+        public override string Type { get; set; }
     }
 }

@@ -9,7 +9,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
 
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -54,20 +53,32 @@ namespace Tzkt.Api
                     options.InvalidModelStateResponseFactory = context => new BadRequest(context);
                 });
 
-            services.AddSwaggerGen(c =>
+            services.AddOpenApiDocument(options =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo
+                options.DocumentName = "v1-preview";
+                options.PostProcess = document =>
                 {
-                    Title = "TzKT API",
-                    Description = "Early version of TzKT API",
-                    Version = "v1",
-                    Contact = new OpenApiContact
+                    document.Info.Title = "TzKT API";
+                    document.Info.Description = "Early version of the TzKT API";
+                    document.Info.Version = "v1-preview";
+                    document.Info.Contact = new NSwag.OpenApiContact
                     {
                         Name = "Baking Bad",
                         Email = "hello@baking-bad.org",
-                        Url = new Uri("https://baking-bad.org/docs")
-                    }
-                });
+                        Url = "https://baking-bad.org/docs"
+                    };
+                    document.Info.ExtensionData = new Dictionary<string, object>
+                    {
+                        { 
+                            "x-logo", new
+                            {
+                                url = "https://tzkt.io/logo.png",
+                                href = "https://tzkt.io/"
+                            }
+                        }
+                    };
+                    document.Produces = new[] { "application/json" };
+                };
             });
         }
 
@@ -78,11 +89,12 @@ namespace Tzkt.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
+            app.UseCors(builder => builder.AllowAnyOrigin());
+
+            app.UseOpenApi(options => 
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TzKT API V1");
-                c.RoutePrefix = string.Empty;
+                options.Path = "/v1/swagger.json";
+                options.DocumentName = "v1-preview";
             });
 
             app.UseRouting();

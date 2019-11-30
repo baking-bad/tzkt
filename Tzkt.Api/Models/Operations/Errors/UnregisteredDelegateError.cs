@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class UnregisteredDelegateError : IOperationError
+    public class UnregisteredDelegateError : OperationError
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; }
+        public override string Type { get; set; }
 
         [JsonPropertyName("delegate")]
         public string Delegate { get; set; }

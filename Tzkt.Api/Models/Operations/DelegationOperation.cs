@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class DelegationOperation : IOperation
+    public class DelegationOperation : Operation
     {
-        public string Type => "delegation";
+        public override string Type => "delegation";
 
-        public int Id { get; set; }
+        public override int Id { get; set; }
 
         public int Level { get; set; }
 
@@ -34,6 +34,6 @@ namespace Tzkt.Api.Models
 
         public string Status { get; set; }
 
-        public List<IOperationError> Errors { get; set; }
+        public List<OperationError> Errors { get; set; }
     }
 }

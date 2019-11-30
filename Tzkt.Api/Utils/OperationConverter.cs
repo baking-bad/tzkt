@@ -9,14 +9,14 @@ using Tzkt.Api.Models;
 
 namespace Tzkt.Api
 {
-    class OperationConverter : JsonConverter<IOperation>
+    class OperationConverter : JsonConverter<Operation>
     {
-        public override IOperation Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override Operation Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             throw new NotImplementedException();
         }
 
-        public override void Write(Utf8JsonWriter writer, IOperation value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, Operation value, JsonSerializerOptions options)
         {
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
         }

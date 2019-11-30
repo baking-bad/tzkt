@@ -22,6 +22,8 @@ namespace Tzkt.Api
         public const string Transaction = "transaction";
         public const string Reveal = "reveal";
 
+        public const string System = "system";
+
         public static readonly HashSet<string> DefaultSet = new HashSet<string>
         {
             Ballot,
@@ -32,7 +34,8 @@ namespace Tzkt.Api
             Delegation,
             Origination,
             Transaction,
-            Reveal
+            Reveal,
+            System
         };
     }
 }

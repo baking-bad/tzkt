@@ -23,10 +23,9 @@ namespace Tzkt.Api.Repositories
             Operations = operations;
         }
 
-        public async Task<IAccount> Get(string address)
+        public async Task<Account> Get(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            var metadata = Accounts.GetMetadata(rawAccount.Id);
 
             if (rawAccount == null)
                 return address[0] == 't'
@@ -36,6 +35,8 @@ namespace Tzkt.Api.Repositories
                         Counter = State.GetCounter(),
                     }
                     : null;
+
+            var metadata = Accounts.GetMetadata(rawAccount.Id);
 
             switch (rawAccount)
             {
@@ -167,7 +168,7 @@ namespace Tzkt.Api.Repositories
             }
         }
 
-        public async Task<IAccount> GetProfile(string address)
+        public async Task<Account> GetProfile(string address)
         {
             var account = await Get(address);
 
@@ -191,7 +192,7 @@ namespace Tzkt.Api.Repositories
             return account;
         }
 
-        public async Task<IEnumerable<IAccount>> Get(int limit = 100, int offset = 0)
+        public async Task<IEnumerable<Account>> Get(int limit = 100, int offset = 0)
         {
             var sql = @"
                 SELECT      *
@@ -203,7 +204,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { limit, offset });
 
-            var accounts = new List<IAccount>(rows.Count());
+            var accounts = new List<Account>(rows.Count());
             foreach (var row in rows)
             {
                 var metadata = Accounts.GetMetadata((int)row.Id);
@@ -346,7 +347,7 @@ namespace Tzkt.Api.Repositories
         {
             var account = await Accounts.GetAsync(address);
 
-            if (account.Contracts == 0)
+            if (account == null || account.Contracts == 0)
                 return Enumerable.Empty<RelatedContract>();
 
             var sql = @"
@@ -392,7 +393,7 @@ namespace Tzkt.Api.Repositories
         {
             var delegat = (RawDelegate)await Accounts.GetAsync(address);
 
-            if (delegat.Delegators == 0)
+            if (delegat == null || delegat.Delegators == 0)
                 return Enumerable.Empty<Delegator>();
 
             var sql = @"
@@ -421,10 +422,10 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<IOperation>> GetOperations(string address, HashSet<string> types, int limit = 100)
+        public async Task<IEnumerable<Operation>> GetOperations(string address, HashSet<string> types, int limit = 100)
         {
             var account = await Accounts.GetAsync(address);
-            var result = new List<IOperation>(limit * 2);
+            var result = new List<Operation>(limit * 2);
 
             switch (account)
             {
@@ -474,6 +475,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetLastReveals(account, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.System)
+                        ? Operations.GetLastSystemOps(account, limit)
+                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+
                     await Task.WhenAll(
                         endorsements,
                         proposals,
@@ -485,7 +490,8 @@ namespace Tzkt.Api.Repositories
                         delegations,
                         originations,
                         transactions,
-                        reveals);
+                        reveals,
+                        system);
 
                     result.AddRange(endorsements.Result);
                     result.AddRange(proposals.Result);
@@ -498,6 +504,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
                     result.AddRange(reveals.Result);
+                    result.AddRange(system.Result);
 
                     break;
                 case RawUser user:
@@ -522,18 +529,24 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetLastReveals(account, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.System)
+                        ? Operations.GetLastSystemOps(account, limit)
+                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+
                     await Task.WhenAll(
                         userActivations,
                         userDelegations,
                         userOriginations,
                         userTransactions,
-                        userReveals);
+                        userReveals,
+                        userSystem);
 
                     result.AddRange(userActivations.Result);
                     result.AddRange(userDelegations.Result);
                     result.AddRange(userOriginations.Result);
                     result.AddRange(userTransactions.Result);
                     result.AddRange(userReveals.Result);
+                    result.AddRange(userSystem.Result);
 
                     break;
                 case RawContract contract:
@@ -554,16 +567,22 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetLastReveals(account, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.System)
+                        ? Operations.GetLastSystemOps(account, limit)
+                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+
                     await Task.WhenAll(
                         contractDelegations,
                         contractOriginations,
                         contractTransactions,
-                        contractReveals);
+                        contractReveals,
+                        contractSystem);
 
                     result.AddRange(contractDelegations.Result);
                     result.AddRange(contractOriginations.Result);
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
+                    result.AddRange(contractSystem.Result);
 
                     break;
             }
@@ -571,10 +590,10 @@ namespace Tzkt.Api.Repositories
             return result.OrderByDescending(x => x.Id).Take(limit);
         }
 
-        public async Task<IEnumerable<IOperation>> GetOperations(string address, HashSet<string> types, int fromLevel, int limit = 100)
+        public async Task<IEnumerable<Operation>> GetOperations(string address, HashSet<string> types, int fromLevel, int limit = 100)
         {
             var account = await Accounts.GetAsync(address);
-            var result = new List<IOperation>(limit * 2);
+            var result = new List<Operation>(limit * 2);
 
             switch (account)
             {
@@ -624,6 +643,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetLastReveals(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.System)
+                        ? Operations.GetLastSystemOps(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+
                     await Task.WhenAll(
                         endorsements,
                         proposals,
@@ -635,7 +658,8 @@ namespace Tzkt.Api.Repositories
                         delegations,
                         originations,
                         transactions,
-                        reveals);
+                        reveals,
+                        system);
 
                     result.AddRange(endorsements.Result);
                     result.AddRange(proposals.Result);
@@ -648,6 +672,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
                     result.AddRange(reveals.Result);
+                    result.AddRange(system.Result);
 
                     break;
                 case RawUser user:
@@ -672,18 +697,24 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetLastReveals(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.System)
+                        ? Operations.GetLastSystemOps(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+
                     await Task.WhenAll(
                         userActivations,
                         userDelegations,
                         userOriginations,
                         userTransactions,
-                        userReveals);
+                        userReveals,
+                        userSystem);
 
                     result.AddRange(userActivations.Result);
                     result.AddRange(userDelegations.Result);
                     result.AddRange(userOriginations.Result);
                     result.AddRange(userTransactions.Result);
                     result.AddRange(userReveals.Result);
+                    result.AddRange(userSystem.Result);
 
                     break;
                 case RawContract contract:
@@ -704,16 +735,22 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetLastReveals(account, fromLevel, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.System)
+                        ? Operations.GetLastSystemOps(account, fromLevel, limit)
+                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+
                     await Task.WhenAll(
                         contractDelegations,
                         contractOriginations,
                         contractTransactions,
-                        contractReveals);
+                        contractReveals,
+                        contractSystem);
 
                     result.AddRange(contractDelegations.Result);
                     result.AddRange(contractOriginations.Result);
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
+                    result.AddRange(contractSystem.Result);
 
                     break;
             }

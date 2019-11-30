@@ -21,7 +21,7 @@ namespace Tzkt.Api.Repositories
         }
 
         #region operations
-        public async Task<IEnumerable<IOperation>> Get(string hash)
+        public async Task<IEnumerable<Operation>> Get(string hash)
         {
             #region test manager operations
             var delegations = GetDelegations(hash);
@@ -31,7 +31,7 @@ namespace Tzkt.Api.Repositories
 
             await Task.WhenAll(delegations, originations, transactions, reveals);
 
-            var managerOps = ((IEnumerable<IOperation>)delegations.Result)
+            var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
                 .Concat(transactions.Result)
                 .Concat(reveals.Result);
@@ -78,10 +78,10 @@ namespace Tzkt.Api.Repositories
                 return nonceRevelation.Result;
             #endregion
 
-            return new List<IOperation>(0);
+            return new List<Operation>(0);
         }
 
-        public async Task<IEnumerable<IOperation>> Get(string hash, int counter)
+        public async Task<IEnumerable<Operation>> Get(string hash, int counter)
         {
             var delegations = GetDelegations(hash, counter);
             var originations = GetOriginations(hash, counter);
@@ -93,17 +93,17 @@ namespace Tzkt.Api.Repositories
             if (reveals.Result.Any())
                 return reveals.Result;
 
-            var managerOps = ((IEnumerable<IOperation>)delegations.Result)
+            var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
                 .Concat(transactions.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
 
-            return new List<IOperation>(0);
+            return new List<Operation>(0);
         }
 
-        public async Task<IEnumerable<IOperation>> Get(string hash, int counter, int nonce)
+        public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce)
         {
             var delegations = GetDelegations(hash, counter, nonce);
             var originations = GetOriginations(hash, counter, nonce);
@@ -120,7 +120,7 @@ namespace Tzkt.Api.Repositories
             if (transactions.Result.Any())
                 return transactions.Result;
 
-            return new List<IOperation>(0);
+            return new List<Operation>(0);
         }
         #endregion
 

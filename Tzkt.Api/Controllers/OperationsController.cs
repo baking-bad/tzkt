@@ -22,19 +22,19 @@ namespace Tzkt.Api.Controllers
 
         #region operations
         [HttpGet("{hash}")]
-        public Task<IEnumerable<IOperation>> Get([OpHash] string hash)
+        public Task<IEnumerable<Operation>> Get([OpHash] string hash)
         {
             return Operations.Get(hash);
         }
 
         [HttpGet("{hash}/{counter}")]
-        public Task<IEnumerable<IOperation>> Get([OpHash] string hash, [Min(0)] int counter)
+        public Task<IEnumerable<Operation>> Get([OpHash] string hash, [Min(0)] int counter)
         {
             return Operations.Get(hash, counter);
         }
 
         [HttpGet("{hash}/{counter}/{nonce}")]
-        public Task<IEnumerable<IOperation>> Get([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce)
+        public Task<IEnumerable<Operation>> Get([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce)
         {
             return Operations.Get(hash, counter, nonce);
         }

@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class NonceRevelationOperation : IOperation
+    public class NonceRevelationOperation : Operation
     {
-        public string Type => "nonce_revelation";
+        public override string Type => "nonce_revelation";
 
-        public int Id { get; set; }
+        public override int Id { get; set; }
 
         public int Level { get; set; }
 

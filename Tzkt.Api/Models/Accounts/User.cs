@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class User : IAccount
+    public class User : Account
     {
-        public string Type => "user";
+        public override string Type => "user";
 
         public string Alias { get; set; }
 
@@ -42,6 +42,6 @@ namespace Tzkt.Api.Models
 
         public IEnumerable<RelatedContract> Contracts { get; set; }
 
-        public IEnumerable<IOperation> Operations { get; set; }
+        public IEnumerable<Operation> Operations { get; set; }
     }
 }

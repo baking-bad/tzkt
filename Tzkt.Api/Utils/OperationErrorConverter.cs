@@ -9,9 +9,9 @@ using Tzkt.Api.Models;
 
 namespace Tzkt.Api
 {
-    class OperationErrorConverter : JsonConverter<IOperationError>
+    class OperationErrorConverter : JsonConverter<OperationError>
     {
-        public override IOperationError Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override OperationError Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var sideReader = reader;
 
@@ -28,7 +28,7 @@ namespace Tzkt.Api
             };
         }
 
-        public override void Write(Utf8JsonWriter writer, IOperationError value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, OperationError value, JsonSerializerOptions options)
         {
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
         }
@@ -44,7 +44,7 @@ namespace Tzkt.Api
             Options.Converters.Add(new OperationErrorConverter());
         }
 
-        public static List<IOperationError> Deserialize(string json)
-            => JsonSerializer.Deserialize<List<IOperationError>>(json, Options);
+        public static List<OperationError> Deserialize(string json)
+            => JsonSerializer.Deserialize<List<OperationError>>(json, Options);
     }
 }

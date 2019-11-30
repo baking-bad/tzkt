@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 
@@ -22,19 +21,19 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet]
-        public Task<IEnumerable<IAccount>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<Account>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
             return Accounts.Get(n, p * n);
         }
 
         [HttpGet("{address}")]
-        public Task<IAccount> Get([Address] string address)
+        public Task<Account> Get([Address] string address)
         {
             return Accounts.Get(address);
         }
 
         [HttpGet("{address}/profile")]
-        public Task<IAccount> GetProfile([Address] string address)
+        public Task<Account> GetProfile([Address] string address)
         {
             return Accounts.GetProfile(address);
         }
@@ -52,7 +51,7 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("{address}/operations")]
-        public Task<IEnumerable<IOperation>> GetOperations([Address] string address, string type, [Min(0)] int from = 0, [Range(0, 1000)] int n = 100)
+        public Task<IEnumerable<Operation>> GetOperations([Address] string address, string type, [Min(0)] int from = 0, [Range(0, 1000)] int n = 100)
         {
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 

@@ -8,9 +8,9 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Models
 {
-    public class Contract : IAccount
+    public class Contract : Account
     {
-        public string Type => "contract";
+        public override string Type => "contract";
 
         public string Kind { get; set; }
 
@@ -44,6 +44,6 @@ namespace Tzkt.Api.Models
 
         public IEnumerable<RelatedContract> Contracts { get; set; }
 
-        public IEnumerable<IOperation> Operations { get; set; }
+        public IEnumerable<Operation> Operations { get; set; }
     }
 }

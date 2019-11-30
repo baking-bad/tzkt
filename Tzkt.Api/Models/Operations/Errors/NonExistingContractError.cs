@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class NonExistingContractError : IOperationError
+    public class NonExistingContractError : OperationError
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; }
+        public override string Type { get; set; }
 
         [JsonPropertyName("contract")]
         public string Contract { get; set; }

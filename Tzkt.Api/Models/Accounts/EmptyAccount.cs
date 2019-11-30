@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class EmptyAccount : IAccount
+    public class EmptyAccount : Account
     {
-        public string Type => "empty";
+        public override string Type => "empty";
 
         public string Address { get; set; }
 

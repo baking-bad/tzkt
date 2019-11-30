@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class BalanceTooLowError : IOperationError
+    public class BalanceTooLowError : OperationError
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; }
+        public override string Type { get; set; }
 
         [JsonPropertyName("balance")]
         public long Balance { get; set; }

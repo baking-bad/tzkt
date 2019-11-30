@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class Delegate : IAccount
+    public class Delegate : Account
     {
-        public string Type => "delegate";
+        public override string Type => "delegate";
 
         public bool Active { get; set; }
 
@@ -70,6 +70,6 @@ namespace Tzkt.Api.Models
 
         public IEnumerable<Delegator> Delegators { get; set; }
 
-        public IEnumerable<IOperation> Operations { get; set; }
+        public IEnumerable<Operation> Operations { get; set; }
     }
 }

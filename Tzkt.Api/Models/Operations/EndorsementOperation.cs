@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class EndorsementOperation : IOperation
+    public class EndorsementOperation : Operation
     {
-        public string Type => "endorsement";
+        public override string Type => "endorsement";
 
-        public int Id { get; set; }
+        public override int Id { get; set; }
 
         public int Level { get; set; }
 

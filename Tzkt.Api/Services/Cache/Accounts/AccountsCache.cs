@@ -117,8 +117,6 @@ namespace Tzkt.Api.Services.Cache
         #region metadata
         public AccountMetadata GetMetadata(int id) => Metadata[id];
 
-        public string GetAliasName(int id) => Metadata[id]?.Alias;
-
         public Alias GetAlias(int id) => new Alias
         {
             Address = Get(id).Address,

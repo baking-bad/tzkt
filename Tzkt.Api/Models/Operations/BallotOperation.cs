@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class BallotOperation : IOperation
+    public class BallotOperation : Operation
     {
-        public string Type => "ballot";
+        public override string Type => "ballot";
 
-        public int Id { get; set; }
+        public override int Id { get; set; }
 
         public int Level { get; set; }
 
