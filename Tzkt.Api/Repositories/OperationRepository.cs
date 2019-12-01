@@ -349,7 +349,7 @@ namespace Tzkt.Api.Repositories
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
                 LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     ""SenderId"" = @accountId
-                {Pagination(sort, offset, offsetMode, limit)}";
+                {Pagination("op", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -491,7 +491,7 @@ namespace Tzkt.Api.Repositories
                 LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
                 LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
                 WHERE     ""SenderId"" = @accountId
-                {Pagination(sort, offset, offsetMode, limit)}";
+                {Pagination("op", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -1929,6 +1929,38 @@ namespace Tzkt.Api.Repositories
             });
         }
         #endregion
+
+        public string Pagination(string alias, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        {
+            var sortMode = sort == SortMode.Ascending ? "" : "DESC";
+
+            if (offset == 0)
+            {
+                return $@"
+                    ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
+                    LIMIT    {limit}";
+            }
+
+            if (offsetMode == OffsetMode.Id)
+            {
+                return sort == SortMode.Ascending
+                    ? $@"
+                        AND      {alias}.""Id"" > {offset}
+                        ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
+                        LIMIT    {limit}"
+                    : $@"
+                        AND      {alias}.""Id"" < {offset}
+                        ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
+                        LIMIT    {limit}";
+            }
+
+            var offsetValue = offsetMode == OffsetMode.Page ? limit * offset : offset;
+
+            return $@"
+                ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
+                OFFSET   {offsetValue}
+                LIMIT    {limit}";
+        }
 
         public string Pagination(SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
