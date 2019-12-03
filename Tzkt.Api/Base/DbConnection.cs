@@ -13,11 +13,6 @@ namespace Tzkt.Api
     {
         readonly string ConnectionString;
 
-        static DbConnection()
-        {
-            SqlMapper.AddTypeHandler(new DateTimeHandler());
-        }
-
         protected DbConnection(IConfiguration config)
         {
             ConnectionString = config.GetConnectionString("DefaultConnection");
