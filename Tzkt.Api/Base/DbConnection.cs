@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
@@ -11,6 +12,11 @@ namespace Tzkt.Api
     public abstract class DbConnection
     {
         readonly string ConnectionString;
+
+        static DbConnection()
+        {
+            SqlMapper.AddTypeHandler(new DateTimeHandler());
+        }
 
         protected DbConnection(IConfiguration config)
         {
