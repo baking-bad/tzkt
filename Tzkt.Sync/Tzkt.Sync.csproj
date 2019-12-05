@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <UserSecretsId>dotnet-Tzkt.Sync-0D5638DC-A8DD-449C-8F4B-5DD8ED259849</UserSecretsId>
   </PropertyGroup>
 
