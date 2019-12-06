@@ -24,7 +24,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(int level, bool operations = false)
         {
             var sql = @"
-                SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""BakerId"", ""RevelationId""
+                SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
                 FROM    ""Blocks""
                 WHERE   ""Level"" = @level
                 LIMIT   1";
@@ -41,6 +41,8 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 Priority = row.Priority,
                 Validations = row.Validations,
+                Reward = row.Reward,
+                Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null
             };
@@ -54,7 +56,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(string hash, bool operations = false)
         {
             var sql = @"
-                SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""BakerId"", ""RevelationId""
+                SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
                 FROM    ""Blocks""
                 WHERE   ""Hash"" = @hash::character(51)
                 LIMIT   1";
@@ -71,6 +73,8 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 Priority = row.Priority,
                 Validations = row.Validations,
+                Reward = row.Reward,
+                Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null
             };
@@ -85,7 +89,7 @@ namespace Tzkt.Api.Repositories
         {
 
             var sql = @"
-                SELECT  ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""BakerId"", ""RevelationId""
+                SELECT  ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
                 FROM    ""Blocks""
                 ORDER BY ""Level""
                 OFFSET   @offset
@@ -102,6 +106,8 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 Priority = row.Priority,
                 Validations = row.Validations,
+                Reward = row.Reward,
+                Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null
             });

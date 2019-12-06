@@ -91,6 +91,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount++;
 
             block.Operations |= Operations.Delegations;
+            block.Fees += Delegation.BakerFee;
 
             sender.Counter = Math.Max(sender.Counter, Delegation.Counter);
             #endregion

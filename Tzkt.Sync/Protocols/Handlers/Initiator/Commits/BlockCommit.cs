@@ -15,6 +15,7 @@ namespace Tzkt.Sync.Protocols.Initiator
         {
             Block = new Block
             {
+                Id = await Cache.NextCounterAsync(),
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol),

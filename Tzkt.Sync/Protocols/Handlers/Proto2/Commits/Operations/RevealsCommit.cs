@@ -82,6 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             sender.RevealsCount++;
 
             block.Operations |= Operations.Reveals;
+            block.Fees += Reveal.BakerFee;
 
             sender.Counter = Math.Max(sender.Counter, Reveal.Counter);
             #endregion

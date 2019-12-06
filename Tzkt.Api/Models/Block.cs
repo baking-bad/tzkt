@@ -18,7 +18,11 @@ namespace Tzkt.Api.Models
         public int Priority { get; set; }
         
         public int Validations { get; set; }
-        
+
+        public long Reward { get; set; }
+
+        public long Fees { get; set; }
+
         public bool NonceRevealed { get; set; }
 
         public Alias Baker { get; set; }

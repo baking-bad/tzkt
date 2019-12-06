@@ -167,6 +167,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (target != null && target != sender) target.TransactionsCount++;
 
             block.Operations |= Operations.Transactions;
+            block.Fees += Transaction.BakerFee;
 
             sender.Counter = Math.Max(sender.Counter, Transaction.Counter);
             #endregion

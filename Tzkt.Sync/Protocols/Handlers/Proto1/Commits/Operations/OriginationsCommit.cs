@@ -127,6 +127,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (contract != null) contract.OriginationsCount++;
 
             block.Operations |= Operations.Originations;
+            block.Fees += Origination.BakerFee;
 
             sender.Counter = Math.Max(sender.Counter, Origination.Counter);
             #endregion

@@ -238,6 +238,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Events")
                         .HasColumnType("integer");
 
+                    b.Property<long>("Fees")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Hash")
                         .IsRequired()
                         .HasColumnType("character(51)")
@@ -261,6 +264,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int?>("RevelationId")
                         .HasColumnType("integer");
+
+                    b.Property<long>("Reward")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp without time zone");

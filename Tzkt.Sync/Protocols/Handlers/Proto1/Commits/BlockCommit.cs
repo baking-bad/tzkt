@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class BlockCommit : ProtocolCommit
     {
-        public Block Block { get; protected set; }
+        public Block Block { get; private set; }
 
         BlockCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -29,13 +29,15 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Block = new Block
             {
+                Id = await Cache.NextCounterAsync(),
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
                 Protocol = protocol,
                 Timestamp = rawBlock.Header.Timestamp,
                 Priority = rawBlock.Header.Priority,
                 Baker = await Cache.GetDelegateAsync(rawBlock.Metadata.Baker),
-                Events = events
+                Events = events,
+                Reward = protocol.BlockReward
             };
         }
 
@@ -56,8 +58,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(baker);
             #endregion
 
-            baker.Balance += Block.Protocol.BlockReward;
-            baker.FrozenRewards += Block.Protocol.BlockReward;
+            baker.Balance += Block.Reward;
+            baker.FrozenRewards += Block.Reward;
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
 
             var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
@@ -86,8 +88,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(baker);
             #endregion
 
-            baker.Balance -= Block.Protocol.BlockReward;
-            baker.FrozenRewards -= Block.Protocol.BlockReward;
+            baker.Balance -= Block.Reward;
+            baker.FrozenRewards -= Block.Reward;
             baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
 
             if (Block.Events.HasFlag(BlockEvents.ProtocolBegin))

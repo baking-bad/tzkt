@@ -18,6 +18,9 @@ namespace Tzkt.Data.Models
         public BlockEvents Events { get; set; }
         public Operations Operations { get; set; }
 
+        public long Reward { get; set; }
+        public long Fees { get; set; }
+
         public int? BakerId { get; set; }
         public int? RevelationId { get; set; }
         public int? ResetDeactivation { get; set; }

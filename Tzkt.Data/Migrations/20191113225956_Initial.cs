@@ -193,6 +193,8 @@ namespace Tzkt.Data.Migrations
                     Validations = table.Column<int>(nullable: false),
                     Events = table.Column<int>(nullable: false),
                     Operations = table.Column<int>(nullable: false),
+                    Reward = table.Column<long>(nullable: false),
+                    Fees = table.Column<long>(nullable: false),
                     BakerId = table.Column<int>(nullable: true),
                     RevelationId = table.Column<int>(nullable: true),
                     ResetDeactivation = table.Column<int>(nullable: true)

@@ -10,7 +10,6 @@ namespace Tzkt.Sync.Protocols.Proto5
     class BlockCommit : ProtocolCommit
     {
         public Block Block { get; private set; }
-        public int EndorsedSlots { get; private set; }
 
         BlockCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -38,17 +37,19 @@ namespace Tzkt.Sync.Protocols.Proto5
             if (rawBlock.Metadata.Deactivated.Count > 0)
                 events |= BlockEvents.Deactivations;
 
+            var validations = rawBlock.Operations[0].Sum(x => (x.Contents[0] as RawEndorsementContent).Metadata.Slots.Count);
             Block = new Block
             {
+                Id = await Cache.NextCounterAsync(),
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
                 Protocol = protocol,
                 Timestamp = rawBlock.Header.Timestamp,
                 Priority = rawBlock.Header.Priority,
                 Baker = await Cache.GetDelegateAsync(rawBlock.Metadata.Baker),
-                Events = events
+                Events = events,
+                Reward = protocol.BlockReward * (8 + 2 * validations / protocol.EndorsersPerBlock) / 10 / (rawBlock.Header.Priority + 1)
             };
-            EndorsedSlots = rawBlock.Operations[0].Sum(x => (x.Contents[0] as RawEndorsementContent).Metadata.Slots.Count);
         }
 
         public async Task Init(Block block)
@@ -56,7 +57,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             Block = block;
             Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
             Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
-            EndorsedSlots = block.Endorsements?.Count > 0 ? block.Endorsements.Sum(x => x.Slots) : 0;
         }
 
         public override async Task Apply()
@@ -70,10 +70,8 @@ namespace Tzkt.Sync.Protocols.Proto5
             Db.TryAttach(baker);
             #endregion
 
-            var reward = proto.BlockReward * (8 + 2 * EndorsedSlots / proto.EndorsersPerBlock) / 10 / (block.Priority + 1);
-
-            baker.Balance += reward;
-            baker.FrozenRewards += reward;
+            baker.Balance += Block.Reward;
+            baker.FrozenRewards += Block.Reward;
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
 
             var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
@@ -103,10 +101,8 @@ namespace Tzkt.Sync.Protocols.Proto5
             Db.TryAttach(baker);
             #endregion
 
-            var reward = proto.BlockReward * (8 + 2 * EndorsedSlots / proto.EndorsersPerBlock) / 10 / (Block.Priority + 1);
-
-            baker.Balance -= reward;
-            baker.FrozenRewards -= reward;
+            baker.Balance -= Block.Reward;
+            baker.FrozenRewards -= Block.Reward;
             baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
 
             if (Block.Events.HasFlag(BlockEvents.ProtocolBegin))
