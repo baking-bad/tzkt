@@ -192,6 +192,8 @@ namespace Tzkt.Sync
                         b.Revelation = null;
                         b.Revelations = null;
                         b.Transactions = null;
+                        b.SystemOperations = null;
+                        b.RevelationPenalties = null;
                         break;
                     case VotingPeriod period:
                         period.Epoch = null;

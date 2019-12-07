@@ -15,6 +15,9 @@ namespace Tzkt.Data.Models
         public long BalanceChange { get; set; }
 
         #region relations
+        [ForeignKey(nameof(Level))]
+        public Block Block { get; set; }
+
         [ForeignKey(nameof(AccountId))]
         public Account Account { get; set; }
         #endregion
@@ -40,8 +43,16 @@ namespace Tzkt.Data.Models
             #endregion
             
             #region keys
-            modelBuilder.Entity<NonceRevelationOperation>()
+            modelBuilder.Entity<SystemOperation>()
                 .HasKey(x => x.Id);
+            #endregion
+
+            #region relations
+            modelBuilder.Entity<SystemOperation>()
+                .HasOne(x => x.Block)
+                .WithMany(x => x.SystemOperations)
+                .HasForeignKey(x => x.Level)
+                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

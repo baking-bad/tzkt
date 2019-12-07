@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Apply()
         {
+            var block = await Cache.GetCurrentBlockAsync();
             var state = await Cache.GetAppStateAsync();
 
             var emptiedManagers = await Db.Contracts
@@ -39,9 +40,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 manager.Counter = state.ManagerCounter;
                 manager.SystemOpsCount++;
 
+                block.Operations |= Operations.System;
                 Db.SystemOps.Add(new SystemOperation
                 {
                     Id = await Cache.NextCounterAsync(),
+                    Block = block,
                     Level = state.Level,
                     Timestamp = state.Timestamp,
                     Account = manager,

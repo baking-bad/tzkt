@@ -67,9 +67,8 @@ namespace Tzkt.Sync.Protocols
         {
             var rawBlock = block as RawBlock;
 
-            await BootstrapCommit.Apply(this, rawBlock);
-
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
+            await BootstrapCommit.Apply(this, blockCommit.Block, rawBlock);
             await VotingCommit.Apply(this, rawBlock);
 
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
@@ -80,9 +79,8 @@ namespace Tzkt.Sync.Protocols
             var currBlock = await Cache.GetCurrentBlockAsync();
 
             await VotingCommit.Revert(this, currBlock);
-            await BlockCommit.Revert(this, currBlock);
-
             await BootstrapCommit.Revert(this, currBlock);
+            await BlockCommit.Revert(this, currBlock);
 
             await StateCommit.Revert(this, currBlock);
         }

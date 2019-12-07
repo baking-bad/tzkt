@@ -1930,6 +1930,65 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
+        #region revelation penalty
+        public async Task<int> GetRevelationPenaltiesCount()
+        {
+            var sql = @"
+                SELECT   COUNT(*)
+                FROM     ""RevelationPenaltyOps""";
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql);
+        }
+
+        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(int limit = 100, int offset = 0)
+        {
+            var sql = @"
+                SELECT    *
+                FROM      ""RevelationPenaltyOps""
+                ORDER BY  ""Id""
+                OFFSET    @offset
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { limit, offset });
+
+            return rows.Select(row => new RevelationPenaltyOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Baker = Accounts.GetAlias(row.BakerId),
+                MissedLevel = row.MissedLevel,
+                LostReward = row.LostReward,
+                LostFees = row.LostFees
+            });
+        }
+
+        public async Task<IEnumerable<RevelationPenaltyOperation>> GetLastRevelationPenalties(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        {
+            var sql = $@"
+                SELECT    *
+                FROM      ""RevelationPenaltyOps""
+                WHERE     ""BakerId"" = @accountId
+                {Pagination(sort, offset, offsetMode, limit)}";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
+
+            return rows.Select(row => new RevelationPenaltyOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Baker = Accounts.GetAlias(row.BakerId),
+                MissedLevel = row.MissedLevel,
+                LostReward = row.LostReward,
+                LostFees = row.LostFees
+            });
+        }
+        #endregion
+
         public string Pagination(string alias, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sortMode = sort == SortMode.Ascending ? "" : "DESC";

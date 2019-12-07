@@ -5,26 +5,25 @@ namespace Tzkt.Data.Models
     [Flags]
     public enum Operations
     {
-        None                = 0b_0000_0000_0000,
-        Voting              = 0b_0000_0000_0110,
-        Anonymous           = 0b_0000_0111_1000,
-        Manager             = 0b_0111_1000_0000,
-        All                 = 0b_0111_1111_1111,
+        None                = 0b_0000_0000_0000_0000,
 
-        Endorsements        = 0b_0000_0000_0001,
+        Endorsements        = 0b_0000_0000_0000_0001,
 
-        Ballots             = 0b_0000_0000_0010,
-        Proposals           = 0b_0000_0000_0100,
+        Ballots             = 0b_0000_0000_0000_0010,
+        Proposals           = 0b_0000_0000_0000_0100,
 
-        Activations         = 0b_0000_0000_1000,
-        DoubleBakings       = 0b_0000_0001_0000,
-        DoubleEndorsings    = 0b_0000_0010_0000,
-        Revelations         = 0b_0000_0100_0000,
+        Activations         = 0b_0000_0000_0000_1000,
+        DoubleBakings       = 0b_0000_0000_0001_0000,
+        DoubleEndorsings    = 0b_0000_0000_0010_0000,
+        Revelations         = 0b_0000_0000_0100_0000,
 
-        Transactions        = 0b_0000_1000_0000,
-        Delegations         = 0b_0001_0000_0000,
-        Originations        = 0b_0010_0000_0000,
-        Reveals             = 0b_0100_0000_0000
+        Transactions        = 0b_0000_0000_1000_0000,
+        Delegations         = 0b_0000_0001_0000_0000,
+        Originations        = 0b_0000_0010_0000_0000,
+        Reveals             = 0b_0000_0100_0000_0000,
+
+        System              = 0b_0000_1000_0000_0000,
+        RevelationPenalty   = 0b_0001_0000_0000_0000
     }
 
     [Flags]

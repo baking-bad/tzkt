@@ -53,6 +53,9 @@ namespace Tzkt.Data.Models
         public List<OriginationOperation> Originations { get; set; }
         public List<TransactionOperation> Transactions { get; set; }
         public List<RevealOperation> Reveals { get; set; }
+
+        public List<SystemOperation> SystemOperations { get; set; }
+        public List<RevelationPenaltyOperation> RevelationPenalties { get; set; }
         #endregion
     }
 

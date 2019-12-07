@@ -889,6 +889,40 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("RevealOps");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.RevelationPenaltyOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("LostFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostReward")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MissedLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BakerId");
+
+                    b.HasIndex("Level");
+
+                    b.ToTable("RevelationPenaltyOps");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.SystemOperation", b =>
                 {
                     b.Property<int>("Id")
@@ -1245,6 +1279,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ProposalsCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("RevelationPenaltiesCount")
+                        .HasColumnType("integer");
+
                     b.Property<long>("StakingBalance")
                         .HasColumnType("bigint");
 
@@ -1537,11 +1574,34 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.RevelationPenaltyOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Delegate", "Baker")
+                        .WithMany()
+                        .HasForeignKey("BakerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("RevelationPenalties")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.SystemOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("SystemOperations")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

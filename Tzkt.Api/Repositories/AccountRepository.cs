@@ -73,6 +73,7 @@ namespace Tzkt.Api.Repositories
                         NumDoubleEndorsing = delegat.DoubleEndorsingCount,
                         NumEndorsements = delegat.EndorsementsCount,
                         NumNonceRevelations = delegat.NonceRevelationsCount,
+                        NumRevelationPenalties = delegat.RevelationPenaltiesCount,
                         NumOriginations = delegat.OriginationsCount,
                         NumProposals = delegat.ProposalsCount,
                         NumReveals = delegat.RevealsCount,
@@ -288,6 +289,7 @@ namespace Tzkt.Api.Repositories
                             NumDoubleEndorsing = row.DoubleEndorsingCount,
                             NumEndorsements = row.EndorsementsCount,
                             NumNonceRevelations = row.NonceRevelationsCount,
+                            NumRevelationPenalties = row.RevelationPenaltiesCount,
                             NumOriginations = row.OriginationsCount,
                             NumProposals = row.ProposalsCount,
                             NumReveals = row.RevealsCount,
@@ -498,6 +500,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetLastSystemOps(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<SystemOperation>());
 
+                    var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
+                        ? Operations.GetLastRevelationPenalties(account, sort, offset, OffsetMode.Id, limit)
+                        : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
+
                     await Task.WhenAll(
                         endorsements,
                         proposals,
@@ -510,7 +516,8 @@ namespace Tzkt.Api.Repositories
                         originations,
                         transactions,
                         reveals,
-                        system);
+                        system,
+                        revelationPenalties);
 
                     result.AddRange(endorsements.Result);
                     result.AddRange(proposals.Result);
@@ -524,6 +531,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(transactions.Result);
                     result.AddRange(reveals.Result);
                     result.AddRange(system.Result);
+                    result.AddRange(revelationPenalties.Result);
 
                     break;
                 case RawUser user:

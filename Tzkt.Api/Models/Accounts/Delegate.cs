@@ -56,6 +56,8 @@ namespace Tzkt.Api.Models
 
         public int NumNonceRevelations { get; set; }
 
+        public int NumRevelationPenalties { get; set; }
+
         public int NumDelegations { get; set; }
 
         public int NumOriginations { get; set; }

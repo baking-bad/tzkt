@@ -12,15 +12,17 @@ namespace Tzkt.Sync.Protocols.Initiator
         public int Level { get; private set; }
         public DateTime Timestamp { get; private set; }
         public List<Account> BootstrapedAccounts { get; private set; }
+        public Block Block { get; private set; }
 
         BootstrapCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(RawBlock rawBlock)
+        public async Task Init(Block block, RawBlock rawBlock)
         {
             var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
             BootstrapedAccounts = new List<Account>(65);
             Timestamp = rawBlock.Header.Timestamp;
             Level = rawBlock.Level;
+            Block = block;
 
             var stream = await Proto.Node.GetContractsAsync(level: 1);
             var contracts = await (Proto.Serializer as Serializer).DeserializeContracts(stream);
@@ -118,9 +120,11 @@ namespace Tzkt.Sync.Protocols.Initiator
             foreach (var account in BootstrapedAccounts)
             {
                 account.SystemOpsCount++;
+                Block.Operations |= Operations.System;
                 Db.SystemOps.Add(new SystemOperation
                 {
                     Id = await Cache.NextCounterAsync(),
+                    Block = Block,
                     Level = Level,
                     Timestamp = Timestamp,
                     Account = account,
@@ -142,10 +146,10 @@ namespace Tzkt.Sync.Protocols.Initiator
         }
 
         #region static
-        public static async Task<BootstrapCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
+        public static async Task<BootstrapCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
         {
             var commit = new BootstrapCommit(proto);
-            await commit.Init(rawBlock);
+            await commit.Init(block, rawBlock);
             await commit.Apply();
 
             return commit;

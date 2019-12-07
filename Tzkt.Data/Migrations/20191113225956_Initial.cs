@@ -251,7 +251,8 @@ namespace Tzkt.Data.Migrations
                     ProposalsCount = table.Column<int>(nullable: true),
                     DoubleBakingCount = table.Column<int>(nullable: true),
                     DoubleEndorsingCount = table.Column<int>(nullable: true),
-                    NonceRevelationsCount = table.Column<int>(nullable: true)
+                    NonceRevelationsCount = table.Column<int>(nullable: true),
+                    RevelationPenaltiesCount = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -525,6 +526,36 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RevelationPenaltyOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    BakerId = table.Column<int>(nullable: false),
+                    MissedLevel = table.Column<int>(nullable: false),
+                    LostReward = table.Column<long>(nullable: false),
+                    LostFees = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RevelationPenaltyOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RevelationPenaltyOps_Accounts_BakerId",
+                        column: x => x.BakerId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RevelationPenaltyOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SystemOps",
                 columns: table => new
                 {
@@ -544,6 +575,12 @@ namespace Tzkt.Data.Migrations
                         column: x => x.AccountId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SystemOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -1082,6 +1119,16 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RevelationPenaltyOps_BakerId",
+                table: "RevelationPenaltyOps",
+                column: "BakerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RevelationPenaltyOps_Level",
+                table: "RevelationPenaltyOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SystemOps_AccountId",
                 table: "SystemOps",
                 column: "AccountId");
@@ -1227,6 +1274,9 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "RevealOps");
+
+            migrationBuilder.DropTable(
+                name: "RevelationPenaltyOps");
 
             migrationBuilder.DropTable(
                 name: "SystemOps");

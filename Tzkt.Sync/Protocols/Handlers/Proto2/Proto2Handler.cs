@@ -159,6 +159,7 @@ namespace Tzkt.Sync.Protocols
 
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
             await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
+            await RevelationPenaltyCommit.Apply(this, blockCommit.Block, rawBlock);
             await VotingCommit.Apply(this, blockCommit.Block, rawBlock);
             await DeactivationCommit.Apply(this, blockCommit.Block, rawBlock);
 
@@ -288,6 +289,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
                 query = query.Include(x => x.DoubleBakings);
 
+            if (currBlock.Operations.HasFlag(Operations.RevelationPenalty))
+                query = query.Include(x => x.RevelationPenalties);
+
             if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
                 query = query.Include(x => x.CreatedAccounts);
 
@@ -359,6 +363,7 @@ namespace Tzkt.Sync.Protocols
 
             await DeactivationCommit.Revert(this, currBlock);
             await VotingCommit.Revert(this, currBlock);
+            await RevelationPenaltyCommit.Revert(this, currBlock);
             await FreezerCommit.Revert(this, currBlock);
             await BlockCommit.Revert(this, currBlock);
 

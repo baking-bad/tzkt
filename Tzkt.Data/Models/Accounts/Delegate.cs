@@ -22,6 +22,7 @@ namespace Tzkt.Data.Models
         public int DoubleBakingCount { get; set; }
         public int DoubleEndorsingCount { get; set; }
         public int NonceRevelationsCount { get; set; }
+        public int RevelationPenaltiesCount { get; set; }
 
         #region indirect relations
         public List<Account> DelegatedAccounts { get; set; }

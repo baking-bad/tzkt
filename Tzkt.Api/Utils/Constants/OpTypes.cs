@@ -23,6 +23,7 @@ namespace Tzkt.Api
         public const string Reveal = "reveal";
 
         public const string System = "system";
+        public const string RevelationPenalty = "revelation_penalty";
 
         public static readonly HashSet<string> DefaultSet = new HashSet<string>
         {

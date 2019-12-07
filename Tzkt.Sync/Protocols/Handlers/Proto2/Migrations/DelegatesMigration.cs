@@ -41,9 +41,11 @@ namespace Tzkt.Sync.Protocols.Proto2
                 activatedDelegates.Add(delegat.Id, delegat);
 
                 delegat.SystemOpsCount++;
+                block.Operations |= Operations.System;
                 Db.SystemOps.Add(new SystemOperation
                 {
                     Id = await Cache.NextCounterAsync(),
+                    Block = block,
                     Level = block.Level,
                     Timestamp = block.Timestamp,
                     Account = delegat,

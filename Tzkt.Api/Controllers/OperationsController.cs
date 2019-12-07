@@ -180,6 +180,20 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region revelation penalties
+        [HttpGet("revelation_penalties")]
+        public Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        {
+            return Operations.GetRevelationPenalties(n, p * n);
+        }
+
+        [HttpGet("revelation_penalties/count")]
+        public Task<int> GetRevelationPenaltiesCount()
+        {
+            return Operations.GetRevelationPenaltiesCount();
+        }
+        #endregion
+
         #region delegations
         [HttpGet("delegations")]
         public Task<IEnumerable<DelegationOperation>> GetDelegations([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
