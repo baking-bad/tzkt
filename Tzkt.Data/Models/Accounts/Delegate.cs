@@ -16,6 +16,7 @@ namespace Tzkt.Data.Models
         public int Delegators { get; set; }
         public long StakingBalance { get; set; }
 
+        public int BlocksCount { get; set; }
         public int EndorsementsCount { get; set; }
         public int BallotsCount { get; set; }
         public int ProposalsCount { get; set; }

@@ -299,5 +299,19 @@ namespace Tzkt.Api.Controllers
             return Operations.GetSystemOpsCount();
         }
         #endregion
+
+        #region baking
+        [HttpGet("baking")]
+        public Task<IEnumerable<BakingOperation>> GetBaking([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        {
+            return Operations.GetBakings(n, p * n);
+        }
+
+        [HttpGet("baking/count")]
+        public Task<int> GetBakingCount()
+        {
+            return Operations.GetBakingsCount();
+        }
+        #endregion
     }
 }

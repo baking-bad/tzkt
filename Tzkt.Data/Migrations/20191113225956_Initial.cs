@@ -246,6 +246,7 @@ namespace Tzkt.Data.Migrations
                     FrozenFees = table.Column<long>(nullable: true),
                     Delegators = table.Column<int>(nullable: true),
                     StakingBalance = table.Column<long>(nullable: true),
+                    BlocksCount = table.Column<int>(nullable: true),
                     EndorsementsCount = table.Column<int>(nullable: true),
                     BallotsCount = table.Column<int>(nullable: true),
                     ProposalsCount = table.Column<int>(nullable: true),

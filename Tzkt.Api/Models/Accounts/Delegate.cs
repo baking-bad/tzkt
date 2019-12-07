@@ -42,6 +42,8 @@ namespace Tzkt.Api.Models
 
         public int NumDelegators { get; set; }
 
+        public int NumBlocks { get; set; }
+
         public int NumEndorsements { get; set; }
 
         public int NumBallots { get; set; }

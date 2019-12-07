@@ -1249,6 +1249,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("BallotsCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("BlocksCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DeactivationLevel")
                         .HasColumnType("integer");
 

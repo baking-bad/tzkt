@@ -340,7 +340,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetLastBallots(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""Vote"", proposal.""Hash"",
@@ -482,7 +482,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetLastProposals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", proposal.""Hash"",
@@ -593,7 +593,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetLastActivations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<ActivationOperation>> GetActivations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Balance""
@@ -712,7 +712,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetLastDoubleBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
@@ -838,7 +838,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetLastDoubleEndorsings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
@@ -949,7 +949,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetLastNonceRevelations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
@@ -1136,7 +1136,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetLastDelegations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"",
@@ -1440,7 +1440,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetLastOriginations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
@@ -1687,7 +1687,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetLastTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
@@ -1845,7 +1845,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetLastReveals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
@@ -1907,7 +1907,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<SystemOperation>> GetLastSystemOps(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<SystemOperation>> GetSystemOps(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
@@ -1965,7 +1965,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<RevelationPenaltyOperation>> GetLastRevelationPenalties(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    *
@@ -1989,37 +1989,67 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
-        public string Pagination(string alias, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        #region baking
+        public async Task<int> GetBakingsCount()
         {
-            var sortMode = sort == SortMode.Ascending ? "" : "DESC";
+            var sql = @"
+                SELECT   (""Level"" - 1)
+                FROM     ""AppState""";
 
-            if (offset == 0)
-            {
-                return $@"
-                    ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
-                    LIMIT    {limit}";
-            }
-
-            if (offsetMode == OffsetMode.Id)
-            {
-                return sort == SortMode.Ascending
-                    ? $@"
-                        AND      {alias}.""Id"" > {offset}
-                        ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
-                        LIMIT    {limit}"
-                    : $@"
-                        AND      {alias}.""Id"" < {offset}
-                        ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
-                        LIMIT    {limit}";
-            }
-
-            var offsetValue = offsetMode == OffsetMode.Page ? limit * offset : offset;
-
-            return $@"
-                ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
-                OFFSET   {offsetValue}
-                LIMIT    {limit}";
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql);
         }
+
+        public async Task<IEnumerable<BakingOperation>> GetBakings(int limit = 100, int offset = 0)
+        {
+            var sql = @"
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees""
+                FROM      ""Blocks""
+                WHERE     ""BakerId"" IS NOT NULL
+                ORDER BY  ""Id""
+                OFFSET    @offset
+                LIMIT     @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { limit, offset });
+
+            return rows.Select(row => new BakingOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Baker = Accounts.GetAlias(row.BakerId),
+                Block = row.Hash,
+                Priority = row.Priority,
+                Reward = row.Reward,
+                Fees = row.Fees
+            });
+        }
+
+        public async Task<IEnumerable<BakingOperation>> GetBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        {
+            var sql = $@"
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees""
+                FROM      ""Blocks""
+                WHERE     ""BakerId"" = @accountId
+                {Pagination(sort, offset, offsetMode, limit)}";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { accountId = account.Id });
+
+            return rows.Select(row => new BakingOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Baker = Accounts.GetAlias(row.BakerId),
+                Block = row.Hash,
+                Priority = row.Priority,
+                Reward = row.Reward,
+                Fees = row.Fees
+            });
+        }
+        #endregion
 
         public string Pagination(SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
@@ -2049,6 +2079,38 @@ namespace Tzkt.Api.Repositories
 
             return $@"
                 ORDER BY ""Id"" {sortMode} NULLS LAST
+                OFFSET   {offsetValue}
+                LIMIT    {limit}";
+        }
+
+        public string Pagination(string alias, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        {
+            var sortMode = sort == SortMode.Ascending ? "" : "DESC";
+
+            if (offset == 0)
+            {
+                return $@"
+                    ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
+                    LIMIT    {limit}";
+            }
+
+            if (offsetMode == OffsetMode.Id)
+            {
+                return sort == SortMode.Ascending
+                    ? $@"
+                        AND      {alias}.""Id"" > {offset}
+                        ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
+                        LIMIT    {limit}"
+                    : $@"
+                        AND      {alias}.""Id"" < {offset}
+                        ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
+                        LIMIT    {limit}";
+            }
+
+            var offsetValue = offsetMode == OffsetMode.Page ? limit * offset : offset;
+
+            return $@"
+                ORDER BY {alias}.""Id"" {sortMode} NULLS LAST
                 OFFSET   {offsetValue}
                 LIMIT    {limit}";
         }
