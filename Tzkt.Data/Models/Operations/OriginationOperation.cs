@@ -39,6 +39,9 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<OriginationOperation>()
+                .HasIndex(x => x.OriginalSenderId);
+
+            modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.ManagerId);
 
             modelBuilder.Entity<OriginationOperation>()

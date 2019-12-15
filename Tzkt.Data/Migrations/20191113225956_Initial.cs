@@ -291,6 +291,60 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DelegationOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(nullable: false),
+                    Counter = table.Column<int>(nullable: false),
+                    BakerFee = table.Column<long>(nullable: false),
+                    StorageFee = table.Column<long>(nullable: true),
+                    AllocationFee = table.Column<long>(nullable: true),
+                    GasLimit = table.Column<int>(nullable: false),
+                    GasUsed = table.Column<int>(nullable: false),
+                    StorageLimit = table.Column<int>(nullable: false),
+                    StorageUsed = table.Column<int>(nullable: false),
+                    Status = table.Column<byte>(nullable: false),
+                    Errors = table.Column<string>(nullable: true),
+                    OriginalSenderId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
+                    DelegateId = table.Column<int>(nullable: true),
+                    ResetDeactivation = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DelegationOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_Accounts_DelegateId",
+                        column: x => x.DelegateId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_Accounts_OriginalSenderId",
+                        column: x => x.OriginalSenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_Accounts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DoubleBakingOps",
                 columns: table => new
                 {
@@ -432,6 +486,74 @@ namespace Tzkt.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_NonceRevelationOps_Accounts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OriginationOps",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(nullable: false),
+                    Timestamp = table.Column<DateTime>(nullable: false),
+                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(nullable: false),
+                    Counter = table.Column<int>(nullable: false),
+                    BakerFee = table.Column<long>(nullable: false),
+                    StorageFee = table.Column<long>(nullable: true),
+                    AllocationFee = table.Column<long>(nullable: true),
+                    GasLimit = table.Column<int>(nullable: false),
+                    GasUsed = table.Column<int>(nullable: false),
+                    StorageLimit = table.Column<int>(nullable: false),
+                    StorageUsed = table.Column<int>(nullable: false),
+                    Status = table.Column<byte>(nullable: false),
+                    Errors = table.Column<string>(nullable: true),
+                    OriginalSenderId = table.Column<int>(nullable: true),
+                    Nonce = table.Column<int>(nullable: true),
+                    ManagerId = table.Column<int>(nullable: true),
+                    DelegateId = table.Column<int>(nullable: true),
+                    ContractId = table.Column<int>(nullable: true),
+                    Balance = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OriginationOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_Accounts_ContractId",
+                        column: x => x.ContractId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_Accounts_DelegateId",
+                        column: x => x.DelegateId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_Accounts_ManagerId",
+                        column: x => x.ManagerId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_Accounts_OriginalSenderId",
+                        column: x => x.OriginalSenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_OriginationOps_Accounts_SenderId",
                         column: x => x.SenderId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
@@ -605,7 +727,7 @@ namespace Tzkt.Data.Migrations
                     StorageUsed = table.Column<int>(nullable: false),
                     Status = table.Column<byte>(nullable: false),
                     Errors = table.Column<string>(nullable: true),
-                    ParentId = table.Column<int>(nullable: true),
+                    OriginalSenderId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
                     TargetId = table.Column<int>(nullable: true),
                     ResetDeactivation = table.Column<int>(nullable: true),
@@ -622,9 +744,9 @@ namespace Tzkt.Data.Migrations
                         principalColumn: "Level",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_TransactionOps_TransactionOps_ParentId",
-                        column: x => x.ParentId,
-                        principalTable: "TransactionOps",
+                        name: "FK_TransactionOps_Accounts_OriginalSenderId",
+                        column: x => x.OriginalSenderId,
+                        principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -677,128 +799,6 @@ namespace Tzkt.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ProposalOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DelegationOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(nullable: false),
-                    Counter = table.Column<int>(nullable: false),
-                    BakerFee = table.Column<long>(nullable: false),
-                    StorageFee = table.Column<long>(nullable: true),
-                    AllocationFee = table.Column<long>(nullable: true),
-                    GasLimit = table.Column<int>(nullable: false),
-                    GasUsed = table.Column<int>(nullable: false),
-                    StorageLimit = table.Column<int>(nullable: false),
-                    StorageUsed = table.Column<int>(nullable: false),
-                    Status = table.Column<byte>(nullable: false),
-                    Errors = table.Column<string>(nullable: true),
-                    ParentId = table.Column<int>(nullable: true),
-                    Nonce = table.Column<int>(nullable: true),
-                    DelegateId = table.Column<int>(nullable: true),
-                    ResetDeactivation = table.Column<int>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DelegationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_TransactionOps_ParentId",
-                        column: x => x.ParentId,
-                        principalTable: "TransactionOps",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OriginationOps",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(nullable: false),
-                    Timestamp = table.Column<DateTime>(nullable: false),
-                    OpHash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(nullable: false),
-                    Counter = table.Column<int>(nullable: false),
-                    BakerFee = table.Column<long>(nullable: false),
-                    StorageFee = table.Column<long>(nullable: true),
-                    AllocationFee = table.Column<long>(nullable: true),
-                    GasLimit = table.Column<int>(nullable: false),
-                    GasUsed = table.Column<int>(nullable: false),
-                    StorageLimit = table.Column<int>(nullable: false),
-                    StorageUsed = table.Column<int>(nullable: false),
-                    Status = table.Column<byte>(nullable: false),
-                    Errors = table.Column<string>(nullable: true),
-                    ParentId = table.Column<int>(nullable: true),
-                    Nonce = table.Column<int>(nullable: true),
-                    ManagerId = table.Column<int>(nullable: true),
-                    DelegateId = table.Column<int>(nullable: true),
-                    ContractId = table.Column<int>(nullable: true),
-                    Balance = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OriginationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_ContractId",
-                        column: x => x.ContractId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_ManagerId",
-                        column: x => x.ManagerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_TransactionOps_ParentId",
-                        column: x => x.ParentId,
-                        principalTable: "TransactionOps",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_SenderId",
                         column: x => x.SenderId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
@@ -932,9 +932,9 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DelegationOps_ParentId",
+                name: "IX_DelegationOps_OriginalSenderId",
                 table: "DelegationOps",
-                column: "ParentId");
+                column: "OriginalSenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DelegationOps_SenderId",
@@ -1042,9 +1042,9 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OriginationOps_ParentId",
+                name: "IX_OriginationOps_OriginalSenderId",
                 table: "OriginationOps",
-                column: "ParentId");
+                column: "OriginalSenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_SenderId",
@@ -1150,9 +1150,9 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionOps_ParentId",
+                name: "IX_TransactionOps_OriginalSenderId",
                 table: "TransactionOps",
-                column: "ParentId");
+                column: "OriginalSenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_SenderId",
@@ -1283,10 +1283,10 @@ namespace Tzkt.Data.Migrations
                 name: "SystemOps");
 
             migrationBuilder.DropTable(
-                name: "VotingSnapshots");
+                name: "TransactionOps");
 
             migrationBuilder.DropTable(
-                name: "TransactionOps");
+                name: "VotingSnapshots");
 
             migrationBuilder.DropTable(
                 name: "Proposals");

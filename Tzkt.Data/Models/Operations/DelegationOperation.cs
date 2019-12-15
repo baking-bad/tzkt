@@ -30,6 +30,9 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<DelegationOperation>()
+                .HasIndex(x => x.OriginalSenderId);
+
+            modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.DelegateId);
             #endregion
 

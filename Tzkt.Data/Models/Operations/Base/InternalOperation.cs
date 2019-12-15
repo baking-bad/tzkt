@@ -5,12 +5,12 @@ namespace Tzkt.Data.Models.Base
 {
     public class InternalOperation : ManagerOperation
     {
-        public int? ParentId { get; set; }
+        public int? OriginalSenderId { get; set; }
         public int? Nonce { get; set; }
 
         #region relations
-        [ForeignKey(nameof(ParentId))]
-        public TransactionOperation Parent { get; set; }
+        [ForeignKey(nameof(OriginalSenderId))]
+        public Account OriginalSender { get; set; }
         #endregion
     }
 }

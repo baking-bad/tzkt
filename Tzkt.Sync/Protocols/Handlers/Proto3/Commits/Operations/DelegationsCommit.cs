@@ -317,20 +317,28 @@ namespace Tzkt.Sync.Protocols.Proto3
                         }
                         break;
                     case DelegationOperation op:
-                        if (op.Sender?.Id == user.Id)
+                        if (op.Sender?.Id == user.Id || op.OriginalSender?.Id == user.Id)
                         {
-                            op.Sender = delegat;
+                            if (op.Sender?.Id == user.Id)
+                                op.Sender = delegat;
+
+                            if (op.OriginalSender?.Id == user.Id)
+                                op.OriginalSender = delegat;
+
                             touched.Add((op, entry.State));
                         }
                         break;
                     case OriginationOperation op:
-                        if (op.Sender?.Id == user.Id || op.Manager?.Id == user.Id)
+                        if (op.Sender?.Id == user.Id || op.Manager?.Id == user.Id || op.OriginalSender?.Id == user.Id)
                         {
                             if (op.Sender?.Id == user.Id)
                                 op.Sender = delegat;
 
                             if (op.Manager?.Id == user.Id)
                                 op.Manager = delegat;
+
+                            if (op.OriginalSender?.Id == user.Id)
+                                op.OriginalSender = delegat;
 
                             touched.Add((op, entry.State));
                         }
@@ -343,13 +351,16 @@ namespace Tzkt.Sync.Protocols.Proto3
                         }
                         break;
                     case TransactionOperation op:
-                        if (op.Sender?.Id == user.Id || op.Target?.Id == user.Id)
+                        if (op.Sender?.Id == user.Id || op.Target?.Id == user.Id || op.OriginalSender?.Id == user.Id)
                         {
                             if (op.Sender?.Id == user.Id)
                                 op.Sender = delegat;
 
                             if (op.Target?.Id == user.Id)
                                 op.Target = delegat;
+
+                            if (op.OriginalSender?.Id == user.Id)
+                                op.OriginalSender = delegat;
 
                             touched.Add((op, entry.State));
                         }
@@ -427,7 +438,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                         }
                         break;
                     case DelegationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
@@ -435,11 +446,14 @@ namespace Tzkt.Sync.Protocols.Proto3
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
 
+                            if (op.OriginalSender?.Id == delegat.Id)
+                                op.OriginalSender = user;
+
                             touched.Add((op, entry.State));
                         }
                         break;
                     case OriginationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Manager?.Id == delegat.Id || op.Delegate?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Manager?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
@@ -449,6 +463,9 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
+
+                            if (op.OriginalSender?.Id == delegat.Id)
+                                op.OriginalSender = user;
 
                             touched.Add((op, entry.State));
                         }
@@ -461,13 +478,16 @@ namespace Tzkt.Sync.Protocols.Proto3
                         }
                         break;
                     case TransactionOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Target?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Target?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
 
                             if (op.Target?.Id == delegat.Id)
                                 op.Target = user;
+
+                            if (op.OriginalSender?.Id == delegat.Id)
+                                op.OriginalSender = user;
 
                             touched.Add((op, entry.State));
                         }

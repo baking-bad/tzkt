@@ -35,6 +35,9 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<TransactionOperation>()
+                .HasIndex(x => x.OriginalSenderId);
+
+            modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.TargetId);
             #endregion
 

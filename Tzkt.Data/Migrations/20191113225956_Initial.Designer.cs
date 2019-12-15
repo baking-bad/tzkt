@@ -334,7 +334,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
-                    b.Property<int?>("ParentId")
+                    b.Property<int?>("OriginalSenderId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("ResetDeactivation")
@@ -366,7 +366,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("OriginalSenderId");
 
                     b.HasIndex("SenderId");
 
@@ -611,7 +611,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
-                    b.Property<int?>("ParentId")
+                    b.Property<int?>("OriginalSenderId")
                         .HasColumnType("integer");
 
                     b.Property<int>("SenderId")
@@ -644,7 +644,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("OriginalSenderId");
 
                     b.HasIndex("SenderId");
 
@@ -997,7 +997,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
-                    b.Property<int?>("ParentId")
+                    b.Property<int?>("OriginalSenderId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("ResetDeactivation")
@@ -1030,7 +1030,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("OriginalSenderId");
 
                     b.HasIndex("SenderId");
 
@@ -1381,9 +1381,9 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
+                    b.HasOne("Tzkt.Data.Models.Account", "OriginalSender")
                         .WithMany()
-                        .HasForeignKey("ParentId");
+                        .HasForeignKey("OriginalSenderId");
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
                         .WithMany()
@@ -1495,9 +1495,9 @@ namespace Tzkt.Data.Migrations
                         .WithMany()
                         .HasForeignKey("ManagerId");
 
-                    b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
+                    b.HasOne("Tzkt.Data.Models.Account", "OriginalSender")
                         .WithMany()
-                        .HasForeignKey("ParentId");
+                        .HasForeignKey("OriginalSenderId");
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
                         .WithMany()
@@ -1618,9 +1618,9 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.TransactionOperation", "Parent")
+                    b.HasOne("Tzkt.Data.Models.Account", "OriginalSender")
                         .WithMany()
-                        .HasForeignKey("ParentId");
+                        .HasForeignKey("OriginalSenderId");
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
                         .WithMany()

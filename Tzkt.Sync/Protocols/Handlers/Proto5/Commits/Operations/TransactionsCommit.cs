@@ -12,6 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto5
     class TransactionsCommit : ProtocolCommit
     {
         public TransactionOperation Transaction { get; private set; }
+        public TransactionOperation Parent { get; private set; }
 
         TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -71,10 +72,11 @@ namespace Tzkt.Sync.Protocols.Proto5
             if (target != null)
                 target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
 
+            Parent = parent;
             Transaction = new TransactionOperation
             {
                 Id = id,
-                Parent = parent,
+                OriginalSender = parent.Sender,
                 Block = parent.Block,
                 Level = parent.Block.Level,
                 Timestamp = parent.Timestamp,
@@ -119,16 +121,16 @@ namespace Tzkt.Sync.Protocols.Proto5
             if (Transaction.Target != null)
                 Transaction.Target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.Target.DelegateId);
 
-            if (Transaction.Parent != null)
+            if (Transaction.OriginalSenderId != null)
             {
-                Transaction.Parent.Sender = await Cache.GetAccountAsync(transaction.Parent.SenderId);
-                Transaction.Parent.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.Parent.Sender.DelegateId);
+                Transaction.OriginalSender = await Cache.GetAccountAsync(transaction.OriginalSenderId);
+                Transaction.OriginalSender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.OriginalSender.DelegateId);
             }
         }
 
         public override async Task Apply()
         {
-            if (Transaction.Parent == null)
+            if (Parent == null)
                 await ApplyTransaction();
             else
                 await ApplyInternalTransaction();
@@ -136,7 +138,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Revert()
         {
-            if (Transaction.ParentId == null)
+            if (Transaction.OriginalSenderId == null)
                 await RevertTransaction();
             else
                 await RevertInternalTransaction();
@@ -219,7 +221,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region entities
             var block = Transaction.Block;
 
-            var parentTx = Transaction.Parent;
+            var parentTx = Parent;
             var parentSender = parentTx.Sender;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
@@ -359,8 +361,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         public async Task RevertInternalTransaction()
         {
             #region entities
-            var parentTx = Transaction.Parent;
-            var parentSender = parentTx.Sender;
+            var parentSender = Transaction.OriginalSender;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
             var sender = Transaction.Sender;

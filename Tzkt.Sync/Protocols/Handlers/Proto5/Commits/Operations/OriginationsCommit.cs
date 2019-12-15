@@ -12,6 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto5
     class OriginationsCommit : ProtocolCommit
     {
         public OriginationOperation Origination { get; private set; }
+        public TransactionOperation Parent { get; private set; }
 
         OriginationsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -90,10 +91,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 }
                 : null;
 
+            Parent = parent;
             Origination = new OriginationOperation
             {
                 Id = await Cache.NextCounterAsync(),
-                Parent = parent,
+                OriginalSender = parent.Sender,
                 Block = parent.Block,
                 Level = parent.Block.Level,
                 Timestamp = parent.Timestamp,
@@ -136,7 +138,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Apply()
         {
-            if (Origination.Parent == null)
+            if (Parent == null)
                 await ApplyOrigination();
             else
                 await ApplyInternalOrigination();
@@ -144,7 +146,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Revert()
         {
-            if (Origination.ParentId == null)
+            if (Origination.OriginalSenderId == null)
                 await RevertOrigination();
             else
                 await RevertInternalOrigination();
@@ -225,7 +227,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region entities
             var block = Origination.Block;
 
-            var parentTx = Origination.Parent;
+            var parentTx = Parent;
             var parentSender = parentTx.Sender;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
@@ -361,8 +363,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         public async Task RevertInternalOrigination()
         {
             #region entities
-            var parentTx = Origination.Parent;
-            var parentSender = parentTx.Sender;
+            var parentSender = Origination.OriginalSender;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
             var sender = Origination.Sender;
