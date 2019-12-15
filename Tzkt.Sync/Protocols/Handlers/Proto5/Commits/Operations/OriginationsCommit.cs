@@ -134,6 +134,12 @@ namespace Tzkt.Sync.Protocols.Proto5
             Origination.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Sender.DelegateId);
             Origination.Contract ??= (Contract)await Cache.GetAccountAsync(origination.ContractId);
             Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
+
+            if (Origination.OriginalSenderId != null)
+            {
+                Origination.OriginalSender = await Cache.GetAccountAsync(origination.OriginalSenderId);
+                Origination.OriginalSender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.OriginalSender.DelegateId);
+            }
         }
 
         public override async Task Apply()
@@ -253,6 +259,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             sender.OriginationsCount++;
             if (contractDelegate != null && contractDelegate != sender) contractDelegate.OriginationsCount++;
+            if (parentSender != sender && parentSender != contractDelegate) parentSender.OriginationsCount++;
             if (contract != null) contract.OriginationsCount++;
 
             block.Operations |= Operations.Originations;
@@ -418,6 +425,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region revert operation
             sender.OriginationsCount--;
             if (contractDelegate != null && contractDelegate != sender) contractDelegate.OriginationsCount--;
+            if (parentSender != sender && parentSender != contractDelegate) parentSender.OriginationsCount--;
             #endregion
 
             Db.OriginationOps.Remove(Origination);

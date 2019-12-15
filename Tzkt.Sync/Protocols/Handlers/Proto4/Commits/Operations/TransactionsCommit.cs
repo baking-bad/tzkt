@@ -249,6 +249,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;
+            if (parentSender != sender && parentSender != target) parentSender.TransactionsCount++;
 
             block.Operations |= Operations.Transactions;
             #endregion
@@ -425,6 +426,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             #region revert operation
             sender.TransactionsCount--;
             if (target != null && target != sender) target.TransactionsCount--;
+            if (parentSender != sender && parentSender != target) parentSender.TransactionsCount--;
             #endregion
 
             Db.TransactionOps.Remove(Transaction);

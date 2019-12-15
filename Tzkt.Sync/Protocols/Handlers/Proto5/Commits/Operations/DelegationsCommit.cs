@@ -99,6 +99,12 @@ namespace Tzkt.Sync.Protocols.Proto5
             Delegation.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.Sender.DelegateId);
             Delegation.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.DelegateId);
             Delegation.PrevDelegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.PrevDelegateId);
+
+            if (Delegation.OriginalSenderId != null)
+            {
+                Delegation.OriginalSender = await Cache.GetAccountAsync(delegation.OriginalSenderId);
+                Delegation.OriginalSender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.OriginalSender.DelegateId);
+            }
         }
 
         public override async Task Apply()
@@ -210,6 +216,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region entities
             var block = Delegation.Block;
             var parentTx = Parent;
+            var parentSender = parentTx.Sender;
 
             var sender = Delegation.Sender;
             var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
@@ -218,6 +225,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             //Db.TryAttach(block);
 
             Db.TryAttach(sender);
+            Db.TryAttach(parentSender);
             Db.TryAttach(prevDelegate);
             Db.TryAttach(newDelegate);
             #endregion
@@ -228,6 +236,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.DelegationsCount++;
             if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount++;
             if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount++;
+            if (parentSender != sender && parentSender != prevDelegate && parentSender != newDelegate) parentSender.DelegationsCount++;
 
             block.Operations |= Operations.Delegations;
             #endregion
@@ -374,6 +383,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             var block = Delegation.Block;
 
             var sender = Delegation.Sender;
+            var parentSender = Delegation.OriginalSender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             var newDelegate = Delegation.Delegate;
@@ -419,6 +429,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.DelegationsCount--;
             if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount--;
             if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount--;
+            if (parentSender != sender && parentSender != prevDelegate && parentSender != newDelegate) parentSender.DelegationsCount--;
             #endregion
 
             Db.DelegationOps.Remove(Delegation);
