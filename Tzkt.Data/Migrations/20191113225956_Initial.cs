@@ -313,6 +313,7 @@ namespace Tzkt.Data.Migrations
                     OriginalSenderId = table.Column<int>(nullable: true),
                     Nonce = table.Column<int>(nullable: true),
                     DelegateId = table.Column<int>(nullable: true),
+                    PrevDelegateId = table.Column<int>(nullable: true),
                     ResetDeactivation = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
@@ -333,6 +334,12 @@ namespace Tzkt.Data.Migrations
                     table.ForeignKey(
                         name: "FK_DelegationOps_Accounts_OriginalSenderId",
                         column: x => x.OriginalSenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DelegationOps_Accounts_PrevDelegateId",
+                        column: x => x.PrevDelegateId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -935,6 +942,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_DelegationOps_OriginalSenderId",
                 table: "DelegationOps",
                 column: "OriginalSenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DelegationOps_PrevDelegateId",
+                table: "DelegationOps",
+                column: "PrevDelegateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DelegationOps_SenderId",

@@ -7,11 +7,15 @@ namespace Tzkt.Data.Models
     public class DelegationOperation : InternalOperation
     {
         public int? DelegateId { get; set; }
+        public int? PrevDelegateId { get; set; }
         public int? ResetDeactivation { get; set; }
 
         #region relations
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
+
+        [ForeignKey(nameof(PrevDelegateId))]
+        public Delegate PrevDelegate { get; set; }
         #endregion
     }
 
@@ -34,6 +38,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.DelegateId);
+
+            modelBuilder.Entity<DelegationOperation>()
+                .HasIndex(x => x.PrevDelegateId);
             #endregion
 
             #region keys

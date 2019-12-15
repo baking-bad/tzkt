@@ -335,6 +335,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("OriginalSenderId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PrevDelegateId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("ResetDeactivation")
                         .HasColumnType("integer");
 
@@ -365,6 +368,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("OpHash");
 
                     b.HasIndex("OriginalSenderId");
+
+                    b.HasIndex("PrevDelegateId");
 
                     b.HasIndex("SenderId");
 
@@ -1382,6 +1387,10 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.Account", "OriginalSender")
                         .WithMany()
                         .HasForeignKey("OriginalSenderId");
+
+                    b.HasOne("Tzkt.Data.Models.Delegate", "PrevDelegate")
+                        .WithMany()
+                        .HasForeignKey("PrevDelegateId");
 
                     b.HasOne("Tzkt.Data.Models.Account", "Sender")
                         .WithMany()

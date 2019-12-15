@@ -37,6 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 StorageLimit = content.StorageLimit,
                 Sender = sender,
                 Delegate = delegat,
+                PrevDelegate = sender.Delegate,
                 Status = content.Metadata.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -60,6 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             Delegation.Sender = await Cache.GetAccountAsync(delegation.SenderId);
             Delegation.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.Sender.DelegateId);
             Delegation.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.DelegateId);
+            Delegation.PrevDelegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.PrevDelegateId);
         }
 
         public override async Task Apply()
@@ -69,28 +71,28 @@ namespace Tzkt.Sync.Protocols.Proto3
             var blockBaker = block.Baker;
 
             var sender = Delegation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-
+            var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var newDelegate = Delegation.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
 
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
+            Db.TryAttach(prevDelegate);
 
             Db.TryAttach(newDelegate);
             #endregion
 
             #region apply operation
             sender.Balance -= Delegation.BakerFee;
-            if (senderDelegate != null) senderDelegate.StakingBalance -= Delegation.BakerFee;
+            if (prevDelegate != null) prevDelegate.StakingBalance -= Delegation.BakerFee;
             blockBaker.FrozenFees += Delegation.BakerFee;
             blockBaker.Balance += Delegation.BakerFee;
             blockBaker.StakingBalance += Delegation.BakerFee;
 
             sender.DelegationsCount++;
-            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount++;
+            if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount++;
+            if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount++;
 
             block.Operations |= Operations.Delegations;
             block.Fees += Delegation.BakerFee;
@@ -105,7 +107,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 {
                     if (sender.Type == AccountType.User)
                     {
-                        await ResetDelegate(sender, senderDelegate);
+                        await ResetDelegate(sender, prevDelegate);
                         await UpgradeUser(Delegation);
 
                         #region weird delegators
@@ -140,7 +142,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 }
                 else
                 {
-                    await ResetDelegate(sender, senderDelegate);
+                    await ResetDelegate(sender, prevDelegate);
                     if (newDelegate != null)
                         await SetDelegate(sender, newDelegate, Delegation.Block.Level);
                 }
@@ -264,7 +266,8 @@ namespace Tzkt.Sync.Protocols.Proto3
             blockBaker.StakingBalance -= Delegation.BakerFee;
 
             sender.DelegationsCount--;
-            if (newDelegate != null && newDelegate != sender) newDelegate.DelegationsCount--;
+            if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount--;
+            if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Delegation.Counter - 1);
             #endregion
@@ -438,7 +441,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                         }
                         break;
                     case DelegationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id || op.PrevDelegate?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
@@ -448,6 +451,9 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                             if (op.OriginalSender?.Id == delegat.Id)
                                 op.OriginalSender = user;
+
+                            if (op.PrevDelegate?.Id == delegat.Id)
+                                op.PrevDelegate = null;
 
                             touched.Add((op, entry.State));
                         }
