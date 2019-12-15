@@ -15,6 +15,9 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public async Task Init(Block block, RawOperation op, RawActivationContent content)
         {
+            var account = (User)await Cache.GetAccountAsync(content.Address);
+            account.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(account.DelegateId);
+
             Activation = new ActivationOperation
             {
                 Id = await Cache.NextCounterAsync(),
@@ -22,7 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
-                Account = (User)await Cache.GetAccountAsync(content.Address),
+                Account = account,
                 Balance = content.Metadata.BalanceUpdates[0].Change
             };
         }
@@ -32,6 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             Activation = activation;
             Activation.Block ??= block;
             Activation.Account ??= (User)await Cache.GetAccountAsync(activation.AccountId);
+            Activation.Account.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(activation.Account.DelegateId);
         }
 
         public override Task Apply()
@@ -39,13 +43,16 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region entities
             var block = Activation.Block;
             var sender = Activation.Account;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
             #endregion
 
             #region apply operation
             sender.Balance += Activation.Balance;
+            if (senderDelegate != null) senderDelegate.StakingBalance += Activation.Balance;
 
             sender.Activated = true;
 
@@ -62,13 +69,16 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region entities
             //var block = Activation.Block;
             var sender = Activation.Account;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
             #endregion
 
             #region revert operation
             sender.Balance -= Activation.Balance;
+            if (senderDelegate != null) senderDelegate.StakingBalance -= Activation.Balance;
 
             sender.Activated = null;
             #endregion

@@ -19,7 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
+                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < (Protocol.PreserverCycles + 2) ? 2 : 3);
             }
         }
 
@@ -32,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < 7 ? 2 : 3);
+                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < (Protocol.PreserverCycles + 2) ? 2 : 3);
             }
         }
 

@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     depostisUpdate.Change != Protocol.BlockDeposit)
                     throw new ValidationException("invalid block depostis update");
 
-                if (Cycle >= 7)
+                if (Cycle >= (Protocol.PreserverCycles + 2))
                 {
                     var rewardsUpdate = rawBlock.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
                         ?? throw new ValidationException("invalid block rewards updates");
@@ -72,12 +72,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
             }
 
-            if (rawBlock.Metadata.BalanceUpdates.Count > (Cycle < 7 ? 2 : 3))
+            if (rawBlock.Metadata.BalanceUpdates.Count > (Cycle < (Protocol.PreserverCycles + 2) ? 2 : 3))
             {
                 if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
                     throw new ValidationException("unexpected freezer updates");
 
-                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Cycle < 7 ? 2 : 3))
+                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Cycle < (Protocol.PreserverCycles + 2) ? 2 : 3))
                 {
                     if (update is ContractUpdate contractUpdate &&
                         !await Cache.AccountExistsAsync(contractUpdate.Contract, AccountType.Delegate))
@@ -88,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (!await Cache.AccountExistsAsync(freezerUpdate.Delegate, AccountType.Delegate))
                             throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
 
-                        if (freezerUpdate.Level != Cycle - 5 && freezerUpdate.Level != Cycle - 1)
+                        if (freezerUpdate.Level != Cycle - Protocol.PreserverCycles && freezerUpdate.Level != Cycle - 1)
                             throw new ValidationException("invalid freezer updates cycle");
                     }
                 }
@@ -161,7 +161,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!await Cache.AccountExistsAsync(endorsement.Metadata.Delegate, AccountType.Delegate))
                 throw new ValidationException("invalid endorsement delegate");
 
-            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Cycle < 7 ? 2 : 3))
+            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Cycle < (Protocol.PreserverCycles + 2) ? 2 : 3))
                 throw new ValidationException("invalid endorsement balance updates count");
 
             if (endorsement.Metadata.BalanceUpdates.Count > 0)
@@ -180,7 +180,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     depostisUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
                     throw new ValidationException("invalid endorsement depostis update");
 
-                if (Cycle >= 7)
+                if (Cycle >= (Protocol.PreserverCycles + 2))
                 {
                     var rewardsUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
                         ?? throw new ValidationException("invalidendorsement rewards updates");

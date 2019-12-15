@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             HardOperationStorageLimit > 0 &&
             HardBlockGasLimit > 0 &&
             TokensPerRoll > 0 &&
-            OriginationBurn > 0 &&
+            OriginationBurn >= 0 &&
             ByteCost > 0;
         #endregion
     }
