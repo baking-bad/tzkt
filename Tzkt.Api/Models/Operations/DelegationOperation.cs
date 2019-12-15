@@ -18,9 +18,11 @@ namespace Tzkt.Api.Models
 
         public string Hash { get; set; }
 
-        public Alias Sender { get; set; }
-
         public int Counter { get; set; }
+
+        public Alias OriginalSender { get; set; }
+
+        public Alias Sender { get; set; }
 
         public int? Nonce { get; set; }
 
@@ -30,7 +32,9 @@ namespace Tzkt.Api.Models
 
         public long BakerFee { get; set; }
 
-        public Alias Delegate { get; set; }
+        public Alias PrevDelegate { get; set; }
+
+        public Alias NewDelegate { get; set; }
 
         public string Status { get; set; }
 

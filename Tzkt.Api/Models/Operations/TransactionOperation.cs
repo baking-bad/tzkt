@@ -18,9 +18,11 @@ namespace Tzkt.Api.Models
 
         public string Hash { get; set; }
 
-        public Alias Sender { get; set; }
-
         public int Counter { get; set; }
+
+        public Alias OriginalSender { get; set; }
+
+        public Alias Sender { get; set; }
 
         public int? Nonce { get; set; }
 

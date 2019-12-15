@@ -21,6 +21,8 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(TransactionOperation))]
     [KnownType(typeof(RevealOperation))]
     [KnownType(typeof(SystemOperation))]
+    [KnownType(typeof(RevelationPenaltyOperation))]
+    [KnownType(typeof(BakingOperation))]
     public abstract class Operation
     {
         public abstract string Type { get; }
@@ -69,6 +71,12 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(SystemOperation))
                 return OpTypes.System;
+
+            if (type == typeof(RevelationPenaltyOperation))
+                return OpTypes.RevelationPenalty;
+
+            if (type == typeof(BakingOperation))
+                return OpTypes.Baking;
 
             return base.GetDiscriminatorValue(type);
         }
