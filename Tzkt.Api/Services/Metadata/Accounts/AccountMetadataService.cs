@@ -44,6 +44,9 @@ namespace Tzkt.Api.Services.Metadata
 
             Metadata = accounts.ToDictionary(x => links.First(l => l.Address == x.Address).Id);
 
+            foreach (var meta in Metadata.Values)
+                meta.Address = null;
+
             Logger.LogDebug($"Loaded {Metadata.Count} accounts metadata");
         }
 

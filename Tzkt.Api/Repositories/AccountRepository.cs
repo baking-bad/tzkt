@@ -7,6 +7,7 @@ using Dapper;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Repositories
 {
@@ -190,14 +191,17 @@ namespace Tzkt.Api.Repositories
                     delegat.Contracts = await GetContracts(address, 10);
                     delegat.Delegators = await GetDelegators(address, 20);
                     delegat.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
+                    delegat.Metadata = await GetMetadata(address);
                     break;
                 case User user when user.FirstActivity != null:
                     user.Contracts = await GetContracts(address, 10);
                     user.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
+                    user.Metadata = await GetMetadata(address);
                     break;
                 case Contract contract:
                     contract.Contracts = await GetContracts(address, 10);
                     contract.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
+                    contract.Metadata = await GetMetadata(address);
                     break;
             }
 
@@ -625,6 +629,12 @@ namespace Tzkt.Api.Repositories
             return sort == SortMode.Ascending
                 ? result.OrderBy(x => x.Id).Take(limit)
                 : result.OrderByDescending(x => x.Id).Take(limit);
+        }
+
+        public async Task<AccountMetadata> GetMetadata(string address)
+        {
+            var account = await Accounts.GetAsync(address);
+            return account == null ? null : Accounts.GetMetadata(account.Id);
         }
 
         string TypeToString(int type) => type switch

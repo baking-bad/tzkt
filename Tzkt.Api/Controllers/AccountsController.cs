@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Controllers
 {
@@ -61,6 +62,12 @@ namespace Tzkt.Api.Controllers
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
             return Accounts.GetOperations(address, types, sort, lastId, limit);
+        }
+
+        [HttpGet("{address}/metadata")]
+        public Task<AccountMetadata> GetMetadata([Address] string address)
+        {
+            return Accounts.GetMetadata(address);
         }
     }
 }

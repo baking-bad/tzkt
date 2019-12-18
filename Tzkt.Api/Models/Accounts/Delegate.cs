@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Models
 {
@@ -83,5 +84,7 @@ namespace Tzkt.Api.Models
         public IEnumerable<Delegator> Delegators { get; set; }
 
         public IEnumerable<Operation> Operations { get; set; }
+
+        public AccountMetadata Metadata { get; set; }
     }
 }

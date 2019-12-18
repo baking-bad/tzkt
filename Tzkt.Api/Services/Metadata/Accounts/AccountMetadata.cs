@@ -8,14 +8,11 @@ namespace Tzkt.Api.Services.Metadata
 {
     public class AccountMetadata
     {
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-
         [JsonPropertyName("address")]
         public string Address { get; set; }
 
-        [JsonPropertyName("logo")]
-        public string Logo { get; set; }
+        [JsonPropertyName("kind")]
+        public string Kind { get; set; }
 
         [JsonPropertyName("alias")]
         public string Alias { get; set; }
@@ -23,8 +20,11 @@ namespace Tzkt.Api.Services.Metadata
         [JsonPropertyName("description")]
         public string Description { get; set; }
 
-        [JsonPropertyName("website")]
-        public string Website { get; set; }
+        [JsonPropertyName("logo")]
+        public string Logo { get; set; }
+
+        [JsonPropertyName("site")]
+        public string Site { get; set; }
 
         [JsonPropertyName("email")]
         public string Email { get; set; }
