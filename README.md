@@ -15,7 +15,7 @@ A lightweight, API-first, baking-focused Tezos explorer supported by the Tezos F
 
 This is a flexible and lightweight Tezos blockchain indexer. At the moment it is only lightweight actually, but it's only a matter of time. It uses Postgresql as its main storage via Npgsql and depends on Tzkt.Data, a library with data models and database migrations, that describes the entire database schema using the code-first approach.
 
-The indexer doesn't require a local node with RPC and can be bootstrapped from [the snapshot](https://drive.google.com/file/d/1B-5NfOGebnjgie_eDWxpckOv6OL6jWjS) (~800MB), so there is no need to download a huge amount of data.
+The indexer doesn't require a local node with RPC and can be bootstrapped from [the snapshot](https://drive.google.com/file/d/1_Sb0Ze4A6Bp8pDQ7WLOEe6jndBOXzXD0) (~800MB), so there is no need to download a huge amount of data.
 
 ### RPC calls
 
