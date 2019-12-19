@@ -109,6 +109,10 @@ namespace Tzkt.Api.Repositories
                                 Address = userDelegate.Address,
                                 Active = userDelegate.Staked
                             },
+                        DelegationLevel = userDelegate == null ? null
+                            : user.DelegationLevel,
+                        DelegationTime = userDelegate == null ? null
+                            : (DateTime?)Time[(int)user.DelegationLevel],
                         NumActivations = user.Activated == true ? 1 : 0,
                         NumContracts = user.Contracts,
                         NumDelegations = user.DelegationsCount,
@@ -164,6 +168,10 @@ namespace Tzkt.Api.Repositories
                                 Address = contractDelegate.Address,
                                 Active = contractDelegate.Staked
                             },
+                        DelegationLevel = contractDelegate == null ? null
+                            : contract.DelegationLevel,
+                        DelegationTime = contractDelegate == null ? null
+                            : (DateTime?)Time[(int)contract.DelegationLevel],
                         FirstActivity = contract.FirstLevel,
                         FirstActivityTime = Time[contract.FirstLevel],
                         LastActivity = contract.LastLevel,
@@ -253,6 +261,10 @@ namespace Tzkt.Api.Repositories
                                 Address = userDelegate.Address,
                                 Active = userDelegate.Staked
                             },
+                            DelegationLevel = userDelegate == null ? null
+                                : row.DelegationLevel,
+                            DelegationTime = userDelegate == null ? null
+                                : (DateTime?)Time[row.DelegationLevel],
                             NumActivations = row.Activated == true ? 1 : 0,
                             NumContracts = row.Contracts,
                             NumDelegations = row.DelegationsCount,
@@ -350,6 +362,10 @@ namespace Tzkt.Api.Repositories
                                 Address = contractDelegate.Address,
                                 Active = contractDelegate.Staked
                             },
+                            DelegationLevel = contractDelegate == null ? null
+                                : row.DelegationLevel,
+                            DelegationTime = contractDelegate == null ? null
+                                : (DateTime?)Time[row.DelegationLevel],
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,

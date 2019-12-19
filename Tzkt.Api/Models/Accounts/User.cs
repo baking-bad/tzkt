@@ -23,6 +23,10 @@ namespace Tzkt.Api.Models
 
         public DelegateInfo Delegate { get; set; }
 
+        public int? DelegationLevel { get; set; }
+
+        public DateTime? DelegationTime { get; set; }
+
         public int NumContracts { get; set; }
 
         public int NumActivations { get; set; }
