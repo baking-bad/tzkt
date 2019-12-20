@@ -1466,6 +1466,7 @@ namespace Tzkt.Api.Repositories
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     (""SenderId"" = @accountId
+                OR        ""ManagerId"" = @accountId
                 OR        ""DelegateId"" = @accountId
                 OR        ""ContractId"" = @accountId
                 OR        ""OriginalSenderId"" = @accountId)
