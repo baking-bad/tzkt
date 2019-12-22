@@ -189,26 +189,26 @@ namespace Tzkt.Api.Repositories
             }
         }
 
-        public async Task<Account> GetProfile(string address)
+        public async Task<Account> GetProfile(string address, HashSet<string> types, SortMode sort, int limit)
         {
             var account = await Get(address);
 
             switch (account)
             {
                 case Models.Delegate delegat:
-                    delegat.Contracts = await GetContracts(address, 10);
-                    delegat.Delegators = await GetDelegators(address, 20);
-                    delegat.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
+                    delegat.Contracts = await GetContracts(address, limit);
+                    delegat.Delegators = await GetDelegators(address, limit);
+                    delegat.Operations = await GetOperations(address, types, sort, 0, limit);
                     delegat.Metadata = await GetMetadata(address);
                     break;
                 case User user when user.FirstActivity != null:
-                    user.Contracts = await GetContracts(address, 10);
-                    user.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
+                    user.Contracts = await GetContracts(address, limit);
+                    user.Operations = await GetOperations(address, types, sort, 0, limit);
                     user.Metadata = await GetMetadata(address);
                     break;
                 case Contract contract:
-                    contract.Contracts = await GetContracts(address, 10);
-                    contract.Operations = await GetOperations(address, OpTypes.DefaultSet, SortMode.Descending, 0, 20);
+                    contract.Contracts = await GetContracts(address, limit);
+                    contract.Operations = await GetOperations(address, types, sort, 0, limit);
                     contract.Metadata = await GetMetadata(address);
                     break;
             }

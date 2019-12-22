@@ -34,9 +34,11 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("{address}/profile")]
-        public Task<Account> GetProfile([Address] string address)
+        public Task<Account> GetProfile([Address] string address, string type, [Range(0, 1000)] int n = 20, SortMode sort = SortMode.Descending)
         {
-            return Accounts.GetProfile(address);
+            var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
+
+            return Accounts.GetProfile(address, types, sort, n);
         }
 
         [HttpGet("{address}/contracts")]

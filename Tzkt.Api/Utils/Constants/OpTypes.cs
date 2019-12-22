@@ -31,8 +31,6 @@ namespace Tzkt.Api
             Ballot,
             Proposal,
             Activation,
-            DoubleBaking,
-            DoubleEndorsing,
             Delegation,
             Origination,
             Transaction,
