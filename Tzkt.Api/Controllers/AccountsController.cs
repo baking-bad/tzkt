@@ -56,6 +56,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/operations")]
         public Task<IEnumerable<Operation>> GetOperations(
             [Address] string address,
+            DateTime? from,
+            DateTime? to,
             string type,
             [Min(0)] int lastId = 0,
             [Range(0, 1000)] int limit = 100,
@@ -63,7 +65,9 @@ namespace Tzkt.Api.Controllers
         {
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
-            return Accounts.GetOperations(address, types, sort, lastId, limit);
+            return from != null || to != null
+                ? Accounts.GetOperations(address, from ?? DateTime.MinValue, to ?? DateTime.MaxValue, types, sort, lastId, limit)
+                : Accounts.GetOperations(address, types, sort, lastId, limit);
         }
 
         [HttpGet("{address}/metadata")]
