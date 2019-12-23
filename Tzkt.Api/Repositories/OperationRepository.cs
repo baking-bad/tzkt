@@ -2534,7 +2534,7 @@ namespace Tzkt.Api.Repositories
             if (offset == 0)
             {
                 return $@"
-                    ORDER BY ""Id"" {sortMode} NULLS LAST
+                    ORDER BY ""Id"" {sortMode}
                     LIMIT    {limit}";
             }
 
@@ -2543,18 +2543,18 @@ namespace Tzkt.Api.Repositories
                 return sort == SortMode.Ascending
                     ? $@"
                         AND      ""Id"" > {offset}
-                        ORDER BY ""Id"" {sortMode} NULLS LAST
+                        ORDER BY ""Id"" {sortMode}
                         LIMIT    {limit}"
                     : $@"
                         AND      ""Id"" < {offset}
-                        ORDER BY ""Id"" {sortMode} NULLS LAST
+                        ORDER BY ""Id"" {sortMode}
                         LIMIT    {limit}";
             }
 
             var offsetValue = offsetMode == OffsetMode.Page ? limit * offset : offset;
 
             return $@"
-                ORDER BY ""Id"" {sortMode} NULLS LAST
+                ORDER BY ""Id"" {sortMode}
                 OFFSET   {offsetValue}
                 LIMIT    {limit}";
         }
