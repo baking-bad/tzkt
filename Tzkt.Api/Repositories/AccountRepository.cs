@@ -189,6 +189,54 @@ namespace Tzkt.Api.Repositories
             }
         }
 
+        public async Task<Models.Delegate> GetDelegate(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+
+            if (!(rawAccount is RawDelegate delegat))
+                return null;
+
+            var metadata = Accounts.GetMetadata(delegat.Id);
+
+            return new Models.Delegate
+            {
+                Alias = metadata?.Alias,
+                Active = delegat.Staked,
+                Address = delegat.Address,
+                PublicKey = delegat.PublicKey,
+                Balance = delegat.Balance,
+                FrozenDeposits = delegat.FrozenDeposits,
+                FrozenRewards = delegat.FrozenRewards,
+                FrozenFees = delegat.FrozenFees,
+                Counter = delegat.Counter,
+                ActivationLevel = delegat.ActivationLevel,
+                ActivationTime = Time[delegat.ActivationLevel],
+                DeactivationLevel = delegat.Staked ? null : (int?)delegat.DeactivationLevel,
+                DeactivationTime = delegat.Staked ? null : (DateTime?)Time[delegat.DeactivationLevel],
+                StakingBalance = delegat.StakingBalance,
+                FirstActivity = delegat.FirstLevel,
+                FirstActivityTime = Time[delegat.FirstLevel],
+                LastActivity = delegat.LastLevel,
+                LastActivityTime = Time[delegat.LastLevel],
+                NumActivations = delegat.Activated == true ? 1 : 0,
+                NumBallots = delegat.BallotsCount,
+                NumContracts = delegat.Contracts,
+                NumDelegators = delegat.Delegators,
+                NumBlocks = delegat.BlocksCount,
+                NumDelegations = delegat.DelegationsCount,
+                NumDoubleBaking = delegat.DoubleBakingCount,
+                NumDoubleEndorsing = delegat.DoubleEndorsingCount,
+                NumEndorsements = delegat.EndorsementsCount,
+                NumNonceRevelations = delegat.NonceRevelationsCount,
+                NumRevelationPenalties = delegat.RevelationPenaltiesCount,
+                NumOriginations = delegat.OriginationsCount,
+                NumProposals = delegat.ProposalsCount,
+                NumReveals = delegat.RevealsCount,
+                NumSystem = delegat.SystemOpsCount,
+                NumTransactions = delegat.TransactionsCount,
+            };
+        }
+
         public async Task<Account> GetProfile(string address, HashSet<string> types, SortMode sort, int limit)
         {
             var account = await Get(address);
@@ -383,6 +431,68 @@ namespace Tzkt.Api.Repositories
             }
 
             return accounts;
+        }
+
+        public async Task<IEnumerable<Models.Delegate>> GetDelegates(bool? active, int limit = 100, int offset = 0)
+        {
+            var sql = $@"
+                SELECT      *
+                FROM        ""Accounts""
+                WHERE       ""Type"" = 1";
+
+            if (active != null)
+                sql += $@"
+                AND         ""Staked"" = {active}";
+            
+            sql += @"
+                ORDER BY    ""Id""
+                OFFSET      @offset
+                LIMIT       @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { limit, offset });
+
+            return rows.Select(row =>
+            {
+                var metadata = Accounts.GetMetadata((int)row.Id);
+                return new Models.Delegate
+                {
+                    Alias = metadata?.Alias,
+                    Active = row.Staked,
+                    Address = row.Address,
+                    PublicKey = row.PublicKey,
+                    Balance = row.Balance,
+                    FrozenDeposits = row.FrozenDeposits,
+                    FrozenRewards = row.FrozenRewards,
+                    FrozenFees = row.FrozenFees,
+                    Counter = row.Counter,
+                    ActivationLevel = row.ActivationLevel,
+                    ActivationTime = Time[row.ActivationLevel],
+                    DeactivationLevel = row.Staked ? null : (int?)row.DeactivationLevel,
+                    DeactivationTime = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel],
+                    StakingBalance = row.StakingBalance,
+                    FirstActivity = row.FirstLevel,
+                    FirstActivityTime = Time[row.FirstLevel],
+                    LastActivity = row.LastLevel,
+                    LastActivityTime = Time[row.LastLevel],
+                    NumActivations = row.Activated == true ? 1 : 0,
+                    NumBallots = row.BallotsCount,
+                    NumContracts = row.Contracts,
+                    NumDelegators = row.Delegators,
+                    NumBlocks = row.BlocksCount,
+                    NumDelegations = row.DelegationsCount,
+                    NumDoubleBaking = row.DoubleBakingCount,
+                    NumDoubleEndorsing = row.DoubleEndorsingCount,
+                    NumEndorsements = row.EndorsementsCount,
+                    NumNonceRevelations = row.NonceRevelationsCount,
+                    NumRevelationPenalties = row.RevelationPenaltiesCount,
+                    NumOriginations = row.OriginationsCount,
+                    NumProposals = row.ProposalsCount,
+                    NumReveals = row.RevealsCount,
+                    NumSystem = row.SystemOpsCount,
+                    NumTransactions = row.TransactionsCount,
+                };
+            });
         }
 
         public async Task<IEnumerable<RelatedContract>> GetContracts(string address, int limit = 100, int offset = 0)
