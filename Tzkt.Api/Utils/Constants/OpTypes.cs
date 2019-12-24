@@ -31,11 +31,15 @@ namespace Tzkt.Api
             Ballot,
             Proposal,
             Activation,
+            DoubleBaking,
+            DoubleEndorsing,
+            NonceRevelation,
             Delegation,
             Origination,
             Transaction,
             Reveal,
-            System
+            System,
+            RevelationPenalty
         };
     }
 }
