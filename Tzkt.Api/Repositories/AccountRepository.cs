@@ -79,7 +79,7 @@ namespace Tzkt.Api.Repositories
                         NumOriginations = delegat.OriginationsCount,
                         NumProposals = delegat.ProposalsCount,
                         NumReveals = delegat.RevealsCount,
-                        NumSystem = delegat.SystemOpsCount,
+                        NumMigrations = delegat.SystemOpsCount,
                         NumTransactions = delegat.TransactionsCount,
                     };
                     #endregion
@@ -118,7 +118,7 @@ namespace Tzkt.Api.Repositories
                         NumDelegations = user.DelegationsCount,
                         NumOriginations = user.OriginationsCount,
                         NumReveals = user.RevealsCount,
-                        NumSystem = user.SystemOpsCount,
+                        NumMigrations = user.SystemOpsCount,
                         NumTransactions = user.TransactionsCount
                     };
                     #endregion
@@ -180,7 +180,7 @@ namespace Tzkt.Api.Repositories
                         NumDelegations = contract.DelegationsCount,
                         NumOriginations = contract.OriginationsCount,
                         NumReveals = contract.RevealsCount,
-                        NumSystem = contract.SystemOpsCount,
+                        NumMigrations = contract.SystemOpsCount,
                         NumTransactions = contract.TransactionsCount
                     };
                     #endregion
@@ -232,7 +232,7 @@ namespace Tzkt.Api.Repositories
                 NumOriginations = delegat.OriginationsCount,
                 NumProposals = delegat.ProposalsCount,
                 NumReveals = delegat.RevealsCount,
-                NumSystem = delegat.SystemOpsCount,
+                NumMigrations = delegat.SystemOpsCount,
                 NumTransactions = delegat.TransactionsCount,
             };
         }
@@ -318,7 +318,7 @@ namespace Tzkt.Api.Repositories
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
-                            NumSystem = row.SystemOpsCount,
+                            NumMigrations = row.SystemOpsCount,
                             NumTransactions = row.TransactionsCount
                         });
                         #endregion
@@ -359,7 +359,7 @@ namespace Tzkt.Api.Repositories
                             NumOriginations = row.OriginationsCount,
                             NumProposals = row.ProposalsCount,
                             NumReveals = row.RevealsCount,
-                            NumSystem = row.SystemOpsCount,
+                            NumMigrations = row.SystemOpsCount,
                             NumTransactions = row.TransactionsCount,
                         });
                         #endregion
@@ -422,7 +422,7 @@ namespace Tzkt.Api.Repositories
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
-                            NumSystem = row.SystemOpsCount,
+                            NumMigrations = row.SystemOpsCount,
                             NumTransactions = row.TransactionsCount
                         });
                         #endregion
@@ -489,7 +489,7 @@ namespace Tzkt.Api.Repositories
                     NumOriginations = row.OriginationsCount,
                     NumProposals = row.ProposalsCount,
                     NumReveals = row.RevealsCount,
-                    NumSystem = row.SystemOpsCount,
+                    NumMigrations = row.SystemOpsCount,
                     NumTransactions = row.TransactionsCount,
                 };
             });
@@ -628,9 +628,9 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetSystemOps(account, sort, offset, OffsetMode.Id, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
+                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
                         ? Operations.GetRevelationPenalties(account, sort, offset, OffsetMode.Id, limit)
@@ -694,9 +694,9 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetSystemOps(account, sort, offset, OffsetMode.Id, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
+                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
                         userActivations,
@@ -732,9 +732,9 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetSystemOps(account, sort, offset, OffsetMode.Id, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
+                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
                         contractDelegations,
@@ -810,9 +810,9 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetSystemOps(account, from, to, sort, offset, OffsetMode.Id, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
                         ? Operations.GetRevelationPenalties(account, from, to, sort, offset, OffsetMode.Id, limit)
@@ -876,9 +876,9 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetSystemOps(account, from, to, sort, offset, OffsetMode.Id, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
                         userActivations,
@@ -914,9 +914,9 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.System)
-                        ? Operations.GetSystemOps(account, from, to, sort, offset, OffsetMode.Id, limit)
-                        : Task.FromResult(Enumerable.Empty<SystemOperation>());
+                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
                         contractDelegations,

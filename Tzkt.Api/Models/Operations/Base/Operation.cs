@@ -20,7 +20,7 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(OriginationOperation))]
     [KnownType(typeof(TransactionOperation))]
     [KnownType(typeof(RevealOperation))]
-    [KnownType(typeof(SystemOperation))]
+    [KnownType(typeof(MigrationOperation))]
     [KnownType(typeof(RevelationPenaltyOperation))]
     [KnownType(typeof(BakingOperation))]
     public abstract class Operation
@@ -69,8 +69,8 @@ namespace Tzkt.Api.Models
             if (type == typeof(RevealOperation))
                 return OpTypes.Reveal;
 
-            if (type == typeof(SystemOperation))
-                return OpTypes.System;
+            if (type == typeof(MigrationOperation))
+                return OpTypes.Migration;
 
             if (type == typeof(RevelationPenaltyOperation))
                 return OpTypes.RevelationPenalty;

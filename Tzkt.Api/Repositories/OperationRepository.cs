@@ -2275,7 +2275,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region system
-        public async Task<int> GetSystemOpsCount()
+        public async Task<int> GetMigrationsCount()
         {
             var sql = @"
                 SELECT   COUNT(*)
@@ -2285,7 +2285,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<SystemOperation>> GetSystemOps(int limit = 100, int offset = 0)
+        public async Task<IEnumerable<MigrationOperation>> GetMigrations(int limit = 100, int offset = 0)
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccountId"", ""Event"", ""BalanceChange""
@@ -2297,7 +2297,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { limit, offset });
 
-            return rows.Select(row => new SystemOperation
+            return rows.Select(row => new MigrationOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -2308,7 +2308,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<SystemOperation>> GetSystemOps(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
@@ -2319,7 +2319,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
 
-            return rows.Select(row => new SystemOperation
+            return rows.Select(row => new MigrationOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -2330,7 +2330,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<SystemOperation>> GetSystemOps(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
@@ -2343,7 +2343,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
 
-            return rows.Select(row => new SystemOperation
+            return rows.Select(row => new MigrationOperation
             {
                 Id = row.Id,
                 Level = row.Level,

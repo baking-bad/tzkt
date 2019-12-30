@@ -22,7 +22,7 @@ namespace Tzkt.Api
         public const string Transaction = "transaction";
         public const string Reveal = "reveal";
 
-        public const string System = "system";
+        public const string Migration = "migration";
         public const string RevelationPenalty = "revelation_penalty";
         public const string Baking = "baking";
 
@@ -38,7 +38,7 @@ namespace Tzkt.Api
             Origination,
             Transaction,
             Reveal,
-            System,
+            Migration,
             RevelationPenalty
         };
     }

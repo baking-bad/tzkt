@@ -286,17 +286,17 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
-        #region system
-        [HttpGet("system")]
-        public Task<IEnumerable<SystemOperation>> GetSystemOps([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        #region migrations
+        [HttpGet("migrations")]
+        public Task<IEnumerable<MigrationOperation>> GetMigrations([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetSystemOps(n, p * n);
+            return Operations.GetMigrations(n, p * n);
         }
 
-        [HttpGet("system/count")]
-        public Task<int> GetSystemOpsCount()
+        [HttpGet("migrations/count")]
+        public Task<int> GetMigrationsCount()
         {
-            return Operations.GetSystemOpsCount();
+            return Operations.GetMigrationsCount();
         }
         #endregion
 

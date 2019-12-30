@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
-    public class SystemOperation : Operation
+    public class MigrationOperation : Operation
     {
-        public override string Type => OpTypes.System;
+        public override string Type => OpTypes.Migration;
 
         public override int Id { get; set; }
 

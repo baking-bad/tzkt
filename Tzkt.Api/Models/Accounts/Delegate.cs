@@ -69,7 +69,7 @@ namespace Tzkt.Api.Models
 
         public int NumReveals { get; set; }
 
-        public int NumSystem { get; set; }
+        public int NumMigrations { get; set; }
 
         public int FirstActivity { get; set; }
 
