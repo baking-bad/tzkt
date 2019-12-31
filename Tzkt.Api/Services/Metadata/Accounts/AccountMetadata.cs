@@ -26,6 +26,9 @@ namespace Tzkt.Api.Services.Metadata
         [JsonPropertyName("site")]
         public string Site { get; set; }
 
+        [JsonPropertyName("support")]
+        public string Support { get; set; }
+
         [JsonPropertyName("email")]
         public string Email { get; set; }
 
