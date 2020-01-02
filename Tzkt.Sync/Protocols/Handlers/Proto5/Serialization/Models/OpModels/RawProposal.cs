@@ -1,17 +1,21 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
     class RawProposalContent : IOperationContent
     {
+        [JsonProperty("source")]
         [JsonPropertyName("source")]
         public string Source { get; set; }
 
+        [JsonProperty("period")]
         [JsonPropertyName("period")]
         public int Period { get; set; }
 
+        [JsonProperty("proposals")]
         [JsonPropertyName("proposals")]
         public List<string> Proposals { get; set; }
 

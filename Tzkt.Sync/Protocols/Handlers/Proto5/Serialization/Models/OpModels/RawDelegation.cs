@@ -2,29 +2,37 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
     class RawDelegationContent : IOperationContent
     {
+        [JsonProperty("source")]
         [JsonPropertyName("source")]
         public string Source { get; set; }
 
+        [JsonProperty("fee")]
         [JsonPropertyName("fee")]
         public long Fee { get; set; }
 
+        [JsonProperty("counter")]
         [JsonPropertyName("counter")]
         public int Counter { get; set; }
 
+        [JsonProperty("gas_limit")]
         [JsonPropertyName("gas_limit")]
         public int GasLimit { get; set; }
 
+        [JsonProperty("storage_limit")]
         [JsonPropertyName("storage_limit")]
         public int StorageLimit { get; set; }
 
+        [JsonProperty("delegate")]
         [JsonPropertyName("delegate")]
         public string Delegate { get; set; }
 
+        [JsonProperty("metadata")]
         [JsonPropertyName("metadata")]
         public RawDelegationContentMetadata Metadata { get; set; }
 
@@ -42,9 +50,11 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class RawDelegationContentMetadata
     {
+        [JsonProperty("balance_updates")]
         [JsonPropertyName("balance_updates")]
         public List<IBalanceUpdate> BalanceUpdates { get; set; }
 
+        [JsonProperty("operation_result")]
         [JsonPropertyName("operation_result")]
         public RawDelegationContentResult Result { get; set; }
 
@@ -58,12 +68,15 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class RawDelegationContentResult
     {
+        [JsonProperty("status")]
         [JsonPropertyName("status")]
         public string Status { get; set; }
 
+        [JsonProperty("consumed_gas")]
         [JsonPropertyName("consumed_gas")]
         public int ConsumedGas { get; set; }
 
+        [JsonProperty("errors")]
         [JsonPropertyName("errors")]
         public JsonElement Errors { get; set; }
 

@@ -1,14 +1,17 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
     public class RawOperation
     {
+        [JsonProperty("hash")]
         [JsonPropertyName("hash")]
         public string Hash { get; set; }
 
+        [JsonProperty("contents")]
         [JsonPropertyName("contents")]
         public List<IOperationContent> Contents { get; set; }
 

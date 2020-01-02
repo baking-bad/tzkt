@@ -2,17 +2,21 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
     class RawDoubleBakingEvidenceContent : IOperationContent
     {
+        [JsonProperty("bh1")]
         [JsonPropertyName("bh1")]
         public RawDoubleBakingEvidenceBlockHeader Block1 { get; set; }
 
+        [JsonProperty("bh2")]
         [JsonPropertyName("bh2")]
         public RawDoubleBakingEvidenceBlockHeader Block2 { get; set; }
 
+        [JsonProperty("metadata")]
         [JsonPropertyName("metadata")]
         public RawDoubleBakingEvidenceContentMetadata Metadata { get; set; }
 
@@ -26,15 +30,19 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class RawDoubleBakingEvidenceBlockHeader
     {
+        [JsonProperty("level")]
         [JsonPropertyName("level")]
         public int Level { get; set; }
 
+        [JsonProperty("predecessor")]
         [JsonPropertyName("predecessor")]
         public string Predecessor { get; set; }
 
+        [JsonProperty("timestamp")]
         [JsonPropertyName("timestamp")]
         public DateTime Timestamp { get; set; }
 
+        [JsonProperty("priority")]
         [JsonPropertyName("priority")]
         public int Priority { get; set; }
 
@@ -49,6 +57,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class RawDoubleBakingEvidenceContentMetadata
     {
+        [JsonProperty("balance_updates")]
         [JsonPropertyName("balance_updates")]
         public List<IBalanceUpdate> BalanceUpdates { get; set; }
 

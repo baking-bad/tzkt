@@ -25,7 +25,14 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             try
             {
-                var rawBlock = await JsonSerializer.DeserializeAsync<RawBlock>(stream, Options);
+                using var reader = new StreamReader(stream);
+                var json = await reader.ReadToEndAsync();
+                var rawBlock = Newtonsoft.Json.JsonConvert.DeserializeObject<RawBlock>(json, 
+                    new NSRawBalanceUpdateConverter(), 
+                    new NSRawInternalOperationResultConverter(), 
+                    new NSRawOperationContentConverter());
+
+                //var rawBlock = await JsonSerializer.DeserializeAsync<RawBlock>(stream, Options);
 
                 if (!rawBlock.IsValidFormat())
                     throw new SerializationException($"invalid format");

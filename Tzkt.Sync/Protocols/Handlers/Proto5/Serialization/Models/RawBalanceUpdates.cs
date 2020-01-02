@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
@@ -11,9 +12,11 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class ContractUpdate : IBalanceUpdate
     {
+        [JsonProperty("contract")]
         [JsonPropertyName("contract")]
         public string Contract { get; set; }
 
+        [JsonProperty("change")]
         [JsonPropertyName("change")]
         public long Change { get; set; }
 
@@ -28,12 +31,15 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class FreezerUpdate : IBalanceUpdate
     {
+        [JsonProperty("delegate")]
         [JsonPropertyName("delegate")]
         public string Delegate { get; set; }
 
+        [JsonProperty("cycle")]
         [JsonPropertyName("cycle")]
         public int Cycle { get; set; }
 
+        [JsonProperty("change")]
         [JsonPropertyName("change")]
         public long Change { get; set; }
 

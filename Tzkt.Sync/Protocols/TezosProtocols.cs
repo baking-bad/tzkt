@@ -26,6 +26,7 @@ namespace Tzkt.Sync
                 case "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i":
                     return services.GetRequiredService<GenesisHandler>();
                 case "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P":
+                case "PtBMwNZT94N7gXKw4i273CKcSaBrrBnqnt3RATExNKr9KNX2USV":
                     return services.GetRequiredService<InitiatorHandler>();
                 case "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY":
                     return services.GetRequiredService<Proto1Handler>();

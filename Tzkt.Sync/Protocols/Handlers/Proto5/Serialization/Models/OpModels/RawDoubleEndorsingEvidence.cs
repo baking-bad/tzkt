@@ -2,17 +2,21 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
     class RawDoubleEndorsingEvidenceContent : IOperationContent
     {
+        [JsonProperty("op1")]
         [JsonPropertyName("op1")]
         public RawDoubleEndorsingEvidenceOp Op1 { get; set; }
 
+        [JsonProperty("op2")]
         [JsonPropertyName("op2")]
         public RawDoubleEndorsingEvidenceOp Op2 { get; set; }
 
+        [JsonProperty("metadata")]
         [JsonPropertyName("metadata")]
         public RawDoubleEndorsingEvidenceContentMetadata Metadata { get; set; }
 
@@ -26,9 +30,11 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class RawDoubleEndorsingEvidenceOp
     {
+        [JsonProperty("branch")]
         [JsonPropertyName("branch")]
         public string Branch { get; set; }
 
+        [JsonProperty("operations")]
         [JsonPropertyName("operations")]
         public RawDoubleEndorsingEvidenceOpEndorsement Operations { get; set; }
 
@@ -41,9 +47,11 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class RawDoubleEndorsingEvidenceOpEndorsement
     {
+        [JsonProperty("kind")]
         [JsonPropertyName("kind")]
         public string Kind { get; set; }
 
+        [JsonProperty("level")]
         [JsonPropertyName("level")]
         public int Level { get; set; }
 
@@ -56,6 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
     class RawDoubleEndorsingEvidenceContentMetadata
     {
+        [JsonProperty("balance_updates")]
         [JsonPropertyName("balance_updates")]
         public List<IBalanceUpdate> BalanceUpdates { get; set; }
 
