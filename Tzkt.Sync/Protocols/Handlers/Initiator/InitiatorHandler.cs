@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
@@ -13,12 +14,14 @@ namespace Tzkt.Sync.Protocols
     class InitiatorHandler : ProtocolHandler
     {
         public override string Protocol => "Initiator";
+        public override IDiagnostics Diagnostics { get; }
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
-        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, DiagnosticService diagnostics, ILogger<InitiatorHandler> logger)
-            : base(node, db, cache, diagnostics, logger)
+        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, IConfiguration config, ILogger<InitiatorHandler> logger)
+            : base(node, db, cache, config, logger)
         {
+            Diagnostics = new Diagnostics();
             Serializer = new Serializer();
             Validator = new Validator(this);
         }

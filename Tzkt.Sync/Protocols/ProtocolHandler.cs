@@ -2,8 +2,9 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
@@ -15,22 +16,22 @@ namespace Tzkt.Sync
     public abstract class ProtocolHandler
     {
         public abstract string Protocol { get; }
+        public abstract IDiagnostics Diagnostics { get; }
         public abstract ISerializer Serializer { get; }
         public abstract IValidator Validator { get; }
 
         public readonly TezosNode Node;
         public readonly TzktContext Db;
         public readonly CacheService Cache;
+        public readonly TezosProtocolsConfig Config;
         public readonly ILogger Logger;
         
-        readonly DiagnosticService Diagnostics;
-
-        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, DiagnosticService diagnostics, ILogger logger)
+        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, IConfiguration config, ILogger logger)
         {
             Node = node;
             Db = db;
             Cache = cache;
-            Diagnostics = diagnostics;
+            Config = config.GetTezosProtocolsConfig();
             Logger = logger;
         }
 
@@ -61,8 +62,11 @@ namespace Tzkt.Sync
             Logger.LogDebug("Touch accounts...");
             TouchAccounts(rawBlock.Level);
 
-            Logger.LogDebug("Diagnostics...");
-            await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+            if (Config.Diagnostics)
+            {
+                Logger.LogDebug("Diagnostics...");
+                await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+            }
 
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
@@ -90,8 +94,11 @@ namespace Tzkt.Sync
             Logger.LogDebug("Clear accounts...");
             ClearAccounts(state.Level + 1);
 
-            Logger.LogDebug("Diagnostics...");
-            await Diagnostics.Run((await Cache.GetAppStateAsync()).Level);
+            if (Config.Diagnostics)
+            {
+                Logger.LogDebug("Diagnostics...");
+                await Diagnostics.Run((await Cache.GetAppStateAsync()).Level);
+            }
 
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();

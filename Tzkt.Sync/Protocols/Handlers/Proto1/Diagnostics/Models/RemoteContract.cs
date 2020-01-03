@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Tzkt.Sync.Services.Diagnostics
+namespace Tzkt.Sync.Protocols.Proto1
 {
     class RemoteContract
     {

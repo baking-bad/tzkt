@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Tzkt.Sync.Services.Diagnostics
+namespace Tzkt.Sync.Protocols.Proto5
 {
-    class RemoteContractBaby
+    class RemoteContract
     {
         [JsonPropertyName("balance")]
         public long? Balance { get; set; }

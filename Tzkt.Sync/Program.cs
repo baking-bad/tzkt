@@ -39,7 +39,6 @@ namespace Tzkt.Sync
                         });
 
                     services.AddCaches();
-                    services.AddDiagnostics();
                     services.AddTezosNode();
                     services.AddTezosProtocols();
 

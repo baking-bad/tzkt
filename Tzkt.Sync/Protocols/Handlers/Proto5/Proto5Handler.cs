@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
@@ -17,12 +17,14 @@ namespace Tzkt.Sync.Protocols
     class Proto5Handler : ProtocolHandler
     {
         public override string Protocol => "Proto 5";
+        public override IDiagnostics Diagnostics { get; }
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
-        public Proto5Handler(TezosNode node, TzktContext db, CacheService cache, DiagnosticService diagnostics, ILogger<Proto1Handler> logger)
-            : base(node, db, cache, diagnostics, logger)
+        public Proto5Handler(TezosNode node, TzktContext db, CacheService cache, IConfiguration config, ILogger<Proto5Handler> logger)
+            : base(node, db, cache, config, logger)
         {
+            Diagnostics = new Diagnostics(db, node);
             Serializer = new Serializer();
             Validator = new Validator(this);
         }

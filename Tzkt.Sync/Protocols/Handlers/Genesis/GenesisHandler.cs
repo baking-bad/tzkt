@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
@@ -12,12 +13,14 @@ namespace Tzkt.Sync.Protocols
     class GenesisHandler : ProtocolHandler
     {
         public override string Protocol => "Genesis";
+        public override IDiagnostics Diagnostics { get; }
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
-        public GenesisHandler(TezosNode node, TzktContext db, CacheService cache, DiagnosticService diagnostics, ILogger<GenesisHandler> logger)
-            : base(node, db, cache, diagnostics, logger)
+        public GenesisHandler(TezosNode node, TzktContext db, CacheService cache, IConfiguration config, ILogger<GenesisHandler> logger)
+            : base(node, db, cache, config, logger)
         {
+            Diagnostics = new Diagnostics();
             Serializer = new Serializer();
             Validator = new Validator(this);
         }

@@ -3,33 +3,27 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
-using Tzkt.Sync.Protocols;
-using Tzkt.Sync.Services.Diagnostics;
+using Tzkt.Sync.Services;
 
-namespace Tzkt.Sync.Services
+namespace Tzkt.Sync.Protocols.Proto5
 {
-    public class DiagnosticService
+    class Diagnostics : IDiagnostics
     {
         readonly TzktContext Db;
         readonly TezosNode Node;
-        readonly DiagnosticServiceConfig Config;
 
-        public DiagnosticService(TzktContext db, TezosNode node, IConfiguration config)
+        public Diagnostics(TzktContext db, TezosNode node)
         {
             Db = db;
             Node = node;
-            Config = config.GetDiagnosticServiceConfig();
         }
 
         public async Task Run(int level, int operations)
         {
-            if (!Config.Enabled || level < 2) return;
-
             var entries = Db.ChangeTracker.Entries();
 
             if (operations > entries.Count(x => x.Entity is BaseOperation && x.State == EntityState.Added))
@@ -50,15 +44,13 @@ namespace Tzkt.Sync.Services
             {
                 if (account is Data.Models.Delegate delegat)
                     await TestDelegate(level, delegat, proto);
-                
+
                 await TestAccount(level, account);
             }
         }
 
         public async Task Run(int level)
         {
-            if (!Config.Enabled || level < 2) return;
-
             var entries = Db.ChangeTracker.Entries();
 
             var state = entries.FirstOrDefault(x => x.Entity is AppState).Entity;
@@ -74,7 +66,7 @@ namespace Tzkt.Sync.Services
 
             foreach (var account in accounts)
             {
-                
+
                 if (account is Data.Models.Delegate delegat)
                     await TestDelegate(level, delegat, proto);
 
@@ -103,7 +95,7 @@ namespace Tzkt.Sync.Services
             if (remote.GracePeriod != (delegat.DeactivationLevel - 2) / proto.BlocksPerCycle)
                 throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
 
-            if (remote.Delegators.Count != delegat.Delegators && level >= 655360 && remote.Delegators.Count - delegat.Delegators != 1)
+            if (remote.Delegators.Count != delegat.Delegators && remote.Delegators.Count - delegat.Delegators != 1)
                 throw new Exception($"Diagnostics failed: wrong delegators count {delegat.Address}");
 
             if ((remote.FrozenBalances.Count > 0 ? remote.FrozenBalances.Sum(x => x.Deposit) : 0) != delegat.FrozenDeposits)
@@ -126,11 +118,11 @@ namespace Tzkt.Sync.Services
             if (!(account is Data.Models.Delegate) && remote.Balance != account.Balance)
                 throw new Exception($"Diagnostics failed: wrong balance {account.Address}");
 
-            if ((level < 655360 || account.Type != AccountType.Contract) && remote.Balance > 0 && remote.Counter != account.Counter)
+            if (account.Type != AccountType.Contract && remote.Balance > 0 && remote.Counter != account.Counter)
                 throw new Exception($"Diagnostics failed: wrong counter {account.Address}");
 
-            if (!(account is Data.Models.Delegate) && remote.Delegate.Value != account.Delegate?.Address &&
-                !(account is Contract c && (c.Manager == null || c.Manager.Address == remote.Delegate.Value)))
+            if (!(account is Data.Models.Delegate) && remote.Delegate != account.Delegate?.Address &&
+                !(account is Contract c && (c.Manager == null || c.Manager.Address == remote.Delegate)))
                 throw new Exception($"Diagnostics failed: wrong delegate {account.Address}");
         }
 
@@ -142,9 +134,6 @@ namespace Tzkt.Sync.Services
 
         async Task<RemoteContract> GetRemoteContract(int level, string address)
         {
-            if (level >= 655360)
-                return await GetRemoteContractBaby(level, address);
-
             try
             {
                 var stream = await Node.GetContractAsync(level, address);
@@ -154,33 +143,6 @@ namespace Tzkt.Sync.Services
                     throw new SerializationException($"invalid format");
 
                 return contract;
-            }
-            catch (JsonException ex)
-            {
-                throw new SerializationException($"[{ex.Path}] {ex.Message}");
-            }
-        }
-
-        async Task<RemoteContract> GetRemoteContractBaby(int level, string address)
-        {
-            try
-            {
-                var stream = await Node.GetContractAsync(level, address);
-                var contract = await JsonSerializer.DeserializeAsync<RemoteContractBaby>(stream, SerializerOptions.Default);
-
-                if (!contract.IsValidFormat())
-                    throw new SerializationException($"invalid format {level} - {address}");
-
-                return new RemoteContract
-                {
-                    Balance = contract.Balance,
-                    Counter = contract.Counter,
-                    Delegate = new RemoteContractDelegate
-                    {
-                        Setable = true,
-                        Value = contract.Delegate
-                    }
-                };
             }
             catch (JsonException ex)
             {
@@ -204,14 +166,6 @@ namespace Tzkt.Sync.Services
             {
                 throw new SerializationException($"[{ex.Path}] {ex.Message}");
             }
-        }
-    }
-
-    static class DiagnosticServiceExt
-    {
-        public static void AddDiagnostics(this IServiceCollection services)
-        {
-            services.AddScoped<DiagnosticService>();
         }
     }
 }
