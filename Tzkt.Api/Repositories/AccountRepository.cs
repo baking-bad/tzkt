@@ -237,6 +237,76 @@ namespace Tzkt.Api.Repositories
             };
         }
 
+        public async Task<Contract> GetContract(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+
+            if (!(rawAccount is RawContract contract))
+                return null;
+
+            var metadata = Accounts.GetMetadata(contract.Id);
+
+            var creator = contract.CreatorId == null ? null
+                        : await Accounts.GetAsync((int)contract.CreatorId);
+
+            var creatorMetadata = creator == null ? null
+                : Accounts.GetMetadata(creator.Id);
+
+            var manager = contract.ManagerId == null ? null
+                : (RawUser)await Accounts.GetAsync((int)contract.ManagerId);
+
+            var managerMetadata = manager == null ? null
+                : Accounts.GetMetadata(manager.Id);
+
+            var contractDelegate = contract.DelegateId == null ? null
+                : await Accounts.GetAsync((int)contract.DelegateId);
+
+            var contractDelegateMetadata = contractDelegate == null ? null
+                : Accounts.GetMetadata(contractDelegate.Id);
+
+            return new Contract
+            {
+                Alias = metadata?.Alias,
+                Address = contract.Address,
+                Kind = KindToString(contract.Kind),
+                Balance = contract.Balance,
+                Creator = creator == null ? null
+                    : new CreatorInfo
+                    {
+                        Alias = creatorMetadata?.Alias,
+                        Address = creator.Address
+                    },
+                Manager = manager == null ? null
+                    : new ManagerInfo
+                    {
+                        Alias = managerMetadata?.Alias,
+                        Address = manager.Address,
+                        PublicKey = manager.PublicKey,
+                    },
+                Delegate = contractDelegate == null ? null
+                    : new DelegateInfo
+                    {
+                        Alias = contractDelegateMetadata?.Alias,
+                        Address = contractDelegate.Address,
+                        Active = contractDelegate.Staked
+                    },
+                DelegationLevel = contractDelegate == null ? null
+                    : contract.DelegationLevel,
+                DelegationTime = contractDelegate == null ? null
+                    : (DateTime?)Time[(int)contract.DelegationLevel],
+                FirstActivity = contract.FirstLevel,
+                FirstActivityTime = Time[contract.FirstLevel],
+                LastActivity = contract.LastLevel,
+                LastActivityTime = Time[contract.LastLevel],
+                NumContracts = contract.Contracts,
+                NumDelegations = contract.DelegationsCount,
+                NumOriginations = contract.OriginationsCount,
+                NumReveals = contract.RevealsCount,
+                NumMigrations = contract.SystemOpsCount,
+                NumTransactions = contract.TransactionsCount
+            };
+        }
+
         public async Task<Account> GetProfile(string address, HashSet<string> types, SortMode sort, int limit)
         {
             var account = await Get(address);
@@ -244,18 +314,18 @@ namespace Tzkt.Api.Repositories
             switch (account)
             {
                 case Models.Delegate delegat:
-                    delegat.Contracts = await GetContracts(address, limit);
+                    delegat.Contracts = await GetRelatedContracts(address, limit);
                     delegat.Delegators = await GetDelegators(address, limit);
                     delegat.Operations = await GetOperations(address, types, sort, 0, limit);
                     delegat.Metadata = await GetMetadata(address);
                     break;
                 case User user when user.FirstActivity != null:
-                    user.Contracts = await GetContracts(address, limit);
+                    user.Contracts = await GetRelatedContracts(address, limit);
                     user.Operations = await GetOperations(address, types, sort, 0, limit);
                     user.Metadata = await GetMetadata(address);
                     break;
                 case Contract contract:
-                    contract.Contracts = await GetContracts(address, limit);
+                    contract.Contracts = await GetRelatedContracts(address, limit);
                     contract.Operations = await GetOperations(address, types, sort, 0, limit);
                     contract.Metadata = await GetMetadata(address);
                     break;
@@ -495,7 +565,92 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<RelatedContract>> GetContracts(string address, int limit = 100, int offset = 0)
+        public async Task<IEnumerable<Contract>> GetContracts(int? kind, int limit = 100, int offset = 0)
+        {
+            var sql = $@"
+                SELECT      *
+                FROM        ""Accounts""
+                WHERE       ""Type"" = 2";
+
+            if (kind != null)
+                sql += $@"
+                AND         ""Kind"" = {kind}";
+
+            sql += @"
+                ORDER BY    ""Id""
+                OFFSET      @offset
+                LIMIT       @limit";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { limit, offset });
+
+            return rows.Select(row =>
+            {
+                var metadata = Accounts.GetMetadata((int)row.Id);
+
+                var creator = row.CreatorId == null ? null
+                            : Accounts.Get((int)row.CreatorId);
+
+                var creatorMetadata = creator == null ? null
+                    : Accounts.GetMetadata(creator.Id);
+
+                var manager = row.ManagerId == null ? null
+                    : (RawUser)Accounts.Get((int)row.ManagerId);
+
+                var managerMetadata = manager == null ? null
+                    : Accounts.GetMetadata(manager.Id);
+
+                var contractDelegate = row.DelegateId == null ? null
+                    : Accounts.Get((int)row.DelegateId);
+
+                var contractDelegateMetadata = contractDelegate == null ? null
+                    : Accounts.GetMetadata(contractDelegate.Id);
+
+                return new Contract
+                {
+                    Alias = metadata?.Alias,
+                    Address = row.Address,
+                    Kind = KindToString(row.Kind),
+                    Balance = row.Balance,
+                    Creator = creator == null ? null
+                        : new CreatorInfo
+                        {
+                            Alias = creatorMetadata?.Alias,
+                            Address = creator.Address
+                        },
+                    Manager = manager == null ? null
+                        : new ManagerInfo
+                        {
+                            Alias = managerMetadata?.Alias,
+                            Address = manager.Address,
+                            PublicKey = manager.PublicKey,
+                        },
+                    Delegate = contractDelegate == null ? null
+                        : new DelegateInfo
+                        {
+                            Alias = contractDelegateMetadata?.Alias,
+                            Address = contractDelegate.Address,
+                            Active = contractDelegate.Staked
+                        },
+                    DelegationLevel = contractDelegate == null ? null
+                        : row.DelegationLevel,
+                    DelegationTime = contractDelegate == null ? null
+                        : (DateTime?)Time[row.DelegationLevel],
+                    FirstActivity = row.FirstLevel,
+                    FirstActivityTime = Time[row.FirstLevel],
+                    LastActivity = row.LastLevel,
+                    LastActivityTime = Time[row.LastLevel],
+                    NumContracts = row.Contracts,
+                    NumDelegations = row.DelegationsCount,
+                    NumOriginations = row.OriginationsCount,
+                    NumReveals = row.RevealsCount,
+                    NumMigrations = row.SystemOpsCount,
+                    NumTransactions = row.TransactionsCount
+                };
+            });
+        }
+
+        public async Task<IEnumerable<RelatedContract>> GetRelatedContracts(string address, int limit = 100, int offset = 0)
         {
             var account = await Accounts.GetAsync(address);
 

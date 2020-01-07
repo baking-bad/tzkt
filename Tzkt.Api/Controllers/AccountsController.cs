@@ -44,7 +44,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/contracts")]
         public Task<IEnumerable<RelatedContract>> GetContracts([Address] string address, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
-            return Accounts.GetContracts(address, n, p * n);
+            return Accounts.GetRelatedContracts(address, n, p * n);
         }
 
         [HttpGet("{address}/delegators")]
