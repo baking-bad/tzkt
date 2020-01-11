@@ -14,6 +14,9 @@ namespace Tzkt.Api.Services.Metadata
         [JsonPropertyName("kind")]
         public string Kind { get; set; }
 
+        [JsonPropertyName("owner")]
+        public string Owner { get; set; }
+
         [JsonPropertyName("alias")]
         public string Alias { get; set; }
 
