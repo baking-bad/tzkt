@@ -81,6 +81,18 @@ namespace Tzkt.Sync.Services
             return Header;
         }
 
+        public async Task<Header> GetHeaderAsync(int level)
+        {
+            var header = await Rpc.GetObjectAsync<Header>(
+                $"chains/main/blocks/{level}/header",
+                DefaultSerializer);
+
+            if (header.ChainId != ChainId)
+                throw new Exception("Invalid chain");
+
+            return header;
+        }
+
         public async Task<bool> CheckHeadAsync()
         {
             var header1 = await Rpc.GetObjectAsync<Header>(
@@ -101,15 +113,6 @@ namespace Tzkt.Sync.Services
         {
             var header = await GetHeaderAsync();
             return header.Level != level;
-        }
-
-        public async Task<bool> ValidateBranchAsync(int level, string hash)
-        {
-            var header = await Rpc.GetObjectAsync<Header>(
-                $"chains/main/blocks/{level}/header",
-                DefaultSerializer);
-
-            return header.ChainId == ChainId && header.Hash == hash;
         }
 
         public void Dispose() => Rpc.Dispose();

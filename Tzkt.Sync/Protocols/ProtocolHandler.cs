@@ -76,7 +76,7 @@ namespace Tzkt.Sync
             return await Cache.GetAppStateAsync();
         }
         
-        public virtual async Task<AppState> RevertLastBlock()
+        public virtual async Task<AppState> RevertLastBlock(string predecessor)
         {
             var state = await Cache.GetAppStateAsync();
             if (state.Protocol != state.NextProtocol)
@@ -94,10 +94,10 @@ namespace Tzkt.Sync
             Logger.LogDebug("Clear accounts...");
             ClearAccounts(state.Level + 1);
 
-            if (Config.Diagnostics)
+            if (Config.Diagnostics && state.Hash == predecessor)
             {
                 Logger.LogDebug("Diagnostics...");
-                await Diagnostics.Run((await Cache.GetAppStateAsync()).Level);
+                await Diagnostics.Run(state.Level);
             }
 
             Logger.LogDebug("Saving...");

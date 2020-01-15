@@ -11,6 +11,9 @@ namespace Tzkt.Sync.Services
         [JsonPropertyName("protocol")]
         public string Protocol { get; set; }
 
+        [JsonPropertyName("predecessor")]
+        public string Predecessor { get; set; }
+
         [JsonPropertyName("hash")]
         public string Hash { get; set; }
 
