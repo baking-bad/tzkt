@@ -568,7 +568,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             sender.Delegate = newDelegate;
             sender.DelegateId = newDelegate.Id;
             sender.DelegationLevel = level;
-            sender.Staked = true;
+            sender.Staked = newDelegate.Staked;
 
             newDelegate.Delegators++;
             newDelegate.StakingBalance += sender.Balance;
