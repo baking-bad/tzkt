@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace Tzkt.Sync
             Logger = logger;
         }
 
-        public virtual async Task<AppState> ApplyBlock(Stream stream)
+        public virtual async Task<AppState> ApplyBlock(Stream stream, int head, DateTime sync)
         {
             Logger.LogDebug("Deserializing block...");
             var rawBlock = await Serializer.DeserializeBlock(stream);
@@ -67,6 +68,9 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Diagnostics...");
                 await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
             }
+
+            state.KnownHead = head;
+            state.LastSync = sync;
 
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
@@ -167,7 +171,7 @@ namespace Tzkt.Sync
             {
                 switch(entry.Entity)
                 {
-                    case Delegate delegat:
+                    case Data.Models.Delegate delegat:
                         delegat.Delegate = null;
                         delegat.DelegatedAccounts = null;
                         delegat.FirstBlock = null;

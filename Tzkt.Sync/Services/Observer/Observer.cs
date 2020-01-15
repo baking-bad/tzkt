@@ -152,8 +152,12 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> ApplyUpdatesAsync(CancellationToken cancelToken)
         {
-            while (await Node.HasUpdatesAsync(AppState.Level) && !cancelToken.IsCancellationRequested)
+            while (!cancelToken.IsCancellationRequested)
             {
+                var sync = DateTime.UtcNow;
+                var header = await Node.GetHeaderAsync();
+                if (AppState.Level == header.Level) break;
+
                 Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                 using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
 
@@ -165,8 +169,8 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug($"Applying block...");
                 using var scope = Services.CreateScope();
                 var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
-                AppState = await protocol.ApplyBlock(blockStream);
-                Logger.LogInformation($"Applied {AppState.Level}");
+                AppState = await protocol.ApplyBlock(blockStream, header.Level, sync);
+                Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
             }
 
             return !cancelToken.IsCancellationRequested;
