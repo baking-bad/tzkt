@@ -4,7 +4,7 @@ prepare:
 	docker cp tzkt-snapshot:/tzkt_db.backup .
 	docker rm tzkt-snapshot
 	docker-compose up -d db
-	docker-compose exec -T db pg_restore --clean --if-exists -v --no-acl --no-owner -U tzkt -d tzkt_db -1 < tzkt_db.backup
+	docker-compose exec -T db pg_restore -C --clean --if-exists -v --no-acl --no-owner -U tzkt -d tzkt_db < tzkt_db.backup
 	rm tzkt_db.backup
 	docker-compose build
 
