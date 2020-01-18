@@ -5,6 +5,7 @@ init:
 	docker rm tzkt-snapshot
 	docker rmi tzkt-snapshot-dl
 	docker-compose up -d db
+	docker-compose exec -T db psql -U tzkt postgres -c '\l'
 	docker-compose exec -T db dropdb -U tzkt --if-exists tzkt_db
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
 	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < tzkt_db.backup
