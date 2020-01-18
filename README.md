@@ -59,6 +59,22 @@ TzKT (v1-preview) has just been launched and we are actively testing it and are 
 
 ## Installation guide
 
+The easiest way to try TzKT Indexer and TzKT API is to use Docker. First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands:
+
+````sh
+git clone https://github.com/baking-bad/tzkt.git
+cd tzkt/
+
+make init #run this command just once to init database from the latest snapshot
+make start
+
+curl http://127.0.0.1:5000/v1/head
+
+make stop
+````
+
+## Advanced installation guide
+
 This installation guide is for Ubuntu 18.04 because it is a fairly common OS. If you are using a different OS, the installation process will probably differ only in the "Install packages" step.
 
 ### Install packages
