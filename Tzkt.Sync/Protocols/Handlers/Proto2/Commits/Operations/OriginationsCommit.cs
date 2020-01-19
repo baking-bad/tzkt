@@ -86,7 +86,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
             #region entities
             var block = Origination.Block;
@@ -111,7 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            sender.Balance -= Origination.BakerFee;
+            await Spend(sender, Origination.BakerFee);
             if (senderDelegate != null) senderDelegate.StakingBalance -= Origination.BakerFee;
             blockBaker.FrozenFees += Origination.BakerFee;
             blockBaker.Balance += Origination.BakerFee;
@@ -131,9 +131,10 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region apply result
             if (Origination.Status == OperationStatus.Applied)
             {
-                sender.Balance -= Origination.Balance;
-                sender.Balance -= Origination.StorageFee ?? 0;
-                sender.Balance -= Origination.AllocationFee ?? 0;
+                await Spend(sender,
+                    Origination.Balance +
+                    (Origination.StorageFee ?? 0) +
+                    (Origination.AllocationFee ?? 0));
 
                 if (senderDelegate != null)
                 {
@@ -156,8 +157,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             Db.OriginationOps.Add(Origination);
-
-            return Task.CompletedTask;
         }
 
         public override async Task Revert()
@@ -187,9 +186,10 @@ namespace Tzkt.Sync.Protocols.Proto2
             #region revert result
             if (Origination.Status == OperationStatus.Applied)
             {
-                sender.Balance += Origination.Balance;
-                sender.Balance += Origination.StorageFee ?? 0;
-                sender.Balance += Origination.AllocationFee ?? 0;
+                await Return(sender,
+                    Origination.Balance +
+                    (Origination.StorageFee ?? 0) +
+                    (Origination.AllocationFee ?? 0));
 
                 if (senderDelegate != null)
                 {
@@ -213,7 +213,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region revert operation
-            sender.Balance += Origination.BakerFee;
+            await Return(sender, Origination.BakerFee);
             if (senderDelegate != null) senderDelegate.StakingBalance += Origination.BakerFee;
             blockBaker.FrozenFees -= Origination.BakerFee;
             blockBaker.Balance -= Origination.BakerFee;

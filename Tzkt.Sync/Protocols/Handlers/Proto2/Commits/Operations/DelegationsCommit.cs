@@ -82,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            sender.Balance -= Delegation.BakerFee;
+            await Spend(sender, Delegation.BakerFee);
             if (prevDelegate != null) prevDelegate.StakingBalance -= Delegation.BakerFee;
             blockBaker.FrozenFees += Delegation.BakerFee;
             blockBaker.Balance += Delegation.BakerFee;
@@ -247,7 +247,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region revert operation
-            sender.Balance += Delegation.BakerFee;
+            await Return(sender, Delegation.BakerFee);
             if (prevDelegate != null) prevDelegate.StakingBalance += Delegation.BakerFee;
             blockBaker.FrozenFees -= Delegation.BakerFee;
             blockBaker.Balance -= Delegation.BakerFee;
@@ -289,6 +289,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Contracts = user.Contracts,
                 SystemOpsCount = user.SystemOpsCount,
                 PublicKey = user.PublicKey,
+                Revealed = user.Revealed,
                 Staked = true,
                 StakingBalance = user.Balance,
                 Type = AccountType.Delegate,
@@ -411,6 +412,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Contracts = delegat.Contracts,
                 SystemOpsCount = delegat.SystemOpsCount,
                 PublicKey = delegat.PublicKey,
+                Revealed = delegat.Revealed,
                 Staked = false,
                 Type = AccountType.User,
             };

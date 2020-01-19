@@ -18,6 +18,7 @@ namespace Tzkt.Sync.Protocols
     {
         public override string Protocol => "Proto 3";
         public override IDiagnostics Diagnostics { get; }
+        public override IDiagnostics NextDiagnostics { get; }
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
@@ -25,6 +26,7 @@ namespace Tzkt.Sync.Protocols
             : base(node, db, cache, config, logger)
         {
             Diagnostics = new Diagnostics(db, node);
+            NextDiagnostics = new Proto4.Diagnostics(db, node);
             Serializer = new Serializer();
             Validator = new Validator(this);
         }

@@ -42,6 +42,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Counter = data.Counter,
                     PublicKey = data.Manager,
                     Staked = true,
+                    Revealed = true,
                     Type = AccountType.Delegate
                 };
                 Cache.AddAccount(baker);
@@ -60,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     LastLevel = rawBlock.Level,
                     Balance = data.Balance,
                     Counter = data.Counter,
-                    Type = AccountType.User,
+                    Type = AccountType.User
                 };
                 Cache.AddAccount(user);
                 BootstrapedAccounts.Add(user);

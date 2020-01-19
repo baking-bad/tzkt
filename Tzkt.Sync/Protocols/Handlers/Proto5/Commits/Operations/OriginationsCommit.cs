@@ -171,7 +171,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 await RevertInternalOrigination();
         }
 
-        public Task ApplyOrigination()
+        public async Task ApplyOrigination()
         {
             #region entities
             var block = Origination.Block;
@@ -196,7 +196,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region apply operation
-            sender.Balance -= Origination.BakerFee;
+            await Spend(sender, Origination.BakerFee);
             if (senderDelegate != null) senderDelegate.StakingBalance -= Origination.BakerFee;
             blockBaker.FrozenFees += Origination.BakerFee;
             blockBaker.Balance += Origination.BakerFee;
@@ -216,9 +216,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region apply result
             if (Origination.Status == OperationStatus.Applied)
             {
-                sender.Balance -= Origination.Balance;
-                sender.Balance -= Origination.StorageFee ?? 0;
-                sender.Balance -= Origination.AllocationFee ?? 0;
+                await Spend(sender,
+                    Origination.Balance +
+                    (Origination.StorageFee ?? 0) +
+                    (Origination.AllocationFee ?? 0));
 
                 if (senderDelegate != null)
                 {
@@ -241,11 +242,9 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             Db.OriginationOps.Add(Origination);
-
-            return Task.CompletedTask;
         }
 
-        public Task ApplyInternalOrigination()
+        public async Task ApplyInternalOrigination()
         {
             #region entities
             var block = Origination.Block;
@@ -288,15 +287,16 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region apply result
             if (Origination.Status == OperationStatus.Applied)
             {
-                sender.Balance -= Origination.Balance;
+                await Spend(sender, Origination.Balance);
 
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance -= Origination.Balance;
                 }
 
-                parentSender.Balance -= Origination.StorageFee ?? 0;
-                parentSender.Balance -= Origination.AllocationFee ?? 0;
+                await Spend(parentSender,
+                    (Origination.StorageFee ?? 0) +
+                    (Origination.AllocationFee ?? 0));
 
                 if (parentDelegate != null)
                 {
@@ -318,8 +318,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             Db.OriginationOps.Add(Origination);
-
-            return Task.CompletedTask;
         }
 
         public async Task RevertOrigination()
@@ -349,9 +347,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region revert result
             if (Origination.Status == OperationStatus.Applied)
             {
-                sender.Balance += Origination.Balance;
-                sender.Balance += Origination.StorageFee ?? 0;
-                sender.Balance += Origination.AllocationFee ?? 0;
+                await Return(sender,
+                    Origination.Balance +
+                    (Origination.StorageFee ?? 0) +
+                    (Origination.AllocationFee ?? 0));
 
                 if (senderDelegate != null)
                 {
@@ -375,7 +374,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region revert operation
-            sender.Balance += Origination.BakerFee;
+            await Return(sender, Origination.BakerFee);
             if (senderDelegate != null) senderDelegate.StakingBalance += Origination.BakerFee;
             blockBaker.FrozenFees -= Origination.BakerFee;
             blockBaker.Balance -= Origination.BakerFee;
@@ -420,15 +419,16 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region revert result
             if (Origination.Status == OperationStatus.Applied)
             {
-                sender.Balance += Origination.Balance;
+                await Return(sender, Origination.Balance);
 
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance += Origination.Balance;
                 }
 
-                parentSender.Balance += Origination.StorageFee ?? 0;
-                parentSender.Balance += Origination.AllocationFee ?? 0;
+                await Return(parentSender,
+                    (Origination.StorageFee ?? 0) +
+                    (Origination.AllocationFee ?? 0));
 
                 if (parentDelegate != null)
                 {

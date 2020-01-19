@@ -18,6 +18,7 @@ namespace Tzkt.Sync
     {
         public abstract string Protocol { get; }
         public abstract IDiagnostics Diagnostics { get; }
+        public abstract IDiagnostics NextDiagnostics { get; }
         public abstract ISerializer Serializer { get; }
         public abstract IValidator Validator { get; }
 
@@ -54,8 +55,10 @@ namespace Tzkt.Sync
             await Commit(rawBlock);
 
             var state = await Cache.GetAppStateAsync();
+            var protocolEnd = false;
             if (state.Protocol != state.NextProtocol)
             {
+                protocolEnd = true;
                 Logger.LogDebug("Migrating context...");
                 await Migration();
             }
@@ -66,7 +69,10 @@ namespace Tzkt.Sync
             if (Config.Diagnostics)
             {
                 Logger.LogDebug("Diagnostics...");
-                await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+                if (!protocolEnd)
+                    await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+                else
+                    await NextDiagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
             }
 
             state.KnownHead = head;
