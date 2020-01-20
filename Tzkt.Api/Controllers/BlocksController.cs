@@ -20,22 +20,49 @@ namespace Tzkt.Api.Controllers
             Blocks = blocks;
         }
 
-        [HttpGet("{level:int}")]
-        public Task<Block> Get([Min(0)] int level, bool operations = false)
-        {
-            return Blocks.Get(level, operations);
-        }
-
-        [HttpGet("{hash}")]
-        public Task<Block> Get([BlockHash] string hash, bool operations = false)
-        {
-            return Blocks.Get(hash, operations);
-        }
-
+        /// <summary>
+        /// Get blocks
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of blocks.
+        /// </remarks>
+        /// <param name="p">Page offset (pagination)</param>
+        /// <param name="n">Number of items to return</param>
+        /// <returns></returns>
         [HttpGet]
         public Task<IEnumerable<Block>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
         {
             return Blocks.Get(n, p * n);
+        }
+
+        /// <summary>
+        /// Get block by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns a block with the specified hash.
+        /// </remarks>
+        /// <param name="hash">Block hash</param>
+        /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
+        /// <returns></returns>
+        [HttpGet("{hash}")]
+        public Task<Block> GetByHash([BlockHash] string hash, bool operations = false)
+        {
+            return Blocks.Get(hash, operations);
+        }
+
+        /// <summary>
+        /// Get block by level
+        /// </summary>
+        /// <remarks>
+        /// Returns a block at the specified level.
+        /// </remarks>
+        /// <param name="level">Block level</param>
+        /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
+        /// <returns></returns>
+        [HttpGet("{level:int}")]
+        public Task<Block> GetByLevel([Min(0)] int level, bool operations = false)
+        {
+            return Blocks.Get(level, operations);
         }
     }
 }

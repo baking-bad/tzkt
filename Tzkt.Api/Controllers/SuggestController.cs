@@ -4,7 +4,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NSwag.Annotations;
 
+using Tzkt.Api.Models;
 using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Controllers
@@ -20,12 +22,21 @@ namespace Tzkt.Api.Controllers
             AccountMetadata = accountMetadata;
         }
 
+        [OpenApiIgnore]
         [HttpGet("accounts")]
         public IEnumerable<AccountMetadataAlias> GetAccounts()
         {
             return AccountMetadata.Aliases;
         }
 
+        /// <summary>
+        /// Suggest accounts
+        /// </summary>
+        /// <remarks>
+        /// Suggests known accounts by part of alias. This endpoint is useful for autocomplete.
+        /// </remarks>
+        /// <param name="search">Part of the account alias to search by</param>
+        /// <returns></returns>
         [HttpGet("accounts/{search}")]
         public IEnumerable<AccountMetadataAlias> GetAccounts(string search)
         {

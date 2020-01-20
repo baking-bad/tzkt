@@ -19,6 +19,13 @@ namespace Tzkt.Api.Controllers
             State = state;
         }
 
+        /// <summary>
+        /// Get indexer head
+        /// </summary>
+        /// <remarks>
+        /// Returns indexer head and synchronization status.
+        /// </remarks>
+        /// <returns></returns>
         [HttpGet]
         public Task<State> Get()
         {
