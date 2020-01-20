@@ -18,7 +18,6 @@ namespace Tzkt.Sync.Protocols
     {
         public override string Protocol => "Proto 5";
         public override IDiagnostics Diagnostics { get; }
-        public override IDiagnostics NextDiagnostics { get; }
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
@@ -26,7 +25,6 @@ namespace Tzkt.Sync.Protocols
             : base(node, db, cache, config, logger)
         {
             Diagnostics = new Diagnostics(db, node);
-            NextDiagnostics = null;
             Serializer = new Serializer();
             Validator = new Validator(this);
         }

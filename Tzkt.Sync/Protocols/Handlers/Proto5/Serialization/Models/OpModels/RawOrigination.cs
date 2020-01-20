@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             StorageLimit >= 0 &&
             Balance >= 0 &&
             (Delegate == null || Delegate != "") &&
-            (Script == null || Script.IsValidFormat()) &&
+            (Script == null || Metadata.Result.Status != "applied" || Script.IsValidFormat()) &&
             Metadata?.IsValidFormat() == true;
         #endregion
     }
@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         public bool IsValidFormat() =>
             Code.ValueKind == JsonValueKind.Array &&
             Code.GetArrayLength() == 3 &&
-            Storage.ValueKind == JsonValueKind.Object;
+            Storage.ValueKind != JsonValueKind.Undefined;
         #endregion
     }
 

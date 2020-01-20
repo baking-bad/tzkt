@@ -10,7 +10,8 @@ namespace Tzkt.Sync.Protocols
 
         public static bool Test(JsonElement code, JsonElement storage)
         {
-            if (storage.EnumerateObject().Count() != 1 ||
+            if (storage.ValueKind != JsonValueKind.Object ||
+                storage.EnumerateObject().Count() != 1 ||
                 !storage.TryGetProperty("string", out var keyHash) ||
                 keyHash.GetString().Length != 36)
                 return false;

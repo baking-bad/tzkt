@@ -458,7 +458,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             Db.OriginationOps.Remove(Origination);
-            await Cache.ReleaseCounterAsync(true);
         }
 
         #region static
