@@ -11,7 +11,7 @@ namespace Tzkt.Data.Models
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
 
-        public int PreserverCycles { get; set; }
+        public int PreservedCycles { get; set; }
 
         public int BlocksPerCycle { get; set; }
         public int BlocksPerCommitment { get; set; }

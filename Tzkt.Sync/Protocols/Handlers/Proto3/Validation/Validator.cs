@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
             if (rawBlock.Metadata.BalanceUpdates.Count > 0)
             {
-                var blockUpdates = rawBlock.Metadata.BalanceUpdates.Take(Cycle < (Protocol.PreserverCycles + 2) ? 2 : 3);
+                var blockUpdates = rawBlock.Metadata.BalanceUpdates.Take(Cycle < (Protocol.PreservedCycles + 2) ? 2 : 3);
 
                 var contractUpdate = blockUpdates.FirstOrDefault(x => x is ContractUpdate) as ContractUpdate
                     ?? throw new ValidationException("invalid block contract balance updates");
@@ -85,7 +85,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     depostisUpdate.Change != Protocol.BlockDeposit)
                     throw new ValidationException("invalid block depostis update");
 
-                if (Cycle >= (Protocol.PreserverCycles + 2))
+                if (Cycle >= (Protocol.PreservedCycles + 2))
                 {
                     var rewardsUpdate = blockUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
                         ?? throw new ValidationException("invalid block rewards updates");
@@ -96,12 +96,12 @@ namespace Tzkt.Sync.Protocols.Proto3
                 }
             }
 
-            if (rawBlock.Metadata.BalanceUpdates.Count > (Cycle < (Protocol.PreserverCycles + 2) ? 2 : 3))
+            if (rawBlock.Metadata.BalanceUpdates.Count > (Cycle < (Protocol.PreservedCycles + 2) ? 2 : 3))
             {
                 if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
                     throw new ValidationException("unexpected freezer updates");
 
-                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Cycle < (Protocol.PreserverCycles + 2) ? 2 : 3))
+                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Cycle < (Protocol.PreservedCycles + 2) ? 2 : 3))
                 {
                     if (update is ContractUpdate contractUpdate &&
                         !await Cache.AccountExistsAsync(contractUpdate.Contract, AccountType.Delegate))
@@ -112,7 +112,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                         if (!await Cache.AccountExistsAsync(freezerUpdate.Delegate, AccountType.Delegate))
                             throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
 
-                        if (freezerUpdate.Level != Cycle - Protocol.PreserverCycles && freezerUpdate.Level != Cycle - 1)
+                        if (freezerUpdate.Level != Cycle - Protocol.PreservedCycles && freezerUpdate.Level != Cycle - 1)
                             throw new ValidationException("invalid freezer updates cycle");
                     }
                 }
@@ -204,7 +204,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             if (!await Cache.AccountExistsAsync(endorsement.Metadata.Delegate, AccountType.Delegate))
                 throw new ValidationException("invalid endorsement delegate");
 
-            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Cycle < (Protocol.PreserverCycles + 2) ? 2 : 3))
+            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Cycle < (Protocol.PreservedCycles + 2) ? 2 : 3))
                 throw new ValidationException("invalid endorsement balance updates count");
 
             if (endorsement.Metadata.BalanceUpdates.Count > 0)
@@ -223,7 +223,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     depostisUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
                     throw new ValidationException("invalid endorsement depostis update");
 
-                if (Cycle >= (Protocol.PreserverCycles + 2))
+                if (Cycle >= (Protocol.PreservedCycles + 2))
                 {
                     var rewardsUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
                         ?? throw new ValidationException("invalidendorsement rewards updates");

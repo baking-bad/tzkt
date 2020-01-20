@@ -111,7 +111,7 @@ namespace Tzkt.Sync.Protocols
                 protocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;
                 protocol.HardOperationStorageLimit = rawConst.HardOperationStorageLimit;
                 protocol.OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost;
-                protocol.PreserverCycles = rawConst.PreserverCycles;
+                protocol.PreservedCycles = rawConst.PreservedCycles;
                 protocol.RevelationReward = rawConst.RevelationReward;
                 protocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
                 protocol.TokensPerRoll = rawConst.TokensPerRoll;
@@ -148,7 +148,7 @@ namespace Tzkt.Sync.Protocols
             currProtocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;
             currProtocol.HardOperationStorageLimit = rawConst.HardOperationStorageLimit;
             currProtocol.OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost;
-            currProtocol.PreserverCycles = rawConst.PreserverCycles;
+            currProtocol.PreservedCycles = rawConst.PreservedCycles;
             currProtocol.RevelationReward = rawConst.RevelationReward;
             currProtocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
             currProtocol.TokensPerRoll = rawConst.TokensPerRoll;

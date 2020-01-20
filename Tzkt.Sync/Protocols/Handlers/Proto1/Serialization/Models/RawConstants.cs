@@ -6,7 +6,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     class RawConstants
     {
         [JsonPropertyName("preserved_cycles")]
-        public int PreserverCycles { get; set; }
+        public int PreservedCycles { get; set; }
 
         [JsonPropertyName("blocks_per_cycle")]
         public int BlocksPerCycle { get; set; }
@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         #region validation
         public bool IsValidFormat() =>
-            PreserverCycles > 0 &&
+            PreservedCycles > 0 &&
             BlocksPerCycle > 0 &&
             BlocksPerCommitment > 0 &&
             BlocksPerSnapshot > 0 &&

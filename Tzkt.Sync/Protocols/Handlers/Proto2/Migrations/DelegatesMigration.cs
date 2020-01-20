@@ -169,7 +169,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 LastLevel = user.LastLevel,
                 Balance = user.Balance,
                 Counter = user.Counter,
-                DeactivationLevel = GracePeriod.Init(level, proto.BlocksPerCycle, proto.PreserverCycles),
+                DeactivationLevel = GracePeriod.Init(level, proto.BlocksPerCycle, proto.PreservedCycles),
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,

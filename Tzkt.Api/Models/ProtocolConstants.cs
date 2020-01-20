@@ -7,7 +7,7 @@ namespace Tzkt.Api.Models
 {
     public class ProtocolConstants
     {
-        public int PreserverCycles { get; set; }
+        public int PreservedCycles { get; set; }
 
         public int BlocksPerCycle { get; set; }
         public int BlocksPerCommitment { get; set; }

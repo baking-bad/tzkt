@@ -814,7 +814,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("OriginationSize")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PreserverCycles")
+                    b.Property<int>("PreservedCycles")
                         .HasColumnType("integer");
 
                     b.Property<long>("RevelationReward")

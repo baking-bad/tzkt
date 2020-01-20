@@ -37,7 +37,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     FirstLevel = rawBlock.Level,
                     LastLevel = rawBlock.Level,
                     ActivationLevel = 1,
-                    DeactivationLevel = GracePeriod.Init(1, protocol.BlocksPerCycle, protocol.PreserverCycles),
+                    DeactivationLevel = GracePeriod.Init(1, protocol.BlocksPerCycle, protocol.PreservedCycles),
                     Balance = data.Balance,
                     Counter = data.Counter,
                     PublicKey = data.Manager,

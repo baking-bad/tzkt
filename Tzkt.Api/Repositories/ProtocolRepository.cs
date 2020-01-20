@@ -50,7 +50,7 @@ namespace Tzkt.Api.Repositories
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreserverCycles = row.PreserverCycles,
+                    PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll
@@ -92,7 +92,7 @@ namespace Tzkt.Api.Repositories
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreserverCycles = row.PreserverCycles,
+                    PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll
@@ -135,7 +135,7 @@ namespace Tzkt.Api.Repositories
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreserverCycles = row.PreserverCycles,
+                    PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll

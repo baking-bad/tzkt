@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto5
     {
         [JsonProperty("preserved_cycles")]
         [JsonPropertyName("preserved_cycles")]
-        public int PreserverCycles { get; set; }
+        public int PreservedCycles { get; set; }
 
         [JsonProperty("blocks_per_cycle")]
         [JsonPropertyName("blocks_per_cycle")]
@@ -80,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         #region validation
         public bool IsValidFormat() =>
-            PreserverCycles > 0 &&
+            PreservedCycles > 0 &&
             BlocksPerCycle > 0 &&
             BlocksPerCommitment > 0 &&
             BlocksPerSnapshot > 0 &&

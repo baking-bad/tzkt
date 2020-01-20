@@ -38,7 +38,7 @@ namespace Tzkt.Data.Migrations
                     Hash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: false),
                     FirstLevel = table.Column<int>(nullable: false),
                     LastLevel = table.Column<int>(nullable: false),
-                    PreserverCycles = table.Column<int>(nullable: false),
+                    PreservedCycles = table.Column<int>(nullable: false),
                     BlocksPerCycle = table.Column<int>(nullable: false),
                     BlocksPerCommitment = table.Column<int>(nullable: false),
                     BlocksPerSnapshot = table.Column<int>(nullable: false),

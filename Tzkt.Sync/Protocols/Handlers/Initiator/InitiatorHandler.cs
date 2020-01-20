@@ -51,7 +51,7 @@ namespace Tzkt.Sync.Protocols
                 HardOperationGasLimit = rawConst.HardOperationGasLimit,
                 HardOperationStorageLimit = rawConst.HardOperationStorageLimit,
                 OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost,
-                PreserverCycles = rawConst.PreserverCycles,
+                PreservedCycles = rawConst.PreservedCycles,
                 RevelationReward = rawConst.RevelationReward,
                 TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0],
                 TokensPerRoll = rawConst.TokensPerRoll
