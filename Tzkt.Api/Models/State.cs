@@ -9,6 +9,7 @@ namespace Tzkt.Api.Models
     {
         public int Level { get; set; }
         public string Hash { get; set; }
+        public string Protocol { get; set; }
         public DateTime Timestamp { get; set; }
     }
 }

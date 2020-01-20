@@ -11,6 +11,8 @@ namespace Tzkt.Api.Services.Cache
 
         public string Hash { get; set; }
 
+        public string Protocol { get; set; }
+
         public DateTime Timestamp { get; set; }
 
         public int ManagerCounter { get; set; }
