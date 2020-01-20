@@ -40,6 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageLimit = content.StorageLimit,
                 Sender = sender,
                 Target = target,
+                Parameters = OperationParameters.Parse(content.Parameters),
                 Status = content.Metadata.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -81,6 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Nonce = content.Nonce,
                 Sender = sender, 
                 Target = target,
+                Parameters = OperationParameters.Parse(content.Parameters),
                 Status = content.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,

@@ -28,6 +28,9 @@ namespace Tzkt.Sync.Protocols.Proto1
         [JsonPropertyName("destination")]
         public string Destination { get; set; }
 
+        [JsonPropertyName("parameters")]
+        public JsonElement Parameters { get; set; }
+
         [JsonPropertyName("metadata")]
         public RawTransactionContentMetadata Metadata { get; set; }
 
@@ -105,6 +108,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         [JsonPropertyName("destination")]
         public string Destination { get; set; }
+
+        [JsonPropertyName("parameters")]
+        public JsonElement Parameters { get; set; }
 
         [JsonPropertyName("result")]
         public RawTransactionContentResult Result { get; set; }
