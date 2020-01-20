@@ -27,6 +27,7 @@ namespace Tzkt.Api.Repositories
             {
                 Hash = appState.Hash,
                 Level = appState.Level,
+                Protocol = appState.Protocol,
                 Timestamp = appState.Timestamp
             });
         }
