@@ -17,3 +17,10 @@ start:
 
 stop:
 	docker-compose down
+
+update:
+	git pull
+	docker-compose build
+
+clean:
+	docker system prune --force
