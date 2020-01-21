@@ -37,7 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Priority = rawBlock.Header.Priority,
                 Baker = await Cache.GetDelegateAsync(rawBlock.Metadata.Baker),
                 Events = events,
-                Reward = protocol.BlockReward
+                Reward = protocol.BlockReward0
             };
         }
 

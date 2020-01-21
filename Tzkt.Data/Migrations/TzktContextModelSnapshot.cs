@@ -762,7 +762,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("BlockDeposit")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("BlockReward")
+                    b.Property<long>("BlockReward0")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BlockReward1")
                         .HasColumnType("bigint");
 
                     b.Property<int>("BlocksPerCommitment")
@@ -786,7 +789,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("EndorsementDeposit")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("EndorsementReward")
+                    b.Property<long>("EndorsementReward0")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("EndorsementReward1")
                         .HasColumnType("bigint");
 
                     b.Property<int>("EndorsersPerBlock")

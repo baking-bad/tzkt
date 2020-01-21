@@ -11,7 +11,7 @@ using Tzkt.Data.Models;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20191113225956_Initial")]
+    [Migration("20200120220606_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -144,6 +144,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<string>("Hash")
                         .HasColumnType("text");
 
+                    b.Property<int>("KnownHead")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("LastSync")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -155,9 +161,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<string>("Protocol")
                         .HasColumnType("text");
-
-                    b.Property<bool>("Synced")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp without time zone");
@@ -172,11 +175,12 @@ namespace Tzkt.Data.Migrations
                             Id = -1,
                             GlobalCounter = 0,
                             Hash = "",
+                            KnownHead = 0,
+                            LastSync = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Level = -1,
                             ManagerCounter = 0,
                             NextProtocol = "",
                             Protocol = "",
-                            Synced = false,
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
@@ -760,7 +764,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("BlockDeposit")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("BlockReward")
+                    b.Property<long>("BlockReward0")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BlockReward1")
                         .HasColumnType("bigint");
 
                     b.Property<int>("BlocksPerCommitment")
@@ -784,7 +791,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("EndorsementDeposit")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("EndorsementReward")
+                    b.Property<long>("EndorsementReward0")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("EndorsementReward1")
                         .HasColumnType("bigint");
 
                     b.Property<int>("EndorsersPerBlock")
@@ -1005,6 +1015,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("OriginalSenderId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Parameters")
+                        .HasColumnType("text");
+
                     b.Property<int?>("ResetDeactivation")
                         .HasColumnType("integer");
 
@@ -1159,6 +1172,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<string>("PublicKey")
                         .HasColumnType("character varying(55)")
                         .HasMaxLength(55);
+
+                    b.Property<bool>("Revealed")
+                        .HasColumnType("boolean");
 
                     b.HasDiscriminator().HasValue((byte)0);
                 });

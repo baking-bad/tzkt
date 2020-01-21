@@ -98,14 +98,14 @@ namespace Tzkt.Sync.Protocols
                 var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
 
                 protocol.BlockDeposit = rawConst.BlockDeposit;
-                protocol.BlockReward = rawConst.BlockReward;
+                protocol.BlockReward0 = rawConst.BlockReward;
                 protocol.BlocksPerCommitment = rawConst.BlocksPerCommitment;
                 protocol.BlocksPerCycle = rawConst.BlocksPerCycle;
                 protocol.BlocksPerSnapshot = rawConst.BlocksPerSnapshot;
                 protocol.BlocksPerVoting = rawConst.BlocksPerVoting;
                 protocol.ByteCost = rawConst.ByteCost;
                 protocol.EndorsementDeposit = rawConst.EndorsementDeposit;
-                protocol.EndorsementReward = rawConst.EndorsementReward;
+                protocol.EndorsementReward0 = rawConst.EndorsementReward;
                 protocol.EndorsersPerBlock = rawConst.EndorsersPerBlock;
                 protocol.HardBlockGasLimit = rawConst.HardBlockGasLimit;
                 protocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;
@@ -135,14 +135,14 @@ namespace Tzkt.Sync.Protocols
             var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
 
             currProtocol.BlockDeposit = rawConst.BlockDeposit;
-            currProtocol.BlockReward = rawConst.BlockReward;
+            currProtocol.BlockReward0 = rawConst.BlockReward;
             currProtocol.BlocksPerCommitment = rawConst.BlocksPerCommitment;
             currProtocol.BlocksPerCycle = rawConst.BlocksPerCycle;
             currProtocol.BlocksPerSnapshot = rawConst.BlocksPerSnapshot;
             currProtocol.BlocksPerVoting = rawConst.BlocksPerVoting;
             currProtocol.ByteCost = rawConst.ByteCost;
             currProtocol.EndorsementDeposit = rawConst.EndorsementDeposit;
-            currProtocol.EndorsementReward = rawConst.EndorsementReward;
+            currProtocol.EndorsementReward0 = rawConst.EndorsementReward;
             currProtocol.EndorsersPerBlock = rawConst.EndorsersPerBlock;
             currProtocol.HardBlockGasLimit = rawConst.HardBlockGasLimit;
             currProtocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;

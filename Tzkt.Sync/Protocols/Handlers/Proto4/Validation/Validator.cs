@@ -91,7 +91,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         ?? throw new ValidationException("invalid block rewards updates");
 
                     if (rewardsUpdate.Delegate != rawBlock.Metadata.Baker ||
-                        rewardsUpdate.Change != Protocol.BlockReward)
+                        rewardsUpdate.Change != Protocol.BlockReward0)
                         throw new ValidationException("invalid block rewards update");
                 }
             }
@@ -482,6 +482,6 @@ namespace Tzkt.Sync.Protocols.Proto4
         }
 
         long GetEndorsementReward(int slots, int priority)
-            => slots * (long)(Protocol.EndorsementReward / (priority + 1.0));
+            => slots * (long)(Protocol.EndorsementReward0 / (priority + 1.0));
     }
 }

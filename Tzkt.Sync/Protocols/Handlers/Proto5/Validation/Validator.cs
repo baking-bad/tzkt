@@ -458,6 +458,8 @@ namespace Tzkt.Sync.Protocols.Proto5
         protected async Task ValidateBallot(RawBallotContent ballot, RawBlock rawBlock)
         {
             var period = await Cache.GetCurrentVotingPeriodAsync();
+            if (period.EndLevel == rawBlock.Level - 1) return;
+
             var proposal = await Cache.GetProposalAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
 
             if (proposal.Hash != ballot.Proposal)
@@ -513,9 +515,9 @@ namespace Tzkt.Sync.Protocols.Proto5
         }
 
         long GetEndorsementReward(int slots, int priority)
-            => slots * (long)(Protocol.EndorsementReward / (priority + 1.0));
+            => slots * (long)(Protocol.EndorsementReward0 / (priority + 1.0));
 
         long GetBlockReward(int endorsements, int priority)
-            => Protocol.BlockReward * (8 + 2 * endorsements / Protocol.EndorsersPerBlock) / 10 / (priority + 1);
+            => Protocol.BlockReward0 * (8 + 2 * endorsements / Protocol.EndorsersPerBlock) / 10 / (priority + 1);
     }
 }

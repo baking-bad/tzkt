@@ -14,7 +14,8 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Synced = table.Column<bool>(nullable: false),
+                    KnownHead = table.Column<int>(nullable: false),
+                    LastSync = table.Column<DateTime>(nullable: false),
                     Level = table.Column<int>(nullable: false),
                     Timestamp = table.Column<DateTime>(nullable: false),
                     Protocol = table.Column<string>(nullable: true),
@@ -51,9 +52,11 @@ namespace Tzkt.Data.Migrations
                     TokensPerRoll = table.Column<long>(nullable: false),
                     RevelationReward = table.Column<long>(nullable: false),
                     BlockDeposit = table.Column<long>(nullable: false),
-                    BlockReward = table.Column<long>(nullable: false),
+                    BlockReward0 = table.Column<long>(nullable: false),
+                    BlockReward1 = table.Column<long>(nullable: false),
                     EndorsementDeposit = table.Column<long>(nullable: false),
-                    EndorsementReward = table.Column<long>(nullable: false),
+                    EndorsementReward0 = table.Column<long>(nullable: false),
+                    EndorsementReward1 = table.Column<long>(nullable: false),
                     OriginationSize = table.Column<int>(nullable: false),
                     ByteCost = table.Column<int>(nullable: false)
                 },
@@ -239,6 +242,7 @@ namespace Tzkt.Data.Migrations
                     WeirdDelegateId = table.Column<int>(nullable: true),
                     Activated = table.Column<bool>(nullable: true),
                     PublicKey = table.Column<string>(maxLength: 55, nullable: true),
+                    Revealed = table.Column<bool>(nullable: true),
                     ActivationLevel = table.Column<int>(nullable: true),
                     DeactivationLevel = table.Column<int>(nullable: true),
                     FrozenDeposits = table.Column<long>(nullable: true),
@@ -739,6 +743,7 @@ namespace Tzkt.Data.Migrations
                     TargetId = table.Column<int>(nullable: true),
                     ResetDeactivation = table.Column<int>(nullable: true),
                     Amount = table.Column<long>(nullable: false),
+                    Parameters = table.Column<string>(nullable: true),
                     InternalOperations = table.Column<byte>(nullable: true)
                 },
                 constraints: table =>
@@ -814,8 +819,8 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "GlobalCounter", "Hash", "Level", "ManagerCounter", "NextProtocol", "Protocol", "Synced", "Timestamp" },
-                values: new object[] { -1, 0, "", -1, 0, "", "", false, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
+                columns: new[] { "Id", "GlobalCounter", "Hash", "KnownHead", "LastSync", "Level", "ManagerCounter", "NextProtocol", "Protocol", "Timestamp" },
+                values: new object[] { -1, 0, "", 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, "", "", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",
