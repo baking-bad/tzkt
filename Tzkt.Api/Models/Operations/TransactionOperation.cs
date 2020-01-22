@@ -44,6 +44,8 @@ namespace Tzkt.Api.Models
 
         public long Amount { get; set; }
 
+        public string Parameters { get; set; }
+
         public string Status { get; set; }
 
         public List<OperationError> Errors { get; set; }

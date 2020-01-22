@@ -22,9 +22,11 @@ namespace Tzkt.Api.Repositories
         public Task<State> Get()
         {
             var appState = State.GetState();
-            
+
             return Task.FromResult(new State
             {
+                KnownLevel = appState.KnownHead,
+                LastSync = appState.LastSync,
                 Hash = appState.Hash,
                 Level = appState.Level,
                 Timestamp = appState.Timestamp

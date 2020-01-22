@@ -10,5 +10,10 @@ namespace Tzkt.Api.Models
         public int Level { get; set; }
         public string Hash { get; set; }
         public DateTime Timestamp { get; set; }
+
+        public int KnownLevel { get; set; }
+        public DateTime LastSync { get; set; }
+        
+        public bool Synced => KnownLevel == Level;
     }
 }
