@@ -61,7 +61,7 @@ namespace Tzkt.Api
                 options.PostProcess = document =>
                 {
                     document.Info.Title = "TzKT API";
-                    document.Info.Description = "Early version of the TzKT API\n\nMainnet: `https://api.tzkt.io/`\n\nBabylonnet: `https://api.babylon.tzkt.io/`";
+                    document.Info.Description = "Early version of the TzKT API\n\nMainnet: `https://api.tzkt.io/`\n\nBabylonnet: `https://api.babylon.tzkt.io/`\n\nCarthagenet: `https://api.carthage.tzkt.io/`";
                     document.Info.Version = "v1-preview";
                     document.Info.Contact = new NSwag.OpenApiContact
                     {
