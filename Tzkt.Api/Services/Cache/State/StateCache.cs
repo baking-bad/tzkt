@@ -34,7 +34,7 @@ namespace Tzkt.Api.Services.Cache
         public RawState LoadState()
         {
             var sql = @"
-                SELECT  ""Level"", ""Hash"", ""Protocol"", ""Timestamp"", ""ManagerCounter""
+                SELECT  ""KnownHead"", ""LastSync"", ""Level"", ""Hash"", ""Protocol"", ""Timestamp"", ""ManagerCounter""
                 FROM    ""AppState""
                 LIMIT   1";
 
@@ -45,7 +45,7 @@ namespace Tzkt.Api.Services.Cache
         public async Task<RawState> LoadStateAsync()
         {
             var sql = @"
-                SELECT  ""Level"", ""Hash"", ""Protocol"", ""Timestamp"", ""ManagerCounter""
+                SELECT  ""KnownHead"", ""LastSync"", ""Level"", ""Hash"", ""Protocol"", ""Timestamp"", ""ManagerCounter""
                 FROM    ""AppState""
                 LIMIT   1";
 

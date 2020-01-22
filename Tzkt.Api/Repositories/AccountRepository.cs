@@ -51,6 +51,7 @@ namespace Tzkt.Api.Repositories
                         Active = delegat.Staked,
                         Address = delegat.Address,
                         PublicKey = delegat.PublicKey,
+                        Revealed = delegat.Revealed,
                         Balance = delegat.Balance,
                         FrozenDeposits = delegat.FrozenDeposits,
                         FrozenRewards = delegat.FrozenRewards,
@@ -102,6 +103,7 @@ namespace Tzkt.Api.Repositories
                         LastActivity = user.LastLevel,
                         LastActivityTime = Time[user.LastLevel],
                         PublicKey = user.PublicKey,
+                        Revealed = user.Revealed,
                         Delegate = userDelegate == null ? null
                             : new DelegateInfo
                             {
@@ -204,6 +206,7 @@ namespace Tzkt.Api.Repositories
                 Active = delegat.Staked,
                 Address = delegat.Address,
                 PublicKey = delegat.PublicKey,
+                Revealed = delegat.Revealed,
                 Balance = delegat.Balance,
                 FrozenDeposits = delegat.FrozenDeposits,
                 FrozenRewards = delegat.FrozenRewards,
@@ -372,6 +375,7 @@ namespace Tzkt.Api.Repositories
                             LastActivity = row.LastLevel,
                             LastActivityTime = Time[row.LastLevel],
                             PublicKey = row.PublicKey,
+                            Revealed = row.Revealed,
                             Delegate = userDelegate == null ? null
                             : new DelegateInfo
                             {
@@ -401,6 +405,7 @@ namespace Tzkt.Api.Repositories
                             Active = row.Staked,
                             Address = row.Address,
                             PublicKey = row.PublicKey,
+                            Revealed = row.Revealed,
                             Balance = row.Balance,
                             FrozenDeposits = row.FrozenDeposits,
                             FrozenRewards = row.FrozenRewards,
@@ -531,6 +536,7 @@ namespace Tzkt.Api.Repositories
                     Active = row.Staked,
                     Address = row.Address,
                     PublicKey = row.PublicKey,
+                    Revealed = row.Revealed,
                     Balance = row.Balance,
                     FrozenDeposits = row.FrozenDeposits,
                     FrozenRewards = row.FrozenRewards,

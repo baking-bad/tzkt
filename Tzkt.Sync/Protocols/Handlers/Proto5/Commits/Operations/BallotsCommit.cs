@@ -20,7 +20,11 @@ namespace Tzkt.Sync.Protocols.Proto5
             var proposal = await Cache.GetProposalAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
             var sender = await Cache.GetDelegateAsync(content.Source);
 
-            SenderRolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
+            if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
+                SenderRolls = (int)(sender.StakingBalance / block.Protocol.TokensPerRoll);
+            else
+                SenderRolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
+
             Ballot = new BallotOperation
             {
                 Id = await Cache.NextCounterAsync(),

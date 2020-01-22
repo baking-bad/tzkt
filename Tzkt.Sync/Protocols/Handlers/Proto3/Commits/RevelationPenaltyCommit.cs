@@ -20,8 +20,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / protocol.BlocksPerCycle;
                 
-                if (rawBlock.Metadata.BalanceUpdates.Skip(cycle < (protocol.PreserverCycles + 2) ? 2 : 3)
-                    .Any(x => x is FreezerUpdate fu && fu.Level != cycle - protocol.PreserverCycles))
+                if (rawBlock.Metadata.BalanceUpdates.Skip(cycle < (protocol.PreservedCycles + 2) ? 2 : 3)
+                    .Any(x => x is FreezerUpdate fu && fu.Level != cycle - protocol.PreservedCycles))
                 {
                     RevelationPanlties = new List<RevelationPenaltyOperation>();
 

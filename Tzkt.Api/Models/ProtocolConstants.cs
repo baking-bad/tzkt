@@ -7,7 +7,7 @@ namespace Tzkt.Api.Models
 {
     public class ProtocolConstants
     {
-        public int PreserverCycles { get; set; }
+        public int PreservedCycles { get; set; }
 
         public int BlocksPerCycle { get; set; }
         public int BlocksPerCommitment { get; set; }
@@ -25,10 +25,10 @@ namespace Tzkt.Api.Models
         public long RevelationReward { get; set; }
 
         public long BlockDeposit { get; set; }
-        public long BlockReward { get; set; }
+        public List<long> BlockReward { get; set; }
 
         public long EndorsementDeposit { get; set; }
-        public long EndorsementReward { get; set; }
+        public List<long> EndorsementReward { get; set; }
 
         public int OriginationSize { get; set; }
         public int ByteCost { get; set; }

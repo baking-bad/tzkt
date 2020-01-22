@@ -12,9 +12,7 @@ namespace Tzkt.Api.Repositories
 {
     public class ProtocolRepository : DbConnection
     {
-        public ProtocolRepository(IConfiguration config) : base(config)
-        {
-        }
+        public ProtocolRepository(IConfiguration config) : base(config) { }
 
         public async Task<Protocol> Get(int code)
         {
@@ -37,20 +35,24 @@ namespace Tzkt.Api.Repositories
                 Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
-                    BlockReward = row.BlockReward,
+                    BlockReward = row.BlockReward1 == 0
+                        ? new List<long> { row.BlockReward0 }
+                        : new List<long> { row.BlockReward0, row.BlockReward1 },
                     BlocksPerCommitment = row.BlocksPerCommitment,
                     BlocksPerCycle = row.BlocksPerCycle,
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
                     BlocksPerVoting = row.BlocksPerVoting,
                     ByteCost = row.ByteCost,
                     EndorsementDeposit = row.EndorsementDeposit,
-                    EndorsementReward = row.EndorsementReward,
+                    EndorsementReward = row.EndorsementReward1 == 0
+                        ? new List<long> { row.EndorsementReward0 }
+                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
                     EndorsersPerBlock = row.EndorsersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreserverCycles = row.PreserverCycles,
+                    PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll
@@ -79,20 +81,24 @@ namespace Tzkt.Api.Repositories
                 Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
-                    BlockReward = row.BlockReward,
+                    BlockReward = row.BlockReward1 == 0
+                        ? new List<long> { row.BlockReward0 }
+                        : new List<long> { row.BlockReward0, row.BlockReward1 },
                     BlocksPerCommitment = row.BlocksPerCommitment,
                     BlocksPerCycle = row.BlocksPerCycle,
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
                     BlocksPerVoting = row.BlocksPerVoting,
                     ByteCost = row.ByteCost,
                     EndorsementDeposit = row.EndorsementDeposit,
-                    EndorsementReward = row.EndorsementReward,
+                    EndorsementReward = row.EndorsementReward1 == 0
+                        ? new List<long> { row.EndorsementReward0 }
+                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
                     EndorsersPerBlock = row.EndorsersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreserverCycles = row.PreserverCycles,
+                    PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll
@@ -122,20 +128,24 @@ namespace Tzkt.Api.Repositories
                 Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
-                    BlockReward = row.BlockReward,
+                    BlockReward = row.BlockReward1 == 0
+                        ? new List<long> { row.BlockReward0 }
+                        : new List<long> { row.BlockReward0, row.BlockReward1 },
                     BlocksPerCommitment = row.BlocksPerCommitment,
                     BlocksPerCycle = row.BlocksPerCycle,
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
                     BlocksPerVoting = row.BlocksPerVoting,
                     ByteCost = row.ByteCost,
                     EndorsementDeposit = row.EndorsementDeposit,
-                    EndorsementReward = row.EndorsementReward,
+                    EndorsementReward = row.EndorsementReward1 == 0
+                        ? new List<long> { row.EndorsementReward0 }
+                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
                     EndorsersPerBlock = row.EndorsersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreserverCycles = row.PreserverCycles,
+                    PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll

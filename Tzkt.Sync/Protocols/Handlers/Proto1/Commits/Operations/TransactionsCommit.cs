@@ -40,6 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageLimit = content.StorageLimit,
                 Sender = sender,
                 Target = target,
+                Parameters = OperationParameters.Parse(content.Parameters),
                 Status = content.Metadata.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -81,6 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Nonce = content.Nonce,
                 Sender = sender, 
                 Target = target,
+                Parameters = OperationParameters.Parse(content.Parameters),
                 Status = content.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -131,7 +133,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await RevertInternalTransaction();
         }
 
-        public Task ApplyTransaction()
+        public async Task ApplyTransaction()
         {
             #region entities
             var block = Transaction.Block;
@@ -154,7 +156,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            sender.Balance -= Transaction.BakerFee;
+            await Spend(sender, Transaction.BakerFee);
             if (senderDelegate != null) senderDelegate.StakingBalance -= Transaction.BakerFee;
             blockBaker.FrozenFees += Transaction.BakerFee;
             blockBaker.Balance += Transaction.BakerFee;
@@ -172,9 +174,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region apply result
             if (Transaction.Status == OperationStatus.Applied)
             {
-                sender.Balance -= Transaction.Amount;
-                sender.Balance -= Transaction.StorageFee ?? 0;
-                sender.Balance -= Transaction.AllocationFee ?? 0;
+                await Spend(sender,
+                    Transaction.Amount +
+                    (Transaction.StorageFee ?? 0) +
+                    (Transaction.AllocationFee ?? 0));
 
                 if (senderDelegate != null)
                 {
@@ -203,10 +206,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.TransactionOps.Add(Transaction);
-            return Task.CompletedTask;
         }
 
-        public Task ApplyInternalTransaction()
+        public async Task ApplyInternalTransaction()
         {
             #region entities
             var block = Transaction.Block;
@@ -247,20 +249,21 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region apply result
             if (Transaction.Status == OperationStatus.Applied)
             {
-                sender.Balance -= Transaction.Amount;
-
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= Transaction.Amount;
-                }
-
-                parentSender.Balance -= Transaction.StorageFee ?? 0;
-                parentSender.Balance -= Transaction.AllocationFee ?? 0;
+                await Spend(parentSender,
+                    (Transaction.StorageFee ?? 0) +
+                    (Transaction.AllocationFee ?? 0));
 
                 if (parentDelegate != null)
                 {
                     parentDelegate.StakingBalance -= Transaction.StorageFee ?? 0;
                     parentDelegate.StakingBalance -= Transaction.AllocationFee ?? 0;
+                }
+
+                sender.Balance -= Transaction.Amount;
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance -= Transaction.Amount;
                 }
 
                 target.Balance += Transaction.Amount;
@@ -283,7 +286,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.TransactionOps.Add(Transaction);
-            return Task.CompletedTask;
         }
 
         public async Task RevertTransaction()
@@ -311,17 +313,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (Transaction.Status == OperationStatus.Applied)
             {
-                sender.Balance += Transaction.Amount;
-                sender.Balance += Transaction.StorageFee ?? 0;
-                sender.Balance += Transaction.AllocationFee ?? 0;
-
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += Transaction.Amount;
-                    senderDelegate.StakingBalance += Transaction.StorageFee ?? 0;
-                    senderDelegate.StakingBalance += Transaction.AllocationFee ?? 0;
-                }
-
                 target.Balance -= Transaction.Amount;
 
                 if (targetDelegate != null)
@@ -336,11 +327,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                         delegat.DeactivationLevel = (int)Transaction.ResetDeactivation;
                     }
                 }
+
+                await Return(sender,
+                    Transaction.Amount +
+                    (Transaction.StorageFee ?? 0) +
+                    (Transaction.AllocationFee ?? 0));
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance += Transaction.Amount;
+                    senderDelegate.StakingBalance += Transaction.StorageFee ?? 0;
+                    senderDelegate.StakingBalance += Transaction.AllocationFee ?? 0;
+                }
             }
             #endregion
 
             #region revert operation
-            sender.Balance += Transaction.BakerFee;
+            await Return(sender, Transaction.BakerFee);
             if (senderDelegate != null) senderDelegate.StakingBalance += Transaction.BakerFee;
             blockBaker.FrozenFees -= Transaction.BakerFee;
             blockBaker.Balance -= Transaction.BakerFee;
@@ -356,7 +359,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             await Cache.ReleaseCounterAsync(true);
         }
 
-        public Task RevertInternalTransaction()
+        public async Task RevertInternalTransaction()
         {
             #region entities
             var parentSender = Transaction.OriginalSender;
@@ -384,22 +387,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (Transaction.Status == OperationStatus.Applied)
             {
-                sender.Balance += Transaction.Amount;
-
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += Transaction.Amount;
-                }
-
-                parentSender.Balance += Transaction.StorageFee ?? 0;
-                parentSender.Balance += Transaction.AllocationFee ?? 0;
-
-                if (parentDelegate != null)
-                {
-                    parentDelegate.StakingBalance += Transaction.StorageFee ?? 0;
-                    parentDelegate.StakingBalance += Transaction.AllocationFee ?? 0;
-                }
-
                 target.Balance -= Transaction.Amount;
 
                 if (targetDelegate != null)
@@ -414,6 +401,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                         delegat.DeactivationLevel = (int)Transaction.ResetDeactivation;
                     }
                 }
+
+                sender.Balance += Transaction.Amount;
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance += Transaction.Amount;
+                }
+
+                await Return(parentSender,
+                    (Transaction.StorageFee ?? 0) +
+                    (Transaction.AllocationFee ?? 0));
+
+                if (parentDelegate != null)
+                {
+                    parentDelegate.StakingBalance += Transaction.StorageFee ?? 0;
+                    parentDelegate.StakingBalance += Transaction.AllocationFee ?? 0;
+                }
             }
             #endregion
 
@@ -424,8 +428,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.TransactionOps.Remove(Transaction);
-
-            return Task.CompletedTask;
         }
 
         #region static

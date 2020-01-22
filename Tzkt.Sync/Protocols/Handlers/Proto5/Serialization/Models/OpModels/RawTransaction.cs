@@ -36,6 +36,10 @@ namespace Tzkt.Sync.Protocols.Proto5
         [JsonPropertyName("destination")]
         public string Destination { get; set; }
 
+        [JsonProperty("parameters")]
+        [JsonPropertyName("parameters")]
+        public JsonElement Parameters { get; set; }
+
         [JsonProperty("metadata")]
         [JsonPropertyName("metadata")]
         public RawTransactionContentMetadata Metadata { get; set; }
@@ -130,6 +134,10 @@ namespace Tzkt.Sync.Protocols.Proto5
         [JsonProperty("destination")]
         [JsonPropertyName("destination")]
         public string Destination { get; set; }
+
+        [JsonProperty("parameters")]
+        [JsonPropertyName("parameters")]
+        public JsonElement Parameters { get; set; }
 
         [JsonProperty("result")]
         [JsonPropertyName("result")]

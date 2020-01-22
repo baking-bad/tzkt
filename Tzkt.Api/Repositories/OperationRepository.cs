@@ -1833,7 +1833,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -1861,6 +1861,7 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
+                Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0
@@ -1870,7 +1871,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
@@ -1898,6 +1899,7 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
+                Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0
@@ -1907,7 +1909,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
@@ -1935,6 +1937,7 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
+                Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0
@@ -1944,7 +1947,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(int level)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""Level"" = @level
@@ -1972,6 +1975,7 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
+                Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0
@@ -1981,7 +1985,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 ORDER BY  ""Id""
@@ -2010,6 +2014,7 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
+                Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0
@@ -2019,7 +2024,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     (""SenderId"" = @accountId
@@ -2049,6 +2054,7 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
+                Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0
@@ -2058,7 +2064,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     (""SenderId"" = @accountId
@@ -2090,6 +2096,7 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
+                Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace Tzkt.Sync
             Logger = logger;
         }
 
-        public virtual async Task<AppState> ApplyBlock(Stream stream)
+        public virtual async Task<AppState> ApplyBlock(Stream stream, int head, DateTime sync)
         {
             Logger.LogDebug("Deserializing block...");
             var rawBlock = await Serializer.DeserializeBlock(stream);
@@ -53,8 +54,10 @@ namespace Tzkt.Sync
             await Commit(rawBlock);
 
             var state = await Cache.GetAppStateAsync();
+            var protocolEnd = false;
             if (state.Protocol != state.NextProtocol)
             {
+                protocolEnd = true;
                 Logger.LogDebug("Migrating context...");
                 await Migration();
             }
@@ -65,8 +68,14 @@ namespace Tzkt.Sync
             if (Config.Diagnostics)
             {
                 Logger.LogDebug("Diagnostics...");
-                await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+                if (!protocolEnd)
+                    await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+                else
+                    await FindDiagnostics(state.NextProtocol).Run(rawBlock.Level, rawBlock.OperationsCount);
             }
+
+            state.KnownHead = head;
+            state.LastSync = sync;
 
             Logger.LogDebug("Saving...");
             await Db.SaveChangesAsync();
@@ -76,7 +85,7 @@ namespace Tzkt.Sync
             return await Cache.GetAppStateAsync();
         }
         
-        public virtual async Task<AppState> RevertLastBlock()
+        public virtual async Task<AppState> RevertLastBlock(string predecessor)
         {
             var state = await Cache.GetAppStateAsync();
             if (state.Protocol != state.NextProtocol)
@@ -94,10 +103,10 @@ namespace Tzkt.Sync
             Logger.LogDebug("Clear accounts...");
             ClearAccounts(state.Level + 1);
 
-            if (Config.Diagnostics)
+            if (Config.Diagnostics && state.Hash == predecessor)
             {
                 Logger.LogDebug("Diagnostics...");
-                await Diagnostics.Run((await Cache.GetAppStateAsync()).Level);
+                await Diagnostics.Run(state.Level);
             }
 
             Logger.LogDebug("Saving...");
@@ -161,13 +170,31 @@ namespace Tzkt.Sync
 
         public abstract Task Revert();
 
+        IDiagnostics FindDiagnostics(string hash)
+        {
+            return hash switch
+            {
+                "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i" => new Protocols.Genesis.Diagnostics(),
+                "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P" => new Protocols.Initiator.Diagnostics(),
+                "PtBMwNZT94N7gXKw4i273CKcSaBrrBnqnt3RATExNKr9KNX2USV" => new Protocols.Initiator.Diagnostics(),
+                "PtYuensgYBb3G3x1hLLbCmcav8ue8Kyd2khADcL5LsT5R1hcXex" => new Protocols.Initiator.Diagnostics(),
+                "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY" => new Protocols.Proto1.Diagnostics(Db, Node),
+                "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt" => new Protocols.Proto2.Diagnostics(Db, Node),
+                "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP" => new Protocols.Proto3.Diagnostics(Db, Node),
+                "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd" => new Protocols.Proto4.Diagnostics(Db, Node),
+                "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS" => new Protocols.Proto5.Diagnostics(Db, Node),
+                "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb" => new Protocols.Proto6.Diagnostics(Db, Node),
+                _ => throw new NotImplementedException($"Diagnostics for the protocol {hash} hasn't been implemented yet")
+            };
+        }
+
         void ClearCachedRelations()
         {
             foreach (var entry in Db.ChangeTracker.Entries())
             {
                 switch(entry.Entity)
                 {
-                    case Delegate delegat:
+                    case Data.Models.Delegate delegat:
                         delegat.Delegate = null;
                         delegat.DelegatedAccounts = null;
                         delegat.FirstBlock = null;

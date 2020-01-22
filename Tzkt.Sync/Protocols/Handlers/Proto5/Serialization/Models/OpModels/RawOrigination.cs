@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             StorageLimit >= 0 &&
             Balance >= 0 &&
             (Delegate == null || Delegate != "") &&
-            (Script == null || Script.IsValidFormat()) &&
+            (Script == null || Metadata.Result.Status != "applied" || Script.IsValidFormat()) &&
             Metadata?.IsValidFormat() == true;
         #endregion
     }
@@ -62,16 +62,17 @@ namespace Tzkt.Sync.Protocols.Proto5
     {
         [JsonProperty("code")]
         [JsonPropertyName("code")]
-        public object Code { get; set; }
+        public JsonElement Code { get; set; }
 
         [JsonProperty("storage")]
         [JsonPropertyName("storage")]
-        public object Storage { get; set; }
+        public JsonElement Storage { get; set; }
 
         #region validation
         public bool IsValidFormat() =>
-            Code != null &&
-            Storage != null;
+            Code.ValueKind == JsonValueKind.Array &&
+            Code.GetArrayLength() == 3 &&
+            Storage.ValueKind != JsonValueKind.Undefined;
         #endregion
     }
 

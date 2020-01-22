@@ -182,6 +182,7 @@ namespace Tzkt.Sync.Services.Cache
             Blocks.Clear();
             Accounts.Clear();
             Protocols.Clear();
+            Proposals.Clear();
         }
     }
 }

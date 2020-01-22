@@ -48,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Priority = rawBlock.Header.Priority,
                 Baker = await Cache.GetDelegateAsync(rawBlock.Metadata.Baker),
                 Events = events,
-                Reward = protocol.BlockReward * (8 + 2 * validations / protocol.EndorsersPerBlock) / 10 / (rawBlock.Header.Priority + 1)
+                Reward = protocol.BlockReward0 * (8 + 2 * validations / protocol.EndorsersPerBlock) / 10 / (rawBlock.Header.Priority + 1)
             };
         }
 

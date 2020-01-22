@@ -7,6 +7,10 @@ namespace Tzkt.Api.Services.Cache
 {
     public class RawState
     {
+        public int KnownHead { get; set; }
+
+        public DateTime LastSync { get; set; }
+
         public int Level { get; set; }
 
         public string Hash { get; set; }

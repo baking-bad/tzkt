@@ -133,29 +133,30 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> RebaseLocalBranchAsync(CancellationToken cancelToken)
         {
-            //while (AppState.Level > 0)
-            while (AppState.Level >= 0 && !await Node.ValidateBranchAsync(AppState.Level, AppState.Hash))
+            while (AppState.Level >= 0 && !cancelToken.IsCancellationRequested)
             {
-                if (cancelToken.IsCancellationRequested)
-                    return false;
+                var header = await Node.GetHeaderAsync(AppState.Level);
+                if (AppState.Hash == header.Hash) break;
 
                 Logger.LogError($"Invalid head [{AppState.Level}:{AppState.Hash}]. Reverting...");
 
                 using var scope = Services.CreateScope();
                 var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Protocol);
-                AppState = await protoHandler.RevertLastBlock();
+                AppState = await protoHandler.RevertLastBlock(header.Predecessor);
 
-                Logger.LogDebug($"Reverted to [{AppState.Level}:{AppState.Hash}]");
-            }   
-            return true;
+                Logger.LogInformation($"Reverted to [{AppState.Level}:{AppState.Hash}]");
+            }
+
+            return !cancelToken.IsCancellationRequested;
         }
 
         private async Task<bool> ApplyUpdatesAsync(CancellationToken cancelToken)
         {
-            while (await Node.HasUpdatesAsync(AppState.Level))
+            while (!cancelToken.IsCancellationRequested)
             {
-                if (cancelToken.IsCancellationRequested)
-                    return false;
+                var sync = DateTime.UtcNow;
+                var header = await Node.GetHeaderAsync();
+                if (AppState.Level == header.Level) break;
 
                 Logger.LogDebug($"Loading block {AppState.Level + 1}...");
                 using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
@@ -168,10 +169,11 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug($"Applying block...");
                 using var scope = Services.CreateScope();
                 var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
-                AppState = await protocol.ApplyBlock(blockStream);
-                Logger.LogInformation($"Applied {AppState.Level}");
+                AppState = await protocol.ApplyBlock(blockStream, header.Level, sync);
+                Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
             }
-            return true;
+
+            return !cancelToken.IsCancellationRequested;
         }
     }
 }

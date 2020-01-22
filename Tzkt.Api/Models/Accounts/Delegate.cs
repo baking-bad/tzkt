@@ -19,6 +19,8 @@ namespace Tzkt.Api.Models
 
         public string PublicKey { get; set; }
 
+        public bool Revealed { get; set; }
+
         public long Balance { get; set; }
 
         public long FrozenDeposits { get; set; }

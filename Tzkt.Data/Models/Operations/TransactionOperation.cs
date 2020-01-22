@@ -11,6 +11,7 @@ namespace Tzkt.Data.Models
         public int? ResetDeactivation { get; set; }
 
         public long Amount { get; set; }
+        public string Parameters { get; set; }
 
         public InternalOperations? InternalOperations { get; set; }
 

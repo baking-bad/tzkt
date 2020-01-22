@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             Reveal.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(reveal.Sender.DelegateId);
         }
 
-        public override Task Apply()
+        public override async Task Apply()
         {
             #region entities
             var block = Reveal.Block;
@@ -77,7 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region apply operation
-            sender.Balance -= Reveal.BakerFee;
+            await Spend(sender, Reveal.BakerFee);
             if (senderDelegate != null) senderDelegate.StakingBalance -= Reveal.BakerFee;
             blockBaker.FrozenFees += Reveal.BakerFee;
             blockBaker.Balance += Reveal.BakerFee;
@@ -93,12 +93,13 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region apply result
             if (sender is User user)
+            {
                 user.PublicKey = PubKey;
+                if (user.Balance > 0) user.Revealed = true;
+            }
             #endregion
 
             Db.RevealOps.Add(Reveal);
-
-            return Task.CompletedTask;
         }
 
         public override async Task Revert()
@@ -117,8 +118,18 @@ namespace Tzkt.Sync.Protocols.Proto5
             Db.TryAttach(senderDelegate);
             #endregion
 
+            #region revert result
+            if (sender is User user)
+            {
+                if (sender.RevealsCount == 1)
+                    user.PublicKey = null;
+
+                user.Revealed = false;
+            }
+            #endregion
+
             #region revert operation
-            sender.Balance += Reveal.BakerFee;
+            await Return(sender, Reveal.BakerFee, true);
             if (senderDelegate != null) senderDelegate.StakingBalance += Reveal.BakerFee;
             blockBaker.FrozenFees -= Reveal.BakerFee;
             blockBaker.Balance -= Reveal.BakerFee;
@@ -127,14 +138,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.RevealsCount--;
 
             sender.Counter = Math.Min(sender.Counter, Reveal.Counter - 1);
-            #endregion
-
-            #region revert result
-            if (sender.RevealsCount == 0)
-            {
-                if (sender is User user)
-                    user.PublicKey = null;
-            }
             #endregion
 
             Db.RevealOps.Remove(Reveal);

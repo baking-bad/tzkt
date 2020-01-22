@@ -6,7 +6,8 @@ namespace Tzkt.Data.Models
     public class AppState
     {
         public int Id { get; set; }
-        public bool Synced { get; set; }
+        public int KnownHead { get; set; }
+        public DateTime LastSync { get; set; }
 
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
