@@ -126,7 +126,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1XdIpPj69S1No18AIf0zx5OBKnJCSdNIw' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1XdIpPj69S1No18AIf0zx5OBKnJCSdNIw" -O tzkt_db.backup && rm -rf /tmp/cookies.txt
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1p8YyGrnepcY_HGWwYpyEaxcyHDPavu8I' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1p8YyGrnepcY_HGWwYpyEaxcyHDPavu8I" -O tzkt_db.backup && rm -rf /tmp/cookies.txt
 ````
 
 #### Restore database from the snapshot
@@ -305,7 +305,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1EhryKBrdEbtQn6FbuPRhumfiRtBT8Jzd' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1EhryKBrdEbtQn6FbuPRhumfiRtBT8Jzd" -O baby_tzkt_db.backup && rm -rf /tmp/cookies.txt
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1aP3QhxL8FgEVuFMcGLT76Q7DoRTekfRs' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1aP3QhxL8FgEVuFMcGLT76Q7DoRTekfRs" -O baby_tzkt_db.backup && rm -rf /tmp/cookies.txt
 ````
 
 #### Restore database from the snapshot
