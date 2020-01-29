@@ -118,10 +118,10 @@ namespace Tzkt.Api.Repositories
 
             sql.AppendLine(@"ORDER BY ""Id""");
             sql.AppendLine(@"LIMIT @limit");
-            
+
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
-            
+
             #region write header
             csv.Write("Block level;");
             csv.Write("Datetime;");
@@ -150,18 +150,18 @@ namespace Tzkt.Api.Repositories
                 csv.Write(";");
                 if (account is RawDelegate)
                 {
-                    csv.Write(row.Reward == 0 ? "" : row.Reward / 1_000_000m);
+                    csv.Write(row.Reward == null ? "" : row.Reward / 1_000_000m);
                     csv.Write(";");
-                    csv.Write(row.Loss == 0 ? "" : -row.Loss / 1_000_000m);
+                    csv.Write(row.Loss == null ? "" : -row.Loss / 1_000_000m);
                     csv.Write(";");
                 }
-                csv.Write(row.Received == 0 ? "" : row.Received / 1_000_000m);
+                csv.Write(row.Received == null ? "" : row.Received / 1_000_000m);
                 csv.Write(";");
                 csv.Write(row.From == null ? "" : Accounts.Get(row.From).Address);
                 csv.Write(";");
-                csv.Write(row.Sent == 0 ? "" : -row.Sent / 1_000_000m);
+                csv.Write(row.Sent == null ? "" : -row.Sent / 1_000_000m);
                 csv.Write(";");
-                csv.Write(row.Fee == 0 ? "" : -row.Fee / 1_000_000m);
+                csv.Write(row.Fee == null ? "" : -row.Fee / 1_000_000m);
                 csv.Write(";");
                 csv.Write(row.To == null ? "" : Accounts.Get(row.To).Address);
                 csv.Write(";");
@@ -192,11 +192,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"(""Reward"" + ""Fees"") as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""Blocks"" ");
@@ -219,11 +219,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"""Reward"" as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""EndorsementOps"" ");
@@ -245,12 +245,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"""Balance"" as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""ActivationOps"" ");
@@ -274,11 +274,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"""AccuserReward"" as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""DoubleBakingOps"" ");
@@ -298,12 +298,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
             sql.Append(@"(""OffenderLostDeposit"" + ""OffenderLostReward"" + ""OffenderLostFee"") as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""DoubleBakingOps"" ");
@@ -327,11 +327,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"""AccuserReward"" as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
@@ -351,12 +351,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
             sql.Append(@"(""OffenderLostDeposit"" + ""OffenderLostReward"" + ""OffenderLostFee"") as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
@@ -379,11 +379,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"125000 as ""Reward"", "); // TODO: get reward amount from protocol constants
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""NonceRevelationOps"" ");
@@ -404,11 +404,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
             sql.Append(@"""BakerFee"" as ""Fee"", ");
             sql.Append(@"""DelegateId"" as ""To"" ");
 
@@ -432,12 +432,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"""Balance"" as ""Received"", ");
             sql.Append(@"""SenderId"" as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""OriginationOps"" ");
@@ -458,12 +458,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"""Balance"" as ""Sent"", ");
-            sql.Append(@"CASE WHEN ""Nonce"" is NULL THEN (""BakerFee"" + COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) ELSE 0 END as ""Fee"", ");
+            sql.Append(@"CASE WHEN ""Nonce"" is NULL THEN (""BakerFee"" + COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) ELSE null::integer END as ""Fee"", ");
             sql.Append(@"""ContractId"" as ""To"" ");
 
             sql.Append(@"FROM ""OriginationOps"" ");
@@ -485,11 +485,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
             sql.Append(@"(COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) as ""Fee"", ");
             sql.Append(@"""ContractId"" as ""To"" ");
 
@@ -512,11 +512,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
             sql.Append(@"""BakerFee"" as ""Fee"", ");
             sql.Append(@"""ContractId"" as ""To"" ");
 
@@ -542,12 +542,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"""Amount"" as ""Received"", ");
             sql.Append(@"""SenderId"" as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""TransactionOps"" ");
@@ -569,12 +569,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"""Amount"" as ""Sent"", ");
-            sql.Append(@"CASE WHEN ""Nonce"" is NULL THEN (""BakerFee"" + COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) ELSE 0 END as ""Fee"", ");
+            sql.Append(@"CASE WHEN ""Nonce"" is NULL THEN (""BakerFee"" + COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) ELSE null::integer END as ""Fee"", ");
             sql.Append(@"""TargetId"" as ""To"" ");
 
             sql.Append(@"FROM ""TransactionOps"" ");
@@ -596,11 +596,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
             sql.Append(@"(COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) as ""Fee"", ");
             sql.Append(@"""TargetId"" as ""To"" ");
 
@@ -623,11 +623,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"""Nonce"" as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
             sql.Append(@"""BakerFee"" as ""Fee"", ");
             sql.Append(@"""TargetId"" as ""To"" ");
 
@@ -652,11 +652,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Counter"" as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
             sql.Append(@"""BakerFee"" as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
@@ -679,12 +679,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", "); // TODO: get reward amount from protocol constants
+            sql.Append(@"null::integer as ""Reward"", "); // TODO: get reward amount from protocol constants
             sql.Append(@"(""LostReward"" + ""LostFees"") as ""Loss"", ");
-            sql.Append(@"0 as ""Received"", ");
+            sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""RevelationPenaltyOps"" ");
@@ -705,12 +705,12 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"0 as ""Reward"", ");
-            sql.Append(@"0 as ""Loss"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"""BalanceChange"" as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"0 as ""Sent"", ");
-            sql.Append(@"0 as ""Fee"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""SystemOps"" ");
