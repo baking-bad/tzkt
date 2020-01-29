@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -17,9 +18,12 @@ namespace Tzkt.Api.Controllers
     public class AccountsController : ControllerBase
     {
         private readonly AccountRepository Accounts;
-        public AccountsController(AccountRepository accounts)
+        private readonly ReportRepository Reports;
+
+        public AccountsController(AccountRepository accounts, ReportRepository reports)
         {
             Accounts = accounts;
+            Reports = reports;
         }
 
         /// <summary>
@@ -135,6 +139,37 @@ namespace Tzkt.Api.Controllers
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
             return Accounts.GetProfile(address, types, sort, n);
+        }
+
+        /// <summary>
+        /// Get account report
+        /// </summary>
+        /// <remarks>
+        /// Exports account balance report in .csv format
+        /// </remarks>
+        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="from">Start of the datetime range to filter by (ISO 8601, e.g. 2019-11-31)</param>
+        /// <param name="to">End of the datetime range to filter by (ISO 8601, e.g. 2019-12-31)</param>
+        /// <returns></returns>
+        [HttpGet("{address}/report")]
+        public async Task<FileStreamResult> GetBalanceReport(
+            [Address] string address,
+            DateTime? from,
+            DateTime? to)
+        {
+            var _from = from ?? DateTime.MinValue;
+            var _to = to ?? DateTime.MaxValue;
+
+            var stream = new MemoryStream();
+            var csv = new StreamWriter(stream);
+
+            await Reports.Write(csv, address, _from, _to, 257_000);
+
+            stream.Seek(0, SeekOrigin.Begin);
+            return new FileStreamResult(stream, "text/csv")
+            {
+                FileDownloadName = $"{address[..9]}..{address[^6..]}_{_from.ToShortDateString()}-{_to.ToShortDateString()}.csv"
+            };
         }
     }
 }
