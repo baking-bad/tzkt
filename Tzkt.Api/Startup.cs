@@ -35,6 +35,7 @@ namespace Tzkt.Api
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();
             services.AddTransient<OperationRepository>();
+            services.AddTransient<ReportRepository>();
             services.AddTransient<BlockRepository>();
             services.AddTransient<VotingRepository>();
             services.AddTransient<ProtocolRepository>();
@@ -71,7 +72,7 @@ namespace Tzkt.Api
                     };
                     document.Info.ExtensionData = new Dictionary<string, object>
                     {
-                        { 
+                        {
                             "x-logo", new
                             {
                                 url = "https://tzkt.io/logo.png",
