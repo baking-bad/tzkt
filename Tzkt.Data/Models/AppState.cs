@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
+    //TODO: add chain id
     public class AppState
     {
         public int Id { get; set; }

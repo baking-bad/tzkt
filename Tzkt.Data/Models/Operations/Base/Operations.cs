@@ -22,7 +22,7 @@ namespace Tzkt.Data.Models
         Originations        = 0b_0000_0010_0000_0000,
         Reveals             = 0b_0000_0100_0000_0000,
 
-        System              = 0b_0000_1000_0000_0000,
+        Migrations          = 0b_0000_1000_0000_0000,
         RevelationPenalty   = 0b_0001_0000_0000_0000
     }
 

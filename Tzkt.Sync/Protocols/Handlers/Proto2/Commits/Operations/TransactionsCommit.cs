@@ -74,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             Transaction = new TransactionOperation
             {
                 Id = id,
-                OriginalSender = parent.Sender,
+                Initiator = parent.Sender,
                 Block = parent.Block,
                 Level = parent.Block.Level,
                 Timestamp = parent.Timestamp,
@@ -115,10 +115,10 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (Transaction.Target != null)
                 Transaction.Target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.Target.DelegateId);
 
-            if (Transaction.OriginalSenderId != null)
+            if (Transaction.InitiatorId != null)
             {
-                Transaction.OriginalSender = await Cache.GetAccountAsync(transaction.OriginalSenderId);
-                Transaction.OriginalSender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.OriginalSender.DelegateId);
+                Transaction.Initiator = await Cache.GetAccountAsync(transaction.InitiatorId);
+                Transaction.Initiator.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.Initiator.DelegateId);
             }
         }
 
@@ -132,7 +132,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public override async Task Revert()
         {
-            if (Transaction.OriginalSenderId == null)
+            if (Transaction.InitiatorId == null)
                 await RevertTransaction();
             else
                 await RevertInternalTransaction();
@@ -376,7 +376,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public async Task RevertInternalTransaction()
         {
             #region entities
-            var parentSender = Transaction.OriginalSender;
+            var parentSender = Transaction.Initiator;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
             var sender = Transaction.Sender;

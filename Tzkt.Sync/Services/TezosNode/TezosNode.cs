@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,10 +9,8 @@ namespace Tzkt.Sync.Services
 {
     public sealed class TezosNode : IDisposable
     {
-        public RpcClient Rpc { get; private set; }
-
         readonly string ChainId;
-        readonly JsonSerializerOptions DefaultSerializer;
+        readonly RpcClient Rpc;
 
         Header Header;
         Constants Constants;
@@ -24,10 +21,6 @@ namespace Tzkt.Sync.Services
             var nodeConf = config.GetTezosNodeConfig();
             ChainId = nodeConf.ChainId;
             Rpc = new RpcClient(nodeConf.Endpoint, nodeConf.Timeout);
-
-            DefaultSerializer = new JsonSerializerOptions();
-            DefaultSerializer.Converters.Add(new JsonInt32Converter());
-            DefaultSerializer.Converters.Add(new JsonInt64Converter());
         }
 
         public Task<Stream> GetBlockAsync(int level)
@@ -58,22 +51,17 @@ namespace Tzkt.Sync.Services
         {
             if (DateTime.UtcNow >= NextBlock)
             {
-                var header = await Rpc.GetObjectAsync<Header>(
-                    "chains/main/blocks/head/header",
-                    DefaultSerializer);
+                var header = await Rpc.GetObjectAsync<Header>("chains/main/blocks/head/header");
 
                 if (header.ChainId != ChainId)
                     throw new Exception("Invalid chain");
 
                 if (header.Protocol != Header?.Protocol)
-                    Constants = await Rpc.GetObjectAsync<Constants>(
-                        "chains/main/blocks/head/context/constants",
-                        DefaultSerializer);
+                    Constants = await Rpc.GetObjectAsync<Constants>("chains/main/blocks/head/context/constants");
 
-                NextBlock = header.Timestamp.AddSeconds(
-                    header.Level != Header?.Level
-                    ? Constants.BlockIntervals[0]
-                    : 1);
+                NextBlock = header.Level != Header?.Level
+                    ? header.Timestamp.AddSeconds(Constants.BlockIntervals[0])
+                    : DateTime.UtcNow.AddSeconds(1);
 
                 Header = header;
             }
@@ -83,30 +71,12 @@ namespace Tzkt.Sync.Services
 
         public async Task<Header> GetHeaderAsync(int level)
         {
-            var header = await Rpc.GetObjectAsync<Header>(
-                $"chains/main/blocks/{level}/header",
-                DefaultSerializer);
+            var header = await Rpc.GetObjectAsync<Header>($"chains/main/blocks/{level}/header");
 
             if (header.ChainId != ChainId)
                 throw new Exception("Invalid chain");
 
             return header;
-        }
-
-        public async Task<bool> CheckHeadAsync()
-        {
-            var header1 = await Rpc.GetObjectAsync<Header>(
-                "chains/main/blocks/head/header",
-                DefaultSerializer);
-
-            if (header1.ChainId != ChainId)
-                throw new Exception("Invalid chain");
-
-            var header2 = await Rpc.GetObjectAsync<Header>(
-                "https://rpc.tzkt.io/mainnet/chains/main/blocks/head/header/shell",
-                DefaultSerializer);
-
-            return header1.ChainId != "NetXdQprcVkpaWU" || Math.Abs(header1.Level - header2.Level) < 8;
         }
 
         public async Task<bool> HasUpdatesAsync(int level)

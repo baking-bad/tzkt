@@ -63,8 +63,8 @@ namespace Tzkt.Sync.Services
         public Task<Stream> GetStreamAsync(string path)
             => HttpClient.GetStreamAsync(path);
 
-        public async Task<T> GetObjectAsync<T>(string path, JsonSerializerOptions options = null)
-            => await JsonSerializer.DeserializeAsync<T>(await HttpClient.GetStreamAsync(path), options);
+        public async Task<T> GetObjectAsync<T>(string path)
+            => await JsonSerializer.DeserializeAsync<T>(await HttpClient.GetStreamAsync(path), SerializerOptions.Default);
 
         public void Dispose()
             => _HttpClient?.Dispose();

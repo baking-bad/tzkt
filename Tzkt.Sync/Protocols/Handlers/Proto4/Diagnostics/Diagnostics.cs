@@ -95,7 +95,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             if (remote.GracePeriod != (delegat.DeactivationLevel - 2) / proto.BlocksPerCycle)
                 throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
 
-            if (remote.Delegators.Count != delegat.Delegators)
+            if (remote.Delegators.Count != delegat.DelegatorsCount)
                 throw new Exception($"Diagnostics failed: wrong delegators count {delegat.Address}");
 
             if ((remote.FrozenBalances.Count > 0 ? remote.FrozenBalances.Sum(x => x.Deposit) : 0) != delegat.FrozenDeposits)

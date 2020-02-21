@@ -1194,7 +1194,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -1209,7 +1209,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -1226,7 +1226,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
@@ -1241,7 +1241,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = row.Nonce,
@@ -1258,7 +1258,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
@@ -1273,7 +1273,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = nonce,
@@ -1290,7 +1290,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(int level)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""Level"" = @level
@@ -1305,7 +1305,7 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -1322,7 +1322,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 ORDER BY  ""Id""
@@ -1338,7 +1338,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -1355,13 +1355,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""PrevDelegateId"" = @accountId
                 OR        ""DelegateId"" = @accountId
-                OR        ""OriginalSenderId"" = @accountId)
+                OR        ""InitiatorId"" = @accountId)
                 {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
@@ -1373,7 +1373,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -1390,13 +1390,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
                           ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""PrevDelegateId"" = @accountId
                 OR        ""DelegateId"" = @accountId
-                OR        ""OriginalSenderId"" = @accountId)
+                OR        ""InitiatorId"" = @accountId)
                 AND       ""Timestamp"" >= @from
                 AND       ""Timestamp"" < @to
                 {Pagination(sort, offset, offsetMode, limit)}";
@@ -1410,7 +1410,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -1439,7 +1439,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -1462,7 +1462,7 @@ namespace Tzkt.Api.Repositories
                     Level = row.Level,
                     Timestamp = row.Timestamp,
                     Hash = hash,
-                    OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                    Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
                     Counter = row.Counter,
                     Nonce = row.Nonce,
@@ -1492,7 +1492,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
@@ -1515,7 +1515,7 @@ namespace Tzkt.Api.Repositories
                     Level = row.Level,
                     Timestamp = row.Timestamp,
                     Hash = hash,
-                    OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                    Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
                     Counter = counter,
                     Nonce = row.Nonce,
@@ -1545,7 +1545,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
@@ -1568,7 +1568,7 @@ namespace Tzkt.Api.Repositories
                     Level = row.Level,
                     Timestamp = row.Timestamp,
                     Hash = hash,
-                    OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                    Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
                     Counter = counter,
                     Nonce = nonce,
@@ -1598,7 +1598,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(int level)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     ""Level"" = @level
@@ -1621,7 +1621,7 @@ namespace Tzkt.Api.Repositories
                     Level = level,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
-                    OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                    Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
                     Counter = row.Counter,
                     Nonce = row.Nonce,
@@ -1651,7 +1651,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 ORDER BY  ""Id""
@@ -1675,7 +1675,7 @@ namespace Tzkt.Api.Repositories
                     Level = row.Level,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
-                    OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                    Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
                     Counter = row.Counter,
                     Nonce = row.Nonce,
@@ -1705,14 +1705,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""ManagerId"" = @accountId
                 OR        ""DelegateId"" = @accountId
                 OR        ""ContractId"" = @accountId
-                OR        ""OriginalSenderId"" = @accountId)
+                OR        ""InitiatorId"" = @accountId)
                 {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
@@ -1732,7 +1732,7 @@ namespace Tzkt.Api.Repositories
                     Level = row.Level,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
-                    OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                    Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
                     Counter = row.Counter,
                     Nonce = row.Nonce,
@@ -1762,14 +1762,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
                 FROM      ""OriginationOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""ManagerId"" = @accountId
                 OR        ""DelegateId"" = @accountId
                 OR        ""ContractId"" = @accountId
-                OR        ""OriginalSenderId"" = @accountId)
+                OR        ""InitiatorId"" = @accountId)
                 AND       ""Timestamp"" >= @from
                 AND       ""Timestamp"" < @to
                 {Pagination(sort, offset, offsetMode, limit)}";
@@ -1791,7 +1791,7 @@ namespace Tzkt.Api.Repositories
                     Level = row.Level,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
-                    OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                    Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
                     Counter = row.Counter,
                     Nonce = row.Nonce,
@@ -1833,7 +1833,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51)
@@ -1848,7 +1848,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -1871,7 +1871,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
@@ -1886,7 +1886,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = row.Nonce,
@@ -1909,7 +1909,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""OriginalSenderId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
@@ -1924,7 +1924,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = counter,
                 Nonce = nonce,
@@ -1947,7 +1947,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(int level)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     ""Level"" = @level
@@ -1962,7 +1962,7 @@ namespace Tzkt.Api.Repositories
                 Level = level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -1985,7 +1985,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 ORDER BY  ""Id""
@@ -2001,7 +2001,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -2024,12 +2024,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""TargetId"" = @accountId
-                OR        ""OriginalSenderId"" = @accountId)
+                OR        ""InitiatorId"" = @accountId)
                 {Pagination(sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
@@ -2041,7 +2041,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -2064,12 +2064,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""OriginalSenderId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
                 WHERE     (""SenderId"" = @accountId
                 OR        ""TargetId"" = @accountId
-                OR        ""OriginalSenderId"" = @accountId)
+                OR        ""InitiatorId"" = @accountId)
                 AND       ""Timestamp"" >= @from
                 AND       ""Timestamp"" < @to
                 {Pagination(sort, offset, offsetMode, limit)}";
@@ -2083,7 +2083,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                OriginalSender = row.OriginalSenderId != null ? Accounts.GetAlias(row.OriginalSenderId) : null,
+                Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
                 Counter = row.Counter,
                 Nonce = row.Nonce,
@@ -2281,12 +2281,12 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
-        #region system
+        #region migrations
         public async Task<int> GetMigrationsCount()
         {
             var sql = @"
                 SELECT   COUNT(*)
-                FROM     ""SystemOps""";
+                FROM     ""MigrationOps""";
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql);
@@ -2296,7 +2296,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccountId"", ""Event"", ""BalanceChange""
-                FROM      ""SystemOps""
+                FROM      ""MigrationOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
                 LIMIT     @limit";
@@ -2319,7 +2319,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
-                FROM      ""SystemOps""
+                FROM      ""MigrationOps""
                 WHERE     ""AccountId"" = @accountId
                 {Pagination(sort, offset, offsetMode, limit)}";
 
@@ -2341,7 +2341,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
-                FROM      ""SystemOps""
+                FROM      ""MigrationOps""
                 WHERE     ""AccountId"" = @accountId
                 AND       ""Timestamp"" >= @from
                 AND       ""Timestamp"" < @to

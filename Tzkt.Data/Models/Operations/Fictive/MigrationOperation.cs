@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
-    public class SystemOperation
+    public class MigrationOperation
     {
         public int Id { get; set; }
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
 
         public int AccountId { get; set; }
-        public SystemEvent Event { get; set; }
+        public MigrationKind Kind { get; set; }
         public long BalanceChange { get; set; }
 
         #region relations
@@ -23,34 +23,34 @@ namespace Tzkt.Data.Models
         #endregion
     }
 
-    public enum SystemEvent
+    public enum MigrationKind
     {
         Bootstrap,
         ActivateDelegate,
         AirDrop
     }
 
-    public static class SystemOperationModel
+    public static class MigrationOperationModel
     {
-        public static void BuildSystemOperationModel(this ModelBuilder modelBuilder)
+        public static void BuildMigrationOperationModel(this ModelBuilder modelBuilder)
         {
             #region indexes
-            modelBuilder.Entity<SystemOperation>()
+            modelBuilder.Entity<MigrationOperation>()
                 .HasIndex(x => x.Level);
 
-            modelBuilder.Entity<SystemOperation>()
+            modelBuilder.Entity<MigrationOperation>()
                 .HasIndex(x => x.AccountId);
             #endregion
             
             #region keys
-            modelBuilder.Entity<SystemOperation>()
+            modelBuilder.Entity<MigrationOperation>()
                 .HasKey(x => x.Id);
             #endregion
 
             #region relations
-            modelBuilder.Entity<SystemOperation>()
+            modelBuilder.Entity<MigrationOperation>()
                 .HasOne(x => x.Block)
-                .WithMany(x => x.SystemOperations)
+                .WithMany(x => x.Migrations)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
             #endregion

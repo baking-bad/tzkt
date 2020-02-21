@@ -145,12 +145,12 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 if (contractDelegate != null)
                 {
-                    contractDelegate.Delegators++;
+                    contractDelegate.DelegatorsCount++;
                     contractDelegate.StakingBalance += contract.Balance;
                 }
 
-                sender.Contracts++;
-                if (contractManager != sender) contractManager.Contracts++;
+                sender.ContractsCount++;
+                if (contractManager != sender) contractManager.ContractsCount++;
 
                 Db.Contracts.Add(contract);
             }
@@ -200,12 +200,12 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 if (contractDelegate != null)
                 {
-                    contractDelegate.Delegators--;
+                    contractDelegate.DelegatorsCount--;
                     contractDelegate.StakingBalance -= contract.Balance;
                 }
 
-                sender.Contracts--;
-                if (contractManager != sender) contractManager.Contracts--;
+                sender.ContractsCount--;
+                if (contractManager != sender) contractManager.ContractsCount--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);

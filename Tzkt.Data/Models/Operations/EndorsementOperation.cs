@@ -4,6 +4,7 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
+    //TODO: store a mask in the Slots field
     public class EndorsementOperation : BaseOperation
     {
         public int DelegateId { get; set; }

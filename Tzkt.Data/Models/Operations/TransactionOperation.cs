@@ -36,7 +36,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<TransactionOperation>()
-                .HasIndex(x => x.OriginalSenderId);
+                .HasIndex(x => x.InitiatorId);
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.TargetId);
