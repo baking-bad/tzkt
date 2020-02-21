@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Protocols;
 
@@ -32,7 +30,6 @@ namespace Tzkt.Sync.Services
         protected override async Task ExecuteAsync(CancellationToken cancelToken)
         {
             #region init state
-            await CheckHeadAsync();
             AppState = await ResetState();
             Logger.LogDebug($"State initialized: [{AppState.Level}:{AppState.Hash}]");
             #endregion
@@ -94,19 +91,6 @@ namespace Tzkt.Sync.Services
             }
 
             Logger.LogWarning("Observer is stoped");
-        }
-
-        private async Task CheckHeadAsync()
-        {
-            try
-            {
-                if (!await Node.CheckHeadAsync())
-                    Logger.LogWarning($"Node is not synchronized!");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogDebug($"Failed to check node. {ex.Message}");
-            }
         }
 
         private async Task<AppState> ResetState()

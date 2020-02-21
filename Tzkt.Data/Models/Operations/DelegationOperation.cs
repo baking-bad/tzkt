@@ -4,6 +4,7 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
+    //TODO: add delegation amount
     public class DelegationOperation : InternalOperation
     {
         public int? DelegateId { get; set; }
@@ -34,7 +35,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<DelegationOperation>()
-                .HasIndex(x => x.OriginalSenderId);
+                .HasIndex(x => x.InitiatorId);
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.DelegateId);

@@ -38,17 +38,17 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 manager.Balance = 1;
                 manager.Counter = state.ManagerCounter;
-                manager.SystemOpsCount++;
+                manager.MigrationsCount++;
 
-                block.Operations |= Operations.System;
-                Db.SystemOps.Add(new SystemOperation
+                block.Operations |= Operations.Migrations;
+                Db.MigrationOps.Add(new MigrationOperation
                 {
                     Id = await Cache.NextCounterAsync(),
                     Block = block,
                     Level = state.Level,
                     Timestamp = state.Timestamp,
                     Account = manager,
-                    Event = SystemEvent.AirDrop,
+                    Kind = MigrationKind.AirDrop,
                     BalanceChange = 1
                 });
             }
@@ -56,10 +56,10 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Revert()
         {
-            var airDrops = await Db.SystemOps
+            var airDrops = await Db.MigrationOps
                 .AsNoTracking()
                 .Include(x => x.Account)
-                .Where(x => x.Event == SystemEvent.AirDrop)
+                .Where(x => x.Kind == MigrationKind.AirDrop)
                 .ToListAsync();
 
             foreach (var airDrop in airDrops)
@@ -68,10 +68,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Cache.AddAccount(airDrop.Account);
 
                 airDrop.Account.Balance = 0;
-                airDrop.Account.SystemOpsCount--;
+                airDrop.Account.MigrationsCount--;
             }
 
-            Db.SystemOps.RemoveRange(airDrops);
+            Db.MigrationOps.RemoveRange(airDrops);
         }
 
         #region static

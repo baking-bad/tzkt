@@ -226,7 +226,7 @@ namespace Tzkt.Sync
                         b.Revelation = null;
                         b.Revelations = null;
                         b.Transactions = null;
-                        b.SystemOperations = null;
+                        b.Migrations = null;
                         b.RevelationPenalties = null;
                         break;
                     case VotingPeriod period:

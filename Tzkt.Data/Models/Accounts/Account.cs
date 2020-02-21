@@ -15,12 +15,14 @@ namespace Tzkt.Data.Models
         public long Balance { get; set; }
         public int Counter { get; set; }
 
-        public int Contracts { get; set; }
+        public int ContractsCount { get; set; }
+
         public int DelegationsCount { get; set; }
         public int OriginationsCount { get; set; }
         public int TransactionsCount { get; set; }
         public int RevealsCount { get; set; }
-        public int SystemOpsCount { get; set; }
+
+        public int MigrationsCount { get; set; }
 
         public int? DelegateId { get; set; }
         public int? DelegationLevel { get; set; }

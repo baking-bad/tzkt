@@ -16,7 +16,7 @@ namespace Tzkt.Api.Services.Cache
         public long FrozenRewards { get; set; }
         public long FrozenFees { get; set; }
 
-        public int Delegators { get; set; }
+        public int DelegatorsCount { get; set; }
         public long StakingBalance { get; set; }
 
         public int BlocksCount { get; set; }

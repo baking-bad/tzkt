@@ -4,8 +4,7 @@ namespace Tzkt.Sync.Services
 {
     public class TezosProtocolsConfig
     {
-        public bool Diagnostics { get; set; } = true;
-
+        public bool Diagnostics { get; set; } = false;
         public bool Validation { get; set; } = true;
     }
 

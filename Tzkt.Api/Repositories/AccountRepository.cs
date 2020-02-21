@@ -68,8 +68,8 @@ namespace Tzkt.Api.Repositories
                         LastActivityTime = Time[delegat.LastLevel],
                         NumActivations = delegat.Activated == true ? 1 : 0,
                         NumBallots = delegat.BallotsCount,
-                        NumContracts = delegat.Contracts,
-                        NumDelegators = delegat.Delegators,
+                        NumContracts = delegat.ContractsCount,
+                        NumDelegators = delegat.DelegatorsCount,
                         NumBlocks = delegat.BlocksCount,
                         NumDelegations = delegat.DelegationsCount,
                         NumDoubleBaking = delegat.DoubleBakingCount,
@@ -80,7 +80,7 @@ namespace Tzkt.Api.Repositories
                         NumOriginations = delegat.OriginationsCount,
                         NumProposals = delegat.ProposalsCount,
                         NumReveals = delegat.RevealsCount,
-                        NumMigrations = delegat.SystemOpsCount,
+                        NumMigrations = delegat.MigrationsCount,
                         NumTransactions = delegat.TransactionsCount,
                     };
                     #endregion
@@ -116,11 +116,11 @@ namespace Tzkt.Api.Repositories
                         DelegationTime = userDelegate == null ? null
                             : (DateTime?)Time[(int)user.DelegationLevel],
                         NumActivations = user.Activated == true ? 1 : 0,
-                        NumContracts = user.Contracts,
+                        NumContracts = user.ContractsCount,
                         NumDelegations = user.DelegationsCount,
                         NumOriginations = user.OriginationsCount,
                         NumReveals = user.RevealsCount,
-                        NumMigrations = user.SystemOpsCount,
+                        NumMigrations = user.MigrationsCount,
                         NumTransactions = user.TransactionsCount
                     };
                     #endregion
@@ -178,11 +178,11 @@ namespace Tzkt.Api.Repositories
                         FirstActivityTime = Time[contract.FirstLevel],
                         LastActivity = contract.LastLevel,
                         LastActivityTime = Time[contract.LastLevel],
-                        NumContracts = contract.Contracts,
+                        NumContracts = contract.ContractsCount,
                         NumDelegations = contract.DelegationsCount,
                         NumOriginations = contract.OriginationsCount,
                         NumReveals = contract.RevealsCount,
-                        NumMigrations = contract.SystemOpsCount,
+                        NumMigrations = contract.MigrationsCount,
                         NumTransactions = contract.TransactionsCount
                     };
                     #endregion
@@ -223,8 +223,8 @@ namespace Tzkt.Api.Repositories
                 LastActivityTime = Time[delegat.LastLevel],
                 NumActivations = delegat.Activated == true ? 1 : 0,
                 NumBallots = delegat.BallotsCount,
-                NumContracts = delegat.Contracts,
-                NumDelegators = delegat.Delegators,
+                NumContracts = delegat.ContractsCount,
+                NumDelegators = delegat.DelegatorsCount,
                 NumBlocks = delegat.BlocksCount,
                 NumDelegations = delegat.DelegationsCount,
                 NumDoubleBaking = delegat.DoubleBakingCount,
@@ -235,7 +235,7 @@ namespace Tzkt.Api.Repositories
                 NumOriginations = delegat.OriginationsCount,
                 NumProposals = delegat.ProposalsCount,
                 NumReveals = delegat.RevealsCount,
-                NumMigrations = delegat.SystemOpsCount,
+                NumMigrations = delegat.MigrationsCount,
                 NumTransactions = delegat.TransactionsCount,
             };
         }
@@ -301,11 +301,11 @@ namespace Tzkt.Api.Repositories
                 FirstActivityTime = Time[contract.FirstLevel],
                 LastActivity = contract.LastLevel,
                 LastActivityTime = Time[contract.LastLevel],
-                NumContracts = contract.Contracts,
+                NumContracts = contract.ContractsCount,
                 NumDelegations = contract.DelegationsCount,
                 NumOriginations = contract.OriginationsCount,
                 NumReveals = contract.RevealsCount,
-                NumMigrations = contract.SystemOpsCount,
+                NumMigrations = contract.MigrationsCount,
                 NumTransactions = contract.TransactionsCount
             };
         }
@@ -388,11 +388,11 @@ namespace Tzkt.Api.Repositories
                             DelegationTime = userDelegate == null ? null
                                 : (DateTime?)Time[row.DelegationLevel],
                             NumActivations = row.Activated == true ? 1 : 0,
-                            NumContracts = row.Contracts,
+                            NumContracts = row.ContractsCount,
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
-                            NumMigrations = row.SystemOpsCount,
+                            NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount
                         });
                         #endregion
@@ -422,8 +422,8 @@ namespace Tzkt.Api.Repositories
                             LastActivityTime = Time[row.LastLevel],
                             NumActivations = row.Activated == true ? 1 : 0,
                             NumBallots = row.BallotsCount,
-                            NumContracts = row.Contracts,
-                            NumDelegators = row.Delegators,
+                            NumContracts = row.ContractsCount,
+                            NumDelegators = row.DelegatorsCount,
                             NumBlocks = row.BlocksCount,
                             NumDelegations = row.DelegationsCount,
                             NumDoubleBaking = row.DoubleBakingCount,
@@ -434,7 +434,7 @@ namespace Tzkt.Api.Repositories
                             NumOriginations = row.OriginationsCount,
                             NumProposals = row.ProposalsCount,
                             NumReveals = row.RevealsCount,
-                            NumMigrations = row.SystemOpsCount,
+                            NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount,
                         });
                         #endregion
@@ -493,11 +493,11 @@ namespace Tzkt.Api.Repositories
                             FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
                             LastActivityTime = Time[row.LastLevel],
-                            NumContracts = row.Contracts,
+                            NumContracts = row.ContractsCount,
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
-                            NumMigrations = row.SystemOpsCount,
+                            NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount
                         });
                         #endregion
@@ -553,8 +553,8 @@ namespace Tzkt.Api.Repositories
                     LastActivityTime = Time[row.LastLevel],
                     NumActivations = row.Activated == true ? 1 : 0,
                     NumBallots = row.BallotsCount,
-                    NumContracts = row.Contracts,
-                    NumDelegators = row.Delegators,
+                    NumContracts = row.ContractsCount,
+                    NumDelegators = row.DelegatorsCount,
                     NumBlocks = row.BlocksCount,
                     NumDelegations = row.DelegationsCount,
                     NumDoubleBaking = row.DoubleBakingCount,
@@ -565,7 +565,7 @@ namespace Tzkt.Api.Repositories
                     NumOriginations = row.OriginationsCount,
                     NumProposals = row.ProposalsCount,
                     NumReveals = row.RevealsCount,
-                    NumMigrations = row.SystemOpsCount,
+                    NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
                 };
             });
@@ -646,11 +646,11 @@ namespace Tzkt.Api.Repositories
                     FirstActivityTime = Time[row.FirstLevel],
                     LastActivity = row.LastLevel,
                     LastActivityTime = Time[row.LastLevel],
-                    NumContracts = row.Contracts,
+                    NumContracts = row.ContractsCount,
                     NumDelegations = row.DelegationsCount,
                     NumOriginations = row.OriginationsCount,
                     NumReveals = row.RevealsCount,
-                    NumMigrations = row.SystemOpsCount,
+                    NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount
                 };
             });
@@ -660,7 +660,7 @@ namespace Tzkt.Api.Repositories
         {
             var account = await Accounts.GetAsync(address);
 
-            if (account == null || account.Contracts == 0)
+            if (account == null || account.ContractsCount == 0)
                 return Enumerable.Empty<RelatedContract>();
 
             var sql = @"
@@ -706,7 +706,7 @@ namespace Tzkt.Api.Repositories
         {
             var delegat = (RawDelegate)await Accounts.GetAsync(address);
 
-            if (delegat == null || delegat.Delegators == 0)
+            if (delegat == null || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
             var sql = @"
@@ -789,7 +789,7 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                    var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
@@ -813,7 +813,7 @@ namespace Tzkt.Api.Repositories
                         originations,
                         transactions,
                         reveals,
-                        system,
+                        migrations,
                         revelationPenalties,
                         blockOps);
 
@@ -828,7 +828,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
                     result.AddRange(reveals.Result);
-                    result.AddRange(system.Result);
+                    result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(blockOps.Result);
 
@@ -855,7 +855,7 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                    var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
@@ -865,14 +865,14 @@ namespace Tzkt.Api.Repositories
                         userOriginations,
                         userTransactions,
                         userReveals,
-                        userSystem);
+                        userMigrations);
 
                     result.AddRange(userActivations.Result);
                     result.AddRange(userDelegations.Result);
                     result.AddRange(userOriginations.Result);
                     result.AddRange(userTransactions.Result);
                     result.AddRange(userReveals.Result);
-                    result.AddRange(userSystem.Result);
+                    result.AddRange(userMigrations.Result);
 
                     break;
                 case RawContract contract:
@@ -893,7 +893,7 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                    var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
@@ -902,13 +902,13 @@ namespace Tzkt.Api.Repositories
                         contractOriginations,
                         contractTransactions,
                         contractReveals,
-                        contractSystem);
+                        contractMigrations);
 
                     result.AddRange(contractDelegations.Result);
                     result.AddRange(contractOriginations.Result);
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
-                    result.AddRange(contractSystem.Result);
+                    result.AddRange(contractMigrations.Result);
 
                     break;
             }
@@ -971,7 +971,7 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var system = delegat.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                    var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
@@ -995,7 +995,7 @@ namespace Tzkt.Api.Repositories
                         originations,
                         transactions,
                         reveals,
-                        system,
+                        migrations,
                         revelationPenalties,
                         blockOps);
 
@@ -1010,7 +1010,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
                     result.AddRange(reveals.Result);
-                    result.AddRange(system.Result);
+                    result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(blockOps.Result);
 
@@ -1037,7 +1037,7 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var userSystem = user.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                    var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
@@ -1047,14 +1047,14 @@ namespace Tzkt.Api.Repositories
                         userOriginations,
                         userTransactions,
                         userReveals,
-                        userSystem);
+                        userMigrations);
 
                     result.AddRange(userActivations.Result);
                     result.AddRange(userDelegations.Result);
                     result.AddRange(userOriginations.Result);
                     result.AddRange(userTransactions.Result);
                     result.AddRange(userReveals.Result);
-                    result.AddRange(userSystem.Result);
+                    result.AddRange(userMigrations.Result);
 
                     break;
                 case RawContract contract:
@@ -1075,7 +1075,7 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
-                    var contractSystem = contract.SystemOpsCount > 0 && types.Contains(OpTypes.Migration)
+                    var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
@@ -1084,13 +1084,13 @@ namespace Tzkt.Api.Repositories
                         contractOriginations,
                         contractTransactions,
                         contractReveals,
-                        contractSystem);
+                        contractMigrations);
 
                     result.AddRange(contractDelegations.Result);
                     result.AddRange(contractOriginations.Result);
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
-                    result.AddRange(contractSystem.Result);
+                    result.AddRange(contractMigrations.Result);
 
                     break;
             }

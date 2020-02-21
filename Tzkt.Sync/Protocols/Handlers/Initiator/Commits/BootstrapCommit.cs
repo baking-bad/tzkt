@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             foreach (var data in contracts.Where(x => x.Address[0] == 'K'))
             {
                 var manager = (User)await Cache.GetAccountAsync(data.Manager);
-                manager.Contracts++;
+                manager.ContractsCount++;
 
                 var contract = new Contract
                 {
@@ -100,9 +100,9 @@ namespace Tzkt.Sync.Protocols.Initiator
             {
                 var delegators = BootstrapedAccounts.Where(x => x.Delegate == baker);
 
-                baker.Delegators = delegators.Count();
+                baker.DelegatorsCount = delegators.Count();
                 baker.StakingBalance = baker.Balance
-                    + (baker.Delegators > 0 ? delegators.Sum(x => x.Balance) : 0);
+                    + (baker.DelegatorsCount > 0 ? delegators.Sum(x => x.Balance) : 0);
             }
             #endregion
         }
@@ -120,16 +120,16 @@ namespace Tzkt.Sync.Protocols.Initiator
 
             foreach (var account in BootstrapedAccounts)
             {
-                account.SystemOpsCount++;
-                Block.Operations |= Operations.System;
-                Db.SystemOps.Add(new SystemOperation
+                account.MigrationsCount++;
+                Block.Operations |= Operations.Migrations;
+                Db.MigrationOps.Add(new MigrationOperation
                 {
                     Id = await Cache.NextCounterAsync(),
                     Block = Block,
                     Level = Level,
                     Timestamp = Timestamp,
                     Account = account,
-                    Event = SystemEvent.Bootstrap,
+                    Kind = MigrationKind.Bootstrap,
                     BalanceChange = account.Balance
                 });
             }
@@ -140,9 +140,9 @@ namespace Tzkt.Sync.Protocols.Initiator
             Db.Accounts.RemoveRange(BootstrapedAccounts);
             Cache.RemoveAccounts(BootstrapedAccounts);
 
-            Db.SystemOps.RemoveRange(await Db.SystemOps
+            Db.MigrationOps.RemoveRange(await Db.MigrationOps
                 .AsNoTracking()
-                .Where(x => x.Event == SystemEvent.Bootstrap)
+                .Where(x => x.Kind == MigrationKind.Bootstrap)
                 .ToListAsync());
         }
 

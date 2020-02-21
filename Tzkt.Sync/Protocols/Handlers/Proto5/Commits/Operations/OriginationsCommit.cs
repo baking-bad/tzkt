@@ -106,7 +106,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             Origination = new OriginationOperation
             {
                 Id = await Cache.NextCounterAsync(),
-                OriginalSender = parent.Sender,
+                Initiator = parent.Sender,
                 Block = parent.Block,
                 Level = parent.Block.Level,
                 Timestamp = parent.Timestamp,
@@ -148,10 +148,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
             Origination.Manager ??= (User)await Cache.GetAccountAsync(origination.ManagerId);
 
-            if (Origination.OriginalSenderId != null)
+            if (Origination.InitiatorId != null)
             {
-                Origination.OriginalSender = await Cache.GetAccountAsync(origination.OriginalSenderId);
-                Origination.OriginalSender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.OriginalSender.DelegateId);
+                Origination.Initiator = await Cache.GetAccountAsync(origination.InitiatorId);
+                Origination.Initiator.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Initiator.DelegateId);
             }
         }
 
@@ -165,7 +165,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Revert()
         {
-            if (Origination.OriginalSenderId == null)
+            if (Origination.InitiatorId == null)
                 await RevertOrigination();
             else
                 await RevertInternalOrigination();
@@ -230,12 +230,12 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 if (contractDelegate != null)
                 {
-                    contractDelegate.Delegators++;
+                    contractDelegate.DelegatorsCount++;
                     contractDelegate.StakingBalance += contract.Balance;
                 }
 
-                sender.Contracts++;
-                if (contractManager != null && contractManager != sender) contractManager.Contracts++;
+                sender.ContractsCount++;
+                if (contractManager != null && contractManager != sender) contractManager.ContractsCount++;
 
                 Db.Contracts.Add(contract);
             }
@@ -306,12 +306,12 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 if (contractDelegate != null)
                 {
-                    contractDelegate.Delegators++;
+                    contractDelegate.DelegatorsCount++;
                     contractDelegate.StakingBalance += contract.Balance;
                 }
 
-                sender.Contracts++;
-                if (contractManager != null && contractManager != sender) contractManager.Contracts++;
+                sender.ContractsCount++;
+                if (contractManager != null && contractManager != sender) contractManager.ContractsCount++;
 
                 Db.Contracts.Add(contract);
             }
@@ -361,12 +361,12 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 if (contractDelegate != null)
                 {
-                    contractDelegate.Delegators--;
+                    contractDelegate.DelegatorsCount--;
                     contractDelegate.StakingBalance -= contract.Balance;
                 }
 
-                sender.Contracts--;
-                if (contractManager != null && contractManager != sender) contractManager.Contracts--;
+                sender.ContractsCount--;
+                if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);
@@ -394,7 +394,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         public async Task RevertInternalOrigination()
         {
             #region entities
-            var parentSender = Origination.OriginalSender;
+            var parentSender = Origination.Initiator;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
             var sender = Origination.Sender;
@@ -438,12 +438,12 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 if (contractDelegate != null)
                 {
-                    contractDelegate.Delegators--;
+                    contractDelegate.DelegatorsCount--;
                     contractDelegate.StakingBalance -= contract.Balance;
                 }
 
-                sender.Contracts--;
-                if (contractManager != null && contractManager != sender) contractManager.Contracts--;
+                sender.ContractsCount--;
+                if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 Db.Contracts.Remove(contract);
                 Cache.RemoveAccount(contract);

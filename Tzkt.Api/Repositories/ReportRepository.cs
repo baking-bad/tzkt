@@ -32,7 +32,7 @@ namespace Tzkt.Api.Repositories
             if (account.OriginationsCount > 0) UnionOriginations(sql);
             if (account.TransactionsCount > 0) UnionTransactions(sql);
             if (account.RevealsCount > 0) UnionReveals(sql);
-            if (account.SystemOpsCount > 0) UnionSystem(sql);
+            if (account.MigrationsCount > 0) UnionMigrations(sql);
 
             if (account is RawUser user)
             {
@@ -97,7 +97,7 @@ namespace Tzkt.Api.Repositories
             if (account.OriginationsCount > 0) UnionOriginations(sql);
             if (account.TransactionsCount > 0) UnionTransactions(sql);
             if (account.RevealsCount > 0) UnionReveals(sql);
-            if (account.SystemOpsCount > 0) UnionSystem(sql);
+            if (account.MigrationsCount > 0) UnionMigrations(sql);
 
             if (account is RawUser user)
             {
@@ -494,7 +494,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""ContractId"" as ""To"" ");
 
             sql.Append(@"FROM ""OriginationOps"" ");
-            sql.Append(@"WHERE ""OriginalSenderId"" = @account ");
+            sql.Append(@"WHERE ""InitiatorId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
             sql.Append(@"AND ""Status"" = 1 ");
             sql.Append(@"AND (COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) > 0 ");
@@ -605,7 +605,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""TargetId"" as ""To"" ");
 
             sql.Append(@"FROM ""TransactionOps"" ");
-            sql.Append(@"WHERE ""OriginalSenderId"" = @account ");
+            sql.Append(@"WHERE ""InitiatorId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
             sql.Append(@"AND ""Status"" = 1 ");
             sql.Append(@"AND (COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) > 0 ");
@@ -694,7 +694,7 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
-        void UnionSystem(StringBuilder sql)
+        void UnionMigrations(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
@@ -713,7 +713,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
-            sql.Append(@"FROM ""SystemOps"" ");
+            sql.Append(@"FROM ""MigrationOps"" ");
             sql.Append(@"WHERE ""AccountId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
             sql.Append(@"AND ""BalanceChange"" > 0 ");

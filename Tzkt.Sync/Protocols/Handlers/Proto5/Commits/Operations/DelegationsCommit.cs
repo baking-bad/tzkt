@@ -64,7 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             Delegation = new DelegationOperation
             {
                 Id = await Cache.NextCounterAsync(),
-                OriginalSender = parent.Sender,
+                Initiator = parent.Sender,
                 Block = parent.Block,
                 Level = parent.Block.Level,
                 Timestamp = parent.Timestamp,
@@ -100,10 +100,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             Delegation.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.DelegateId);
             Delegation.PrevDelegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.PrevDelegateId);
 
-            if (Delegation.OriginalSenderId != null)
+            if (Delegation.InitiatorId != null)
             {
-                Delegation.OriginalSender = await Cache.GetAccountAsync(delegation.OriginalSenderId);
-                Delegation.OriginalSender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.OriginalSender.DelegateId);
+                Delegation.Initiator = await Cache.GetAccountAsync(delegation.InitiatorId);
+                Delegation.Initiator.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.Initiator.DelegateId);
             }
         }
 
@@ -117,7 +117,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Revert()
         {
-            if (Delegation.OriginalSenderId == null)
+            if (Delegation.InitiatorId == null)
                 await RevertDelegation();
             else
                 await RevertInternalDelegation();
@@ -383,7 +383,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             var block = Delegation.Block;
 
             var sender = Delegation.Sender;
-            var parentSender = Delegation.OriginalSender;
+            var parentSender = Delegation.Initiator;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             var newDelegate = Delegation.Delegate;
@@ -458,8 +458,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 OriginationsCount = user.OriginationsCount,
                 TransactionsCount = user.TransactionsCount,
                 RevealsCount = user.RevealsCount,
-                Contracts = user.Contracts,
-                SystemOpsCount = user.SystemOpsCount,
+                ContractsCount = user.ContractsCount,
+                MigrationsCount = user.MigrationsCount,
                 PublicKey = user.PublicKey,
                 Revealed = user.Revealed,
                 Staked = true,
@@ -481,19 +481,19 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
                         break;
                     case DelegationOperation op:
-                        if (op.Sender?.Id == user.Id || op.OriginalSender?.Id == user.Id)
+                        if (op.Sender?.Id == user.Id || op.Initiator?.Id == user.Id)
                         {
                             if (op.Sender?.Id == user.Id)
                                 op.Sender = delegat;
 
-                            if (op.OriginalSender?.Id == user.Id)
-                                op.OriginalSender = delegat;
+                            if (op.Initiator?.Id == user.Id)
+                                op.Initiator = delegat;
 
                             touched.Add((op, entry.State));
                         }
                         break;
                     case OriginationOperation op:
-                        if (op.Sender?.Id == user.Id || op.Manager?.Id == user.Id || op.OriginalSender?.Id == user.Id)
+                        if (op.Sender?.Id == user.Id || op.Manager?.Id == user.Id || op.Initiator?.Id == user.Id)
                         {
                             if (op.Sender?.Id == user.Id)
                                 op.Sender = delegat;
@@ -501,8 +501,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                             if (op.Manager?.Id == user.Id)
                                 op.Manager = delegat;
 
-                            if (op.OriginalSender?.Id == user.Id)
-                                op.OriginalSender = delegat;
+                            if (op.Initiator?.Id == user.Id)
+                                op.Initiator = delegat;
 
                             touched.Add((op, entry.State));
                         }
@@ -515,7 +515,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
                         break;
                     case TransactionOperation op:
-                        if (op.Sender?.Id == user.Id || op.Target?.Id == user.Id || op.OriginalSender?.Id == user.Id)
+                        if (op.Sender?.Id == user.Id || op.Target?.Id == user.Id || op.Initiator?.Id == user.Id)
                         {
                             if (op.Sender?.Id == user.Id)
                                 op.Sender = delegat;
@@ -523,8 +523,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                             if (op.Target?.Id == user.Id)
                                 op.Target = delegat;
 
-                            if (op.OriginalSender?.Id == user.Id)
-                                op.OriginalSender = delegat;
+                            if (op.Initiator?.Id == user.Id)
+                                op.Initiator = delegat;
 
                             touched.Add((op, entry.State));
                         }
@@ -581,8 +581,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 OriginationsCount = delegat.OriginationsCount,
                 TransactionsCount = delegat.TransactionsCount,
                 RevealsCount = delegat.RevealsCount,
-                Contracts = delegat.Contracts,
-                SystemOpsCount = delegat.SystemOpsCount,
+                ContractsCount = delegat.ContractsCount,
+                MigrationsCount = delegat.MigrationsCount,
                 PublicKey = delegat.PublicKey,
                 Revealed = delegat.Revealed,
                 Staked = false,
@@ -603,7 +603,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
                         break;
                     case DelegationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id || op.PrevDelegate?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.Initiator?.Id == delegat.Id || op.PrevDelegate?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
@@ -611,8 +611,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
 
-                            if (op.OriginalSender?.Id == delegat.Id)
-                                op.OriginalSender = user;
+                            if (op.Initiator?.Id == delegat.Id)
+                                op.Initiator = user;
 
                             if (op.PrevDelegate?.Id == delegat.Id)
                                 op.PrevDelegate = null;
@@ -621,7 +621,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
                         break;
                     case OriginationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Manager?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Manager?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.Initiator?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
@@ -632,8 +632,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
 
-                            if (op.OriginalSender?.Id == delegat.Id)
-                                op.OriginalSender = user;
+                            if (op.Initiator?.Id == delegat.Id)
+                                op.Initiator = user;
 
                             touched.Add((op, entry.State));
                         }
@@ -646,7 +646,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
                         break;
                     case TransactionOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Target?.Id == delegat.Id || op.OriginalSender?.Id == delegat.Id)
+                        if (op.Sender?.Id == delegat.Id || op.Target?.Id == delegat.Id || op.Initiator?.Id == delegat.Id)
                         {
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
@@ -654,8 +654,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                             if (op.Target?.Id == delegat.Id)
                                 op.Target = user;
 
-                            if (op.OriginalSender?.Id == delegat.Id)
-                                op.OriginalSender = user;
+                            if (op.Initiator?.Id == delegat.Id)
+                                op.Initiator = user;
 
                             touched.Add((op, entry.State));
                         }
@@ -732,7 +732,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.DelegationLevel = level;
             sender.Staked = newDelegate.Staked;
 
-            newDelegate.Delegators++;
+            newDelegate.DelegatorsCount++;
             newDelegate.StakingBalance += sender.Balance;
 
             return Task.CompletedTask;
@@ -743,7 +743,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             if (currentDelegate != null)
             {
                 if (sender.Address != currentDelegate.Address)
-                    currentDelegate.Delegators--;
+                    currentDelegate.DelegatorsCount--;
                 
                 currentDelegate.StakingBalance -= sender.Balance;
             }

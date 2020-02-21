@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
+    //TODO: add link to proposal
     public class Protocol
     {
         public int Id { get; set; }

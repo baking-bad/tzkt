@@ -20,7 +20,7 @@ namespace Tzkt.Api.Models
 
         public int Counter { get; set; }
 
-        public Alias OriginalSender { get; set; }
+        public Alias Initiator { get; set; }
 
         public Alias Sender { get; set; }
 

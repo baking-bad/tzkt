@@ -35,7 +35,7 @@ namespace Tzkt.Data
         public DbSet<RevealOperation> RevealOps { get; set; }
         public DbSet<TransactionOperation> TransactionOps { get; set; }
 
-        public DbSet<SystemOperation> SystemOps { get; set; }
+        public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
         #endregion
 
@@ -90,7 +90,7 @@ namespace Tzkt.Data
             modelBuilder.BuildRevealOperationModel();
             modelBuilder.BuildTransactionOperationModel();
 
-            modelBuilder.BuildSystemOperationModel();
+            modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
             #endregion
 
