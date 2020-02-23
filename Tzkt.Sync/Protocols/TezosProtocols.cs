@@ -39,6 +39,7 @@ namespace Tzkt.Sync
                 case "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd":
                     return services.GetRequiredService<Proto4Handler>();
                 case "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS":
+                case "PsBABY5HQTSkA4297zNHfsZNKtxULfL18y95qb3m53QJiXGmrbU":
                     return services.GetRequiredService<Proto5Handler>();
                 case "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb":
                     return services.GetRequiredService<Proto6Handler>();

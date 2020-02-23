@@ -62,13 +62,20 @@ namespace Tzkt.Api
                 options.PostProcess = document =>
                 {
                     document.Info.Title = "TzKT API";
-                    document.Info.Description = "Early version of the TzKT API\n\nMainnet: `https://api.tzkt.io/`\n\nBabylonnet: `https://api.babylon.tzkt.io/`\n\nCarthagenet: `https://api.carthage.tzkt.io/`";
+                    document.Info.Description = "TzKT Explorer provides an API for accessing the extended Tezos blockchain data. This API is free for both commercial and non-commercial usage. " +
+                        "Also, TzKT API is an open-source project, so you can clone and build it and use as a self-hosted service to avoid risks of using third-party services. " +
+                        "Feel free to contact us if you need specific features or endpoints or query parameters, etc.\n\n" +
+                        "TzKT API is available for the following Tezos networks:\n\n" +
+                        "Mainnet: `https://api.tzkt.io/`\n\n" + 
+                        "Babylonnet: `https://api.babylon.tzkt.io/`\n\n" +
+                        "Carthagenet: `https://api.carthage.tzkt.io/`\n\n" +
+                        "Zeronet: `https://api.zeronet.tzkt.io/`";
                     document.Info.Version = "v1-preview";
                     document.Info.Contact = new NSwag.OpenApiContact
                     {
-                        Name = "Baking Bad",
+                        Name = "Baking Bad Team",
                         Email = "hello@baking-bad.org",
-                        Url = "https://baking-bad.org/docs"
+                        Url = "https://tzkt.io"
                     };
                     document.Info.ExtensionData = new Dictionary<string, object>
                     {

@@ -72,12 +72,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
             }
 
-            if (rawBlock.Metadata.BalanceUpdates.Count > (Cycle < (Protocol.PreservedCycles + 2) ? 2 : 3))
+            if (rawBlock.Metadata.BalanceUpdates.Count > (Protocol.BlockReward0 > 0 ? 3 : 2))
             {
                 if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
                     throw new ValidationException("unexpected freezer updates");
 
-                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Cycle < (Protocol.PreservedCycles + 2) ? 2 : 3))
+                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2))
                 {
                     if (update is ContractUpdate contractUpdate &&
                         !await Cache.AccountExistsAsync(contractUpdate.Contract, AccountType.Delegate))
@@ -161,7 +161,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!await Cache.AccountExistsAsync(endorsement.Metadata.Delegate, AccountType.Delegate))
                 throw new ValidationException("invalid endorsement delegate");
 
-            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Cycle < (Protocol.PreservedCycles + 2) ? 2 : 3))
+            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Protocol.BlockReward0 > 0 ? 3 : 2))
                 throw new ValidationException("invalid endorsement balance updates count");
 
             if (endorsement.Metadata.BalanceUpdates.Count > 0)
