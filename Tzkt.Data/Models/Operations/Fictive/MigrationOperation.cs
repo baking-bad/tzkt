@@ -27,7 +27,8 @@ namespace Tzkt.Data.Models
     {
         Bootstrap,
         ActivateDelegate,
-        AirDrop
+        AirDrop,
+        ProposalInvoice
     }
 
     public static class MigrationOperationModel

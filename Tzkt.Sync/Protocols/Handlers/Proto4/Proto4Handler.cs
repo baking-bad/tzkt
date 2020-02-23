@@ -29,9 +29,17 @@ namespace Tzkt.Sync.Protocols
             Validator = new Validator(this);
         }
 
-        public override Task Migration() => Proto5.ManagersMigration.Apply(this);
+        public override async Task Migration()
+        {
+            await Proto5.InvoiceMigration.Apply(this);
+            await Proto5.ManagersMigration.Apply(this);
+        }
 
-        public override Task CancelMigration() => Proto5.ManagersMigration.Revert(this);
+        public override async Task CancelMigration()
+        {
+            await Proto5.InvoiceMigration.Revert(this);
+            await Proto5.ManagersMigration.Revert(this);
+        }
 
         public override Task LoadEntities(IBlock block)
         {
