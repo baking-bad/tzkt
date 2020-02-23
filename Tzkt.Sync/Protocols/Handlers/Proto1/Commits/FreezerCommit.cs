@@ -18,8 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < (Protocol.PreservedCycles + 2) ? 2 : 3);
+                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2);
             }
         }
 
@@ -31,8 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
 
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < (Protocol.PreservedCycles + 2) ? 2 : 3);
+                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2);
             }
         }
 

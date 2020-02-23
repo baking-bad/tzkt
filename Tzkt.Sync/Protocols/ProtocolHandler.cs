@@ -183,6 +183,7 @@ namespace Tzkt.Sync
                 "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP" => new Protocols.Proto3.Diagnostics(Db, Node),
                 "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd" => new Protocols.Proto4.Diagnostics(Db, Node),
                 "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS" => new Protocols.Proto5.Diagnostics(Db, Node),
+                "PsBABY5HQTSkA4297zNHfsZNKtxULfL18y95qb3m53QJiXGmrbU" => new Protocols.Proto5.Diagnostics(Db, Node),
                 "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb" => new Protocols.Proto6.Diagnostics(Db, Node),
                 _ => throw new NotImplementedException($"Diagnostics for the protocol {hash} hasn't been implemented yet")
             };

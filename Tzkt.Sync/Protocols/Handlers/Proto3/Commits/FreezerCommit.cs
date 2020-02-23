@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
 
-                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < (Protocol.PreservedCycles + 2) ? 2 : 3)
+                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2)
                     .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreservedCycles);
             }
         }
@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
 
-                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(cycle < (Protocol.PreservedCycles + 2) ? 2 : 3)
+                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2)
                     .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreservedCycles);
             }
         }
