@@ -698,7 +698,7 @@ namespace Tzkt.Api.Repositories
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"(11 + ""Event"") as ""Type"", ");
+            sql.Append(@"(11 + ""Kind"") as ""Type"", ");
             sql.Append(@"""Id"" as ""Id"", ");
             sql.Append(@"""Level"" as ""Level"", ");
             sql.Append(@"null::character(51) as ""OpHash"", ");
@@ -740,6 +740,7 @@ namespace Tzkt.Api.Repositories
             "bootstrap",            // 11
             "activate delegate",    // 12
             "airdrop",              // 13
+            "proposal invoice",     // 14
         };
     }
 }

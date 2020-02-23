@@ -2295,7 +2295,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(int limit = 100, int offset = 0)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccountId"", ""Event"", ""BalanceChange""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccountId"", ""Kind"", ""BalanceChange""
                 FROM      ""MigrationOps""
                 ORDER BY  ""Id""
                 OFFSET    @offset
@@ -2310,7 +2310,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(row.AccountId),
-                Kind = SystemEventToString(row.Event),
+                Kind = SystemEventToString(row.Kind),
                 BalanceChange = row.BalanceChange
             });
         }
@@ -2318,7 +2318,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Kind"", ""BalanceChange""
                 FROM      ""MigrationOps""
                 WHERE     ""AccountId"" = @accountId
                 {Pagination(sort, offset, offsetMode, limit)}";
@@ -2332,7 +2332,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
-                Kind = SystemEventToString(row.Event),
+                Kind = SystemEventToString(row.Kind),
                 BalanceChange = row.BalanceChange
             });
         }
@@ -2340,7 +2340,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Event"", ""BalanceChange""
+                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Kind"", ""BalanceChange""
                 FROM      ""MigrationOps""
                 WHERE     ""AccountId"" = @accountId
                 AND       ""Timestamp"" >= @from
@@ -2356,7 +2356,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
-                Kind = SystemEventToString(row.Event),
+                Kind = SystemEventToString(row.Kind),
                 BalanceChange = row.BalanceChange
             });
         }
