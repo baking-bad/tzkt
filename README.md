@@ -25,13 +25,13 @@ In production mode the indexer (if bootstrapped) uses the following RPC endpoint
 - `/chains/main/blocks/{level}/context/constants`
 - `/chains/main/blocks/{level}/helpers/baking_rights`
 - `/chains/main/blocks/{level}/helpers/endorsing_rights`
- 
+
 And there is also a diagnostics option, which does a self test after each block using the following RPC endpoints:
- 
+
 - `chains/main/blocks/{level}/context/raw/json/contracts/global_counter`
 - `chains/main/blocks/{level}/context/contracts/{address}`
 - `chains/main/blocks/{level}/context/delegates/{address}`
- 
+
 > **Note:** It is highly recommended not to enable diagnostics until the indexer is fully synchronized with the blockchain. Otherwise synchronization will take a long time.
 
 ### Costs
@@ -52,9 +52,9 @@ Tzkt.Api uses swagger to automatically generate documentation with Open API 3 sp
 ### Costs
 
 - **~150-400MB RAM**, depending on cache size settings.
- 
+
  ## Current state
- 
+
 TzKT (v1-preview) has just been launched and we are actively testing it and are working on adding additional features. At the same time we are working on the frontend part of the TzKT explorer. There are so many things to do!
 
 ## Installation guide
@@ -126,7 +126,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1p8YyGrnepcY_HGWwYpyEaxcyHDPavu8I' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1p8YyGrnepcY_HGWwYpyEaxcyHDPavu8I" -O tzkt_db.backup && rm -rf /tmp/cookies.txt
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1lqGnkLnPt41FibQ6CsBUdcUfwO_5QGIW' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1lqGnkLnPt41FibQ6CsBUdcUfwO_5QGIW" -O tzkt_db.backup && rm -rf /tmp/cookies.txt
 ````
 
 #### Restore database from the snapshot
@@ -154,7 +154,7 @@ dotnet publish -o ~/tzkt-sync
 
 #### Configure indexer
 
-Edit configuration file `~/tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`. 
+Edit configuration file `~/tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
 
 Like this:
 
@@ -305,7 +305,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1aP3QhxL8FgEVuFMcGLT76Q7DoRTekfRs' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1aP3QhxL8FgEVuFMcGLT76Q7DoRTekfRs" -O baby_tzkt_db.backup && rm -rf /tmp/cookies.txt
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=140cpzC4CEqxZLGMQsxwDa3yHe_fqfTGR' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=140cpzC4CEqxZLGMQsxwDa3yHe_fqfTGR" -O baby_tzkt_db.backup && rm -rf /tmp/cookies.txt
 ````
 
 #### Restore database from the snapshot
@@ -333,7 +333,7 @@ dotnet publish -o ~/baby-tzkt-sync
 
 #### Configure indexer
 
-Edit configuration file `~/baby-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`. 
+Edit configuration file `~/baby-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
 
 Like this:
 
@@ -402,7 +402,7 @@ dotnet publish -o ~/baby-tzkt-api
 
 Edit configuration file `~/baby-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
 
-By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates. 
+By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates.
 
 If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json`.
 
@@ -499,7 +499,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1x-3_tK0G1X7KS_ZnlPGBI9zxvGbKWXbd' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1x-3_tK0G1X7KS_ZnlPGBI9zxvGbKWXbd" -O cartha_tzkt_db.backup && rm -rf /tmp/cookies.txt
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1B6v0F7RXAXzR7wpSplOzH779c22CErX4' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1B6v0F7RXAXzR7wpSplOzH779c22CErX4" -O cartha_tzkt_db.backup && rm -rf /tmp/cookies.txt
 ````
 
 #### Restore database from the snapshot
@@ -527,7 +527,7 @@ dotnet publish -o ~/cartha-tzkt-sync
 
 #### Configure indexer
 
-Edit configuration file `~/cartha-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`. 
+Edit configuration file `~/cartha-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
 
 Like this:
 
@@ -596,7 +596,7 @@ dotnet publish -o ~/cartha-tzkt-api
 
 Edit configuration file `~/cartha-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
 
-By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates. 
+By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates.
 
 If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json`.
 
@@ -667,6 +667,200 @@ dotnet Tzkt.Api.dll
 //       Hosting environment: Production
 // info: Microsoft.Hosting.Lifetime[0]
 //       Content root path: /home/tzkt/cartha-tzkt-api
+// ....
+````
+
+That's it.
+
+## Install Tzkt Indexer and API for zeronet
+
+In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Anyway, let's do it from scratch.
+
+### Prepare database
+
+#### Create an empty database and its user
+
+````
+sudo -u postgres psql
+
+postgres=# create database zero_tzkt_db;
+postgres=# create user tzkt with encrypted password 'qwerty';
+postgres=# grant all privileges on database zero_tzkt_db to tzkt;
+postgres=# \q
+````
+
+#### Download fresh snapshot
+
+````c
+cd ~
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1tCurmI3adDyrWjMWd_UIDPq34KN4z1DD' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1tCurmI3adDyrWjMWd_UIDPq34KN4z1DD" -O zero_tzkt_db.backup && rm -rf /tmp/cookies.txt
+````
+
+#### Restore database from the snapshot
+
+````c
+// zeronet restoring takes ~1 min
+sudo -u postgres pg_restore -c --if-exists -v -d zero_tzkt_db -1 zero_tzkt_db.backup
+````
+
+### Clone, build, configure and run Tzkt Indexer
+
+#### Clone
+
+````
+cd ~
+git clone https://github.com/baking-bad/tzkt.git
+````
+
+#### Build indexer
+
+````
+cd ~/tzkt/Tzkt.Sync/
+dotnet publish -o ~/zero-tzkt-sync
+````
+
+#### Configure indexer
+
+Edit configuration file `~/zero-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
+
+Like this:
+
+````json
+{
+  "Protocols": {
+    "Diagnostics": false,
+    "Validation": true
+  },
+
+  "TezosNode": {
+    "ChainId": "NetXKakFj1A7ouL",
+    "Endpoint": "https://rpc.tzkt.io/zeronet/",
+    "Timeout": 30
+  },
+
+  "ConnectionStrings": {
+    "DefaultConnection": "server=localhost;port=5432;database=zero_tzkt_db;username=tzkt;password=qwerty;"
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+````
+
+#### Run indexer
+
+````c
+cd ~/zero-tzkt-sync
+dotnet Tzkt.Sync.dll
+
+// info: Microsoft.Hosting.Lifetime[0]
+//       Application started. Press Ctrl+C to shut down.
+// info: Microsoft.Hosting.Lifetime[0]
+//       Hosting environment: Production
+// info: Microsoft.Hosting.Lifetime[0]
+//       Content root path: /home/tzkt/zero-tzkt-sync
+// warn: Tzkt.Sync.Services.Observer[0]
+//       Observer is started
+// info: Tzkt.Sync.Services.Observer[0]
+//       Applied 125790
+// info: Tzkt.Sync.Services.Observer[0]
+//       Applied 125791
+// ....
+````
+
+That's it. If you want to run the indexer as a daemon, take a look at this guide: https://docs.microsoft.com/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-3.1#create-the-service-file.
+
+### Build, configure and run Tzkt API for the zeronet indexer
+
+Suppose you have already created database `zero_tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
+
+#### Build API
+
+````
+cd ~/tzkt/Tzkt.Api/
+dotnet publish -o ~/zero-tzkt-api
+````
+
+#### Configure API
+
+Edit configuration file `~/zero-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
+
+By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates.
+
+If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json`.
+
+Like this:
+
+````js
+{
+  "Sync": {
+    "CheckInterval": 20,
+    "UpdateInterval": 10
+  },
+
+  "Metadata": {
+    "AccountsPath": "*"
+  },
+
+  "Cache": {
+    "LoadRate": 0.75,
+    "MaxAccounts": 32000
+  },
+
+  "ConnectionStrings": {
+    "DefaultConnection": "server=localhost;port=5432;database=zero_tzkt_db;username=tzkt;password=qwerty;"
+  },
+
+  "Kestrel": {
+    "EndPoints": {
+      "Http": {
+        "Url": "http://localhost:5030"
+      },
+      "Https": {
+        "Url": "https://localhost:5031"
+      }
+    }
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+
+  "AllowedHosts": "*"
+}
+````
+
+#### Run API
+
+````c
+cd ~/zero-tzkt-api
+dotnet Tzkt.Api.dll
+
+// info: Tzkt.Api.Services.Metadata.AccountMetadataService[0]
+//       Accounts metadata not found
+// info: Tzkt.Api.Services.Sync.SyncWorker[0]
+//       Sync worker initialized with level 205804 and blocks time 30s
+// info: Tzkt.Api.Services.Sync.SyncWorker[0]
+//       Syncronization started
+// info: Microsoft.Hosting.Lifetime[0]
+//       Now listening on: http://localhost:5030
+// info: Microsoft.Hosting.Lifetime[0]
+//       Now listening on: https://localhost:5031
+// info: Microsoft.Hosting.Lifetime[0]
+//       Application started. Press Ctrl+C to shut down.
+// info: Microsoft.Hosting.Lifetime[0]
+//       Hosting environment: Production
+// info: Microsoft.Hosting.Lifetime[0]
+//       Content root path: /home/tzkt/zero-tzkt-api
 // ....
 ````
 
