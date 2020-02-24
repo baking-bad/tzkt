@@ -2310,7 +2310,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(row.AccountId),
-                Kind = SystemEventToString(row.Kind),
+                Kind = MigrationKindToString(row.Kind),
                 BalanceChange = row.BalanceChange
             });
         }
@@ -2332,7 +2332,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
-                Kind = SystemEventToString(row.Kind),
+                Kind = MigrationKindToString(row.Kind),
                 BalanceChange = row.BalanceChange
             });
         }
@@ -2356,7 +2356,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
-                Kind = SystemEventToString(row.Kind),
+                Kind = MigrationKindToString(row.Kind),
                 BalanceChange = row.BalanceChange
             });
         }
@@ -2598,11 +2598,12 @@ namespace Tzkt.Api.Repositories
                 LIMIT    {limit}";
         }
 
-        string SystemEventToString(int sysEvent) => sysEvent switch
+        string MigrationKindToString(int kind) => kind switch
         {
             0 => "bootstrap",
             1 => "activate_delegate",
             2 => "airdrop",
+            3 => "proposal_invoice",
             _ => "unknown"
         };
 
