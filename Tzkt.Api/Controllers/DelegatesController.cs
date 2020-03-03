@@ -11,7 +11,7 @@ using Tzkt.Api.Repositories;
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("v1/[controller]")]
+    [Route("v1/delegates")]
     public class DelegatesController : ControllerBase
     {
         private readonly AccountRepository Accounts;

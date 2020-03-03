@@ -11,7 +11,7 @@ using Tzkt.Api.Repositories;
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("v1/[controller]")]
+    [Route("v1/voting")]
     public class VotingController : ControllerBase
     {
         private readonly VotingRepository Voting;

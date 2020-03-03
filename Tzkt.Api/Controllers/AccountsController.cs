@@ -14,7 +14,7 @@ using Tzkt.Api.Services.Metadata;
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("v1/[controller]")]
+    [Route("v1/accounts")]
     public class AccountsController : ControllerBase
     {
         private readonly AccountRepository Accounts;

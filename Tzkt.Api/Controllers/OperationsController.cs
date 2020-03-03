@@ -7,16 +7,20 @@ using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("v1/[controller]")]
+    [Route("v1/operations")]
     public class OperationsController : ControllerBase
     {
+        private readonly AccountsCache Accounts;
         private readonly OperationRepository Operations;
-        public OperationsController(OperationRepository operations)
+
+        public OperationsController(AccountsCache accounts, OperationRepository operations)
         {
+            Accounts = accounts;
             Operations = operations;
         }
 
@@ -470,13 +474,79 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of transaction operations.
         /// </remarks>
+        /// <param name="initiator">Filters transactions by initiator. You can provide single address or comma-separated list of addresses or one of the keywords `null`, `target`.</param>
+        /// <param name="sender">Filters transactions by sender. You can provide single address or comma-separated list of addresses or one of the keywords `null`, `target`.</param>
+        /// <param name="target">Filters transactions by target. You can provide single address or comma-separated list of addresses or one of the keywords `null`, `sender`, `initiator`.</param>
+        /// <param name="parameters">Filters transactions by parameters value. You can use wildcard `*` for pattern matching (e.g. `123*` means "starts with 123", or `*123*` means "contains 123"). To avoid pattern matching use `\*`. Supported keywords: `null`.</param>
+        /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `timestamp`, `amount`. Add `.desc` to sort by descending (e.g. `sort=amount.desc`).</param>
         /// <param name="p">Page offset (pagination)</param>
         /// <param name="n">Number of items to return</param>
         /// <returns></returns>
         [HttpGet("transactions")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactions([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactions(
+            string initiator,
+            string sender,
+            string target,
+            string parameters,
+            string sort,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetTransactions(n, p * n);
+            AccountParameter _initiator = null;
+            AccountParameter _sender = null;
+            AccountParameter _target = null;
+            StringParameter _parameters = null;
+            SortParameter _sort = null;
+
+            #region validate
+            if (initiator != null)
+            {
+                _initiator = await AccountParameter.Parse(initiator, Accounts, "target");
+                if (_initiator.Invalid)
+                    return new BadRequest(nameof(initiator), _initiator.Error);
+            }
+
+            if (sender != null)
+            {
+                _sender = await AccountParameter.Parse(sender, Accounts, "target");
+                if (_sender.Invalid)
+                    return new BadRequest(nameof(sender), _sender.Error);
+            }
+
+            if (target != null)
+            {
+                _target = await AccountParameter.Parse(target, Accounts, "sender", "initiator");
+                if (_target.Invalid)
+                    return new BadRequest(nameof(target), _target.Error);
+            }
+
+            if (parameters != null)
+            {
+                _parameters = await StringParameter.Parse(parameters);
+                //if (_parameters.Invalid)
+                //    return new BadRequest(nameof(parameters), _parameters.Error);
+            }
+
+            if (sort != null)
+            {
+                _sort = await SortParameter.Parse(sort, "id", "level", "timestamp", "amount");
+                if (_sort?.Invalid == true)
+                    return new BadRequest(nameof(sort), _sort.Error);
+            }
+            #endregion
+
+            #region check dead filters
+            if (_initiator?.Mode == QueryMode.Dead)
+                return Ok(Enumerable.Empty<TransactionOperation>());
+
+            if (_sender?.Mode == QueryMode.Dead)
+                return Ok(Enumerable.Empty<TransactionOperation>());
+            
+            if (_target?.Mode == QueryMode.Dead)
+                return Ok(Enumerable.Empty<TransactionOperation>());
+            #endregion
+
+            return Ok(await Operations.GetTransactions(_initiator, _sender, _target, _parameters, _sort,  n, p * n));
         }
 
         /// <summary>

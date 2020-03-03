@@ -12,7 +12,7 @@ using Tzkt.Api.Services.Metadata;
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("v1/[controller]")]
+    [Route("v1/suggest")]
     public class SuggestController : ControllerBase
     {
         private readonly AccountMetadataService AccountMetadata;

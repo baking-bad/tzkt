@@ -1982,18 +1982,145 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(int limit = 100, int offset = 0)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter target,
+            StringParameter parameters,
+            SortParameter sort,
+            int limit, int offset)
         {
-            var sql = @"
+            var sqlParams = new DynamicParameters();
+            var sqlFilters = "";
+
+            #region initiator
+            if (initiator != null)
+            {
+                switch(initiator.Mode)
+                {
+                    case QueryMode.Exact:
+                        sqlFilters += $@"AND ""InitiatorId"" = {initiator.Value} ";
+                        break;
+                    case QueryMode.Any:
+                        sqlFilters += @"AND ""InitiatorId"" = ANY (@initiatorIds) ";
+                        sqlParams.Add("initiatorIds", initiator.Values);
+                        break;
+                    case QueryMode.Null:
+                        sqlFilters += @"AND ""InitiatorId"" IS NULL ";
+                        break;
+                    case QueryMode.Column:
+                        sqlFilters += @"AND ""InitiatorId"" = ""TargetId"" ";
+                        break;
+                    default:
+                        throw new Exception("Unsupported account filter mode");
+                }
+            }
+            #endregion
+
+            #region sender
+            if (sender != null)
+            {
+                switch (sender.Mode)
+                {
+                    case QueryMode.Exact:
+                        sqlFilters += $@"AND ""SenderId"" = {sender.Value} ";
+                        break;
+                    case QueryMode.Any:
+                        sqlFilters += @"AND ""SenderId"" = ANY (@senderIds) ";
+                        sqlParams.Add("senderIds", sender.Values);
+                        break;
+                    case QueryMode.Null:
+                        sqlFilters += @"AND ""SenderId"" IS NULL ";
+                        break;
+                    case QueryMode.Column:
+                        sqlFilters += @"AND ""SenderId"" = ""TargetId"" ";
+                        break;
+                    default:
+                        throw new Exception("Unsupported account filter mode");
+                }
+            }
+            #endregion
+
+            #region target
+            if (target != null)
+            {
+                switch (target.Mode)
+                {
+                    case QueryMode.Exact:
+                        sqlFilters += $@"AND ""TargetId"" = {target.Value} ";
+                        break;
+                    case QueryMode.Any:
+                        sqlFilters += @"AND ""TargetId"" = ANY (@targetIds) ";
+                        sqlParams.Add("targetIds", target.Values);
+                        break;
+                    case QueryMode.Null:
+                        sqlFilters += @"AND ""TargetId"" IS NULL ";
+                        break;
+                    case QueryMode.Column:
+                        sqlFilters += target.Column == "sender"
+                            ? @"AND ""TargetId"" = ""SenderId"" "
+                            : @"AND ""TargetId"" = ""InitiatorId"" ";
+                        break;
+                    default:
+                        throw new Exception("Unsupported account filter mode");
+                }
+            }
+            #endregion
+
+            #region parameters
+            if (parameters != null)
+            {
+                switch (parameters.Mode)
+                {
+                    case QueryMode.Exact:
+                        sqlFilters += $@"AND ""Parameters"" = @parameters ";
+                        sqlParams.Add("parameters", parameters.Value);
+                        break;
+                    case QueryMode.Like:
+                        sqlFilters += @"AND ""Parameters"" LIKE @parameters ";
+                        sqlParams.Add("parameters", parameters.Value);
+                        break;
+                    case QueryMode.Null:
+                        sqlFilters += @"AND ""Parameters"" IS NULL ";
+                        break;
+                    default:
+                        throw new Exception("Unsupported account filter mode");
+                }
+            }
+            #endregion
+
+            if (sqlFilters.Length > 0)
+                sqlFilters = "WHERE" + sqlFilters[3..];
+
+            #region sort
+            var sqlSort = @"""Id""";
+            if (sort != null)
+            {
+                sqlSort = sort.Value switch
+                {
+                    "id" => sort.Desc ? @"""Id"" DESC" : @"""Id""",
+                    "level" => sort.Desc ? @"""Id"" DESC" : @"""Id""",
+                    "timestamp" => sort.Desc ? @"""Id"" DESC" : @"""Id""",
+                    "amount" => sort.Desc ? @"""Amount"" DESC" : @"""Amount""",
+                    _ => throw new Exception("Unsupported sorting column"),
+                };
+            }
+            #endregion
+
+            var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
                           ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
                 FROM      ""TransactionOps""
-                ORDER BY  ""Id""
+                {sqlFilters}
+                ORDER BY  {sqlSort}
                 OFFSET    @offset
                 LIMIT     @limit";
 
+            sqlParams.Add("offset", offset);
+            sqlParams.Add("limit", limit);
+
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { limit, offset });
+            var rows = await db.QueryAsync(sql, sqlParams);
 
             return rows.Select(row => new TransactionOperation
             {
