@@ -701,7 +701,7 @@ namespace Tzkt.Api.Repositories
                 };
             });
         }
-
+        
         public async Task<IEnumerable<Delegator>> GetDelegators(string address, int limit = 100, int offset = 0)
         {
             var delegat = (RawDelegate)await Accounts.GetAsync(address);
@@ -726,6 +726,51 @@ namespace Tzkt.Api.Repositories
 
                 return new Delegator
                 {
+                    Id = row.Id,
+                    Type = TypeToString(row.Type),
+                    Alias = metadata?.Alias,
+                    Address = row.Address,
+                    Balance = row.Balance,
+                    DelegationLevel = row.DelegationLevel,
+                    DelegationTime = Time[row.DelegationLevel]
+                };
+            });
+        }
+
+        public async Task<IEnumerable<Delegator>> GetDelegators(
+            string address,
+            AccountTypeParameter type,
+            Int64Parameter balance,
+            Int32Parameter delegationLevel, 
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
+        {
+            var delegat = (RawDelegate)await Accounts.GetAsync(address);
+
+            if (delegat == null || delegat.DelegatorsCount == 0)
+                return Enumerable.Empty<Delegator>();
+
+            var sql = new SqlBuilder(@"SELECT ""Id"", ""Address"", ""Type"", ""Balance"", ""DelegationLevel"" FROM ""Accounts""")
+                .Filter("DelegateId", delegat.Id)
+                .Filter("Type", type)
+                .Filter("Balance", balance)
+                .Filter("DelegationLevel", delegationLevel)
+                .Take(sort ?? new SortParameter { Desc = "delegationLevel" }, offset, limit, x => x == "balance" ? "Balance" : "DelegationLevel");
+
+            var sqlParams = new DynamicParameters();
+            var sqlFilters = $@"WHERE ""DelegateId"" = {delegat.Id} ";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            return rows.Select(row =>
+            {
+                var metadata = Accounts.GetMetadata((int)row.Id);
+
+                return new Delegator
+                {
+                    Id = row.Id,
                     Type = TypeToString(row.Type),
                     Alias = metadata?.Alias,
                     Address = row.Address,

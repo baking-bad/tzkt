@@ -78,13 +78,61 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts delegated to the specified account.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`).</param>
+        /// <param name="balance">Filters delegators by balance.</param>
+        /// <param name="delegationLevel">Number of items to skip</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id`, `delegationLevel`, `balance`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("{address}/delegators")]
-        public Task<IEnumerable<Delegator>> GetDelegators([Address] string address, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<Delegator>>> GetDelegators(
+            [Address] string address,
+            AccountTypeParameter type,
+            Int64Parameter balance,
+            Int32Parameter delegationLevel,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 1000)] int limit = 100,
+            [Min(0)] int p = 0, 
+            [Range(0, 1000)] int n = 100)
         {
-            return Accounts.GetDelegators(address, n, p * n);
+            #region validate
+            if (balance != null)
+            {
+                if (balance.Eqx != null)
+                    return new BadRequest($"{nameof(balance)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (balance.Nex != null)
+                    return new BadRequest($"{nameof(balance)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (delegationLevel != null)
+            {
+                if (delegationLevel.Eqx != null)
+                    return new BadRequest($"{nameof(delegationLevel)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (delegationLevel.Nex != null)
+                    return new BadRequest($"{nameof(delegationLevel)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (sort != null)
+            {
+                if (sort.Asc != null && sort.Asc != "id" && sort.Asc != "delegationLevel" && sort.Asc != "balance")
+                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
+
+                if (sort.Desc != null && sort.Desc != "id" && sort.Desc != "delegationLevel" && sort.Desc != "balance")
+                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
+            }
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            return Ok(await Accounts.GetDelegators(address, type, balance, delegationLevel, sort, offset, limit));
         }
 
         /// <summary>

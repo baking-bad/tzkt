@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
-using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -15,12 +14,10 @@ namespace Tzkt.Api.Controllers
     [Route("v1/operations")]
     public class OperationsController : ControllerBase
     {
-        private readonly AccountsCache Accounts;
         private readonly OperationRepository Operations;
 
-        public OperationsController(AccountsCache accounts, OperationRepository operations)
+        public OperationsController(OperationRepository operations)
         {
-            Accounts = accounts;
             Operations = operations;
         }
 
@@ -474,79 +471,89 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of transaction operations.
         /// </remarks>
-        /// <param name="initiator">Filters transactions by initiator. You can provide single address or comma-separated list of addresses or one of the keywords `null`, `target`.</param>
-        /// <param name="sender">Filters transactions by sender. You can provide single address or comma-separated list of addresses or one of the keywords `null`, `target`.</param>
-        /// <param name="target">Filters transactions by target. You can provide single address or comma-separated list of addresses or one of the keywords `null`, `sender`, `initiator`.</param>
-        /// <param name="parameters">Filters transactions by parameters value. You can use wildcard `*` for pattern matching (e.g. `123*` means "starts with 123", or `*123*` means "contains 123"). To avoid pattern matching use `\*`. Supported keywords: `null`.</param>
-        /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `timestamp`, `amount`. Add `.desc` to sort by descending (e.g. `sort=amount.desc`).</param>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="initiator">Filters transactions by initiator. Allowed fields for `.eqx` mode: `target`.</param>
+        /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
+        /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
+        /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
+        /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `amount`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next version.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next version.</param>
         /// <returns></returns>
         [HttpGet("transactions")]
         public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactions(
-            string initiator,
-            string sender,
-            string target,
-            string parameters,
-            string sort,
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter target,
+            StringParameter parameters,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 1000)] int limit = 100,
             [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 1000)] int n = 100) 
         {
-            AccountParameter _initiator = null;
-            AccountParameter _sender = null;
-            AccountParameter _target = null;
-            StringParameter _parameters = null;
-            SortParameter _sort = null;
-
             #region validate
             if (initiator != null)
             {
-                _initiator = await AccountParameter.Parse(initiator, Accounts, "target");
-                if (_initiator.Invalid)
-                    return new BadRequest(nameof(initiator), _initiator.Error);
+                if (initiator.Eqx != null && initiator.Eqx != "target")
+                    return new BadRequest($"{nameof(initiator)}.eqx", "The 'initiator' field can be compared with the 'target' field only.");
+
+                if (initiator.Nex != null && initiator.Nex != "target")
+                    return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'target' field only.");
+
+                if (initiator.Eq == -1 || initiator.In?.Count == 0)
+                    return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
             if (sender != null)
             {
-                _sender = await AccountParameter.Parse(sender, Accounts, "target");
-                if (_sender.Invalid)
-                    return new BadRequest(nameof(sender), _sender.Error);
+                if (sender.Eqx != null && sender.Eqx != "target")
+                    return new BadRequest($"{nameof(sender)}.eqx", "The 'sender' field can be compared with the 'target' field only.");
+
+                if (sender.Nex != null && sender.Nex != "target")
+                    return new BadRequest($"{nameof(sender)}.nex", "The 'sender' field can be compared with the 'target' field only.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
             if (target != null)
             {
-                _target = await AccountParameter.Parse(target, Accounts, "sender", "initiator");
-                if (_target.Invalid)
-                    return new BadRequest(nameof(target), _target.Error);
+                if (target.Eqx != null && target.Eqx != "sender" && target.Eqx != "initiator")
+                    return new BadRequest($"{nameof(target)}.eqx", "The 'target' field can be compared with the 'sender' or 'initiator' fields only.");
+
+                if (target.Nex != null && target.Nex != "sender" && target.Eqx != "initiator")
+                    return new BadRequest($"{nameof(target)}.nex", "The 'target' field can be compared with the 'sender' or 'initiator' fields only.");
+
+                if (target.Eq == -1 || target.In?.Count == 0)
+                    return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
             if (parameters != null)
             {
-                _parameters = await StringParameter.Parse(parameters);
-                //if (_parameters.Invalid)
-                //    return new BadRequest(nameof(parameters), _parameters.Error);
+                if (parameters.Eqx != null)
+                    return new BadRequest($"{nameof(parameters)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (parameters.Nex != null)
+                    return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
             }
 
             if (sort != null)
             {
-                _sort = await SortParameter.Parse(sort, "id", "level", "timestamp", "amount");
-                if (_sort?.Invalid == true)
-                    return new BadRequest(nameof(sort), _sort.Error);
+                if (sort.Asc != null && sort.Asc != "id" && sort.Asc != "level" && sort.Asc != "amount")
+                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
+
+                if (sort.Desc != null && sort.Desc != "id" && sort.Desc != "level" && sort.Desc != "amount")
+                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
             }
             #endregion
 
-            #region check dead filters
-            if (_initiator?.Mode == QueryMode.Dead)
-                return Ok(Enumerable.Empty<TransactionOperation>());
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
 
-            if (_sender?.Mode == QueryMode.Dead)
-                return Ok(Enumerable.Empty<TransactionOperation>());
-            
-            if (_target?.Mode == QueryMode.Dead)
-                return Ok(Enumerable.Empty<TransactionOperation>());
-            #endregion
-
-            return Ok(await Operations.GetTransactions(_initiator, _sender, _target, _parameters, _sort,  n, p * n));
+            return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit));
         }
 
         /// <summary>
