@@ -113,6 +113,20 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<int>> GetEventLevels(Data.Models.BlockEvents @event, int offset = 0, int limit = 100)
+        {
+            var sql = $@"
+                SELECT  ""Level""
+                FROM    ""Blocks""
+                WHERE   ""Events"" & {(int)@event} > 0
+                ORDER BY ""Id""
+                OFFSET   @offset
+                LIMIT    @limit";
+
+            using var db = GetConnection();
+            return await db.QueryAsync<int>(sql, new { limit, offset });
+        }
+
         async Task LoadOperations(Block block, Data.Models.Operations operations)
         {
             var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements)

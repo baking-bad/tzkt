@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -63,6 +64,13 @@ namespace Tzkt.Api.Controllers
         public Task<Block> GetByLevel([Min(0)] int level, bool operations = false)
         {
             return Blocks.Get(level, operations);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("levels")]
+        public Task<IEnumerable<int>> GetSmartContractBlocks([Min(0)] int offset = 0, [Range(0, 10000)] int limit = 10000)
+        {
+            return Blocks.GetEventLevels(Data.Models.BlockEvents.SmartContracts, offset, limit);
         }
     }
 }
