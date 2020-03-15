@@ -170,6 +170,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;
 
+            if (target is Contract c && c.Kind == ContractKind.SmartContract)
+                block.Events |= BlockEvents.SmartContracts;
+
             block.Operations |= Operations.Transactions;
             block.Fees += Transaction.BakerFee;
 

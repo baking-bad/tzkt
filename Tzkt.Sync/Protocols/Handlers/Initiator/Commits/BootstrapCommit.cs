@@ -116,22 +116,28 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public override async Task Apply()
         {
-            Db.Accounts.AddRange(BootstrapedAccounts);
-
-            foreach (var account in BootstrapedAccounts)
+            if (BootstrapedAccounts.Count > 0)
             {
-                account.MigrationsCount++;
+                Db.Accounts.AddRange(BootstrapedAccounts);
+                
                 Block.Operations |= Operations.Migrations;
-                Db.MigrationOps.Add(new MigrationOperation
+                if (BootstrapedAccounts.Any(x => x.Type == AccountType.Contract))
+                    Block.Events |= BlockEvents.SmartContracts;
+
+                foreach (var account in BootstrapedAccounts)
                 {
-                    Id = await Cache.NextCounterAsync(),
-                    Block = Block,
-                    Level = Level,
-                    Timestamp = Timestamp,
-                    Account = account,
-                    Kind = MigrationKind.Bootstrap,
-                    BalanceChange = account.Balance
-                });
+                    account.MigrationsCount++;
+                    Db.MigrationOps.Add(new MigrationOperation
+                    {
+                        Id = await Cache.NextCounterAsync(),
+                        Block = Block,
+                        Level = Level,
+                        Timestamp = Timestamp,
+                        Account = account,
+                        Kind = MigrationKind.Bootstrap,
+                        BalanceChange = account.Balance
+                    });
+                }
             }
         }
 

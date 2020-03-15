@@ -153,6 +153,9 @@ namespace Tzkt.Sync.Protocols.Proto3
                 sender.ContractsCount++;
                 if (contractManager != sender) contractManager.ContractsCount++;
 
+                if (contract.Kind == ContractKind.SmartContract)
+                    block.Events |= BlockEvents.SmartContracts;
+
                 Db.Contracts.Add(contract);
             }
             #endregion
