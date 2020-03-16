@@ -726,7 +726,6 @@ namespace Tzkt.Api.Repositories
 
                 return new Delegator
                 {
-                    Id = row.Id,
                     Type = TypeToString(row.Type),
                     Alias = metadata?.Alias,
                     Address = row.Address,
@@ -770,7 +769,6 @@ namespace Tzkt.Api.Repositories
 
                 return new Delegator
                 {
-                    Id = row.Id,
                     Type = TypeToString(row.Type),
                     Alias = metadata?.Alias,
                     Address = row.Address,

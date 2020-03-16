@@ -95,7 +95,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter delegationLevel,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 1000)] int limit = 100,
+            [Range(0, 10000)] int limit = 100,
             [Min(0)] int p = 0, 
             [Range(0, 1000)] int n = 100)
         {

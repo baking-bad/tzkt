@@ -15,7 +15,8 @@ namespace Tzkt.Api
 
         /// <summary>
         /// **Id** offset mode. \
-        /// Skips all elements with `id` before (including) the specified value. This is the most preferred way to enumerate items, especially backward.
+        /// Skips all elements with `id` before (including) the specified value. This is the most preferred way to enumerate items by id, especially backward.
+        /// Don't use this offset mode with non-default ordering (not by id).
         /// 
         /// Example: `?offset.id=45837`.
         /// </summary>
