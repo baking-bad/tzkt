@@ -127,6 +127,19 @@ namespace Tzkt.Api.Repositories
             return await db.QueryAsync<int>(sql, new { limit, offset });
         }
 
+        public async Task<IEnumerable<DateTime>> GetTimestamps(int offset = 0, int limit = 100)
+        {
+            var sql = $@"
+                SELECT  ""Timestamp""
+                FROM    ""Blocks""
+                ORDER BY ""Id""
+                OFFSET   @offset
+                LIMIT    @limit";
+
+            using var db = GetConnection();
+            return await db.QueryAsync<DateTime>(sql, new { limit, offset });
+        }
+
         async Task LoadOperations(Block block, Data.Models.Operations operations)
         {
             var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements)

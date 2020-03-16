@@ -72,5 +72,12 @@ namespace Tzkt.Api.Controllers
         {
             return Blocks.GetEventLevels(Data.Models.BlockEvents.SmartContracts, offset, limit);
         }
+
+        [OpenApiIgnore]
+        [HttpGet("timestamps")]
+        public Task<IEnumerable<DateTime>> GetTimestamps([Min(0)] int offset = 0, [Range(0, 10000)] int limit = 10000)
+        {
+            return Blocks.GetTimestamps(offset, limit);
+        }
     }
 }
