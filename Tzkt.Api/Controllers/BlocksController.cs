@@ -68,7 +68,7 @@ namespace Tzkt.Api.Controllers
 
         [OpenApiIgnore]
         [HttpGet("levels")]
-        public Task<IEnumerable<int>> GetSmartContractBlocks([Min(0)] int offset = 0, [Range(0, 10000)] int limit = 10000)
+        public Task<IEnumerable<int>> GetSmartContractBlocks(OffsetParameter offset, [Range(0, 10000)] int limit = 10000)
         {
             return Blocks.GetEventLevels(Data.Models.BlockEvents.SmartContracts, offset, limit);
         }

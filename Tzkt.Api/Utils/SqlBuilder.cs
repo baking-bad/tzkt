@@ -22,6 +22,12 @@ namespace Tzkt.Api
             Builder.AppendLine();
         }
 
+        public SqlBuilder Filter(string expression)
+        {
+            AppendFilter(expression);
+            return this;
+        }
+
         public SqlBuilder Filter(string column, int value)
         {
             AppendFilter($@"""{column}"" = {value}");
@@ -237,25 +243,32 @@ namespace Tzkt.Api
 
         public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, string> map = null)
         {
-            if (offset?.Id != null)
+            var sortAsc = true;
+            var sortColumn = "Id";
+
+            if (sort != null && map != null)
             {
-                if (sort?.Asc == null && sort?.Desc != null && map != null)
-                    AppendFilter($@"""Id"" < {offset.Id} ");
-                else
-                    AppendFilter($@"""Id"" > {offset.Id} ");
+                if (sort.Asc != null)
+                {
+                    sortColumn = map(sort.Asc);
+                }
+                else if (sort.Desc != null)
+                {
+                    sortAsc = false;
+                    sortColumn = map(sort.Desc);
+                }
             }
 
-            if (sort != null)
+            if (offset?.Cr != null)
             {
-                if (sort.Asc != null && map != null)
-                    Builder.AppendLine($@"ORDER BY ""{map(sort.Asc)}""");
-                else if (sort.Desc != null && map != null)
-                    Builder.AppendLine($@"ORDER BY ""{map(sort.Desc)}"" DESC");
+                AppendFilter(sortAsc 
+                    ? $@"""{sortColumn}"" > {offset.Cr}"
+                    : $@"""{sortColumn}"" < {offset.Cr}");
             }
-            else
-            {
-                Builder.AppendLine($@"ORDER BY ""Id""");
-            }
+
+            Builder.AppendLine(sortAsc
+                ? $@"ORDER BY ""{sortColumn}"""
+                : $@"ORDER BY ""{sortColumn}"" DESC");
 
             if (offset != null)
             {
@@ -271,8 +284,8 @@ namespace Tzkt.Api
 
         public SqlBuilder Take(OffsetParameter offset, int limit)
         {
-            if (offset?.Id != null)
-                AppendFilter($@"""Id"" > {offset.Id} ");
+            if (offset?.Cr != null)
+                AppendFilter($@"""Id"" > {offset.Cr} ");
 
             Builder.AppendLine($@"ORDER BY ""Id""");
 

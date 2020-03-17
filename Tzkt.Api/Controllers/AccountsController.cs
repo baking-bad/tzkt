@@ -81,7 +81,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`).</param>
         /// <param name="balance">Filters delegators by balance.</param>
         /// <param name="delegationLevel">Number of items to skip</param>
-        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id`, `delegationLevel`, `balance`.</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `delegationLevel`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
@@ -120,10 +120,10 @@ namespace Tzkt.Api.Controllers
 
             if (sort != null)
             {
-                if (sort.Asc != null && sort.Asc != "id" && sort.Asc != "delegationLevel" && sort.Asc != "balance")
+                if (sort.Asc != null && sort.Asc != "delegationLevel" && sort.Asc != "balance")
                     return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
 
-                if (sort.Desc != null && sort.Desc != "id" && sort.Desc != "delegationLevel" && sort.Desc != "balance")
+                if (sort.Desc != null && sort.Desc != "delegationLevel" && sort.Desc != "balance")
                     return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
             }
             #endregion

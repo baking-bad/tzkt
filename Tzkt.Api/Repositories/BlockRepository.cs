@@ -113,18 +113,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<int>> GetEventLevels(Data.Models.BlockEvents @event, int offset = 0, int limit = 100)
+        public async Task<IEnumerable<int>> GetEventLevels(Data.Models.BlockEvents @event, OffsetParameter offset, int limit = 100)
         {
-            var sql = $@"
-                SELECT  ""Level""
-                FROM    ""Blocks""
-                WHERE   ""Events"" & {(int)@event} > 0
-                ORDER BY ""Id""
-                OFFSET   @offset
-                LIMIT    @limit";
+            var sql = new SqlBuilder(@"SELECT ""Level"" FROM ""Blocks""")
+                .Filter($@"""Events"" & {(int)@event} > 0")
+                .Take(new SortParameter { Asc = "level" }, offset, limit, x => "Level");
 
             using var db = GetConnection();
-            return await db.QueryAsync<int>(sql, new { limit, offset });
+            return await db.QueryAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<DateTime>> GetTimestamps(int offset = 0, int limit = 100)

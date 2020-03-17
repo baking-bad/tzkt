@@ -19,10 +19,10 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetInt32($"{model}.el", ref hasValue, out var el))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetInt32($"{model}.id", ref hasValue, out var id))
+            if (!bindingContext.TryGetInt32($"{model}.pg", ref hasValue, out var pg))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetInt32($"{model}.pg", ref hasValue, out var pg))
+            if (!bindingContext.TryGetInt64($"{model}.cr", ref hasValue, out var cr))
                 return Task.CompletedTask;
 
             if (!hasValue)
@@ -43,12 +43,6 @@ namespace Tzkt.Api
                 return Task.CompletedTask;
             }
 
-            if (id != null && id < 0)
-            {
-                bindingContext.ModelState.AddModelError($"{model}.id", "The value must be greater than or equal to 0.");
-                return Task.CompletedTask;
-            }
-
             if (pg != null && pg < 0)
             {
                 bindingContext.ModelState.AddModelError($"{model}.pg", "The value must be greater than or equal to 0.");
@@ -58,8 +52,8 @@ namespace Tzkt.Api
             bindingContext.Result = ModelBindingResult.Success(new OffsetParameter
             {
                 El = value ?? el,
-                Id = id,
-                Pg = pg
+                Pg = pg,
+                Cr = cr
             });
 
             return Task.CompletedTask;

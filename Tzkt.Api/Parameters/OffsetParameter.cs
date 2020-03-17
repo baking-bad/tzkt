@@ -14,20 +14,20 @@ namespace Tzkt.Api
         public int? El { get; set; }
 
         /// <summary>
-        /// **Id** offset mode. \
-        /// Skips all elements with `id` before (including) the specified value. This is the most preferred way to enumerate items by id, especially backward.
-        /// Don't use this offset mode with non-default ordering (not by id).
-        /// 
-        /// Example: `?offset.id=45837`.
-        /// </summary>
-        public int? Id { get; set; }
-
-        /// <summary>
         /// **Page** offset mode. \
         /// Skips `page * limit` elements. This is a classic pagination.
         /// 
         /// Example: `?offset.pg=1`.
         /// </summary>
         public int? Pg { get; set; }
+
+        /// <summary>
+        /// **Cursor** offset mode. \
+        /// Skips all elements with the `cursor` before (including) the specified value. Cursor is a field used for sorting, e.g. `id`.
+        /// Avoid using this offset mode with non-unique or non-sequential cursors such as `amount`, `balance`, etc.
+        /// 
+        /// Example: `?offset.cr=45837`.
+        /// </summary>
+        public long? Cr { get; set; }
     }
 }
