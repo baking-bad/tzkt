@@ -383,13 +383,80 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of delegation operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sender">Filters delegations by sender. Allowed fields for `.eqx` mode: `prevDelegate`, `newDelegate`.</param>
+        /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `sender`, `newDelegate`.</param>
+        /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `sender`, `prevDelegate`.</param>
+        /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="sort">Sorts delegations by specified field. Supported fields: `id`, `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next version.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next version.</param>
         /// <returns></returns>
         [HttpGet("delegations")]
-        public Task<IEnumerable<DelegationOperation>> GetDelegations([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegations(
+            AccountParameter sender,
+            AccountParameter prevDelegate,
+            AccountParameter newDelegate,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 1000)] int limit = 100,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetDelegations(n, p * n);
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null && sender.Eqx != "prevDelegate" && sender.Eqx != "newDelegate")
+                    return new BadRequest($"{nameof(sender)}.eqx", "The 'sender' field can be compared with the 'prevDelegate' or 'newDelegate' field only.");
+
+                if (sender.Nex != null && sender.Nex != "prevDelegate" && sender.Nex != "newDelegate")
+                    return new BadRequest($"{nameof(sender)}.nex", "The 'sender' field can be compared with the 'prevDelegate' or 'newDelegate' field only.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TransactionOperation>());
+            }
+
+            if (prevDelegate != null)
+            {
+                if (prevDelegate.Eqx != null && prevDelegate.Eqx != "sender" && prevDelegate.Eqx != "newDelegate")
+                    return new BadRequest($"{nameof(prevDelegate)}.eqx", "The 'prevDelegate' field can be compared with the 'sender' or 'newDelegate' field only.");
+
+                if (prevDelegate.Nex != null && prevDelegate.Nex != "sender" && prevDelegate.Nex != "newDelegate")
+                    return new BadRequest($"{nameof(prevDelegate)}.nex", "The 'prevDelegate' field can be compared with the 'sender' or 'newDelegate' field only.");
+
+                if (prevDelegate.Eq == -1 || prevDelegate.In?.Count == 0 || prevDelegate.Null == true)
+                    return Ok(Enumerable.Empty<TransactionOperation>());
+            }
+
+            if (newDelegate != null)
+            {
+                if (newDelegate.Eqx != null && newDelegate.Eqx != "sender" && newDelegate.Eqx != "prevDelegate")
+                    return new BadRequest($"{nameof(newDelegate)}.eqx", "The 'newDelegate' field can be compared with the 'sender' or 'prevDelegate' fields only.");
+
+                if (newDelegate.Nex != null && newDelegate.Nex != "sender" && newDelegate.Nex != "prevDelegate")
+                    return new BadRequest($"{nameof(newDelegate)}.nex", "The 'newDelegate' field can be compared with the 'sender' or 'prevDelegate' fields only.");
+
+                if (newDelegate.Eq == -1 || newDelegate.In?.Count == 0)
+                    return Ok(Enumerable.Empty<TransactionOperation>());
+            }
+
+            if (sort != null)
+            {
+                if (sort.Asc != null && sort.Asc != "id" && sort.Asc != "level")
+                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
+
+                if (sort.Desc != null && sort.Desc != "id" && sort.Desc != "level")
+                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
+            }
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit));
         }
 
         /// <summary>

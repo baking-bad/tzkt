@@ -47,6 +47,19 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, OperationStatusParameter status)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+                AppendFilter($@"""{column}"" = {status.Eq}");
+
+            if (status.Ne != null)
+                AppendFilter($@"""{column}"" != {status.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, AccountParameter account, Func<string, string> map = null)
         {
             if (account == null) return this;

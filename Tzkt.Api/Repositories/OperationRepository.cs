@@ -1319,18 +1319,24 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(int limit = 100, int offset = 0)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(
+            AccountParameter sender,
+            AccountParameter prevDelegate,
+            AccountParameter newDelegate,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
-            var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
-                FROM      ""DelegationOps""
-                ORDER BY  ""Id""
-                OFFSET    @offset
-                LIMIT     @limit";
+            var sql = new SqlBuilder(@"SELECT * FROM ""DelegationOps""")
+                .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
+                .Filter("PrevDelegateId", prevDelegate, x => x == "sender" ? "SenderId" : "DelegateId")
+                .Filter("DelegateId", newDelegate, x => x == "sender" ? "SenderId" : "PrevDelegateId")
+                .Filter("Status", status)
+                .Take(sort, offset, limit, x => "Id");
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { limit, offset });
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new DelegationOperation
             {

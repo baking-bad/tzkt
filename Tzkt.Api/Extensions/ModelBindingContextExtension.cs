@@ -224,6 +224,47 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetOperationStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (valueObject.FirstValue == "applied")
+                    {
+                        hasValue = true;
+                        result = 1;
+                    }
+                    else if (valueObject.FirstValue == "failed")
+                    {
+                        hasValue = true;
+                        result = 4;
+                    }
+                    else if (valueObject.FirstValue == "backtracked")
+                    {
+                        hasValue = true;
+                        result = 2;
+                    }
+                    else if (valueObject.FirstValue == "skipped")
+                    {
+                        hasValue = true;
+                        result = 3;
+                    }
+                    else
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid operation status.");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetBool(this ModelBindingContext bindingContext, string name, ref bool hasValue, out bool? result)
         {
             result = null;
