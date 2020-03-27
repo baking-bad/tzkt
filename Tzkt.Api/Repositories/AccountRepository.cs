@@ -704,8 +704,7 @@ namespace Tzkt.Api.Repositories
         
         public async Task<IEnumerable<Delegator>> GetDelegators(string address, int limit = 100, int offset = 0)
         {
-            var delegat = (RawDelegate)await Accounts.GetAsync(address);
-
+            var delegat = await Accounts.GetAsync(address) as RawDelegate;
             if (delegat == null || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
@@ -745,8 +744,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var delegat = (RawDelegate)await Accounts.GetAsync(address);
-
+            var delegat = await Accounts.GetAsync(address) as RawDelegate;
             if (delegat == null || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
