@@ -30,15 +30,18 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify fields to include into response or leave it undefined to return all fields. If you use `select` query parameter then response will be an array of array of selected values.</param>
         /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
         /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Models.Delegate>>> Get(
+        [ProducesResponseType(200, Type = typeof(IEnumerable<Models.Delegate>))]
+        public async Task<ActionResult> Get(
             BoolParameter active,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
+            SelectorParameter select = null,
             [Min(0)] int p = 0,
             [Range(0, 1000)] int n = 100)
         {
@@ -57,7 +60,9 @@ namespace Tzkt.Api.Controllers
             if (p != 0) offset = new OffsetParameter { Pg = p };
             if (n != 100) limit = n;
 
-            return Ok(await Accounts.GetDelegates(active, sort, offset, limit));
+            return Ok(select == null
+                ? (object)await Accounts.GetDelegates(active, sort, offset, limit)
+                : await Accounts.GetDelegates(active, sort, offset, limit, select));
         }
 
         /// <summary>
