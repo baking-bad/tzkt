@@ -27,13 +27,37 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts.
         /// </remarks>
         /// <param name="active">Delegate status to filter by (true - only active, false - only deactivated, undefined - all delegates)</param>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet]
-        public Task<IEnumerable<Models.Delegate>> Get(bool? active, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<Models.Delegate>>> Get(
+            BoolParameter active,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Accounts.GetDelegates(active, n, p * n);
+            #region validate
+            if (sort != null)
+            {
+                if (sort.Asc != null && !(sort.Asc == "activationLevel" || sort.Asc == "stakingBalance" || sort.Asc == "deactivationLevel" || sort.Asc == "balance"))
+                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
+
+                if (sort.Desc != null && !(sort.Desc == "activationLevel" || sort.Desc == "stakingBalance" || sort.Desc == "deactivationLevel" || sort.Desc == "balance"))
+                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
+            }
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            return Ok(await Accounts.GetDelegates(active, sort, offset, limit));
         }
 
         /// <summary>

@@ -508,24 +508,26 @@ namespace Tzkt.Api.Repositories
             return accounts;
         }
 
-        public async Task<IEnumerable<Models.Delegate>> GetDelegates(bool? active, int limit = 100, int offset = 0)
+        public async Task<IEnumerable<Models.Delegate>> GetDelegates(
+            BoolParameter active,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
-            var sql = $@"
-                SELECT      *
-                FROM        ""Accounts""
-                WHERE       ""Type"" = 1";
-
-            if (active != null)
-                sql += $@"
-                AND         ""Staked"" = {active}";
-            
-            sql += @"
-                ORDER BY    ""Id""
-                OFFSET      @offset
-                LIMIT       @limit";
+            var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
+                .Filter("Type", 1)
+                .Filter("Staked", active)
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "activationLevel" => "ActivationLevel",
+                    "deactivationLevel" => "DeactivationLevel",
+                    "stakingBalance" => "StakingBalance",
+                    "balance" => "Balance",
+                    _ => "Id"
+                });
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { limit, offset });
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row =>
             {
@@ -754,9 +756,6 @@ namespace Tzkt.Api.Repositories
                 .Filter("Balance", balance)
                 .Filter("DelegationLevel", delegationLevel)
                 .Take(sort ?? new SortParameter { Desc = "delegationLevel" }, offset, limit, x => x == "balance" ? "Balance" : "DelegationLevel");
-
-            var sqlParams = new DynamicParameters();
-            var sqlFilters = $@"WHERE ""DelegateId"" = {delegat.Id} ";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);

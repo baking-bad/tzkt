@@ -254,6 +254,23 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, BoolParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"""{column}"" = {value.Eq}");
+
+            if (value.Null != null)
+            {
+                AppendFilter(value.Null == true
+                    ? $@"""{column}"" IS NULL"
+                    : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
         public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, string> map = null)
         {
             var sortAsc = true;
