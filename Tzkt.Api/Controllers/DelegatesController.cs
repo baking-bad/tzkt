@@ -30,7 +30,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify fields to include into response or leave it undefined to return all fields. If you use `select` query parameter then response will be an array of array of selected values.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
         /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
         /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
@@ -41,7 +41,7 @@ namespace Tzkt.Api.Controllers
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
-            SelectorParameter select = null,
+            string select = null,
             [Min(0)] int p = 0,
             [Range(0, 1000)] int n = 100)
         {
@@ -60,9 +60,15 @@ namespace Tzkt.Api.Controllers
             if (p != 0) offset = new OffsetParameter { Pg = p };
             if (n != 100) limit = n;
 
-            return Ok(select == null
-                ? (object)await Accounts.GetDelegates(active, sort, offset, limit)
-                : await Accounts.GetDelegates(active, sort, offset, limit, select));
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Accounts.GetDelegates(active, sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Accounts.GetDelegates(active, sort, offset, limit, fields[0]));
+
+            return Ok(await Accounts.GetDelegates(active, sort, offset, limit, fields));
         }
 
         /// <summary>
