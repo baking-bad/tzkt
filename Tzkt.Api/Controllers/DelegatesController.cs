@@ -27,7 +27,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts.
         /// </remarks>
         /// <param name="active">Delegate status to filter by (true - only active, false - only deactivated, undefined - all delegates)</param>
-        /// <param name="sort">Sorts delegators by specified field. Supported fields: `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`.</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`, `numDelegators`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
@@ -48,10 +48,10 @@ namespace Tzkt.Api.Controllers
             #region validate
             if (sort != null)
             {
-                if (sort.Asc != null && !(sort.Asc == "activationLevel" || sort.Asc == "stakingBalance" || sort.Asc == "deactivationLevel" || sort.Asc == "balance"))
+                if (sort.Asc != null && !(sort.Asc == "activationLevel" || sort.Asc == "stakingBalance" || sort.Asc == "deactivationLevel" || sort.Asc == "balance" || sort.Asc == "numDelegators"))
                     return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
 
-                if (sort.Desc != null && !(sort.Desc == "activationLevel" || sort.Desc == "stakingBalance" || sort.Desc == "deactivationLevel" || sort.Desc == "balance"))
+                if (sort.Desc != null && !(sort.Desc == "activationLevel" || sort.Desc == "stakingBalance" || sort.Desc == "deactivationLevel" || sort.Desc == "balance" || sort.Desc == "numDelegators"))
                     return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
             }
             #endregion

@@ -523,6 +523,7 @@ namespace Tzkt.Api.Repositories
                     "deactivationLevel" => "DeactivationLevel",
                     "stakingBalance" => "StakingBalance",
                     "balance" => "Balance",
+                    "numDelegators" => "DelegatorsCount",
                     _ => "Id"
                 });
 
@@ -636,6 +637,7 @@ namespace Tzkt.Api.Repositories
                     "deactivationLevel" => "DeactivationLevel",
                     "stakingBalance" => "StakingBalance",
                     "balance" => "Balance",
+                    "numDelegators" => "DelegatorsCount",
                     _ => "Id"
                 });
 
@@ -899,6 +901,7 @@ namespace Tzkt.Api.Repositories
                     "deactivationLevel" => "DeactivationLevel",
                     "stakingBalance" => "StakingBalance",
                     "balance" => "Balance",
+                    "numDelegators" => "DelegatorsCount",
                     _ => "Id"
                 });
 
