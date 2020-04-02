@@ -46,14 +46,8 @@ namespace Tzkt.Api.Controllers
             [Range(0, 1000)] int n = 100)
         {
             #region validate
-            if (sort != null)
-            {
-                if (sort.Asc != null && !(sort.Asc == "activationLevel" || sort.Asc == "stakingBalance" || sort.Asc == "deactivationLevel" || sort.Asc == "balance" || sort.Asc == "numDelegators"))
-                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
-
-                if (sort.Desc != null && !(sort.Desc == "activationLevel" || sort.Desc == "stakingBalance" || sort.Desc == "deactivationLevel" || sort.Desc == "balance" || sort.Desc == "numDelegators"))
-                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
-            }
+            if (sort != null && !sort.Validate("stakingBalance", "balance", "numDelegators", "activationLevel", "deactivationLevel"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
             #endregion
 
             //backward compatibility

@@ -508,6 +508,7 @@ namespace Tzkt.Api.Repositories
             return accounts;
         }
 
+        #region delegates
         public async Task<IEnumerable<Models.Delegate>> GetDelegates(
             BoolParameter active,
             SortParameter sort,
@@ -624,7 +625,7 @@ namespace Tzkt.Api.Repositories
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                 }
             }
-            
+
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
@@ -1064,6 +1065,482 @@ namespace Tzkt.Api.Repositories
 
             return result;
         }
+        #endregion
+
+        #region contracts
+        public async Task<IEnumerable<Contract>> GetContracts(
+            ContractKindParameter kind,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
+        {
+            var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
+                .Filter("Type", 2)
+                .Filter("Kind", kind)
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "balance" => "Balance",
+                    "firstActivity" => "FirstLevel",
+                    "lastActivity" => "LastLevel",
+                    "numTransactions" => "TransactionsCount",
+                    _ => "Id"
+                });
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            return rows.Select(row =>
+            {
+                var metadata = Accounts.GetMetadata((int)row.Id);
+
+                var creator = row.CreatorId == null ? null
+                            : Accounts.Get((int)row.CreatorId);
+
+                var creatorMetadata = creator == null ? null
+                    : Accounts.GetMetadata(creator.Id);
+
+                var manager = row.ManagerId == null ? null
+                    : (RawUser)Accounts.Get((int)row.ManagerId);
+
+                var managerMetadata = manager == null ? null
+                    : Accounts.GetMetadata(manager.Id);
+
+                var contractDelegate = row.DelegateId == null ? null
+                    : Accounts.Get((int)row.DelegateId);
+
+                var contractDelegateMetadata = contractDelegate == null ? null
+                    : Accounts.GetMetadata(contractDelegate.Id);
+
+                return new Contract
+                {
+                    Alias = metadata?.Alias,
+                    Address = row.Address,
+                    Kind = KindToString(row.Kind),
+                    Balance = row.Balance,
+                    Creator = creator == null ? null
+                        : new CreatorInfo
+                        {
+                            Alias = creatorMetadata?.Alias,
+                            Address = creator.Address
+                        },
+                    Manager = manager == null ? null
+                        : new ManagerInfo
+                        {
+                            Alias = managerMetadata?.Alias,
+                            Address = manager.Address,
+                            PublicKey = manager.PublicKey,
+                        },
+                    Delegate = contractDelegate == null ? null
+                        : new DelegateInfo
+                        {
+                            Alias = contractDelegateMetadata?.Alias,
+                            Address = contractDelegate.Address,
+                            Active = contractDelegate.Staked
+                        },
+                    DelegationLevel = contractDelegate == null ? null
+                        : row.DelegationLevel,
+                    DelegationTime = contractDelegate == null ? null
+                        : (DateTime?)Time[row.DelegationLevel],
+                    FirstActivity = row.FirstLevel,
+                    FirstActivityTime = Time[row.FirstLevel],
+                    LastActivity = row.LastLevel,
+                    LastActivityTime = Time[row.LastLevel],
+                    NumContracts = row.ContractsCount,
+                    NumDelegations = row.DelegationsCount,
+                    NumOriginations = row.OriginationsCount,
+                    NumReveals = row.RevealsCount,
+                    NumMigrations = row.MigrationsCount,
+                    NumTransactions = row.TransactionsCount
+                };
+            });
+        }
+
+        public async Task<IEnumerable<object>> GetContracts(
+            ContractKindParameter kind,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
+        {
+            var columns = new HashSet<string>(fields.Length + 2);
+            foreach (var field in fields)
+            {
+                switch (field)
+                {
+                    case "type": columns.Add(@"""Type"""); break;
+                    case "kind": columns.Add(@"""Kind"""); break;
+                    case "alias": columns.Add(@"""Id"""); break;
+                    case "address": columns.Add(@"""Address"""); break;
+                    case "balance": columns.Add(@"""Balance"""); break;
+                    case "creator": columns.Add(@"""CreatorId"""); break;
+                    case "manager": columns.Add(@"""ManagerId"""); break;
+                    case "delegate": columns.Add(@"""DelegateId"""); break;
+                    case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
+                    case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
+                    case "numContracts": columns.Add(@"""ContractsCount"""); break;
+                    case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
+                    case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
+                    case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
+                    case "numReveals": columns.Add(@"""RevealsCount"""); break;
+                    case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
+                    case "firstActivity": columns.Add(@"""FirstLevel"""); break;
+                    case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
+                    case "lastActivity": columns.Add(@"""LastLevel"""); break;
+                    case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
+                }
+            }
+
+            if (columns.Count == 0)
+                return Enumerable.Empty<object>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
+                .Filter("Type", 2)
+                .Filter("Kind", kind)
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "balance" => "Balance",
+                    "firstActivity" => "FirstLevel",
+                    "lastActivity" => "LastLevel",
+                    "numTransactions" => "TransactionsCount",
+                    _ => "Id"
+                });
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Length];
+
+            for (int i = 0, j = 0; i < fields.Length; i++)
+            {
+                switch (fields[i])
+                {
+                    case "type":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = AccountTypes.Contract;
+                        break;
+                    case "kind":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = KindToString(row.Kind);
+                        break;
+                    case "alias":
+                        j = 0;
+                        foreach (var row in rows)
+                        {
+                            var metadata = Accounts.GetMetadata((int)row.Id);
+                            result[j++][i] = metadata?.Alias;
+                        }
+                        break;
+                    case "address":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.Address;
+                        break;
+                    case "balance":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.Balance;
+                        break;
+                    case "creator":
+                        j = 0;
+                        foreach (var row in rows)
+                        {
+                            var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
+                            var creatorMetadata = creator == null ? null : Accounts.GetMetadata(creator.Id);
+                            result[j++][i] = creator == null ? null : new CreatorInfo
+                            {
+                                Alias = creatorMetadata?.Alias,
+                                Address = creator.Address
+                            };
+                        }
+                        break;
+                    case "manager":
+                        j = 0;
+                        foreach (var row in rows)
+                        {
+                            var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
+                            var managerMetadata = manager == null ? null : Accounts.GetMetadata(manager.Id);
+                            result[j++][i] = manager == null ? null : new ManagerInfo
+                            {
+                                Alias = managerMetadata?.Alias,
+                                Address = manager.Address,
+                                PublicKey = manager.PublicKey,
+                            };
+                        }
+                        break;
+                    case "delegate":
+                        j = 0;
+                        foreach (var row in rows)
+                        {
+                            var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
+                            var delegatMetadata = delegat == null ? null : Accounts.GetMetadata(delegat.Id);
+                            result[j++][i] = delegat == null ? null : new DelegateInfo
+                            {
+                                Alias = delegatMetadata?.Alias,
+                                Address = delegat.Address,
+                                Active = delegat.Staked
+                            };
+                        }
+                        break;
+                    case "delegationLevel":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.DelegateId == null ? null : row.DelegationLevel;
+                        break;
+                    case "delegationTime":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.DelegateId == null ? null : Time[row.DelegationLevel];
+                        break;
+                    case "numContracts":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.ContractsCount;
+                        break;
+                    case "numDelegations":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.DelegationsCount;
+                        break;
+                    case "numOriginations":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.OriginationsCount;
+                        break;
+                    case "numTransactions":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.TransactionsCount;
+                        break;
+                    case "numReveals":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.RevealsCount;
+                        break;
+                    case "numMigrations":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.MigrationsCount;
+                        break;
+                    case "firstActivity":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.FirstLevel;
+                        break;
+                    case "firstActivityTime":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = Time[row.FirstLevel];
+                        break;
+                    case "lastActivity":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = row.LastLevel;
+                        break;
+                    case "lastActivityTime":
+                        j = 0;
+                        foreach (var row in rows)
+                            result[j++][i] = Time[row.LastLevel];
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+
+        public async Task<IEnumerable<object>> GetContracts(
+            ContractKindParameter kind,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
+        {
+            var columns = new HashSet<string>(3);
+            switch (field)
+            {
+                case "type": columns.Add(@"""Type"""); break;
+                case "kind": columns.Add(@"""Kind"""); break;
+                case "alias": columns.Add(@"""Id"""); break;
+                case "address": columns.Add(@"""Address"""); break;
+                case "balance": columns.Add(@"""Balance"""); break;
+                case "creator": columns.Add(@"""CreatorId"""); break;
+                case "manager": columns.Add(@"""ManagerId"""); break;
+                case "delegate": columns.Add(@"""DelegateId"""); break;
+                case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
+                case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
+                case "numContracts": columns.Add(@"""ContractsCount"""); break;
+                case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
+                case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
+                case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
+                case "numReveals": columns.Add(@"""RevealsCount"""); break;
+                case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
+                case "firstActivity": columns.Add(@"""FirstLevel"""); break;
+                case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
+                case "lastActivity": columns.Add(@"""LastLevel"""); break;
+                case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
+            }
+
+            if (columns.Count == 0)
+                return Enumerable.Empty<object>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
+                .Filter("Type", 2)
+                .Filter("Kind", kind)
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "balance" => "Balance",
+                    "firstActivity" => "FirstLevel",
+                    "lastActivity" => "LastLevel",
+                    "numTransactions" => "TransactionsCount",
+                    _ => "Id"
+                });
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()];
+            var j = 0;
+
+            switch (field)
+            {
+                case "type":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = AccountTypes.Contract;
+                    break;
+                case "kind":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = KindToString(row.Kind);
+                    break;
+                case "alias":
+                    j = 0;
+                    foreach (var row in rows)
+                    {
+                        var metadata = Accounts.GetMetadata((int)row.Id);
+                        result[j++] = metadata?.Alias;
+                    }
+                    break;
+                case "address":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.Address;
+                    break;
+                case "balance":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.Balance;
+                    break;
+                case "creator":
+                    j = 0;
+                    foreach (var row in rows)
+                    {
+                        var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
+                        var creatorMetadata = creator == null ? null : Accounts.GetMetadata(creator.Id);
+                        result[j++] = creator == null ? null : new CreatorInfo
+                        {
+                            Alias = creatorMetadata?.Alias,
+                            Address = creator.Address
+                        };
+                    }
+                    break;
+                case "manager":
+                    j = 0;
+                    foreach (var row in rows)
+                    {
+                        var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
+                        var managerMetadata = manager == null ? null : Accounts.GetMetadata(manager.Id);
+                        result[j++] = manager == null ? null : new ManagerInfo
+                        {
+                            Alias = managerMetadata?.Alias,
+                            Address = manager.Address,
+                            PublicKey = manager.PublicKey,
+                        };
+                    }
+                    break;
+                case "delegate":
+                    j = 0;
+                    foreach (var row in rows)
+                    {
+                        var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
+                        var delegatMetadata = delegat == null ? null : Accounts.GetMetadata(delegat.Id);
+                        result[j++] = delegat == null ? null : new DelegateInfo
+                        {
+                            Alias = delegatMetadata?.Alias,
+                            Address = delegat.Address,
+                            Active = delegat.Staked
+                        };
+                    }
+                    break;
+                case "delegationLevel":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.DelegateId == null ? null : row.DelegationLevel;
+                    break;
+                case "delegationTime":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.DelegateId == null ? null : Time[row.DelegationLevel];
+                    break;
+                case "numContracts":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.ContractsCount;
+                    break;
+                case "numDelegations":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.DelegationsCount;
+                    break;
+                case "numOriginations":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.OriginationsCount;
+                    break;
+                case "numTransactions":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.TransactionsCount;
+                    break;
+                case "numReveals":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.RevealsCount;
+                    break;
+                case "numMigrations":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.MigrationsCount;
+                    break;
+                case "firstActivity":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.FirstLevel;
+                    break;
+                case "firstActivityTime":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = Time[row.FirstLevel];
+                    break;
+                case "lastActivity":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = row.LastLevel;
+                    break;
+                case "lastActivityTime":
+                    j = 0;
+                    foreach (var row in rows)
+                        result[j++] = Time[row.LastLevel];
+                    break;
+            }
+
+            return result;
+        }
+        #endregion
 
         public async Task<IEnumerable<Contract>> GetContracts(int? kind, int limit = 100, int offset = 0)
         {
@@ -1648,8 +2125,8 @@ namespace Tzkt.Api.Repositories
 
         string KindToString(int kind) => kind switch
         {
-            0 => "delegator_contract",
-            1 => "smart_contract",
+            0 => ContractKinds.Delegator,
+            1 => ContractKinds.SmartContract,
             _ => "unknown"
         };
     }

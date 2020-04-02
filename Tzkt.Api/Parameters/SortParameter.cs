@@ -20,5 +20,28 @@ namespace Tzkt.Api
         /// Example: `?sort.desc=id`.
         /// </summary>
         public string Desc { get; set; }
+
+        public bool Validate(params string[] fields)
+        {
+            if (Asc != null)
+            {
+                for (int i = 0; i < fields.Length; i++)
+                    if (fields[i] == Asc)
+                        return true;
+
+                return false;
+            }
+
+            if (Desc != null)
+            {
+                for (int i = 0; i < fields.Length; i++)
+                    if (fields[i] == Desc)
+                        return true;
+
+                return false;
+            }
+
+            return true;
+        }
     }
 }

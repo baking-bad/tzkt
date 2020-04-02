@@ -47,6 +47,19 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, ContractKindParameter kind)
+        {
+            if (kind == null) return this;
+
+            if (kind.Eq != null)
+                AppendFilter($@"""{column}"" = {kind.Eq}");
+
+            if (kind.Ne != null)
+                AppendFilter($@"""{column}"" != {kind.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, OperationStatusParameter status)
         {
             if (status == null) return this;

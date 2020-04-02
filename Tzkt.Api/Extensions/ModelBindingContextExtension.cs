@@ -224,6 +224,37 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetContractKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (valueObject.FirstValue == ContractKinds.Delegator)
+                    {
+                        hasValue = true;
+                        result = 0;
+                    }
+                    else if (valueObject.FirstValue == ContractKinds.SmartContract)
+                    {
+                        hasValue = true;
+                        result = 1;
+                    }
+                    else
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid contract kind.");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetOperationStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

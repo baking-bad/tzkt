@@ -118,14 +118,8 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(delegationLevel)}.nex", "This parameter doesn't support .nex mode.");
             }
 
-            if (sort != null)
-            {
-                if (sort.Asc != null && sort.Asc != "delegationLevel" && sort.Asc != "balance")
-                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
-
-                if (sort.Desc != null && sort.Desc != "delegationLevel" && sort.Desc != "balance")
-                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
-            }
+            if (sort != null && !sort.Validate("balance", "delegationLevel"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
             #endregion
 
             //backward compatibility

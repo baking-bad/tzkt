@@ -442,14 +442,8 @@ namespace Tzkt.Api.Controllers
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
-            if (sort != null)
-            {
-                if (sort.Asc != null && sort.Asc != "id" && sort.Asc != "level")
-                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
-
-                if (sort.Desc != null && sort.Desc != "id" && sort.Desc != "level")
-                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
-            }
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
             #endregion
 
             //backward compatibility
@@ -606,14 +600,8 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
             }
 
-            if (sort != null)
-            {
-                if (sort.Asc != null && sort.Asc != "id" && sort.Asc != "level" && sort.Asc != "amount")
-                    return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
-
-                if (sort.Desc != null && sort.Desc != "id" && sort.Desc != "level" && sort.Desc != "amount")
-                    return new BadRequest($"{nameof(sort)}.desc", "Sorting by the specified field is not supported.");
-            }
+            if (sort != null && !sort.Validate("id", "level", "amount"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
             #endregion
 
             //backward compatibility

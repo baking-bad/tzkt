@@ -16,8 +16,8 @@ namespace Tzkt.Api.Services.Cache
 
         public string KindString => Kind switch
         {
-            0 => "delegator_contract",
-            1 => "smart_contract",
+            0 => ContractKinds.Delegator,
+            1 => ContractKinds.SmartContract,
             _ => "unknown"
         };
     }
