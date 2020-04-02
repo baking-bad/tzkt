@@ -66,6 +66,20 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get contracts count
+        /// </summary>
+        /// <remarks>
+        /// Returns a number of contract accounts.
+        /// </remarks>
+        /// <param name="kind">Contract kind to filter by (`delegator_contract` or `smart_contract`)</param>
+        /// <returns></returns>
+        [HttpGet("count")]
+        public Task<int> GetCount(ContractKindParameter kind)
+        {
+            return Accounts.GetContractsCount(kind);
+        }
+
+        /// <summary>
         /// Get contract by address
         /// </summary>
         /// <remarks>

@@ -24,7 +24,7 @@ namespace Tzkt.Api.Controllers
         /// Get delegates
         /// </summary>
         /// <remarks>
-        /// Returns a list of accounts.
+        /// Returns a list of delegate accounts.
         /// </remarks>
         /// <param name="active">Delegate status to filter by (true - only active, false - only deactivated, undefined - all delegates)</param>
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`, `numDelegators`.</param>
@@ -63,6 +63,20 @@ namespace Tzkt.Api.Controllers
                 return Ok(await Accounts.GetDelegates(active, sort, offset, limit, fields[0]));
 
             return Ok(await Accounts.GetDelegates(active, sort, offset, limit, fields));
+        }
+
+        /// <summary>
+        /// Get delegates count
+        /// </summary>
+        /// <remarks>
+        /// Returns a number of delegate accounts.
+        /// </remarks>
+        /// <param name="active">Delegate status to filter by (true - only active, false - only deactivated, undefined - all delegates)</param>
+        /// <returns></returns>
+        [HttpGet("count")]
+        public Task<int> GetCount(BoolParameter active)
+        {
+            return Accounts.GetDelegatesCount(active);
         }
 
         /// <summary>

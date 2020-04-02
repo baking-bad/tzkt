@@ -338,6 +338,16 @@ namespace Tzkt.Api.Repositories
         }
 
         #region accounts
+        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind)
+        {
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
+                .Filter("Type", type)
+                .Filter("Kind", kind);
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
         public async Task<IEnumerable<Account>> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
@@ -1134,6 +1144,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region delegates
+        public async Task<int> GetDelegatesCount(BoolParameter active)
+        {
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
+                .Filter("Type", 1)
+                .Filter("Staked", active);
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
         public async Task<IEnumerable<Models.Delegate>> GetDelegates(
             BoolParameter active,
             SortParameter sort,
@@ -1693,6 +1713,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region contracts
+        public async Task<int> GetContractsCount(ContractKindParameter kind)
+        {
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
+                .Filter("Type", 2)
+                .Filter("Kind", kind);
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
         public async Task<IEnumerable<Contract>> GetContracts(
             ContractKindParameter kind,
             SortParameter sort,

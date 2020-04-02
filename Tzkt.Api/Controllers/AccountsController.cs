@@ -79,6 +79,26 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get accounts count
+        /// </summary>
+        /// <remarks>
+        /// Returns a number of accounts.
+        /// </remarks>
+        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`).</param>
+        /// <param name="kind">Filter accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
+        /// <returns></returns>
+        [HttpGet("count")]
+        public Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind)
+        {
+            #region optimize
+            if (kind?.Eq != null && type == null)
+                type = new AccountTypeParameter { Eq = 2 };
+            #endregion
+
+            return Accounts.GetCount(type, kind);
+        }
+
+        /// <summary>
         /// Get account by address
         /// </summary>
         /// <remarks>
