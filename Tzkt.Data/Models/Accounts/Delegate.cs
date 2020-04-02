@@ -34,6 +34,9 @@ namespace Tzkt.Data.Models
     {
         public static void BuildDelegateModel(this ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => new { x.Type, x.Staked })
+                .HasFilter(@"""Type"" = 1");
         }
     }
 }

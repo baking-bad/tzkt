@@ -37,6 +37,10 @@ namespace Tzkt.Data.Models
         {
             #region indexes
             modelBuilder.Entity<Contract>()
+                .HasIndex(x => new { x.Type, x.Kind })
+                .HasFilter(@"""Type"" = 2");
+
+            modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.CreatorId);
 
             modelBuilder.Entity<Contract>()

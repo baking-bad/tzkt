@@ -53,6 +53,12 @@ namespace Tzkt.Data.Models
                 .IsUnique();
 
             modelBuilder.Entity<Account>()
+                .HasIndex(x => x.Type);
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.Staked);
+
+            modelBuilder.Entity<Account>()
                 .HasIndex(x => x.DelegateId);
             #endregion
 
