@@ -364,6 +364,7 @@ namespace Tzkt.Api.Repositories
                     "firstActivity" => "FirstLevel",
                     "lastActivity" => "LastLevel",
                     "numTransactions" => "TransactionsCount",
+                    "numContracts" => "ContractsCount",
                     _ => "Id"
                 });
 
@@ -601,6 +602,7 @@ namespace Tzkt.Api.Repositories
                     "firstActivity" => "FirstLevel",
                     "lastActivity" => "LastLevel",
                     "numTransactions" => "TransactionsCount",
+                    "numContracts" => "ContractsCount",
                     _ => "Id"
                 });
 
@@ -929,6 +931,7 @@ namespace Tzkt.Api.Repositories
                     "firstActivity" => "FirstLevel",
                     "lastActivity" => "LastLevel",
                     "numTransactions" => "TransactionsCount",
+                    "numContracts" => "ContractsCount",
                     _ => "Id"
                 });
 

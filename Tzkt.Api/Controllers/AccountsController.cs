@@ -34,7 +34,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`).</param>
         /// <param name="kind">Filter accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
-        /// <param name="sort">Sorts delegators by specified field. Supported fields: `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `balance`, `firstActivity`, `lastActivity`, `numTransactions`, `numContracts`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
@@ -54,7 +54,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 1000)] int n = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("balance", "firstActivity", "lastActivity", "numTransactions"))
+            if (sort != null && !sort.Validate("balance", "firstActivity", "lastActivity", "numTransactions", "numContracts"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
             #endregion
 
