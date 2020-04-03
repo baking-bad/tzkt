@@ -683,7 +683,7 @@ namespace Tzkt.Api.Repositories
                     case "activationTime":
                         j = 0;
                         foreach (var row in rows)
-                            result[j++][i] = Time[row.ActivationLevel];
+                            result[j++][i] = row.ActivationLevel == null ? null : Time[row.ActivationLevel];
                         break;
                     case "deactivationLevel":
                         j = 0;
@@ -827,7 +827,7 @@ namespace Tzkt.Api.Repositories
                     case "kind":
                         j = 0;
                         foreach (var row in rows)
-                            result[j++][i] = KindToString(row.Kind);
+                            result[j++][i] = row.Kind == null ? null : KindToString(row.Kind);
                         break;
                     case "creator":
                         j = 0;
@@ -996,7 +996,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "activationTime":
                     foreach (var row in rows)
-                        result[j++] = Time[row.ActivationLevel];
+                        result[j++] = row.ActivationLevel == null ? null : Time[row.ActivationLevel];
                     break;
                 case "deactivationLevel":
                     foreach (var row in rows)
@@ -1113,7 +1113,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "kind":
                     foreach (var row in rows)
-                        result[j++] = KindToString(row.Kind);
+                        result[j++] = row.Kind == null ? null : KindToString(row.Kind);
                     break;
                 case "creator":
                     foreach (var row in rows)
