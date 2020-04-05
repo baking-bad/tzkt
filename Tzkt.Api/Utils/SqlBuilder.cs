@@ -284,12 +284,12 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, string> map = null)
+        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, string> map)
         {
             var sortAsc = true;
             var sortColumn = "Id";
 
-            if (sort != null && map != null)
+            if (sort != null)
             {
                 if (sort.Asc != null)
                 {
@@ -312,6 +312,47 @@ namespace Tzkt.Api
             Builder.AppendLine(sortAsc
                 ? $@"ORDER BY ""{sortColumn}"""
                 : $@"ORDER BY ""{sortColumn}"" DESC");
+
+            if (offset != null)
+            {
+                if (offset.El != null)
+                    Builder.AppendLine($"OFFSET {offset.El}");
+                else if (offset.Pg != null)
+                    Builder.AppendLine($"OFFSET {offset.Pg * limit}");
+            }
+
+            Builder.AppendLine($"LIMIT {limit}");
+            return this;
+        }
+
+        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, string> map, string prefix)
+        {
+            var sortAsc = true;
+            var sortColumn = "Id";
+
+            if (sort != null)
+            {
+                if (sort.Asc != null)
+                {
+                    sortColumn = map(sort.Asc);
+                }
+                else if (sort.Desc != null)
+                {
+                    sortAsc = false;
+                    sortColumn = map(sort.Desc);
+                }
+            }
+
+            if (offset?.Cr != null)
+            {
+                AppendFilter(sortAsc
+                    ? $@"{prefix}.""{sortColumn}"" > {offset.Cr}"
+                    : $@"{prefix}.""{sortColumn}"" < {offset.Cr}");
+            }
+
+            Builder.AppendLine(sortAsc
+                ? $@"ORDER BY {prefix}.""{sortColumn}"""
+                : $@"ORDER BY {prefix}.""{sortColumn}"" DESC");
 
             if (offset != null)
             {

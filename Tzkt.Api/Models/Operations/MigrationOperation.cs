@@ -21,7 +21,5 @@ namespace Tzkt.Api.Models
         public Alias Account { get; set; }
 
         public long BalanceChange { get; set; }
-
-        public string Hash => null;
     }
 }

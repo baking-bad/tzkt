@@ -23,7 +23,5 @@ namespace Tzkt.Api.Models
         public long LostReward { get; set; }
 
         public long LostFees { get; set; }
-
-        public string Hash => null;
     }
 }

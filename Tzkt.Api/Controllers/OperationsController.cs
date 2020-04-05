@@ -75,13 +75,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of endorsement operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("endorsements")]
-        public Task<IEnumerable<EndorsementOperation>> GetEndorsements([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetEndorsements(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetEndorsements(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetEndorsements(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetEndorsements(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -119,13 +146,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of proposal operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("proposals")]
-        public Task<IEnumerable<ProposalOperation>> GetProposals([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetProposals(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetProposals(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetProposals(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetProposals(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -163,13 +217,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of ballot operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts ballots by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("ballots")]
-        public Task<IEnumerable<BallotOperation>> GetBallots([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetBallots(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetBallots(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetBallots(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetBallots(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -207,13 +288,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of activation operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts activations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("activations")]
-        public Task<IEnumerable<ActivationOperation>> GetActivations([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivations(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetActivations(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetActivations(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetActivations(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetActivations(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -251,13 +359,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double baking operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("double_baking")]
-        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBaking([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetDoubleBakings(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetDoubleBakings(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetDoubleBakings(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetDoubleBakings(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -295,13 +430,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double endorsing operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("double_endorsing")]
-        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsing([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetDoubleEndorsings(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -339,13 +501,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of seed nonce revelation operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations")]
-        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetNonceRevelations(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetNonceRevelations(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetNonceRevelations(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetNonceRevelations(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -387,9 +576,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `sender`, `newDelegate`.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `sender`, `prevDelegate`.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
-        /// <param name="sort">Sorts delegations by specified field. Supported fields: `id`, `level`.</param>
+        /// <param name="sort">Sorts delegations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
         /// <param name="p">Deprecated parameter. Will be removed in the next version.</param>
         /// <param name="n">Deprecated parameter. Will be removed in the next version.</param>
         /// <returns></returns>
@@ -402,6 +592,7 @@ namespace Tzkt.Api.Controllers
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 1000)] int limit = 100,
+            string select = null,
             [Min(0)] int p = 0,
             [Range(0, 1000)] int n = 100)
         {
@@ -442,15 +633,23 @@ namespace Tzkt.Api.Controllers
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
-            if (sort != null && !sort.Validate("id", "level"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             //backward compatibility
             if (p != 0) offset = new OffsetParameter { Pg = p };
             if (n != 100) limit = n;
 
-            return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit));
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -488,13 +687,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of origination operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts originations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("originations")]
-        public Task<IEnumerable<OriginationOperation>> GetOriginations([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetOriginations(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetOriginations(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetOriginations(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetOriginations(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -536,9 +762,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
         /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
-        /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `amount`.</param>
+        /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `timestamp`, `amount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
         /// <param name="p">Deprecated parameter. Will be removed in the next version.</param>
         /// <param name="n">Deprecated parameter. Will be removed in the next version.</param>
         /// <returns></returns>
@@ -551,6 +778,7 @@ namespace Tzkt.Api.Controllers
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 1000)] int limit = 100,
+            string select = null,
             [Min(0)] int p = 0,
             [Range(0, 1000)] int n = 100) 
         {
@@ -600,15 +828,23 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
             }
 
-            if (sort != null && !sort.Validate("id", "level", "amount"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             //backward compatibility
             if (p != 0) offset = new OffsetParameter { Pg = p };
             if (n != 100) limit = n;
 
-            return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit));
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -677,13 +913,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of reveal operations.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts reveals by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("reveals")]
-        public Task<IEnumerable<RevealOperation>> GetReveals([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<RevealOperation>>> GetReveals(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetReveals(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetReveals(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetReveals(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetReveals(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -721,13 +984,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts migrations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("migrations")]
-        public Task<IEnumerable<MigrationOperation>> GetMigrations([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetMigrations(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetMigrations(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetMigrations(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetMigrations(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -751,13 +1041,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of revelation penalty operations (synthetic type).
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("revelation_penalties")]
-        public Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<RevelationPenaltyOperation>>> GetRevelationPenalties(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetRevelationPenalties(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetRevelationPenalties(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -781,13 +1098,40 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("baking")]
-        public Task<IEnumerable<BakingOperation>> GetBaking([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            string select = null,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Operations.GetBakings(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            if (string.IsNullOrEmpty(select))
+                return Ok(await Operations.GetBakings(sort, offset, limit));
+
+            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+            if (fields.Length == 1)
+                return Ok(await Operations.GetBakings(sort, offset, limit, fields[0]));
+
+            return Ok(await Operations.GetBakings(sort, offset, limit, fields));
         }
 
         /// <summary>

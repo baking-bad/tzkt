@@ -35,8 +35,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<Contract>))]
-        public async Task<ActionResult> Get(
+        public async Task<ActionResult<IEnumerable<Contract>>> Get(
             ContractKindParameter kind,
             SortParameter sort,
             OffsetParameter offset,
@@ -47,7 +46,7 @@ namespace Tzkt.Api.Controllers
         {
             #region validate
             if (sort != null && !sort.Validate("balance", "firstActivity", "lastActivity", "numTransactions"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not supported.");
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             //backward compatibility
