@@ -16,6 +16,8 @@ namespace Tzkt.Api.Models
 
         public DateTime Timestamp { get; set; }
 
+        public string Block { get; set; }
+
         public string Hash { get; set; }
 
         public Alias Delegate { get; set; }

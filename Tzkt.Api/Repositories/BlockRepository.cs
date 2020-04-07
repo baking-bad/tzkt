@@ -139,47 +139,47 @@ namespace Tzkt.Api.Repositories
         async Task LoadOperations(Block block, Data.Models.Operations operations)
         {
             var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements)
-                ? Operations.GetEndorsements(block.Level)
+                ? Operations.GetEndorsements(block)
                 : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
             var proposals = operations.HasFlag(Data.Models.Operations.Proposals)
-                ? Operations.GetProposals(block.Level)
+                ? Operations.GetProposals(block)
                 : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
             var ballots = operations.HasFlag(Data.Models.Operations.Ballots)
-                ? Operations.GetBallots(block.Level)
+                ? Operations.GetBallots(block)
                 : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
             var activations = operations.HasFlag(Data.Models.Operations.Activations)
-                ? Operations.GetActivations(block.Level)
+                ? Operations.GetActivations(block)
                 : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
             var doubleBaking = operations.HasFlag(Data.Models.Operations.DoubleBakings)
-                ? Operations.GetDoubleBakings(block.Level)
+                ? Operations.GetDoubleBakings(block)
                 : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
             var doubleEndorsing = operations.HasFlag(Data.Models.Operations.DoubleEndorsings)
-                ? Operations.GetDoubleEndorsings(block.Level)
+                ? Operations.GetDoubleEndorsings(block)
                 : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
             var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations)
-                ? Operations.GetNonceRevelations(block.Level)
+                ? Operations.GetNonceRevelations(block)
                 : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
             var delegations = operations.HasFlag(Data.Models.Operations.Delegations)
-                ? Operations.GetDelegations(block.Level)
+                ? Operations.GetDelegations(block)
                 : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
             var originations = operations.HasFlag(Data.Models.Operations.Originations)
-                ? Operations.GetOriginations(block.Level)
+                ? Operations.GetOriginations(block)
                 : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
             var transactions = operations.HasFlag(Data.Models.Operations.Transactions)
-                ? Operations.GetTransactions(block.Level)
+                ? Operations.GetTransactions(block)
                 : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
             var reveals = operations.HasFlag(Data.Models.Operations.Reveals)
-                ? Operations.GetReveals(block.Level)
+                ? Operations.GetReveals(block)
                 : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
             await Task.WhenAll(

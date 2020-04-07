@@ -138,10 +138,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash)
         {
             var sql = @"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""DelegateId"", ""Slots"", ""Reward""
-                FROM     ""EndorsementOps""
-                WHERE    ""OpHash"" = @hash::character(51)
-                LIMIT    1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""DelegateId"", o.""Slots"", o.""Reward"", b.""Hash""
+                FROM        ""EndorsementOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -150,6 +152,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
@@ -158,21 +161,22 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(int level)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(Block block)
         {
             var sql = @"
-                SELECT   ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward""
-                FROM     ""EndorsementOps""
-                WHERE    ""Level"" = @level
-                ORDER BY ""Id""";
+                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward""
+                FROM        ""EndorsementOps""
+                WHERE       ""Level"" = @level
+                ORDER BY    ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new EndorsementOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
@@ -183,8 +187,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""EndorsementOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""EndorsementOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -193,6 +197,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
@@ -204,25 +209,31 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "delegate": columns.Add(@"""DelegateId"""); break;
-                    case "slots": columns.Add(@"""Slots"""); break;
-                    case "rewards": columns.Add(@"""Reward"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "delegate": columns.Add(@"o.""DelegateId"""); break;
+                    case "slots": columns.Add(@"o.""Slots"""); break;
+                    case "rewards": columns.Add(@"o.""Reward"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -242,6 +253,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -272,21 +287,27 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "delegate": columns.Add(@"""DelegateId"""); break;
-                case "slots": columns.Add(@"""Slots"""); break;
-                case "rewards": columns.Add(@"""Reward"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "delegate": columns.Add(@"o.""DelegateId"""); break;
+                case "slots": columns.Add(@"o.""Slots"""); break;
+                case "rewards": columns.Add(@"o.""Reward"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps""")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id");
 
             using var db = GetConnection();
@@ -305,6 +326,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -334,18 +359,21 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots"", ""Reward""
-                FROM     ""EndorsementOps""
-                WHERE    ""DelegateId"" = @accountId
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Slots"", o.""Reward"", b.""Hash""
+                FROM        ""EndorsementOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""DelegateId"" = @accountId
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
-
+            
             return rows.Select(row => new EndorsementOperation
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(account.Id),
@@ -357,12 +385,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT   ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Slots"", ""Reward""
-                FROM     ""EndorsementOps""
-                WHERE    ""DelegateId"" = @accountId
-                AND      ""Timestamp"" >= @from
-                AND      ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Slots"", o.""Reward"", b.""Hash""
+                FROM        ""EndorsementOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""DelegateId"" = @accountId
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -371,6 +401,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(account.Id),
@@ -394,13 +425,17 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(string hash)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", op.""Vote"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""OpHash"" = @hash::character(51)
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""BallotOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -409,6 +444,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Period = new PeriodInfo
@@ -418,30 +454,33 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetBallots(int level)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(Block block)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""Vote"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""Level"" = @level
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Vote"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""BallotOps"" as o
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""Level"" = @level
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new BallotOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -451,7 +490,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
@@ -460,13 +499,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", op.""Vote"",
-                          proposal.""Hash"", period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""BallotOps"" as o
+                INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
-                .Take(sort, offset, limit, x => "Id", "op");
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -475,6 +515,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -484,7 +525,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
@@ -493,22 +534,32 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetBallots(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
+            var joins = new HashSet<string>(3);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"op.""Id"""); break;
-                    case "level": columns.Add(@"op.""Level"""); break;
-                    case "timestamp": columns.Add(@"op.""Timestamp"""); break;
-                    case "hash": columns.Add(@"op.""OpHash"""); break;
-                    case "proposal": columns.Add(@"proposal.""Hash"""); break;
-                    case "delegate": columns.Add(@"op.""SenderId"""); break;
-                    case "vote": columns.Add(@"op.""Vote"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "delegate": columns.Add(@"o.""SenderId"""); break;
+                    case "vote": columns.Add(@"o.""Vote"""); break;
+                    case "proposal":
+                        columns.Add(@"proposal.""Hash"" as proposal");
+                        joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+                        break;
                     case "period": 
                         columns.Add(@"period.""Code""");
                         columns.Add(@"period.""Kind""");
                         columns.Add(@"period.""StartLevel""");
                         columns.Add(@"period.""EndLevel""");
+                        joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                        break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                 }
             }
@@ -516,12 +567,8 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"
-                SELECT {string.Join(',', columns)} FROM ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                ")
-                .Take(sort, offset, limit, x => "Id", "op");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -541,6 +588,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -562,7 +613,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "proposal":
                         foreach (var row in rows)
-                            result[j++][i] = row.Hash;
+                            result[j++][i] = row.proposal;
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -581,32 +632,38 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetBallots(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(4);
+            var joins = new HashSet<string>(3);
+
             switch (field)
             {
-                case "id": columns.Add(@"op.""Id"""); break;
-                case "level": columns.Add(@"op.""Level"""); break;
-                case "timestamp": columns.Add(@"op.""Timestamp"""); break;
-                case "hash": columns.Add(@"op.""OpHash"""); break;
-                case "proposal": columns.Add(@"proposal.""Hash"""); break;
-                case "delegate": columns.Add(@"op.""SenderId"""); break;
-                case "vote": columns.Add(@"op.""Vote"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "delegate": columns.Add(@"o.""SenderId"""); break;
+                case "vote": columns.Add(@"o.""Vote"""); break;
+                case "proposal":
+                    columns.Add(@"proposal.""Hash"" as proposal");
+                    joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+                    break;
                 case "period":
                     columns.Add(@"period.""Code""");
                     columns.Add(@"period.""Kind""");
                     columns.Add(@"period.""StartLevel""");
                     columns.Add(@"period.""EndLevel""");
+                    joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                    break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"
-                SELECT {string.Join(',', columns)} FROM ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                ")
-                .Take(sort, offset, limit, x => "Id", "op");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -624,6 +681,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -645,7 +706,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "proposal":
                     foreach (var row in rows)
-                        result[j++] = row.Hash;
+                        result[j++] = row.proposal;
                     break;
                 case "delegate":
                     foreach (var row in rows)
@@ -663,13 +724,17 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""Vote"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""SenderId"" = @accountId
-                {Pagination("op", sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""BallotOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""SenderId"" = @accountId
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -678,6 +743,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -687,7 +753,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(account.Id),
                 Vote = VoteToString(row.Vote)
             });
@@ -696,15 +762,19 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""Vote"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""BallotOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""SenderId"" = @accountId
-                AND       op.""Timestamp"" >= @from
-                AND       op.""Timestamp"" < @to
-                {Pagination("op", sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""BallotOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""SenderId"" = @accountId
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -713,6 +783,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -722,7 +793,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(account.Id),
                 Vote = VoteToString(row.Vote)
             });
@@ -743,13 +814,17 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""SenderId"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""OpHash"" = @hash::character(51)
-                ORDER BY  op.""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""ProposalOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -758,6 +833,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Period = new PeriodInfo
@@ -767,29 +843,32 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(int level)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(Block block)
         {
             var sql = @"
-                SELECT    op.""Id"", op.""Timestamp"", op.""OpHash"", op.""SenderId"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""Level"" = @level
-                ORDER BY  op.""Id""";
+                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""ProposalOps"" as o
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""Level"" = @level
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new ProposalOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -799,7 +878,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
@@ -807,13 +886,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", op.""SenderId"",
-                          proposal.""Hash"", period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""ProposalOps"" as o
+                INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
-                .Take(sort, offset, limit, x => "Id", "op");
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -822,6 +902,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -831,7 +912,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
@@ -839,21 +920,31 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
+            var joins = new HashSet<string>(3);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"op.""Id"""); break;
-                    case "level": columns.Add(@"op.""Level"""); break;
-                    case "timestamp": columns.Add(@"op.""Timestamp"""); break;
-                    case "hash": columns.Add(@"op.""OpHash"""); break;
-                    case "proposal": columns.Add(@"proposal.""Hash"""); break;
-                    case "delegate": columns.Add(@"op.""SenderId"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "delegate": columns.Add(@"o.""SenderId"""); break;
+                    case "proposal":
+                        columns.Add(@"proposal.""Hash"" as proposal");
+                        joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+                        break;
                     case "period":
                         columns.Add(@"period.""Code""");
                         columns.Add(@"period.""Kind""");
                         columns.Add(@"period.""StartLevel""");
                         columns.Add(@"period.""EndLevel""");
+                        joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                        break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                 }
             }
@@ -861,12 +952,8 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"
-                SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                ")
-                .Take(sort, offset, limit, x => "Id", "op");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -886,6 +973,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -907,7 +998,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "proposal":
                         foreach (var row in rows)
-                            result[j++][i] = row.Hash;
+                            result[j++][i] = row.proposal;
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -922,31 +1013,37 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(4);
+            var joins = new HashSet<string>(3);
+
             switch (field)
             {
-                case "id": columns.Add(@"op.""Id"""); break;
-                case "level": columns.Add(@"op.""Level"""); break;
-                case "timestamp": columns.Add(@"op.""Timestamp"""); break;
-                case "hash": columns.Add(@"op.""OpHash"""); break;
-                case "proposal": columns.Add(@"proposal.""Hash"""); break;
-                case "delegate": columns.Add(@"op.""SenderId"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "delegate": columns.Add(@"o.""SenderId"""); break;
+                case "proposal":
+                    columns.Add(@"proposal.""Hash"" as proposal");
+                    joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+                    break;
                 case "period":
                     columns.Add(@"period.""Code""");
                     columns.Add(@"period.""Kind""");
                     columns.Add(@"period.""StartLevel""");
                     columns.Add(@"period.""EndLevel""");
+                    joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                    break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"
-                SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                ")
-                .Take(sort, offset, limit, x => "Id", "op");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -964,6 +1061,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -985,7 +1086,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "proposal":
                     foreach (var row in rows)
-                        result[j++] = row.Hash;
+                        result[j++] = row.proposal;
                     break;
                 case "delegate":
                     foreach (var row in rows)
@@ -999,13 +1100,17 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""SenderId"" = @accountId
-                {Pagination("op", sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""ProposalOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""SenderId"" = @accountId
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -1014,6 +1119,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -1023,7 +1129,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(account.Id)
             });
         }
@@ -1031,15 +1137,19 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    op.""Id"", op.""Level"", op.""Timestamp"", op.""OpHash"", proposal.""Hash"",
-                          period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
-                FROM      ""ProposalOps"" as op
-                LEFT JOIN ""Proposals"" as proposal ON proposal.""Id"" = op.""ProposalId""
-                LEFT JOIN ""VotingPeriods"" as period ON period.""Id"" = op.""PeriodId""
-                WHERE     op.""SenderId"" = @accountId
-                AND       op.""Timestamp"" >= @from
-                AND       op.""Timestamp"" < @to
-                {Pagination("op", sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", b.""Hash"", proposal.""Hash"" as proposal,
+                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                FROM        ""ProposalOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                INNER JOIN  ""Proposals"" as proposal
+                        ON  proposal.""Id"" = o.""ProposalId""
+                INNER JOIN  ""VotingPeriods"" as period
+                        ON  period.""Id"" = o.""PeriodId""
+                WHERE       o.""SenderId"" = @accountId
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -1048,6 +1158,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Period = new PeriodInfo
@@ -1057,7 +1168,7 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.Hash,
+                Proposal = row.proposal,
                 Delegate = Accounts.GetAlias(account.Id)
             });
         }
@@ -1077,10 +1188,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ActivationOperation>> GetActivations(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccountId"", ""Balance""
-                FROM      ""ActivationOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccountId"", o.""Balance"", b.""Hash""
+                FROM        ""ActivationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -1089,6 +1202,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Account = Accounts.GetAlias(row.AccountId),
@@ -1096,21 +1210,22 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetActivations(int level)
+        public async Task<IEnumerable<ActivationOperation>> GetActivations(Block block)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""AccountId"", ""Balance""
-                FROM      ""ActivationOps""
-                WHERE     ""Level"" = @level
-                ORDER BY  ""Id""";
+                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccountId"", ""Balance""
+                FROM        ""ActivationOps""
+                WHERE       ""Level"" = @level
+                ORDER BY    ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new ActivationOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(row.AccountId),
@@ -1120,8 +1235,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<ActivationOperation>> GetActivations(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""ActivationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""ActivationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1130,6 +1245,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(row.AccountId),
@@ -1140,24 +1256,30 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "account": columns.Add(@"""AccountId"""); break;
-                    case "balance": columns.Add(@"""Balance"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "account": columns.Add(@"o.""AccountId"""); break;
+                    case "balance": columns.Add(@"o.""Balance"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1177,6 +1299,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -1203,21 +1329,27 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "account": columns.Add(@"""AccountId"""); break;
-                case "balance": columns.Add(@"""Balance"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "account": columns.Add(@"o.""AccountId"""); break;
+                case "balance": columns.Add(@"o.""Balance"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1235,6 +1367,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -1260,10 +1396,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ActivationOperation>> GetActivations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Balance""
-                FROM      ""ActivationOps""
-                WHERE     ""AccountId"" = @accountId
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Balance"", b.""Hash""
+                FROM        ""ActivationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""AccountId"" = @accountId
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -1272,6 +1410,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(account.Id),
@@ -1282,12 +1421,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ActivationOperation>> GetActivations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""Balance""
-                FROM      ""ActivationOps""
-                WHERE     ""AccountId"" = @accountId
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Balance"", b.""Hash""
+                FROM        ""ActivationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""AccountId"" = @accountId
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -1296,6 +1437,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(account.Id),
@@ -1318,11 +1460,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleBakingOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
+                            o.""OffenderId"", o.""OffenderLostDeposit"", o.""OffenderLostReward"", o.""OffenderLostFee"", b.""Hash""
+                FROM        ""DoubleBakingOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -1331,6 +1475,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 AccusedLevel = row.AccusedLevel,
@@ -1343,22 +1488,23 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(int level)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(Block block)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleBakingOps""
-                WHERE     ""Level"" = @level
-                ORDER BY  ""Id""";
+                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                            ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
+                FROM        ""DoubleBakingOps""
+                WHERE       ""Level"" = @level
+                ORDER BY    ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new DoubleBakingOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1373,8 +1519,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""DoubleBakingOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleBakingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1383,6 +1529,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1398,29 +1545,35 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "accusedLevel": columns.Add(@"""AccusedLevel"""); break;
-                    case "accuser": columns.Add(@"""AccuserId"""); break;
-                    case "accuserRewards": columns.Add(@"""AccuserReward"""); break;
-                    case "offender": columns.Add(@"""OffenderId"""); break;
-                    case "offenderLostDeposits": columns.Add(@"""OffenderLostDeposit"""); break;
-                    case "offenderLostRewards": columns.Add(@"""OffenderLostReward"""); break;
-                    case "offenderLostFees": columns.Add(@"""OffenderLostFee"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
+                    case "accuser": columns.Add(@"o.""AccuserId"""); break;
+                    case "accuserRewards": columns.Add(@"o.""AccuserReward"""); break;
+                    case "offender": columns.Add(@"o.""OffenderId"""); break;
+                    case "offenderLostDeposits": columns.Add(@"o.""OffenderLostDeposit"""); break;
+                    case "offenderLostRewards": columns.Add(@"o.""OffenderLostReward"""); break;
+                    case "offenderLostFees": columns.Add(@"o.""OffenderLostFee"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1440,6 +1593,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -1486,26 +1643,32 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "accusedLevel": columns.Add(@"""AccusedLevel"""); break;
-                case "accuser": columns.Add(@"""AccuserId"""); break;
-                case "accuserRewards": columns.Add(@"""AccuserReward"""); break;
-                case "offender": columns.Add(@"""OffenderId"""); break;
-                case "offenderLostDeposits": columns.Add(@"""OffenderLostDeposit"""); break;
-                case "offenderLostRewards": columns.Add(@"""OffenderLostReward"""); break;
-                case "offenderLostFees": columns.Add(@"""OffenderLostFee"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
+                case "accuser": columns.Add(@"o.""AccuserId"""); break;
+                case "accuserRewards": columns.Add(@"o.""AccuserReward"""); break;
+                case "offender": columns.Add(@"o.""OffenderId"""); break;
+                case "offenderLostDeposits": columns.Add(@"o.""OffenderLostDeposit"""); break;
+                case "offenderLostRewards": columns.Add(@"o.""OffenderLostReward"""); break;
+                case "offenderLostFees": columns.Add(@"o.""OffenderLostFee"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1523,6 +1686,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -1568,12 +1735,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleBakingOps""
-                WHERE     (""AccuserId"" = @accountId
-                OR        ""OffenderId"" = @accountId)
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
+                            o.""OffenderId"", o.""OffenderLostDeposit"", o.""OffenderLostReward"", o.""OffenderLostFee"", b.""Hash""
+                FROM        ""DoubleBakingOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""AccuserId"" = @accountId
+                OR          o.""OffenderId"" = @accountId)
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -1582,6 +1751,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1597,14 +1767,16 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleBakingOps""
-                WHERE     (""AccuserId"" = @accountId
-                OR        ""OffenderId"" = @accountId)
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
+                            o.""OffenderId"", o.""OffenderLostDeposit"", o.""OffenderLostReward"", o.""OffenderLostFee"", b.""Hash""
+                FROM        ""DoubleBakingOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""AccuserId"" = @accountId
+                OR          o.""OffenderId"" = @accountId)
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -1613,6 +1785,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1640,11 +1813,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleEndorsingOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
+                            o.""OffenderId"", o.""OffenderLostDeposit"", o.""OffenderLostReward"", o.""OffenderLostFee"", b.""Hash""
+                FROM        ""DoubleEndorsingOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -1653,6 +1828,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 AccusedLevel = row.AccusedLevel,
@@ -1665,22 +1841,23 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(int level)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(Block block)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleEndorsingOps""
-                WHERE     ""Level"" = @level
-                ORDER BY  ""Id""";
+                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
+                            ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
+                FROM        ""DoubleEndorsingOps""
+                WHERE       ""Level"" = @level
+                ORDER BY    ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new DoubleEndorsingOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1695,8 +1872,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""DoubleEndorsingOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleEndorsingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1705,6 +1882,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1720,29 +1898,35 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "accusedLevel": columns.Add(@"""AccusedLevel"""); break;
-                    case "accuser": columns.Add(@"""AccuserId"""); break;
-                    case "accuserRewards": columns.Add(@"""AccuserReward"""); break;
-                    case "offender": columns.Add(@"""OffenderId"""); break;
-                    case "offenderLostDeposits": columns.Add(@"""OffenderLostDeposit"""); break;
-                    case "offenderLostRewards": columns.Add(@"""OffenderLostReward"""); break;
-                    case "offenderLostFees": columns.Add(@"""OffenderLostFee"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
+                    case "accuser": columns.Add(@"o.""AccuserId"""); break;
+                    case "accuserRewards": columns.Add(@"o.""AccuserReward"""); break;
+                    case "offender": columns.Add(@"o.""OffenderId"""); break;
+                    case "offenderLostDeposits": columns.Add(@"o.""OffenderLostDeposit"""); break;
+                    case "offenderLostRewards": columns.Add(@"o.""OffenderLostReward"""); break;
+                    case "offenderLostFees": columns.Add(@"o.""OffenderLostFee"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1762,6 +1946,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -1808,26 +1996,32 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "accusedLevel": columns.Add(@"""AccusedLevel"""); break;
-                case "accuser": columns.Add(@"""AccuserId"""); break;
-                case "accuserRewards": columns.Add(@"""AccuserReward"""); break;
-                case "offender": columns.Add(@"""OffenderId"""); break;
-                case "offenderLostDeposits": columns.Add(@"""OffenderLostDeposit"""); break;
-                case "offenderLostRewards": columns.Add(@"""OffenderLostReward"""); break;
-                case "offenderLostFees": columns.Add(@"""OffenderLostFee"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
+                case "accuser": columns.Add(@"o.""AccuserId"""); break;
+                case "accuserRewards": columns.Add(@"o.""AccuserReward"""); break;
+                case "offender": columns.Add(@"o.""OffenderId"""); break;
+                case "offenderLostDeposits": columns.Add(@"o.""OffenderLostDeposit"""); break;
+                case "offenderLostRewards": columns.Add(@"o.""OffenderLostReward"""); break;
+                case "offenderLostFees": columns.Add(@"o.""OffenderLostFee"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1845,6 +2039,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -1890,12 +2088,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleEndorsingOps""
-                WHERE     (""AccuserId"" = @accountId
-                OR        ""OffenderId"" = @accountId)
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
+                            o.""OffenderId"", o.""OffenderLostDeposit"", o.""OffenderLostReward"", o.""OffenderLostFee"", b.""Hash""
+                FROM        ""DoubleEndorsingOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""AccuserId"" = @accountId
+                OR          o.""OffenderId"" = @accountId)
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -1904,6 +2104,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1919,14 +2120,16 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                          ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
-                FROM      ""DoubleEndorsingOps""
-                WHERE     (""AccuserId"" = @accountId
-                OR        ""OffenderId"" = @accountId)
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
+                            o.""OffenderId"", o.""OffenderLostDeposit"", o.""OffenderLostReward"", o.""OffenderLostFee"", b.""Hash""
+                FROM        ""DoubleEndorsingOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""AccuserId"" = @accountId
+                OR          o.""OffenderId"" = @accountId)
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -1935,6 +2138,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
@@ -1962,10 +2166,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""SenderId"", ""RevealedLevel""
-                FROM      ""NonceRevelationOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", b.""Hash""
+                FROM        ""NonceRevelationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -1974,6 +2180,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -1982,7 +2189,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(int level)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(Block block)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
@@ -1991,12 +2198,13 @@ namespace Tzkt.Api.Repositories
                 ORDER BY  ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new NonceRevelationOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -2007,8 +2215,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""NonceRevelationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""NonceRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2017,6 +2225,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -2028,25 +2237,31 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "baker": columns.Add(@"""BakerId"""); break;
-                    case "sender": columns.Add(@"""SenderId"""); break;
-                    case "revealedLevel": columns.Add(@"""RevealedLevel"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "baker": columns.Add(@"o.""BakerId"""); break;
+                    case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2066,6 +2281,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -2096,22 +2315,28 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "baker": columns.Add(@"""BakerId"""); break;
-                case "sender": columns.Add(@"""SenderId"""); break;
-                case "revealedLevel": columns.Add(@"""RevealedLevel"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "baker": columns.Add(@"o.""BakerId"""); break;
+                case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2129,6 +2354,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -2158,11 +2387,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
-                FROM      ""NonceRevelationOps""
-                WHERE     (""BakerId"" = @accountId
-                OR        ""SenderId"" = @accountId)
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", b.""Hash""
+                FROM        ""NonceRevelationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""BakerId"" = @accountId
+                OR          o.""SenderId"" = @accountId)
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -2171,6 +2402,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -2182,13 +2414,15 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
-                FROM      ""NonceRevelationOps""
-                WHERE     (""BakerId"" = @accountId
-                OR        ""SenderId"" = @accountId)
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", b.""Hash""
+                FROM        ""NonceRevelationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""BakerId"" = @accountId
+                OR          o.""SenderId"" = @accountId)
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -2197,6 +2431,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -2220,11 +2455,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
-                FROM      ""DelegationOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
+                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Nonce"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                FROM        ""DelegationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -2233,6 +2470,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2252,11 +2490,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
-                FROM      ""DelegationOps""
-                WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
+                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Nonce"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                FROM        ""DelegationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
@@ -2265,6 +2505,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2284,11 +2525,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
-                FROM      ""DelegationOps""
-                WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
+                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                FROM        ""DelegationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
@@ -2297,6 +2540,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2313,7 +2557,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(int level)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(Block block)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
@@ -2323,12 +2567,13 @@ namespace Tzkt.Api.Repositories
                 ORDER BY  ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new DelegationOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2354,12 +2599,12 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""DelegationOps""")
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DelegationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "sender" ? "SenderId" : "PrevDelegateId")
                 .Filter("Status", status)
-                .Take(sort, offset, limit, x => "Id");
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2368,6 +2613,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2395,37 +2641,43 @@ namespace Tzkt.Api.Repositories
             string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "initiator": columns.Add(@"""InitiatorId"""); break;
-                    case "sender": columns.Add(@"""SenderId"""); break;
-                    case "counter": columns.Add(@"""Counter"""); break;
-                    case "nonce": columns.Add(@"""Nonce"""); break;
-                    case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                    case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                    case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                    case "prevDelegate": columns.Add(@"""PrevDelegateId"""); break;
-                    case "newDelegate": columns.Add(@"""DelegateId"""); break;
-                    case "status": columns.Add(@"""Status"""); break;
-                    case "errors": columns.Add(@"""Errors"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "initiator": columns.Add(@"o.""InitiatorId"""); break;
+                    case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "counter": columns.Add(@"o.""Counter"""); break;
+                    case "nonce": columns.Add(@"o.""Nonce"""); break;
+                    case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                    case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                    case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                    case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
+                    case "newDelegate": columns.Add(@"o.""DelegateId"""); break;
+                    case "status": columns.Add(@"o.""Status"""); break;
+                    case "errors": columns.Add(@"o.""Errors"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps""")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "sender" ? "SenderId" : "PrevDelegateId")
                 .Filter("Status", status)
-                .Take(sort, offset, limit, x => "Id");
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2445,6 +2697,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -2515,34 +2771,40 @@ namespace Tzkt.Api.Repositories
             string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "initiator": columns.Add(@"""InitiatorId"""); break;
-                case "sender": columns.Add(@"""SenderId"""); break;
-                case "counter": columns.Add(@"""Counter"""); break;
-                case "nonce": columns.Add(@"""Nonce"""); break;
-                case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                case "prevDelegate": columns.Add(@"""PrevDelegateId"""); break;
-                case "newDelegate": columns.Add(@"""DelegateId"""); break;
-                case "status": columns.Add(@"""Status"""); break;
-                case "errors": columns.Add(@"""Errors"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "initiator": columns.Add(@"o.""InitiatorId"""); break;
+                case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "counter": columns.Add(@"o.""Counter"""); break;
+                case "nonce": columns.Add(@"o.""Nonce"""); break;
+                case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
+                case "newDelegate": columns.Add(@"o.""DelegateId"""); break;
+                case "status": columns.Add(@"o.""Status"""); break;
+                case "errors": columns.Add(@"o.""Errors"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps""")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "sender" ? "SenderId" : "PrevDelegateId")
                 .Filter("Status", status)
-                .Take(sort, offset, limit, x => "Id");
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2560,6 +2822,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -2621,14 +2887,16 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
-                FROM      ""DelegationOps""
-                WHERE     (""SenderId"" = @accountId
-                OR        ""PrevDelegateId"" = @accountId
-                OR        ""DelegateId"" = @accountId
-                OR        ""InitiatorId"" = @accountId)
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
+                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Nonce"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                FROM        ""DelegationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""SenderId"" = @accountId
+                OR          o.""PrevDelegateId"" = @accountId
+                OR          o.""DelegateId"" = @accountId
+                OR          o.""InitiatorId"" = @accountId)
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -2637,6 +2905,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2656,16 +2925,18 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
-                FROM      ""DelegationOps""
-                WHERE     (""SenderId"" = @accountId
-                OR        ""PrevDelegateId"" = @accountId
-                OR        ""DelegateId"" = @accountId
-                OR        ""InitiatorId"" = @accountId)
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
+                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Nonce"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                FROM        ""DelegationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""SenderId"" = @accountId
+                OR          o.""PrevDelegateId"" = @accountId
+                OR          o.""DelegateId"" = @accountId
+                OR          o.""InitiatorId"" = @accountId)
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -2674,6 +2945,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2705,11 +2977,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
-                FROM      ""OriginationOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
+                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
+                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                FROM        ""OriginationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -2726,6 +3001,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Id = row.Id,
                     Level = row.Level,
+                    Block = row.Hash,
                     Timestamp = row.Timestamp,
                     Hash = hash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2758,11 +3034,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
-                FROM      ""OriginationOps""
-                WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
+                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
+                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                FROM        ""OriginationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
@@ -2779,6 +3058,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Id = row.Id,
                     Level = row.Level,
+                    Block = row.Hash,
                     Timestamp = row.Timestamp,
                     Hash = hash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2811,11 +3091,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
-                FROM      ""OriginationOps""
-                WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
+                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
+                            o.""Status"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                FROM        ""OriginationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
@@ -2832,6 +3115,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Id = row.Id,
                     Level = row.Level,
+                    Block = row.Hash,
                     Timestamp = row.Timestamp,
                     Hash = hash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2861,7 +3145,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(int level)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(Block block)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
@@ -2871,7 +3155,7 @@ namespace Tzkt.Api.Repositories
                 ORDER BY  ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row =>
             {
@@ -2884,7 +3168,8 @@ namespace Tzkt.Api.Repositories
                 return new OriginationOperation
                 {
                     Id = row.Id,
-                    Level = level,
+                    Level = block.Level,
+                    Block = block.Hash,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2916,8 +3201,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""OriginationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""OriginationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2934,6 +3219,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Id = row.Id,
                     Level = row.Level,
+                    Block = row.Hash,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -2965,39 +3251,45 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "initiator": columns.Add(@"""InitiatorId"""); break;
-                    case "sender": columns.Add(@"""SenderId"""); break;
-                    case "counter": columns.Add(@"""Counter"""); break;
-                    case "nonce": columns.Add(@"""Nonce"""); break;
-                    case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                    case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                    case "storageLimit": columns.Add(@"""StorageLimit"""); break;
-                    case "storageUsed": columns.Add(@"""StorageUsed"""); break;
-                    case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                    case "storageFee": columns.Add(@"""StorageFee"""); break;
-                    case "allocationFee": columns.Add(@"""AllocationFee"""); break;
-                    case "contractDelegate": columns.Add(@"""DelegateId"""); break;
-                    case "contractBalance": columns.Add(@"""Balance"""); break;
-                    case "status": columns.Add(@"""Status"""); break;
-                    case "originatedContract": columns.Add(@"""ContractId"""); break;
-                    case "contractManager": columns.Add(@"""ManagerId"""); break;
-                    case "errors": columns.Add(@"""Errors"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "initiator": columns.Add(@"o.""InitiatorId"""); break;
+                    case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "counter": columns.Add(@"o.""Counter"""); break;
+                    case "nonce": columns.Add(@"o.""Nonce"""); break;
+                    case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                    case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                    case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
+                    case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
+                    case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                    case "storageFee": columns.Add(@"o.""StorageFee"""); break;
+                    case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
+                    case "contractDelegate": columns.Add(@"o.""DelegateId"""); break;
+                    case "contractBalance": columns.Add(@"o.""Balance"""); break;
+                    case "status": columns.Add(@"o.""Status"""); break;
+                    case "originatedContract": columns.Add(@"o.""ContractId"""); break;
+                    case "contractManager": columns.Add(@"o.""ManagerId"""); break;
+                    case "errors": columns.Add(@"o.""Errors"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -3017,6 +3309,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -3113,36 +3409,42 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "initiator": columns.Add(@"""InitiatorId"""); break;
-                case "sender": columns.Add(@"""SenderId"""); break;
-                case "counter": columns.Add(@"""Counter"""); break;
-                case "nonce": columns.Add(@"""Nonce"""); break;
-                case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                case "storageLimit": columns.Add(@"""StorageLimit"""); break;
-                case "storageUsed": columns.Add(@"""StorageUsed"""); break;
-                case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                case "storageFee": columns.Add(@"""StorageFee"""); break;
-                case "allocationFee": columns.Add(@"""AllocationFee"""); break;
-                case "contractDelegate": columns.Add(@"""DelegateId"""); break;
-                case "contractBalance": columns.Add(@"""Balance"""); break;
-                case "status": columns.Add(@"""Status"""); break;
-                case "originatedContract": columns.Add(@"""ContractId"""); break;
-                case "contractManager": columns.Add(@"""ManagerId"""); break;
-                case "errors": columns.Add(@"""Errors"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "initiator": columns.Add(@"o.""InitiatorId"""); break;
+                case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "counter": columns.Add(@"o.""Counter"""); break;
+                case "nonce": columns.Add(@"o.""Nonce"""); break;
+                case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
+                case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
+                case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                case "storageFee": columns.Add(@"o.""StorageFee"""); break;
+                case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
+                case "contractDelegate": columns.Add(@"o.""DelegateId"""); break;
+                case "contractBalance": columns.Add(@"o.""Balance"""); break;
+                case "status": columns.Add(@"o.""Status"""); break;
+                case "originatedContract": columns.Add(@"o.""ContractId"""); break;
+                case "contractManager": columns.Add(@"o.""ManagerId"""); break;
+                case "errors": columns.Add(@"o.""Errors"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -3160,6 +3462,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -3255,15 +3561,18 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
-                FROM      ""OriginationOps""
-                WHERE     (""SenderId"" = @accountId
-                OR        ""ManagerId"" = @accountId
-                OR        ""DelegateId"" = @accountId
-                OR        ""ContractId"" = @accountId
-                OR        ""InitiatorId"" = @accountId)
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
+                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
+                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                FROM        ""OriginationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""SenderId"" = @accountId
+                OR          o.""ManagerId"" = @accountId
+                OR          o.""DelegateId"" = @accountId
+                OR          o.""ContractId"" = @accountId
+                OR          o.""InitiatorId"" = @accountId)
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -3280,6 +3589,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Id = row.Id,
                     Level = row.Level,
+                    Block = row.Hash,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3312,17 +3622,20 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
-                FROM      ""OriginationOps""
-                WHERE     (""SenderId"" = @accountId
-                OR        ""ManagerId"" = @accountId
-                OR        ""DelegateId"" = @accountId
-                OR        ""ContractId"" = @accountId
-                OR        ""InitiatorId"" = @accountId)
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
+                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
+                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                FROM        ""OriginationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""SenderId"" = @accountId
+                OR          o.""ManagerId"" = @accountId
+                OR          o.""DelegateId"" = @accountId
+                OR          o.""ContractId"" = @accountId
+                OR          o.""InitiatorId"" = @accountId)
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -3339,6 +3652,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Id = row.Id,
                     Level = row.Level,
+                    Block = row.Hash,
                     Timestamp = row.Timestamp,
                     Hash = row.OpHash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3383,11 +3697,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
-                FROM      ""TransactionOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""Nonce"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                FROM        ""TransactionOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -3396,6 +3712,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3421,11 +3738,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
-                FROM      ""TransactionOps""
-                WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""Nonce"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                FROM        ""TransactionOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
@@ -3434,6 +3753,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3459,11 +3779,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""InitiatorId"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
-                FROM      ""TransactionOps""
-                WHERE     ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter AND ""Nonce"" = @nonce
-                LIMIT     1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                FROM        ""TransactionOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
@@ -3472,6 +3794,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3494,7 +3817,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(int level)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(Block block)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
@@ -3504,12 +3827,13 @@ namespace Tzkt.Api.Repositories
                 ORDER BY  ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new TransactionOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3541,12 +3865,12 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""TransactionOps""")
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""TransactionOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Parameters", parameters)
-                .Take(sort, offset, limit, x => x == "amount" ? "Amount" : "Id");
+                .Take(sort, offset, limit, x => x == "amount" ? "Amount" : "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -3555,6 +3879,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3588,43 +3913,49 @@ namespace Tzkt.Api.Repositories
             string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "initiator": columns.Add(@"""InitiatorId"""); break;
-                    case "sender": columns.Add(@"""SenderId"""); break;
-                    case "counter": columns.Add(@"""Counter"""); break;
-                    case "nonce": columns.Add(@"""Nonce"""); break;
-                    case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                    case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                    case "storageLimit": columns.Add(@"""StorageLimit"""); break;
-                    case "storageUsed": columns.Add(@"""StorageUsed"""); break;
-                    case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                    case "storageFee": columns.Add(@"""StorageFee"""); break;
-                    case "allocationFee": columns.Add(@"""AllocationFee"""); break;
-                    case "target": columns.Add(@"""TargetId"""); break;
-                    case "amount": columns.Add(@"""Amount"""); break;
-                    case "parameters": columns.Add(@"""Parameters"""); break;
-                    case "status": columns.Add(@"""Status"""); break;
-                    case "errors": columns.Add(@"""Errors"""); break;
-                    case "hasInternals": columns.Add(@"""InternalOperations"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "initiator": columns.Add(@"o.""InitiatorId"""); break;
+                    case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "counter": columns.Add(@"o.""Counter"""); break;
+                    case "nonce": columns.Add(@"o.""Nonce"""); break;
+                    case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                    case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                    case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
+                    case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
+                    case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                    case "storageFee": columns.Add(@"o.""StorageFee"""); break;
+                    case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
+                    case "target": columns.Add(@"o.""TargetId"""); break;
+                    case "amount": columns.Add(@"o.""Amount"""); break;
+                    case "parameters": columns.Add(@"o.""Parameters"""); break;
+                    case "status": columns.Add(@"o.""Status"""); break;
+                    case "errors": columns.Add(@"o.""Errors"""); break;
+                    case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps""")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Parameters", parameters)
-                .Take(sort, offset, limit, x => x == "amount" ? "Amount" : "Id");
+                .Take(sort, offset, limit, x => x == "amount" ? "Amount" : "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -3644,6 +3975,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -3738,40 +4073,46 @@ namespace Tzkt.Api.Repositories
             string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "initiator": columns.Add(@"""InitiatorId"""); break;
-                case "sender": columns.Add(@"""SenderId"""); break;
-                case "counter": columns.Add(@"""Counter"""); break;
-                case "nonce": columns.Add(@"""Nonce"""); break;
-                case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                case "storageLimit": columns.Add(@"""StorageLimit"""); break;
-                case "storageUsed": columns.Add(@"""StorageUsed"""); break;
-                case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                case "storageFee": columns.Add(@"""StorageFee"""); break;
-                case "allocationFee": columns.Add(@"""AllocationFee"""); break;
-                case "target": columns.Add(@"""TargetId"""); break;
-                case "amount": columns.Add(@"""Amount"""); break;
-                case "parameters": columns.Add(@"""Parameters"""); break;
-                case "status": columns.Add(@"""Status"""); break;
-                case "errors": columns.Add(@"""Errors"""); break;
-                case "hasInternals": columns.Add(@"""InternalOperations"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "initiator": columns.Add(@"o.""InitiatorId"""); break;
+                case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "counter": columns.Add(@"o.""Counter"""); break;
+                case "nonce": columns.Add(@"o.""Nonce"""); break;
+                case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
+                case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
+                case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                case "storageFee": columns.Add(@"o.""StorageFee"""); break;
+                case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
+                case "target": columns.Add(@"o.""TargetId"""); break;
+                case "amount": columns.Add(@"o.""Amount"""); break;
+                case "parameters": columns.Add(@"o.""Parameters"""); break;
+                case "status": columns.Add(@"o.""Status"""); break;
+                case "errors": columns.Add(@"o.""Errors"""); break;
+                case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps""")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Parameters", parameters)
-                .Take(sort, offset, limit, x => x == "amount" ? "Amount" : "Id");
+                .Take(sort, offset, limit, x => x == "amount" ? "Amount" : "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -3789,6 +4130,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -3874,13 +4219,15 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
-                FROM      ""TransactionOps""
-                WHERE     (""SenderId"" = @accountId
-                OR        ""TargetId"" = @accountId
-                OR        ""InitiatorId"" = @accountId)
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""Nonce"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                FROM        ""TransactionOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""SenderId"" = @accountId
+                OR          o.""TargetId"" = @accountId
+                OR          o.""InitiatorId"" = @accountId)
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -3889,6 +4236,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3914,15 +4262,17 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
-                FROM      ""TransactionOps""
-                WHERE     (""SenderId"" = @accountId
-                OR        ""TargetId"" = @accountId
-                OR        ""InitiatorId"" = @accountId)
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""Nonce"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                FROM        ""TransactionOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE      (o.""SenderId"" = @accountId
+                OR          o.""TargetId"" = @accountId
+                OR          o.""InitiatorId"" = @accountId)
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -3931,6 +4281,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
@@ -3968,10 +4319,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash)
         {
             var sql = @"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
-                FROM      ""RevealOps""
-                WHERE     ""OpHash"" = @hash::character(51)
-                ORDER BY  ""Id""";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
+                FROM        ""RevealOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51)
+                ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -3980,6 +4333,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Sender = Accounts.GetAlias(row.SenderId),
@@ -3995,10 +4349,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, int counter)
         {
             var sql = @"
-                SELECT  ""Id"", ""Level"", ""Timestamp"", ""SenderId"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
-                FROM    ""RevealOps""
-                WHERE   ""OpHash"" = @hash::character(51) AND ""Counter"" = @counter
-                LIMIT   1";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
+                FROM        ""RevealOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
+                LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
@@ -4007,6 +4363,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Sender = Accounts.GetAlias(row.SenderId),
@@ -4019,7 +4376,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetReveals(int level)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(Block block)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
@@ -4028,12 +4385,13 @@ namespace Tzkt.Api.Repositories
                 ORDER BY  ""Id""";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { level });
+            var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new RevealOperation
             {
                 Id = row.Id,
-                Level = level,
+                Level = block.Level,
+                Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Sender = Accounts.GetAlias(row.SenderId),
@@ -4048,8 +4406,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<RevealOperation>> GetReveals(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""RevealOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevealOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4058,6 +4416,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Sender = Accounts.GetAlias(row.SenderId),
@@ -4073,29 +4432,35 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "hash": columns.Add(@"""OpHash"""); break;
-                    case "sender": columns.Add(@"""SenderId"""); break;
-                    case "counter": columns.Add(@"""Counter"""); break;
-                    case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                    case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                    case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                    case "status": columns.Add(@"""Status"""); break;
-                    case "errors": columns.Add(@"""Errors"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "hash": columns.Add(@"o.""OpHash"""); break;
+                    case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "counter": columns.Add(@"o.""Counter"""); break;
+                    case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                    case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                    case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                    case "status": columns.Add(@"o.""Status"""); break;
+                    case "errors": columns.Add(@"o.""Errors"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4115,6 +4480,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -4161,26 +4530,32 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "hash": columns.Add(@"""OpHash"""); break;
-                case "sender": columns.Add(@"""SenderId"""); break;
-                case "counter": columns.Add(@"""Counter"""); break;
-                case "gasLimit": columns.Add(@"""GasLimit"""); break;
-                case "gasUsed": columns.Add(@"""GasUsed"""); break;
-                case "bakerFee": columns.Add(@"""BakerFee"""); break;
-                case "status": columns.Add(@"""Status"""); break;
-                case "errors": columns.Add(@"""Errors"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "hash": columns.Add(@"o.""OpHash"""); break;
+                case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "counter": columns.Add(@"o.""Counter"""); break;
+                case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
+                case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
+                case "status": columns.Add(@"o.""Status"""); break;
+                case "errors": columns.Add(@"o.""Errors"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4198,6 +4573,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -4243,10 +4622,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
-                FROM      ""RevealOps""
-                WHERE     ""SenderId"" = @accountId
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
+                FROM        ""RevealOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""SenderId"" = @accountId
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -4255,6 +4636,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Sender = Accounts.GetAlias(row.SenderId),
@@ -4270,12 +4652,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
-                FROM      ""RevealOps""
-                WHERE     ""SenderId"" = @accountId
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
+                FROM        ""RevealOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""SenderId"" = @accountId
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -4284,6 +4668,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Sender = Accounts.GetAlias(row.SenderId),
@@ -4310,8 +4695,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""MigrationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""MigrationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4320,6 +4705,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(row.AccountId),
                 Kind = MigrationKindToString(row.Kind),
@@ -4330,24 +4716,30 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "account": columns.Add(@"""AccountId"""); break;
-                    case "kind": columns.Add(@"""Kind"""); break;
-                    case "balanceChange": columns.Add(@"""BalanceChange"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "account": columns.Add(@"o.""AccountId"""); break;
+                    case "kind": columns.Add(@"o.""Kind"""); break;
+                    case "balanceChange": columns.Add(@"o.""BalanceChange"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4367,6 +4759,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -4393,21 +4789,27 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "account": columns.Add(@"""AccountId"""); break;
-                case "kind": columns.Add(@"""Kind"""); break;
-                case "balanceChange": columns.Add(@"""BalanceChange"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "account": columns.Add(@"o.""AccountId"""); break;
+                case "kind": columns.Add(@"o.""Kind"""); break;
+                case "balanceChange": columns.Add(@"o.""BalanceChange"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4425,6 +4827,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -4450,10 +4856,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Kind"", ""BalanceChange""
-                FROM      ""MigrationOps""
-                WHERE     ""AccountId"" = @accountId
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""Kind"", o.""BalanceChange"", b.""Hash""
+                FROM        ""MigrationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""AccountId"" = @accountId
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -4462,6 +4870,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
                 Kind = MigrationKindToString(row.Kind),
@@ -4472,12 +4881,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    ""Id"", ""Level"", ""Timestamp"", ""Kind"", ""BalanceChange""
-                FROM      ""MigrationOps""
-                WHERE     ""AccountId"" = @accountId
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""Kind"", o.""BalanceChange"", b.""Hash""
+                FROM        ""MigrationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""AccountId"" = @accountId
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -4486,6 +4897,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
                 Kind = MigrationKindToString(row.Kind),
@@ -4507,8 +4919,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""RevelationPenaltyOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevelationPenaltyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4517,6 +4929,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,
@@ -4528,25 +4941,31 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "level": columns.Add(@"""Level"""); break;
-                    case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "baker": columns.Add(@"""BakerId"""); break;
-                    case "missedLevel": columns.Add(@"""MissedLevel"""); break;
-                    case "lostReward": columns.Add(@"""LostReward"""); break;
-                    case "lostFees": columns.Add(@"""LostFees"""); break;
+                    case "id": columns.Add(@"o.""Id"""); break;
+                    case "level": columns.Add(@"o.""Level"""); break;
+                    case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                    case "baker": columns.Add(@"o.""BakerId"""); break;
+                    case "missedLevel": columns.Add(@"o.""MissedLevel"""); break;
+                    case "lostReward": columns.Add(@"o.""LostReward"""); break;
+                    case "lostFees": columns.Add(@"o.""LostFees"""); break;
+                    case "block":
+                        columns.Add(@"b.""Hash""");
+                        joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4566,6 +4985,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "block":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
@@ -4596,22 +5019,28 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<object>> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "level": columns.Add(@"""Level"""); break;
-                case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "baker": columns.Add(@"""BakerId"""); break;
-                case "missedLevel": columns.Add(@"""MissedLevel"""); break;
-                case "lostReward": columns.Add(@"""LostReward"""); break;
-                case "lostFees": columns.Add(@"""LostFees"""); break;
+                case "id": columns.Add(@"o.""Id"""); break;
+                case "level": columns.Add(@"o.""Level"""); break;
+                case "timestamp": columns.Add(@"o.""Timestamp"""); break;
+                case "baker": columns.Add(@"o.""BakerId"""); break;
+                case "missedLevel": columns.Add(@"o.""MissedLevel"""); break;
+                case "lostReward": columns.Add(@"o.""LostReward"""); break;
+                case "lostFees": columns.Add(@"o.""LostFees"""); break;
+                case "block":
+                    columns.Add(@"b.""Hash""");
+                    joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps""")
-                .Take(sort, offset, limit, x => "Id");
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -4629,6 +5058,10 @@ namespace Tzkt.Api.Repositories
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
+                    break;
+                case "block":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
                     break;
                 case "timestamp":
                     foreach (var row in rows)
@@ -4658,10 +5091,12 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    *
-                FROM      ""RevelationPenaltyOps""
-                WHERE     ""BakerId"" = @accountId
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.*, b.""Hash""
+                FROM        ""RevelationPenaltyOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""BakerId"" = @accountId
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id });
@@ -4670,6 +5105,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,
@@ -4681,12 +5117,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT    *
-                FROM      ""RevelationPenaltyOps""
-                WHERE     ""BakerId"" = @accountId
-                AND       ""Timestamp"" >= @from
-                AND       ""Timestamp"" < @to
-                {Pagination(sort, offset, offsetMode, limit)}";
+                SELECT      o.*, b.""Hash""
+                FROM        ""RevelationPenaltyOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""BakerId"" = @accountId
+                AND         o.""Timestamp"" >= @from
+                AND         o.""Timestamp"" < @to
+                {Pagination("o", sort, offset, offsetMode, limit)}";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { accountId = account.Id, from, to });
@@ -4695,6 +5133,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,

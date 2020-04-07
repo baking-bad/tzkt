@@ -16,6 +16,8 @@ namespace Tzkt.Api.Models
 
         public DateTime Timestamp { get; set; }
 
+        public string Block { get; set; }
+
         public string Kind { get; set; }
 
         public Alias Account { get; set; }

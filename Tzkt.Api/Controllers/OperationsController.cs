@@ -828,7 +828,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
             }
 
-            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+            if (sort != null && !sort.Validate("id", "level", "timestamp", "amount"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

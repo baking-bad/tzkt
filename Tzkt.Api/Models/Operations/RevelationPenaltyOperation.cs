@@ -16,6 +16,8 @@ namespace Tzkt.Api.Models
 
         public DateTime Timestamp { get; set; }
 
+        public string Block { get; set; }
+
         public Alias Baker { get; set; }
 
         public int MissedLevel { get; set; }
