@@ -27,6 +27,7 @@ namespace Tzkt.Api.Models
 
         public Alias Baker { get; set; }
 
+        #region operations
         public IEnumerable<EndorsementOperation> Endorsements { get; set; }
 
         public IEnumerable<ProposalOperation> Proposals { get; set; }
@@ -41,5 +42,6 @@ namespace Tzkt.Api.Models
         public IEnumerable<OriginationOperation> Originations { get; set; }
         public IEnumerable<TransactionOperation> Transactions { get; set; }
         public IEnumerable<RevealOperation> Reveals { get; set; }
+        #endregion
     }
 }

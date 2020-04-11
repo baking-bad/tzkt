@@ -85,18 +85,22 @@ namespace Tzkt.Api.Repositories
             return block;
         }
 
-        public async Task<IEnumerable<Block>> Get(int limit = 100, int offset = 0)
+        public async Task<IEnumerable<Block>> Get(SortParameter sort, OffsetParameter offset, int limit)
         {
-
-            var sql = @"
-                SELECT  ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
-                FROM    ""Blocks""
-                ORDER BY ""Level""
-                OFFSET   @offset
-                LIMIT    @limit";
+            var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"" FROM ""Blocks""")
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "level" => "Id",
+                    "timestamp" => "Id",
+                    "priority" => "Priority",
+                    "validations" => "Validations",
+                    "reward" => "Reward",
+                    "fees" => "Fees",
+                    _ => "Id",
+                });
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { limit, offset });
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Block
             {
@@ -111,6 +115,184 @@ namespace Tzkt.Api.Repositories
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null
             });
+        }
+
+        public async Task<IEnumerable<object>> Get(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        {
+            var columns = new HashSet<string>(fields.Length);
+            foreach (var field in fields)
+            {
+                switch (field)
+                {
+                    case "level": columns.Add(@"""Level"""); break;
+                    case "hash": columns.Add(@"""Hash"""); break;
+                    case "timestamp": columns.Add(@"""Timestamp"""); break;
+                    case "proto": columns.Add(@"""ProtoCode"""); break;
+                    case "priority": columns.Add(@"""Priority"""); break;
+                    case "validations": columns.Add(@"""Validations"""); break;
+                    case "reward": columns.Add(@"""Reward"""); break;
+                    case "fees": columns.Add(@"""Fees"""); break;
+                    case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
+                    case "baker": columns.Add(@"""BakerId"""); break;
+                }
+            }
+
+            if (columns.Count == 0)
+                return Enumerable.Empty<object>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "level" => "Id",
+                    "timestamp" => "Id",
+                    "priority" => "Priority",
+                    "validations" => "Validations",
+                    "reward" => "Reward",
+                    "fees" => "Fees",
+                    _ => "Id",
+                });
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Length];
+
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
+            {
+                switch (fields[i])
+                {
+                    case "level":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Level;
+                        break;
+                    case "hash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Hash;
+                        break;
+                    case "timestamp":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Timestamp;
+                        break;
+                    case "proto":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ProtoCode;
+                        break;
+                    case "priority":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Priority;
+                        break;
+                    case "validations":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Validations;
+                        break;
+                    case "reward":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Reward;
+                        break;
+                    case "fees":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Fees;
+                        break;
+                    case "nonceRevealed":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RevelationId != null;
+                        break;
+                    case "baker":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<IEnumerable<object>> Get(SortParameter sort, OffsetParameter offset, int limit, string field)
+        {
+            var columns = new HashSet<string>(1);
+            switch (field)
+            {
+                case "level": columns.Add(@"""Level"""); break;
+                case "hash": columns.Add(@"""Hash"""); break;
+                case "timestamp": columns.Add(@"""Timestamp"""); break;
+                case "proto": columns.Add(@"""ProtoCode"""); break;
+                case "priority": columns.Add(@"""Priority"""); break;
+                case "validations": columns.Add(@"""Validations"""); break;
+                case "reward": columns.Add(@"""Reward"""); break;
+                case "fees": columns.Add(@"""Fees"""); break;
+                case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
+                case "baker": columns.Add(@"""BakerId"""); break;
+            }
+
+            if (columns.Count == 0)
+                return Enumerable.Empty<object>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "level" => "Id",
+                    "timestamp" => "Id",
+                    "priority" => "Priority",
+                    "validations" => "Validations",
+                    "reward" => "Reward",
+                    "fees" => "Fees",
+                    _ => "Id",
+                });
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            //TODO: optimize memory allocation
+            var result = new object[rows.Count()];
+            var j = 0;
+
+            switch (field)
+            {
+                case "level":
+                    foreach (var row in rows)
+                        result[j++] = row.Level;
+                    break;
+                case "hash":
+                    foreach (var row in rows)
+                        result[j++] = row.Hash;
+                    break;
+                case "timestamp":
+                    foreach (var row in rows)
+                        result[j++] = row.Timestamp;
+                    break;
+                case "proto":
+                    foreach (var row in rows)
+                        result[j++] = row.ProtoCode;
+                    break;
+                case "priority":
+                    foreach (var row in rows)
+                        result[j++] = row.Priority;
+                    break;
+                case "validations":
+                    foreach (var row in rows)
+                        result[j++] = row.Validations;
+                    break;
+                case "reward":
+                    foreach (var row in rows)
+                        result[j++] = row.Reward;
+                    break;
+                case "fees":
+                    foreach (var row in rows)
+                        result[j++] = row.Fees;
+                    break;
+                case "nonceRevealed":
+                    foreach (var row in rows)
+                        result[j++] = row.RevelationId != null;
+                    break;
+                case "baker":
+                    foreach (var row in rows)
+                        result[j++] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
+                    break;
+            }
+
+            return result;
         }
 
         public async Task<IEnumerable<int>> GetEventLevels(Data.Models.BlockEvents @event, OffsetParameter offset, int limit = 100)
