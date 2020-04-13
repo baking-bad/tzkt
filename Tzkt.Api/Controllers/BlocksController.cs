@@ -20,6 +20,18 @@ namespace Tzkt.Api.Controllers
         {
             Blocks = blocks;
         }
+        /// <summary>
+        /// Get blocks count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of blocks.
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("count")]
+        public Task<int> GetCount()
+        {
+            return Blocks.GetCount();
+        }
 
         /// <summary>
         /// Get blocks

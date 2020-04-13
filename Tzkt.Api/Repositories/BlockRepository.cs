@@ -14,11 +14,18 @@ namespace Tzkt.Api.Repositories
     {
         readonly AccountsCache Accounts;
         readonly OperationRepository Operations;
+        readonly StateCache State;
 
-        public BlockRepository(AccountsCache accounts, OperationRepository operations, IConfiguration config) : base(config)
+        public BlockRepository(AccountsCache accounts, OperationRepository operations, StateCache state, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Operations = operations;
+            State = state;
+        }
+
+        public Task<int> GetCount()
+        {
+            return Task.FromResult(State.GetState().Level + 1);
         }
 
         public async Task<Block> Get(int level, bool operations = false)
