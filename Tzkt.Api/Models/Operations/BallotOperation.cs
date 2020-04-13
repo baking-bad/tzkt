@@ -22,7 +22,7 @@ namespace Tzkt.Api.Models
 
         public PeriodInfo Period { get; set; }
 
-        public string Proposal { get; set; }
+        public ProposalAlias Proposal { get; set; }
 
         public Alias Delegate { get; set; }
 

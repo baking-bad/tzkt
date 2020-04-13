@@ -8,16 +8,19 @@ using Dapper;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Repositories
 {
     public class OperationRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly ProposalMetadataService Proposals;
 
-        public OperationRepository(AccountsCache accounts, IConfiguration config) : base(config)
+        public OperationRepository(AccountsCache accounts, ProposalMetadataService proposals, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            Proposals = proposals;
         }
 
         #region operations
@@ -454,7 +457,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
@@ -490,7 +497,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
@@ -525,7 +536,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Vote = VoteToString(row.Vote)
             });
@@ -613,7 +628,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "proposal":
                         foreach (var row in rows)
-                            result[j++][i] = row.proposal;
+                            result[j++][i] = new ProposalAlias
+                            {
+                                Hash = row.proposal,
+                                Alias = Proposals[row.proposal]?.Alias
+                            };
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -706,7 +725,11 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "proposal":
                     foreach (var row in rows)
-                        result[j++] = row.proposal;
+                        result[j++] = new ProposalAlias
+                        {
+                            Hash = row.proposal,
+                            Alias = Proposals[row.proposal]?.Alias
+                        };
                     break;
                 case "delegate":
                     foreach (var row in rows)
@@ -753,7 +776,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(account.Id),
                 Vote = VoteToString(row.Vote)
             });
@@ -793,7 +820,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(account.Id),
                 Vote = VoteToString(row.Vote)
             });
@@ -843,7 +874,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
@@ -878,7 +913,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
@@ -912,7 +951,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(row.SenderId)
             });
         }
@@ -998,7 +1041,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "proposal":
                         foreach (var row in rows)
-                            result[j++][i] = row.proposal;
+                            result[j++][i] = new ProposalAlias
+                            {
+                                Hash = row.proposal,
+                                Alias = Proposals[row.proposal]?.Alias
+                            };
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -1086,7 +1133,11 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "proposal":
                     foreach (var row in rows)
-                        result[j++] = row.proposal;
+                        result[j++] = new ProposalAlias
+                        {
+                            Hash = row.proposal,
+                            Alias = Proposals[row.proposal]?.Alias
+                        };
                     break;
                 case "delegate":
                     foreach (var row in rows)
@@ -1129,7 +1180,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(account.Id)
             });
         }
@@ -1168,7 +1223,11 @@ namespace Tzkt.Api.Repositories
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
                 },
-                Proposal = row.proposal,
+                Proposal = new ProposalAlias
+                {
+                    Hash = row.proposal,
+                    Alias = Proposals[row.proposal]?.Alias
+                },
                 Delegate = Accounts.GetAlias(account.Id)
             });
         }

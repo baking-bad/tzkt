@@ -28,6 +28,8 @@ namespace Tzkt.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAccountMetadata();
+            services.AddProposalMetadata();
+
             services.AddAccountsCache();
             services.AddStateCache();
             services.AddTimeCache();

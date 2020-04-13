@@ -16,10 +16,12 @@ namespace Tzkt.Api.Controllers
     public class SuggestController : ControllerBase
     {
         private readonly AccountMetadataService AccountMetadata;
+        private readonly ProposalMetadataService ProposalMetadata;
 
-        public SuggestController(AccountMetadataService accountMetadata)
+        public SuggestController(AccountMetadataService accountMetadata, ProposalMetadataService proposalMetadata)
         {
             AccountMetadata = accountMetadata;
+            ProposalMetadata = proposalMetadata;
         }
 
         [OpenApiIgnore]
@@ -42,6 +44,28 @@ namespace Tzkt.Api.Controllers
         {
             search = search.ToLower();
             return AccountMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search));
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("proposals")]
+        public IEnumerable<ProposalMetadataAlias> GetProposals()
+        {
+            return ProposalMetadata.Aliases;
+        }
+
+        /// <summary>
+        /// Suggest proposals
+        /// </summary>
+        /// <remarks>
+        /// Suggests known proposals by part of alias. This endpoint is useful for autocomplete.
+        /// </remarks>
+        /// <param name="search">Part of the proposal alias to search by</param>
+        /// <returns></returns>
+        [HttpGet("proposals/{search}")]
+        public IEnumerable<ProposalMetadataAlias> GetProposals(string search)
+        {
+            search = search.ToLower();
+            return ProposalMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search));
         }
     }
 }
