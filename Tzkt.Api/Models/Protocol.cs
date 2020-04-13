@@ -14,7 +14,7 @@ namespace Tzkt.Api.Models
 
         public int  FirstLevel { get; set; }
 
-        public int LastLevel { get; set; }
+        public int? LastLevel { get; set; }
 
         public ProtocolConstants Constants { get; set; }
 

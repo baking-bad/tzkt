@@ -38,13 +38,30 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of protocols.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts protocols by specified field. Supported fields: `code`, `firstLevel`, `lastLevel`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
+        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet]
-        public Task<IEnumerable<Protocol>> Get([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<Protocol>>> Get(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            [Min(0)] int p = 0,
+            [Range(0, 1000)] int n = 100)
         {
-            return Protocols.Get(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("code", "firstLevel", "lastLevel"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            //backward compatibility
+            if (p != 0) offset = new OffsetParameter { Pg = p };
+            if (n != 100) limit = n;
+
+            return Ok(await Protocols.Get(sort, offset, limit));
         }
 
         /// <summary>

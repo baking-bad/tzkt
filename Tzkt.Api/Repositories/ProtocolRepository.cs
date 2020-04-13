@@ -46,7 +46,7 @@ namespace Tzkt.Api.Repositories
                 Code = code,
                 Hash = row.Hash,
                 FirstLevel = row.FirstLevel,
-                LastLevel = row.LastLevel,
+                LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
@@ -93,7 +93,7 @@ namespace Tzkt.Api.Repositories
                 Code = row.Code,
                 Hash = hash,
                 FirstLevel = row.FirstLevel,
-                LastLevel = row.LastLevel,
+                LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
@@ -123,25 +123,20 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<IEnumerable<Protocol>> Get(int limit = 100, int offset = 0)
+        public async Task<IEnumerable<Protocol>> Get(SortParameter sort, OffsetParameter offset, int limit)
         {
-
-            var sql = @"
-                SELECT  *
-                FROM    ""Protocols""
-                ORDER BY ""Code""
-                OFFSET   @offset
-                LIMIT    @limit";
+            var sql = new SqlBuilder(@"SELECT * FROM ""Protocols""")
+                .Take(sort, offset, limit, x => "Id");
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { limit, offset });
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Protocol
             {
                 Code = row.Code,
                 Hash = row.Hash,
                 FirstLevel = row.FirstLevel,
-                LastLevel = row.LastLevel,
+                LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
                     BlockDeposit = row.BlockDeposit,
