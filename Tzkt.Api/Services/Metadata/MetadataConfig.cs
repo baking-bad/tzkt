@@ -10,6 +10,7 @@ namespace Tzkt.Api.Services
     {
         public string AccountsPath { get; set; }
         public string ProposalsPath { get; set; }
+        public string ProtocolsPath { get; set; }
     }
 
     public static class MetadataConfigExt

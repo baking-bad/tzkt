@@ -6,13 +6,28 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 
 using Tzkt.Api.Models;
-using Tzkt.Api.Services;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Repositories
 {
     public class ProtocolRepository : DbConnection
     {
-        public ProtocolRepository(IConfiguration config) : base(config) { }
+        readonly ProtocolMetadataService ProtocolMetadata;
+
+        public ProtocolRepository(ProtocolMetadataService protocolMetadata, IConfiguration config) : base(config) 
+        {
+            ProtocolMetadata = protocolMetadata;
+        }
+
+        public async Task<int> GetCount()
+        {
+            var sql = @"
+                SELECT   COUNT(*)
+                FROM     ""Protocols""";
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql);
+        }
 
         public async Task<Protocol> Get(int code)
         {
@@ -56,7 +71,8 @@ namespace Tzkt.Api.Repositories
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll
-                }
+                },
+                Metadata = ProtocolMetadata[row.Hash]
             };
         }
 
@@ -102,7 +118,8 @@ namespace Tzkt.Api.Repositories
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll
-                }
+                },
+                Metadata = ProtocolMetadata[row.Hash]
             };
         }
 
@@ -149,7 +166,8 @@ namespace Tzkt.Api.Repositories
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     TokensPerRoll = row.TokensPerRoll
-                }
+                },
+                Metadata = ProtocolMetadata[row.Hash]
             });
         }
     }

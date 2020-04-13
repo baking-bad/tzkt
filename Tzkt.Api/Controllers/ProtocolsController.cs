@@ -19,6 +19,18 @@ namespace Tzkt.Api.Controllers
         {
             Protocols = protocols;
         }
+        /// <summary>
+        /// Get protocols count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of protocols.
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("count")]
+        public Task<int> GetCount()
+        {
+            return Protocols.GetCount();
+        }
 
         /// <summary>
         /// Get protocols

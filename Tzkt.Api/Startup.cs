@@ -29,6 +29,7 @@ namespace Tzkt.Api
         {
             services.AddAccountMetadata();
             services.AddProposalMetadata();
+            services.AddProtocolMetadata();
 
             services.AddAccountsCache();
             services.AddStateCache();

@@ -17,11 +17,13 @@ namespace Tzkt.Api.Controllers
     {
         private readonly AccountMetadataService AccountMetadata;
         private readonly ProposalMetadataService ProposalMetadata;
+        private readonly ProtocolMetadataService ProtocolMetadata;
 
-        public SuggestController(AccountMetadataService accountMetadata, ProposalMetadataService proposalMetadata)
+        public SuggestController(AccountMetadataService accounts, ProposalMetadataService proposals, ProtocolMetadataService protocols)
         {
-            AccountMetadata = accountMetadata;
-            ProposalMetadata = proposalMetadata;
+            AccountMetadata = accounts;
+            ProposalMetadata = proposals;
+            ProtocolMetadata = protocols;
         }
 
         [OpenApiIgnore]
@@ -66,6 +68,28 @@ namespace Tzkt.Api.Controllers
         {
             search = search.ToLower();
             return ProposalMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search));
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("protocols")]
+        public IEnumerable<ProtocolMetadataAlias> GetProtocols()
+        {
+            return ProtocolMetadata.Aliases;
+        }
+
+        /// <summary>
+        /// Suggest protocols
+        /// </summary>
+        /// <remarks>
+        /// Suggests known protocols by part of alias. This endpoint is useful for autocomplete.
+        /// </remarks>
+        /// <param name="search">Part of the protocol alias to search by</param>
+        /// <returns></returns>
+        [HttpGet("protocols/{search}")]
+        public IEnumerable<ProtocolMetadataAlias> GetProtocols(string search)
+        {
+            search = search.ToLower();
+            return ProtocolMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search));
         }
     }
 }
