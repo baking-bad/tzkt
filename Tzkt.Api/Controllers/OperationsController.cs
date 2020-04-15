@@ -146,6 +146,8 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of proposal operations.
         /// </remarks>
+        /// <param name="period">Filters proposal operations by voting period id.</param>
+        /// <param name="proposal">Filters proposal operations by proposal hash.</param>
         /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -155,6 +157,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
+            Int32Parameter period,
+            ProtocolParameter proposal,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
@@ -172,14 +176,14 @@ namespace Tzkt.Api.Controllers
             if (n != 100) limit = n;
 
             if (string.IsNullOrEmpty(select))
-                return Ok(await Operations.GetProposals(sort, offset, limit));
+                return Ok(await Operations.GetProposals(period, proposal, sort, offset, limit));
 
             var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
             if (fields.Length == 1)
-                return Ok(await Operations.GetProposals(sort, offset, limit, fields[0]));
+                return Ok(await Operations.GetProposals(period, proposal, sort, offset, limit, fields[0]));
 
-            return Ok(await Operations.GetProposals(sort, offset, limit, fields));
+            return Ok(await Operations.GetProposals(period, proposal, sort, offset, limit, fields));
         }
 
         /// <summary>
@@ -217,6 +221,8 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of ballot operations.
         /// </remarks>
+        /// <param name="period">Filters ballots by voting period id.</param>
+        /// <param name="proposal">Filters ballots by proposal hash.</param>
         /// <param name="sort">Sorts ballots by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -226,6 +232,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("ballots")]
         public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
+            Int32Parameter period,
+            ProtocolParameter proposal,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
@@ -243,14 +251,14 @@ namespace Tzkt.Api.Controllers
             if (n != 100) limit = n;
 
             if (string.IsNullOrEmpty(select))
-                return Ok(await Operations.GetBallots(sort, offset, limit));
+                return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit));
 
             var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
             if (fields.Length == 1)
-                return Ok(await Operations.GetBallots(sort, offset, limit, fields[0]));
+                return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, fields[0]));
 
-            return Ok(await Operations.GetBallots(sort, offset, limit, fields));
+            return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, fields));
         }
 
         /// <summary>

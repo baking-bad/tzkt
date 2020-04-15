@@ -14,6 +14,7 @@ namespace Tzkt.Api
         
         StringBuilder Builder;
         bool Filters;
+        int Counter;
 
         public SqlBuilder(string select)
         {
@@ -69,6 +70,68 @@ namespace Tzkt.Api
 
             if (status.Ne != null)
                 AppendFilter($@"""{column}"" != {status.Ne}");
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, ProtocolParameter protocol)
+        {
+            if (protocol == null) return this;
+
+            if (protocol.Eq != null)
+            {
+                AppendFilter($@"""{column}"" = @p{Counter}::character(51)");
+                Params.Add($"p{Counter++}", protocol.Eq);
+            }
+
+            if (protocol.Ne != null)
+            {
+                AppendFilter($@"""{column}"" != @p{Counter}::character(51)");
+                Params.Add($"p{Counter++}", protocol.Ne);
+            }
+
+            if (protocol.In != null)
+            {
+                AppendFilter($@"""{column}"" = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", protocol.In);
+            }
+
+            if (protocol.Ni != null && protocol.Ni.Count > 0)
+            {
+                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", protocol.Ni);
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, ProtocolParameter protocol)
+        {
+            if (protocol == null) return this;
+
+            if (protocol.Eq != null)
+            {
+                AppendFilter($@"{column} = @p{Counter}::character(51)");
+                Params.Add($"p{Counter++}", protocol.Eq);
+            }
+
+            if (protocol.Ne != null)
+            {
+                AppendFilter($@"{column} != @p{Counter}::character(51)");
+                Params.Add($"p{Counter++}", protocol.Ne);
+            }
+
+            if (protocol.In != null)
+            {
+                AppendFilter($@"{column} = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", protocol.In);
+            }
+
+            if (protocol.Ni != null && protocol.Ni.Count > 0)
+            {
+                AppendFilter($@"NOT ({column} = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", protocol.Ni);
+            }
 
             return this;
         }
@@ -212,6 +275,56 @@ namespace Tzkt.Api
                 AppendFilter(value.Null == true
                     ? $@"""{column}"" IS NULL"
                     : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, Int32Parameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"{column} = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($@"{column} != {value.Ne}");
+
+            if (value.Gt != null)
+                AppendFilter($@"{column} > {value.Gt}");
+
+            if (value.Ge != null)
+                AppendFilter($@"{column} >= {value.Ge}");
+
+            if (value.Lt != null)
+                AppendFilter($@"{column} < {value.Lt}");
+
+            if (value.Le != null)
+                AppendFilter($@"{column} <= {value.Le}");
+
+            if (value.In != null)
+            {
+                AppendFilter($@"{column} = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", value.In);
+            }
+
+            if (value.Ni != null)
+            {
+                AppendFilter($@"NOT ({column} = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", value.Ni);
+            }
+
+            if (value.Eqx != null && map != null)
+                AppendFilter($@"{column} = {map(value.Eqx)}");
+
+            if (value.Nex != null && map != null)
+                AppendFilter($@"{column} != {map(value.Nex)}");
+
+            if (value.Null != null)
+            {
+                AppendFilter(value.Null == true
+                    ? $@"{column} IS NULL"
+                    : $@"{column} IS NOT NULL");
             }
 
             return this;

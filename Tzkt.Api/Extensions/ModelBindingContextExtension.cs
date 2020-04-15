@@ -188,6 +188,67 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetProtocol(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^P[0-9A-z]{50}$"))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid protocol hash.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = valueObject.FirstValue;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetProtocolList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regex.IsMatch(rawValue, "^P[0-9A-z]{50}$"))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid protocol hash.");
+                            return false;
+                        }
+
+                        result.Add(rawValue);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetAccountType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

@@ -507,7 +507,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetBallots(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -517,6 +517,8 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
+                .FilterA(@"period.""Code""", period)
+                .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
@@ -546,7 +548,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetBallots(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<IEnumerable<object>> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -579,10 +581,18 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
+            if (period != null)
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+
+            if (proposal != null)
+                joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"period.""Code""", period)
+                .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
@@ -648,7 +658,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetBallots(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<IEnumerable<object>> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -678,10 +688,18 @@ namespace Tzkt.Api.Repositories
                     break;
             }
 
+            if (period != null)
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+
+            if (proposal != null)
+                joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"period.""Code""", period)
+                .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
@@ -922,7 +940,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -932,6 +950,8 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
+                .FilterA(@"period.""Code""", period)
+                .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
@@ -960,7 +980,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -992,10 +1012,18 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
+            if (period != null)
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+
+            if (proposal != null)
+                joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"period.""Code""", period)
+                .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
@@ -1057,7 +1085,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -1086,10 +1114,18 @@ namespace Tzkt.Api.Repositories
                     break;
             }
 
+            if (period != null)
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+
+            if (proposal != null)
+                joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
+
             if (columns.Count == 0)
                 return Enumerable.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"period.""Code""", period)
+                .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
 
             using var db = GetConnection();
