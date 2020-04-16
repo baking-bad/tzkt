@@ -77,7 +77,9 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, TransactionOperation parent, RawInternalOriginationResult content)
         {
-            var sender = await Cache.GetAccountAsync(content.Source);
+            var sender = await Cache.GetAccountAsync(content.Source)
+                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Source)?.Contract;
+            
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
             var manager = ManagerTz.Test(content.Script.Code, content.Script.Storage)

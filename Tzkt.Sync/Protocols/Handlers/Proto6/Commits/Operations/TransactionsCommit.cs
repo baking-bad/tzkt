@@ -21,7 +21,8 @@ namespace Tzkt.Sync.Protocols.Proto6
             var sender = await Cache.GetAccountAsync(content.Source);
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
-            var target = await Cache.GetAccountAsync(content.Destination);
+            var target = await Cache.GetAccountAsync(content.Destination)
+                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Destination)?.Contract;
 
             if (target != null)
                 target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
@@ -65,10 +66,13 @@ namespace Tzkt.Sync.Protocols.Proto6
         {
             var id = await Cache.NextCounterAsync();
 
-            var sender = await Cache.GetAccountAsync(content.Source);
+            var sender = await Cache.GetAccountAsync(content.Source)
+                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Source)?.Contract;
+
             sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
 
-            var target = await Cache.GetAccountAsync(content.Destination);
+            var target = await Cache.GetAccountAsync(content.Destination)
+                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Destination)?.Contract;
 
             if (target != null)
                 target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
