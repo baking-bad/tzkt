@@ -277,6 +277,8 @@ namespace Tzkt.Sync.Protocols
             }
             #endregion
 
+            await BakingRightsCommit.Apply(this, blockCommit.Block);
+
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
@@ -367,6 +369,8 @@ namespace Tzkt.Sync.Protocols
                 foreach (var account in currBlock.CreatedAccounts)
                     Cache.AddAccount(account);
             #endregion
+
+            await BakingRightsCommit.Revert(this, currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
             {

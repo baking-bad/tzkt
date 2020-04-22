@@ -31,12 +31,8 @@ namespace Tzkt.Sync
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddEntityFrameworkNpgsql()
-                        .AddDbContext<TzktContext>(options =>
-                        {
-                            options.UseNpgsql(
-                                hostContext.Configuration.GetConnectionString("DefaultConnection"));
-                        });
+                    services.AddDbContext<TzktContext>(options =>
+                        options.UseNpgsql(hostContext.Configuration.GetConnectionString("DefaultConnection")));
 
                     services.AddCaches();
                     services.AddTezosNode();

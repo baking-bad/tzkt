@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Sync.Protocols.Proto6.Serialization;
@@ -55,6 +56,42 @@ namespace Tzkt.Sync.Protocols.Proto6
                     throw new SerializationException($"invalid format");
 
                 return rawConstants;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
+
+        public async Task<List<RawBakingRight>> DeserializeBakingRights(Stream stream)
+        {
+            try
+            {
+                var rawRights = await JsonSerializer.DeserializeAsync<List<RawBakingRight>>(stream, Options);
+
+                foreach (var right in rawRights)
+                    if (!right.IsValidFormat())
+                        throw new SerializationException($"invalid format");
+
+                return rawRights;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
+
+        public async Task<List<RawEndorsingRight>> DeserializeEndorsingRights(Stream stream)
+        {
+            try
+            {
+                var rawRights = await JsonSerializer.DeserializeAsync<List<RawEndorsingRight>>(stream, Options);
+
+                foreach (var right in rawRights)
+                    if (!right.IsValidFormat())
+                        throw new SerializationException($"invalid format");
+
+                return rawRights;
             }
             catch (JsonException ex)
             {

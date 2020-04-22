@@ -71,5 +71,41 @@ namespace Tzkt.Sync.Protocols.Initiator
                 throw new SerializationException($"[{ex.Path}] {ex.Message}");
             }
         }
+
+        public async Task<List<RawBakingRight>> DeserializeBakingRights(Stream stream)
+        {
+            try
+            {
+                var rawRights = await JsonSerializer.DeserializeAsync<List<RawBakingRight>>(stream, Options);
+
+                foreach (var right in rawRights)
+                    if (!right.IsValidFormat())
+                        throw new SerializationException($"invalid format");
+
+                return rawRights;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
+
+        public async Task<List<RawEndorsingRight>> DeserializeEndorsingRights(Stream stream)
+        {
+            try
+            {
+                var rawRights = await JsonSerializer.DeserializeAsync<List<RawEndorsingRight>>(stream, Options);
+
+                foreach (var right in rawRights)
+                    if (!right.IsValidFormat())
+                        throw new SerializationException($"invalid format");
+
+                return rawRights;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
     }
 }

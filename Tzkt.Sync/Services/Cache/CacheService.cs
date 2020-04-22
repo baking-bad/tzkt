@@ -44,6 +44,8 @@ namespace Tzkt.Sync.Services
                         AddAccount(new User
                         {
                             Address = account,
+                            FirstLevel = (await GetAppStateAsync()).Level + 1,
+                            LastLevel = (await GetAppStateAsync()).Level + 1,
                             Type = AccountType.User
                         });
                 }
@@ -96,7 +98,8 @@ namespace Tzkt.Sync.Services
                         ? new User
                         {
                             Address = address,
-                            Counter = (await GetAppStateAsync()).ManagerCounter,
+                            FirstLevel = (await GetAppStateAsync()).Level + 1,
+                            LastLevel = (await GetAppStateAsync()).Level + 1,
                             Type = AccountType.User
                         }
                         : null));

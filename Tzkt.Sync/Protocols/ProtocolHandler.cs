@@ -38,47 +38,57 @@ namespace Tzkt.Sync
 
         public virtual async Task<AppState> ApplyBlock(Stream stream, int head, DateTime sync)
         {
-            Logger.LogDebug("Deserializing block...");
-            var rawBlock = await Serializer.DeserializeBlock(stream);
-
-            Logger.LogDebug("Loading entities...");
-            await LoadEntities(rawBlock);
-
-            Logger.LogDebug("Loading constants...");
-            await InitProtocol(rawBlock);
-
-            Logger.LogDebug("Validating block...");
-            rawBlock = await Validator.ValidateBlock(rawBlock);
-
-            Logger.LogDebug("Committing block...");
-            await Commit(rawBlock);
-
-            var state = await Cache.GetAppStateAsync();
-            var protocolEnd = false;
-            if (state.Protocol != state.NextProtocol)
+            using var tx = await Db.Database.BeginTransactionAsync();
+            try
             {
-                protocolEnd = true;
-                Logger.LogDebug("Migrating context...");
-                await Migration();
+                Logger.LogDebug("Deserializing block...");
+                var rawBlock = await Serializer.DeserializeBlock(stream);
+
+                Logger.LogDebug("Loading entities...");
+                await LoadEntities(rawBlock);
+
+                Logger.LogDebug("Loading constants...");
+                await InitProtocol(rawBlock);
+
+                Logger.LogDebug("Validating block...");
+                rawBlock = await Validator.ValidateBlock(rawBlock);
+
+                Logger.LogDebug("Committing block...");
+                await Commit(rawBlock);
+
+                var state = await Cache.GetAppStateAsync();
+                var protocolEnd = false;
+                if (state.Protocol != state.NextProtocol)
+                {
+                    protocolEnd = true;
+                    Logger.LogDebug("Migrating context...");
+                    await Migration();
+                }
+
+                Logger.LogDebug("Touch accounts...");
+                TouchAccounts(rawBlock.Level);
+
+                if (Config.Diagnostics)
+                {
+                    Logger.LogDebug("Diagnostics...");
+                    if (!protocolEnd)
+                        await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+                    else
+                        await FindDiagnostics(state.NextProtocol).Run(rawBlock.Level, rawBlock.OperationsCount);
+                }
+
+                state.KnownHead = head;
+                state.LastSync = sync;
+ 
+                Logger.LogDebug("Saving...");
+                await Db.SaveChangesAsync();
+                await tx.CommitAsync();
             }
-
-            Logger.LogDebug("Touch accounts...");
-            TouchAccounts(rawBlock.Level);
-
-            if (Config.Diagnostics)
+            catch (Exception)
             {
-                Logger.LogDebug("Diagnostics...");
-                if (!protocolEnd)
-                    await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
-                else
-                    await FindDiagnostics(state.NextProtocol).Run(rawBlock.Level, rawBlock.OperationsCount);
+                await tx.RollbackAsync();
+                throw;
             }
-
-            state.KnownHead = head;
-            state.LastSync = sync;
-
-            Logger.LogDebug("Saving...");
-            await Db.SaveChangesAsync();
 
             ClearCachedRelations();
 
@@ -87,33 +97,43 @@ namespace Tzkt.Sync
         
         public virtual async Task<AppState> RevertLastBlock(string predecessor)
         {
-            var state = await Cache.GetAppStateAsync();
-            if (state.Protocol != state.NextProtocol)
+            using var tx = await Db.Database.BeginTransactionAsync();
+            try
             {
-                Logger.LogDebug("Migrating context...");
-                await CancelMigration();
+                var state = await Cache.GetAppStateAsync();
+                if (state.Protocol != state.NextProtocol)
+                {
+                    Logger.LogDebug("Migrating context...");
+                    await CancelMigration();
+                }
+
+                Logger.LogDebug("Loading protocol...");
+                await InitProtocol();
+
+                Logger.LogDebug("Reverting...");
+                await Revert();
+
+                Logger.LogDebug("Clear accounts...");
+                ClearAccounts(state.Level + 1);
+
+                if (Config.Diagnostics && state.Hash == predecessor)
+                {
+                    Logger.LogDebug("Diagnostics...");
+                    await Diagnostics.Run(state.Level);
+                }
+
+                Logger.LogDebug("Saving...");
+                await Db.SaveChangesAsync();
+                await tx.CommitAsync();
             }
-
-            Logger.LogDebug("Loading protocol...");
-            await InitProtocol();
-
-            Logger.LogDebug("Reverting...");
-            await Revert();
-
-            Logger.LogDebug("Clear accounts...");
-            ClearAccounts(state.Level + 1);
-
-            if (Config.Diagnostics && state.Hash == predecessor)
+            catch (Exception)
             {
-                Logger.LogDebug("Diagnostics...");
-                await Diagnostics.Run(state.Level);
+                await tx.RollbackAsync();
+                throw;
             }
-
-            Logger.LogDebug("Saving...");
-            await Db.SaveChangesAsync();
 
             ClearCachedRelations();
-            
+
             return await Cache.GetAppStateAsync();
         }
 

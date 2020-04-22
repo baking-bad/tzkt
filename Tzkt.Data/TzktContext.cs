@@ -50,9 +50,9 @@ namespace Tzkt.Data
         public DbSet<VotingSnapshot> VotingSnapshots { get; set; }
         #endregion
 
+        public DbSet<BakingRight> BakingRights { get; set; }
         //public DbSet<Cycle> Cycles { get; set; }
         //public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
-        //public DbSet<BakingRight> BakingRights { get; set; }
         //public DbSet<EndorsingRight> EndorsingRights { get; set; }
         //public DbSet<BakingCycle> BakerCycles { get; set; }
         //public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
@@ -104,6 +104,8 @@ namespace Tzkt.Data
             modelBuilder.BuildPromotionPeriodModel();
             modelBuilder.BuildVotingSnapshotModel();
             #endregion
+
+            modelBuilder.BuildBakingRightModel();
         }
     }
 }
