@@ -49,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                     #region start exploration period
                     var proposal = await Db.Proposals
                         .Where(x => x.ProposalPeriodId == currentPeriod.Id)
-                        .OrderByDescending(x => x.Likes)
+                        .OrderByDescending(x => x.Upvotes)
                         .FirstAsync();
 
                     Cache.AddProposal(proposal);
@@ -109,15 +109,18 @@ namespace Tzkt.Sync.Protocols.Proto6
                         .Where(x => x.Staked && x.DeactivationLevel < gracePeriod && x.StakingBalance >= protocol.TokensPerRoll)
                         .ToListAsync();
 
+                    var lastBlock = await Cache.GetCurrentBlockAsync();
+                    lastBlock.Protocol ??= await Cache.GetProtocolAsync(lastBlock.ProtoCode);
+
                     Rolls = new List<VotingSnapshot>(delegates.Count);
                     foreach (var delegat in delegates)
                     {
                         Rolls.Add(new VotingSnapshot
                         {
-                            Level = block.Level - 1,
+                            Level = lastBlock.Level,
                             Period = Period,
                             DelegateId = delegat.Id,
-                            Rolls = (int)(delegat.StakingBalance / block.Protocol.TokensPerRoll)
+                            Rolls = (int)(delegat.StakingBalance / lastBlock.Protocol.TokensPerRoll)
                         });
                     }
 

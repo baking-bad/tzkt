@@ -10,7 +10,6 @@ namespace Tzkt.Sync.Protocols.Proto3
     class BallotsCommit : ProtocolCommit
     {
         public BallotOperation Ballot  { get; private set; }
-        public int SenderRolls { get; set; }
 
         BallotsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -19,8 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto3
             var period = await Cache.GetCurrentVotingPeriodAsync();
             var proposal = await Cache.GetProposalAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
             var sender = await Cache.GetDelegateAsync(content.Source);
+            var rolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
 
-            SenderRolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
             Ballot = new BallotOperation
             {
                 Id = await Cache.NextCounterAsync(),
@@ -29,6 +28,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Sender = sender,
+                Rolls = rolls,
                 Period = period,
                 Proposal = proposal,
                 Vote = content.Ballot switch
@@ -67,17 +67,17 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region apply operation
             if (period is ExplorationPeriod exploration)
             {
-                exploration.Abstainings += Ballot.Vote == Vote.Pass ? SenderRolls : 0;
-                exploration.Approvals += Ballot.Vote == Vote.Yay ? SenderRolls : 0;
-                exploration.Refusals += Ballot.Vote == Vote.Nay ? SenderRolls : 0;
-                exploration.Participation += SenderRolls;
+                exploration.Abstainings += Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
+                exploration.Approvals += Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
+                exploration.Refusals += Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
+                exploration.Participation += Ballot.Rolls;
             }
             else if (period is PromotionPeriod promotion)
             {
-                promotion.Abstainings += Ballot.Vote == Vote.Pass ? SenderRolls : 0;
-                promotion.Approvals += Ballot.Vote == Vote.Yay ? SenderRolls : 0;
-                promotion.Refusals += Ballot.Vote == Vote.Nay ? SenderRolls : 0;
-                promotion.Participation += SenderRolls;
+                promotion.Abstainings += Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
+                promotion.Approvals += Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
+                promotion.Refusals += Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
+                promotion.Participation += Ballot.Rolls;
             }
 
             sender.BallotsCount++;
@@ -107,17 +107,17 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region revert operation
             if (period is ExplorationPeriod exploration)
             {
-                exploration.Abstainings -= Ballot.Vote == Vote.Pass ? SenderRolls : 0;
-                exploration.Approvals -= Ballot.Vote == Vote.Yay ? SenderRolls : 0;
-                exploration.Refusals -= Ballot.Vote == Vote.Nay ? SenderRolls : 0;
-                exploration.Participation -= SenderRolls;
+                exploration.Abstainings -= Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
+                exploration.Approvals -= Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
+                exploration.Refusals -= Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
+                exploration.Participation -= Ballot.Rolls;
             }
             else if (period is PromotionPeriod promotion)
             {
-                promotion.Abstainings -= Ballot.Vote == Vote.Pass ? SenderRolls : 0;
-                promotion.Approvals -= Ballot.Vote == Vote.Yay ? SenderRolls : 0;
-                promotion.Refusals -= Ballot.Vote == Vote.Nay ? SenderRolls : 0;
-                promotion.Participation -= SenderRolls;
+                promotion.Abstainings -= Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
+                promotion.Approvals -= Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
+                promotion.Refusals -= Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
+                promotion.Participation -= Ballot.Rolls;
             }
 
             sender.BallotsCount--;

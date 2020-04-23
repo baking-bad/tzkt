@@ -148,6 +148,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="period">Filters proposal operations by voting period id.</param>
         /// <param name="proposal">Filters proposal operations by proposal hash.</param>
+        /// <param name="redundant">Specify whether to include or exclude redundant operations (duplicates, which didn't actually upvote a proposal).</param>
         /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -159,6 +160,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
             Int32Parameter period,
             ProtocolParameter proposal,
+            BoolParameter redundant,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
@@ -176,14 +178,14 @@ namespace Tzkt.Api.Controllers
             if (n != 100) limit = n;
 
             if (string.IsNullOrEmpty(select))
-                return Ok(await Operations.GetProposals(period, proposal, sort, offset, limit));
+                return Ok(await Operations.GetProposals(period, proposal, redundant, sort, offset, limit));
 
             var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
             if (fields.Length == 1)
-                return Ok(await Operations.GetProposals(period, proposal, sort, offset, limit, fields[0]));
+                return Ok(await Operations.GetProposals(period, proposal, redundant, sort, offset, limit, fields[0]));
 
-            return Ok(await Operations.GetProposals(period, proposal, sort, offset, limit, fields));
+            return Ok(await Operations.GetProposals(period, proposal, redundant, sort, offset, limit, fields));
         }
 
         /// <summary>

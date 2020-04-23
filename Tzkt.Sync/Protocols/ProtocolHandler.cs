@@ -50,8 +50,11 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Loading constants...");
                 await InitProtocol(rawBlock);
 
-                Logger.LogDebug("Validating block...");
-                rawBlock = await Validator.ValidateBlock(rawBlock);
+                if (Config.Validation)
+                {
+                    Logger.LogDebug("Validating block...");
+                    rawBlock = await Validator.ValidateBlock(rawBlock);
+                }
 
                 Logger.LogDebug("Committing block...");
                 await Commit(rawBlock);

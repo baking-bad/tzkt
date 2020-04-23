@@ -609,7 +609,7 @@ namespace Tzkt.Data.Migrations
                     Hash = table.Column<string>(fixedLength: true, maxLength: 51, nullable: true),
                     Status = table.Column<int>(nullable: false),
                     InitiatorId = table.Column<int>(nullable: false),
-                    Likes = table.Column<int>(nullable: false),
+                    Upvotes = table.Column<int>(nullable: false),
                     ProposalPeriodId = table.Column<int>(nullable: false),
                     ExplorationPeriodId = table.Column<int>(nullable: true),
                     TestingPeriodId = table.Column<int>(nullable: true),

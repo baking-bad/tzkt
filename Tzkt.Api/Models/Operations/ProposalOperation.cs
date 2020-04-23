@@ -25,5 +25,9 @@ namespace Tzkt.Api.Models
         public ProposalAlias Proposal { get; set; }
 
         public Alias Delegate { get; set; }
+
+        public int Rolls { get; set; }
+
+        public bool Redundant { get; set; }
     }
 }

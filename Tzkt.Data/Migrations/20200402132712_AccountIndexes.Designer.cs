@@ -713,7 +713,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("InitiatorId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Likes")
+                    b.Property<int>("Upvotes")
                         .HasColumnType("integer");
 
                     b.Property<int?>("PromotionPeriodId")

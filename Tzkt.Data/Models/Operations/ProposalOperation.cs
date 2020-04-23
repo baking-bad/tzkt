@@ -9,6 +9,9 @@ namespace Tzkt.Data.Models
         public int PeriodId { get; set; }
         public int ProposalId { get; set; }
         public int SenderId { get; set; }
+        public int Rolls { get; set; }
+
+        public bool Redundant { get; set; }
 
         #region relations
         [ForeignKey(nameof(PeriodId))]

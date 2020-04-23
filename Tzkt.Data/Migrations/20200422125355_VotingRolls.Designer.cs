@@ -11,15 +11,15 @@ using Tzkt.Data.Models;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20200120220606_Initial")]
-    partial class Initial
+    [Migration("20200422125355_VotingRolls")]
+    partial class VotingRolls
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.1.0-preview3.19554.8")
+                .HasAnnotation("ProductVersion", "3.1.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("Tzkt.Data.Models.Account", b =>
@@ -88,6 +88,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Id")
                         .IsUnique();
+
+                    b.HasIndex("Staked");
+
+                    b.HasIndex("Type");
 
                     b.ToTable("Accounts");
 
@@ -185,6 +189,47 @@ namespace Tzkt.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.BakingRight", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Slots")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<byte>("Type")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Cycle");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("Cycle", "BakerId");
+
+                    b.HasIndex("Cycle", "BakerId", "Type");
+
+                    b.ToTable("BakingRights");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.BallotOperation", b =>
                 {
                     b.Property<int>("Id")
@@ -205,6 +250,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ProposalId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rolls")
                         .HasColumnType("integer");
 
                     b.Property<int>("SenderId")
@@ -709,7 +757,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("InitiatorId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Upvotes")
+                    b.Property<int>("Likes")
                         .HasColumnType("integer");
 
                     b.Property<int?>("PromotionPeriodId")
@@ -762,6 +810,12 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ProposalId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Redundant")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Rolls")
                         .HasColumnType("integer");
 
                     b.Property<int>("SenderId")
@@ -1158,6 +1212,12 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ManagerId");
 
                     b.HasIndex("WeirdDelegateId");
+
+                    b.HasIndex("Type", "Kind")
+                        .HasFilter("\"Type\" = 2");
+
+                    b.HasIndex("Type", "Staked")
+                        .HasFilter("\"Type\" = 1");
 
                     b.HasDiscriminator().HasValue((byte)2);
                 });

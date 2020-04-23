@@ -36,7 +36,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Proposal> GetProposal(string hash)
         {
             var sql = @"
-                SELECT      p.""InitiatorId"", p.""Likes"", p.""ExplorationPeriodId"", p.""PromotionPeriodId"", v.""Code""
+                SELECT      p.""InitiatorId"", p.""Upvotes"", p.""ExplorationPeriodId"", p.""PromotionPeriodId"", v.""Code""
                 FROM        ""Proposals"" as p
                 INNER JOIN  ""VotingPeriods"" as v
                         ON  v.""Id"" = p.""ProposalPeriodId""
@@ -52,7 +52,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Initiator = Accounts.GetAlias(row.InitiatorId),
                 Period = row.Code,
-                Upvotes = row.Likes,
+                Upvotes = row.Upvotes,
                 Status = row.ExplorationPeriodId == null ? "skipped" : row.PromotionPeriodId == null ? "rejected" : "accepted",
                 Metadata = ProposalMetadata[hash]
             };
@@ -61,7 +61,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Proposal>> GetProposals(SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"
-                SELECT      p.""Hash"", p.""InitiatorId"", p.""Likes"", p.""ExplorationPeriodId"", p.""PromotionPeriodId"", v.""Code""
+                SELECT      p.""Hash"", p.""InitiatorId"", p.""Upvotes"", p.""ExplorationPeriodId"", p.""PromotionPeriodId"", v.""Code""
                 FROM        ""Proposals"" as p
                 INNER JOIN  ""VotingPeriods"" as v ON v.""Id"" = p.""ProposalPeriodId""
                 ")
@@ -75,7 +75,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.Hash,
                 Initiator = Accounts.GetAlias(row.InitiatorId),
                 Period = row.Code,
-                Upvotes = row.Likes,
+                Upvotes = row.Upvotes,
                 Status = row.ExplorationPeriodId == null ? "skipped" : row.PromotionPeriodId == null ? "rejected" : "accepted",
                 Metadata = ProposalMetadata[row.Hash]
             });
@@ -92,7 +92,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "hash": columns.Add(@"p.""Hash"""); break;
                     case "initiator": columns.Add(@"p.""InitiatorId"""); break;
-                    case "upvotes": columns.Add(@"p.""Likes"""); break;
+                    case "upvotes": columns.Add(@"p.""Upvotes"""); break;
                     case "metadata": columns.Add(@"p.""Hash"""); break;
                     case "status": 
                         columns.Add(@"p.""ExplorationPeriodId""");
@@ -132,7 +132,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "upvotes":
                         foreach (var row in rows)
-                            result[j++][i] = row.Likes;
+                            result[j++][i] = row.Upvotes;
                         break;
                     case "metadata":
                         foreach (var row in rows)
@@ -161,7 +161,7 @@ namespace Tzkt.Api.Repositories
             {
                 case "hash": columns.Add(@"p.""Hash"""); break;
                 case "initiator": columns.Add(@"p.""InitiatorId"""); break;
-                case "upvotes": columns.Add(@"p.""Likes"""); break;
+                case "upvotes": columns.Add(@"p.""Upvotes"""); break;
                 case "metadata": columns.Add(@"p.""Hash"""); break;
                 case "status":
                     columns.Add(@"p.""ExplorationPeriodId""");
@@ -198,7 +198,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "upvotes":
                     foreach (var row in rows)
-                        result[j++] = row.Likes;
+                        result[j++] = row.Upvotes;
                     break;
                 case "metadata":
                     foreach (var row in rows)

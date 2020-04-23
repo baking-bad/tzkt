@@ -26,6 +26,8 @@ namespace Tzkt.Api.Models
 
         public Alias Delegate { get; set; }
 
+        public int Rolls { get; set; }
+
         public string Vote { get; set; }
     }
 }

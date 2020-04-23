@@ -250,6 +250,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ProposalId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Rolls")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
@@ -752,7 +755,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("InitiatorId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Likes")
+                    b.Property<int>("Upvotes")
                         .HasColumnType("integer");
 
                     b.Property<int?>("PromotionPeriodId")
@@ -805,6 +808,12 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ProposalId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Redundant")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Rolls")
                         .HasColumnType("integer");
 
                     b.Property<int>("SenderId")

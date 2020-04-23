@@ -10,7 +10,6 @@ namespace Tzkt.Sync.Protocols.Proto6
     class ProposalsCommit : ProtocolCommit
     {
         public List<ProposalOperation> ProposalOperations { get; private set; }
-        public int SenderRolls { get; set; }
 
         ProposalsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -19,10 +18,27 @@ namespace Tzkt.Sync.Protocols.Proto6
             var period = (ProposalPeriod)await Cache.GetCurrentVotingPeriodAsync();
             var sender = await Cache.GetDelegateAsync(content.Source);
 
-            SenderRolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
+            var rolls = 0;
+            if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
+                rolls = (int)(sender.StakingBalance / block.Protocol.TokensPerRoll);
+            else
+                rolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
+
             ProposalOperations = new List<ProposalOperation>(4);
-            foreach (var proposal in content.Proposals)
+            foreach (var proposalHash in content.Proposals)
             {
+                var proposal = await Cache.GetOrSetProposalAsync(proposalHash, () => Task.FromResult(new Proposal
+                {
+                    Hash = proposalHash,
+                    Initiator = sender,
+                    ProposalPeriod = period,
+                    Status = ProposalStatus.Active
+                }));
+
+                var redundant = ProposalOperations.Any(x => x.Period.Id == period.Id && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash);
+                if (!redundant) redundant = block.Proposals?.Any(x => x.Period.Id == period.Id && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash) ?? false;
+                if (!redundant) redundant = await Db.ProposalOps.AnyAsync(x => x.PeriodId == period.Id && x.SenderId == sender.Id && x.ProposalId == proposal.Id);
+
                 ProposalOperations.Add(new ProposalOperation
                 {
                     Id = await Cache.NextCounterAsync(),
@@ -31,15 +47,10 @@ namespace Tzkt.Sync.Protocols.Proto6
                     Timestamp = block.Timestamp,
                     OpHash = op.Hash,
                     Sender = sender,
+                    Rolls = rolls,
+                    Redundant = redundant,
                     Period = period,
-                    Proposal = await Cache.GetOrSetProposalAsync(proposal, () =>
-                        Task.FromResult(new Proposal
-                        {
-                            Hash = proposal,
-                            Initiator = sender,
-                            ProposalPeriod = period,
-                            Status = ProposalStatus.Active
-                        }))
+                    Proposal = proposal
                 });
             }
         }
@@ -71,7 +82,8 @@ namespace Tzkt.Sync.Protocols.Proto6
                 #endregion
 
                 #region apply operation
-                proposal.Likes += SenderRolls;
+                if (!proposalOp.Redundant)
+                    proposal.Upvotes += proposalOp.Rolls;
 
                 sender.ProposalsCount++;
 
@@ -99,12 +111,13 @@ namespace Tzkt.Sync.Protocols.Proto6
                 #endregion
 
                 #region revert operation
-                proposal.Likes -= SenderRolls;
+                if (!proposalOp.Redundant)
+                    proposal.Upvotes -= proposalOp.Rolls;
 
                 sender.ProposalsCount--;
                 #endregion
 
-                if (proposal.Likes == 0)
+                if (proposal.Upvotes == 0)
                 {
                     Db.Proposals.Remove(proposal);
                     Cache.RemoveProposal(proposal);
