@@ -44,9 +44,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<BakingRight>()
                 .HasIndex(x => new { x.Cycle, x.BakerId });
-
-            modelBuilder.Entity<BakingRight>()
-                .HasIndex(x => new { x.Cycle, x.BakerId, x.Type });
             #endregion
 
             #region keys

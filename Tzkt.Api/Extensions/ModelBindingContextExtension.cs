@@ -285,6 +285,73 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetBakingRightType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (valueObject.FirstValue == "baking")
+                    {
+                        hasValue = true;
+                        result = 0;
+                    }
+                    else if (valueObject.FirstValue == "endorsing")
+                    {
+                        hasValue = true;
+                        result = 1;
+                    }
+                    else
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid baking right type.");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetBakingRightStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (valueObject.FirstValue == "future")
+                    {
+                        hasValue = true;
+                        result = 0;
+                    }
+                    else if (valueObject.FirstValue == "success")
+                    {
+                        hasValue = true;
+                        result = 1;
+                    }
+                    else if (valueObject.FirstValue == "missed")
+                    {
+                        hasValue = true;
+                        result = 2;
+                    }
+                    else
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid baking right status.");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetContractKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

@@ -179,24 +179,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
-                
-                foreach (var br in bakingRights)
-                {
-                    if (!await Cache.AccountExistsAsync(br.Delegate))
-                        throw new Exception($"Account {br.Delegate} doesn't exist");
-
-                    // WTF: [level:28680] - Baking rights were given to non-baker account
-                    var acc = await Cache.GetAccountAsync(br.Delegate);
-
-                    writer.StartRow();
-                    writer.Write(futureCycle, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(acc.Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write(br.Priority, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.WriteNull();
-                }
 
                 foreach (var er in endorsingRights)
                 {
@@ -214,6 +196,24 @@ namespace Tzkt.Sync.Protocols.Proto1
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.WriteNull();
                     writer.Write(er.Slots.Count, NpgsqlTypes.NpgsqlDbType.Integer);
+                }
+
+                foreach (var br in bakingRights)
+                {
+                    if (!await Cache.AccountExistsAsync(br.Delegate))
+                        throw new Exception($"Account {br.Delegate} doesn't exist");
+
+                    // WTF: [level:28680] - Baking rights were given to non-baker account
+                    var acc = await Cache.GetAccountAsync(br.Delegate);
+
+                    writer.StartRow();
+                    writer.Write(futureCycle, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(acc.Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
+                    writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                    writer.Write(br.Priority, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.WriteNull();
                 }
 
                 writer.Complete();

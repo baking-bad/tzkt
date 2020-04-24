@@ -40,11 +40,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_BakingRights_Cycle_BakerId",
                 table: "BakingRights",
                 columns: new[] { "Cycle", "BakerId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BakingRights_Cycle_BakerId_Type",
-                table: "BakingRights",
-                columns: new[] { "Cycle", "BakerId", "Type" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

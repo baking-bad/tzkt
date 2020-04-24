@@ -223,8 +223,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Cycle", "BakerId");
 
-                    b.HasIndex("Cycle", "BakerId", "Type");
-
                     b.ToTable("BakingRights");
                 });
 

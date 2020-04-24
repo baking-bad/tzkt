@@ -157,18 +157,6 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
-                
-                foreach (var br in bakingRights)
-                {
-                    writer.StartRow();
-                    writer.Write(futureCycle, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write((await Cache.GetDelegateAsync(br.Delegate)).Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write(br.Priority, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.WriteNull();
-                }
 
                 foreach (var er in endorsingRights)
                 {
@@ -180,6 +168,18 @@ namespace Tzkt.Sync.Protocols.Proto5
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.WriteNull();
                     writer.Write(er.Slots.Count, NpgsqlTypes.NpgsqlDbType.Integer);
+                }
+
+                foreach (var br in bakingRights)
+                {
+                    writer.StartRow();
+                    writer.Write(futureCycle, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write((await Cache.GetDelegateAsync(br.Delegate)).Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
+                    writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                    writer.Write(br.Priority, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.WriteNull();
                 }
 
                 writer.Complete();

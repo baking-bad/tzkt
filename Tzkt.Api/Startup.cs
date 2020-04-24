@@ -42,6 +42,7 @@ namespace Tzkt.Api
             services.AddTransient<BlockRepository>();
             services.AddTransient<VotingRepository>();
             services.AddTransient<ProtocolRepository>();
+            services.AddTransient<BakingRightsRepository>();
 
             services.AddSynchronization();
 

@@ -48,6 +48,32 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, BakingRightTypeParameter type)
+        {
+            if (type == null) return this;
+
+            if (type.Eq != null)
+                AppendFilter($@"""{column}"" = {type.Eq}");
+
+            if (type.Ne != null)
+                AppendFilter($@"""{column}"" != {type.Ne}");
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, BakingRightStatusParameter type)
+        {
+            if (type == null) return this;
+
+            if (type.Eq != null)
+                AppendFilter($@"""{column}"" = {type.Eq}");
+
+            if (type.Ne != null)
+                AppendFilter($@"""{column}"" != {type.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, ContractKindParameter kind)
         {
             if (kind == null) return this;
@@ -439,9 +465,18 @@ namespace Tzkt.Api
                     : $@"""{sortColumn}"" < {offset.Cr}");
             }
 
-            Builder.AppendLine(sortAsc
-                ? $@"ORDER BY ""{sortColumn}"""
-                : $@"ORDER BY ""{sortColumn}"" DESC");
+            if (sortColumn == "Id")
+            {
+                Builder.AppendLine(sortAsc
+                    ? $@"ORDER BY ""Id"""
+                    : $@"ORDER BY ""Id"" DESC");
+            }
+            else
+            {
+                Builder.AppendLine(sortAsc
+                    ? $@"ORDER BY ""{sortColumn}"", ""Id"""
+                    : $@"ORDER BY ""{sortColumn}"" DESC, ""Id"" DESC");
+            }
 
             if (offset != null)
             {
@@ -480,9 +515,18 @@ namespace Tzkt.Api
                     : $@"{prefix}.""{sortColumn}"" < {offset.Cr}");
             }
 
-            Builder.AppendLine(sortAsc
-                ? $@"ORDER BY {prefix}.""{sortColumn}"""
-                : $@"ORDER BY {prefix}.""{sortColumn}"" DESC");
+            if (sortColumn == "Id")
+            {
+                Builder.AppendLine(sortAsc
+                    ? $@"ORDER BY {prefix}.""Id"""
+                    : $@"ORDER BY {prefix}.""Id"" DESC");
+            }
+            else
+            {
+                Builder.AppendLine(sortAsc
+                    ? $@"ORDER BY {prefix}.""{sortColumn}"", {prefix}.""Id"""
+                    : $@"ORDER BY {prefix}.""{sortColumn}"" DESC, {prefix}.""Id"" DESC");
+            }
 
             if (offset != null)
             {
