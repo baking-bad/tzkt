@@ -36,7 +36,7 @@ namespace Tzkt.Sync
             Logger = logger;
         }
 
-        public virtual async Task<AppState> ApplyBlock(Stream stream, int head, DateTime sync)
+        public virtual async Task<AppState> CommitBlock(Stream stream, int head, DateTime sync)
         {
             using var tx = await Db.Database.BeginTransactionAsync();
             try
@@ -85,6 +85,9 @@ namespace Tzkt.Sync
  
                 Logger.LogDebug("Saving...");
                 await Db.SaveChangesAsync();
+
+                await AfterCommit();
+
                 await tx.CommitAsync();
             }
             catch (Exception)
@@ -103,6 +106,8 @@ namespace Tzkt.Sync
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
+                await BeforeRevert();
+
                 var state = await Cache.GetAppStateAsync();
                 if (state.Protocol != state.NextProtocol)
                 {
@@ -190,6 +195,10 @@ namespace Tzkt.Sync
         public abstract Task InitProtocol(IBlock block);
 
         public abstract Task Commit(IBlock block);
+
+        public virtual Task AfterCommit() => Task.CompletedTask;
+
+        public virtual Task BeforeRevert() => Task.CompletedTask;
 
         public abstract Task Revert();
 

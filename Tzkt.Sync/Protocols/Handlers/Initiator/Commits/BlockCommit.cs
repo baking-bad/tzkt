@@ -24,6 +24,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     | BlockEvents.ProtocolBegin
                     | BlockEvents.ProtocolEnd
                     | BlockEvents.VotingPeriodBegin
+                    | BlockEvents.Snapshot
             };
         }
 

@@ -37,6 +37,9 @@ namespace Tzkt.Sync.Protocols.Proto3
             if (rawBlock.Metadata.Deactivated.Count > 0)
                 events |= BlockEvents.Deactivations;
 
+            if (rawBlock.Level % protocol.BlocksPerSnapshot == 0)
+                events |= BlockEvents.Snapshot;
+
             Block = new Block
             {
                 Id = await Cache.NextCounterAsync(),

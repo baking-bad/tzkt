@@ -51,8 +51,8 @@ namespace Tzkt.Data
         #endregion
 
         public DbSet<BakingRight> BakingRights { get; set; }
+        public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
         //public DbSet<Cycle> Cycles { get; set; }
-        //public DbSet<BalanceSnapshot> BalanceSnapshots { get; set; }
         //public DbSet<EndorsingRight> EndorsingRights { get; set; }
         //public DbSet<BakingCycle> BakerCycles { get; set; }
         //public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
@@ -106,6 +106,7 @@ namespace Tzkt.Data
             #endregion
 
             modelBuilder.BuildBakingRightModel();
+            modelBuilder.BuildSnapshotBalanceModel();
         }
     }
 }

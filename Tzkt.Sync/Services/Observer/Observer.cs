@@ -153,7 +153,7 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug($"Applying block...");
                 using var scope = Services.CreateScope();
                 var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
-                AppState = await protocol.ApplyBlock(blockStream, header.Level, sync);
+                AppState = await protocol.CommitBlock(blockStream, header.Level, sync);
                 Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
             }
 

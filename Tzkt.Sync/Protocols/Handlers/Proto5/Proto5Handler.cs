@@ -276,6 +276,18 @@ namespace Tzkt.Sync.Protocols
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
+        public override async Task AfterCommit()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            await SnapshotBalanceCommit.Apply(this, block);
+        }
+
+        public override async Task BeforeRevert()
+        {
+            var block = await Cache.GetCurrentBlockAsync();
+            await SnapshotBalanceCommit.Revert(this, block);
+        }
+
         public override async Task Revert()
         {
             var currBlock = await Cache.GetCurrentBlockAsync();

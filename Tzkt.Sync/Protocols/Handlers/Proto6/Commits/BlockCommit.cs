@@ -37,6 +37,9 @@ namespace Tzkt.Sync.Protocols.Proto6
             if (rawBlock.Metadata.Deactivated.Count > 0)
                 events |= BlockEvents.Deactivations;
 
+            if (rawBlock.Level % protocol.BlocksPerSnapshot == 0)
+                events |= BlockEvents.Snapshot;
+
             var validations = rawBlock.Operations[0].Sum(x => (x.Contents[0] as RawEndorsementContent).Metadata.Slots.Count);
             Block = new Block
             {

@@ -27,6 +27,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             else if (rawBlock.Metadata.Protocol != rawBlock.Metadata.NextProtocol)
                 events |= BlockEvents.ProtocolEnd;
 
+            if (rawBlock.Level % protocol.BlocksPerSnapshot == 0)
+                events |= BlockEvents.Snapshot;
+
             Block = new Block
             {
                 Id = await Cache.NextCounterAsync(),
