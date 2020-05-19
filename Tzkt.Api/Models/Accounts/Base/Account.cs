@@ -15,6 +15,9 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(EmptyAccount))]
     public abstract class Account
     {
+        /// <summary>
+        /// Type of the account (`user`, `delegate`, `contract`, 'empty')
+        /// </summary>
         public abstract string Type { get; }
     }
 
