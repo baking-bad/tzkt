@@ -2393,6 +2393,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Baker = Accounts.GetAlias(row.BakerId),
+                BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
@@ -2417,6 +2418,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
+                BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
@@ -2438,6 +2440,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
+                BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
@@ -2615,6 +2618,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
+                BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });
@@ -2644,6 +2648,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Baker = Accounts.GetAlias(row.BakerId),
+                BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel
             });

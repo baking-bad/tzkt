@@ -22,6 +22,8 @@ namespace Tzkt.Api.Models
 
         public Alias Baker { get; set; }
 
+        public long BakerRewards { get; set; }
+
         public Alias Sender { get; set; }
 
         public int RevealedLevel { get; set; }
