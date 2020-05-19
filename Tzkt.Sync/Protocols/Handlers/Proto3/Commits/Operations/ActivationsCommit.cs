@@ -17,12 +17,12 @@ namespace Tzkt.Sync.Protocols.Proto3
         {
             Activation = new ActivationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
-                Account = (User)await Cache.GetAccountAsync(content.Address),
+                Account = (User)await Cache.Accounts.GetAsync(content.Address),
                 Balance = content.Metadata.BalanceUpdates[0].Change
             };
         }
@@ -31,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto3
         {
             Activation = activation;
             Activation.Block ??= block;
-            Activation.Account ??= (User)await Cache.GetAccountAsync(activation.AccountId);
+            Activation.Account ??= (User)await Cache.Accounts.GetAsync(activation.AccountId);
         }
 
         public override Task Apply()

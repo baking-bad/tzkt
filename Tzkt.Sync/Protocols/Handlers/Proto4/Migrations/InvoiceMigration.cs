@@ -14,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto4
 
         public override async Task Apply()
         {
-            var block = await Cache.GetCurrentBlockAsync();
-            var account = await Cache.GetAccountAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
+            var block = await Cache.Blocks.CurrentAsync();
+            var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
 
             Db.TryAttach(account);
             account.Balance += 100_000_000;
@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             block.Operations |= Operations.Migrations;
             Db.MigrationOps.Add(new MigrationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
         public override async Task Revert()
         {
-            var block = await Cache.GetCurrentBlockAsync();
+            var block = await Cache.Blocks.CurrentAsync();
 
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
@@ -44,7 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 .FirstOrDefaultAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
 
             Db.TryAttach(invoice.Account);
-            Cache.AddAccount(invoice.Account);
+            Cache.Accounts.Add(invoice.Account);
 
             invoice.Account.Balance -= 100_000_000;
             invoice.Account.MigrationsCount--;

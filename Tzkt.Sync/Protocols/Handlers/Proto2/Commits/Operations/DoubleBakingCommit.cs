@@ -13,11 +13,11 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         DoubleBakingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(Block block, RawOperation op, RawDoubleBakingEvidenceContent content)
+        public Task Init(Block block, RawOperation op, RawDoubleBakingEvidenceContent content)
         {
             DoubleBaking = new DoubleBakingOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -25,24 +25,28 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 AccusedLevel = content.Block1.Level,
                 Accuser = block.Baker,
-                Offender = await Cache.GetDelegateAsync(content.Metadata.BalanceUpdates.First(x => x.Change < 0).Target),
+                Offender = Cache.Accounts.GetDelegate(content.Metadata.BalanceUpdates.First(x => x.Change < 0).Target),
                 
                 AccuserReward = content.Metadata.BalanceUpdates.Where(x => x.Change > 0).Sum(x => x.Change),
                 OffenderLostDeposit = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is DepositsUpdate).Sum(x => -x.Change),
                 OffenderLostReward = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is RewardsUpdate).Sum(x => -x.Change),
                 OffenderLostFee = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is FeesUpdate).Sum(x => -x.Change)
             };
+
+            return Task.CompletedTask;
         }
 
-        public async Task Init(Block block, DoubleBakingOperation doubleBaking)
+        public Task Init(Block block, DoubleBakingOperation doubleBaking)
         {
             DoubleBaking = doubleBaking;
 
             DoubleBaking.Block ??= block;
-            DoubleBaking.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            DoubleBaking.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
 
-            DoubleBaking.Accuser ??= (Data.Models.Delegate)await Cache.GetAccountAsync(doubleBaking.AccuserId);
-            DoubleBaking.Offender ??= (Data.Models.Delegate)await Cache.GetAccountAsync(doubleBaking.OffenderId);
+            DoubleBaking.Accuser ??= Cache.Accounts.GetDelegate(doubleBaking.AccuserId);
+            DoubleBaking.Offender ??= Cache.Accounts.GetDelegate(doubleBaking.OffenderId);
+
+            return Task.CompletedTask;
         }
 
         public override Task Apply()

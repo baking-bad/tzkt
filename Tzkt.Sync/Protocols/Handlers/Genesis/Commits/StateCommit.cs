@@ -13,19 +13,19 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         StateCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(Block block, RawBlock rawBlock)
+        public Task Init(Block block, RawBlock rawBlock)
         {
             Block = block;
-            //Block.Protocol ??= await Cache.GetProtocolAsync(rawBlock.Protocol);
-            AppState = await Cache.GetAppStateAsync();
+            AppState = Cache.AppState.Get();
             NextProtocol = rawBlock.Metadata.NextProtocol;
+            return Task.CompletedTask;
         }
 
         public async Task Init(Block block)
         {
-            Block = await Cache.GetCurrentBlockAsync();
-            Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
-            AppState = await Cache.GetAppStateAsync();
+            Block = block;
+            Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            AppState = Cache.AppState.Get();
             NextProtocol = block.Protocol.Hash;
         }
 
@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Genesis
             state.NextProtocol = "";
             state.Hash = "";
 
-            Cache.RemoveBlock(Block);
+            Cache.Blocks.Remove(Block);
             return Task.CompletedTask;
         }
 

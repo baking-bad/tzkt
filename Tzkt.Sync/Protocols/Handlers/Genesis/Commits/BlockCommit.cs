@@ -15,10 +15,10 @@ namespace Tzkt.Sync.Protocols.Genesis
         {
             Block = new Block
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
-                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol),
+                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol),
                 Timestamp = rawBlock.Header.Timestamp,
                 Events = BlockEvents.ProtocolBegin | BlockEvents.ProtocolEnd
             };
@@ -27,7 +27,7 @@ namespace Tzkt.Sync.Protocols.Genesis
         public async Task Init(Block block)
         {
             Block = block;
-            Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
+            Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
         }
 
         public override Task Apply()
@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols.Genesis
             Db.TryAttach(Block.Protocol);
 
             Db.Blocks.Add(Block);
-            Cache.AddBlock(Block);
+            Cache.Blocks.Add(Block);
 
             return Task.CompletedTask;
         }
@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Protocols.Genesis
         public override Task Revert()
         {
             Db.Protocols.Remove(Block.Protocol);
-            Cache.RemoveProtocol(Block.Protocol);
+            Cache.Protocols.Remove(Block.Protocol);
 
             Db.Blocks.Remove(Block);
             return Task.CompletedTask;

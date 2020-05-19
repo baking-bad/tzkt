@@ -132,7 +132,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             return await JsonSerializer.DeserializeAsync<int>(stream, SerializerOptions.Default);
         }
 
-        async Task<RemoteContract> GetRemoteContract(int level, string address)
+        public async Task<RemoteContract> GetRemoteContract(int level, string address)
         {
             try
             {
@@ -150,7 +150,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             }
         }
 
-        async Task<RemoteDelegate> GetRemoteDelegate(int level, string address)
+        public async Task<RemoteDelegate> GetRemoteDelegate(int level, string address)
         {
             try
             {

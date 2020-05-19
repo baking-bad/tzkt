@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto6
         {
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
 
                 FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 == 0 || rawBlock.Operations[0].Count == 0 ? 2 : 3)
@@ -32,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                 var stream = await Proto.Node.GetBlockAsync(block.Level);
                 var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
 
-                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
 
                 FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 == 0 || rawBlock.Operations[0].Count == 0 ? 2 : 3)
@@ -40,14 +40,14 @@ namespace Tzkt.Sync.Protocols.Proto6
             }
         }
 
-        public override async Task Apply()
+        public override Task Apply()
         {
-            if (FreezerUpdates == null) return;
+            if (FreezerUpdates == null) return Task.CompletedTask;
 
             foreach (var update in FreezerUpdates)
             {
                 #region entities
-                var delegat = await Cache.GetDelegateAsync(update.Target);
+                var delegat = Cache.Accounts.GetDelegate(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -70,16 +70,18 @@ namespace Tzkt.Sync.Protocols.Proto6
                     throw new Exception("unexpected freezer balance update type");
                 }
             }
+
+            return Task.CompletedTask;
         }
 
-        public async override Task Revert()
+        public override Task Revert()
         {
-            if (FreezerUpdates == null) return;
+            if (FreezerUpdates == null) return Task.CompletedTask;
 
             foreach (var update in FreezerUpdates)
             {
                 #region entities
-                var delegat = await Cache.GetDelegateAsync(update.Target);
+                var delegat = Cache.Accounts.GetDelegate(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -102,6 +104,8 @@ namespace Tzkt.Sync.Protocols.Proto6
                     throw new Exception("unexpected freezer balance update type");
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         #region static

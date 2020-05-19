@@ -18,10 +18,10 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, RawOperation op, RawRevealContent content)
         {
-            var id = await Cache.NextCounterAsync();
+            var id = Cache.AppState.NextOperationId();
 
-            var sender = await Cache.GetAccountAsync(content.Source);
-            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            var sender = await Cache.Accounts.GetAsync(content.Source);
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
             PubKey = content.PublicKey;
             Reveal = new RevealOperation
@@ -54,10 +54,10 @@ namespace Tzkt.Sync.Protocols.Proto6
             Reveal = reveal;
 
             Reveal.Block ??= block;
-            Reveal.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            Reveal.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
 
-            Reveal.Sender = await Cache.GetAccountAsync(reveal.SenderId);
-            Reveal.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(reveal.Sender.DelegateId);
+            Reveal.Sender = await Cache.Accounts.GetAsync(reveal.SenderId);
+            Reveal.Sender.Delegate ??= Cache.Accounts.GetDelegate(reveal.Sender.DelegateId);
         }
 
         public override async Task Apply()
@@ -141,7 +141,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             #endregion
 
             Db.RevealOps.Remove(Reveal);
-            await Cache.ReleaseCounterAsync(true);
+            Cache.AppState.ReleaseManagerCounter();
         }
 
         #region static

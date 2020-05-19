@@ -15,8 +15,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public async Task Init(RawBlock rawBlock)
         {
-            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
-            var votingPeriod = await Cache.GetCurrentVotingPeriodAsync();
+            var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
+            var votingPeriod = await Cache.Periods.CurrentAsync();
             var events = BlockEvents.None;
 
             if (rawBlock.Level % protocol.BlocksPerCycle == 1)
@@ -43,13 +43,13 @@ namespace Tzkt.Sync.Protocols.Proto5
             var validations = rawBlock.Operations[0].Sum(x => (x.Contents[0] as RawEndorsementContent).Metadata.Slots.Count);
             Block = new Block
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Hash = rawBlock.Hash,
                 Level = rawBlock.Level,
                 Protocol = protocol,
                 Timestamp = rawBlock.Header.Timestamp,
                 Priority = rawBlock.Header.Priority,
-                Baker = await Cache.GetDelegateAsync(rawBlock.Metadata.Baker),
+                Baker = Cache.Accounts.GetDelegate(rawBlock.Metadata.Baker),
                 Events = events,
                 Reward = protocol.BlockReward0 * (8 + 2 * validations / protocol.EndorsersPerBlock) / 10 / (rawBlock.Header.Priority + 1)
             };
@@ -58,8 +58,8 @@ namespace Tzkt.Sync.Protocols.Proto5
         public async Task Init(Block block)
         {
             Block = block;
-            Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
-            Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
         }
 
         public override async Task Apply()
@@ -92,7 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 proto.LastLevel = Block.Level;
 
             Db.Blocks.Add(Block);
-            Cache.AddBlock(Block);
+            Cache.Blocks.Add(Block);
         }
 
         public override async Task Revert()
@@ -113,7 +113,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             if (Block.Events.HasFlag(BlockEvents.ProtocolBegin))
             {
                 Db.Protocols.Remove(proto);
-                Cache.RemoveProtocol(proto);
+                Cache.Protocols.Remove(proto);
             }
             else if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
             {
@@ -137,7 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
-                Cache.AddAccount(delegator);
+                Cache.Accounts.Add(delegator);
                 Db.TryAttach(delegator);
 
                 delegator.Staked = staked;

@@ -19,15 +19,15 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
             {
                 Event = BlockEvents.VotingPeriodEnd;
-                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period = await Cache.Periods.CurrentAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
             else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
             {
                 Event = BlockEvents.VotingPeriodBegin;
-                var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
 
-                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period = await Cache.Periods.CurrentAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
 
                 Period = rawBlock.Metadata.VotingPeriod switch
@@ -74,13 +74,13 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
             {
                 Event = BlockEvents.VotingPeriodEnd;
-                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period = await Cache.Periods.CurrentAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
             else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
             {
                 Event = BlockEvents.VotingPeriodBegin;
-                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period = await Cache.Periods.CurrentAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
         }
@@ -100,7 +100,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             else if (Event == BlockEvents.VotingPeriodBegin)
             {
                 Db.VotingPeriods.Add(Period);
-                Cache.AddVotingPeriod(Period);
+                Cache.Periods.Add(Period);
             }
 
             return Task.CompletedTask;
@@ -124,7 +124,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     Db.VotingEpoches.Remove(Period.Epoch);
 
                 Db.VotingPeriods.Remove(Period);
-                Cache.RemoveVotingPeriod();
+                Cache.Periods.Remove();
             }
 
             return Task.CompletedTask;

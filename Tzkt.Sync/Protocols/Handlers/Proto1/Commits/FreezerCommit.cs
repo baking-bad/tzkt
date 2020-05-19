@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
                 BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2);
             }
         }
@@ -29,19 +29,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var stream = await Proto.Node.GetBlockAsync(block.Level);
                 var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
 
-                Protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
                 BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2);
             }
         }
 
-        public override async Task Apply()
+        public override Task Apply()
         {
-            if (BalanceUpdates == null) return;
+            if (BalanceUpdates == null) return Task.CompletedTask;
 
             foreach (var update in BalanceUpdates)
             {
                 #region entities
-                var delegat = await Cache.GetDelegateAsync(update.Target);
+                var delegat = Cache.Accounts.GetDelegate(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -60,16 +60,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                     delegat.FrozenFees += feesFreezer.Change;
                 }
             }
+
+            return Task.CompletedTask;
         }
 
-        public async override Task Revert()
+        public override Task Revert()
         {
-            if (BalanceUpdates == null) return;
+            if (BalanceUpdates == null) return Task.CompletedTask;
 
             foreach (var update in BalanceUpdates)
             {
                 #region entities
-                var delegat = await Cache.GetDelegateAsync(update.Target);
+                var delegat = Cache.Accounts.GetDelegate(update.Target);
 
                 Db.TryAttach(delegat);
                 #endregion
@@ -88,6 +90,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     delegat.FrozenFees -= feesFreezer.Change;
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         #region static

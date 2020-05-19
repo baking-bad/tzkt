@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto3
         {
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
                 var cycle = (rawBlock.Level - 1) / protocol.BlocksPerCycle;
                 
                 if (rawBlock.Metadata.BalanceUpdates.Skip(protocol.BlockReward0 > 0 ? 3 : 2)
@@ -34,10 +34,10 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     foreach (var missedBlock in missedBlocks)
                     {
-                        Cache.AddAccount(missedBlock.Baker);
+                        Cache.Accounts.Add(missedBlock.Baker);
                         RevelationPanlties.Add(new RevelationPenaltyOperation
                         {
-                            Id = await Cache.NextCounterAsync(),
+                            Id = Cache.AppState.NextOperationId(),
                             Baker = missedBlock.Baker,
                             Block = block,
                             Level = block.Level,
@@ -51,7 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
         }
 
-        public async Task Init(Block block)
+        public Task Init(Block block)
         {
             if (block.RevelationPenalties?.Count > 0)
             {
@@ -59,9 +59,11 @@ namespace Tzkt.Sync.Protocols.Proto3
                 foreach (var penalty in RevelationPanlties)
                 {
                     penalty.Block ??= block;
-                    penalty.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(penalty.BakerId);
+                    penalty.Baker ??= Cache.Accounts.GetDelegate(penalty.BakerId);
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         public override Task Apply()

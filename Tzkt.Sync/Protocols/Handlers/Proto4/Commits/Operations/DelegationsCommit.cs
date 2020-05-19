@@ -18,15 +18,15 @@ namespace Tzkt.Sync.Protocols.Proto4
 
         public async Task Init(Block block, RawOperation op, RawDelegationContent content)
         {
-            var sender = await Cache.GetAccountAsync(content.Source);
-            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            var sender = await Cache.Accounts.GetAsync(content.Source);
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
-            var delegat = await Cache.GetDelegateOrDefaultAsync(content.Delegate);
+            var delegat = Cache.Accounts.GetDelegateOrDefault(content.Delegate);
 
             IsSelfDelegation = content.Source == content.Delegate;
             Delegation = new DelegationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -55,13 +55,13 @@ namespace Tzkt.Sync.Protocols.Proto4
             Delegation = delegation;
             
             Delegation.Block ??= block;
-            Delegation.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
-            Delegation.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            Delegation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            Delegation.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
             
-            Delegation.Sender = await Cache.GetAccountAsync(delegation.SenderId);
-            Delegation.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.Sender.DelegateId);
-            Delegation.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.DelegateId);
-            Delegation.PrevDelegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(delegation.PrevDelegateId);
+            Delegation.Sender = await Cache.Accounts.GetAsync(delegation.SenderId);
+            Delegation.Sender.Delegate ??= Cache.Accounts.GetDelegate(delegation.Sender.DelegateId);
+            Delegation.Delegate ??= Cache.Accounts.GetDelegate(delegation.DelegateId);
+            Delegation.PrevDelegate ??= Cache.Accounts.GetDelegate(delegation.PrevDelegateId);
         }
 
         public override async Task Apply()
@@ -127,7 +127,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                             if (origination.Contract.DelegationsCount == 0)
                             {
                                 Db.TryAttach(origination.Contract);
-                                Cache.AddAccount(origination.Contract);
+                                Cache.Accounts.Add(origination.Contract);
 
                                 await SetDelegate(origination.Contract, delegat, origination.Level);
                             }
@@ -173,7 +173,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 {
                     if (contract.WeirdDelegateId != null)
                     {
-                        prevDelegate = await Cache.GetAccountAsync(contract.WeirdDelegateId) as Data.Models.Delegate;
+                        prevDelegate = await Cache.Accounts.GetAsync(contract.WeirdDelegateId) as Data.Models.Delegate;
                         prevDelegationLevel = prevDelegate?.ActivationLevel;
                     }
                     else
@@ -229,7 +229,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                             if (origination.Contract.DelegationsCount == 0)
                             {
                                 Db.TryAttach(origination.Contract);
-                                Cache.AddAccount(origination.Contract);
+                                Cache.Accounts.Add(origination.Contract);
 
                                 await ResetDelegate(origination.Contract, delegat);
                             }
@@ -273,7 +273,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             Db.DelegationOps.Remove(Delegation);
-            await Cache.ReleaseCounterAsync(true);
+            Cache.AppState.ReleaseManagerCounter();
         }
 
         Task UpgradeUser(DelegationOperation delegation)
@@ -390,7 +390,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             Db.Entry(user).State = EntityState.Detached;
             Db.Entry(delegat).State = EntityState.Modified;
-            Cache.AddAccount(delegat);
+            Cache.Accounts.Add(delegat);
 
             #region update graph
             foreach (var (entry, state) in touched)
@@ -521,7 +521,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             Db.Entry(delegat).State = EntityState.Detached;
             Db.Entry(user).State = EntityState.Modified;
-            Cache.AddAccount(user);
+            Cache.Accounts.Add(user);
 
             #region update graph
             foreach (var (entry, state) in touched)
@@ -543,7 +543,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
-                Cache.AddAccount(delegator);
+                Cache.Accounts.Add(delegator);
                 delegator.Staked = true;
             }
 
@@ -559,7 +559,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
-                Cache.AddAccount(delegator);
+                Cache.Accounts.Add(delegator);
                 delegator.Staked = false;
             }
         }
@@ -602,7 +602,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             var result = await Db.OriginationOps
                 .FirstAsync(x => x.Status == OperationStatus.Applied && x.ContractId == contract.Id);
 
-            result.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(result.DelegateId);
+            result.Delegate ??= Cache.Accounts.GetDelegate(result.DelegateId);
 
             return result;
         }
@@ -619,7 +619,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             if (result != null)
             {
                 result.Sender = sender;
-                result.Delegate = (Data.Models.Delegate)await Cache.GetAccountAsync(result.DelegateId);
+                result.Delegate = Cache.Accounts.GetDelegate(result.DelegateId);
             }
 
             return result;

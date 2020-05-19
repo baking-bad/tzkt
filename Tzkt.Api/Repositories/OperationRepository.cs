@@ -878,7 +878,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Redundant"", b.""Hash"", proposal.""Hash"" as proposal,
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
                             period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b 
@@ -901,7 +901,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Rolls = row.Rolls,
-                Redundant = row.Redundant,
+                Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
                     Id = row.Code,
@@ -921,7 +921,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(Block block)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Redundant"", proposal.""Hash"" as proposal,
+                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", proposal.""Hash"" as proposal,
                             period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Proposals"" as proposal
@@ -942,7 +942,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Rolls = row.Rolls,
-                Redundant = row.Redundant,
+                Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
                     Id = row.Code,
@@ -959,17 +959,17 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter redundant, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Redundant"", b.""Hash"", proposal.""Hash"" as proposal,
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
                             period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
-                .FilterA(@"o.""Redundant""", redundant)
+                .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -985,7 +985,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Rolls = row.Rolls,
-                Redundant = row.Redundant,
+                Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
                     Id = row.Code,
@@ -1002,7 +1002,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter redundant, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -1017,7 +1017,7 @@ namespace Tzkt.Api.Repositories
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "delegate": columns.Add(@"o.""SenderId"""); break;
                     case "rolls": columns.Add(@"o.""Rolls"""); break;
-                    case "redundant": columns.Add(@"o.""Redundant"""); break;
+                    case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                     case "proposal":
                         columns.Add(@"proposal.""Hash"" as proposal");
                         joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
@@ -1046,7 +1046,7 @@ namespace Tzkt.Api.Repositories
                 return Enumerable.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
-                .FilterA(@"o.""Redundant""", redundant)
+                .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -1086,9 +1086,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Rolls;
                         break;
-                    case "redundant":
+                    case "duplicated":
                         foreach (var row in rows)
-                            result[j++][i] = row.Redundant;
+                            result[j++][i] = row.Duplicated;
                         break;
                     case "period":
                         foreach (var row in rows)
@@ -1118,7 +1118,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter redundant, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -1131,7 +1131,7 @@ namespace Tzkt.Api.Repositories
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "delegate": columns.Add(@"o.""SenderId"""); break;
                 case "rolls": columns.Add(@"o.""Rolls"""); break;
-                case "redundant": columns.Add(@"o.""Redundant"""); break;
+                case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                 case "proposal":
                     columns.Add(@"proposal.""Hash"" as proposal");
                     joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
@@ -1159,7 +1159,7 @@ namespace Tzkt.Api.Repositories
                 return Enumerable.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
-                .FilterA(@"o.""Redundant""", redundant)
+                .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -1197,9 +1197,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Rolls;
                     break;
-                case "redundant":
+                case "duplicated":
                     foreach (var row in rows)
-                        result[j++] = row.Redundant;
+                        result[j++] = row.Duplicated;
                     break;
                 case "period":
                     foreach (var row in rows)
@@ -1231,7 +1231,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Rolls"", o.""Redundant"", b.""Hash"", proposal.""Hash"" as proposal,
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
                             period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b 
@@ -1254,7 +1254,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Rolls = row.Rolls,
-                Redundant = row.Redundant,
+                Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
                     Id = row.Code,
@@ -1274,7 +1274,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", b.""Hash"", o.""Rolls"", o.""Redundant"", proposal.""Hash"" as proposal,
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", b.""Hash"", o.""Rolls"", o.""Duplicated"", proposal.""Hash"" as proposal,
                             period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b 
@@ -1299,7 +1299,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Rolls = row.Rolls,
-                Redundant = row.Redundant,
+                Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
                     Id = row.Code,

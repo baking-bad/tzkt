@@ -16,7 +16,8 @@ namespace Tzkt.Data.Models
         public string NextProtocol { get; set; }
         public string Hash { get; set; }
 
-        public int GlobalCounter { get; set; }
+        public int AccountCounter { get; set; }
+        public int OperationCounter { get; set; }
         public int ManagerCounter { get; set; }
     }
 
@@ -34,7 +35,8 @@ namespace Tzkt.Data.Models
                     NextProtocol = "",
                     Hash = "",
 
-                    GlobalCounter = 0,
+                    AccountCounter = 0,
+                    OperationCounter = 0,
                     ManagerCounter = 0
                 });
         }

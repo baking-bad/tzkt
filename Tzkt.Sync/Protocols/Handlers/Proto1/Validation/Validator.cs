@@ -21,27 +21,27 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task<IBlock> ValidateBlock(IBlock block)
         {
-            Protocol = await Cache.GetProtocolAsync(block.Protocol);
+            Protocol = await Cache.Protocols.GetAsync(block.Protocol);
             Cycle = (block.Level - 1) / Protocol.BlocksPerCycle;
 
             if (!(block is Proto1.RawBlock rawBlock))
                 throw new ValidationException("invalid raw block type");
 
-            if (rawBlock.Level != (await Cache.GetCurrentBlockAsync()).Level + 1)
+            if (rawBlock.Level != Cache.AppState.GetNextLevel())
                 throw new ValidationException($"invalid block level", true);
 
-            if (rawBlock.Predecessor != (await Cache.GetCurrentBlockAsync()).Hash)
+            if (rawBlock.Predecessor != Cache.AppState.GetHead())
                 throw new ValidationException($"Invalid block predecessor", true);
 
-            if (rawBlock.Protocol != (await Cache.GetAppStateAsync()).NextProtocol)
+            if (rawBlock.Protocol != Cache.AppState.GetNextProtocol())
                 throw new ValidationException($"invalid block protocol", true);
 
-            if (!await Cache.AccountExistsAsync(rawBlock.Metadata.Baker, AccountType.Delegate))
+            if (!Cache.Accounts.DelegateExists(rawBlock.Metadata.Baker))
                 throw new ValidationException($"invalid block baker '{rawBlock.Metadata.Baker}'");
 
             foreach (var baker in rawBlock.Metadata.Deactivated)
             {
-                if (!await Cache.AccountExistsAsync(baker, AccountType.Delegate))
+                if (!Cache.Accounts.DelegateExists(baker))
                     throw new ValidationException($"invalid deactivated baker {baker}");
             }
 
@@ -80,12 +80,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2))
                 {
                     if (update is ContractUpdate contractUpdate &&
-                        !await Cache.AccountExistsAsync(contractUpdate.Contract, AccountType.Delegate))
+                        !Cache.Accounts.DelegateExists(contractUpdate.Contract))
                         throw new ValidationException($"unknown delegate {contractUpdate.Contract}");
 
                     if (update is FreezerUpdate freezerUpdate)
                     {
-                        if (!await Cache.AccountExistsAsync(freezerUpdate.Delegate, AccountType.Delegate))
+                        if (!Cache.Accounts.DelegateExists(freezerUpdate.Delegate))
                             throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
 
                         if (freezerUpdate.Level != Cycle - Protocol.PreservedCycles && freezerUpdate.Level != Cycle - 1)
@@ -124,8 +124,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateActivation(RawActivationContent activation)
         {
-            if (await Cache.AccountExistsAsync(activation.Address, AccountType.User) &&
-                ((await Cache.GetAccountAsync(activation.Address)) as User).Activated == true)
+            if (await Cache.Accounts.ExistsAsync(activation.Address, AccountType.User) &&
+                ((await Cache.Accounts.GetAsync(activation.Address)) as User).Activated == true)
                 throw new ValidationException("account is already activated");
 
             if ((activation.Metadata.BalanceUpdates[0] as ContractUpdate)?.Contract != activation.Address)
@@ -134,7 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateDelegation(RawDelegationContent delegation, RawBlock rawBlock)
         {
-            if (!await Cache.AccountExistsAsync(delegation.Source))
+            if (!await Cache.Accounts.ExistsAsync(delegation.Source))
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
@@ -146,19 +146,19 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (delegation.Metadata.Result.Status == "applied" && delegation.Delegate != null)
             {
-                if (delegation.Source != delegation.Delegate && !await Cache.AccountExistsAsync(delegation.Delegate, AccountType.Delegate))
+                if (delegation.Source != delegation.Delegate && !Cache.Accounts.DelegateExists(delegation.Delegate))
                     throw new ValidationException("unknown delegate account");
             }
         }
 
         protected async Task ValidateEndorsement(RawEndorsementContent endorsement, RawBlock rawBlock)
         {
-            var lastBlock = await Cache.GetCurrentBlockAsync();
+            var lastBlock = await Cache.Blocks.CurrentAsync();
 
             if (endorsement.Level != lastBlock.Level)
                 throw new ValidationException("invalid endorsed block level");
 
-            if (!await Cache.AccountExistsAsync(endorsement.Metadata.Delegate, AccountType.Delegate))
+            if (!Cache.Accounts.DelegateExists(endorsement.Metadata.Delegate))
                 throw new ValidationException("invalid endorsement delegate");
 
             if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Protocol.BlockReward0 > 0 ? 3 : 2))
@@ -192,7 +192,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected async Task ValidateNonceRevelation(RawNonceRevelationContent revelation, RawBlock rawBlock)
+        protected Task ValidateNonceRevelation(RawNonceRevelationContent revelation, RawBlock rawBlock)
         {
             if (revelation.Level % Protocol.BlocksPerCommitment != 0)
                 throw new ValidationException("invalid seed nonce revelation level");
@@ -206,18 +206,17 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (revelation.Metadata.BalanceUpdates[0].Change != Protocol.RevelationReward)
                 throw new ValidationException("invalid seed nonce revelation balance update amount");
 
-            if (!await Cache.AccountExistsAsync(revelation.Metadata.BalanceUpdates[0].Target, AccountType.Delegate) ||
+            if (!Cache.Accounts.DelegateExists(revelation.Metadata.BalanceUpdates[0].Target) ||
                 revelation.Metadata.BalanceUpdates[0].Target != rawBlock.Metadata.Baker)
                 throw new ValidationException("invalid seed nonce revelation baker");
+
+            return Task.CompletedTask;
         }
 
         protected async Task ValidateOrigination(RawOriginationContent origination, RawBlock rawBlock)
         {
-            if (!await Cache.AccountExistsAsync(origination.Source))
+            if (!await Cache.Accounts.ExistsAsync(origination.Source))
                 throw new ValidationException("unknown source account");
-
-            if (!await Cache.AccountExistsAsync(origination.Manager))
-                throw new ValidationException("unknown manager account");
 
             ValidateFeeBalanceUpdates(
                 origination.Metadata.BalanceUpdates,
@@ -237,7 +236,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateReveal(RawRevealContent reveal, RawBlock rawBlock)
         {
-            if (!await Cache.AccountExistsAsync(reveal.Source))
+            if (!await Cache.Accounts.ExistsAsync(reveal.Source))
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
@@ -250,7 +249,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ValidateTransaction(RawTransactionContent transaction, RawBlock rawBlock)
         {
-            if (!await Cache.AccountExistsAsync(transaction.Source))
+            if (!await Cache.Accounts.ExistsAsync(transaction.Source))
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
@@ -274,7 +273,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     var internalTransaction = internalContent as RawInternalTransactionResult;
 
-                    if (!await Cache.AccountExistsAsync(internalTransaction.Source, AccountType.Contract))
+                    if (!await Cache.Accounts.ExistsAsync(internalTransaction.Source, AccountType.Contract))
                         throw new ValidationException("unknown source contract");
 
                     if (internalTransaction.Result.BalanceUpdates != null)

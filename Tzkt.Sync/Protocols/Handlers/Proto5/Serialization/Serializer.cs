@@ -98,5 +98,22 @@ namespace Tzkt.Sync.Protocols.Proto5
                 throw new SerializationException($"[{ex.Path}] {ex.Message}");
             }
         }
+
+        public async Task<RawCycle> DeserializeCycle(Stream stream)
+        {
+            try
+            {
+                var cycle = await JsonSerializer.DeserializeAsync<RawCycle>(stream, Options);
+
+                if (!cycle.IsValidFormat())
+                    throw new SerializationException($"invalid format");
+
+                return cycle;
+            }
+            catch (JsonException ex)
+            {
+                throw new SerializationException($"[{ex.Path}] {ex.Message}");
+            }
+        }
     }
 }

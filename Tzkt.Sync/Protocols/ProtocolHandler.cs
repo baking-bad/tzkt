@@ -43,7 +43,7 @@ namespace Tzkt.Sync
             {
                 Logger.LogDebug("Deserializing block...");
                 var rawBlock = await Serializer.DeserializeBlock(stream);
-
+                
                 Logger.LogDebug("Loading entities...");
                 await LoadEntities(rawBlock);
 
@@ -59,7 +59,7 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Committing block...");
                 await Commit(rawBlock);
 
-                var state = await Cache.GetAppStateAsync();
+                var state = Cache.AppState.Get();
                 var protocolEnd = false;
                 if (state.Protocol != state.NextProtocol)
                 {
@@ -86,7 +86,7 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Saving...");
                 await Db.SaveChangesAsync();
 
-                await AfterCommit();
+                await AfterCommit(rawBlock);
 
                 await tx.CommitAsync();
             }
@@ -98,7 +98,7 @@ namespace Tzkt.Sync
 
             ClearCachedRelations();
 
-            return await Cache.GetAppStateAsync();
+            return Cache.AppState.Get();
         }
         
         public virtual async Task<AppState> RevertLastBlock(string predecessor)
@@ -108,7 +108,7 @@ namespace Tzkt.Sync
             {
                 await BeforeRevert();
 
-                var state = await Cache.GetAppStateAsync();
+                var state = Cache.AppState.Get();
                 if (state.Protocol != state.NextProtocol)
                 {
                     Logger.LogDebug("Migrating context...");
@@ -142,7 +142,7 @@ namespace Tzkt.Sync
 
             ClearCachedRelations();
 
-            return await Cache.GetAppStateAsync();
+            return Cache.AppState.Get();
         }
 
         public virtual void TouchAccounts(int level)
@@ -179,7 +179,7 @@ namespace Tzkt.Sync
                 if (account.FirstLevel == level)
                 {
                     Db.Remove(account);
-                    Cache.RemoveAccount(account);
+                    Cache.Accounts.Remove(account);
                 }
             }
         }
@@ -196,7 +196,7 @@ namespace Tzkt.Sync
 
         public abstract Task Commit(IBlock block);
 
-        public virtual Task AfterCommit() => Task.CompletedTask;
+        public virtual Task AfterCommit(IBlock block) => Task.CompletedTask;
 
         public virtual Task BeforeRevert() => Task.CompletedTask;
 

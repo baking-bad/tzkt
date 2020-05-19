@@ -32,7 +32,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="priority">Filters rights by priority</param>
-        /// <param name="status">Filters rights by status (`future`, `success`, `missed`)</param>
+        /// <param name="status">Filters rights by status (`future`, `realized`, `uncovered`, `missed`)</param>
         /// <returns></returns>
         [HttpGet("count")]
         public Task<int> GetCount(
@@ -59,7 +59,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="priority">Filters rights by priority</param>
-        /// <param name="status">Filters rights by status (`future`, `success`, `missed`)</param>
+        /// <param name="status">Filters rights by status (`future`, `realized`, `uncovered`, `missed`)</param>
         /// <param name="sort">Sorts rights by specified field. Supported fields: `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>

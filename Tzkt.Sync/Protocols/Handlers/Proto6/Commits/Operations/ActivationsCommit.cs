@@ -15,12 +15,12 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, RawOperation op, RawActivationContent content)
         {
-            var account = (User)await Cache.GetAccountAsync(content.Address);
-            account.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(account.DelegateId);
+            var account = (User)await Cache.Accounts.GetAsync(content.Address);
+            account.Delegate ??= Cache.Accounts.GetDelegate(account.DelegateId);
 
             Activation = new ActivationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -34,8 +34,8 @@ namespace Tzkt.Sync.Protocols.Proto6
         {
             Activation = activation;
             Activation.Block ??= block;
-            Activation.Account ??= (User)await Cache.GetAccountAsync(activation.AccountId);
-            Activation.Account.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(activation.Account.DelegateId);
+            Activation.Account ??= (User)await Cache.Accounts.GetAsync(activation.AccountId);
+            Activation.Account.Delegate ??= Cache.Accounts.GetDelegate(activation.Account.DelegateId);
         }
 
         public override Task Apply()

@@ -27,8 +27,9 @@ namespace Tzkt.Data.Models
     public enum BakingRightStatus : byte
     {
         Future = 0,
-        Success = 1,
-        Missed = 2
+        Realized = 1,
+        Uncovered = 2,
+        Missed = 3
     }
 
     public static class BakingRightModel

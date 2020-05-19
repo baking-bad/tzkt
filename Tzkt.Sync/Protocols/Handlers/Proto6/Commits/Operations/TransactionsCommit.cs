@@ -18,18 +18,18 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, RawOperation op, RawTransactionContent content)
         {
-            var sender = await Cache.GetAccountAsync(content.Source);
-            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            var sender = await Cache.Accounts.GetAsync(content.Source);
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
-            var target = await Cache.GetAccountAsync(content.Destination)
-                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Destination)?.Contract;
+            var target = await Cache.Accounts.GetAsync(content.Destination)
+                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.Destination)?.Contract;
 
             if (target != null)
-                target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
+                target.Delegate ??= Cache.Accounts.GetDelegate(target.DelegateId);
 
             Transaction = new TransactionOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -64,18 +64,18 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, TransactionOperation parent, RawInternalTransactionResult content)
         {
-            var id = await Cache.NextCounterAsync();
+            var id = Cache.AppState.NextOperationId();
 
-            var sender = await Cache.GetAccountAsync(content.Source)
-                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Source)?.Contract;
+            var sender = await Cache.Accounts.GetAsync(content.Source)
+                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.Source)?.Contract;
 
-            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
-            var target = await Cache.GetAccountAsync(content.Destination)
-                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Destination)?.Contract;
+            var target = await Cache.Accounts.GetAsync(content.Destination)
+                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.Destination)?.Contract;
 
             if (target != null)
-                target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(target.DelegateId);
+                target.Delegate ??= Cache.Accounts.GetDelegate(target.DelegateId);
 
             Parent = parent;
             Transaction = new TransactionOperation
@@ -117,20 +117,20 @@ namespace Tzkt.Sync.Protocols.Proto6
             Transaction = transaction;
 
             Transaction.Block ??= block;
-            Transaction.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
-            Transaction.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            Transaction.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            Transaction.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
 
-            Transaction.Sender = await Cache.GetAccountAsync(transaction.SenderId);
-            Transaction.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.Sender.DelegateId);
-            Transaction.Target = await Cache.GetAccountAsync(transaction.TargetId);
+            Transaction.Sender = await Cache.Accounts.GetAsync(transaction.SenderId);
+            Transaction.Sender.Delegate ??= Cache.Accounts.GetDelegate(transaction.Sender.DelegateId);
+            Transaction.Target = await Cache.Accounts.GetAsync(transaction.TargetId);
 
             if (Transaction.Target != null)
-                Transaction.Target.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.Target.DelegateId);
+                Transaction.Target.Delegate ??= Cache.Accounts.GetDelegate(transaction.Target.DelegateId);
 
             if (Transaction.InitiatorId != null)
             {
-                Transaction.Initiator = await Cache.GetAccountAsync(transaction.InitiatorId);
-                Transaction.Initiator.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(transaction.Initiator.DelegateId);
+                Transaction.Initiator = await Cache.Accounts.GetAsync(transaction.InitiatorId);
+                Transaction.Initiator.Delegate ??= Cache.Accounts.GetDelegate(transaction.Initiator.DelegateId);
             }
         }
 
@@ -361,7 +361,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             #endregion
 
             Db.TransactionOps.Remove(Transaction);
-            await Cache.ReleaseCounterAsync(true);
+            Cache.AppState.ReleaseManagerCounter();
         }
 
         public async Task RevertInternalTransaction()
@@ -444,7 +444,7 @@ namespace Tzkt.Sync.Protocols.Proto6
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
-                Cache.AddAccount(delegator);
+                Cache.Accounts.Add(delegator);
                 Db.TryAttach(delegator);
 
                 delegator.Staked = staked;

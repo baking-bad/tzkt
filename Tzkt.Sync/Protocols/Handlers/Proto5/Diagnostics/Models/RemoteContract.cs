@@ -5,7 +5,7 @@ namespace Tzkt.Sync.Protocols.Proto5
     class RemoteContract
     {
         [JsonPropertyName("balance")]
-        public long? Balance { get; set; }
+        public long Balance { get; set; }
 
         [JsonPropertyName("delegate")]
         public string Delegate { get; set; }

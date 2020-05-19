@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public async Task Init(RawBlock rawBlock)
         {
-            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
 
             VotingPeriod = new ProposalPeriod
             {
@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             Db.VotingEpoches.Add(VotingPeriod.Epoch);
 
             Db.VotingPeriods.Add(VotingPeriod);
-            Cache.AddVotingPeriod(VotingPeriod);
+            Cache.Periods.Add(VotingPeriod);
 
             return Task.CompletedTask;
         }
@@ -46,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             Db.VotingEpoches.Remove(VotingPeriod.Epoch);
 
             Db.VotingPeriods.Remove(VotingPeriod);
-            Cache.RemoveVotingPeriod();
+            Cache.Periods.Remove();
 
             return Task.CompletedTask;
         }

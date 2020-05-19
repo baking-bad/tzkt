@@ -15,17 +15,17 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, RawOperation op, RawNonceRevelationContent content)
         {
-            var revealedBlock = await Cache.GetBlockAsync(content.Level);
+            var revealedBlock = await Cache.Blocks.GetAsync(content.Level);
 
             Revelation = new NonceRevelationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Baker = block.Baker,
-                Sender = (Data.Models.Delegate)await Cache.GetAccountAsync(revealedBlock.BakerId),
+                Sender = Cache.Accounts.GetDelegate(revealedBlock.BakerId),
                 RevealedBlock = revealedBlock,
                 RevealedLevel = content.Level
             };
@@ -36,12 +36,12 @@ namespace Tzkt.Sync.Protocols.Proto6
             Revelation = revelation;
 
             Revelation.Block ??= block;
-            Revelation.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
-            Revelation.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            Revelation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            Revelation.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
 
-            Revelation.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(revelation.BakerId);
-            Revelation.Sender ??= (Data.Models.Delegate)await Cache.GetAccountAsync(revelation.SenderId);
-            Revelation.RevealedBlock = await Cache.GetBlockAsync(Revelation.RevealedLevel);
+            Revelation.Baker ??= Cache.Accounts.GetDelegate(revelation.BakerId);
+            Revelation.Sender ??= Cache.Accounts.GetDelegate(revelation.SenderId);
+            Revelation.RevealedBlock = await Cache.Blocks.GetAsync(Revelation.RevealedLevel);
         }
 
         public override Task Apply()

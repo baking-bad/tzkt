@@ -15,9 +15,9 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public async Task Init(Block block, RawOperation op, RawBallotContent content)
         {
-            var period = await Cache.GetCurrentVotingPeriodAsync();
-            var proposal = await Cache.GetProposalAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
-            var sender = await Cache.GetDelegateAsync(content.Source);
+            var period = await Cache.Periods.CurrentAsync();
+            var proposal = await Cache.Proposals.GetAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
+            var sender = Cache.Accounts.GetDelegate(content.Source);
             
             var rolls = 0;
             if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
@@ -27,7 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             Ballot = new BallotOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -50,9 +50,9 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             Ballot = ballot;
             Ballot.Block ??= block;
-            Ballot.Sender ??= (Data.Models.Delegate)await Cache.GetAccountAsync(ballot.SenderId);
-            Ballot.Period ??= await Cache.GetCurrentVotingPeriodAsync();
-            Ballot.Proposal ??= await Cache.GetProposalAsync(ballot.ProposalId);
+            Ballot.Sender ??= Cache.Accounts.GetDelegate(ballot.SenderId);
+            Ballot.Period ??= await Cache.Periods.CurrentAsync();
+            Ballot.Proposal ??= await Cache.Proposals.GetAsync(ballot.ProposalId);
         }
 
         public override Task Apply()

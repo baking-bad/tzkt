@@ -18,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public async Task Init(Block block, RawBlock rawBlock)
         {
-            var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+            var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
             BootstrapedAccounts = new List<Account>(65);
             Timestamp = rawBlock.Header.Timestamp;
             Level = rawBlock.Level;
@@ -33,6 +33,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             {
                 var baker = new Data.Models.Delegate
                 {
+                    Id = Cache.AppState.NextAccountId(),
                     Address = data.Address,
                     FirstLevel = rawBlock.Level,
                     LastLevel = rawBlock.Level,
@@ -45,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Revealed = true,
                     Type = AccountType.Delegate
                 };
-                Cache.AddAccount(baker);
+                Cache.Accounts.Add(baker);
                 BootstrapedAccounts.Add(baker);
                 delegates.Add(baker);
             }
@@ -56,6 +57,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             {
                 var user = new User
                 {
+                    Id = Cache.AppState.NextAccountId(),
                     Address = data.Address,
                     FirstLevel = rawBlock.Level,
                     LastLevel = rawBlock.Level,
@@ -63,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Counter = data.Counter,
                     Type = AccountType.User
                 };
-                Cache.AddAccount(user);
+                Cache.Accounts.Add(user);
                 BootstrapedAccounts.Add(user);
             }
             #endregion
@@ -71,11 +73,12 @@ namespace Tzkt.Sync.Protocols.Initiator
             #region bootstrap contracts
             foreach (var data in contracts.Where(x => x.Address[0] == 'K'))
             {
-                var manager = (User)await Cache.GetAccountAsync(data.Manager);
+                var manager = (User)await Cache.Accounts.GetAsync(data.Manager);
                 manager.ContractsCount++;
 
                 var contract = new Contract
                 {
+                    Id = Cache.AppState.NextAccountId(),
                     Address = data.Address,
                     FirstLevel = rawBlock.Level,
                     LastLevel = rawBlock.Level,
@@ -83,14 +86,14 @@ namespace Tzkt.Sync.Protocols.Initiator
                     Counter = data.Counter,
                     Spendable = false,
                     DelegationLevel = 1,
-                    Delegate = await Cache.GetDelegateAsync(data.Delegate),
+                    Delegate = Cache.Accounts.GetDelegate(data.Delegate),
                     Manager = manager,
                     Staked = !String.IsNullOrEmpty(data.Delegate),
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                 };
 
-                Cache.AddAccount(contract);
+                Cache.Accounts.Add(contract);
                 BootstrapedAccounts.Add(contract);
             }
             #endregion
@@ -114,7 +117,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             BootstrapedAccounts = await Db.Accounts.Where(x => x.Counter == 0).ToListAsync();
         }
 
-        public override async Task Apply()
+        public override Task Apply()
         {
             if (BootstrapedAccounts.Count > 0)
             {
@@ -129,7 +132,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     account.MigrationsCount++;
                     Db.MigrationOps.Add(new MigrationOperation
                     {
-                        Id = await Cache.NextCounterAsync(),
+                        Id = Cache.AppState.NextOperationId(),
                         Block = Block,
                         Level = Level,
                         Timestamp = Timestamp,
@@ -139,12 +142,14 @@ namespace Tzkt.Sync.Protocols.Initiator
                     });
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         public override async Task Revert()
         {
             Db.Accounts.RemoveRange(BootstrapedAccounts);
-            Cache.RemoveAccounts(BootstrapedAccounts);
+            Cache.Accounts.Remove(BootstrapedAccounts);
 
             Db.MigrationOps.RemoveRange(await Db.MigrationOps
                 .AsNoTracking()

@@ -42,13 +42,16 @@ namespace Tzkt.Sync.Services
             => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/delegates/{address}");
 
         public Task<Stream> GetBakingRightsAsync(int level, int cycle, int maxPriority)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/baking_rights?cycle={cycle}&max_priority={maxPriority}&all");
+            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/baking_rights?cycle={cycle}&max_priority={maxPriority}&all=true");
 
         public Task<Stream> GetLevelBakingRightsAsync(int level, int maxPriority)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/baking_rights?level={level}&max_priority={maxPriority}&all");
+            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/baking_rights?level={level}&max_priority={maxPriority}&all=true");
 
         public Task<Stream> GetEndorsingRightsAsync(int level, int cycle)
             => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/endorsing_rights?cycle={cycle}");
+
+        public Task<Stream> GetCycleAsync(int level, int cycle)
+            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/raw/json/cycle/{cycle}");
 
         public async Task<Header> GetHeaderAsync()
         {

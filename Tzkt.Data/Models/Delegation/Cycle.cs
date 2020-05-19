@@ -6,17 +6,14 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public int Index { get; set; }
-
-        #region shapshot
-        public int Snapshot { get; set; }
-        public int ActiveBakers { get; set; }
-        public int ActiveDelegators { get; set; }
+        public int SnapshotLevel { get; set; }
         public int TotalRolls { get; set; }
-        public long TotalBalances { get; set; }
-        #endregion
+        public long TotalStaking { get; set; }
+        public long TotalDelegated { get; set; }
+        public int TotalDelegators { get; set; }
+        public int TotalBakers { get; set; }
 
-        #region stats
-        #endregion
+        public string Seed { get; set; }
     }
 
     public static class CycleModel
@@ -32,6 +29,17 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<Cycle>()
                 .HasKey(x => x.Id);
+
+            modelBuilder.Entity<Cycle>()
+                .HasAlternateKey(x => x.Index);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<Cycle>()
+                .Property(x => x.Seed)
+                .IsFixedLength(true)
+                .HasMaxLength(64)
+                .IsRequired();
             #endregion
         }
     }

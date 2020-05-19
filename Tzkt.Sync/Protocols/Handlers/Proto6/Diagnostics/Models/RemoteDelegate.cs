@@ -13,7 +13,10 @@ namespace Tzkt.Sync.Protocols.Proto6
         public List<RemoteDelegateFreeze> FrozenBalances { get; set; }
 
         [JsonPropertyName("staking_balance")]
-        public long? StakingBalance { get; set; }
+        public long StakingBalance { get; set; }
+
+        [JsonPropertyName("delegated_balance")]
+        public long DelegatedBalance { get; set; }
 
         [JsonPropertyName("delegated_contracts")]
         public List<object> Delegators { get; set; }

@@ -58,7 +58,7 @@ namespace Tzkt.Sync.Protocols
             };
 
             Db.Protocols.Add(protocol);
-            Cache.AddProtocol(protocol);
+            Cache.Protocols.Add(protocol);
         }
 
         public override Task InitProtocol()
@@ -73,123 +73,46 @@ namespace Tzkt.Sync.Protocols
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
             var bootstrapCommit = await BootstrapCommit.Apply(this, blockCommit.Block, rawBlock);
             await VotingCommit.Apply(this, rawBlock);
-            await BakingRightsCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
-            await SnapshotBalanceCommit.Apply(this, blockCommit.Block);
+
+            var brCommit = await BakingRightsCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
+            await CycleCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
+            await DelegatorCycleCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
+            
+            await BakerCycleCommit.Apply(this,
+                blockCommit.Block,
+                bootstrapCommit.BootstrapedAccounts,
+                brCommit.FutureBakingRights,
+                brCommit.FutureEndorsingRights);
 
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
+        public override async Task AfterCommit(IBlock rawBlock)
+        {
+            var block = await Cache.Blocks.CurrentAsync();
+            await SnapshotBalanceCommit.Apply(this, block);
+        }
+
+        public override async Task BeforeRevert()
+        {
+            var block = await Cache.Blocks.CurrentAsync();
+            await SnapshotBalanceCommit.Revert(this, block);
+        }
+
         public override async Task Revert()
         {
-            var currBlock = await Cache.GetCurrentBlockAsync();
+            var currBlock = await Cache.Blocks.CurrentAsync();
 
-            await SnapshotBalanceCommit.Revert(this, currBlock);
-            await BakingRightsCommit.Revert(this, currBlock);
+            await BakerCycleCommit.Revert(this);
+            await DelegatorCycleCommit.Revert(this);
+            await CycleCommit.Revert(this);
+            await BakingRightsCommit.Revert(this);
+
             await VotingCommit.Revert(this, currBlock);
             await BootstrapCommit.Revert(this, currBlock);
             await BlockCommit.Revert(this, currBlock);
 
             await StateCommit.Revert(this, currBlock);
         }
-
-        /*private async Task InitCycle(int cycle)
-        {
-            #region init rights
-            var rights = await Task.WhenAll(
-                Node.GetBakingRightsAsync(1, cycle, 1),
-                Node.GetEndorsingRightsAsync(1, cycle));
-
-            var bakingRights = rights[0]
-                .Select(x => new BakingRight
-                {
-                    Baker = GetContract(x["delegate"].String()),
-                    Level = x["level"].Int32(),
-                    Priority = x["priority"].Int32()
-                });
-
-            var endorsingRights = rights[1]
-                .Select(x => new EndorsingRight
-                {
-                    Baker = GetContract(x["delegate"].String()),
-                    Level = x["level"].Int32(),
-                    Slots = x["slots"].Count()
-                });
-
-            Db.BakingRights.AddRange(bakingRights);
-            Db.EndorsingRights.AddRange(endorsingRights);
-            #endregion
-
-            #region init cycle
-            var cycleObj = new Cycle
-            {
-                Index = cycle,
-                Snapshot = 1,
-            };
-            Db.Cycles.Add(cycleObj);
-            #endregion
-
-            #region init snapshots
-            var snapshots = Contracts.Values
-                .Where(x => x.Staked)
-                .Select(x => new BalanceSnapshot
-                {
-                    Balance = x.Balance,
-                    Address = x,
-                    Delegate = GetContract(x.Delegate?.Address ?? x.Address),
-                    Level = cycleObj.Snapshot
-                });
-            #endregion
-
-            #region init delegators
-            var delegators = snapshots
-                .Where(x => x.Contract.Kind != ContractKind.Baker)
-                .Select(x => new DelegatorSnapshot
-                {
-                    Baker = x.Delegate,
-                    Balance = x.Balance,
-                    Delegator = x.Contract,
-                    Cycle = cycle
-                });
-            Db.DelegatorSnapshots.AddRange(delegators);
-            #endregion
-
-            #region init bakers
-            var bakers = snapshots
-                .Where(x => x.Contract.Kind == ContractKind.Baker)
-                .Select(x => new BakingCycle
-                {
-                    Baker = x.Contract,
-                    Balance = x.Balance,
-                    Cycle = cycle,
-                    StakingBalance = snapshots
-                        .Where(s => s.Delegate == x.Contract)
-                        .Sum(s => s.Balance),
-                    Blocks = bakingRights
-                        .Count(r => r.Priority == 0 && r.Baker == x.Contract),
-                    Endorsements = endorsingRights
-                        .Where(r => r.Baker == x.Contract)
-                        .DefaultIfEmpty(new EndorsingRight())
-                        .Sum(r => r.Slots)
-                });
-            Db.BakerCycles.AddRange(bakers);
-            #endregion
-        }*/
-        /*private async Task ClearCycle(int cycle)
-        {
-            Db.BakingRights.RemoveRange(
-                await Db.BakingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
-
-            Db.EndorsingRights.RemoveRange(
-                await Db.EndorsingRights.Where(x => (x.Level - 1) / 4096 == cycle).ToListAsync());
-
-            Db.Cycles.Remove(
-                await Db.Cycles.FirstAsync(x => x.Index == cycle));
-
-            Db.DelegatorSnapshots.RemoveRange(
-                await Db.DelegatorSnapshots.Where(x => x.Cycle == cycle).ToListAsync());
-
-            Db.BakerCycles.RemoveRange(
-                await Db.BakerCycles.Where(x => x.Cycle == cycle).ToListAsync());
-        }*/
     }
 }

@@ -331,15 +331,20 @@ namespace Tzkt.Api
                         hasValue = true;
                         result = 0;
                     }
-                    else if (valueObject.FirstValue == "success")
+                    else if (valueObject.FirstValue == "realized")
                     {
                         hasValue = true;
                         result = 1;
                     }
-                    else if (valueObject.FirstValue == "missed")
+                    else if (valueObject.FirstValue == "uncovered")
                     {
                         hasValue = true;
                         result = 2;
+                    }
+                    else if (valueObject.FirstValue == "missed")
+                    {
+                        hasValue = true;
+                        result = 3;
                     }
                     else
                     {

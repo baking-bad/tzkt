@@ -28,15 +28,17 @@ namespace Tzkt.Sync.Protocols
 
         public abstract Task Revert();
 
-        public async Task Spend(Account account, long amount)
+        public Task Spend(Account account, long amount)
         {
             account.Balance -= amount;
 
             if (account.Balance <= 0 && account.Type == AccountType.User)
             {
-                account.Counter = (await Cache.GetAppStateAsync()).ManagerCounter;
+                account.Counter = Cache.AppState.GetManagerCounter();
                 (account as User).Revealed = false;
             }
+
+            return Task.CompletedTask;
         }
 
         public Task Return(Account account, long amount, bool reveal = false)

@@ -28,6 +28,6 @@ namespace Tzkt.Api.Models
 
         public int Rolls { get; set; }
 
-        public bool Redundant { get; set; }
+        public bool Duplicated { get; set; }
     }
 }

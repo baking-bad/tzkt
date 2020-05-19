@@ -97,10 +97,9 @@ namespace Tzkt.Sync.Services
         {
             using var scope = Services.CreateScope();
             var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
-            cache.Clear();
-            await cache.LoadDelegates();
+            await cache.ResetAsync();
 
-            return await cache.GetAppStateAsync();
+            return cache.AppState.Get();
         }
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)

@@ -11,7 +11,7 @@ namespace Tzkt.Data.Models
         public int SenderId { get; set; }
         public int Rolls { get; set; }
 
-        public bool Redundant { get; set; }
+        public bool Duplicated { get; set; }
 
         #region relations
         [ForeignKey(nameof(PeriodId))]

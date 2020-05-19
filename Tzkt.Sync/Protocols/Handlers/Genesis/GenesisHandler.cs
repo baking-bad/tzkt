@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols
             };
 
             Db.Protocols.Add(protocol);
-            Cache.AddProtocol(protocol);
+            Cache.Protocols.Add(protocol);
             return Task.CompletedTask;
         }
 
@@ -56,7 +56,7 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Revert()
         {
-            var currBlock = await Cache.GetCurrentBlockAsync();
+            var currBlock = await Cache.Blocks.CurrentAsync();
 
             await BlockCommit.Revert(this, currBlock);
 

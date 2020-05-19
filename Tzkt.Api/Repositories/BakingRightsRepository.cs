@@ -272,8 +272,9 @@ namespace Tzkt.Api.Repositories
         string StatusToString(int status) => status switch
         {
             0 => "future",
-            1 => "success",
-            2 => "missed",
+            1 => "realized",
+            2 => "uncovered",
+            3 => "missed",
             _ => "unknown"
         };
     }

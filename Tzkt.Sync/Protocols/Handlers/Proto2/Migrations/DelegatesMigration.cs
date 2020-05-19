@@ -15,8 +15,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public override async Task Apply()
         {
-            var block = await Cache.GetCurrentBlockAsync();
-            var protocol = await Cache.GetProtocolAsync(block.ProtoCode);
+            var block = await Cache.Blocks.CurrentAsync();
+            var protocol = await Cache.Protocols.GetAsync(block.ProtoCode);
 
             var weirdDelegates = (await Db.Contracts
                 .AsNoTracking()
@@ -44,7 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 block.Operations |= Operations.Migrations;
                 Db.MigrationOps.Add(new MigrationOperation
                 {
-                    Id = await Cache.NextCounterAsync(),
+                    Id = Cache.AppState.NextOperationId(),
                     Block = block,
                     Level = block.Level,
                     Timestamp = block.Timestamp,
@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     delegator.WeirdDelegate = null;
 
                     Db.TryAttach(delegator);
-                    Cache.AddAccount(delegator);
+                    Cache.Accounts.Add(delegator);
 
                     delegator.WeirdDelegate = delegat;
                     delegator.Delegate = delegat;
@@ -97,7 +97,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public override async Task Revert()
         {
-            var block = await Cache.GetCurrentBlockAsync();
+            var block = await Cache.Blocks.CurrentAsync();
 
             var delegates = await Db.Delegates
                 .AsNoTracking()
@@ -111,7 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 foreach (var delegator in delegators)
                 {
                     Db.TryAttach(delegator);
-                    Cache.AddAccount(delegator);
+                    Cache.Accounts.Add(delegator);
 
                     (delegator as Contract).WeirdDelegate = null;
                     delegator.Delegate = null;
@@ -190,7 +190,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             Db.Entry(user).State = EntityState.Detached;
             Db.Entry(delegat).State = EntityState.Modified;
-            Cache.AddAccount(delegat);
+            Cache.Accounts.Add(delegat);
 
             return Task.FromResult(delegat);
         }
@@ -223,7 +223,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             Db.Entry(delegat).State = EntityState.Detached;
             Db.Entry(user).State = EntityState.Modified;
-            Cache.AddAccount(user);
+            Cache.Accounts.Add(user);
 
             return user;
         }

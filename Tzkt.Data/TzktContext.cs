@@ -50,12 +50,13 @@ namespace Tzkt.Data
         public DbSet<VotingSnapshot> VotingSnapshots { get; set; }
         #endregion
 
+        #region baking
+        public DbSet<Cycle> Cycles { get; set; }
+        public DbSet<BakerCycle> BakerCycles { get; set; }
+        public DbSet<DelegatorCycle> DelegatorCycles { get; set; }
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
-        //public DbSet<Cycle> Cycles { get; set; }
-        //public DbSet<EndorsingRight> EndorsingRights { get; set; }
-        //public DbSet<BakingCycle> BakerCycles { get; set; }
-        //public DbSet<DelegatorSnapshot> DelegatorSnapshots { get; set; }
+        #endregion
 
         public TzktContext(DbContextOptions options) : base(options) { }
 
@@ -105,8 +106,13 @@ namespace Tzkt.Data
             modelBuilder.BuildVotingSnapshotModel();
             #endregion
 
+            #region baking
+            modelBuilder.BuildCycleModel();
+            modelBuilder.BuildBakerCycleModel();
+            modelBuilder.BuildDelegatorCycleModel();
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
+            #endregion
         }
     }
 }

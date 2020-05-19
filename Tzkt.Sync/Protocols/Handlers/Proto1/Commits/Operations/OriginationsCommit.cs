@@ -17,19 +17,20 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task Init(Block block, RawOperation op, RawOriginationContent content)
         {
-            var sender = await Cache.GetAccountAsync(content.Source);
-            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            var sender = await Cache.Accounts.GetAsync(content.Source);
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
             // WTF: [level:25054] - Manager and sender are not equal.
-            var manager = (User)await Cache.GetAccountAsync(content.Manager);
+            var manager = (User)await Cache.Accounts.GetAsync(content.Manager);
 
-            var originDelegate = await Cache.GetAccountAsync(content.Delegate);
+            var originDelegate = await Cache.Accounts.GetAsync(content.Delegate);
             var delegat = originDelegate as Data.Models.Delegate;
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
             var contract = content.Metadata.Result.Status == "applied" ?
                 new Contract
                 {
+                    Id = Cache.AppState.NextAccountId(),
                     Address = content.Metadata.Result.OriginatedContracts[0],
                     Balance = content.Balance,
                     Counter = 0,
@@ -47,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Origination = new OriginationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -80,14 +81,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             Origination = origination;
 
             Origination.Block ??= block;
-            Origination.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
-            Origination.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            Origination.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            Origination.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
             
-            Origination.Sender = await Cache.GetAccountAsync(origination.SenderId);
-            Origination.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Sender.DelegateId);
-            Origination.Contract ??= (Contract)await Cache.GetAccountAsync(origination.ContractId);
-            Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
-            Origination.Manager ??= (User)await Cache.GetAccountAsync(origination.ManagerId);
+            Origination.Sender = await Cache.Accounts.GetAsync(origination.SenderId);
+            Origination.Sender.Delegate ??= Cache.Accounts.GetDelegate(origination.Sender.DelegateId);
+            Origination.Contract ??= (Contract)await Cache.Accounts.GetAsync(origination.ContractId);
+            Origination.Delegate ??= Cache.Accounts.GetDelegate(origination.DelegateId);
+            Origination.Manager ??= (User)await Cache.Accounts.GetAsync(origination.ManagerId);
         }
 
         public override async Task Apply()
@@ -215,7 +216,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractManager != sender) contractManager.ContractsCount--;
 
                 Db.Contracts.Remove(contract);
-                Cache.RemoveAccount(contract);
+                Cache.Accounts.Remove(contract);
             }
             #endregion
 
@@ -234,7 +235,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.OriginationOps.Remove(Origination);
-            await Cache.ReleaseCounterAsync(true);
+            Cache.AppState.ReleaseManagerCounter();
         }
 
         #region static

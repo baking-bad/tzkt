@@ -138,7 +138,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("GlobalCounter")
+                    b.Property<int>("OperationCounter")
                         .HasColumnType("integer");
 
                     b.Property<string>("Hash")
@@ -173,7 +173,7 @@ namespace Tzkt.Data.Migrations
                         new
                         {
                             Id = -1,
-                            GlobalCounter = 0,
+                            OperationCounter = 0,
                             Hash = "",
                             KnownHead = 0,
                             LastSync = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),

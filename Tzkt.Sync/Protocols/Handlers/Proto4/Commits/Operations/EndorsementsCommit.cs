@@ -13,19 +13,21 @@ namespace Tzkt.Sync.Protocols.Proto4
 
         EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(Block block, RawOperation op, RawEndorsementContent content)
+        public Task Init(Block block, RawOperation op, RawEndorsementContent content)
         {
             Endorsement = new EndorsementOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.Hash,
                 Slots = content.Metadata.Slots.Count,
-                Delegate = await Cache.GetDelegateAsync(content.Metadata.Delegate),
+                Delegate = Cache.Accounts.GetDelegate(content.Metadata.Delegate),
                 Reward = content.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate)?.Change ?? 0
             };
+
+            return Task.CompletedTask;
         }
 
         public async Task Init(Block block, EndorsementOperation endorsement)
@@ -33,9 +35,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             Endorsement = endorsement;
 
             Endorsement.Block ??= block;
-            Endorsement.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
+            Endorsement.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
 
-            Endorsement.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(endorsement.DelegateId);
+            Endorsement.Delegate ??= Cache.Accounts.GetDelegate(endorsement.DelegateId);
         }
 
         public override async Task Apply()
@@ -107,7 +109,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
-                Cache.AddAccount(delegator);
+                Cache.Accounts.Add(delegator);
                 Db.TryAttach(delegator);
 
                 delegator.Staked = staked;

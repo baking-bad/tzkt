@@ -15,35 +15,35 @@ namespace Tzkt.Sync.Protocols.Proto4
 
         public async Task Init(Block block, RawOperation op, RawProposalContent content)
         {
-            var period = (ProposalPeriod)await Cache.GetCurrentVotingPeriodAsync();
-            var sender = await Cache.GetDelegateAsync(content.Source);
+            var period = (ProposalPeriod)await Cache.Periods.CurrentAsync();
+            var sender = Cache.Accounts.GetDelegate(content.Source);
             var rolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
 
             ProposalOperations = new List<ProposalOperation>(4);
             foreach (var proposalHash in content.Proposals)
             {
-                var proposal = await Cache.GetOrSetProposalAsync(proposalHash, () => Task.FromResult(new Proposal
+                var proposal = await Cache.Proposals.GetOrCreateAsync(proposalHash, () => new Proposal
                 {
                     Hash = proposalHash,
                     Initiator = sender,
                     ProposalPeriod = period,
                     Status = ProposalStatus.Active
-                }));
+                });
 
-                var redundant = ProposalOperations.Any(x => x.Period.Id == period.Id && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash);
-                if (!redundant) redundant = block.Proposals?.Any(x => x.Period.Id == period.Id && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash) ?? false;
-                if (!redundant) redundant = await Db.ProposalOps.AnyAsync(x => x.PeriodId == period.Id && x.SenderId == sender.Id && x.ProposalId == proposal.Id);
+                var duplicated = ProposalOperations.Any(x => x.Period.Id == period.Id && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash);
+                if (!duplicated) duplicated = block.Proposals?.Any(x => x.Period.Id == period.Id && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash) ?? false;
+                if (!duplicated) duplicated = await Db.ProposalOps.AnyAsync(x => x.PeriodId == period.Id && x.SenderId == sender.Id && x.ProposalId == proposal.Id);
 
                 ProposalOperations.Add(new ProposalOperation
                 {
-                    Id = await Cache.NextCounterAsync(),
+                    Id = Cache.AppState.NextOperationId(),
                     Block = block,
                     Level = block.Level,
                     Timestamp = block.Timestamp,
                     OpHash = op.Hash,
                     Sender = sender,
                     Rolls = rolls,
-                    Redundant = redundant,
+                    Duplicated = duplicated,
                     Period = period,
                     Proposal = proposal
                 });
@@ -53,9 +53,9 @@ namespace Tzkt.Sync.Protocols.Proto4
         public async Task Init(Block block, ProposalOperation proposal)
         {
             proposal.Block ??= block;
-            proposal.Sender ??= (Data.Models.Delegate)await Cache.GetAccountAsync(proposal.SenderId);
-            proposal.Period ??= await Cache.GetCurrentVotingPeriodAsync();
-            proposal.Proposal ??= await Cache.GetProposalAsync(proposal.ProposalId);
+            proposal.Sender ??= Cache.Accounts.GetDelegate(proposal.SenderId);
+            proposal.Period ??= await Cache.Periods.CurrentAsync();
+            proposal.Proposal ??= await Cache.Proposals.GetAsync(proposal.ProposalId);
 
             ProposalOperations = new List<ProposalOperation> { proposal };
         }
@@ -77,7 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 #endregion
 
                 #region apply operation
-                if (!proposalOp.Redundant)
+                if (!proposalOp.Duplicated)
                     proposal.Upvotes += proposalOp.Rolls;
 
                 sender.ProposalsCount++;
@@ -106,7 +106,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 #endregion
 
                 #region revert operation
-                if (!proposalOp.Redundant)
+                if (!proposalOp.Duplicated)
                     proposal.Upvotes -= proposalOp.Rolls;
 
                 sender.ProposalsCount--;
@@ -115,7 +115,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 if (proposal.Upvotes == 0)
                 {
                     Db.Proposals.Remove(proposal);
-                    Cache.RemoveProposal(proposal);
+                    Cache.Proposals.Remove(proposal);
                 }
 
                 Db.ProposalOps.Remove(proposalOp);

@@ -33,10 +33,61 @@ namespace Tzkt.Sync.Protocols
 
         public override Task CancelMigration() => Proto2.DelegatesMigration.Revert(this);
 
+        public override Task LoadEntities(IBlock block)
+        {
+            var rawBlock = block as RawBlock;
+            var accounts = new HashSet<string>(64);
+
+            foreach (var op in rawBlock.Operations[2])
+            {
+                if (op.Contents[0] is RawActivationContent activation)
+                    accounts.Add(activation.Address);
+            }
+
+            foreach (var op in rawBlock.Operations[3])
+            {
+                foreach (var content in op.Contents)
+                {
+                    switch (content)
+                    {
+                        case RawRevealContent reveal:
+                            accounts.Add(reveal.Source);
+                            break;
+                        case RawDelegationContent delegation:
+                            accounts.Add(delegation.Source);
+                            break;
+                        case RawTransactionContent transaction:
+                            accounts.Add(transaction.Source);
+                            if (transaction.Destination != null)
+                                accounts.Add(transaction.Destination);
+
+                            if (transaction.Metadata.InternalResults != null)
+                                foreach (var internalContent in transaction.Metadata.InternalResults)
+                                {
+                                    if (internalContent is RawInternalTransactionResult internalTransaction)
+                                    {
+                                        accounts.Add(internalTransaction.Source);
+                                        if (internalTransaction.Destination != null)
+                                            accounts.Add(internalTransaction.Destination);
+                                    }
+                                }
+                            break;
+                        case RawOriginationContent origination:
+                            accounts.Add(origination.Source);
+                            if (origination.Manager != null)
+                                accounts.Add(origination.Manager);
+                            break;
+                    }
+                }
+            }
+
+            return Cache.Accounts.LoadAsync(accounts);
+        }
+
         public override async Task InitProtocol(IBlock block)
         {
-            var state = await Cache.GetAppStateAsync();
-            var currProtocol = await Cache.GetProtocolAsync(state.Protocol);
+            var state = Cache.AppState.Get();
+            var currProtocol = await Cache.Protocols.GetAsync(state.Protocol);
 
             Protocol protocol = null;
             if (state.Protocol != state.NextProtocol)
@@ -49,11 +100,11 @@ namespace Tzkt.Sync.Protocols
                     LastLevel = -1
                 };
                 Db.Protocols.Add(protocol);
-                Cache.AddProtocol(protocol);
+                Cache.Protocols.Add(protocol);
             }
             else if (block.Level % currProtocol.BlocksPerCycle == 1)
             {
-                protocol = await Cache.GetProtocolAsync(state.Protocol);
+                protocol = await Cache.Protocols.GetAsync(state.Protocol);
                 Db.TryAttach(protocol);
             }
 
@@ -85,8 +136,8 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task InitProtocol()
         {
-            var state = await Cache.GetAppStateAsync();
-            var currProtocol = await Cache.GetProtocolAsync(state.Protocol);
+            var state = Cache.AppState.Get();
+            var currProtocol = await Cache.Protocols.GetAsync(state.Protocol);
 
             if (state.Protocol == state.NextProtocol &&
                 state.Level % currProtocol.BlocksPerCycle != 0)
@@ -174,7 +225,7 @@ namespace Tzkt.Sync.Protocols
             #region operations 3
             foreach (var operation in rawBlock.Operations[3])
             {
-                await Cache.IncreaseManagerCounter(operation.Contents.Count);
+                Cache.AppState.IncreaseManagerCounter(operation.Contents.Count);
 
                 foreach (var content in operation.Contents)
                 {
@@ -213,26 +264,36 @@ namespace Tzkt.Sync.Protocols
             }
             #endregion
 
-            await BakingRightsCommit.Apply(this, blockCommit.Block);
+            var brCommit = await BakingRightsCommit.Apply(this, blockCommit.Block);
+            var cycleCommit = await CycleCommit.Apply(this, blockCommit.Block);
+            await DelegatorCycleCommit.Apply(this, blockCommit.Block, cycleCommit.FutureCycle);
+
+            await BakerCycleCommit.Apply(this,
+                blockCommit.Block,
+                cycleCommit.FutureCycle,
+                brCommit.FutureBakingRights,
+                brCommit.FutureEndorsingRights,
+                cycleCommit.Snapshots,
+                brCommit.CurrentRights);
 
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
-        public override async Task AfterCommit()
+        public override async Task AfterCommit(IBlock rawBlock)
         {
-            var block = await Cache.GetCurrentBlockAsync();
+            var block = await Cache.Blocks.CurrentAsync();
             await SnapshotBalanceCommit.Apply(this, block);
         }
 
         public override async Task BeforeRevert()
         {
-            var block = await Cache.GetCurrentBlockAsync();
+            var block = await Cache.Blocks.CurrentAsync();
             await SnapshotBalanceCommit.Revert(this, block);
         }
 
         public override async Task Revert()
         {
-            var currBlock = await Cache.GetCurrentBlockAsync();
+            var currBlock = await Cache.Blocks.CurrentAsync();
 
             #region load operations
             var query = Db.Blocks.AsQueryable();
@@ -262,7 +323,7 @@ namespace Tzkt.Sync.Protocols
                 query = query.Include(x => x.CreatedAccounts);
 
             currBlock = await query.FirstOrDefaultAsync(x => x.Level == currBlock.Level);
-            Cache.AddBlock(currBlock);
+            Cache.Blocks.Add(currBlock);
 
             var operations = new List<BaseOperation>(40);
             if (currBlock.Activations != null)
@@ -288,9 +349,12 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.CreatedAccounts != null)
                 foreach (var account in currBlock.CreatedAccounts)
-                    Cache.AddAccount(account);
+                    Cache.Accounts.Add(account);
             #endregion
 
+            await BakerCycleCommit.Revert(this, currBlock);
+            await DelegatorCycleCommit.Revert(this, currBlock);
+            await CycleCommit.Revert(this, currBlock);
             await BakingRightsCommit.Revert(this, currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))

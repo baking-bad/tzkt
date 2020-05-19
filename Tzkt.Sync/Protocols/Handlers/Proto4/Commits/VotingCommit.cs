@@ -20,15 +20,15 @@ namespace Tzkt.Sync.Protocols.Proto4
             if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
             {
                 Event = BlockEvents.VotingPeriodEnd;
-                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period = await Cache.Periods.CurrentAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
             else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
             {
                 Event = BlockEvents.VotingPeriodBegin;
-                var protocol = await Cache.GetProtocolAsync(rawBlock.Protocol);
+                var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
 
-                var currentPeriod = await Cache.GetCurrentVotingPeriodAsync();
+                var currentPeriod = await Cache.Periods.CurrentAsync();
                 var currentEpoch = await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == currentPeriod.EpochId);
 
                 if (rawBlock.Metadata.VotingPeriod == "proposal")
@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         .OrderByDescending(x => x.Upvotes)
                         .FirstAsync();
 
-                    Cache.AddProposal(proposal);
+                    Cache.Proposals.Add(proposal);
 
                     Period = new ExplorationPeriod
                     {
@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         Kind = VotingPeriods.Testing,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
-                        Proposal = await Cache.GetProposalAsync((currentPeriod as ExplorationPeriod).ProposalId),
+                        Proposal = await Cache.Proposals.GetAsync((currentPeriod as ExplorationPeriod).ProposalId),
                         ProposalId = (currentPeriod as ExplorationPeriod).ProposalId
                     };
                     #endregion
@@ -91,7 +91,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         Kind = VotingPeriods.Promotion,
                         StartLevel = rawBlock.Level,
                         EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1,
-                        Proposal = await Cache.GetProposalAsync((currentPeriod as TestingPeriod).ProposalId),
+                        Proposal = await Cache.Proposals.GetAsync((currentPeriod as TestingPeriod).ProposalId),
                         ProposalId = (currentPeriod as TestingPeriod).ProposalId
                     };
                     #endregion
@@ -109,8 +109,8 @@ namespace Tzkt.Sync.Protocols.Proto4
                         .Where(x => x.Staked && x.DeactivationLevel < gracePeriod && x.StakingBalance >= protocol.TokensPerRoll)
                         .ToListAsync();
 
-                    var lastBlock = await Cache.GetCurrentBlockAsync();
-                    lastBlock.Protocol ??= await Cache.GetProtocolAsync(lastBlock.ProtoCode);
+                    var lastBlock = await Cache.Blocks.CurrentAsync();
+                    lastBlock.Protocol ??= await Cache.Protocols.GetAsync(lastBlock.ProtoCode);
 
                     Rolls = new List<VotingSnapshot>(delegates.Count);
                     foreach (var delegat in delegates)
@@ -137,20 +137,20 @@ namespace Tzkt.Sync.Protocols.Proto4
             if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
             {
                 Event = BlockEvents.VotingPeriodEnd;
-                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period = await Cache.Periods.CurrentAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
             }
             else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
             {
                 Event = BlockEvents.VotingPeriodBegin;
-                Period = await Cache.GetCurrentVotingPeriodAsync();
+                Period = await Cache.Periods.CurrentAsync();
                 Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
                 if (Period is ExplorationPeriod exploration)
-                    exploration.Proposal ??= await Cache.GetProposalAsync(exploration.ProposalId);
+                    exploration.Proposal ??= await Cache.Proposals.GetAsync(exploration.ProposalId);
                 if (Period is TestingPeriod testing)
-                    testing.Proposal ??= await Cache.GetProposalAsync(testing.ProposalId);
+                    testing.Proposal ??= await Cache.Proposals.GetAsync(testing.ProposalId);
                 else if (Period is PromotionPeriod promotion)
-                    promotion.Proposal ??= await Cache.GetProposalAsync(promotion.ProposalId);
+                    promotion.Proposal ??= await Cache.Proposals.GetAsync(promotion.ProposalId);
 
                 if (!(Period is TestingPeriod))
                     Rolls = await Db.VotingSnapshots.Where(x => x.Level == block.Level - 1).ToListAsync();
@@ -181,7 +181,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 #endregion
 
                 Db.VotingPeriods.Add(Period);
-                Cache.AddVotingPeriod(Period);
+                Cache.Periods.Add(Period);
 
                 if (Rolls != null)
                     Db.VotingSnapshots.AddRange(Rolls);
@@ -217,7 +217,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                     Db.VotingEpoches.Remove(Period.Epoch);
 
                 Db.VotingPeriods.Remove(Period);
-                Cache.RemoveVotingPeriod();
+                Cache.Periods.Remove();
 
                 if (Rolls != null)
                     Db.VotingSnapshots.RemoveRange(Rolls);

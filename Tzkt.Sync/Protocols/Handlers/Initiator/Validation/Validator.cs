@@ -13,24 +13,24 @@ namespace Tzkt.Sync.Protocols.Initiator
             Cache = protocol.Cache;
         }
 
-        public async Task<IBlock> ValidateBlock(IBlock block)
+        public Task<IBlock> ValidateBlock(IBlock block)
         {
             if (!(block is RawBlock rawBlock))
                 throw new ArgumentException("invalid type of the block to validate");
 
-            if (rawBlock.Level != (await Cache.GetCurrentBlockAsync()).Level + 1)
+            if (rawBlock.Level != Cache.AppState.GetNextLevel())
                 throw new ValidationException($"Invalid block level", true);
 
-            if (rawBlock.Predecessor != (await Cache.GetCurrentBlockAsync()).Hash)
+            if (rawBlock.Predecessor != Cache.AppState.GetHead())
                 throw new ValidationException($"Invalid block predecessor", true);
 
-            if (rawBlock.Protocol != (await Cache.GetAppStateAsync()).NextProtocol)
+            if (rawBlock.Protocol != Cache.AppState.GetNextProtocol())
                 throw new ValidationException($"Invalid block protocol", true);
 
             if (rawBlock.Level != 1)
                 throw new ValidationException("initiator block is allowed only at level 1");
 
-            return rawBlock;
+            return Task.FromResult(block);
         }
     }
 }

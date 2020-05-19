@@ -18,18 +18,19 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, RawOperation op, RawOriginationContent content)
         {
-            var sender = await Cache.GetAccountAsync(content.Source);
-            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            var sender = await Cache.Accounts.GetAsync(content.Source);
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var manager = ManagerTz.Test(content.Script.Code, content.Script.Storage)
-                ? (User)await Cache.GetAccountAsync(ManagerTz.GetManager(content.Script.Storage))
+                ? (User)await Cache.Accounts.GetAsync(ManagerTz.GetManager(content.Script.Storage))
                 : null;
 
-            var delegat = await Cache.GetDelegateOrDefaultAsync(content.Delegate);
+            var delegat = Cache.Accounts.GetDelegateOrDefault(content.Delegate);
 
             var contract = content.Metadata.Result.Status == "applied" ?
                 new Contract
                 {
+                    Id = Cache.AppState.NextAccountId(),
                     Address = content.Metadata.Result.OriginatedContracts[0],
                     Balance = content.Balance,
                     Counter = 0,
@@ -45,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto6
 
             Origination = new OriginationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
@@ -77,20 +78,21 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         public async Task Init(Block block, TransactionOperation parent, RawInternalOriginationResult content)
         {
-            var sender = await Cache.GetAccountAsync(content.Source)
-                ?? block.Originations.FirstOrDefault(x => x.Contract.Address == content.Source)?.Contract;
+            var sender = await Cache.Accounts.GetAsync(content.Source)
+                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.Source)?.Contract;
             
-            sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(sender.DelegateId);
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var manager = ManagerTz.Test(content.Script.Code, content.Script.Storage)
-                ? (User)await Cache.GetAccountAsync(ManagerTz.GetManager(content.Script.Storage))
+                ? (User)await Cache.Accounts.GetAsync(ManagerTz.GetManager(content.Script.Storage))
                 : null;
 
-            var delegat = await Cache.GetDelegateOrDefaultAsync(content.Delegate);
+            var delegat = Cache.Accounts.GetDelegateOrDefault(content.Delegate);
 
             var contract = content.Result.Status == "applied" ?
                 new Contract
                 {
+                    Id = Cache.AppState.NextAccountId(),
                     Address = content.Result.OriginatedContracts[0],
                     Balance = content.Balance,
                     Counter = 0,
@@ -107,7 +109,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             Parent = parent;
             Origination = new OriginationOperation
             {
-                Id = await Cache.NextCounterAsync(),
+                Id = Cache.AppState.NextOperationId(),
                 Initiator = parent.Sender,
                 Block = parent.Block,
                 Level = parent.Block.Level,
@@ -141,19 +143,19 @@ namespace Tzkt.Sync.Protocols.Proto6
             Origination = origination;
 
             Origination.Block ??= block;
-            Origination.Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
-            Origination.Block.Baker ??= (Data.Models.Delegate)await Cache.GetAccountAsync(block.BakerId);
+            Origination.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            Origination.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
             
-            Origination.Sender = await Cache.GetAccountAsync(origination.SenderId);
-            Origination.Sender.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Sender.DelegateId);
-            Origination.Contract ??= (Contract)await Cache.GetAccountAsync(origination.ContractId);
-            Origination.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.DelegateId);
-            Origination.Manager ??= (User)await Cache.GetAccountAsync(origination.ManagerId);
+            Origination.Sender = await Cache.Accounts.GetAsync(origination.SenderId);
+            Origination.Sender.Delegate ??= Cache.Accounts.GetDelegate(origination.Sender.DelegateId);
+            Origination.Contract ??= (Contract)await Cache.Accounts.GetAsync(origination.ContractId);
+            Origination.Delegate ??= Cache.Accounts.GetDelegate(origination.DelegateId);
+            Origination.Manager ??= (User)await Cache.Accounts.GetAsync(origination.ManagerId);
 
             if (Origination.InitiatorId != null)
             {
-                Origination.Initiator = await Cache.GetAccountAsync(origination.InitiatorId);
-                Origination.Initiator.Delegate ??= (Data.Models.Delegate)await Cache.GetAccountAsync(origination.Initiator.DelegateId);
+                Origination.Initiator = await Cache.Accounts.GetAsync(origination.InitiatorId);
+                Origination.Initiator.Delegate ??= Cache.Accounts.GetDelegate(origination.Initiator.DelegateId);
             }
         }
 
@@ -377,7 +379,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 Db.Contracts.Remove(contract);
-                Cache.RemoveAccount(contract);
+                Cache.Accounts.Remove(contract);
             }
             #endregion
 
@@ -396,7 +398,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             #endregion
 
             Db.OriginationOps.Remove(Origination);
-            await Cache.ReleaseCounterAsync(true);
+            Cache.AppState.ReleaseManagerCounter();
         }
 
         public async Task RevertInternalOrigination()
@@ -454,7 +456,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 Db.Contracts.Remove(contract);
-                Cache.RemoveAccount(contract);
+                Cache.Accounts.Remove(contract);
             }
             #endregion
 

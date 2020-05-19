@@ -7,7 +7,7 @@ namespace Tzkt.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<bool>(
-                name: "Redundant",
+                name: "Duplicated",
                 table: "ProposalOps",
                 nullable: false,
                 defaultValue: false);
@@ -28,7 +28,7 @@ namespace Tzkt.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Redundant",
+                name: "Duplicated",
                 table: "ProposalOps");
 
             migrationBuilder.DropColumn(

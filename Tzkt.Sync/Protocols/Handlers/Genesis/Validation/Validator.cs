@@ -13,18 +13,18 @@ namespace Tzkt.Sync.Protocols.Genesis
             Cache = protocol.Cache;
         }
 
-        public async Task<IBlock> ValidateBlock(IBlock block)
+        public Task<IBlock> ValidateBlock(IBlock block)
         {
             if (!(block is RawBlock rawBlock))
                 throw new ArgumentException("invalid type of the block to validate");
 
-            if (rawBlock.Level != (await Cache.GetAppStateAsync()).Level + 1)
+            if (rawBlock.Level != Cache.AppState.GetNextLevel())
                 throw new ValidationException("invalid block level", true);
 
             if (rawBlock.Level != 0)
                 throw new ValidationException("genesis block is allowed only at level 0");
 
-            return rawBlock;
+            return Task.FromResult(block);
         }
     }
 }

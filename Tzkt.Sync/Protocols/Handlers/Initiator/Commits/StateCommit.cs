@@ -13,20 +13,20 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         StateCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(Block block, RawBlock rawBlock)
+        public Task Init(Block block, RawBlock rawBlock)
         {
             Block = block;
-            //Block.Protocol ??= await Cache.GetProtocolAsync(rawBlock.Protocol);
             NextProtocol = rawBlock.Metadata.NextProtocol;
-            AppState = await Cache.GetAppStateAsync();
+            AppState = Cache.AppState.Get();
+            return Task.CompletedTask;
         }
 
         public async Task Init(Block block)
         {
-            Block = await Cache.GetCurrentBlockAsync();
-            Block.Protocol ??= await Cache.GetProtocolAsync(block.ProtoCode);
+            Block = block;
+            Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
             NextProtocol = block.Protocol.Hash;
-            AppState = await Cache.GetAppStateAsync();
+            AppState = Cache.AppState.Get();
         }
 
         public override Task Apply()
@@ -50,8 +50,8 @@ namespace Tzkt.Sync.Protocols.Initiator
         {
             #region entities
             var state = AppState;
-            var prevBlock = await Cache.GetPreviousBlockAsync();
-            prevBlock.Protocol ??= await Cache.GetProtocolAsync(prevBlock.ProtoCode);
+            var prevBlock = await Cache.Blocks.PreviousAsync();
+            prevBlock.Protocol ??= await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
 
             Db.TryAttach(state);
             #endregion
@@ -62,7 +62,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             state.NextProtocol = NextProtocol;
             state.Hash = prevBlock.Hash;
 
-            Cache.RemoveBlock(Block);
+            Cache.Blocks.Remove(Block);
         }
 
         #region static

@@ -21,7 +21,7 @@ namespace Tzkt.Data.Migrations
                     Protocol = table.Column<string>(nullable: true),
                     NextProtocol = table.Column<string>(nullable: true),
                     Hash = table.Column<string>(nullable: true),
-                    GlobalCounter = table.Column<int>(nullable: false),
+                    OperationCounter = table.Column<int>(nullable: false),
                     ManagerCounter = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
@@ -819,7 +819,7 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "GlobalCounter", "Hash", "KnownHead", "LastSync", "Level", "ManagerCounter", "NextProtocol", "Protocol", "Timestamp" },
+                columns: new[] { "Id", "OperationCounter", "Hash", "KnownHead", "LastSync", "Level", "ManagerCounter", "NextProtocol", "Protocol", "Timestamp" },
                 values: new object[] { -1, 0, "", 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, "", "", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) });
 
             migrationBuilder.CreateIndex(

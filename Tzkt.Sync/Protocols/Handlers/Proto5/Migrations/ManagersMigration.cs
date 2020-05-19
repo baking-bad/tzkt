@@ -14,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Apply()
         {
-            var block = await Cache.GetCurrentBlockAsync();
-            var state = await Cache.GetAppStateAsync();
+            var block = await Cache.Blocks.CurrentAsync();
+            var state = Cache.AppState.Get();
 
             var emptiedManagers = await Db.Contracts
                 .AsNoTracking()
@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             foreach (var manager in dict.Values)
             {
                 Db.TryAttach(manager);
-                Cache.AddAccount(manager);
+                Cache.Accounts.Add(manager);
 
                 manager.Balance = 1;
                 manager.Counter = state.ManagerCounter;
@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 block.Operations |= Operations.Migrations;
                 Db.MigrationOps.Add(new MigrationOperation
                 {
-                    Id = await Cache.NextCounterAsync(),
+                    Id = Cache.AppState.NextOperationId(),
                     Block = block,
                     Level = state.Level,
                     Timestamp = state.Timestamp,
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             foreach (var airDrop in airDrops)
             {
                 Db.TryAttach(airDrop.Account);
-                Cache.AddAccount(airDrop.Account);
+                Cache.Accounts.Add(airDrop.Account);
 
                 airDrop.Account.Balance = 0;
                 airDrop.Account.MigrationsCount--;

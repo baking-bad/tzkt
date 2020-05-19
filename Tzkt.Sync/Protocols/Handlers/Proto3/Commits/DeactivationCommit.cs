@@ -54,7 +54,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
             foreach (var delegat in Delegates)
             {
-                Cache.AddAccount(delegat);
+                Cache.Accounts.Add(delegat);
                 Db.TryAttach(delegat);
 
                 delegat.DeactivationLevel = DeactivationLevel;
@@ -62,7 +62,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                 foreach (var delegator in delegat.DelegatedAccounts)
                 {
-                    Cache.AddAccount(delegator);
+                    Cache.Accounts.Add(delegator);
                     Db.TryAttach(delegator);
 
                     delegator.Staked = false;
@@ -78,7 +78,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
             foreach (var delegat in Delegates)
             {
-                Cache.AddAccount(delegat);
+                Cache.Accounts.Add(delegat);
                 Db.TryAttach(delegat);
 
                 delegat.DeactivationLevel = Block.Events.HasFlag(BlockEvents.CycleEnd)
@@ -89,7 +89,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                 foreach (var delegator in delegat.DelegatedAccounts)
                 {
-                    Cache.AddAccount(delegator);
+                    Cache.Accounts.Add(delegator);
                     Db.TryAttach(delegator);
 
                     delegator.Staked = true;
