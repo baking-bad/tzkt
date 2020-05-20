@@ -34,18 +34,18 @@ namespace Tzkt.Api.Services.Cache
 
             using var db = GetConnection();
             var totalAccounts = db.QueryFirst<int>(@"SELECT COUNT(*) FROM ""Accounts""");
-
-            var capacity = totalAccounts <= Config.MaxAccounts
-                ? (int)(totalAccounts * 1.1)
+            
+            var count = Math.Min(totalAccounts, Config.MaxAccounts);            
+            var capacity = count < Config.MaxAccounts
+                ? Math.Min((int)(count * 1.1), Config.MaxAccounts)
                 : Config.MaxAccounts;
-
             var sql = @"
                 SELECT   *
                 FROM     ""Accounts""
                 ORDER BY ""LastLevel"" DESC
                 LIMIT    @limit";
 
-            using var reader = db.ExecuteReader(sql, new { limit = (int)(capacity * Config.LoadRate) });
+            using var reader = db.ExecuteReader(sql, new { limit = (int)(count * Config.LoadRate) });
 
             var userParser = reader.GetRowParser<RawUser>();
             var delegateParser = reader.GetRowParser<RawDelegate>();
@@ -252,27 +252,29 @@ namespace Tzkt.Api.Services.Cache
 
         void AddAccount(RawAccount account)
         {
+            Sema.Wait();
+
             CheckCacheSize();
 
             AccountsById[account.Id] = account;
             AccountsByAddress[account.Address] = account;
 
             Logger.LogDebug($"Account {account.Address} cached [{AccountsByAddress.Count}/{Config.MaxAccounts}]");
+
+            Sema.Release();
         }
 
         void CheckCacheSize()
         {
             if (AccountsByAddress.Count >= Config.MaxAccounts)
             {
-                Sema.Wait();
-
                 if (AccountsByAddress.Count >= Config.MaxAccounts)
                 {
                     Logger.LogDebug($"Clearing accounts cache [{AccountsByAddress.Count}/{Config.MaxAccounts}]...");
 
                     #region clear addresses
                     var toRemoveByAddress = AccountsByAddress.Keys
-                        .Take((int)(Config.MaxAccounts * (1 - Config.LoadRate)))
+                        .Take((int)(AccountsByAddress.Count * 0.25))
                         .ToList();
 
                     foreach (var key in toRemoveByAddress)
@@ -281,7 +283,7 @@ namespace Tzkt.Api.Services.Cache
 
                     #region clear ids
                     var toRemoveById = AccountsById.Keys
-                        .Take((int)(Config.MaxAccounts * (1 - Config.LoadRate)))
+                        .Take((int)(AccountsById.Count * 0.25))
                         .ToList();
 
                     foreach (var key in toRemoveById)
@@ -290,8 +292,6 @@ namespace Tzkt.Api.Services.Cache
 
                     Logger.LogInformation($"Accounts cache cleared [{AccountsByAddress.Count}/{Config.MaxAccounts}]");
                 }
-
-                Sema.Release();
             }
         }
     }
