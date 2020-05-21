@@ -19,7 +19,7 @@ namespace Tzkt.Api.Models
         public string Address { get; set; }
 
         /// <summary>
-        /// Delegation status (true - active, false - deactivated)
+        /// Delegation status (`true` - active, `false` - deactivated)
         /// </summary>
         public bool Active { get; set; }
     }

@@ -6,11 +6,14 @@ namespace Tzkt.Api.Models
 {
     public class Contract : Account
     {
+        /// <summary>
+        /// Type of the account, `contract` - smart contract programmable account
+        /// </summary>
         public override string Type => AccountTypes.Contract;
 
         /// <summary>
         /// Kind of the contract (`delegator_contract` or `smart_contract`),
-        /// where `delegator_contract` - simple type of a contract for delegation purpose only
+        /// where `delegator_contract` - manager.tz smart contract for delegation purpose only
         /// </summary>
         public string Kind { get; set; }
         
@@ -30,32 +33,32 @@ namespace Tzkt.Api.Models
         public long Balance { get; set; }
         
         /// <summary>
-        /// Contract creator info
+        /// Information about the account, which has deployed the contract to the blockchain
         /// </summary>       
         public CreatorInfo Creator { get; set; }
-
+        
         /// <summary>
-        /// Contract manager info
+        /// Information about the account, which was marked as a manager when contract was deployed to the blockchain
         /// </summary>
         public ManagerInfo Manager { get; set; }
         
         /// <summary>
-        /// Information about the current delegate of the contract
+        /// Information about the current delegate of the contract. `null` if it doesn't delegated
         /// </summary>
         public DelegateInfo Delegate { get; set; }
 
         /// <summary>
-        /// Block height of latest delegation
+        /// Block height of latest delegation. `null` if it doesn't delegated
         /// </summary>
         public int? DelegationLevel { get; set; }
 
         /// <summary>
-        /// Block datetime of latest delegation (ISO 8601, e.g. 2019-11-31)
+        /// Block datetime of latest delegation (ISO 8601, e.g. `2020-02-20T02:40:57Z`). `null` if it doesn't delegated
         /// </summary>
         public DateTime? DelegationTime { get; set; }
 
         /// <summary>
-        /// Number of contracts, related to the contract
+        /// Number of contracts, created (originated) and/or managed by the contract
         /// </summary>
         public int NumContracts { get; set; }
 
@@ -75,7 +78,7 @@ namespace Tzkt.Api.Models
         public int NumTransactions { get; set; }
     
         /// <summary>
-        /// Number of reveal (is used to reveal the public key associated with a tz1 address (implicit account/public key hash)) operations of the contract
+        /// Number of reveal (is used to reveal the public key associated with an account) operations of the contract
         /// </summary>
         public int NumReveals { get; set; }
 
@@ -91,21 +94,21 @@ namespace Tzkt.Api.Models
         public int FirstActivity { get; set; }
 
         /// <summary>
-        /// Block datetime of the contract creation (ISO 8601, e.g. 2019-11-31)
+        /// Block datetime of the contract creation (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime FirstActivityTime { get; set; }
 
         /// <summary>
-        /// Block height of last activity
+        /// Height of the block in which the account state was changed last time
         /// </summary>
         public int LastActivity { get; set; }
 
         /// <summary>
-        /// Block datetime of last activity (ISO 8601, e.g. 2019-11-31)
+        /// Datetime of the block in which the account state was changed last time (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime LastActivityTime { get; set; }
 
-
+        
         /// <summary>
         /// List of contracts, related to the contract
         /// </summary>

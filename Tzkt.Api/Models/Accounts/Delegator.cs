@@ -33,7 +33,7 @@ namespace Tzkt.Api.Models
         public int DelegationLevel { get; set; }
 
         /// <summary>
-        /// Block datetime of last delegation operation (ISO 8601, e.g. 2019-11-31)
+        /// Block datetime of last delegation operation (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime DelegationTime { get; set; }
     }

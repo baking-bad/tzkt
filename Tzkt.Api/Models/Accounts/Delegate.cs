@@ -9,10 +9,13 @@ namespace Tzkt.Api.Models
 {
     public class Delegate : Account
     {
+        /// <summary>
+        /// Type of the account, `delegate` - account, registered as a delegate (baker)
+        /// </summary>
         public override string Type => AccountTypes.Delegate;
 
         /// <summary>
-        /// Delegation status (true - active, false - deactivated)
+        /// Delegation status (`true` - active, `false` - deactivated)
         /// </summary>
         public bool Active { get; set; }
 
@@ -32,7 +35,7 @@ namespace Tzkt.Api.Models
         public string PublicKey { get; set; }
 
         /// <summary>
-        /// Public key revelation status
+        /// Public key revelation status. Unrevealed account can't send manager operation (transaction, origination etc.)
         /// </summary>
         public bool Revealed { get; set; }
 
@@ -42,17 +45,17 @@ namespace Tzkt.Api.Models
         public long Balance { get; set; }
 
         /// <summary>
-        /// Amount of security deposit, currently locked for baked (validated) blocks and (or) given endorsements (micro tez)
+        /// Amount of security deposit, currently locked for baked (produced) blocks and (or) given endorsements (micro tez)
         /// </summary>
         public long FrozenDeposits { get; set; }
 
         /// <summary>
-        /// Amount of currently frozen baking rewards as a security deposit (micro tez)
+        /// Amount of currently frozen baking rewards (micro tez)
         /// </summary>
         public long FrozenRewards { get; set; }
 
         /// <summary>
-        /// Amount of currently frozen as security deposit fees paid by operations inside blocks, baked (validated) by the delegate (micro tez)
+        /// Amount of currently frozen fees paid by operations inside blocks, baked (produced) by the delegate (micro tez)
         /// </summary>
         public long FrozenFees { get; set; }
         
@@ -82,12 +85,12 @@ namespace Tzkt.Api.Models
         public DateTime? DeactivationTime { get; set; }
 
         /// <summary>
-        /// Sum of delegate (baker) balance and delegated funds (micro tez)
+        /// Sum of delegate (baker) balance and delegated funds minus frozen rewards (micro tez)
         /// </summary>
         public long StakingBalance { get; set; }
 
         /// <summary>
-        /// Number of contracts, related to the delegate (baker)
+        /// Number of contracts, created (originated) and/or managed by the delegate (baker)
         /// </summary>
         public int NumContracts { get; set; }
 
@@ -102,17 +105,17 @@ namespace Tzkt.Api.Models
         public int NumBlocks { get; set; }
 
         /// <summary>
-        /// Number of given endorsements (approvals) by the delegate (baker) all the time
+        /// Number of given endorsements (approvals) by the delegate (baker)
         /// </summary>
         public int NumEndorsements { get; set; }
 
         /// <summary>
-        /// Number of submitted by the delegate ballots during a voting period all the time
+        /// Number of submitted by the delegate ballots during a voting period
         /// </summary>
         public int NumBallots { get; set; }
 
         /// <summary>
-        /// Number of submitted (upvoted) by the delegate proposals during a proposal period all the time
+        /// Number of submitted (upvoted) by the delegate proposals during a proposal period
         /// </summary>
         public int NumProposals { get; set; }
 
@@ -124,19 +127,18 @@ namespace Tzkt.Api.Models
 
         /// <summary>
         /// Number of double baking (baking two different blocks at the same height) evidence operations,
-        /// included in blocks, baked (validated) by the delegate all the time
+        /// included in blocks, baked (validated) by the delegate
         /// </summary>
         public int NumDoubleBaking { get; set; }
 
         /// <summary>
         /// Number of double endorsement (endorsing two different blocks at the same block height) evidence operations,
-        /// included in blocks, baked (validated) by the delegate all the time
+        /// included in blocks, baked (validated) by the delegate
         /// </summary>
         public int NumDoubleEndorsing { get; set; }
 
         /// <summary>
-        /// Number of seed nonce revelation operations provided by the delegate all the time.
-        /// https://tezos.stackexchange.com/a/568/137
+        /// Number of seed nonce revelation (are used by the blockchain to create randomness) operations provided by the delegate
         /// </summary>
         public int NumNonceRevelations { get; set; }
 
@@ -162,8 +164,7 @@ namespace Tzkt.Api.Models
         public int NumTransactions { get; set; }
 
         /// <summary>
-        /// Number of reveal (is used to reveal the public key associated with a tz1 address
-        /// (implicit account/public key hash)) operations of the delegate
+        /// Number of reveal (is used to reveal the public key associated with an account) operations of the delegate (baker)
         /// </summary>
         public int NumReveals { get; set; }
 
@@ -179,17 +180,17 @@ namespace Tzkt.Api.Models
         public int FirstActivity { get; set; }
 
         /// <summary>
-        /// Block datetime of the first operation, related to the delegate (ISO 8601, e.g. 2019-11-31)
+        /// Block datetime of the first operation, related to the delegate (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime FirstActivityTime { get; set; }
 
         /// <summary>
-        /// Block height of any last action, related to the delegate
+        /// Height of the block in which the account state was changed last time
         /// </summary>
         public int LastActivity { get; set; }
 
         /// <summary>
-        /// Block datetime of any last action, related to the delegate (ISO 8601, e.g. 2019-11-31)
+        /// Datetime of the block in which the account state was changed last time (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime LastActivityTime { get; set; }
 

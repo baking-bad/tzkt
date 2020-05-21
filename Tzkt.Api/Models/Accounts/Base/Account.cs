@@ -16,7 +16,8 @@ namespace Tzkt.Api.Models
     public abstract class Account
     {
         /// <summary>
-        /// Type of the account (`user`, `delegate`, `contract`, 'empty')
+        /// Type of the account (`user` - simple wallet account, `delegate` - account, registered as a delegate (baker),
+        /// `contract` - smart contract programmable account , `empty` - account hasn't appeared in the blockchain yet)
         /// </summary>
         public abstract string Type { get; }
     }

@@ -9,6 +9,7 @@ namespace Tzkt.Api.Models
 {
     public class User : Account
     {
+        /// Type of the account, `user` - simple wallet account
         public override string Type => AccountTypes.User;
 
         /// <summary>
@@ -22,12 +23,12 @@ namespace Tzkt.Api.Models
         public string Address { get; set; }
 
         /// <summary>
-        /// Base58 representation of account's public key
+        /// Base58 representation of account's public key, revealed by the account
         /// </summary>
         public string PublicKey { get; set; }
         
         /// <summary>
-        /// Public key revelation status
+        /// Public key revelation status. Unrevealed account can't send manager operation (transaction, origination etc.)
         /// </summary>
         public bool Revealed { get; set; }
 
@@ -42,22 +43,22 @@ namespace Tzkt.Api.Models
         public int Counter { get; set; }
 
         /// <summary>
-        /// Information about the current delegate of the account
+        /// Information about the current delegate of the account. `null` if it doesn't delegated
         /// </summary>
         public DelegateInfo Delegate { get; set; }
 
         /// <summary>
-        /// Block height of latest delegation
+        /// Block height of latest delegation. `null` if it doesn't delegated
         /// </summary>
         public int? DelegationLevel { get; set; }
 
         /// <summary>
-        /// Block datetime of latest delegation (ISO 8601, e.g. 2019-11-31)
+        /// Block datetime of latest delegation (ISO 8601, e.g. `2020-02-20T02:40:57Z`). `null` if it doesn't delegated
         /// </summary>
         public DateTime? DelegationTime { get; set; }
 
         /// <summary>
-        /// Number of contracts, related to the account
+        /// Number of contracts, created (originated) and/or managed by the contract
         /// </summary>
         public int NumContracts { get; set; }
 
@@ -83,8 +84,7 @@ namespace Tzkt.Api.Models
         public int NumTransactions { get; set; }
 
         /// <summary>
-        /// Number of reveal (is used to reveal the public key associated with a tz1 address
-        /// (implicit account/public key hash)) operations of the account
+        /// Number of reveal (is used to reveal the public key associated with an account) operations of the contract
         /// </summary>
         public int NumReveals { get; set; }
 
@@ -100,17 +100,17 @@ namespace Tzkt.Api.Models
         public int? FirstActivity { get; set; }
 
         /// <summary>
-        /// Block datetime of the first operation, related to the account (ISO 8601, e.g. 2019-11-31)
+        /// Block datetime of the first operation, related to the account (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime? FirstActivityTime { get; set; }
 
         /// <summary>
-        /// Block height of any last action, related to the account
+        /// Height of the block in which the account state was changed last time
         /// </summary>
         public int? LastActivity { get; set; }
 
         /// <summary>
-        /// Block datetime of any last action, related to the account (ISO 8601, e.g. 2019-11-31)
+        /// Datetime of the block in which the account state was changed last time (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime? LastActivityTime { get; set; }
 

@@ -8,6 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class EmptyAccount : Account
     {
+        /// <summary>
+        /// Type of the account, `empty` - account hasn't appeared in the blockchain yet
+        /// </summary>
         public override string Type => AccountTypes.Empty;
 
         /// <summary>

@@ -10,7 +10,7 @@ namespace Tzkt.Api.Models
     {
         /// <summary>
         /// Kind of the contract (`delegator_contract` or `smart_contract`),
-        /// where `delegator_contract` - simple type of a contract for delegation purpose only
+        /// where `delegator_contract` - manager.tz smart contract for delegation purpose only
         /// </summary>
         public string Kind { get; set; }
 

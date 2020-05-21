@@ -19,7 +19,7 @@ namespace Tzkt.Api.Models
         public string Address { get; set; }
 
         /// <summary>
-        /// Base58 representation of account's public key
+        /// Base58 representation of account's public key, revealed by the account
         /// </summary>
         public string PublicKey { get; set; }
     }
