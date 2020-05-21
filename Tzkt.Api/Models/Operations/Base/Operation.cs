@@ -25,8 +25,15 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(BakingOperation))]
     public abstract class Operation
     {
+        /// <summary>
+        /// Type of the operation (`endorsement`, `ballot`, `proposal`, `activation`, `double_baking`, `double_endorsing`,
+        /// `nonce_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `migration`, `revelation_penalty`, `baking`)
+        /// </summary>
         public abstract string Type { get; }
 
+        /// <summary>
+        /// Unique ID of the operation, stored in the TzKT indexer database
+        /// </summary>
         public abstract int Id { get; set; }
     }
 
