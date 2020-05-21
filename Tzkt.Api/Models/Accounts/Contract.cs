@@ -43,17 +43,17 @@ namespace Tzkt.Api.Models
         public ManagerInfo Manager { get; set; }
         
         /// <summary>
-        /// Information about the current delegate of the contract. `null` if it doesn't delegated
+        /// Information about the current delegate of the contract. `null` if it's not delegated
         /// </summary>
         public DelegateInfo Delegate { get; set; }
 
         /// <summary>
-        /// Block height of latest delegation. `null` if it doesn't delegated
+        /// Block height of latest delegation. `null` if it's not delegated
         /// </summary>
         public int? DelegationLevel { get; set; }
 
         /// <summary>
-        /// Block datetime of latest delegation (ISO 8601, e.g. `2020-02-20T02:40:57Z`). `null` if it doesn't delegated
+        /// Block datetime of latest delegation (ISO 8601, e.g. `2020-02-20T02:40:57Z`). `null` if it's not delegated
         /// </summary>
         public DateTime? DelegationTime { get; set; }
 

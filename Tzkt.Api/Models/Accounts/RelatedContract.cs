@@ -30,7 +30,7 @@ namespace Tzkt.Api.Models
         public long Balance { get; set; }
 
         /// <summary>
-        /// Information about the current delegate of the contract. `null` if it doesn't delegated
+        /// Information about the current delegate of the contract. `null` if it's not delegated
         /// </summary>
         public DelegateInfo Delegate { get; set; }
     }
