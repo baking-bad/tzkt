@@ -60,7 +60,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="priority">Filters rights by priority</param>
         /// <param name="status">Filters rights by status (`future`, `realized`, `uncovered`, `missed`)</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts rights by specified field. Supported fields: `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -87,23 +87,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Tup));
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Fields)
                     });
                 }
             }

@@ -40,7 +40,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of protocol proposals.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts proposals by specified field. Supported fields: `id`, `period`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -60,23 +60,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Voting.GetProposals(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Voting.GetProposals(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Voting.GetProposals(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Voting.GetProposals(sort, offset, limit, select.Tup));
+                    return Ok(await Voting.GetProposals(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Voting.GetProposals(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Voting.GetProposals(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Voting.GetProposals(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Voting.GetProposals(sort, offset, limit, select.Fields)
                     });
                 }
             }

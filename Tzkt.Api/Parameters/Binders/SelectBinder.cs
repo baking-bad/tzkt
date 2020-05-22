@@ -16,10 +16,10 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetStringArray($"{model}", ref hasValue, out var value))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringArray($"{model}.rec", ref hasValue, out var rec))
+            if (!bindingContext.TryGetStringArray($"{model}.fields", ref hasValue, out var rec))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringArray($"{model}.tup", ref hasValue, out var tup))
+            if (!bindingContext.TryGetStringArray($"{model}.values", ref hasValue, out var tup))
                 return Task.CompletedTask;
 
             if (!hasValue)
@@ -30,8 +30,8 @@ namespace Tzkt.Api
 
             bindingContext.Result = ModelBindingResult.Success(new SelectParameter
             {
-                Rec = value ?? rec,
-                Tup = tup
+                Fields = value ?? rec,
+                Values = tup
             });
 
             return Task.CompletedTask;

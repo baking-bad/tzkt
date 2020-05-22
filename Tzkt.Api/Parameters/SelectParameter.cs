@@ -7,20 +7,20 @@ namespace Tzkt.Api
     {
 #pragma warning disable CA1819 // Properties should not return arrays
         /// <summary>
-        /// **Records** selection mode (optional, i.e. `select.rec=balance` is the same as `select=balance`). \
+        /// **Fields** selection mode (optional, i.e. `select.fields=balance` is the same as `select=balance`). \
         /// Specify a comma-separated list of fields to include into response.
         /// 
         /// Example: `?select=address,balance` => `[ { "address": "asd", "balance": 10 } ]`.
         /// </summary>
-        public string[] Rec { get; set; }
+        public string[] Fields { get; set; }
 
         /// <summary>
-        /// **Tuples** selection mode. \
+        /// **Values** selection mode. \
         /// Specify a comma-separated list of fields to include their values into response.
         /// 
-        /// Example: `?select.v=address,balance` => `[ [ "asd", 10 ] ]`.
+        /// Example: `?select.values=address,balance` => `[ [ "asd", 10 ] ]`.
         /// </summary>
-        public string[] Tup { get; set; }
+        public string[] Values { get; set; }
 #pragma warning restore CA1819 // Properties should not return arrays
     }
 }

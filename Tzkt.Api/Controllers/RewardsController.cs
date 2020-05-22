@@ -11,87 +11,92 @@ using Tzkt.Api.Repositories;
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
-    [Route("v1/cycles")]
-    public class CyclesController : ControllerBase
+    [Route("v1/rewards")]
+    public class RewardsController : ControllerBase
     {
-        private readonly CyclesRepository Cycles;
-        public CyclesController(CyclesRepository cycles)
+        private readonly RewardsRepository Rewards;
+
+        public RewardsController(RewardsRepository rewards)
         {
-            Cycles = cycles;
+            Rewards = rewards;
         }
 
         /// <summary>
-        /// Get cycles count
+        /// Get baker cycle rewards count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of cycles, including future cycles.
+        /// Returns total number of cycles where the baker was active
         /// </remarks>
         /// <returns></returns>
-        [HttpGet("count")]
-        public Task<int> GetCount()
+        [HttpGet("bakers/{address}/count")]
+        public Task<int> GetBakerRewardsCount([Address] string address)
         {
-            return Cycles.GetCount();
+            return Rewards.GetBakerRewardsCount(address);
         }
 
         /// <summary>
-        /// Get cycles
+        /// Get baker cycle rewards
         /// </summary>
         /// <remarks>
-        /// Returns a list of cycles, including future cycles.
+        /// Returns a list of baker rewards for every cycle, including future cycles.
         /// </remarks>
+        /// <param name="address">Baker address.</param>
+        /// <param name="cycle">Filters rewards by cycle.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts cycles by specified field. Supported fields: `index`.</param>
+        /// <param name="sort">Sorts cycle rewards by specified field. Supported fields: `cycle`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
-        [HttpGet]
+        [HttpGet("bakers/{address}")]
         public async Task<ActionResult<IEnumerable<Cycle>>> Get(
+            [Address] string address,
+            Int32Parameter cycle,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("index"))
+            if (sort != null && !sort.Validate("cycle"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Cycles.Get(sort, offset, limit));
+                return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Cycles.Get(sort, offset, limit, select.Values[0]));
+                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Cycles.Get(sort, offset, limit, select.Values));
+                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Cycles.Get(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Cycles.Get(sort, offset, limit, select.Fields)
+                        Rows = await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields)
                     });
                 }
             }
         }
 
         /// <summary>
-        /// Get cycle by index
+        /// Get baker cycle rewards by cycle
         /// </summary>
         /// <remarks>
-        /// Returns a cycle at the specified index.
+        /// Returns baker cycle rewards for the specified cycle.
         /// </remarks>
         /// <returns></returns>
-        [HttpGet("{index:int}")]
-        public Task<Cycle> GetByIndex(int index)
+        [HttpGet("bakers/{address}/{cycle:int}")]
+        public Task<BakerRewards> GetByIndex([Address] string address, int cycle)
         {
-            return Cycles.Get(index);
+            return Rewards.GetBakerRewards(address, cycle);
         }
     }
 }

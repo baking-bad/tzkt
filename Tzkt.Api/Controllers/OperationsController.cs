@@ -75,7 +75,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of endorsement operations.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -95,23 +95,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetEndorsements(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetEndorsements(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetEndorsements(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -155,7 +155,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="period">Filters proposal operations by voting period id.</param>
         /// <param name="proposal">Filters proposal operations by proposal hash.</param>
         /// <param name="duplicated">Specify whether to include or exclude duplicates, which didn't actually upvote a proposal.</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -178,23 +178,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -237,7 +237,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="period">Filters ballots by voting period id.</param>
         /// <param name="proposal">Filters ballots by proposal hash.</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts ballots by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -259,23 +259,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetBallots(period, proposal, sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetBallots(period, proposal, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -316,7 +316,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of activation operations.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts activations by specified field. Supported fields: `id`, `level`, `timestamp`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -336,23 +336,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetActivations(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetActivations(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetActivations(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -393,7 +393,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double baking operations.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id`, `level`, `timestamp`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -413,23 +413,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetDoubleBakings(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetDoubleBakings(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDoubleBakings(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -470,7 +470,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double endorsing operations.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id`, `level`, `timestamp`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -490,23 +490,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetDoubleEndorsings(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDoubleEndorsings(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -547,7 +547,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of seed nonce revelation operations.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id`, `level`, `timestamp`, `revealedLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -567,23 +567,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetNonceRevelations(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetNonceRevelations(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetNonceRevelations(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -628,7 +628,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `sender`, `newDelegate`.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `sender`, `prevDelegate`.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegations by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -688,23 +688,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -745,7 +745,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of origination operations.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -765,23 +765,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetOriginations(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetOriginations(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetOriginations(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -826,7 +826,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
         /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -895,23 +895,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -983,7 +983,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of reveal operations.
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts reveals by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -1003,23 +1003,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetReveals(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetReveals(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetReveals(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -1060,7 +1060,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -1080,23 +1080,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetMigrations(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetMigrations(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetMigrations(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -1123,7 +1123,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of revelation penalty operations (synthetic type).
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -1143,23 +1143,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetRevelationPenalties(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetRevelationPenalties(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetRevelationPenalties(sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -1186,7 +1186,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -1206,23 +1206,23 @@ namespace Tzkt.Api.Controllers
             if (select == null)
                 return Ok(await Operations.GetBakings(sort, offset, limit));
 
-            if (select.Tup != null)
+            if (select.Values != null)
             {
-                if (select.Tup.Length == 1)
-                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Tup[0]));
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Tup));
+                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Values));
             }
             else
             {
-                if (select.Rec.Length == 1)
-                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Rec[0]));
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
-                        Cols = select.Rec,
-                        Rows = await Operations.GetBakings(sort, offset, limit, select.Rec)
+                        Cols = select.Fields,
+                        Rows = await Operations.GetBakings(sort, offset, limit, select.Fields)
                     });
                 }
             }
