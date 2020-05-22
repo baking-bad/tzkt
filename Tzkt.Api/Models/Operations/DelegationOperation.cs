@@ -8,6 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class DelegationOperation : Operation
     {
+        /// <summary>
+        /// Type of the operation, `delegation` -  is used to delegate funds to a delegate (an implicit account registered as a baker)
+        /// </summary>
         public override string Type => OpTypes.Delegation;
         
         /// <summary>
@@ -76,15 +79,16 @@ namespace Tzkt.Api.Models
         /// </summary>
         public Alias PrevDelegate { get; set; }
 
-        //TODO Find null values
         /// <summary>
-        /// Information about the delegate to which the operation was sent
+        /// Information about the delegate to which the operation was sent. `null` if there is no new delegate (an undelegation operation)
         /// </summary>
         public Alias NewDelegate { get; set; }
-
-        //TODO Think about detailed description
+        
         /// <summary>
-        /// Operation status (`applied`, `failed`, `backtracked`, `skipped`)
+        /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
+        /// `failed` - an operation which failed with some particular error (not enough balance, gas limit, etc),
+        /// `backtracked` - an operation which were successful but reverted due to one of the following operations in the same operation group was failed,
+        /// `skipped` - an operation after the failed one in an operation group)
         /// </summary>
         public string Status { get; set; }
 

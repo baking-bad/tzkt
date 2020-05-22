@@ -8,6 +8,10 @@ namespace Tzkt.Api.Models
 {
     public class ActivationOperation : Operation
     {
+        /// <summary>
+        /// Type of the operation, `activation` - is used to activate accounts that were recommended allocations of
+        /// tezos tokens for donations to the Tezos Foundation’s fundraiser.
+        /// </summary>
         public override string Type => OpTypes.Activation;
 
         /// <summary>

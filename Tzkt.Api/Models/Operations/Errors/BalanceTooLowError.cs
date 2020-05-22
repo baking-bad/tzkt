@@ -9,7 +9,7 @@ namespace Tzkt.Api.Models
     public class BalanceTooLowError : OperationError
     {
         /// <summary>
-        /// Type of an error, `contract.balance_too_low` - an operation tried to spend then the contract has
+        /// Type of an error, `contract.balance_too_low` - an operation tried to spend more then the contract has
         /// https://tezos.gitlab.io/api/errors.html - full list of errors
         /// </summary>
         [JsonPropertyName("type")]

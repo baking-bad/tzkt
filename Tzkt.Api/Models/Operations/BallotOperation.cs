@@ -8,6 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class BallotOperation : Operation
     {
+        /// <summary>
+        /// Type of the operation, `ballot` - is used to vote for a proposal in a given voting cycle
+        /// </summary>
         public override string Type => OpTypes.Ballot;
 
         /// <summary>
@@ -16,7 +19,7 @@ namespace Tzkt.Api.Models
         public override int Id { get; set; }
 
         /// <summary>
-        /// The height of the block, from the genesis block, in which the operation was included
+        /// The height of the block from the genesis block, in which the operation was included
         /// </summary>
         public int Level { get; set; }
 

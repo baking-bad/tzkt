@@ -8,6 +8,9 @@ namespace Tzkt.Api.Models
 {
     public class  BakingOperation : Operation
     {
+        /// <summary>
+        /// Type of the operation, `baking` - an operation which contains brief information about a baked (produced) block (synthetic type)
+        /// </summary>
         public override string Type => OpTypes.Baking;
 
         /// <summary>
@@ -16,7 +19,7 @@ namespace Tzkt.Api.Models
         public override int Id { get; set; }
 
         /// <summary>
-        /// The height of the block, from the genesis block
+        /// The height of the block from the genesis block
         /// </summary>
         public int Level { get; set; }
 
@@ -31,7 +34,7 @@ namespace Tzkt.Api.Models
         public string Block { get; set; }
 
         /// <summary>
-        /// Information about a baker (validator), produced the block
+        /// Information about a delegate (baker), produced the block
         /// </summary>
         public Alias Baker { get; set; }
 
