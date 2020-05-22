@@ -530,7 +530,7 @@ namespace Tzkt.Api.Repositories
             return accounts;
         }
 
-        public async Task<IEnumerable<object>> Get(
+        public async Task<object[][]> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
             SortParameter sort,
@@ -591,7 +591,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", type)
@@ -862,7 +862,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> Get(
+        public async Task<object[]> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
             SortParameter sort,
@@ -920,7 +920,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", type)
@@ -1223,7 +1223,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetDelegates(
+        public async Task<object[][]> GetDelegates(
             BoolParameter active,
             SortParameter sort,
             OffsetParameter offset,
@@ -1275,7 +1275,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 1)
@@ -1490,7 +1490,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetDelegates(
+        public async Task<object[]> GetDelegates(
             BoolParameter active,
             SortParameter sort,
             OffsetParameter offset,
@@ -1539,7 +1539,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 1)
@@ -1813,7 +1813,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetContracts(
+        public async Task<object[][]> GetContracts(
             ContractKindParameter kind,
             SortParameter sort,
             OffsetParameter offset,
@@ -1849,7 +1849,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 2)
@@ -2010,7 +2010,7 @@ namespace Tzkt.Api.Repositories
         }
 
 
-        public async Task<IEnumerable<object>> GetContracts(
+        public async Task<object[]> GetContracts(
             ContractKindParameter kind,
             SortParameter sort,
             OffsetParameter offset,
@@ -2043,7 +2043,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 2)

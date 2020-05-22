@@ -84,7 +84,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> Get(
+        public async Task<object[][]> Get(
             BakingRightTypeParameter type,
             AccountParameter baker,
             Int32Parameter cycle,
@@ -114,7 +114,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BakingRights""")
                 .Filter("Cycle", cycle)
@@ -176,7 +176,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> Get(
+        public async Task<object[]> Get(
             BakingRightTypeParameter type,
             AccountParameter baker,
             Int32Parameter cycle,
@@ -203,7 +203,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BakingRights""")
                 .Filter("Cycle", cycle)

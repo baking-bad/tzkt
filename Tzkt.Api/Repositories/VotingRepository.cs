@@ -81,7 +81,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 1);
             var joins = new HashSet<string>(1);
@@ -106,7 +106,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals"" as p {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id", "p");
@@ -152,7 +152,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetProposals(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(2);
             var joins = new HashSet<string>(1);
@@ -174,7 +174,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals"" as p {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id", "p");

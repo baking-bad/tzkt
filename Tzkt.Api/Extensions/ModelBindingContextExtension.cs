@@ -518,5 +518,31 @@ namespace Tzkt.Api
 
             return true;
         }
+
+        public static bool TryGetStringArray(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string[] result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = rawValues;
+                }
+            }
+
+            return true;
+        }
     }
 }

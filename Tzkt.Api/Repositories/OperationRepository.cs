@@ -209,7 +209,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -233,7 +233,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -287,7 +287,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -308,7 +308,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id");
@@ -551,7 +551,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -592,7 +592,7 @@ namespace Tzkt.Api.Repositories
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"period.""Code""", period)
@@ -666,7 +666,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -704,7 +704,7 @@ namespace Tzkt.Api.Repositories
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"period.""Code""", period)
@@ -1002,7 +1002,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -1043,7 +1043,7 @@ namespace Tzkt.Api.Repositories
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Duplicated""", duplicated)
@@ -1118,7 +1118,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -1156,7 +1156,7 @@ namespace Tzkt.Api.Repositories
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Duplicated""", duplicated)
@@ -1396,7 +1396,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -1419,7 +1419,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x == "balance" ? "Balance" : "Id", "o");
@@ -1469,7 +1469,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -1489,7 +1489,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x == "balance" ? "Balance" : "Id", "o");
@@ -1696,7 +1696,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -1724,7 +1724,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -1805,7 +1805,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -1830,7 +1830,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -2082,7 +2082,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -2110,7 +2110,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -2191,7 +2191,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -2216,7 +2216,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -2446,7 +2446,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -2470,7 +2470,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x == "revealedLevel" ? "RevealedLevel" : "Id", "o");
@@ -2524,7 +2524,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -2545,7 +2545,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x == "revealedLevel" ? "RevealedLevel" : "Id", "o");
@@ -2852,7 +2852,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetDelegations(
+        public async Task<object[][]> GetDelegations(
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
@@ -2892,7 +2892,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
@@ -2990,7 +2990,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetDelegations(
+        public async Task<object[]> GetDelegations(
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
@@ -3027,7 +3027,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
@@ -3498,7 +3498,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -3536,7 +3536,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -3668,7 +3668,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -3703,7 +3703,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -4188,7 +4188,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetTransactions(
+        public async Task<object[][]> GetTransactions(
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
@@ -4234,7 +4234,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
                 .Filter("InitiatorId", initiator, x => "TargetId")
@@ -4360,7 +4360,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetTransactions(
+        public async Task<object[]> GetTransactions(
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
@@ -4403,7 +4403,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
                 .Filter("InitiatorId", initiator, x => "TargetId")
@@ -4747,7 +4747,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -4775,7 +4775,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -4853,7 +4853,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -4878,7 +4878,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => x switch
@@ -5047,7 +5047,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -5070,7 +5070,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -5120,7 +5120,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -5140,7 +5140,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -5272,7 +5272,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -5296,7 +5296,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -5350,7 +5350,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -5371,7 +5371,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
                 .Take(sort, offset, limit, x => "Id", "o");
@@ -5510,7 +5510,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> GetBakings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetBakings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -5529,7 +5529,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
@@ -5584,7 +5584,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> GetBakings(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetBakings(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -5600,7 +5600,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")

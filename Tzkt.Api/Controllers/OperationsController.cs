@@ -75,40 +75,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of endorsement operations.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("endorsements")]
         public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetEndorsements(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetEndorsements(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetEndorsements(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetEndorsements(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -149,43 +155,49 @@ namespace Tzkt.Api.Controllers
         /// <param name="period">Filters proposal operations by voting period id.</param>
         /// <param name="proposal">Filters proposal operations by proposal hash.</param>
         /// <param name="duplicated">Specify whether to include or exclude duplicates, which didn't actually upvote a proposal.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -225,42 +237,48 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="period">Filters ballots by voting period id.</param>
         /// <param name="proposal">Filters ballots by proposal hash.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts ballots by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("ballots")]
         public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
             Int32Parameter period,
             ProtocolParameter proposal,
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetBallots(period, proposal, sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -298,40 +316,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of activation operations.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts activations by specified field. Supported fields: `id`, `level`, `timestamp`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("activations")]
         public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivations(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp", "balance"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetActivations(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetActivations(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetActivations(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetActivations(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -369,40 +393,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double baking operations.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id`, `level`, `timestamp`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("double_baking")]
         public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetDoubleBakings(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetDoubleBakings(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetDoubleBakings(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetDoubleBakings(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -440,40 +470,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double endorsing operations.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id`, `level`, `timestamp`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("double_endorsing")]
         public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetDoubleEndorsings(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -511,40 +547,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of seed nonce revelation operations.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id`, `level`, `timestamp`, `revealedLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations")]
         public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp", "revealedLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetNonceRevelations(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetNonceRevelations(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetNonceRevelations(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetNonceRevelations(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -586,12 +628,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `sender`, `newDelegate`.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `sender`, `prevDelegate`.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts delegations by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next version.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next version.</param>
         /// <returns></returns>
         [HttpGet("delegations")]
         public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegations(
@@ -599,12 +639,10 @@ namespace Tzkt.Api.Controllers
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
             OperationStatusParameter status,
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sender != null)
@@ -647,19 +685,29 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -697,40 +745,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of origination operations.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("originations")]
         public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validates
             if (sort != null && !sort.Validate("id", "level", "timestamp", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "contractBalance"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetOriginations(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetOriginations(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetOriginations(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetOriginations(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -772,12 +826,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
         /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next version.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next version.</param>
         /// <returns></returns>
         [HttpGet("transactions")]
         public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactions(
@@ -785,12 +837,10 @@ namespace Tzkt.Api.Controllers
             AccountParameter sender,
             AccountParameter target,
             StringParameter parameters,
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100) 
+            [Range(0, 10000)] int limit = 100) 
         {
             #region validate
             if (initiator != null)
@@ -842,19 +892,29 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -923,40 +983,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of reveal operations.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts reveals by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("reveals")]
         public async Task<ActionResult<IEnumerable<RevealOperation>>> GetReveals(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp", "gasUsed", "bakerFee"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetReveals(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetReveals(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetReveals(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetReveals(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -994,40 +1060,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetMigrations(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetMigrations(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetMigrations(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetMigrations(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -1051,40 +1123,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of revelation penalty operations (synthetic type).
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("revelation_penalties")]
         public async Task<ActionResult<IEnumerable<RevelationPenaltyOperation>>> GetRevelationPenalties(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetRevelationPenalties(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetRevelationPenalties(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -1108,40 +1186,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "timestamp"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Operations.GetBakings(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Operations.GetBakings(sort, offset, limit, fields[0]));
-
-            return Ok(await Operations.GetBakings(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Operations.GetBakings(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>

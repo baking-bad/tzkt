@@ -124,7 +124,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<object>> Get(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> Get(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -145,7 +145,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Take(sort, offset, limit, x => x switch
@@ -216,7 +216,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<object>> Get(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> Get(SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -234,7 +234,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Enumerable.Empty<object>();
+                return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Take(sort, offset, limit, x => x switch

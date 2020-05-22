@@ -39,40 +39,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of blocks.
         /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts blocks by specified field. Supported fields: `level`, `timestamp`, `priority`, `validations`, `reward`, `fees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
-        /// <param name="p">Deprecated parameter. Will be removed in the next release.</param>
-        /// <param name="n">Deprecated parameter. Will be removed in the next release.</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("level", "timestamp", "priority", "validations", "reward", "fees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            //backward compatibility
-            if (p != 0) offset = new OffsetParameter { Pg = p };
-            if (n != 100) limit = n;
-
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await Blocks.Get(sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await Blocks.Get(sort, offset, limit, fields[0]));
-
-            return Ok(await Blocks.Get(sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await Blocks.Get(sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await Blocks.Get(sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await Blocks.Get(sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await Blocks.Get(sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
 
         /// <summary>

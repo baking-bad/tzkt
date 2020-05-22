@@ -60,10 +60,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="priority">Filters rights by priority</param>
         /// <param name="status">Filters rights by status (`future`, `realized`, `uncovered`, `missed`)</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.rec` and `.tup` modes.</param>
         /// <param name="sort">Sorts rights by specified field. Supported fields: `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you use this query parameter, response will be an array of values (if you select single field) or an array of array of values (if you select multiple fields).</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BakingRight>>> Get(
@@ -74,25 +74,39 @@ namespace Tzkt.Api.Controllers
             Int32Parameter slots,
             Int32Parameter priority,
             BakingRightStatusParameter status,
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            string select = null)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (string.IsNullOrEmpty(select))
+            if (select == null)
                 return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit));
 
-            var fields = select.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-            if (fields.Length == 1)
-                return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, fields[0]));
-
-            return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, fields));
+            if (select.Tup != null)
+            {
+                if (select.Tup.Length == 1)
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Tup[0]));
+                else
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Tup));
+            }
+            else
+            {
+                if (select.Rec.Length == 1)
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Rec[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Rec,
+                        Rows = await BakingRights.Get(type, baker, cycle, level, slots, priority, status, sort, offset, limit, select.Rec)
+                    });
+                }
+            }
         }
     }
 }
