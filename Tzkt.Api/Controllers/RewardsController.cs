@@ -27,6 +27,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns total number of cycles where the baker was active
         /// </remarks>
+        /// <param name="address">Baker address</param>
         /// <returns></returns>
         [HttpGet("bakers/{address}/count")]
         public Task<int> GetBakerRewardsCount([Address] string address)
@@ -92,6 +93,8 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns baker cycle rewards for the specified cycle.
         /// </remarks>
+        /// <param name="address">Baker address</param>
+        /// <param name="cycle">Rewards cycle</param>
         /// <returns></returns>
         [HttpGet("bakers/{address}/{cycle:int}")]
         public Task<BakerRewards> GetBakerRewardsByCycle([Address] string address, int cycle)
@@ -105,6 +108,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns total number of cycles where the delegator was delegated to an active baker
         /// </remarks>
+        /// <param name="address">Delegator address</param>
         /// <returns></returns>
         [HttpGet("delegators/{address}/count")]
         public Task<int> GetDelegatorRewardsCount([Address] string address)
@@ -170,11 +174,30 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns delegator cycle rewards for the specified cycle.
         /// </remarks>
+        /// <param name="address">Delegator address</param>
+        /// <param name="cycle">Rewards cycle</param>
         /// <returns></returns>
         [HttpGet("delegators/{address}/{cycle:int}")]
         public Task<DelegatorRewards> GetDelegatorRewardsByCycle([Address] string address, int cycle)
         {
             return Rewards.GetDelegatorRewards(address, cycle);
+        }
+
+        /// <summary>
+        /// Get reward split
+        /// </summary>
+        /// <remarks>
+        /// Returns baker rewards for the specified cycle with all delegator balances at that cycle to allow rewards distribution in proportion to shares.
+        /// </remarks>
+        /// <param name="address">Baker address</param>
+        /// <param name="cycle">Rewards cycle</param>
+        /// <param name="offset">Specifies how many delegators in the reward split should be skipped</param>
+        /// <param name="limit">Maximum number of delegators to return</param>
+        /// <returns></returns>
+        [HttpGet("split/{address}/{cycle:int}")]
+        public Task<RewardSplit> GetRewardSplit([Address] string address, int cycle, int offset = 0, [Range(0, 10000)] int limit = 100)
+        {
+            return Rewards.GetRewardSplit(address, cycle, offset, limit);
         }
     }
 }

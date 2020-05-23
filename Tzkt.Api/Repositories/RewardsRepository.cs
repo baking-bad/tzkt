@@ -1311,5 +1311,89 @@ namespace Tzkt.Api.Repositories
             return result;
         }
         #endregion
+
+        #region split
+        public async Task<RewardSplit> GetRewardSplit(string address, int cycle, int offset, int limit)
+        {
+            if (!(await Accounts.GetAsync(address) is RawDelegate baker))
+                return null;
+
+            var sqlRewards = $@"
+                SELECT  *
+                FROM    ""BakerCycles""
+                WHERE   ""BakerId"" = {baker.Id}
+                AND     ""Cycle"" = {cycle}
+                LIMIT   1";
+
+            var sqlDelegators = $@"
+                SELECT      ""DelegatorId"", ""Balance""
+                FROM        ""DelegatorCycles""
+                WHERE       ""BakerId"" = {baker.Id}
+                AND         ""Cycle"" = {cycle}
+                ORDER BY    ""Balance"" DESC
+                OFFSET      {offset}
+                LIMIT       {limit}";
+
+            using var db = GetConnection();
+            using var result = await db.QueryMultipleAsync($@"
+                {sqlRewards};
+                {sqlDelegators};");
+
+            var rewards = result.ReadFirst();
+            var delegators = result.Read();
+
+            return new RewardSplit
+            {
+                AccusationLostDeposits = rewards.AccusationLostDeposits,
+                AccusationLostFees = rewards.AccusationLostFees,
+                AccusationLostRewards = rewards.AccusationLostRewards,
+                AccusationRewards = rewards.AccusationRewards,
+                BlockDeposits = rewards.BlockDeposits,
+                Cycle = rewards.Cycle,
+                DelegatedBalance = rewards.DelegatedBalance,
+                EndorsementDeposits = rewards.EndorsementDeposits,
+                EndorsementRewards = rewards.EndorsementRewards,
+                Endorsements = rewards.Endorsements,
+                ExpectedBlocks = Math.Round(rewards.ExpectedBlocks, 2),
+                ExpectedEndorsements = Math.Round(rewards.ExpectedEndorsements, 2),
+                ExtraBlockFees = rewards.ExtraBlockFees,
+                ExtraBlockRewards = rewards.ExtraBlockRewards,
+                ExtraBlocks = rewards.ExtraBlocks,
+                FutureBlockDeposits = rewards.FutureBlockDeposits,
+                FutureBlockRewards = rewards.FutureBlockRewards,
+                FutureBlocks = rewards.FutureBlocks,
+                FutureEndorsementDeposits = rewards.FutureEndorsementDeposits,
+                FutureEndorsementRewards = rewards.FutureEndorsementRewards,
+                FutureEndorsements = rewards.FutureEndorsements,
+                MissedEndorsementRewards = rewards.MissedEndorsementRewards,
+                MissedEndorsements = rewards.MissedEndorsements,
+                MissedExtraBlockFees = rewards.MissedExtraBlockFees,
+                MissedExtraBlockRewards = rewards.MissedExtraBlockRewards,
+                MissedExtraBlocks = rewards.MissedExtraBlocks,
+                MissedOwnBlockFees = rewards.MissedOwnBlockFees,
+                MissedOwnBlockRewards = rewards.MissedOwnBlockRewards,
+                MissedOwnBlocks = rewards.MissedOwnBlocks,
+                NumDelegators = rewards.DelegatorsCount,
+                OwnBlockFees = rewards.OwnBlockFees,
+                OwnBlockRewards = rewards.OwnBlockRewards,
+                OwnBlocks = rewards.OwnBlocks,
+                RevelationLostFees = rewards.RevelationLostFees,
+                RevelationLostRewards = rewards.RevelationLostRewards,
+                RevelationRewards = rewards.RevelationRewards,
+                StakingBalance = rewards.StakingBalance,
+                UncoveredEndorsementRewards = rewards.UncoveredEndorsementRewards,
+                UncoveredEndorsements = rewards.UncoveredEndorsements,
+                UncoveredExtraBlockFees = rewards.UncoveredExtraBlockFees,
+                UncoveredExtraBlockRewards = rewards.UncoveredExtraBlockRewards,
+                UncoveredExtraBlocks = rewards.UncoveredExtraBlocks,
+                UncoveredOwnBlockFees = rewards.UncoveredOwnBlockFees,
+                UncoveredOwnBlockRewards = rewards.UncoveredOwnBlockRewards,
+                UncoveredOwnBlocks = rewards.UncoveredOwnBlocks,
+                Delegators = delegators.ToDictionary(
+                    k => (string)Accounts.Get(k.DelegatorId).Address,
+                    v => (long)v.Balance)
+            };
+        }
+        #endregion
     }
 }
