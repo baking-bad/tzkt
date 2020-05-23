@@ -48,7 +48,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("bakers/{address}")]
-        public async Task<ActionResult<IEnumerable<Cycle>>> Get(
+        public async Task<ActionResult<IEnumerable<BakerRewards>>> GetBakerRewards(
             [Address] string address,
             Int32Parameter cycle,
             SelectParameter select,
@@ -94,9 +94,87 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet("bakers/{address}/{cycle:int}")]
-        public Task<BakerRewards> GetByIndex([Address] string address, int cycle)
+        public Task<BakerRewards> GetBakerRewardsByCycle([Address] string address, int cycle)
         {
             return Rewards.GetBakerRewards(address, cycle);
+        }
+
+        /// <summary>
+        /// Get delegator cycle rewards count
+        /// </summary>
+        /// <remarks>
+        /// Returns total number of cycles where the delegator was delegated to an active baker
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("delegators/{address}/count")]
+        public Task<int> GetDelegatorRewardsCount([Address] string address)
+        {
+            return Rewards.GetDelegatorRewardsCount(address);
+        }
+
+        /// <summary>
+        /// Get delegator cycle rewards
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of delegator rewards for every cycle, including future cycles.
+        /// </remarks>
+        /// <param name="address">Delegator address.</param>
+        /// <param name="cycle">Filters rewards by cycle.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts cycle rewards by specified field. Supported fields: `cycle`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
+        [HttpGet("delegators/{address}")]
+        public async Task<ActionResult<IEnumerable<DelegatorRewards>>> GetDelegatorRewards(
+            [Address] string address,
+            Int32Parameter cycle,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("cycle"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values[0]));
+                else
+                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get delegator cycle rewards by cycle
+        /// </summary>
+        /// <remarks>
+        /// Returns delegator cycle rewards for the specified cycle.
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("delegators/{address}/{cycle:int}")]
+        public Task<DelegatorRewards> GetDelegatorRewardsByCycle([Address] string address, int cycle)
+        {
+            return Rewards.GetDelegatorRewards(address, cycle);
         }
     }
 }

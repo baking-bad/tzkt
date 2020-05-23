@@ -35,6 +35,12 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, int value)
+        {
+            AppendFilter($"{column} = {value}");
+            return this;
+        }
+
         public SqlBuilder Filter(string column, AccountTypeParameter type)
         {
             if (type == null) return this;
