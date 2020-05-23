@@ -35,6 +35,7 @@ namespace Tzkt.Api.Repositories
             {
                 Index = row.Index,
                 RandomSeed = row.Seed,
+                SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
                 TotalDelegated = row.TotalDelegated,
@@ -56,6 +57,7 @@ namespace Tzkt.Api.Repositories
             {
                 Index = row.Index,
                 RandomSeed = row.Seed,
+                SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
                 TotalDelegated = row.TotalDelegated,
@@ -74,6 +76,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "index": columns.Add(@"""Index"""); break;
                     case "randomSeed": columns.Add(@"""Seed"""); break;
+                    case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                     case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                     case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
@@ -107,6 +110,10 @@ namespace Tzkt.Api.Repositories
                     case "randomSeed":
                         foreach (var row in rows)
                             result[j++][i] = row.Seed;
+                        break;
+                    case "snapshotIndex":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SnapshotIndex;
                         break;
                     case "snapshotLevel":
                         foreach (var row in rows)
@@ -145,6 +152,7 @@ namespace Tzkt.Api.Repositories
             {
                 case "index": columns.Add(@"""Index"""); break;
                 case "randomSeed": columns.Add(@"""Seed"""); break;
+                case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                 case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                 case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
@@ -175,6 +183,10 @@ namespace Tzkt.Api.Repositories
                 case "randomSeed":
                     foreach (var row in rows)
                         result[j++] = row.Seed;
+                    break;
+                case "snapshotIndex":
+                    foreach (var row in rows)
+                        result[j++] = row.SnapshotIndex;
                     break;
                 case "snapshotLevel":
                     foreach (var row in rows)

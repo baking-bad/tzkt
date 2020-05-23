@@ -58,6 +58,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                 FutureCycle = new Cycle
                 {
                     Index = futureCycle,
+                    SnapshotIndex = rawCycle.RollSnapshot,
                     SnapshotLevel = snapshotLevel,
                     TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / Block.Protocol.TokensPerRoll)),
                     TotalStaking = Snapshots.Values.Sum(x => x.StakingBalance),

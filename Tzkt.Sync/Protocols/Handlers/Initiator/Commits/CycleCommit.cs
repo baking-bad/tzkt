@@ -41,6 +41,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                 Db.Cycles.Add(new Cycle
                 {
                     Index = cycle,
+                    SnapshotIndex = 0,
                     SnapshotLevel = 1,
                     TotalRolls = totalRolls,
                     TotalStaking = totalStake,

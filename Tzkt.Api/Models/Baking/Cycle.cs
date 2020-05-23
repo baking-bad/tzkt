@@ -10,6 +10,11 @@ namespace Tzkt.Api.Models
         public int Index { get; set; }
 
         /// <summary>
+        /// Index of the snapshot
+        /// </summary>
+        public int SnapshotIndex { get; set; }
+
+        /// <summary>
         /// Height of the block where the snapshot was taken
         /// </summary>
         public int SnapshotLevel { get; set; }

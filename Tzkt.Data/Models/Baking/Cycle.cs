@@ -6,6 +6,7 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public int Index { get; set; }
+        public int SnapshotIndex { get; set; }
         public int SnapshotLevel { get; set; }
         public int TotalRolls { get; set; }
         public long TotalStaking { get; set; }
