@@ -143,6 +143,33 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("AccountCounter")
                         .HasColumnType("integer");
 
+                    b.Property<int>("AccountsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ActivationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BallotOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlocksCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CyclesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DelegationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DoubleBakingOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DoubleEndorsingOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EndorsementOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Hash")
                         .HasColumnType("text");
 
@@ -158,17 +185,44 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ManagerCounter")
                         .HasColumnType("integer");
 
+                    b.Property<int>("MigrationOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("NextProtocol")
                         .HasColumnType("text");
 
+                    b.Property<int>("NonceRevelationOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OperationCounter")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OriginationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProposalOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProposalsCount")
                         .HasColumnType("integer");
 
                     b.Property<string>("Protocol")
                         .HasColumnType("text");
 
+                    b.Property<int>("ProtocolsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RevealOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RevelationPenaltyOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("TransactionOpsCount")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -179,15 +233,33 @@ namespace Tzkt.Data.Migrations
                         {
                             Id = -1,
                             AccountCounter = 0,
+                            AccountsCount = 0,
+                            ActivationOpsCount = 0,
+                            BallotOpsCount = 0,
+                            BlocksCount = 0,
+                            CyclesCount = 0,
+                            DelegationOpsCount = 0,
+                            DoubleBakingOpsCount = 0,
+                            DoubleEndorsingOpsCount = 0,
+                            EndorsementOpsCount = 0,
                             Hash = "",
                             KnownHead = 0,
                             LastSync = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Level = -1,
                             ManagerCounter = 0,
+                            MigrationOpsCount = 0,
                             NextProtocol = "",
+                            NonceRevelationOpsCount = 0,
                             OperationCounter = 0,
+                            OriginationOpsCount = 0,
+                            ProposalOpsCount = 0,
+                            ProposalsCount = 0,
                             Protocol = "",
-                            Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                            ProtocolsCount = 0,
+                            RevealOpsCount = 0,
+                            RevelationPenaltyOpsCount = 0,
+                            Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            TransactionOpsCount = 0
                         });
                 });
 
@@ -227,6 +299,12 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("EndorsementDeposits")
                         .HasColumnType("bigint");
+
+                    b.Property<long>("EndorsementRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Endorsements")
+                        .HasColumnType("integer");
 
                     b.Property<double>("ExpectedBlocks")
                         .HasColumnType("double precision");
@@ -292,12 +370,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<int>("OwnBlocks")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("EndorsementRewards")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Endorsements")
                         .HasColumnType("integer");
 
                     b.Property<long>("RevelationLostFees")
@@ -524,6 +596,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength(true)
                         .HasMaxLength(64);
+
+                    b.Property<int>("SnapshotIndex")
+                        .HasColumnType("integer");
 
                     b.Property<int>("SnapshotLevel")
                         .HasColumnType("integer");

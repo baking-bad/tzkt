@@ -11,7 +11,7 @@ using Tzkt.Data.Models;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20200120220606_Initial")]
+    [Migration("20200524155106_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -19,7 +19,7 @@ namespace Tzkt.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.1.0-preview3.19554.8")
+                .HasAnnotation("ProductVersion", "3.1.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("Tzkt.Data.Models.Account", b =>
@@ -89,6 +89,10 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
+                    b.HasIndex("Staked");
+
+                    b.HasIndex("Type");
+
                     b.ToTable("Accounts");
 
                     b.HasDiscriminator<byte>("Type");
@@ -138,7 +142,34 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("OperationCounter")
+                    b.Property<int>("AccountCounter")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AccountsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ActivationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BallotOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlocksCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CyclesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DelegationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DoubleBakingOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DoubleEndorsingOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EndorsementOpsCount")
                         .HasColumnType("integer");
 
                     b.Property<string>("Hash")
@@ -156,14 +187,44 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ManagerCounter")
                         .HasColumnType("integer");
 
+                    b.Property<int>("MigrationOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("NextProtocol")
                         .HasColumnType("text");
+
+                    b.Property<int>("NonceRevelationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OperationCounter")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OriginationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProposalOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProposalsCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Protocol")
                         .HasColumnType("text");
 
+                    b.Property<int>("ProtocolsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RevealOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RevelationPenaltyOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("TransactionOpsCount")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -173,16 +234,237 @@ namespace Tzkt.Data.Migrations
                         new
                         {
                             Id = -1,
-                            OperationCounter = 0,
+                            AccountCounter = 0,
+                            AccountsCount = 0,
+                            ActivationOpsCount = 0,
+                            BallotOpsCount = 0,
+                            BlocksCount = 0,
+                            CyclesCount = 0,
+                            DelegationOpsCount = 0,
+                            DoubleBakingOpsCount = 0,
+                            DoubleEndorsingOpsCount = 0,
+                            EndorsementOpsCount = 0,
                             Hash = "",
                             KnownHead = 0,
                             LastSync = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Level = -1,
                             ManagerCounter = 0,
+                            MigrationOpsCount = 0,
                             NextProtocol = "",
+                            NonceRevelationOpsCount = 0,
+                            OperationCounter = 0,
+                            OriginationOpsCount = 0,
+                            ProposalOpsCount = 0,
+                            ProposalsCount = 0,
                             Protocol = "",
-                            Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                            ProtocolsCount = 0,
+                            RevealOpsCount = 0,
+                            RevelationPenaltyOpsCount = 0,
+                            Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            TransactionOpsCount = 0
                         });
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.BakerCycle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long>("AccusationLostDeposits")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AccusationLostFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AccusationLostRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AccusationRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("BlockDeposits")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("DelegatedBalance")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("DelegatorsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("EndorsementDeposits")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("EndorsementRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Endorsements")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("ExpectedBlocks")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ExpectedEndorsements")
+                        .HasColumnType("double precision");
+
+                    b.Property<long>("ExtraBlockFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ExtraBlockRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ExtraBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("FutureBlockDeposits")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FutureBlockRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("FutureBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("FutureEndorsementDeposits")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FutureEndorsementRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("FutureEndorsements")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("MissedEndorsementRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MissedEndorsements")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("MissedExtraBlockFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("MissedExtraBlockRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MissedExtraBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("MissedOwnBlockFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("MissedOwnBlockRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MissedOwnBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("OwnBlockFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OwnBlockRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("OwnBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("RevelationLostFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RevelationLostRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RevelationRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Rolls")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("StakingBalance")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UncoveredEndorsementRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("UncoveredEndorsements")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("UncoveredExtraBlockFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UncoveredExtraBlockRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("UncoveredExtraBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("UncoveredOwnBlockFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UncoveredOwnBlockRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("UncoveredOwnBlocks")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BakerId");
+
+                    b.HasIndex("Cycle");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("Cycle", "BakerId")
+                        .IsUnique();
+
+                    b.ToTable("BakerCycles");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.BakingRight", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Slots")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<byte>("Type")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Cycle");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("Cycle", "BakerId");
+
+                    b.ToTable("BakingRights");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.BallotOperation", b =>
@@ -205,6 +487,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ProposalId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rolls")
                         .HasColumnType("integer");
 
                     b.Property<int>("SenderId")
@@ -298,6 +583,53 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Blocks");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.Cycle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("Index")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Seed")
+                        .IsRequired()
+                        .HasColumnType("character(64)")
+                        .IsFixedLength(true)
+                        .HasMaxLength(64);
+
+                    b.Property<int>("SnapshotIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SnapshotLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalBakers")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TotalDelegated")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TotalDelegators")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalRolls")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TotalStaking")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("Index");
+
+                    b.HasIndex("Index")
+                        .IsUnique();
+
+                    b.ToTable("Cycles");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
                 {
                     b.Property<int>("Id")
@@ -380,6 +712,39 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("DelegationOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.DelegatorCycle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Balance")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DelegatorId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Cycle");
+
+                    b.HasIndex("DelegatorId");
+
+                    b.HasIndex("Cycle", "BakerId");
+
+                    b.HasIndex("Cycle", "DelegatorId")
+                        .IsUnique();
+
+                    b.ToTable("DelegatorCycles");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DoubleBakingOperation", b =>
@@ -709,9 +1074,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("InitiatorId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Upvotes")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("PromotionPeriodId")
                         .HasColumnType("integer");
 
@@ -722,6 +1084,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("TestingPeriodId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Upvotes")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -749,6 +1114,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<bool>("Duplicated")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -762,6 +1130,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ProposalId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rolls")
                         .HasColumnType("integer");
 
                     b.Property<int>("SenderId")
@@ -969,6 +1340,32 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("RevelationPenaltyOps");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.SnapshotBalance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Balance")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("DelegateId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.ToTable("SnapshotBalances");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.TransactionOperation", b =>
                 {
                     b.Property<int>("Id")
@@ -1158,6 +1555,12 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ManagerId");
 
                     b.HasIndex("WeirdDelegateId");
+
+                    b.HasIndex("Type", "Kind")
+                        .HasFilter("\"Type\" = 2");
+
+                    b.HasIndex("Type", "Staked")
+                        .HasFilter("\"Type\" = 1");
 
                     b.HasDiscriminator().HasValue((byte)2);
                 });
