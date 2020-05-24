@@ -9,6 +9,7 @@ using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Controllers
@@ -19,11 +20,13 @@ namespace Tzkt.Api.Controllers
     {
         private readonly AccountRepository Accounts;
         private readonly ReportRepository Reports;
+        private readonly StateCache State;
 
-        public AccountsController(AccountRepository accounts, ReportRepository reports)
+        public AccountsController(AccountRepository accounts, ReportRepository reports, StateCache state)
         {
             Accounts = accounts;
             Reports = reports;
+            State = state;
         }
 
         /// <summary>
@@ -96,6 +99,9 @@ namespace Tzkt.Api.Controllers
         public Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind)
         {
             #region optimize
+            if (type == null && kind == null)
+                return Task.FromResult(State.GetState().AccountsCount);
+
             if (kind?.Eq != null && type == null)
                 type = new AccountTypeParameter { Eq = 2 };
             #endregion

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -15,9 +16,12 @@ namespace Tzkt.Api.Controllers
     public class VotingController : ControllerBase
     {
         private readonly VotingRepository Voting;
-        public VotingController(VotingRepository voting)
+        private readonly StateCache State;
+
+        public VotingController(VotingRepository voting, StateCache state)
         {
             Voting = voting;
+            State = state;
         }
 
         #region proposals
@@ -29,9 +33,9 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet("proposals/count")]
-        public Task<int> GetDoubleBakingCount()
+        public Task<int> GetProposalsCount()
         {
-            return Voting.GetProposalsCount();
+            return Task.FromResult(State.GetState().ProposalsCount);
         }
 
         /// <summary>

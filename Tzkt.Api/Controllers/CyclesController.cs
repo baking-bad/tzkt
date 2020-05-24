@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -15,9 +16,12 @@ namespace Tzkt.Api.Controllers
     public class CyclesController : ControllerBase
     {
         private readonly CyclesRepository Cycles;
-        public CyclesController(CyclesRepository cycles)
+        private readonly StateCache State;
+
+        public CyclesController(CyclesRepository cycles, StateCache state)
         {
             Cycles = cycles;
+            State = state;
         }
 
         /// <summary>
@@ -30,7 +34,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public Task<int> GetCount()
         {
-            return Cycles.GetCount();
+            return Task.FromResult(State.GetState().CyclesCount);
         }
 
         /// <summary>

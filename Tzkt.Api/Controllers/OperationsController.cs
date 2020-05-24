@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -15,10 +16,12 @@ namespace Tzkt.Api.Controllers
     public class OperationsController : ControllerBase
     {
         private readonly OperationRepository Operations;
+        private readonly StateCache State;
 
-        public OperationsController(OperationRepository operations)
+        public OperationsController(OperationRepository operations, StateCache state)
         {
             Operations = operations;
+            State = state;
         }
 
         #region operations
@@ -141,7 +144,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("endorsements/count")]
         public Task<int> GetEndorsementsCount()
         {
-            return Operations.GetEndorsementsCount();
+            return Task.FromResult(State.GetState().EndorsementOpsCount);
         }
         #endregion
 
@@ -224,7 +227,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("proposals/count")]
         public Task<int> GetProposalsCount()
         {
-            return Operations.GetProposalsCount();
+            return Task.FromResult(State.GetState().ProposalOpsCount);
         }
         #endregion
 
@@ -305,7 +308,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("ballots/count")]
         public Task<int> GetBallotsCount()
         {
-            return Operations.GetBallotsCount();
+            return Task.FromResult(State.GetState().BallotOpsCount);
         }
         #endregion
 
@@ -382,7 +385,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("activations/count")]
         public Task<int> GetActivationsCount()
         {
-            return Operations.GetActivationsCount();
+            return Task.FromResult(State.GetState().ActivationOpsCount);
         }
         #endregion
 
@@ -459,7 +462,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("double_baking/count")]
         public Task<int> GetDoubleBakingCount()
         {
-            return Operations.GetDoubleBakingsCount();
+            return Task.FromResult(State.GetState().DoubleBakingOpsCount);
         }
         #endregion
 
@@ -536,7 +539,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("double_endorsing/count")]
         public Task<int> GetDoubleEndorsingCount()
         {
-            return Operations.GetDoubleEndorsingsCount();
+            return Task.FromResult(State.GetState().DoubleEndorsingOpsCount);
         }
         #endregion
 
@@ -613,7 +616,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("nonce_revelations/count")]
         public Task<int> GetNonceRevelationsCount()
         {
-            return Operations.GetNonceRevelationsCount();
+            return Task.FromResult(State.GetState().NonceRevelationOpsCount);
         }
         #endregion
 
@@ -734,7 +737,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("delegations/count")]
         public Task<int> GetDelegationsCount()
         {
-            return Operations.GetDelegationsCount();
+            return Task.FromResult(State.GetState().DelegationOpsCount);
         }
         #endregion
 
@@ -811,7 +814,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("originations/count")]
         public Task<int> GetOriginationsCount()
         {
-            return Operations.GetOriginationsCount();
+            return Task.FromResult(State.GetState().OriginationOpsCount);
         }
         #endregion
 
@@ -972,7 +975,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("transactions/count")]
         public Task<int> GetTransactionsCount()
         {
-            return Operations.GetTransactionsCount();
+            return Task.FromResult(State.GetState().TransactionOpsCount);
         }
         #endregion
 
@@ -1049,7 +1052,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("reveals/count")]
         public Task<int> GetRevealsCount()
         {
-            return Operations.GetRevealsCount();
+            return Task.FromResult(State.GetState().RevealOpsCount);
         }
         #endregion
 
@@ -1112,7 +1115,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("migrations/count")]
         public Task<int> GetMigrationsCount()
         {
-            return Operations.GetMigrationsCount();
+            return Task.FromResult(State.GetState().MigrationOpsCount);
         }
         #endregion
 
@@ -1175,7 +1178,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("revelation_penalties/count")]
         public Task<int> GetRevelationPenaltiesCount()
         {
-            return Operations.GetRevelationPenaltiesCount();
+            return Task.FromResult(State.GetState().RevelationPenaltyOpsCount);
         }
         #endregion
 
@@ -1238,7 +1241,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("baking/count")]
         public Task<int> GetBakingCount()
         {
-            return Operations.GetBakingsCount();
+            return Task.FromResult(State.GetState().BlocksCount - 2);
         }
         #endregion
     }

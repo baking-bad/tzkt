@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -15,9 +16,12 @@ namespace Tzkt.Api.Controllers
     public class ProtocolsController : ControllerBase
     {
         private readonly ProtocolRepository Protocols;
-        public ProtocolsController(ProtocolRepository protocols)
+        private readonly StateCache State;
+
+        public ProtocolsController(ProtocolRepository protocols, StateCache state)
         {
             Protocols = protocols;
+            State = state;
         }
         /// <summary>
         /// Get protocols count
@@ -29,7 +33,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public Task<int> GetCount()
         {
-            return Protocols.GetCount();
+            return Task.FromResult(State.GetState().ProtocolsCount);
         }
 
         /// <summary>

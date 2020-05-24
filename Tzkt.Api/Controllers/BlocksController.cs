@@ -8,6 +8,7 @@ using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -16,9 +17,12 @@ namespace Tzkt.Api.Controllers
     public class BlocksController : ControllerBase
     {
         private readonly BlockRepository Blocks;
-        public BlocksController(BlockRepository blocks)
+        private readonly StateCache State;
+
+        public BlocksController(BlockRepository blocks, StateCache state)
         {
             Blocks = blocks;
+            State = state;
         }
         /// <summary>
         /// Get blocks count
@@ -30,7 +34,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public Task<int> GetCount()
         {
-            return Blocks.GetCount();
+            return Task.FromResult(State.GetState().BlocksCount);
         }
 
         /// <summary>
