@@ -141,6 +141,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                         BalanceChange = account.Balance
                     });
                 }
+                Cache.AppState.Get().MigrationOpsCount += BootstrapedAccounts.Count;
             }
 
             return Task.CompletedTask;
@@ -151,10 +152,16 @@ namespace Tzkt.Sync.Protocols.Initiator
             Db.Accounts.RemoveRange(BootstrapedAccounts);
             Cache.Accounts.Remove(BootstrapedAccounts);
 
-            Db.MigrationOps.RemoveRange(await Db.MigrationOps
+            var migrationOps = await Db.MigrationOps
                 .AsNoTracking()
                 .Where(x => x.Kind == MigrationKind.Bootstrap)
-                .ToListAsync());
+                .ToListAsync();
+
+            Db.MigrationOps.RemoveRange(migrationOps);
+
+            var state = Cache.AppState.Get();
+            Db.TryAttach(state);
+            state.MigrationOpsCount -= migrationOps.Count;
         }
 
         #region static

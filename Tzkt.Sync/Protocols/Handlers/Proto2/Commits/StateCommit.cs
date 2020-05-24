@@ -44,6 +44,24 @@ namespace Tzkt.Sync.Protocols.Proto2
             state.NextProtocol = NextProtocol;
             state.Hash = Block.Hash;
 
+            #region count
+            state.BlocksCount++;
+            if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount++;
+
+            if (Block.Activations != null) state.ActivationOpsCount += Block.Activations.Count;
+            if (Block.Delegations != null) state.DelegationOpsCount += Block.Delegations.Count;
+            if (Block.DoubleBakings != null) state.DoubleBakingOpsCount += Block.DoubleBakings.Count;
+            if (Block.Endorsements != null) state.EndorsementOpsCount += Block.Endorsements.Count;
+            if (Block.Revelations != null) state.NonceRevelationOpsCount += Block.Revelations.Count;
+            if (Block.Originations != null) state.OriginationOpsCount += Block.Originations.Count;
+            if (Block.Reveals != null) state.RevealOpsCount += Block.Reveals.Count;
+            if (Block.Transactions != null) state.TransactionOpsCount += Block.Transactions.Count;
+
+            if (Block.RevelationPenalties != null) state.RevelationPenaltyOpsCount += Block.RevelationPenalties.Count;
+
+            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount++;
+            #endregion
+
             return Task.CompletedTask;
         }
 
@@ -62,6 +80,24 @@ namespace Tzkt.Sync.Protocols.Proto2
             state.Protocol = prevBlock?.Protocol.Hash ?? "";
             state.NextProtocol = prevBlock == null ? "" : NextProtocol;
             state.Hash = prevBlock?.Hash ?? "";
+
+            #region count
+            state.BlocksCount--;
+            if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount--;
+
+            if (Block.Activations != null) state.ActivationOpsCount -= Block.Activations.Count;
+            if (Block.Delegations != null) state.DelegationOpsCount -= Block.Delegations.Count;
+            if (Block.DoubleBakings != null) state.DoubleBakingOpsCount -= Block.DoubleBakings.Count;
+            if (Block.Endorsements != null) state.EndorsementOpsCount -= Block.Endorsements.Count;
+            if (Block.Revelations != null) state.NonceRevelationOpsCount -= Block.Revelations.Count;
+            if (Block.Originations != null) state.OriginationOpsCount -= Block.Originations.Count;
+            if (Block.Reveals != null) state.RevealOpsCount -= Block.Reveals.Count;
+            if (Block.Transactions != null) state.TransactionOpsCount -= Block.Transactions.Count;
+
+            if (Block.RevelationPenalties != null) state.RevelationPenaltyOpsCount -= Block.RevelationPenalties.Count;
+
+            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount--;
+            #endregion
 
             Cache.Blocks.Remove(Block);
         }

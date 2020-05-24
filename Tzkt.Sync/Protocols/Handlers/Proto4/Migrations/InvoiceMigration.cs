@@ -32,6 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 Kind = MigrationKind.ProposalInvoice,
                 BalanceChange = 100_000_000
             });
+            Cache.AppState.Get().MigrationOpsCount++;
         }
 
         public override async Task Revert()
@@ -50,6 +51,10 @@ namespace Tzkt.Sync.Protocols.Proto4
             invoice.Account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);
+
+            var state = Cache.AppState.Get();
+            Db.TryAttach(state);
+            state.MigrationOpsCount--;
         }
 
         #region static

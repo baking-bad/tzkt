@@ -43,6 +43,13 @@ namespace Tzkt.Sync.Protocols.Initiator
             state.NextProtocol = NextProtocol;
             state.Hash = Block.Hash;
 
+            #region count
+            state.BlocksCount++;
+            state.ProtocolsCount++;
+
+            state.CyclesCount += Block.Protocol.PreservedCycles + 1;
+            #endregion
+
             return Task.CompletedTask;
         }
 
@@ -61,6 +68,13 @@ namespace Tzkt.Sync.Protocols.Initiator
             state.Protocol = prevBlock.Protocol.Hash;
             state.NextProtocol = NextProtocol;
             state.Hash = prevBlock.Hash;
+
+            #region count
+            state.BlocksCount--;
+            state.ProtocolsCount--;
+
+            state.CyclesCount -= Block.Protocol.PreservedCycles + 1;
+            #endregion
 
             Cache.Blocks.Remove(Block);
         }

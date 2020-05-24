@@ -147,6 +147,7 @@ namespace Tzkt.Sync
 
         public virtual void TouchAccounts(int level)
         {
+            var state = Cache.AppState.Get();
             var block = Db.ChangeTracker.Entries()
                 .First(x => x.Entity is Block block && block.Level == level).Entity as Block;
 
@@ -160,6 +161,7 @@ namespace Tzkt.Sync
                 }
                 else if (entry.State == EntityState.Added)
                 {
+                    state.AccountsCount++;
                     account.FirstLevel = level;
                     account.LastLevel = level;
                     block.Events |= BlockEvents.NewAccounts;
@@ -169,6 +171,8 @@ namespace Tzkt.Sync
 
         public virtual void ClearAccounts(int level)
         {
+            var state = Cache.AppState.Get();
+
             foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
             {
                 var account = entry.Entity as Account;
@@ -180,6 +184,7 @@ namespace Tzkt.Sync
                 {
                     Db.Remove(account);
                     Cache.Accounts.Remove(account);
+                    state.AccountsCount--;
                 }
             }
         }

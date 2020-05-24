@@ -15,6 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public override async Task Apply()
         {
+            var state = Cache.AppState.Get();
             var block = await Cache.Blocks.CurrentAsync();
             var protocol = await Cache.Protocols.GetAsync(block.ProtoCode);
 
@@ -51,7 +52,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                     Account = delegat,
                     Kind = MigrationKind.ActivateDelegate
                 });
-                
+                state.MigrationOpsCount++;
+
                 foreach (var weird in weirds)
                 {
                     var delegator = weird.Contract;
@@ -132,11 +134,17 @@ namespace Tzkt.Sync.Protocols.Proto2
                 foreach (var delegator in delegators)
                     (delegator as Contract).WeirdDelegate = user;
             }
-            
-            Db.RemoveRange(await Db.MigrationOps
+
+            var migrationOps = await Db.MigrationOps
                 .AsNoTracking()
                 .Where(x => x.Kind == MigrationKind.ActivateDelegate)
-                .ToListAsync());
+                .ToListAsync();
+
+            Db.MigrationOps.RemoveRange(migrationOps);
+
+            var state = Cache.AppState.Get();
+            Db.TryAttach(state);
+            state.MigrationOpsCount -= migrationOps.Count;
 
             var ids = delegates.Select(x => x.Id).ToList();
             var weirdOriginations = await Db.OriginationOps

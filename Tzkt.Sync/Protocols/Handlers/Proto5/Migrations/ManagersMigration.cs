@@ -14,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public override async Task Apply()
         {
-            var block = await Cache.Blocks.CurrentAsync();
             var state = Cache.AppState.Get();
+            var block = await Cache.Blocks.CurrentAsync();
 
             var emptiedManagers = await Db.Contracts
                 .AsNoTracking()
@@ -52,6 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     BalanceChange = 1
                 });
             }
+            state.MigrationOpsCount += dict.Values.Count;
         }
 
         public override async Task Revert()
@@ -72,6 +73,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
 
             Db.MigrationOps.RemoveRange(airDrops);
+
+            var state = Cache.AppState.Get();
+            Db.TryAttach(state);
+            state.MigrationOpsCount -= airDrops.Count;
         }
 
         #region static
