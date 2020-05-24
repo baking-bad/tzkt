@@ -87,8 +87,8 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
         /// `failed` - an operation which failed with some particular error (not enough balance, gas limit, etc),
-        /// `backtracked` - an operation which were successful but reverted due to one of the following operations in the same operation group was failed,
-        /// `skipped` - an operation after the failed one in an operation group)
+        /// `backtracked` - an operation which was successful but reverted due to one of the following operations in the same operation group was failed,
+        /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
         public string Status { get; set; }
 
