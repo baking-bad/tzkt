@@ -1389,9 +1389,16 @@ namespace Tzkt.Api.Repositories
                 UncoveredOwnBlockFees = rewards.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = rewards.UncoveredOwnBlockRewards,
                 UncoveredOwnBlocks = rewards.UncoveredOwnBlocks,
-                Delegators = delegators.ToDictionary(
-                    k => (string)Accounts.Get(k.DelegatorId).Address,
-                    v => (long)v.Balance)
+                Delegators = delegators.Select(x => 
+                {
+                    var delegator = Accounts.Get((int)x.DelegatorId);
+                    return new SplitDelegator
+                    {
+                        Address = delegator.Address,
+                        Balance = x.Balance,
+                        Emptied = delegator is RawUser && delegator.Balance == 0
+                    };
+                })
             };
         }
         #endregion

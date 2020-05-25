@@ -57,6 +57,6 @@ namespace Tzkt.Api.Models
         public long RevelationLostRewards { get; set; }
         public long RevelationLostFees { get; set; }
 
-        public Dictionary<string, long> Delegators { get; set; }
+        public IEnumerable<SplitDelegator> Delegators { get; set; }
     }
 }
