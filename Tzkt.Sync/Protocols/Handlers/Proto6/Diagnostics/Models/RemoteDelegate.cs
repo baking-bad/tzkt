@@ -31,7 +31,6 @@ namespace Tzkt.Sync.Protocols.Proto6
         public bool IsValidFormat() =>
             Balance != null &&
             FrozenBalances.All(x => x.IsValidFormat()) &&
-            StakingBalance != null &&
             Delegators != null &&
             Deactivated != null &&
             GracePeriod != null;

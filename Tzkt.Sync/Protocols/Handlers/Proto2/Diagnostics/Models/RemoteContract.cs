@@ -15,7 +15,6 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         #region validation
         public bool IsValidFormat() =>
-            Balance != null &&
             Delegate?.IsValidFormat() == true &&
             Counter != null;
         #endregion
@@ -32,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         #region validation
         public bool IsValidFormat() =>
             Setable != null &&
-            (Value == null || Value != "");
+            (Value == null || Value.Length > 0);
         #endregion
     }
 }

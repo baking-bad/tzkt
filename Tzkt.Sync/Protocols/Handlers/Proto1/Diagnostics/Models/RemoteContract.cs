@@ -32,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         #region validation
         public bool IsValidFormat() =>
             Setable != null &&
-            (Value == null || Value != "");
+            (Value == null || Value.Length > 0);
         #endregion
     }
 }

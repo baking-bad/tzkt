@@ -14,8 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         public long? Counter { get; set; }
 
         #region validation
-        public bool IsValidFormat() =>
-            Balance != null;
+        public bool IsValidFormat() => true;
         #endregion
     }
 }

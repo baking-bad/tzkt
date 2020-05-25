@@ -50,9 +50,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<Protocol>>> Get(
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
-            [Min(0)] int p = 0,
-            [Range(0, 1000)] int n = 100)
+            [Range(0, 10000)] int limit = 100)
         {
             #region validate
             if (sort != null && !sort.Validate("code", "firstLevel", "lastLevel"))
