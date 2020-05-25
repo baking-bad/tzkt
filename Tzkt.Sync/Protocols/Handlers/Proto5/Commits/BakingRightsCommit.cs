@@ -143,12 +143,11 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 var futureCycle = cycle + Block.Protocol.PreservedCycles;
 
-                var rights = await Task.WhenAll(
-                    Proto.Node.GetBakingRightsAsync(Block.Level, futureCycle, BakingRight.MaxPriority + 1),
-                    Proto.Node.GetEndorsingRightsAsync(Block.Level, futureCycle));
+                using var bakingRightsStream = await Proto.Node.GetBakingRightsAsync(Block.Level, futureCycle, BakingRight.MaxPriority + 1);
+                FutureBakingRights = await (Proto.Serializer as Serializer).DeserializeBakingRights(bakingRightsStream);
 
-                FutureBakingRights = await (Proto.Serializer as Serializer).DeserializeBakingRights(rights[0]);
-                FutureEndorsingRights = await (Proto.Serializer as Serializer).DeserializeEndorsingRights(rights[1]);
+                using var endorsingRightsStream = await Proto.Node.GetEndorsingRightsAsync(Block.Level, futureCycle);
+                FutureEndorsingRights = await (Proto.Serializer as Serializer).DeserializeEndorsingRights(endorsingRightsStream);
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");

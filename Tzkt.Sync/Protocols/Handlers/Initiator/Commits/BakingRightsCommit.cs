@@ -28,12 +28,11 @@ namespace Tzkt.Sync.Protocols.Initiator
 
             for (int cycle = 0; cycle <= Block.Protocol.PreservedCycles; cycle++)
             {
-                var rights = await Task.WhenAll(
-                    Proto.Node.GetBakingRightsAsync(1, cycle, BakingRight.MaxPriority + 1),
-                    Proto.Node.GetEndorsingRightsAsync(1, cycle));
+                using var bakingRightsStream = await Proto.Node.GetBakingRightsAsync(1, cycle, BakingRight.MaxPriority + 1);
+                var bakingRights = await (Proto.Serializer as Serializer).DeserializeBakingRights(bakingRightsStream);
 
-                var bakingRights = await (Proto.Serializer as Serializer).DeserializeBakingRights(rights[0]);
-                var endorsingRights = await (Proto.Serializer as Serializer).DeserializeEndorsingRights(rights[1]);
+                using var endorsingRightsStream = await Proto.Node.GetEndorsingRightsAsync(1, cycle);
+                var endorsingRights = await (Proto.Serializer as Serializer).DeserializeEndorsingRights(endorsingRightsStream);
 
                 FutureBakingRights.Add(bakingRights);
                 FutureEndorsingRights.Add(endorsingRights);
