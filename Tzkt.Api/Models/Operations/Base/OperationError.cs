@@ -15,6 +15,11 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(UnregisteredDelegateError))]
     public abstract class OperationError
     {
+        /// <summary>
+        /// Type of an error (`error.id`, `contract.balance_too_low`, `contract.non_existing_contract`,
+        /// `contract.manager.unregistered_delegate`, etc.)
+        /// https://tezos.gitlab.io/api/errors.html - full list of errors
+        /// </summary>
         public abstract string Type { get; set; }
     }
 
