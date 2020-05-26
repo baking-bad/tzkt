@@ -11,6 +11,16 @@
   <PropertyGroup>
     <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <None Remove="Description.md" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="Description.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.30" />

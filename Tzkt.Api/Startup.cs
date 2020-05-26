@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -64,24 +64,20 @@ namespace Tzkt.Api
 
             services.AddOpenApiDocument(options =>
             {
-                options.DocumentName = "v1-preview";
+                options.DocumentName = "v1.0";
                 options.PostProcess = document =>
                 {
                     document.Info.Title = "TzKT API";
-                    document.Info.Description = "TzKT Explorer provides an API for accessing the extended Tezos blockchain data. This API is free for both commercial and non-commercial usage. " +
-                        "Also, TzKT API is an open-source project, so you can clone and build it and use as a self-hosted service to avoid risks of using third-party services. " +
-                        "Feel free to contact us if you need specific features or endpoints or query parameters, etc.\n\n" +
-                        "TzKT API is available for the following Tezos networks:\n\n" +
-                        "Mainnet: `https://api.tzkt.io/`\n\n" + 
-                        "Babylonnet: `https://api.babylon.tzkt.io/`\n\n" +
-                        "Carthagenet: `https://api.carthage.tzkt.io/`\n\n" +
-                        "Zeronet: `https://api.zeronet.tzkt.io/`";
-                    document.Info.Version = "v1-preview";
+
+                    if (File.Exists("Description.md"))
+                        document.Info.Description = File.ReadAllText("Description.md");
+
+                    document.Info.Version = "v1.0";
                     document.Info.Contact = new NSwag.OpenApiContact
                     {
                         Name = "Baking Bad Team",
                         Email = "hello@baking-bad.org",
-                        Url = "https://tzkt.io"
+                        Url = "https://baking-bad.org/docs"
                     };
                     document.Info.ExtensionData = new Dictionary<string, object>
                     {
@@ -110,7 +106,7 @@ namespace Tzkt.Api
             app.UseOpenApi(options => 
             {
                 options.Path = "/v1/swagger.json";
-                options.DocumentName = "v1-preview";
+                options.DocumentName = "v1.0";
             });
 
             app.UseRouting();
