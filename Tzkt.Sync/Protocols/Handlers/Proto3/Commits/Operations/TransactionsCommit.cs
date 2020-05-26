@@ -263,6 +263,9 @@ namespace Tzkt.Sync.Protocols.Proto3
             if (target != null && target != sender) target.TransactionsCount++;
             if (parentSender != sender && parentSender != target) parentSender.TransactionsCount++;
 
+            if (target is Contract c && c.Kind == ContractKind.SmartContract)
+                block.Events |= BlockEvents.SmartContracts;
+
             block.Operations |= Operations.Transactions;
             #endregion
 
