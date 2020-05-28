@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             {
                 #region remove outdated
                 var delete = string.Empty;
-                var outdatedLevel = Block.Level - (Block.Protocol.PreservedCycles * 2 + 3) * Block.Protocol.BlocksPerCycle;
+                var outdatedLevel = Block.Level - (Block.Protocol.PreservedCycles + 3) * Block.Protocol.BlocksPerCycle;
                 if (outdatedLevel > 0)
                 {
                     delete += outdatedLevel == Block.Protocol.BlocksPerSnapshot
