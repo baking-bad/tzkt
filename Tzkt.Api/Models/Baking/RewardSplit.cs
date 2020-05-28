@@ -196,24 +196,44 @@ namespace Tzkt.Api.Models
         public long UncoveredExtraBlockFees { get; set; }
 
         /// <summary>
-        /// Rewards for detecting double baking (accusing someone of producing two different blocks at the same level) or double endorsing (accusing someone of validating two different blocks at the same level).
+        /// Rewards for detecting double baking (accusing someone of producing two different blocks at the same level).
         /// </summary>
-        public long AccusationRewards { get; set; }
+        public long DoubleBakingRewards { get; set; }
 
         /// <summary>
-        /// Bonds lost due to double baking or double endorsing
+        /// Bonds lost due to double baking
         /// </summary>
-        public long AccusationLostDeposits { get; set; }
+        public long DoubleBakingLostDeposits { get; set; }
 
         /// <summary>
-        /// Rewards lost due to double baking or double endorsing
+        /// Rewards lost due to double baking
         /// </summary>
-        public long AccusationLostRewards { get; set; }
+        public long DoubleBakingLostRewards { get; set; }
 
         /// <summary>
-        /// Fees lost due to double baking or double endorsing
+        /// Fees lost due to double baking
         /// </summary>
-        public long AccusationLostFees { get; set; }
+        public long DoubleBakingLostFees { get; set; }
+
+        /// <summary>
+        /// Rewards for detecting double endorsing (accusing someone of validating two different blocks at the same level).
+        /// </summary>
+        public long DoubleEndorsingRewards { get; set; }
+
+        /// <summary>
+        /// Bonds lost due to double endorsing
+        /// </summary>
+        public long DoubleEndorsingLostDeposits { get; set; }
+
+        /// <summary>
+        /// Rewards lost due to double endorsing
+        /// </summary>
+        public long DoubleEndorsingLostRewards { get; set; }
+
+        /// <summary>
+        /// Fees lost due to double endorsing
+        /// </summary>
+        public long DoubleEndorsingLostFees { get; set; }
 
         /// <summary>
         /// Rewards for including into a block seed nonce revelation operations.

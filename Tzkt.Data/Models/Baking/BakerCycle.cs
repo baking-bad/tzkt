@@ -49,10 +49,15 @@ namespace Tzkt.Data.Models
         public long UncoveredOwnBlockFees { get; set; }
         public long UncoveredExtraBlockFees { get; set; }
 
-        public long AccusationRewards { get; set; }
-        public long AccusationLostDeposits { get; set; }
-        public long AccusationLostRewards { get; set; }
-        public long AccusationLostFees { get; set; }
+        public long DoubleBakingRewards { get; set; }
+        public long DoubleBakingLostDeposits { get; set; }
+        public long DoubleBakingLostRewards { get; set; }
+        public long DoubleBakingLostFees { get; set; }
+
+        public long DoubleEndorsingRewards { get; set; }
+        public long DoubleEndorsingLostDeposits { get; set; }
+        public long DoubleEndorsingLostRewards { get; set; }
+        public long DoubleEndorsingLostFees { get; set; }
 
         public long RevelationRewards { get; set; }
         public long RevelationLostRewards { get; set; }

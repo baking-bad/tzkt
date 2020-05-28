@@ -246,14 +246,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync((op.AccusedLevel - 1) / Block.Protocol.BlocksPerCycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.AccusationLostDeposits += op.OffenderLostDeposit;
-                    offenderCycle.AccusationLostRewards += op.OffenderLostReward;
-                    offenderCycle.AccusationLostFees += op.OffenderLostFee;
+                    offenderCycle.DoubleBakingLostDeposits += op.OffenderLostDeposit;
+                    offenderCycle.DoubleBakingLostRewards += op.OffenderLostReward;
+                    offenderCycle.DoubleBakingLostFees += op.OffenderLostFee;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
 
-                    accuserCycle.AccusationRewards += op.AccuserReward;
+                    accuserCycle.DoubleBakingRewards += op.AccuserReward;
                 }
             }
 
@@ -264,14 +264,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync((op.AccusedLevel - 1) / Block.Protocol.BlocksPerCycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.AccusationLostDeposits += op.OffenderLostDeposit;
-                    offenderCycle.AccusationLostRewards += op.OffenderLostReward;
-                    offenderCycle.AccusationLostFees += op.OffenderLostFee;
+                    offenderCycle.DoubleEndorsingLostDeposits += op.OffenderLostDeposit;
+                    offenderCycle.DoubleEndorsingLostRewards += op.OffenderLostReward;
+                    offenderCycle.DoubleEndorsingLostFees += op.OffenderLostFee;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
 
-                    accuserCycle.AccusationRewards += op.AccuserReward;
+                    accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
                 }
             }
 
@@ -628,14 +628,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync((op.AccusedLevel - 1) / Block.Protocol.BlocksPerCycle, op.OffenderId);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.AccusationLostDeposits -= op.OffenderLostDeposit;
-                    offenderCycle.AccusationLostRewards -= op.OffenderLostReward;
-                    offenderCycle.AccusationLostFees -= op.OffenderLostFee;
+                    offenderCycle.DoubleBakingLostDeposits -= op.OffenderLostDeposit;
+                    offenderCycle.DoubleBakingLostRewards -= op.OffenderLostReward;
+                    offenderCycle.DoubleBakingLostFees -= op.OffenderLostFee;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(cycle, op.AccuserId);
                     Db.TryAttach(accuserCycle);
 
-                    accuserCycle.AccusationRewards -= op.AccuserReward;
+                    accuserCycle.DoubleBakingRewards -= op.AccuserReward;
                 }
             }
 
@@ -646,14 +646,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync((op.AccusedLevel - 1) / Block.Protocol.BlocksPerCycle, op.OffenderId);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.AccusationLostDeposits -= op.OffenderLostDeposit;
-                    offenderCycle.AccusationLostRewards -= op.OffenderLostReward;
-                    offenderCycle.AccusationLostFees -= op.OffenderLostFee;
+                    offenderCycle.DoubleEndorsingLostDeposits -= op.OffenderLostDeposit;
+                    offenderCycle.DoubleEndorsingLostRewards -= op.OffenderLostReward;
+                    offenderCycle.DoubleEndorsingLostFees -= op.OffenderLostFee;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(cycle, op.AccuserId);
                     Db.TryAttach(accuserCycle);
 
-                    accuserCycle.AccusationRewards -= op.AccuserReward;
+                    accuserCycle.DoubleEndorsingRewards -= op.AccuserReward;
                 }
             }
 

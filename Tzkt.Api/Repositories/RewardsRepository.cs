@@ -47,10 +47,14 @@ namespace Tzkt.Api.Repositories
 
             return new BakerRewards
             {
-                AccusationLostDeposits = row.AccusationLostDeposits,
-                AccusationLostFees = row.AccusationLostFees,
-                AccusationLostRewards = row.AccusationLostRewards,
-                AccusationRewards = row.AccusationRewards,
+                DoubleBakingRewards = row.DoubleBakingRewards,
+                DoubleBakingLostDeposits = row.DoubleBakingLostDeposits,
+                DoubleBakingLostRewards = row.DoubleBakingLostRewards,
+                DoubleBakingLostFees = row.DoubleBakingLostFees,
+                DoubleEndorsingRewards = row.DoubleEndorsingRewards,
+                DoubleEndorsingLostDeposits = row.DoubleEndorsingLostDeposits,
+                DoubleEndorsingLostRewards = row.DoubleEndorsingLostRewards,
+                DoubleEndorsingLostFees = row.DoubleEndorsingLostFees,
                 BlockDeposits = row.BlockDeposits,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
@@ -110,10 +114,14 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new BakerRewards
             {
-                AccusationLostDeposits = row.AccusationLostDeposits,
-                AccusationLostFees = row.AccusationLostFees,
-                AccusationLostRewards = row.AccusationLostRewards,
-                AccusationRewards = row.AccusationRewards,
+                DoubleBakingRewards = row.DoubleBakingRewards,
+                DoubleBakingLostDeposits = row.DoubleBakingLostDeposits,
+                DoubleBakingLostRewards = row.DoubleBakingLostRewards,
+                DoubleBakingLostFees = row.DoubleBakingLostFees,
+                DoubleEndorsingRewards = row.DoubleEndorsingRewards,
+                DoubleEndorsingLostDeposits = row.DoubleEndorsingLostDeposits,
+                DoubleEndorsingLostRewards = row.DoubleEndorsingLostRewards,
+                DoubleEndorsingLostFees = row.DoubleEndorsingLostFees,
                 BlockDeposits = row.BlockDeposits,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
@@ -168,10 +176,14 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "accusationLostDeposits": columns.Add(@"""AccusationLostDeposits"""); break;
-                    case "accusationLostFees": columns.Add(@"""AccusationLostFees"""); break;
-                    case "accusationLostRewards": columns.Add(@"""AccusationLostRewards"""); break;
-                    case "accusationRewards": columns.Add(@"""AccusationRewards"""); break;
+                    case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
+                    case "doubleBakingLostDeposits": columns.Add(@"""DoubleBakingLostDeposits"""); break;
+                    case "doubleBakingLostRewards": columns.Add(@"""DoubleBakingLostRewards"""); break;
+                    case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); break;
+                    case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
+                    case "doubleEndorsingLostDeposits": columns.Add(@"""DoubleEndorsingLostDeposits"""); break;
+                    case "doubleEndorsingLostRewards": columns.Add(@"""DoubleEndorsingLostRewards"""); break;
+                    case "doubleEndorsingLostFees": columns.Add(@"""DoubleEndorsingLostFees"""); break;
                     case "blockDeposits": columns.Add(@"""BlockDeposits"""); break;
                     case "cycle": columns.Add(@"""Cycle"""); break;
                     case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
@@ -235,21 +247,37 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
-                    case "accusationLostDeposits":
+                    case "doubleBakingRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationLostDeposits;
+                            result[j++][i] = row.DoubleBakingRewards;
                         break;
-                    case "accusationLostFees":
+                    case "doubleBakingLostDeposits":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationLostFees;
+                            result[j++][i] = row.DoubleBakingLostDeposits;
                         break;
-                    case "accusationLostRewards":
+                    case "doubleBakingLostRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationLostRewards;
+                            result[j++][i] = row.DoubleBakingLostRewards;
                         break;
-                    case "accusationRewards":
+                    case "doubleBakingLostFees":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationRewards;
+                            result[j++][i] = row.DoubleBakingLostFees;
+                        break;
+                    case "doubleEndorsingRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingRewards;
+                        break;
+                    case "doubleEndorsingLostDeposits":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingLostDeposits;
+                        break;
+                    case "doubleEndorsingLostRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingLostRewards;
+                        break;
+                    case "doubleEndorsingLostFees":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingLostFees;
                         break;
                     case "blockDeposits":
                         foreach (var row in rows)
@@ -429,10 +457,14 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(1);
             switch (field)
             {
-                case "accusationLostDeposits": columns.Add(@"""AccusationLostDeposits"""); break;
-                case "accusationLostFees": columns.Add(@"""AccusationLostFees"""); break;
-                case "accusationLostRewards": columns.Add(@"""AccusationLostRewards"""); break;
-                case "accusationRewards": columns.Add(@"""AccusationRewards"""); break;
+                case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
+                case "doubleBakingLostDeposits": columns.Add(@"""DoubleBakingLostDeposits"""); break;
+                case "doubleBakingLostRewards": columns.Add(@"""DoubleBakingLostRewards"""); break;
+                case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); break;
+                case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
+                case "doubleEndorsingLostDeposits": columns.Add(@"""DoubleEndorsingLostDeposits"""); break;
+                case "doubleEndorsingLostRewards": columns.Add(@"""DoubleEndorsingLostRewards"""); break;
+                case "doubleEndorsingLostFees": columns.Add(@"""DoubleEndorsingLostFees"""); break;
                 case "blockDeposits": columns.Add(@"""BlockDeposits"""); break;
                 case "cycle": columns.Add(@"""Cycle"""); break;
                 case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
@@ -493,21 +525,37 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
-                case "accusationLostDeposits":
+                case "doubleBakingRewards":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationLostDeposits;
+                        result[j++] = row.DoubleBakingRewards;
                     break;
-                case "accusationLostFees":
+                case "doubleBakingLostDeposits":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationLostFees;
+                        result[j++] = row.DoubleBakingLostDeposits;
                     break;
-                case "accusationLostRewards":
+                case "doubleBakingLostRewards":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationLostRewards;
+                        result[j++] = row.DoubleBakingLostRewards;
                     break;
-                case "accusationRewards":
+                case "doubleBakingLostFees":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationRewards;
+                        result[j++] = row.DoubleBakingLostFees;
+                    break;
+                case "doubleEndorsingRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingRewards;
+                    break;
+                case "doubleEndorsingLostDeposits":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingLostDeposits;
+                    break;
+                case "doubleEndorsingLostRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingLostRewards;
+                    break;
+                case "doubleEndorsingLostFees":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingLostFees;
                     break;
                 case "blockDeposits":
                     foreach (var row in rows)
@@ -712,10 +760,14 @@ namespace Tzkt.Api.Repositories
             {
                 Baker = Accounts.GetAlias(row.BakerId),
                 Balance = row.Balance,
-                AccusationLostDeposits = row.AccusationLostDeposits,
-                AccusationLostFees = row.AccusationLostFees,
-                AccusationLostRewards = row.AccusationLostRewards,
-                AccusationRewards = row.AccusationRewards,
+                DoubleBakingRewards = row.DoubleBakingRewards,
+                DoubleBakingLostDeposits = row.DoubleBakingLostDeposits,
+                DoubleBakingLostRewards = row.DoubleBakingLostRewards,
+                DoubleBakingLostFees = row.DoubleBakingLostFees,
+                DoubleEndorsingRewards = row.DoubleEndorsingRewards,
+                DoubleEndorsingLostDeposits = row.DoubleEndorsingLostDeposits,
+                DoubleEndorsingLostRewards = row.DoubleEndorsingLostRewards,
+                DoubleEndorsingLostFees = row.DoubleEndorsingLostFees,
                 Cycle = row.Cycle,
                 EndorsementRewards = row.EndorsementRewards,
                 Endorsements = row.Endorsements,
@@ -777,10 +829,14 @@ namespace Tzkt.Api.Repositories
             {
                 Baker = Accounts.GetAlias(row.BakerId),
                 Balance = row.Balance,
-                AccusationLostDeposits = row.AccusationLostDeposits,
-                AccusationLostFees = row.AccusationLostFees,
-                AccusationLostRewards = row.AccusationLostRewards,
-                AccusationRewards = row.AccusationRewards,
+                DoubleBakingRewards = row.DoubleBakingRewards,
+                DoubleBakingLostDeposits = row.DoubleBakingLostDeposits,
+                DoubleBakingLostRewards = row.DoubleBakingLostRewards,
+                DoubleBakingLostFees = row.DoubleBakingLostFees,
+                DoubleEndorsingRewards = row.DoubleEndorsingRewards,
+                DoubleEndorsingLostDeposits = row.DoubleEndorsingLostDeposits,
+                DoubleEndorsingLostRewards = row.DoubleEndorsingLostRewards,
+                DoubleEndorsingLostFees = row.DoubleEndorsingLostFees,
                 Cycle = row.Cycle,
                 EndorsementRewards = row.EndorsementRewards,
                 Endorsements = row.Endorsements,
@@ -833,10 +889,14 @@ namespace Tzkt.Api.Repositories
                 {
                     case "baker": columns.Add(@"dc.""BakerId"""); break;
                     case "balance": columns.Add(@"dc.""Balance"""); break;
-                    case "accusationLostDeposits": columns.Add(@"bc.""AccusationLostDeposits"""); join = true; break;
-                    case "accusationLostFees": columns.Add(@"bc.""AccusationLostFees"""); join = true; break;
-                    case "accusationLostRewards": columns.Add(@"bc.""AccusationLostRewards"""); join = true; break;
-                    case "accusationRewards": columns.Add(@"bc.""AccusationRewards"""); join = true; break;
+                    case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
+                    case "doubleBakingLostDeposits": columns.Add(@"""DoubleBakingLostDeposits"""); break;
+                    case "doubleBakingLostRewards": columns.Add(@"""DoubleBakingLostRewards"""); break;
+                    case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); break;
+                    case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
+                    case "doubleEndorsingLostDeposits": columns.Add(@"""DoubleEndorsingLostDeposits"""); break;
+                    case "doubleEndorsingLostRewards": columns.Add(@"""DoubleEndorsingLostRewards"""); break;
+                    case "doubleEndorsingLostFees": columns.Add(@"""DoubleEndorsingLostFees"""); break;
                     case "cycle": columns.Add(@"dc.""Cycle"""); break;
                     case "endorsementRewards": columns.Add(@"bc.""EndorsementRewards"""); join = true; break;
                     case "endorsements": columns.Add(@"bc.""Endorsements"""); join = true; break;
@@ -906,21 +966,37 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
-                    case "accusationLostDeposits":
+                    case "doubleBakingRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationLostDeposits;
+                            result[j++][i] = row.DoubleBakingRewards;
                         break;
-                    case "accusationLostFees":
+                    case "doubleBakingLostDeposits":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationLostFees;
+                            result[j++][i] = row.DoubleBakingLostDeposits;
                         break;
-                    case "accusationLostRewards":
+                    case "doubleBakingLostRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationLostRewards;
+                            result[j++][i] = row.DoubleBakingLostRewards;
                         break;
-                    case "accusationRewards":
+                    case "doubleBakingLostFees":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccusationRewards;
+                            result[j++][i] = row.DoubleBakingLostFees;
+                        break;
+                    case "doubleEndorsingRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingRewards;
+                        break;
+                    case "doubleEndorsingLostDeposits":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingLostDeposits;
+                        break;
+                    case "doubleEndorsingLostRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingLostRewards;
+                        break;
+                    case "doubleEndorsingLostFees":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleEndorsingLostFees;
                         break;
                     case "cycle":
                         foreach (var row in rows)
@@ -1080,10 +1156,14 @@ namespace Tzkt.Api.Repositories
             {
                 case "baker": columns.Add(@"dc.""BakerId"""); break;
                 case "balance": columns.Add(@"dc.""Balance"""); break;
-                case "accusationLostDeposits": columns.Add(@"bc.""AccusationLostDeposits"""); join = true; break;
-                case "accusationLostFees": columns.Add(@"bc.""AccusationLostFees"""); join = true; break;
-                case "accusationLostRewards": columns.Add(@"bc.""AccusationLostRewards"""); join = true; break;
-                case "accusationRewards": columns.Add(@"bc.""AccusationRewards"""); join = true; break;
+                case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
+                case "doubleBakingLostDeposits": columns.Add(@"""DoubleBakingLostDeposits"""); break;
+                case "doubleBakingLostRewards": columns.Add(@"""DoubleBakingLostRewards"""); break;
+                case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); break;
+                case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
+                case "doubleEndorsingLostDeposits": columns.Add(@"""DoubleEndorsingLostDeposits"""); break;
+                case "doubleEndorsingLostRewards": columns.Add(@"""DoubleEndorsingLostRewards"""); break;
+                case "doubleEndorsingLostFees": columns.Add(@"""DoubleEndorsingLostFees"""); break;
                 case "cycle": columns.Add(@"dc.""Cycle"""); break;
                 case "endorsementRewards": columns.Add(@"bc.""EndorsementRewards"""); join = true; break;
                 case "endorsements": columns.Add(@"bc.""Endorsements"""); join = true; break;
@@ -1150,21 +1230,37 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Balance;
                     break;
-                case "accusationLostDeposits":
+                case "doubleBakingRewards":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationLostDeposits;
+                        result[j++] = row.DoubleBakingRewards;
                     break;
-                case "accusationLostFees":
+                case "doubleBakingLostDeposits":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationLostFees;
+                        result[j++] = row.DoubleBakingLostDeposits;
                     break;
-                case "accusationLostRewards":
+                case "doubleBakingLostRewards":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationLostRewards;
+                        result[j++] = row.DoubleBakingLostRewards;
                     break;
-                case "accusationRewards":
+                case "doubleBakingLostFees":
                     foreach (var row in rows)
-                        result[j++] = row.AccusationRewards;
+                        result[j++] = row.DoubleBakingLostFees;
+                    break;
+                case "doubleEndorsingRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingRewards;
+                    break;
+                case "doubleEndorsingLostDeposits":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingLostDeposits;
+                    break;
+                case "doubleEndorsingLostRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingLostRewards;
+                    break;
+                case "doubleEndorsingLostFees":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleEndorsingLostFees;
                     break;
                 case "cycle":
                     foreach (var row in rows)
@@ -1344,10 +1440,14 @@ namespace Tzkt.Api.Repositories
 
             return new RewardSplit
             {
-                AccusationLostDeposits = rewards.AccusationLostDeposits,
-                AccusationLostFees = rewards.AccusationLostFees,
-                AccusationLostRewards = rewards.AccusationLostRewards,
-                AccusationRewards = rewards.AccusationRewards,
+                DoubleBakingRewards = rewards.DoubleBakingRewards,
+                DoubleBakingLostDeposits = rewards.DoubleBakingLostDeposits,
+                DoubleBakingLostRewards = rewards.DoubleBakingLostRewards,
+                DoubleBakingLostFees = rewards.DoubleBakingLostFees,
+                DoubleEndorsingRewards = rewards.DoubleEndorsingRewards,
+                DoubleEndorsingLostDeposits = rewards.DoubleEndorsingLostDeposits,
+                DoubleEndorsingLostRewards = rewards.DoubleEndorsingLostRewards,
+                DoubleEndorsingLostFees = rewards.DoubleEndorsingLostFees,
                 BlockDeposits = rewards.BlockDeposits,
                 Cycle = rewards.Cycle,
                 DelegatedBalance = rewards.DelegatedBalance,

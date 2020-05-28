@@ -270,18 +270,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<long>("AccusationLostDeposits")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("AccusationLostFees")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("AccusationLostRewards")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("AccusationRewards")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
 
@@ -296,6 +284,30 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("DelegatorsCount")
                         .HasColumnType("integer");
+
+                    b.Property<long>("DoubleBakingLostDeposits")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleBakingLostFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleBakingLostRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleBakingRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleEndorsingLostDeposits")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleEndorsingLostFees")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleEndorsingLostRewards")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleEndorsingRewards")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("EndorsementDeposits")
                         .HasColumnType("bigint");
