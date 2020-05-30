@@ -34,6 +34,8 @@ namespace Tzkt.Api.Services.Cache
             Logger.LogDebug($"Time cache initialized with {Times.Count} items");
         }
 
+        public int Count => Times.Count;
+
         public DateTime this[int level]
         {
             get

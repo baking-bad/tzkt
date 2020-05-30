@@ -38,6 +38,7 @@ namespace Tzkt.Api
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();
             services.AddTransient<OperationRepository>();
+            services.AddTransient<BalanceHistoryRepository>();
             services.AddTransient<ReportRepository>();
             services.AddTransient<BlockRepository>();
             services.AddTransient<VotingRepository>();

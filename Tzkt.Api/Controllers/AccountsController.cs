@@ -19,12 +19,14 @@ namespace Tzkt.Api.Controllers
     public class AccountsController : ControllerBase
     {
         private readonly AccountRepository Accounts;
+        private readonly BalanceHistoryRepository History;
         private readonly ReportRepository Reports;
         private readonly StateCache State;
 
-        public AccountsController(AccountRepository accounts, ReportRepository reports, StateCache state)
+        public AccountsController(AccountRepository accounts, BalanceHistoryRepository history, ReportRepository reports, StateCache state)
         {
             Accounts = accounts;
+            History = history;
             Reports = reports;
             State = state;
         }
@@ -272,6 +274,73 @@ namespace Tzkt.Api.Controllers
             {
                 FileDownloadName = $"{address[..9]}..{address[^6..]}_{_from.ToShortDateString()}-{_to.ToShortDateString()}.csv"
             };
+        }
+
+        /// <summary>
+        /// Get balance history
+        /// </summary>
+        /// <remarks>
+        /// Returns time series with historical balances (only changes, without duplicates).
+        /// </remarks>
+        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="step">Step of the time series, for example if `step = 1000` you will get balances at blocks `1000, 2000, 3000, ...`.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts historical balances by specified field. Supported fields: `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
+        [HttpGet("{address}/balance_history")]
+        public async Task<ActionResult<IEnumerable<HistoricalBalance>>> GetBalanceHistory(
+            [Address] string address,
+            [Min(1)] int? step,
+            SelectParameter select,
+            SortParameter sort,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await History.Get(address, step ?? 1, sort, offset, limit));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values[0]));
+                else
+                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Fields[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await History.Get(address, step ?? 1, sort, offset, limit, select.Fields)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get balance at level
+        /// </summary>
+        /// <remarks>
+        /// Returns account balance at the specified block
+        /// </remarks>
+        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="level">Block height at which you want to know account balance</param>
+        /// <returns></returns>
+        [HttpGet("{address}/balance_history/{level}")]
+        public Task<long> GetBalanceHistoryByLevel([Address] string address, int level)
+        {
+            return History.Get(address, level);
         }
     }
 }
