@@ -132,13 +132,23 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of contracts created by (or related to) the specified account.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default, desc), `balance`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/contracts")]
-        public Task<IEnumerable<RelatedContract>> GetContracts([Address] string address, [Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<RelatedContract>>> GetContracts(
+            [Address] string address,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100)
         {
-            return Accounts.GetRelatedContracts(address, n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id", "balance"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            return Ok(await Accounts.GetRelatedContracts(address, sort, offset, limit));
         }
 
         /// <summary>

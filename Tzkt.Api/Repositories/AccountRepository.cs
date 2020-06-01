@@ -317,18 +317,18 @@ namespace Tzkt.Api.Repositories
             switch (account)
             {
                 case Models.Delegate delegat:
-                    delegat.Contracts = await GetRelatedContracts(address, limit);
+                    delegat.Contracts = await GetRelatedContracts(address, null, null, limit);
                     delegat.Delegators = await GetDelegators(address, limit);
                     delegat.Operations = await GetOperations(address, types, sort, 0, limit);
                     delegat.Metadata = await GetMetadata(address);
                     break;
                 case User user when user.FirstActivity != null:
-                    user.Contracts = await GetRelatedContracts(address, limit);
+                    user.Contracts = await GetRelatedContracts(address, null, null, limit);
                     user.Operations = await GetOperations(address, types, sort, 0, limit);
                     user.Metadata = await GetMetadata(address);
                     break;
                 case Contract contract:
-                    contract.Contracts = await GetRelatedContracts(address, limit);
+                    contract.Contracts = await GetRelatedContracts(address, null, null, limit);
                     contract.Operations = await GetOperations(address, types, sort, 0, limit);
                     contract.Metadata = await GetMetadata(address);
                     break;
@@ -2180,24 +2180,22 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
-        public async Task<IEnumerable<RelatedContract>> GetRelatedContracts(string address, int limit = 100, int offset = 0)
+        public async Task<IEnumerable<RelatedContract>> GetRelatedContracts(
+            string address,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var account = await Accounts.GetAsync(address);
-
             if (account == null || account.ContractsCount == 0)
                 return Enumerable.Empty<RelatedContract>();
 
-            var sql = @"
-                SELECT      ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId""
-                FROM        ""Accounts""
-                WHERE       ""CreatorId"" = @accountId
-                OR          ""ManagerId"" = @accountId
-                ORDER BY    ""FirstLevel"" DESC
-                OFFSET      @offset
-                LIMIT       @limit";
+            var sql = new SqlBuilder(@"SELECT ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId"" FROM ""Accounts""")
+                .Filter($@"(""CreatorId"" = {account.Id} OR ""ManagerId"" = {account.Id})")
+                .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x == "balance" ? ("Balance", "Balance") : ("Id", "Id"));
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { accountId = account.Id, limit, offset });
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row =>
             {
