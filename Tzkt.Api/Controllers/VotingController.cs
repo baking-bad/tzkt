@@ -108,13 +108,46 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of voting periods.
         /// </remarks>
-        /// <param name="p">Page offset (pagination)</param>
-        /// <param name="n">Number of items to return</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts voting periods by specified field. Supported fields: `id` (default).</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("periods")]
-        public Task<IEnumerable<VotingPeriod>> GetPeriods([Min(0)] int p = 0, [Range(0, 1000)] int n = 100)
+        public async Task<ActionResult<IEnumerable<VotingPeriod>>> GetPeriods(
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100)
         {
-            return Voting.GetPeriods(n, p * n);
+            #region validate
+            if (sort != null && !sort.Validate("id"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Voting.GetPeriods(sort, offset, limit));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Voting.GetPeriods(sort, offset, limit, select.Values[0]));
+                else
+                    return Ok(await Voting.GetPeriods(sort, offset, limit, select.Values));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Voting.GetPeriods(sort, offset, limit, select.Fields[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Voting.GetPeriods(sort, offset, limit, select.Fields)
+                    });
+                }
+            }
         }
         #endregion
     }

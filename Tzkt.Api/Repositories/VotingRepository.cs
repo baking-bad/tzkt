@@ -219,18 +219,13 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region periods
-        public async Task<IEnumerable<VotingPeriod>> GetPeriods(int limit = 100, int offset = 0)
+        public async Task<IEnumerable<VotingPeriod>> GetPeriods(SortParameter sort, OffsetParameter offset, int limit)
         {
-
-            var sql = @"
-                SELECT  ""Kind"", ""StartLevel"", ""EndLevel""
-                FROM    ""VotingPeriods""
-                ORDER BY ""Id""
-                OFFSET   @offset
-                LIMIT    @limit";
+            var sql = new SqlBuilder(@"SELECT ""Kind"", ""StartLevel"", ""EndLevel"" FROM ""VotingPeriods""")
+                .Take(sort, offset, limit, x => ("Id", "Id"));
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { limit, offset });
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new VotingPeriod
             {
@@ -238,6 +233,98 @@ namespace Tzkt.Api.Repositories
                 FirstLevel = row.StartLevel,
                 LastLevel = row.EndLevel
             });
+        }
+
+        public async Task<object[][]> GetPeriods(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        {
+            var columns = new HashSet<string>(fields.Length);
+
+            foreach (var field in fields)
+            {
+                switch (field)
+                {
+                    case "kind": columns.Add(@"""Kind"""); break;
+                    case "firstLevel": columns.Add(@"""StartLevel"""); break;
+                    case "lastLevel": columns.Add(@"""EndLevel"""); break;
+                }
+            }
+
+            if (columns.Count == 0)
+                return Array.Empty<object[]>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
+                .Take(sort, offset, limit, x => ("Id", "Id"));
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Length];
+
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
+            {
+                switch (fields[i])
+                {
+                    case "kind":
+                        foreach (var row in rows)
+                            result[j++][i] = KindToString(row.Kind);
+                        break;
+                    case "firstLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StartLevel;
+                        break;
+                    case "lastLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EndLevel;
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<object[]> GetPeriods(SortParameter sort, OffsetParameter offset, int limit, string field)
+        {
+            var columns = new HashSet<string>(1);
+
+            switch (field)
+            {
+                case "kind": columns.Add(@"""Kind"""); break;
+                case "firstLevel": columns.Add(@"""StartLevel"""); break;
+                case "lastLevel": columns.Add(@"""EndLevel"""); break;
+            }
+
+            if (columns.Count == 0)
+                return Array.Empty<object>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
+                .Take(sort, offset, limit, x => ("Id", "Id"));
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            //TODO: optimize memory allocation
+            var result = new object[rows.Count()];
+            var j = 0;
+
+            switch (field)
+            {
+                case "kind":
+                    foreach (var row in rows)
+                        result[j++] = KindToString(row.Kind);
+                    break;
+                case "firstLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.StartLevel;
+                    break;
+                case "lastLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.EndLevel;
+                    break;
+            }
+
+            return result;
         }
         #endregion
 
