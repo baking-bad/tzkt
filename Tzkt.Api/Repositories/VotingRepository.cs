@@ -65,7 +65,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""Proposals"" as p
                 INNER JOIN  ""VotingPeriods"" as v ON v.""Id"" = p.""ProposalPeriodId""
                 ")
-                .Take(sort, offset, limit, x => "Id", "p");
+                .Take(sort, offset, limit, x => ("Id", "Id"), "p");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -109,7 +109,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals"" as p {string.Join(' ', joins)}")
-                .Take(sort, offset, limit, x => "Id", "p");
+                .Take(sort, offset, limit, x => ("Id", "Id"), "p");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -177,7 +177,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals"" as p {string.Join(' ', joins)}")
-                .Take(sort, offset, limit, x => "Id", "p");
+                .Take(sort, offset, limit, x => ("Id", "Id"), "p");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);

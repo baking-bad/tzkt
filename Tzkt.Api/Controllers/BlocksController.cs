@@ -44,7 +44,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of blocks.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts blocks by specified field. Supported fields: `level`, `timestamp`, `priority`, `validations`, `reward`, `fees`.</param>
+        /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `priority`, `validations`, `reward`, `fees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -56,7 +56,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("level", "timestamp", "priority", "validations", "reward", "fees"))
+            if (sort != null && !sort.Validate("id", "level", "priority", "validations", "reward", "fees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

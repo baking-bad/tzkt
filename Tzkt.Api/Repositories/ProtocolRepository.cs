@@ -126,7 +126,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Protocol>> Get(SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Protocols""")
-                .Take(sort, offset, limit, x => "Id");
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "code" => ("Id", "Code"),
+                    "firstLevel" => ("Id", "FirstLevel"),
+                    "lastLevel" => ("Id", "LastLevel"),
+                    _ => ("Id", "Id")
+                });
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);

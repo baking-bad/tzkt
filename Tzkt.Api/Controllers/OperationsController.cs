@@ -79,7 +79,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of endorsement operations.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -91,7 +91,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+            if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -159,7 +159,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="proposal">Filters proposal operations by proposal hash.</param>
         /// <param name="duplicated">Specify whether to include or exclude duplicates, which didn't actually upvote a proposal.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -174,7 +174,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+            if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -241,7 +241,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="period">Filters ballots by voting period id.</param>
         /// <param name="proposal">Filters ballots by proposal hash.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts ballots by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="sort">Sorts ballots by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -255,7 +255,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+            if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -320,7 +320,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of activation operations.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts activations by specified field. Supported fields: `id`, `level`, `timestamp`, `balance`.</param>
+        /// <param name="sort">Sorts activations by specified field. Supported fields: `id` (default), `level`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -332,7 +332,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "balance"))
+            if (sort != null && !sort.Validate("id", "level", "balance"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -397,7 +397,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of double baking operations.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id`, `level`, `timestamp`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
+        /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -409,7 +409,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
+            if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -474,7 +474,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of double endorsing operations.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id`, `level`, `timestamp`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
+        /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -486,7 +486,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
+            if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -551,7 +551,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of seed nonce revelation operations.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id`, `level`, `timestamp`, `revealedLevel`.</param>
+        /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id` (default), `level`, `revealedLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -563,7 +563,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "revealedLevel"))
+            if (sort != null && !sort.Validate("id", "level", "revealedLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -632,7 +632,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `sender`, `prevDelegate`.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts delegations by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="sort">Sorts delegations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -684,7 +684,7 @@ namespace Tzkt.Api.Controllers
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "gasUsed", "bakerFee"))
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -749,7 +749,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of origination operations.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts originations by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
+        /// <param name="sort">Sorts originations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -761,7 +761,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validates
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "contractBalance"))
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "contractBalance"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -830,7 +830,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
         /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts transactions by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
+        /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -891,7 +891,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
             }
 
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "amount"))
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "amount"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -987,7 +987,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of reveal operations.
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts reveals by specified field. Supported fields: `id`, `level`, `timestamp`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="sort">Sorts reveals by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -999,7 +999,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp", "gasUsed", "bakerFee"))
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -1064,7 +1064,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts migrations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="sort">Sorts migrations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -1076,7 +1076,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+            if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -1127,7 +1127,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of revelation penalty operations (synthetic type).
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -1139,7 +1139,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+            if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -1190,7 +1190,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id`, `level`, `timestamp`.</param>
+        /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -1202,7 +1202,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "level", "timestamp"))
+            if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

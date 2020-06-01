@@ -360,12 +360,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "balance" => "Balance",
-                    "firstActivity" => "FirstLevel",
-                    "lastActivity" => "LastLevel",
-                    "numTransactions" => "TransactionsCount",
-                    "numContracts" => "ContractsCount",
-                    _ => "Id"
+                    "balance" => ("Balance", "Balance"),
+                    "firstActivity" => ("FirstLevel", "FirstLevel"),
+                    "lastActivity" => ("LastLevel", "LastLevel"),
+                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
+                    "numContracts" => ("ContractsCount", "ContractsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -598,12 +598,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "balance" => "Balance",
-                    "firstActivity" => "FirstLevel",
-                    "lastActivity" => "LastLevel",
-                    "numTransactions" => "TransactionsCount",
-                    "numContracts" => "ContractsCount",
-                    _ => "Id"
+                    "balance" => ("Balance", "Balance"),
+                    "firstActivity" => ("FirstLevel", "FirstLevel"),
+                    "lastActivity" => ("LastLevel", "LastLevel"),
+                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
+                    "numContracts" => ("ContractsCount", "ContractsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -927,12 +927,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "balance" => "Balance",
-                    "firstActivity" => "FirstLevel",
-                    "lastActivity" => "LastLevel",
-                    "numTransactions" => "TransactionsCount",
-                    "numContracts" => "ContractsCount",
-                    _ => "Id"
+                    "balance" => ("Balance", "Balance"),
+                    "firstActivity" => ("FirstLevel", "FirstLevel"),
+                    "lastActivity" => ("LastLevel", "LastLevel"),
+                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
+                    "numContracts" => ("ContractsCount", "ContractsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -1168,12 +1168,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("Staked", active)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "activationLevel" => "ActivationLevel",
-                    "deactivationLevel" => "DeactivationLevel",
-                    "stakingBalance" => "StakingBalance",
-                    "balance" => "Balance",
-                    "numDelegators" => "DelegatorsCount",
-                    _ => "Id"
+                    "activationLevel" => ("ActivationLevel", "ActivationLevel"),
+                    "deactivationLevel" => ("DeactivationLevel", "DeactivationLevel"),
+                    "stakingBalance" => ("StakingBalance", "StakingBalance"),
+                    "balance" => ("Balance", "Balance"),
+                    "numDelegators" => ("DelegatorsCount", "DelegatorsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -1282,12 +1282,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("Staked", active)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "activationLevel" => "ActivationLevel",
-                    "deactivationLevel" => "DeactivationLevel",
-                    "stakingBalance" => "StakingBalance",
-                    "balance" => "Balance",
-                    "numDelegators" => "DelegatorsCount",
-                    _ => "Id"
+                    "activationLevel" => ("ActivationLevel", "ActivationLevel"),
+                    "deactivationLevel" => ("DeactivationLevel", "DeactivationLevel"),
+                    "stakingBalance" => ("StakingBalance", "StakingBalance"),
+                    "balance" => ("Balance", "Balance"),
+                    "numDelegators" => ("DelegatorsCount", "DelegatorsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -1546,12 +1546,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("Staked", active)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "activationLevel" => "ActivationLevel",
-                    "deactivationLevel" => "DeactivationLevel",
-                    "stakingBalance" => "StakingBalance",
-                    "balance" => "Balance",
-                    "numDelegators" => "DelegatorsCount",
-                    _ => "Id"
+                    "activationLevel" => ("ActivationLevel", "ActivationLevel"),
+                    "deactivationLevel" => ("DeactivationLevel", "DeactivationLevel"),
+                    "stakingBalance" => ("StakingBalance", "StakingBalance"),
+                    "balance" => ("Balance", "Balance"),
+                    "numDelegators" => ("DelegatorsCount", "DelegatorsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -1737,11 +1737,11 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "balance" => "Balance",
-                    "firstActivity" => "FirstLevel",
-                    "lastActivity" => "LastLevel",
-                    "numTransactions" => "TransactionsCount",
-                    _ => "Id"
+                    "balance" => ("Balance", "Balance"),
+                    "firstActivity" => ("FirstLevel", "FirstLevel"),
+                    "lastActivity" => ("LastLevel", "LastLevel"),
+                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -1856,11 +1856,11 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "balance" => "Balance",
-                    "firstActivity" => "FirstLevel",
-                    "lastActivity" => "LastLevel",
-                    "numTransactions" => "TransactionsCount",
-                    _ => "Id"
+                    "balance" => ("Balance", "Balance"),
+                    "firstActivity" => ("FirstLevel", "FirstLevel"),
+                    "lastActivity" => ("LastLevel", "LastLevel"),
+                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -2050,11 +2050,11 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "balance" => "Balance",
-                    "firstActivity" => "FirstLevel",
-                    "lastActivity" => "LastLevel",
-                    "numTransactions" => "TransactionsCount",
-                    _ => "Id"
+                    "balance" => ("Balance", "Balance"),
+                    "firstActivity" => ("FirstLevel", "FirstLevel"),
+                    "lastActivity" => ("LastLevel", "LastLevel"),
+                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -2277,7 +2277,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Type", type)
                 .Filter("Balance", balance)
                 .Filter("DelegationLevel", delegationLevel)
-                .Take(sort ?? new SortParameter { Desc = "delegationLevel" }, offset, limit, x => x == "balance" ? "Balance" : "DelegationLevel");
+                .Take(sort ?? new SortParameter { Desc = "delegationLevel" }, offset, limit, x => x == "balance" ? ("Balance", "Balance") : ("DelegationLevel", "DelegationLevel"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);

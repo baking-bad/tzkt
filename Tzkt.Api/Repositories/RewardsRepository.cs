@@ -107,7 +107,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT * FROM ""BakerCycles""")
                 .Filter("BakerId", baker.Id)
                 .Filter("Cycle", cycle)
-                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => "Cycle");
+                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -234,7 +234,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BakerCycles""")
                 .Filter("BakerId", baker.Id)
                 .Filter("Cycle", cycle)
-                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => "Cycle");
+                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -514,7 +514,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BakerCycles""")
                 .Filter("BakerId", baker.Id)
                 .Filter("Cycle", cycle)
-                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => "Cycle");
+                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -820,7 +820,7 @@ namespace Tzkt.Api.Repositories
                 ")
                 .FilterA(@"dc.""DelegatorId""", acc.Id)
                 .FilterA(@"dc.""Cycle""", cycle)
-                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => "Cycle", "dc");
+                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -945,7 +945,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegatorCycles"" as dc {joinStr}")
                 .FilterA(@"dc.""DelegatorId""", acc.Id)
                 .FilterA(@"dc.""Cycle""", cycle)
-                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => "Cycle", "dc");
+                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1211,7 +1211,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegatorCycles"" as dc {joinStr}")
                 .FilterA(@"dc.""DelegatorId""", acc.Id)
                 .FilterA(@"dc.""Cycle""", cycle)
-                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => "Cycle", "dc");
+                .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);

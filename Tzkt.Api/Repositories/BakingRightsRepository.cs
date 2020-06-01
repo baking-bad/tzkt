@@ -65,7 +65,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Filter("Priority", priority)
                 .Filter("Slots", slots)
-                .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => "Level");
+                .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -124,7 +124,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Filter("Priority", priority)
                 .Filter("Slots", slots)
-                .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => "Level");
+                .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -213,7 +213,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Filter("Priority", priority)
                 .Filter("Slots", slots)
-                .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => "Level");
+                .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);

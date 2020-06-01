@@ -28,7 +28,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="active">Delegate status to filter by (true - only active, false - only deactivated, undefined - all delegates)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts delegators by specified field. Supported fields: `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`, `numDelegators`.</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`, `numDelegators`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -41,7 +41,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("stakingBalance", "balance", "numDelegators", "activationLevel", "deactivationLevel"))
+            if (sort != null && !sort.Validate("id", "stakingBalance", "balance", "numDelegators", "activationLevel", "deactivationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

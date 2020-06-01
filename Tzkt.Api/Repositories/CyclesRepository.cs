@@ -48,7 +48,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Cycle>> Get(SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Cycles""")
-                .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => "Index");
+                .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -90,7 +90,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Cycles""")
-                .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => "Index");
+                .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -165,7 +165,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Cycles""")
-                .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => "Index");
+                .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);

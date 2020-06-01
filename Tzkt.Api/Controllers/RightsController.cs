@@ -61,7 +61,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="priority">Filters rights by priority</param>
         /// <param name="status">Filters rights by status (`future`, `realized`, `uncovered`, `missed`)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts rights by specified field. Supported fields: `level`.</param>
+        /// <param name="sort">Sorts rights by specified field. Supported fields: `level` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>

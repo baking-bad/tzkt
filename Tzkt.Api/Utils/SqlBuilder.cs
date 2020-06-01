@@ -446,29 +446,30 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, string> map)
+        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, (string, string)> map)
         {
             var sortAsc = true;
             var sortColumn = "Id";
+            var cursorColumn = "Id";
 
             if (sort != null)
             {
                 if (sort.Asc != null)
                 {
-                    sortColumn = map(sort.Asc);
+                    (sortColumn, cursorColumn) = map(sort.Asc);
                 }
                 else if (sort.Desc != null)
                 {
                     sortAsc = false;
-                    sortColumn = map(sort.Desc);
+                    (sortColumn, cursorColumn) = map(sort.Desc);
                 }
             }
 
             if (offset?.Cr != null)
             {
                 AppendFilter(sortAsc 
-                    ? $@"""{sortColumn}"" > {offset.Cr}"
-                    : $@"""{sortColumn}"" < {offset.Cr}");
+                    ? $@"""{cursorColumn}"" > {offset.Cr}"
+                    : $@"""{cursorColumn}"" < {offset.Cr}");
             }
 
             if (sortColumn == "Id")
@@ -496,29 +497,30 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, string> map, string prefix)
+        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, (string, string)> map, string prefix)
         {
             var sortAsc = true;
             var sortColumn = "Id";
+            var cursorColumn = "Id";
 
             if (sort != null)
             {
                 if (sort.Asc != null)
                 {
-                    sortColumn = map(sort.Asc);
+                    (sortColumn, cursorColumn) = map(sort.Asc);
                 }
                 else if (sort.Desc != null)
                 {
                     sortAsc = false;
-                    sortColumn = map(sort.Desc);
+                    (sortColumn, cursorColumn) = map(sort.Desc);
                 }
             }
 
             if (offset?.Cr != null)
             {
                 AppendFilter(sortAsc
-                    ? $@"{prefix}.""{sortColumn}"" > {offset.Cr}"
-                    : $@"{prefix}.""{sortColumn}"" < {offset.Cr}");
+                    ? $@"{prefix}.""{cursorColumn}"" > {offset.Cr}"
+                    : $@"{prefix}.""{cursorColumn}"" < {offset.Cr}");
             }
 
             if (sortColumn == "Id")

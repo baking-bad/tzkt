@@ -97,13 +97,12 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"" FROM ""Blocks""")
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => "Id",
-                    "timestamp" => "Id",
-                    "priority" => "Priority",
-                    "validations" => "Validations",
-                    "reward" => "Reward",
-                    "fees" => "Fees",
-                    _ => "Id",
+                    "level" => ("Id", "Level"),
+                    "priority" => ("Priority", "Priority"),
+                    "validations" => ("Validations", "Validations"),
+                    "reward" => ("Reward", "Reward"),
+                    "fees" => ("Fees", "Fees"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -150,13 +149,12 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => "Id",
-                    "timestamp" => "Id",
-                    "priority" => "Priority",
-                    "validations" => "Validations",
-                    "reward" => "Reward",
-                    "fees" => "Fees",
-                    _ => "Id",
+                    "level" => ("Id", "Level"),
+                    "priority" => ("Priority", "Priority"),
+                    "validations" => ("Validations", "Validations"),
+                    "reward" => ("Reward", "Reward"),
+                    "fees" => ("Fees", "Fees"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -239,13 +237,12 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => "Id",
-                    "timestamp" => "Id",
-                    "priority" => "Priority",
-                    "validations" => "Validations",
-                    "reward" => "Reward",
-                    "fees" => "Fees",
-                    _ => "Id",
+                    "level" => ("Id", "Level"),
+                    "priority" => ("Priority", "Priority"),
+                    "validations" => ("Validations", "Validations"),
+                    "reward" => ("Reward", "Reward"),
+                    "fees" => ("Fees", "Fees"),
+                    _ => ("Id", "Id")
                 });
 
             using var db = GetConnection();
@@ -306,7 +303,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder(@"SELECT ""Level"" FROM ""Blocks""")
                 .Filter($@"""Events"" & {(int)@event} > 0")
-                .Take(new SortParameter { Asc = "level" }, offset, limit, x => "Level");
+                .Take(new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
             using var db = GetConnection();
             return await db.QueryAsync<int>(sql.Query, sql.Params);
