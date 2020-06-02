@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Tzkt.Api
 {
-    public class Int64Binder : IModelBinder
+    public class Int64NullBinder : IModelBinder
     {
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
@@ -40,13 +40,16 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetInt64List($"{model}.ni", ref hasValue, out var ni))
                 return Task.CompletedTask;
 
+            if (!bindingContext.TryGetBool($"{model}.null", ref hasValue, out var isNull))
+                return Task.CompletedTask;
+
             if (!hasValue)
             {
                 bindingContext.Result = ModelBindingResult.Success(null);
                 return Task.CompletedTask;
             }
 
-            bindingContext.Result = ModelBindingResult.Success(new Int64Parameter
+            bindingContext.Result = ModelBindingResult.Success(new Int64NullParameter
             {
                 Eq = value ?? eq,
                 Ne = ne,
@@ -55,7 +58,8 @@ namespace Tzkt.Api
                 Lt = lt,
                 Le = le,
                 In = @in,
-                Ni = ni
+                Ni = ni,
+                Null = isNull
             });
 
             return Task.CompletedTask;

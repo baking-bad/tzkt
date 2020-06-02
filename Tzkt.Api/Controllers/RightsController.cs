@@ -40,8 +40,8 @@ namespace Tzkt.Api.Controllers
             AccountParameter baker,
             Int32Parameter cycle,
             Int32Parameter level,
-            Int32Parameter slots,
-            Int32Parameter priority,
+            Int32NullParameter slots,
+            Int32NullParameter priority,
             BakingRightStatusParameter status)
         {
             return BakingRights.GetCount(type, baker, cycle, level, slots, priority, status);
@@ -71,8 +71,8 @@ namespace Tzkt.Api.Controllers
             AccountParameter baker,
             Int32Parameter cycle,
             Int32Parameter level,
-            Int32Parameter slots,
-            Int32Parameter priority,
+            Int32NullParameter slots,
+            Int32NullParameter priority,
             BakingRightStatusParameter status,
             SelectParameter select,
             SortParameter sort,

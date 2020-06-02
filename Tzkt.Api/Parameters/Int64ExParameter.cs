@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Tzkt.Api
 {
-    [ModelBinder(BinderType = typeof(Int64Binder))]
-    public class Int64Parameter
+    [ModelBinder(BinderType = typeof(Int64ExBinder))]
+    public class Int64ExParameter
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -69,5 +69,29 @@ namespace Tzkt.Api
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
         public List<long> Ni { get; set; }
+
+        /// <summary>
+        /// **Equal to another field** filter mode. \
+        /// Specify a field name to get items where the specified fields are equal.
+        /// 
+        /// Example: `?firstActivity.eqx=lastActivity`.
+        /// </summary>
+        public string Eqx { get; set; }
+
+        /// <summary>
+        /// **Not equal to another field** filter mode. \
+        /// Specify a field name to get items where the specified fields are not equal.
+        /// 
+        /// Example: `??firstActivity.nex=lastActivity`.
+        /// </summary>
+        public string Nex { get; set; }
+
+        /// <summary>
+        /// **Is null** filter mode. \
+        /// Use this mode to get items where the specified field is null or not.
+        /// 
+        /// Example: `?nonce.null` or `?nonce.null=false`.
+        /// </summary>
+        public bool? Null { get; set; }
     }
 }

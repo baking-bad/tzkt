@@ -176,24 +176,6 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (balance != null)
-            {
-                if (balance.Eqx != null)
-                    return new BadRequest($"{nameof(balance)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (balance.Nex != null)
-                    return new BadRequest($"{nameof(balance)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
-            if (delegationLevel != null)
-            {
-                if (delegationLevel.Eqx != null)
-                    return new BadRequest($"{nameof(delegationLevel)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (delegationLevel.Nex != null)
-                    return new BadRequest($"{nameof(delegationLevel)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
             if (sort != null && !sort.Validate("balance", "delegationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion

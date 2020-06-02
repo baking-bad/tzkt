@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Tzkt.Api
 {
-    [ModelBinder(BinderType = typeof(Int64Binder))]
-    public class Int64Parameter
+    [ModelBinder(BinderType = typeof(Int32ExBinder))]
+    public class Int32ExParameter
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -12,7 +12,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance=1234`.
         /// </summary>
-        public long? Eq { get; set; }
+        public int? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -20,7 +20,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.ne=1234`.
         /// </summary>
-        public long? Ne { get; set; }
+        public int? Ne { get; set; }
 
         /// <summary>
         /// **Greater than** filter mode. \
@@ -28,7 +28,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.gt=1234`.
         /// </summary>
-        public long? Gt { get; set; }
+        public int? Gt { get; set; }
 
         /// <summary>
         /// **Greater or equal** filter mode. \
@@ -36,7 +36,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.ge=1234`.
         /// </summary>
-        public long? Ge { get; set; }
+        public int? Ge { get; set; }
 
         /// <summary>
         /// **Less than** filter mode. \
@@ -44,7 +44,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.lt=1234`.
         /// </summary>
-        public long? Lt { get; set; }
+        public int? Lt { get; set; }
 
         /// <summary>
         /// **Less or equal** filter mode. \
@@ -52,7 +52,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.le=1234`.
         /// </summary>
-        public long? Le { get; set; }
+        public int? Le { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -60,7 +60,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.in=12,14,52,69`.
         /// </summary>
-        public List<long> In { get; set; }
+        public List<int> In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -68,6 +68,30 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
-        public List<long> Ni { get; set; }
+        public List<int> Ni { get; set; }
+
+        /// <summary>
+        /// **Equal to another field** filter mode. \
+        /// Specify a field name to get items where the specified fields are equal.
+        /// 
+        /// Example: `?firstActivity.eqx=lastActivity`.
+        /// </summary>
+        public string Eqx { get; set; }
+
+        /// <summary>
+        /// **Not equal to another field** filter mode. \
+        /// Specify a field name to get items where the specified fields are not equal.
+        /// 
+        /// Example: `??firstActivity.nex=lastActivity`.
+        /// </summary>
+        public string Nex { get; set; }
+
+        /// <summary>
+        /// **Is null** filter mode. \
+        /// Use this mode to get items where the specified field is null or not.
+        /// 
+        /// Example: `?nonce.null` or `?nonce.null=false`.
+        /// </summary>
+        public bool? Null { get; set; }
     }
 }
