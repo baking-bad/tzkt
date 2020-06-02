@@ -828,7 +828,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="initiator">Filters transactions by initiator. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
+        /// <param name="level">Filters transactions by level.</param>
         /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
+        /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -839,7 +841,9 @@ namespace Tzkt.Api.Controllers
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int32Parameter level,
             StringParameter parameters,
+            OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -896,25 +900,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit));
+                return Ok(await Operations.GetTransactions(initiator, sender, target, level, parameters, status, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, level, parameters, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, level, parameters, status, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, level, parameters, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(initiator, sender, target, parameters, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetTransactions(initiator, sender, target, level, parameters, status, sort, offset, limit, select.Fields)
                     });
                 }
             }

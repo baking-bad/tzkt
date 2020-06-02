@@ -4140,7 +4140,9 @@ namespace Tzkt.Api.Repositories
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int32Parameter level,
             StringParameter parameters,
+            OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
@@ -4150,6 +4152,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Parameters", parameters)
+                .Filter("Status", status)
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -4196,7 +4200,9 @@ namespace Tzkt.Api.Repositories
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int32Parameter level,
             StringParameter parameters,
+            OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -4245,6 +4251,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Parameters", parameters)
+                .Filter("Status", status)
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -4366,7 +4374,9 @@ namespace Tzkt.Api.Repositories
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int32Parameter level,
             StringParameter parameters,
+            OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -4412,6 +4422,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Parameters", parameters)
+                .Filter("Status", status)
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
