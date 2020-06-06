@@ -16,10 +16,10 @@ by placing the label **"Powered by TzKT API"** with a direct link to [tzkt.io](h
 
 TzKT API is available for the following Tezos networks and on the following base URLs:
 
-- Mainnet: `https://api.tzkt.io/` ([check](https://api.tzkt.io/v1/head))
-- Babylonnet: `https://api.babylon.tzkt.io/` ([check](https://api.babylon.tzkt.io/v1/head))
-- Carthagenet: `https://api.carthage.tzkt.io/` ([check](https://api.carthage.tzkt.io/v1/head))
-- Zeronet: `https://api.zeronet.tzkt.io/` ([check](https://api.zeronet.tzkt.io/v1/head))
+- Mainnet: `https://api.tzkt.io/` ([view docs](https://api.tzkt.io))
+- Babylonnet: `https://api.babylon.tzkt.io/` ([view docs](https://api.babylon.tzkt.io))
+- Carthagenet: `https://api.carthage.tzkt.io/` ([view docs](https://api.carthage.tzkt.io))
+- Zeronet: `https://api.zeronet.tzkt.io/` ([view docs](https://api.zeronet.tzkt.io))
 
 ### Staging environment
 
@@ -27,7 +27,7 @@ We also provide a staging environment with the newest features and updates befor
 This allows to test latest features and pre-update client applications in case of breaking changes
 so API may be used without the adverse consequences of operating in a production environment.
 
-Staging API: `https://staging.api.tzkt.io/` ([check](https://staging.api.tzkt.io/v1/head))
+Staging API: `https://staging.api.tzkt.io/` ([view docs](https://staging.api.tzkt.io))
 
 ### Rate Limits
 
