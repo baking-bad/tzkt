@@ -126,7 +126,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_221.backup" -O tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_240.backup" -O tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -305,7 +305,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/baby_tzkt_176.backup" -O baby_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/baby_tzkt_198.backup" -O baby_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -499,7 +499,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/cartha_tzkt_130.backup" -O cartha_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/cartha_tzkt_226.backup" -O cartha_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -693,7 +693,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/zero_tzkt_db_6340.backup" -O zero_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/zero_tzkt_9535.backup" -O zero_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
