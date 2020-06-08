@@ -4140,6 +4140,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int64Parameter amount,
             Int32Parameter level,
             StringParameter parameters,
             OperationStatusParameter status,
@@ -4151,6 +4152,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
+                .Filter("Amount", amount)
                 .Filter("Parameters", parameters)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
@@ -4200,6 +4202,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int64Parameter amount,
             Int32Parameter level,
             StringParameter parameters,
             OperationStatusParameter status,
@@ -4250,6 +4253,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
+                .Filter("Amount", amount)
                 .Filter("Parameters", parameters)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
@@ -4374,6 +4378,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int64Parameter amount,
             Int32Parameter level,
             StringParameter parameters,
             OperationStatusParameter status,
@@ -4421,6 +4426,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
+                .Filter("Amount", amount)
                 .Filter("Parameters", parameters)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
