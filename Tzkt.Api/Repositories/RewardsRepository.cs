@@ -1435,7 +1435,9 @@ namespace Tzkt.Api.Repositories
                 {sqlRewards};
                 {sqlDelegators};");
 
-            var rewards = result.ReadFirst();
+            var rewards = result.ReadFirstOrDefault();
+            if (rewards == null) return null;
+
             var delegators = result.Read();
 
             return new RewardSplit
@@ -1500,6 +1502,34 @@ namespace Tzkt.Api.Repositories
                         Emptied = delegator is RawUser && delegator.Balance == 0
                     };
                 })
+            };
+        }
+
+        public async Task<SplitDelegator> GetRewardSplitDelegator(string baker, int cycle, string delegator)
+        {
+            if (!(await Accounts.GetAsync(baker) is RawDelegate bakerAccount))
+                return null;
+
+            if (!(await Accounts.GetAsync(delegator) is RawAccount delegatorAccount))
+                    return null;
+
+            var sql = $@"
+                SELECT      ""Balance""
+                FROM        ""DelegatorCycles""
+                WHERE       ""BakerId"" = {bakerAccount.Id}
+                AND         ""Cycle"" = {cycle}
+                AND         ""DelegatorId"" = {delegatorAccount.Id}
+                LIMIT       1";
+
+            using var db = GetConnection();
+            var result = await db.ExecuteScalarAsync(sql);
+            if (result == null) return null;
+
+            return new SplitDelegator
+            {
+                Balance = (long)result,
+                CurrentBalance = delegatorAccount.Balance,
+                Emptied = delegatorAccount is RawUser && delegatorAccount.Balance == 0
             };
         }
         #endregion

@@ -199,5 +199,21 @@ namespace Tzkt.Api.Controllers
         {
             return Rewards.GetRewardSplit(address, cycle, offset, limit);
         }
+
+        /// <summary>
+        /// Get reward split delegator
+        /// </summary>
+        /// <remarks>
+        /// Returns delegator from the reward split for the specified cycle.
+        /// </remarks>
+        /// <param name="baker">Baker address</param>
+        /// <param name="cycle">Reward split cycle</param>
+        /// <param name="delegator">Delegator address</param>
+        /// <returns></returns>
+        [HttpGet("split/{baker}/{cycle:int}/{delegator}")]
+        public Task<SplitDelegator> GetRewardSplitDelegator([Address] string baker, int cycle, [Address] string delegator)
+        {
+            return Rewards.GetRewardSplitDelegator(baker, cycle, delegator);
+        }
     }
 }
