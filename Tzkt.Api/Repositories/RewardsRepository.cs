@@ -1496,6 +1496,7 @@ namespace Tzkt.Api.Repositories
                     {
                         Address = delegator.Address,
                         Balance = x.Balance,
+                        CurrentBalance = delegator.Balance,
                         Emptied = delegator is RawUser && delegator.Balance == 0
                     };
                 })
