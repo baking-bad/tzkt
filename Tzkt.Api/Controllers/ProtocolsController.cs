@@ -87,5 +87,19 @@ namespace Tzkt.Api.Controllers
         {
             return Protocols.Get(hash);
         }
+
+        /// <summary>
+        /// Get protocol by cycle
+        /// </summary>
+        /// <remarks>
+        /// Returns a protocol at the specified cycle.
+        /// </remarks>
+        /// <param name="cycle">Cycle index</param>
+        /// <returns></returns>
+        [HttpGet("cycles/{cycle}")]
+        public Task<Protocol> GetByCycle([Min(0)] int cycle)
+        {
+            return Protocols.GetByCycle(cycle);
+        }
     }
 }

@@ -29,6 +29,54 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
+        public async Task<Protocol> GetByCycle(int cycle)
+        {
+            var sql = $@"
+                SELECT      *
+                FROM        ""Protocols""
+                WHERE       (""FirstLevel"" - 1) / GREATEST(""BlocksPerCycle"", 1) <= {cycle}
+                ORDER BY    ""FirstLevel"" DESC
+                LIMIT       1";
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync(sql);
+            if (row == null) return null;
+
+            return new Protocol
+            {
+                Code = row.Code,
+                Hash = row.Hash,
+                FirstLevel = row.FirstLevel,
+                LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
+                Constants = new ProtocolConstants
+                {
+                    BlockDeposit = row.BlockDeposit,
+                    BlockReward = row.BlockReward1 == 0
+                        ? new List<long> { row.BlockReward0 }
+                        : new List<long> { row.BlockReward0, row.BlockReward1 },
+                    BlocksPerCommitment = row.BlocksPerCommitment,
+                    BlocksPerCycle = row.BlocksPerCycle,
+                    BlocksPerSnapshot = row.BlocksPerSnapshot,
+                    BlocksPerVoting = row.BlocksPerVoting,
+                    ByteCost = row.ByteCost,
+                    EndorsementDeposit = row.EndorsementDeposit,
+                    EndorsementReward = row.EndorsementReward1 == 0
+                        ? new List<long> { row.EndorsementReward0 }
+                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
+                    EndorsersPerBlock = row.EndorsersPerBlock,
+                    HardBlockGasLimit = row.HardBlockGasLimit,
+                    HardOperationGasLimit = row.HardOperationGasLimit,
+                    HardOperationStorageLimit = row.HardOperationStorageLimit,
+                    OriginationSize = row.OriginationSize,
+                    PreservedCycles = row.PreservedCycles,
+                    RevelationReward = row.RevelationReward,
+                    TimeBetweenBlocks = row.TimeBetweenBlocks,
+                    TokensPerRoll = row.TokensPerRoll
+                },
+                Metadata = ProtocolMetadata[row.Hash]
+            };
+        }
+
         public async Task<Protocol> Get(int code)
         {
             var sql = @"
