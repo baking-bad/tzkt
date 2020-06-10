@@ -45,9 +45,10 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<IEnumerable<Cycle>> Get(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<Cycle>> Get(Int32Parameter snapshotIndex, SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Cycles""")
+                .Filter("SnapshotIndex", snapshotIndex)
                 .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
             using var db = GetConnection();
@@ -67,7 +68,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> Get(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> Get(Int32Parameter snapshotIndex, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -90,6 +91,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Cycles""")
+                .Filter("SnapshotIndex", snapshotIndex)
                 .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
             using var db = GetConnection();
@@ -145,7 +147,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> Get(Int32Parameter snapshotIndex, SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -165,6 +167,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Cycles""")
+                .Filter("SnapshotIndex", snapshotIndex)
                 .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
             using var db = GetConnection();

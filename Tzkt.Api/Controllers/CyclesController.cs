@@ -43,6 +43,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of cycles, including future cycles.
         /// </remarks>
+        /// <param name="snapshotIndex">Filters cycles by snapshot index (0..15)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts cycles by specified field. Supported fields: `index` (default, desc).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -50,6 +51,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cycle>>> Get(
+            Int32Parameter snapshotIndex,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -61,25 +63,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Cycles.Get(sort, offset, limit));
+                return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Cycles.Get(sort, offset, limit, select.Values[0]));
+                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Cycles.Get(sort, offset, limit, select.Values));
+                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Cycles.Get(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Cycles.Get(sort, offset, limit, select.Fields)
+                        Rows = await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields)
                     });
                 }
             }
