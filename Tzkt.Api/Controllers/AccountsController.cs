@@ -118,11 +118,12 @@ namespace Tzkt.Api.Controllers
         /// Returns an account with the specified address.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="metadata">Include or not account metadata</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Account> GetByAddress([Address] string address)
+        public Task<Account> GetByAddress([Address] string address, bool metadata = false)
         {
-            return Accounts.Get(address);
+            return Accounts.Get(address, metadata);
         }
 
         /// <summary>

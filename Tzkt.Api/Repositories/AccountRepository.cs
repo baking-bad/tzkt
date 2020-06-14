@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
             Operations = operations;
         }
 
-        public async Task<Account> Get(string address)
+        public async Task<Account> Get(string address, bool metadata)
         {
             var rawAccount = await Accounts.GetAsync(address);
 
@@ -39,7 +39,7 @@ namespace Tzkt.Api.Repositories
                     }
                     : null;
 
-            var metadata = Accounts.GetMetadata(rawAccount.Id);
+            var accMetadata = Accounts.GetMetadata(rawAccount.Id);
 
             switch (rawAccount)
             {
@@ -47,7 +47,7 @@ namespace Tzkt.Api.Repositories
                     #region build delegate
                     return new Models.Delegate
                     {
-                        Alias = metadata?.Alias,
+                        Alias = accMetadata?.Alias,
                         Active = delegat.Staked,
                         Address = delegat.Address,
                         PublicKey = delegat.PublicKey,
@@ -82,6 +82,7 @@ namespace Tzkt.Api.Repositories
                         NumReveals = delegat.RevealsCount,
                         NumMigrations = delegat.MigrationsCount,
                         NumTransactions = delegat.TransactionsCount,
+                        Metadata = metadata ? accMetadata : null
                     };
                     #endregion
                 case RawUser user:
@@ -94,7 +95,7 @@ namespace Tzkt.Api.Repositories
 
                     return new User
                     {
-                        Alias = metadata?.Alias,
+                        Alias = accMetadata?.Alias,
                         Address = user.Address,
                         Balance = user.Balance,
                         Counter = user.Balance > 0 ? user.Counter : State.GetCounter(),
@@ -121,7 +122,8 @@ namespace Tzkt.Api.Repositories
                         NumOriginations = user.OriginationsCount,
                         NumReveals = user.RevealsCount,
                         NumMigrations = user.MigrationsCount,
-                        NumTransactions = user.TransactionsCount
+                        NumTransactions = user.TransactionsCount,
+                        Metadata = metadata ? accMetadata : null
                     };
                     #endregion
                 case RawContract contract:
@@ -146,7 +148,7 @@ namespace Tzkt.Api.Repositories
 
                     return new Contract
                     {
-                        Alias = metadata?.Alias,
+                        Alias = accMetadata?.Alias,
                         Address = contract.Address,
                         Kind = KindToString(contract.Kind),
                         Balance = contract.Balance,
@@ -183,7 +185,8 @@ namespace Tzkt.Api.Repositories
                         NumOriginations = contract.OriginationsCount,
                         NumReveals = contract.RevealsCount,
                         NumMigrations = contract.MigrationsCount,
-                        NumTransactions = contract.TransactionsCount
+                        NumTransactions = contract.TransactionsCount,
+                        Metadata = metadata ? accMetadata : null
                     };
                     #endregion
                 default:
@@ -312,7 +315,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<Account> GetProfile(string address, HashSet<string> types, SortMode sort, int limit)
         {
-            var account = await Get(address);
+            var account = await Get(address, false);
 
             switch (account)
             {
