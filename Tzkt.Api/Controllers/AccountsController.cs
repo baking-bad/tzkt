@@ -133,7 +133,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of contracts created by (or related to) the specified account.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default, desc), `balance`.</param>
+        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default, desc), `balance`, `creationLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -145,7 +145,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "balance"))
+            if (sort != null && !sort.Validate("id", "balance", "creationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

@@ -33,5 +33,15 @@ namespace Tzkt.Api.Models
         /// Information about the current delegate of the contract. `null` if it's not delegated
         /// </summary>
         public DelegateInfo Delegate { get; set; }
+
+        /// <summary>
+        /// Height of the block where the contract was created
+        /// </summary>
+        public int CreationLevel { get; set; }
+
+        /// <summary>
+        /// Datetime of the block where the contract was created (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
+        /// </summary>
+        public DateTime? CreationTime { get; set; }
     }
 }

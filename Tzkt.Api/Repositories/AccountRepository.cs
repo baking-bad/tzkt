@@ -2193,9 +2193,14 @@ namespace Tzkt.Api.Repositories
             if (account == null || account.ContractsCount == 0)
                 return Enumerable.Empty<RelatedContract>();
 
-            var sql = new SqlBuilder(@"SELECT ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId"" FROM ""Accounts""")
+            var sql = new SqlBuilder(@"SELECT ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId"", ""FirstLevel"" FROM ""Accounts""")
                 .Filter($@"(""CreatorId"" = {account.Id} OR ""ManagerId"" = {account.Id})")
-                .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x == "balance" ? ("Balance", "Balance") : ("Id", "Id"));
+                .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x switch
+                {
+                    "balance" => ("Balance", "Balance"),
+                    "creationLevel" => ("Id", "FirstLevel"),
+                    _ => ("Id", "Id")
+                });
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2204,8 +2209,8 @@ namespace Tzkt.Api.Repositories
             {
                 var metadata = Accounts.GetMetadata((int)row.Id);
 
-                var delegat = row.DelegatId == null ? null
-                    : Accounts.Get((int)row.DelegatId);
+                var delegat = row.DelegateId == null ? null
+                    : Accounts.Get((int)row.DelegateId);
 
                 var delegatMetadata = delegat == null ? null
                     : Accounts.GetMetadata(delegat.Id);
@@ -2216,13 +2221,15 @@ namespace Tzkt.Api.Repositories
                     Alias = metadata?.Alias,
                     Address = row.Address,
                     Balance = row.Balance,
-                    Delegate = row.DelegatId == null ? null
+                    Delegate = row.DelegateId == null ? null
                          : new DelegateInfo
                          {
                              Alias = delegatMetadata?.Alias,
                              Address = delegat.Address,
                              Active = delegat.Staked
-                         }
+                         },
+                    CreationLevel = row.FirstLevel,
+                    CreationTime = Time[row.FirstLevel]
                 };
             });
         }
