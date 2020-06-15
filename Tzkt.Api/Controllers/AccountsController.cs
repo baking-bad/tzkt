@@ -38,7 +38,9 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts.
         /// </remarks>
         /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`).</param>
-        /// <param name="kind">Filter accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="balance">Filters accounts by balance</param>
+        /// <param name="staked">Filters accounts by participation in staking</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`, `numContracts`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -48,6 +50,8 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<Account>>> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            Int64Parameter balance,
+            BoolParameter staked,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -64,25 +68,25 @@ namespace Tzkt.Api.Controllers
             #endregion
             
             if (select == null)
-                return Ok(await Accounts.Get(type, kind, sort, offset, limit));
+                return Ok(await Accounts.Get(type, kind, balance, staked, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.Get(type, kind, sort, offset, limit, select.Values[0]));
+                    return Ok(await Accounts.Get(type, kind, balance, staked, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Accounts.Get(type, kind, sort, offset, limit, select.Values));
+                    return Ok(await Accounts.Get(type, kind, balance, staked, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.Get(type, kind, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Accounts.Get(type, kind, balance, staked, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Accounts.Get(type, kind, sort, offset, limit, select.Fields)
+                        Rows = await Accounts.Get(type, kind, balance, staked, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -95,10 +99,16 @@ namespace Tzkt.Api.Controllers
         /// Returns a number of accounts.
         /// </remarks>
         /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`).</param>
-        /// <param name="kind">Filter accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="balance">Filters accounts by balance</param>
+        /// <param name="staked">Filters accounts by participation in staking</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind)
+        public Task<int> GetCount(
+            AccountTypeParameter type,
+            ContractKindParameter kind,
+            Int64Parameter balance,
+            BoolParameter staked)
         {
             #region optimize
             if (type == null && kind == null)
@@ -108,7 +118,7 @@ namespace Tzkt.Api.Controllers
                 type = new AccountTypeParameter { Eq = 2 };
             #endregion
 
-            return Accounts.GetCount(type, kind);
+            return Accounts.GetCount(type, kind, balance, staked);
         }
 
         /// <summary>

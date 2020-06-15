@@ -341,11 +341,13 @@ namespace Tzkt.Api.Repositories
         }
 
         #region accounts
-        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind)
+        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind, Int64Parameter balance, BoolParameter staked)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
                 .Filter("Type", type)
-                .Filter("Kind", kind);
+                .Filter("Kind", kind)
+                .Filter("Balance", balance)
+                .Filter("Staked", staked);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -354,6 +356,8 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Account>> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            Int64Parameter balance,
+            BoolParameter staked,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
@@ -361,6 +365,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
+                .Filter("Balance", balance)
+                .Filter("Staked", staked)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -536,6 +542,8 @@ namespace Tzkt.Api.Repositories
         public async Task<object[][]> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            Int64Parameter balance,
+            BoolParameter staked,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -599,6 +607,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
+                .Filter("Balance", balance)
+                .Filter("Staked", staked)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -868,6 +878,8 @@ namespace Tzkt.Api.Repositories
         public async Task<object[]> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            Int64Parameter balance,
+            BoolParameter staked,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -928,6 +940,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
+                .Filter("Balance", balance)
+                .Filter("Staked", staked)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
