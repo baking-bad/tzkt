@@ -111,7 +111,7 @@ namespace Tzkt.Api.Controllers
             BoolParameter staked)
         {
             #region optimize
-            if (type == null && kind == null)
+            if (type == null && kind == null && balance == null && staked == null)
                 return Task.FromResult(State.GetState().AccountsCount);
 
             if (kind?.Eq != null && type == null)
