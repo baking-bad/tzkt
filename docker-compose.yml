@@ -19,9 +19,7 @@ services:
   api:
     container_name: tzkt-api
     restart: always
-    build:
-      context: .
-      dockerfile: Tzkt.Api/Dockerfile
+    image: bakingbad/tzkt-api:latest
     depends_on:
       - db
     expose:
@@ -32,9 +30,7 @@ services:
   sync:
     container_name: tzkt-sync
     restart: always
-    build:
-      context: .
-      dockerfile: Tzkt.Sync/Dockerfile
+    image: bakingbad/tzkt-sync:latest
     depends_on:
       - db
 
