@@ -2,7 +2,7 @@ init:
 	docker run --name tzkt-snapshot bakingbad/tzkt-db:latest
 	docker cp tzkt-snapshot:/tzkt_db.backup .
 	docker rm tzkt-snapshot
-	docker rmi tzkt-snapshot-dl
+	docker rmi bakingbad/tzkt-db
 	docker-compose up -d db
 	docker-compose exec -T db psql -U tzkt postgres -c '\l'
 	docker-compose exec -T db dropdb -U tzkt --if-exists tzkt_db
