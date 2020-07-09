@@ -1,6 +1,5 @@
 init:
-	docker build -t tzkt-snapshot-dl -f Dockerfile-snapshot .
-	docker run --name tzkt-snapshot tzkt-snapshot-dl
+	docker run --name tzkt-snapshot bakingbad/tzkt-db:tagname
 	docker cp tzkt-snapshot:/tzkt_db.backup .
 	docker rm tzkt-snapshot
 	docker rmi tzkt-snapshot-dl
