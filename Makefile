@@ -1,5 +1,5 @@
 init:
-	docker run --name tzkt-snapshot bakingbad/tzkt-db:latest
+	docker run --name tzkt-snapshot bakingbad/tzkt-snapshot:latest
 	docker cp tzkt-snapshot:/tzkt_db.backup .
 	docker rm tzkt-snapshot
 	docker rmi bakingbad/tzkt-db
