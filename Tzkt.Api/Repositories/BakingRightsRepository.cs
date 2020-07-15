@@ -13,12 +13,14 @@ namespace Tzkt.Api.Repositories
     public class BakingRightsRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly ProtocolsCache Protocols;
         readonly TimeCache Time;
         readonly StateCache State;
 
-        public BakingRightsRepository(AccountsCache accounts, TimeCache time, StateCache state, IConfiguration config) : base(config)
+        public BakingRightsRepository(AccountsCache accounts, ProtocolsCache protocols, TimeCache time, StateCache state, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            Protocols = protocols;
             Time = time;
             State = state;
         }
@@ -71,12 +73,14 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var state = State.GetState();
+            var proto = Protocols.Current;
+
             return rows.Select(row => new BakingRight
             {
                 Type = TypeToString(row.Type),
                 Cycle = row.Cycle,
                 Level = row.Level,
-                Timestamp = row.Status == 0 ? state.Timestamp.AddMinutes(row.Level - state.Level) : Time[row.Level],
+                Timestamp = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level],
                 Baker = Accounts.GetAlias(row.BakerId),
                 Priority = row.Priority,
                 Slots = row.Slots,
@@ -151,8 +155,9 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "timestamp":
                         var state = State.GetState();
+                        var proto = Protocols.Current;
                         foreach (var row in rows)
-                            result[j++][i] = row.Status == 0 ? state.Timestamp.AddMinutes(row.Level - state.Level) : Time[row.Level];
+                            result[j++][i] = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level];
                         break;
                     case "baker":
                         foreach (var row in rows)
@@ -238,8 +243,9 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "timestamp":
                     var state = State.GetState();
+                    var proto = Protocols.Current;
                     foreach (var row in rows)
-                        result[j++] = row.Status == 0 ? state.Timestamp.AddMinutes(row.Level - state.Level) : Time[row.Level];
+                        result[j++] = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level];
                     break;
                 case "baker":
                     foreach (var row in rows)
@@ -260,6 +266,69 @@ namespace Tzkt.Api.Repositories
             }
 
             return result;
+        }
+
+        public async Task<IEnumerable<BakingInterval>> GetSchedule(string address, DateTime from, DateTime to, int maxPriority)
+        {
+            var state = State.GetState();
+            var proto = Protocols.Current;
+
+            var rawAccount = await Accounts.GetAsync(address);
+            var fromLevel = Time.FindLevel(from, Nearest.Higher);
+            var toLevel = to > state.Timestamp
+                ? state.Level + (int)(to - state.Timestamp).TotalSeconds / proto.TimeBetweenBlocks
+                : Time.FindLevel(to, Nearest.Lower);
+
+            if (!(rawAccount is RawDelegate) || fromLevel == -1 || toLevel == -1)
+                return Enumerable.Empty<BakingInterval>();
+
+            var fromCycle = (fromLevel - 1) / proto.BlocksPerCycle;
+            var toCycle = (toLevel - 1) / proto.BlocksPerCycle;
+
+            var sql = $@"
+                SELECT ""Level"", ""Slots"", ""Status"" FROM ""BakingRights""
+                WHERE ""BakerId"" = {rawAccount.Id}
+                AND   ""Cycle"" >= {fromCycle} AND ""Cycle"" <= {toCycle}
+                AND   ""Level"" >= {fromLevel} AND ""Level"" <= {toLevel}
+                AND   NOT(""Status"" = 0 AND ""Priority"" IS NOT NULL AND ""Priority"" > {maxPriority})";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql);
+
+            var count = (int)Math.Ceiling((to - from).TotalHours);
+            var intervals = new List<BakingInterval>(count);
+            
+            for (int i = 0; i < count; i++)
+            {
+                var interval = new BakingInterval();
+                interval.StartTime = from.AddHours(i);
+                interval.EndTime = interval.StartTime.AddSeconds(3599);
+
+                intervals.Add(interval);
+            }
+
+            foreach (var row in rows)
+            {
+                var ts = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level];
+                var i = (int)(ts - from).TotalHours;
+                if (i >= intervals.Count) continue;
+
+                if (intervals[i].LastLevel == null || row.Level > intervals[i].LastLevel)
+                    intervals[i].LastLevel = row.Level;
+
+                if (intervals[i].FirstLevel == null || row.Level < intervals[i].FirstLevel)
+                    intervals[i].FirstLevel = row.Level;
+
+                if (intervals[i].Status == null || row.Status > intervals[i].Status)
+                    intervals[i].Status = row.Status;
+
+                if (row.Slots == null)
+                    intervals[i].Blocks++;
+                else
+                    intervals[i].Slots += row.Slots;
+            }
+
+            return intervals;
         }
 
         string TypeToString(int type) => type switch

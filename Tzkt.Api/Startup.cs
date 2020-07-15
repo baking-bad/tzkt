@@ -32,6 +32,7 @@ namespace Tzkt.Api
             services.AddProtocolMetadata();
 
             services.AddAccountsCache();
+            services.AddProtocolsCache();
             services.AddStateCache();
             services.AddTimeCache();
 

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -107,6 +108,25 @@ namespace Tzkt.Api.Controllers
                     });
                 }
             }
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("schedule")]
+        public async Task<ActionResult<IEnumerable<BakingRight>>> GetSchedule(
+            [Address] [Required] string baker,
+            [Required] DateTimeOffset from,
+            [Required] DateTimeOffset to,
+            [Min(0)] int maxPriority = 0)
+        {
+            #region validate
+            if (to <= from)
+                return new BadRequest(nameof(to), "'to' should be greater than 'from'");
+
+            if ((to - from).TotalDays > 14)
+                return new BadRequest(nameof(to), "Maximum schedule period is 14 days");
+            #endregion
+
+            return Ok(await BakingRights.GetSchedule(baker, from.DateTime, to.DateTime, maxPriority));
         }
     }
 }

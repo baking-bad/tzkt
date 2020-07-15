@@ -54,6 +54,44 @@ namespace Tzkt.Api.Services.Cache
             }
         }
 
+        public int FindLevel(DateTime datetime, Nearest mode)
+        {
+            if (Times.Count == 0)
+                return -1;
+
+            if (datetime > Times[^1])
+                return mode == Nearest.Lower ? Times.Count - 1 : -1;
+
+            if (datetime < Times[0])
+                return mode == Nearest.Higher ? 0 : -1;
+
+            #region binary search
+            var from = 0;
+            var mid = 0;
+            var to = Times.Count - 1;
+
+            while (from <= to)
+            {
+                mid = from + (to - from) / 2;
+
+                if (datetime > Times[mid])
+                {
+                    from = mid + 1;
+                }
+                else if (datetime < Times[mid])
+                {
+                    to = mid - 1;
+                }
+                else
+                {
+                    return mid;
+                }
+            }
+
+            return mode == Nearest.Higher ? from : to;
+            #endregion
+        }
+
         public void Update()
         {
             var sql = @"
@@ -85,6 +123,12 @@ namespace Tzkt.Api.Services.Cache
 
             Sema.Release();
         }
+    }
+
+    public enum Nearest
+    {
+        Lower,
+        Higher
     }
 
     public static class TimeCacheExt
