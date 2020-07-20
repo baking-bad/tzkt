@@ -274,7 +274,11 @@ namespace Tzkt.Api.Repositories
             var proto = Protocols.Current;
 
             var rawAccount = await Accounts.GetAsync(address);
-            var fromLevel = Time.FindLevel(from, Nearest.Higher);
+
+            var fromLevel = from > state.Timestamp
+                ? state.Level + (int)(from - state.Timestamp).TotalSeconds / proto.TimeBetweenBlocks
+                : Time.FindLevel(from, Nearest.Higher);
+
             var toLevel = to > state.Timestamp
                 ? state.Level + (int)(to - state.Timestamp).TotalSeconds / proto.TimeBetweenBlocks
                 : Time.FindLevel(to, Nearest.Lower);
