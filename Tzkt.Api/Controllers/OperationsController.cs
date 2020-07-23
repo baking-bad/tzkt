@@ -78,6 +78,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of endorsement operations.
         /// </remarks>
+        /// <param name="level">Filters endorsements by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -85,6 +86,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("endorsements")]
         public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -96,25 +98,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetEndorsements(sort, offset, limit));
+                return Ok(await Operations.GetEndorsements(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetEndorsements(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetEndorsements(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetEndorsements(level, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -155,6 +157,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of proposal operations.
         /// </remarks>
+        /// <param name="level">Filters proposal operations by level.</param>
         /// <param name="period">Filters proposal operations by voting period id.</param>
         /// <param name="proposal">Filters proposal operations by proposal hash.</param>
         /// <param name="duplicated">Specify whether to include or exclude duplicates, which didn't actually upvote a proposal.</param>
@@ -165,6 +168,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
+            Int32Parameter level,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -179,25 +183,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit));
+                return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetProposals(period, proposal, duplicated, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -238,6 +242,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of ballot operations.
         /// </remarks>
+        /// <param name="level">Filters ballots by level.</param>
         /// <param name="period">Filters ballots by voting period id.</param>
         /// <param name="proposal">Filters ballots by proposal hash.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -247,6 +252,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("ballots")]
         public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
+            Int32Parameter level,
             Int32Parameter period,
             ProtocolParameter proposal,
             SelectParameter select,
@@ -260,25 +266,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit));
+                return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBallots(period, proposal, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBallots(period, proposal, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -319,6 +325,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of activation operations.
         /// </remarks>
+        /// <param name="level">Filters activations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts activations by specified field. Supported fields: `id` (default), `level`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -326,6 +333,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("activations")]
         public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivations(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -337,25 +345,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetActivations(sort, offset, limit));
+                return Ok(await Operations.GetActivations(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetActivations(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetActivations(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetActivations(level, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -396,6 +404,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double baking operations.
         /// </remarks>
+        /// <param name="level">Filters double baking operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -403,6 +412,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_baking")]
         public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -414,25 +424,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleBakings(sort, offset, limit));
+                return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleBakings(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -473,6 +483,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double endorsing operations.
         /// </remarks>
+        /// <param name="level">Filters double endorsing operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -480,6 +491,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_endorsing")]
         public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -491,25 +503,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit));
+                return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleEndorsings(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -550,6 +562,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of seed nonce revelation operations.
         /// </remarks>
+        /// <param name="level">Filters nonce revelation operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id` (default), `level`, `revealedLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -557,6 +570,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("nonce_revelations")]
         public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -568,25 +582,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetNonceRevelations(sort, offset, limit));
+                return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetNonceRevelations(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -627,9 +641,11 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of delegation operations.
         /// </remarks>
+        /// <param name="initiator">Filters delegations by initiator. Allowed fields for `.eqx` mode: `prevDelegate`, `newDelegate`.</param>
         /// <param name="sender">Filters delegations by sender. Allowed fields for `.eqx` mode: `prevDelegate`, `newDelegate`.</param>
-        /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `sender`, `newDelegate`.</param>
-        /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `sender`, `prevDelegate`.</param>
+        /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `newDelegate`.</param>
+        /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `prevDelegate`.</param>
+        /// <param name="level">Filters delegations by level.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
@@ -638,9 +654,11 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("delegations")]
         public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegations(
+            AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int32Parameter level,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -648,6 +666,18 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
+            if (initiator != null)
+            {
+                if (initiator.Eqx != null && initiator.Eqx != "prevDelegate" && initiator.Eqx != "newDelegate")
+                    return new BadRequest($"{nameof(initiator)}.eqx", "The 'initiator' field can be compared with the 'prevDelegate' or 'newDelegate' field only.");
+
+                if (initiator.Nex != null && initiator.Nex != "prevDelegate" && initiator.Nex != "newDelegate")
+                    return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'prevDelegate' or 'newDelegate' field only.");
+
+                if (initiator.Eq == -1 || initiator.In?.Count == 0)
+                    return Ok(Enumerable.Empty<DelegationOperation>());
+            }
+
             if (sender != null)
             {
                 if (sender.Eqx != null && sender.Eqx != "prevDelegate" && sender.Eqx != "newDelegate")
@@ -657,31 +687,31 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(sender)}.nex", "The 'sender' field can be compared with the 'prevDelegate' or 'newDelegate' field only.");
 
                 if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
-                    return Ok(Enumerable.Empty<TransactionOperation>());
+                    return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
             if (prevDelegate != null)
             {
-                if (prevDelegate.Eqx != null && prevDelegate.Eqx != "sender" && prevDelegate.Eqx != "newDelegate")
-                    return new BadRequest($"{nameof(prevDelegate)}.eqx", "The 'prevDelegate' field can be compared with the 'sender' or 'newDelegate' field only.");
+                if (prevDelegate.Eqx != null && prevDelegate.Eqx != "initiator" && prevDelegate.Eqx != "sender" && prevDelegate.Eqx != "newDelegate")
+                    return new BadRequest($"{nameof(prevDelegate)}.eqx", "The 'prevDelegate' field can be compared with the 'initiator', 'sender' or 'newDelegate' field only.");
 
-                if (prevDelegate.Nex != null && prevDelegate.Nex != "sender" && prevDelegate.Nex != "newDelegate")
-                    return new BadRequest($"{nameof(prevDelegate)}.nex", "The 'prevDelegate' field can be compared with the 'sender' or 'newDelegate' field only.");
+                if (prevDelegate.Nex != null && prevDelegate.Nex != "initiator" && prevDelegate.Nex != "sender" && prevDelegate.Nex != "newDelegate")
+                    return new BadRequest($"{nameof(prevDelegate)}.nex", "The 'prevDelegate' field can be compared with the 'initiator', 'sender' or 'newDelegate' field only.");
 
                 if (prevDelegate.Eq == -1 || prevDelegate.In?.Count == 0 || prevDelegate.Null == true)
-                    return Ok(Enumerable.Empty<TransactionOperation>());
+                    return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
             if (newDelegate != null)
             {
-                if (newDelegate.Eqx != null && newDelegate.Eqx != "sender" && newDelegate.Eqx != "prevDelegate")
-                    return new BadRequest($"{nameof(newDelegate)}.eqx", "The 'newDelegate' field can be compared with the 'sender' or 'prevDelegate' fields only.");
+                if (newDelegate.Eqx != null && newDelegate.Eqx != "initiator" && newDelegate.Eqx != "sender" && newDelegate.Eqx != "prevDelegate")
+                    return new BadRequest($"{nameof(newDelegate)}.eqx", "The 'newDelegate' field can be compared with the 'initiator', 'sender' or 'prevDelegate' fields only.");
 
-                if (newDelegate.Nex != null && newDelegate.Nex != "sender" && newDelegate.Nex != "prevDelegate")
-                    return new BadRequest($"{nameof(newDelegate)}.nex", "The 'newDelegate' field can be compared with the 'sender' or 'prevDelegate' fields only.");
+                if (newDelegate.Nex != null && newDelegate.Nex != "initiator" && newDelegate.Nex != "sender" && newDelegate.Nex != "prevDelegate")
+                    return new BadRequest($"{nameof(newDelegate)}.nex", "The 'newDelegate' field can be compared with the 'initiator', 'sender' or 'prevDelegate' fields only.");
 
                 if (newDelegate.Eq == -1 || newDelegate.In?.Count == 0)
-                    return Ok(Enumerable.Empty<TransactionOperation>());
+                    return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
@@ -689,25 +719,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit));
+                return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDelegations(sender, prevDelegate, newDelegate, status, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -748,6 +778,13 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of origination operations.
         /// </remarks>
+        /// <param name="initiator">Filters origination operations by initiator. Allowed fields for `.eqx` mode: `contractManager`, `contractDelegate`.</param>
+        /// <param name="sender">Filters origination operations by sender. Allowed fields for `.eqx` mode: `contractManager`, `contractDelegate`.</param>
+        /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractDelegate`.</param>
+        /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractManager`.</param>
+        /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters origination operations by level.</param>
+        /// <param name="status">Filters origination operations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -755,36 +792,103 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("originations")]
         public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter contractManager,
+            AccountParameter contractDelegate,
+            AccountParameter originatedContract,
+            Int32Parameter level,
+            OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validates
+            if (initiator != null)
+            {
+                if (initiator.Eqx != null && initiator.Eqx != "contractManager" && initiator.Eqx != "contractDelegate")
+                    return new BadRequest($"{nameof(initiator)}.eqx", "The 'initiator' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+
+                if (initiator.Nex != null && initiator.Nex != "contractManager" && initiator.Nex != "contractDelegate")
+                    return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+
+                if (initiator.Eq == -1 || initiator.In?.Count == 0)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
+            if (sender != null)
+            {
+                if (sender.Eqx != null && sender.Eqx != "contractManager" && sender.Eqx != "contractDelegate")
+                    return new BadRequest($"{nameof(sender)}.eqx", "The 'sender' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+
+                if (sender.Nex != null && sender.Nex != "contractManager" && sender.Nex != "contractDelegate")
+                    return new BadRequest($"{nameof(sender)}.nex", "The 'sender' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
+            if (contractManager != null)
+            {
+                if (contractManager.Eqx != null && contractManager.Eqx != "initiator" && contractManager.Eqx != "sender" && contractManager.Eqx != "contractDelegate")
+                    return new BadRequest($"{nameof(contractManager)}.eqx", "The 'contractManager' field can be compared with the 'initiator', 'sender' or 'contractDelegate' field only.");
+
+                if (contractManager.Nex != null && contractManager.Nex != "initiator" && contractManager.Nex != "sender" && contractManager.Nex != "contractDelegate")
+                    return new BadRequest($"{nameof(contractManager)}.nex", "The 'contractManager' field can be compared with the 'initiator', 'sender' or 'contractDelegate' field only.");
+
+                if (contractManager.Eq == -1 || contractManager.In?.Count == 0)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
+            if (contractDelegate != null)
+            {
+                if (contractDelegate.Eqx != null && contractDelegate.Eqx != "initiator" && contractDelegate.Eqx != "sender" && contractDelegate.Eqx != "contractManager")
+                    return new BadRequest($"{nameof(contractDelegate)}.eqx", "The 'contractDelegate' field can be compared with the 'initiator', 'sender' or 'contractManager' field only.");
+
+                if (contractDelegate.Nex != null && contractDelegate.Nex != "initiator" && contractDelegate.Nex != "sender" && contractDelegate.Nex != "contractManager")
+                    return new BadRequest($"{nameof(contractDelegate)}.nex", "The 'contractDelegate' field can be compared with the 'initiator', 'sender' or 'contractManager' field only.");
+
+                if (contractDelegate.Eq == -1 || contractDelegate.In?.Count == 0)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
+            if (originatedContract != null)
+            {
+                if (originatedContract.Eqx != null)
+                    return new BadRequest($"{nameof(originatedContract)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (originatedContract.Nex != null)
+                    return new BadRequest($"{nameof(originatedContract)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (originatedContract.Eq == -1 || originatedContract.In?.Count == 0)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
             if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "contractBalance"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetOriginations(sort, offset, limit));
+                return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -992,6 +1096,9 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of reveal operations.
         /// </remarks>
+        /// <param name="sender">Filters reveal operations by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters reveal operations by level.</param>
+        /// <param name="status">Filters reveal operations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts reveals by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -999,36 +1106,51 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("reveals")]
         public async Task<ActionResult<IEnumerable<RevealOperation>>> GetReveals(
+            AccountParameter sender,
+            Int32Parameter level,
+            OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
             if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetReveals(sort, offset, limit));
+                return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetReveals(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetReveals(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -1069,6 +1191,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
+        /// <param name="level">Filters migration operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -1076,6 +1199,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -1087,25 +1211,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetMigrations(sort, offset, limit));
+                return Ok(await Operations.GetMigrations(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetMigrations(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetMigrations(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetMigrations(level, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -1132,6 +1256,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of revelation penalty operations (synthetic type).
         /// </remarks>
+        /// <param name="level">Filters revelation penalty operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -1139,6 +1264,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("revelation_penalties")]
         public async Task<ActionResult<IEnumerable<RevelationPenaltyOperation>>> GetRevelationPenalties(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -1150,25 +1276,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetRevelationPenalties(sort, offset, limit));
+                return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetRevelationPenalties(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -1195,6 +1321,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
+        /// <param name="level">Filters baking operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -1202,6 +1329,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
+            Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -1213,25 +1341,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBakings(sort, offset, limit));
+                return Ok(await Operations.GetBakings(level, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBakings(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBakings(sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetBakings(level, sort, offset, limit, select.Fields)
                     });
                 }
             }

@@ -43,6 +43,9 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of blocks.
         /// </remarks>
+        /// <param name="baker">Filters blocks by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters blocks by level.</param>
+        /// <param name="priority">Filters blocks by priority.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `priority`, `validations`, `reward`, `fees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -50,36 +53,51 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
+            AccountParameter baker,
+            Int32Parameter level,
+            Int32Parameter priority,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
+            if (baker != null)
+            {
+                if (baker.Eqx != null)
+                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (baker.Nex != null)
+                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (baker.Eq == -1 || baker.In?.Count == 0)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
             if (sort != null && !sort.Validate("id", "level", "priority", "validations", "reward", "fees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Blocks.Get(sort, offset, limit));
+                return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Blocks.Get(sort, offset, limit, select.Values[0]));
+                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Blocks.Get(sort, offset, limit, select.Values));
+                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Blocks.Get(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Blocks.Get(sort, offset, limit, select.Fields)
+                        Rows = await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields)
                     });
                 }
             }

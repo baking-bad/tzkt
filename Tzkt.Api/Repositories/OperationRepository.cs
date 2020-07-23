@@ -188,9 +188,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""EndorsementOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -209,7 +214,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetEndorsements(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -236,6 +246,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -287,7 +298,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetEndorsements(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetEndorsements(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -311,6 +327,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -509,7 +526,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(
+            Int32Parameter level,
+            Int32Parameter period,
+            ProtocolParameter proposal,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -519,6 +542,7 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
+                .FilterA(@"o.""Level""", level)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -551,7 +575,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetBallots(
+            Int32Parameter level,
+            Int32Parameter period,
+            ProtocolParameter proposal,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -595,6 +626,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -666,7 +698,14 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetBallots(Int32Parameter period, ProtocolParameter proposal, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetBallots(
+            Int32Parameter level,
+            Int32Parameter period,
+            ProtocolParameter proposal,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -707,6 +746,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -959,7 +999,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(
+            Int32Parameter level,
+            Int32Parameter period,
+            ProtocolParameter proposal,
+            BoolParameter duplicated,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -969,6 +1016,7 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
+                .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
@@ -1002,7 +1050,15 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetProposals(
+            Int32Parameter level,
+            Int32Parameter period,
+            ProtocolParameter proposal,
+            BoolParameter duplicated,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -1046,6 +1102,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
@@ -1118,7 +1175,15 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetProposals(Int32Parameter period, ProtocolParameter proposal, BoolParameter duplicated, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetProposals(
+            Int32Parameter level,
+            Int32Parameter period,
+            ProtocolParameter proposal,
+            BoolParameter duplicated,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -1159,6 +1224,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
@@ -1376,9 +1442,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetActivations(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<ActivationOperation>> GetActivations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""ActivationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1401,7 +1472,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetActivations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -1427,6 +1503,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1479,7 +1556,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetActivations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetActivations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -1502,6 +1584,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1675,9 +1758,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleBakingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1709,7 +1797,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetDoubleBakings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -1740,6 +1833,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1816,7 +1910,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetDoubleBakings(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetDoubleBakings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -1844,6 +1943,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2055,9 +2155,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleEndorsingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2089,7 +2194,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetDoubleEndorsings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -2120,6 +2230,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2196,7 +2307,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetDoubleEndorsings(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetDoubleEndorsings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -2224,6 +2340,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2427,9 +2544,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""NonceRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2454,7 +2576,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetNonceRevelations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -2481,6 +2608,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2537,7 +2665,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetNonceRevelations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetNonceRevelations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -2561,6 +2694,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2823,18 +2957,22 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(
+            AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int32Parameter level,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DelegationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("InitiatorId", initiator, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
-                .Filter("PrevDelegateId", prevDelegate, x => x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", newDelegate, x => x == "sender" ? "SenderId" : "PrevDelegateId")
+                .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
+                .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Level""", level)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -2869,9 +3007,11 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetDelegations(
+            AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int32Parameter level,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -2911,9 +3051,11 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
+                .Filter("InitiatorId", initiator, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
-                .Filter("PrevDelegateId", prevDelegate, x => x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", newDelegate, x => x == "sender" ? "SenderId" : "PrevDelegateId")
+                .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
+                .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Level""", level)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -3005,9 +3147,11 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetDelegations(
+            AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int32Parameter level,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -3044,9 +3188,11 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
+                .Filter("InitiatorId", initiator, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
-                .Filter("PrevDelegateId", prevDelegate, x => x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", newDelegate, x => x == "sender" ? "SenderId" : "PrevDelegateId")
+                .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
+                .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Level""", level)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -3449,9 +3595,26 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter contractManager,
+            AccountParameter contractDelegate,
+            AccountParameter originatedContract,
+            Int32Parameter level,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""OriginationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
+                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
+                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""Level""", level)
+                .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -3508,7 +3671,18 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetOriginations(
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter contractManager,
+            AccountParameter contractDelegate,
+            AccountParameter originatedContract,
+            Int32Parameter level,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -3549,6 +3723,13 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
+                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
+                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
+                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""Level""", level)
+                .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -3676,7 +3857,18 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetOriginations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetOriginations(
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter contractManager,
+            AccountParameter contractDelegate,
+            AccountParameter originatedContract,
+            Int32Parameter level,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -3714,6 +3906,13 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
+                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
+                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
+                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""Level""", level)
+                .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -4732,9 +4931,18 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetReveals(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(
+            AccountParameter sender,
+            Int32Parameter level,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevealOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("SenderId", sender)
+                .FilterA(@"o.""Level""", level)
+                .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -4763,7 +4971,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetReveals(
+            AccountParameter sender,
+            Int32Parameter level,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -4794,6 +5009,9 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
+                .Filter("SenderId", sender)
+                .FilterA(@"o.""Level""", level)
+                .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -4867,7 +5085,14 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetReveals(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetReveals(
+            AccountParameter sender,
+            Int32Parameter level,
+            OperationStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -4895,6 +5120,9 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
+                .Filter("SenderId", sender)
+                .FilterA(@"o.""Level""", level)
+                .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -5039,9 +5267,14 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<MigrationOperation>> GetMigrations(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<MigrationOperation>> GetMigrations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""MigrationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5059,7 +5292,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetMigrations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -5085,6 +5323,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5132,7 +5371,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetMigrations(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetMigrations(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -5155,6 +5399,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5263,9 +5508,14 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevelationPenaltyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5284,7 +5534,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetRevelationPenalties(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -5311,6 +5566,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5362,7 +5618,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetRevelationPenalties(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetRevelationPenalties(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -5386,6 +5647,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5500,10 +5762,15 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<BakingOperation>> GetBakings(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<BakingOperation>> GetBakings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees"" FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
+                .Filter("Level", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             using var db = GetConnection();
@@ -5522,7 +5789,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetBakings(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetBakings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -5545,6 +5817,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
+                .Filter("Level", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             using var db = GetConnection();
@@ -5596,7 +5869,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetBakings(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetBakings(
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -5616,6 +5894,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
+                .Filter("Level", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             using var db = GetConnection();
