@@ -87,7 +87,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_240.backup" -O tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_258.backup" -O tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
