@@ -257,20 +257,79 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <param name="from">Start of the datetime range to filter by (ISO 8601, e.g. 2019-11-31)</param>
         /// <param name="to">End of the datetime range to filter by (ISO 8601, e.g. 2019-12-31)</param>
+        /// <param name="delimiter">Column delimiter (`comma`, `semicolon`)</param>
+        /// <param name="separator">Decimal separator (`comma`, `point`)</param>
+        /// <param name="currency">Currency to convert amounts to (`btc`, `eur`, `usd`)</param>
+        /// <param name="historical">`true` if you want to use historical prices, `false` to use current price</param>
         /// <returns></returns>
         [HttpGet("{address}/report")]
-        public async Task<FileStreamResult> GetBalanceReport(
+        public async Task<ActionResult> GetBalanceReport(
             [Address] string address,
             DateTime? from,
-            DateTime? to)
+            DateTime? to,
+            string currency,
+            bool historical = false,
+            string delimiter = "comma",
+            string separator = "point")
         {
+            #region verify delimiter
+            if (delimiter == "comma")
+            {
+                delimiter = ",";
+            }
+            else if (delimiter == "semicolon")
+            {
+                delimiter = ";";
+            }
+            else
+            {
+                return new BadRequest(nameof(delimiter), "Unsupported value");
+            }
+            #endregion
+
+            #region verify separator
+            if (separator == "comma")
+            {
+                separator = ",";
+            }
+            else if (separator == "point")
+            {
+                separator = ".";
+            }
+            else
+            {
+                return new BadRequest(nameof(separator), "Unsupported value");
+            }
+            #endregion
+
+            #region verify symbol
+            var symbol = currency switch
+            {
+                "btc" => 0,
+                "eur" => 1,
+                "usd" => 2,
+                _ => -1
+            };
+            #endregion
+
             var _from = from ?? DateTime.MinValue;
             var _to = to ?? DateTime.MaxValue;
 
             var stream = new MemoryStream();
             var csv = new StreamWriter(stream);
 
-            await Reports.Write(csv, address, _from, _to, 257_000);
+            if (symbol == -1)
+            {
+                await Reports.Write(csv, address, _from, _to, 257_000, delimiter, separator);
+            }
+            else if (historical)
+            {
+                await Reports.WriteHistorical(csv, address, _from, _to, 257_000, delimiter, separator, symbol);
+            }
+            else
+            {
+                await Reports.Write(csv, address, _from, _to, 257_000, delimiter, separator, symbol);
+            }
 
             stream.Seek(0, SeekOrigin.Begin);
             return new FileStreamResult(stream, "text/csv")

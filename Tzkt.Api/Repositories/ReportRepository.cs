@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,78 +16,15 @@ namespace Tzkt.Api.Repositories
     public class ReportRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly QuotesCache Quotes;
 
-        public ReportRepository(AccountsCache accounts, IConfiguration config) : base(config)
+        public ReportRepository(AccountsCache accounts, QuotesCache quotes, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            Quotes = quotes;
         }
 
-        public async Task Test(string address)
-        {
-            var account = await Accounts.GetAsync(address);
-            if (account == null) return;
-
-            var sql = new StringBuilder();
-
-            if (account.DelegationsCount > 0) UnionDelegations(sql);
-            if (account.OriginationsCount > 0) UnionOriginations(sql);
-            if (account.TransactionsCount > 0) UnionTransactions(sql);
-            if (account.RevealsCount > 0) UnionReveals(sql);
-            if (account.MigrationsCount > 0) UnionMigrations(sql);
-
-            if (account is RawUser user)
-            {
-                if (user.Activated == true) UnionActivations(sql);
-            }
-
-            if (account is RawDelegate delegat)
-            {
-                if (delegat.BlocksCount > 0) UnionBaking(sql);
-                if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
-                if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
-                if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
-                if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
-                if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
-            }
-
-            if (sql.Length == 0) return;
-
-            sql.AppendLine(@"ORDER BY ""Id""");
-            sql.AppendLine(@"LIMIT @limit");
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.ToString(), new
-            {
-                account = account.Id,
-                from = DateTime.MinValue,
-                to = DateTime.MaxValue,
-                limit = 10000000
-            });
-
-            var balance = 0m;
-
-            #region write rows
-            foreach (var row in rows)
-            {
-                if (row.Reward + row.Loss + row.Received + row.Sent + row.Fee == 0)
-                    throw new Exception($"{account.Address}: {row.Id} is empty");
-
-                balance += row.Reward / 1000000m;
-                balance -= row.Loss / 1000000m;
-                balance += row.Received / 1000000m;
-                balance -= row.Sent / 1000000m;
-                balance -= row.Fee / 1000000m;
-            }
-            #endregion
-
-            if (balance * 1000000 != account.Balance)
-            {
-                Console.WriteLine($"{account.Address}: {account.Balance} != {balance}");
-                throw new Exception($"{account.Address}: {account.Balance} != {balance}");
-            }
-        }
-
-        public async Task Write(StreamWriter csv, string address, DateTime from, DateTime to, int limit)
+        public async Task Write(StreamWriter csv, string address, DateTime from, DateTime to, int limit, string delimiter, string separator)
         {
             var account = await Accounts.GetAsync(address);
             if (account == null) return;
@@ -123,48 +61,322 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
 
             #region write header
-            csv.Write("Block level;");
-            csv.Write("Datetime;");
-            csv.Write("Operation;");
+            csv.Write("Block level");
+            csv.Write(delimiter);
+            csv.Write("Datetime");
+            csv.Write(delimiter);
+            csv.Write("Operation");
+            csv.Write(delimiter);
             if (account is RawDelegate)
             {
-                csv.Write("Reward;");
-                csv.Write("Loss;");
+                csv.Write("Reward");
+                csv.Write(delimiter);
+                csv.Write("Loss");
+                csv.Write(delimiter);
             }
-            csv.Write("Received;");
-            csv.Write("From address;");
-            csv.Write("Sent;");
-            csv.Write("Fee;");
-            csv.Write("To address;");
-            csv.Write("Explorer link;\n");
+            csv.Write("Received");
+            csv.Write(delimiter);
+            csv.Write("From address");
+            csv.Write(delimiter);
+            csv.Write("Sent");
+            csv.Write(delimiter);
+            csv.Write("Fee");
+            csv.Write(delimiter);
+            csv.Write("To address");
+            csv.Write(delimiter);
+            csv.Write("Explorer link");
+            csv.Write("\n");
             #endregion
 
             #region write rows
+            var format = new NumberFormatInfo { NumberDecimalSeparator = separator };
+
             foreach (var row in rows)
             {
                 csv.Write(row.Level);
-                csv.Write(";");
-                csv.Write(row.Timestamp);
-                csv.Write(";");
+                csv.Write(delimiter);
+                csv.Write(row.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
+                csv.Write(delimiter);
                 csv.Write(Operations[row.Type]);
-                csv.Write(";");
+                csv.Write(delimiter);
                 if (account is RawDelegate)
                 {
-                    csv.Write(row.Reward == null ? "" : row.Reward / 1_000_000m);
-                    csv.Write(";");
-                    csv.Write(row.Loss == null ? "" : -row.Loss / 1_000_000m);
-                    csv.Write(";");
+                    csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
+                    csv.Write(delimiter);
+                    csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
+                    csv.Write(delimiter);
                 }
-                csv.Write(row.Received == null ? "" : row.Received / 1_000_000m);
-                csv.Write(";");
+                csv.Write(row.Received == null ? "" : ((decimal)row.Received / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
                 csv.Write(row.From == null ? "" : Accounts.Get(row.From).Address);
-                csv.Write(";");
-                csv.Write(row.Sent == null ? "" : -row.Sent / 1_000_000m);
-                csv.Write(";");
-                csv.Write(row.Fee == null ? "" : -row.Fee / 1_000_000m);
-                csv.Write(";");
+                csv.Write(delimiter);
+                csv.Write(row.Sent == null ? "" : ((decimal)-row.Sent / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Fee == null ? "" : ((decimal)-row.Fee / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
                 csv.Write(row.To == null ? "" : Accounts.Get(row.To).Address);
-                csv.Write(";");
+                csv.Write(delimiter);
+                csv.Write(row.Nonce != null
+                    ? $"https://tzkt.io/{row.OpHash}/{row.Counter}/{row.Nonce}"
+                    : row.Counter != null
+                        ? $"https://tzkt.io/{row.OpHash}/{row.Counter}"
+                        : row.OpHash != null
+                            ? $"https://tzkt.io/{row.OpHash}"
+                            : "");
+
+                csv.Write("\n");
+            }
+            #endregion
+
+            csv.Flush();
+        }
+
+        public async Task Write(StreamWriter csv, string address, DateTime from, DateTime to, int limit, string delimiter, string separator, int symbol)
+        {
+            var account = await Accounts.GetAsync(address);
+            if (account == null) return;
+
+            var sql = new StringBuilder();
+
+            if (account.DelegationsCount > 0) UnionDelegations(sql);
+            if (account.OriginationsCount > 0) UnionOriginations(sql);
+            if (account.TransactionsCount > 0) UnionTransactions(sql);
+            if (account.RevealsCount > 0) UnionReveals(sql);
+            if (account.MigrationsCount > 0) UnionMigrations(sql);
+
+            if (account is RawUser user)
+            {
+                if (user.Activated == true) UnionActivations(sql);
+            }
+
+            if (account is RawDelegate delegat)
+            {
+                if (delegat.BlocksCount > 0) UnionBaking(sql);
+                if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
+                if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
+                if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
+                if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+                if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+            }
+
+            if (sql.Length == 0) return;
+
+            sql.AppendLine(@"ORDER BY ""Id""");
+            sql.AppendLine(@"LIMIT @limit");
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
+
+            #region write header
+            var symbolName = symbol == 2 ? "USD" : symbol == 1 ? "EUR" : "BTC";
+
+            csv.Write("Block level");
+            csv.Write(delimiter);
+            csv.Write("Datetime");
+            csv.Write(delimiter);
+            csv.Write("Operation");
+            csv.Write(delimiter);
+            if (account is RawDelegate)
+            {
+                csv.Write("Reward, XTZ");
+                csv.Write(delimiter);
+                csv.Write($"Reward, {symbolName}");
+                csv.Write(delimiter);
+                csv.Write("Loss, XTZ");
+                csv.Write(delimiter);
+                csv.Write($"Loss, {symbolName}");
+                csv.Write(delimiter);
+            }
+            csv.Write("Received, XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Received, {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("From address");
+            csv.Write(delimiter);
+            csv.Write("Sent, XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Sent, {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("Fee, XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Fee, {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("To address");
+            csv.Write(delimiter);
+            csv.Write("Explorer link");
+            csv.Write("\n");
+            #endregion
+
+            #region write rows
+            var format = new NumberFormatInfo { NumberDecimalSeparator = separator };
+            var price = Quotes.Get(symbol);
+            
+            foreach (var row in rows)
+            {
+                csv.Write(row.Level);
+                csv.Write(delimiter);
+                csv.Write(row.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
+                csv.Write(delimiter);
+                csv.Write(Operations[row.Type]);
+                csv.Write(delimiter);
+                if (account is RawDelegate)
+                {
+                    csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
+                    csv.Write(delimiter);
+                    csv.Write(row.Reward == null ? "" : ((double)row.Reward / 1_000_000d * price).ToString(format));
+                    csv.Write(delimiter);
+                    csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
+                    csv.Write(delimiter);
+                    csv.Write(row.Loss == null ? "" : ((double)-row.Loss / 1_000_000d * price).ToString(format));
+                    csv.Write(delimiter);
+                }
+                csv.Write(row.Received == null ? "" : ((decimal)row.Received / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Received == null ? "" : ((double)row.Received / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.From == null ? "" : Accounts.Get(row.From).Address);
+                csv.Write(delimiter);
+                csv.Write(row.Sent == null ? "" : ((decimal)-row.Sent / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Sent == null ? "" : ((double)-row.Sent / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Fee == null ? "" : ((decimal)-row.Fee / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Fee == null ? "" : ((double)-row.Fee / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.To == null ? "" : Accounts.Get(row.To).Address);
+                csv.Write(delimiter);
+                csv.Write(row.Nonce != null
+                    ? $"https://tzkt.io/{row.OpHash}/{row.Counter}/{row.Nonce}"
+                    : row.Counter != null
+                        ? $"https://tzkt.io/{row.OpHash}/{row.Counter}"
+                        : row.OpHash != null
+                            ? $"https://tzkt.io/{row.OpHash}"
+                            : "");
+
+                csv.Write("\n");
+            }
+            #endregion
+
+            csv.Flush();
+        }
+
+        public async Task WriteHistorical(StreamWriter csv, string address, DateTime from, DateTime to, int limit, string delimiter, string separator, int symbol)
+        {
+            var account = await Accounts.GetAsync(address);
+            if (account == null) return;
+
+            var sql = new StringBuilder();
+
+            if (account.DelegationsCount > 0) UnionDelegations(sql);
+            if (account.OriginationsCount > 0) UnionOriginations(sql);
+            if (account.TransactionsCount > 0) UnionTransactions(sql);
+            if (account.RevealsCount > 0) UnionReveals(sql);
+            if (account.MigrationsCount > 0) UnionMigrations(sql);
+
+            if (account is RawUser user)
+            {
+                if (user.Activated == true) UnionActivations(sql);
+            }
+
+            if (account is RawDelegate delegat)
+            {
+                if (delegat.BlocksCount > 0) UnionBaking(sql);
+                if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
+                if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
+                if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
+                if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+                if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+            }
+
+            if (sql.Length == 0) return;
+
+            sql.AppendLine(@"ORDER BY ""Id""");
+            sql.AppendLine(@"LIMIT @limit");
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
+
+            #region write header
+            var symbolName = symbol == 2 ? "USD" : symbol == 1 ? "EUR" : "BTC";
+
+            csv.Write("Block level");
+            csv.Write(delimiter);
+            csv.Write("Datetime");
+            csv.Write(delimiter);
+            csv.Write("Operation");
+            csv.Write(delimiter);
+            if (account is RawDelegate)
+            {
+                csv.Write("Reward, XTZ");
+                csv.Write(delimiter);
+                csv.Write($"Reward, {symbolName}");
+                csv.Write(delimiter);
+                csv.Write("Loss, XTZ");
+                csv.Write(delimiter);
+                csv.Write($"Loss, {symbolName}");
+                csv.Write(delimiter);
+            }
+            csv.Write("Received, XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Received, {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("From address");
+            csv.Write(delimiter);
+            csv.Write("Sent, XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Sent, {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("Fee, XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Fee, {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("To address");
+            csv.Write(delimiter);
+            csv.Write("Explorer link");
+            csv.Write("\n");
+            #endregion
+
+            #region write rows
+            var format = new NumberFormatInfo { NumberDecimalSeparator = separator };
+
+            foreach (var row in rows)
+            {
+                var price = Quotes.Get(symbol, (int)row.Level);
+
+                csv.Write(row.Level);
+                csv.Write(delimiter);
+                csv.Write(row.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
+                csv.Write(delimiter);
+                csv.Write(Operations[row.Type]);
+                csv.Write(delimiter);
+                if (account is RawDelegate)
+                {
+                    csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
+                    csv.Write(delimiter);
+                    csv.Write(row.Reward == null ? "" : ((double)row.Reward / 1_000_000d * price).ToString(format));
+                    csv.Write(delimiter);
+                    csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
+                    csv.Write(delimiter);
+                    csv.Write(row.Loss == null ? "" : ((double)-row.Loss / 1_000_000d * price).ToString(format));
+                    csv.Write(delimiter);
+                }
+                csv.Write(row.Received == null ? "" : ((decimal)row.Received / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Received == null ? "" : ((double)row.Received / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.From == null ? "" : Accounts.Get(row.From).Address);
+                csv.Write(delimiter);
+                csv.Write(row.Sent == null ? "" : ((decimal)-row.Sent / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Sent == null ? "" : ((double)-row.Sent / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Fee == null ? "" : ((decimal)-row.Fee / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Fee == null ? "" : ((double)-row.Fee / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.To == null ? "" : Accounts.Get(row.To).Address);
+                csv.Write(delimiter);
                 csv.Write(row.Nonce != null
                     ? $"https://tzkt.io/{row.OpHash}/{row.Counter}/{row.Nonce}"
                     : row.Counter != null
