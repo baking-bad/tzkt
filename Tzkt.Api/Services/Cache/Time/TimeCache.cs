@@ -17,7 +17,7 @@ namespace Tzkt.Api.Services.Cache
         readonly List<DateTime> Times;
         readonly ILogger Logger;
 
-        public TimeCache(IConfiguration config, ILogger<StateCache> logger) : base(config)
+        public TimeCache(IConfiguration config, ILogger<TimeCache> logger) : base(config)
         {
             Logger = logger;
 

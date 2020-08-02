@@ -43,5 +43,12 @@ namespace Tzkt.Api.Services.Cache
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
         #endregion
+
+        #region quotes
+        public int QuoteLevel { get; set; }
+        public double QuoteBtc { get; set; }
+        public double QuoteEur { get; set; }
+        public double QuoteUsd { get; set; }
+        #endregion
     }
 }
