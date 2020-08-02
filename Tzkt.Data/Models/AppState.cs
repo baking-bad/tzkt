@@ -45,6 +45,13 @@ namespace Tzkt.Data.Models
 
         public int CyclesCount { get; set; }
         #endregion
+
+        #region quotes
+        public int QuoteLevel { get; set; }
+        public double QuoteBtc { get; set; }
+        public double QuoteEur { get; set; }
+        public double QuoteUsd { get; set; }
+        #endregion
     }
 
     public static class AppStateModel
@@ -59,7 +66,8 @@ namespace Tzkt.Data.Models
                     Timestamp = DateTime.MinValue,
                     Protocol = "",
                     NextProtocol = "",
-                    Hash = ""
+                    Hash = "",
+                    QuoteLevel = -1
                 });
         }
     }

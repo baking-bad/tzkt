@@ -18,8 +18,8 @@ namespace Tzkt.Sync.Protocols
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
-        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, IConfiguration config, ILogger<InitiatorHandler> logger)
-            : base(node, db, cache, config, logger)
+        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<InitiatorHandler> logger)
+            : base(node, db, cache, quotes, config, logger)
         {
             Diagnostics = new Diagnostics();
             Serializer = new Serializer();

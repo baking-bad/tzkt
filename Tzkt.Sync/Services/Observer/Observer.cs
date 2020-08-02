@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Protocols;
 
@@ -29,68 +31,86 @@ namespace Tzkt.Sync.Services
 
         protected override async Task ExecuteAsync(CancellationToken cancelToken)
         {
-            #region init state
-            AppState = await ResetState();
-            Logger.LogDebug($"State initialized: [{AppState.Level}:{AppState.Hash}]");
-            #endregion
-
-            Logger.LogWarning("Observer is started");
-
-            while (!cancelToken.IsCancellationRequested)
+            try
             {
-                #region wait for updates
-                try
-                {
-                    if (!await WaitForUpdatesAsync(cancelToken))
-                        break;
-
-                    var head = await Node.GetHeaderAsync();
-                    Logger.LogDebug($"New head is found [{head.Level}:{head.Hash}]");
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogCritical($"Failed to check updates. {ex.Message}");
-                    await Task.Delay(5000);
-                    continue;
-                }
+                #region init database
+                await InitDatabase();
+                Logger.LogInformation("Database initialized");
                 #endregion
 
-                #region apply updates
-                try
-                {
-                    if (!await ApplyUpdatesAsync(cancelToken))
-                        break;
+                #region init state
+                AppState = await ResetState();
+                Logger.LogInformation($"State initialized: [{AppState.Level}:{AppState.Hash}]");
+                #endregion
 
-                    Logger.LogDebug($"Current head [{AppState.Level}:{AppState.Hash}]");
-                }
-                catch (BaseException ex) when (ex.RebaseRequired)
-                {
-                    Logger.LogError($"Failed to apply block: {ex.Message}. Rebase local branch...");
+                #region init quotes
+                await InitQuotes();
+                Logger.LogInformation($"Quotes initialized: [{AppState.QuoteLevel}]");
+                #endregion
 
+                Logger.LogWarning("Observer is started");
+
+                while (!cancelToken.IsCancellationRequested)
+                {
+                    #region wait for updates
                     try
                     {
-                        if (!await RebaseLocalBranchAsync(cancelToken))
+                        if (!await WaitForUpdatesAsync(cancelToken))
                             break;
+
+                        var head = await Node.GetHeaderAsync();
+                        Logger.LogDebug($"New head is found [{head.Level}:{head.Hash}]");
                     }
-                    catch (Exception exx)
+                    catch (Exception ex)
                     {
-                        Logger.LogCritical($"Failed to rebase branch. {exx.Message}");
+                        Logger.LogCritical($"Failed to check updates. {ex.Message}");
+                        await Task.Delay(5000);
+                        continue;
+                    }
+                    #endregion
+
+                    #region apply updates
+                    try
+                    {
+                        if (!await ApplyUpdatesAsync(cancelToken))
+                            break;
+
+                        Logger.LogDebug($"Current head [{AppState.Level}:{AppState.Hash}]");
+                    }
+                    catch (BaseException ex) when (ex.RebaseRequired)
+                    {
+                        Logger.LogError($"Failed to apply block: {ex.Message}. Rebase local branch...");
+
+                        try
+                        {
+                            if (!await RebaseLocalBranchAsync(cancelToken))
+                                break;
+                        }
+                        catch (Exception exx)
+                        {
+                            Logger.LogCritical($"Failed to rebase branch. {exx.Message}");
+                            AppState = await ResetState();
+                            await Task.Delay(5000);
+                            continue;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogCritical($"Failed to apply updates. {ex.Message}");
                         AppState = await ResetState();
                         await Task.Delay(5000);
                         continue;
                     }
+                    #endregion
                 }
-                catch (Exception ex)
-                {
-                    Logger.LogCritical($"Failed to apply updates. {ex.Message}");
-                    AppState = await ResetState();
-                    await Task.Delay(5000);
-                    continue;
-                }
-                #endregion
-            }
 
-            Logger.LogWarning("Observer is stoped");
+                Logger.LogWarning("Observer is stoped");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogCritical($"Observer crashed: {ex.Message}");
+                throw;
+            }
         }
 
         private async Task<AppState> ResetState()
@@ -100,6 +120,33 @@ namespace Tzkt.Sync.Services
             await cache.ResetAsync();
 
             return cache.AppState.Get();
+        }
+
+        private async Task InitQuotes()
+        {
+            using var scope = Services.CreateScope();
+            var quotes = scope.ServiceProvider.GetRequiredService<QuotesService>();
+            await quotes.Init();
+        }
+
+        private async Task InitDatabase()
+        {
+            try
+            {
+                using var scope = Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
+                var migrations = await db.Database.GetPendingMigrationsAsync();
+                if (migrations.Any())
+                {
+                    Logger.LogWarning($"{migrations.Count()} database migrations were found. Applying migrations...");
+                    await db.Database.MigrateAsync();
+                }
+            }
+            catch
+            {
+                Logger.LogCritical($"Failed to migrate database. It seems like you were using too old version. Try to restore database from the latest snapshot. See https://github.com/baking-bad/tzkt");
+                throw;
+            }
         }
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
@@ -150,9 +197,11 @@ namespace Tzkt.Sync.Services
                 //}
 
                 Logger.LogDebug($"Applying block...");
+
                 using var scope = Services.CreateScope();
                 var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
                 AppState = await protocol.CommitBlock(blockStream, header.Level, sync);
+
                 Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
             }
 
