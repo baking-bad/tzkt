@@ -21,8 +21,8 @@ namespace Tzkt.Sync.Protocols
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
 
-        public Proto2Handler(TezosNode node, TzktContext db, CacheService cache, IConfiguration config, ILogger<Proto2Handler> logger)
-            : base(node, db, cache, config, logger)
+        public Proto2Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<Proto2Handler> logger)
+            : base(node, db, cache, quotes, config, logger)
         {
             Diagnostics = new Diagnostics(db, node);
             Serializer = new Serializer();

@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Services
     public sealed class TezosNode : IDisposable
     {
         readonly string ChainId;
-        readonly RpcClient Rpc;
+        readonly TzktClient Rpc;
 
         Header Header;
         Constants Constants;
@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Services
         {
             var nodeConf = config.GetTezosNodeConfig();
             ChainId = nodeConf.ChainId;
-            Rpc = new RpcClient(nodeConf.Endpoint, nodeConf.Timeout);
+            Rpc = new TzktClient(nodeConf.Endpoint, nodeConf.Timeout);
         }
 
         public Task<Stream> GetBlockAsync(int level)

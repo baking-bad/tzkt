@@ -58,6 +58,10 @@ namespace Tzkt.Data
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
         #endregion
 
+        #region quotes
+        public DbSet<Quote> Quotes { get; set; }
+        #endregion
+
         public TzktContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -112,6 +116,10 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegatorCycleModel();
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
+            #endregion
+
+            #region quotes
+            modelBuilder.BuildQuoteModel();
             #endregion
         }
     }

@@ -38,6 +38,8 @@ namespace Tzkt.Sync
                     services.AddTezosNode();
                     services.AddTezosProtocols();
 
+                    services.AddQuotes(hostContext.Configuration);
+
                     services.AddHostedService<Observer>();
                 });
     }

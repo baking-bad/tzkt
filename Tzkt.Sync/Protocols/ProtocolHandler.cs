@@ -24,14 +24,16 @@ namespace Tzkt.Sync
         public readonly TezosNode Node;
         public readonly TzktContext Db;
         public readonly CacheService Cache;
+        public readonly QuotesService Quotes;
         public readonly TezosProtocolsConfig Config;
         public readonly ILogger Logger;
         
-        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, IConfiguration config, ILogger logger)
+        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger logger)
         {
             Node = node;
             Db = db;
             Cache = cache;
+            Quotes = quotes;
             Config = config.GetTezosProtocolsConfig();
             Logger = logger;
         }
@@ -88,6 +90,8 @@ namespace Tzkt.Sync
 
                 await AfterCommit(rawBlock);
 
+                await Quotes.Commit();
+
                 await tx.CommitAsync();
             }
             catch (Exception)
@@ -106,6 +110,8 @@ namespace Tzkt.Sync
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
+                await Quotes.Revert();
+
                 await BeforeRevert();
 
                 var state = Cache.AppState.Get();
