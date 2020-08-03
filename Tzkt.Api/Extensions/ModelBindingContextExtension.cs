@@ -127,6 +127,66 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetDateTime(this ModelBindingContext bindingContext, string name, ref bool hasValue, out DateTime? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!DateTimeOffset.TryParse(valueObject.FirstValue, out var value))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid datetime value.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = value.DateTime;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetDateTimeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<DateTime> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<DateTime>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!DateTimeOffset.TryParse(rawValue, out var value))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid datetime value.");
+                            return false;
+                        }
+                        result.Add(value.DateTime);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetAccount(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
         {
             result = null;
