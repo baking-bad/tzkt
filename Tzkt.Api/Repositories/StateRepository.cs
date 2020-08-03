@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Dapper;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
@@ -30,7 +29,11 @@ namespace Tzkt.Api.Repositories
                 Hash = appState.Hash,
                 Level = appState.Level,
                 Protocol = appState.Protocol,
-                Timestamp = appState.Timestamp
+                Timestamp = appState.Timestamp,
+                QuoteLevel = appState.QuoteLevel,
+                QuoteBtc = appState.QuoteBtc,
+                QuoteEur = appState.QuoteEur,
+                QuoteUsd = appState.QuoteUsd
             });
         }
     }
