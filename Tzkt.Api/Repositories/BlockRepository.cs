@@ -28,7 +28,7 @@ namespace Tzkt.Api.Repositories
             return Task.FromResult(State.GetState().Level + 1);
         }
 
-        public async Task<Block> Get(int level, bool operations = false)
+        public async Task<Block> Get(int level, bool operations, Symbols quotes)
         {
             var sql = @"
                 SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
@@ -55,12 +55,12 @@ namespace Tzkt.Api.Repositories
             };
 
             if (operations)
-                await LoadOperations(block, (Data.Models.Operations)row.Operations);
+                await LoadOperations(block, (Data.Models.Operations)row.Operations, quotes);
 
             return block;
         }
 
-        public async Task<Block> Get(string hash, bool operations = false)
+        public async Task<Block> Get(string hash, bool operations, Symbols quotes)
         {
             var sql = @"
                 SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
@@ -87,7 +87,7 @@ namespace Tzkt.Api.Repositories
             };
 
             if (operations)
-                await LoadOperations(block, (Data.Models.Operations)row.Operations);
+                await LoadOperations(block, (Data.Models.Operations)row.Operations, quotes);
 
             return block;
         }
@@ -351,50 +351,50 @@ namespace Tzkt.Api.Repositories
             return await db.QueryAsync<DateTime>(sql, new { limit, offset });
         }
 
-        async Task LoadOperations(Block block, Data.Models.Operations operations)
+        async Task LoadOperations(Block block, Data.Models.Operations operations, Symbols quotes)
         {
             var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements)
-                ? Operations.GetEndorsements(block)
+                ? Operations.GetEndorsements(block, quotes)
                 : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
             var proposals = operations.HasFlag(Data.Models.Operations.Proposals)
-                ? Operations.GetProposals(block)
+                ? Operations.GetProposals(block, quotes)
                 : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
             var ballots = operations.HasFlag(Data.Models.Operations.Ballots)
-                ? Operations.GetBallots(block)
+                ? Operations.GetBallots(block, quotes)
                 : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
             var activations = operations.HasFlag(Data.Models.Operations.Activations)
-                ? Operations.GetActivations(block)
+                ? Operations.GetActivations(block, quotes)
                 : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
             var doubleBaking = operations.HasFlag(Data.Models.Operations.DoubleBakings)
-                ? Operations.GetDoubleBakings(block)
+                ? Operations.GetDoubleBakings(block, quotes)
                 : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
             var doubleEndorsing = operations.HasFlag(Data.Models.Operations.DoubleEndorsings)
-                ? Operations.GetDoubleEndorsings(block)
+                ? Operations.GetDoubleEndorsings(block, quotes)
                 : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
             var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations)
-                ? Operations.GetNonceRevelations(block)
+                ? Operations.GetNonceRevelations(block, quotes)
                 : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
             var delegations = operations.HasFlag(Data.Models.Operations.Delegations)
-                ? Operations.GetDelegations(block)
+                ? Operations.GetDelegations(block, quotes)
                 : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
             var originations = operations.HasFlag(Data.Models.Operations.Originations)
-                ? Operations.GetOriginations(block)
+                ? Operations.GetOriginations(block, quotes)
                 : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
             var transactions = operations.HasFlag(Data.Models.Operations.Transactions)
-                ? Operations.GetTransactions(block)
+                ? Operations.GetTransactions(block, quotes)
                 : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
             var reveals = operations.HasFlag(Data.Models.Operations.Reveals)
-                ? Operations.GetReveals(block)
+                ? Operations.GetReveals(block, quotes)
                 : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
             await Task.WhenAll(

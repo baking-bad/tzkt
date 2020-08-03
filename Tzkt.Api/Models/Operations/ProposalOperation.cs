@@ -62,5 +62,12 @@ namespace Tzkt.Api.Models
         /// Indicates whether proposal upvote has already been pushed. Duplicated proposal operations are not counted when selecting proposal-winner.
         /// </summary>
         public bool Duplicated { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

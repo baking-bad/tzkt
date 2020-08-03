@@ -52,5 +52,12 @@ namespace Tzkt.Api.Models
         /// Lost due to unrevealed seed nonce total fee paid by all operations, included in the block, which was to be revealed (micro tez)
         /// </summary>
         public long LostFees { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

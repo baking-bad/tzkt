@@ -73,5 +73,12 @@ namespace Tzkt.Api.Models
         /// Amount of frozen fees, lost by accused baker (delegate)
         /// </summary>
         public long OffenderLostFees { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

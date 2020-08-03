@@ -207,6 +207,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
         /// <param name="limit">Number of items to return</param>
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{address}/operations")]
         public Task<IEnumerable<Operation>> GetOperations(
@@ -216,13 +217,14 @@ namespace Tzkt.Api.Controllers
             string type,
             [Min(0)] int lastId = 0,
             [Range(0, 1000)] int limit = 100,
-            SortMode sort = SortMode.Descending)
+            SortMode sort = SortMode.Descending,
+            Symbols quotes = Symbols.None)
         {
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
             return from != null || to != null
-                ? Accounts.GetOperations(address, from ?? DateTime.MinValue, to ?? DateTime.MaxValue, types, sort, lastId, limit)
-                : Accounts.GetOperations(address, types, sort, lastId, limit);
+                ? Accounts.GetOperations(address, from ?? DateTime.MinValue, to ?? DateTime.MaxValue, types, sort, lastId, limit, quotes)
+                : Accounts.GetOperations(address, types, sort, lastId, limit, quotes);
         }
 
         /// <summary>

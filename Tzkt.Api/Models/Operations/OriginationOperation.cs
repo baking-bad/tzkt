@@ -125,5 +125,12 @@ namespace Tzkt.Api.Models
         /// Information about the originated ( deployed / created ) contract
         /// </summary>
         public OriginatedContract OriginatedContract { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

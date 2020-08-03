@@ -16,21 +16,23 @@ namespace Tzkt.Api.Repositories
     {
         readonly AccountsCache Accounts;
         readonly ProposalMetadataService Proposals;
+        readonly QuotesCache Quotes;
 
-        public OperationRepository(AccountsCache accounts, ProposalMetadataService proposals, IConfiguration config) : base(config)
+        public OperationRepository(AccountsCache accounts, ProposalMetadataService proposals, QuotesCache quotes, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Proposals = proposals;
+            Quotes = quotes;
         }
 
         #region operations
-        public async Task<IEnumerable<Operation>> Get(string hash)
+        public async Task<IEnumerable<Operation>> Get(string hash, Symbols quotes)
         {
             #region test manager operations
-            var delegations = GetDelegations(hash);
-            var originations = GetOriginations(hash);
-            var transactions = GetTransactions(hash);
-            var reveals = GetReveals(hash);
+            var delegations = GetDelegations(hash, quotes);
+            var originations = GetOriginations(hash, quotes);
+            var transactions = GetTransactions(hash, quotes);
+            var reveals = GetReveals(hash, quotes);
 
             await Task.WhenAll(delegations, originations, transactions, reveals);
 
@@ -44,9 +46,9 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region less likely
-            var activations = GetActivations(hash);
-            var proposals = GetProposals(hash);
-            var ballots = GetBallots(hash);
+            var activations = GetActivations(hash, quotes);
+            var proposals = GetProposals(hash, quotes);
+            var ballots = GetBallots(hash, quotes);
 
             await Task.WhenAll(activations, proposals, ballots);
 
@@ -61,10 +63,10 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region very unlikely
-            var endorsements = GetEndorsements(hash);
-            var dobleBaking = GetDoubleBakings(hash);
-            var doubleEndorsing = GetDoubleEndorsings(hash);
-            var nonceRevelation = GetNonceRevelations(hash);
+            var endorsements = GetEndorsements(hash, quotes);
+            var dobleBaking = GetDoubleBakings(hash, quotes);
+            var doubleEndorsing = GetDoubleEndorsings(hash, quotes);
+            var nonceRevelation = GetNonceRevelations(hash, quotes);
 
             await Task.WhenAll(endorsements, dobleBaking, doubleEndorsing, nonceRevelation);
 
@@ -84,12 +86,12 @@ namespace Tzkt.Api.Repositories
             return new List<Operation>(0);
         }
 
-        public async Task<IEnumerable<Operation>> Get(string hash, int counter)
+        public async Task<IEnumerable<Operation>> Get(string hash, int counter, Symbols quotes)
         {
-            var delegations = GetDelegations(hash, counter);
-            var originations = GetOriginations(hash, counter);
-            var transactions = GetTransactions(hash, counter);
-            var reveals = GetReveals(hash, counter);
+            var delegations = GetDelegations(hash, counter, quotes);
+            var originations = GetOriginations(hash, counter, quotes);
+            var transactions = GetTransactions(hash, counter, quotes);
+            var reveals = GetReveals(hash, counter, quotes);
 
             await Task.WhenAll(delegations, originations, transactions, reveals);
 
@@ -106,11 +108,11 @@ namespace Tzkt.Api.Repositories
             return new List<Operation>(0);
         }
 
-        public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce)
+        public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce, Symbols quotes)
         {
-            var delegations = GetDelegations(hash, counter, nonce);
-            var originations = GetOriginations(hash, counter, nonce);
-            var transactions = GetTransactions(hash, counter, nonce);
+            var delegations = GetDelegations(hash, counter, nonce, quotes);
+            var originations = GetOriginations(hash, counter, nonce, quotes);
+            var transactions = GetTransactions(hash, counter, nonce, quotes);
 
             await Task.WhenAll(delegations, originations, transactions);
 
@@ -138,7 +140,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""DelegateId"", o.""Slots"", o.""Reward"", b.""Hash""
@@ -160,11 +162,12 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
-                Rewards = row.Reward
+                Rewards = row.Reward,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(Block block)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward""
@@ -184,7 +187,8 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
-                Rewards = row.Reward
+                Rewards = row.Reward,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -192,7 +196,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""EndorsementOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
@@ -210,7 +215,8 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
-                Rewards = row.Reward
+                Rewards = row.Reward,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -219,7 +225,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -239,6 +246,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -292,6 +300,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -303,7 +315,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -321,6 +334,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -371,12 +385,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Reward;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Slots"", o.""Reward"", b.""Hash""
@@ -398,11 +416,12 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(account.Id),
                 Slots = row.Slots,
-                Rewards = row.Reward
+                Rewards = row.Reward,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Slots"", o.""Reward"", b.""Hash""
@@ -426,7 +445,8 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(account.Id),
                 Slots = row.Slots,
-                Rewards = row.Reward
+                Rewards = row.Reward,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -442,7 +462,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetBallots(string hash)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -481,11 +501,12 @@ namespace Tzkt.Api.Repositories
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Rolls = row.Rolls,
-                Vote = VoteToString(row.Vote)
+                Vote = VoteToString(row.Vote),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetBallots(Block block)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", proposal.""Hash"" as proposal,
@@ -522,7 +543,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Rolls = row.Rolls,
-                Vote = VoteToString(row.Vote)
+                Vote = VoteToString(row.Vote),
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -532,7 +554,8 @@ namespace Tzkt.Api.Repositories
             ProtocolParameter proposal,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -571,7 +594,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Rolls = row.Rolls,
-                Vote = VoteToString(row.Vote)
+                Vote = VoteToString(row.Vote),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -582,7 +606,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -613,6 +638,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -692,6 +718,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = VoteToString(row.Vote);
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -705,7 +735,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -734,6 +765,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (period != null)
@@ -810,12 +842,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = VoteToString(row.Vote);
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetBallots(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Rolls"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -854,11 +890,12 @@ namespace Tzkt.Api.Repositories
                 },
                 Delegate = Accounts.GetAlias(account.Id),
                 Rolls = row.Rolls,
-                Vote = VoteToString(row.Vote)
+                Vote = VoteToString(row.Vote),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<BallotOperation>> GetBallots(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<BallotOperation>> GetBallots(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Rolls"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -899,7 +936,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Delegate = Accounts.GetAlias(account.Id),
                 Rolls = row.Rolls,
-                Vote = VoteToString(row.Vote)
+                Vote = VoteToString(row.Vote),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -915,7 +953,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -954,11 +992,12 @@ namespace Tzkt.Api.Repositories
                     Hash = row.proposal,
                     Alias = Proposals[row.proposal]?.Alias
                 },
-                Delegate = Accounts.GetAlias(row.SenderId)
+                Delegate = Accounts.GetAlias(row.SenderId),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(Block block)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", proposal.""Hash"" as proposal,
@@ -995,7 +1034,8 @@ namespace Tzkt.Api.Repositories
                     Hash = row.proposal,
                     Alias = Proposals[row.proposal]?.Alias
                 },
-                Delegate = Accounts.GetAlias(row.SenderId)
+                Delegate = Accounts.GetAlias(row.SenderId),
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -1006,7 +1046,8 @@ namespace Tzkt.Api.Repositories
             BoolParameter duplicated,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -1046,7 +1087,8 @@ namespace Tzkt.Api.Repositories
                     Hash = row.proposal,
                     Alias = Proposals[row.proposal]?.Alias
                 },
-                Delegate = Accounts.GetAlias(row.SenderId)
+                Delegate = Accounts.GetAlias(row.SenderId),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -1058,7 +1100,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length + 3);
             var joins = new HashSet<string>(3);
@@ -1089,6 +1132,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -1169,6 +1213,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.SenderId);
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -1183,7 +1231,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(4);
             var joins = new HashSet<string>(3);
@@ -1212,6 +1261,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (period != null)
@@ -1289,12 +1339,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.SenderId);
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
@@ -1333,11 +1387,12 @@ namespace Tzkt.Api.Repositories
                     Hash = row.proposal,
                     Alias = Proposals[row.proposal]?.Alias
                 },
-                Delegate = Accounts.GetAlias(account.Id)
+                Delegate = Accounts.GetAlias(account.Id),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<ProposalOperation>> GetProposals(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", b.""Hash"", o.""Rolls"", o.""Duplicated"", proposal.""Hash"" as proposal,
@@ -1378,7 +1433,8 @@ namespace Tzkt.Api.Repositories
                     Hash = row.proposal,
                     Alias = Proposals[row.proposal]?.Alias
                 },
-                Delegate = Accounts.GetAlias(account.Id)
+                Delegate = Accounts.GetAlias(account.Id),
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -1394,7 +1450,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetActivations(string hash)
+        public async Task<IEnumerable<ActivationOperation>> GetActivations(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccountId"", o.""Balance"", b.""Hash""
@@ -1415,11 +1471,12 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Account = Accounts.GetAlias(row.AccountId),
-                Balance = row.Balance
+                Balance = row.Balance,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetActivations(Block block)
+        public async Task<IEnumerable<ActivationOperation>> GetActivations(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccountId"", ""Balance""
@@ -1438,7 +1495,8 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(row.AccountId),
-                Balance = row.Balance
+                Balance = row.Balance,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -1446,7 +1504,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""ActivationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
@@ -1468,7 +1527,8 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(row.AccountId),
-                Balance = row.Balance
+                Balance = row.Balance,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -1477,7 +1537,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -1496,6 +1557,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -1550,6 +1612,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -1561,7 +1627,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -1578,6 +1645,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -1629,12 +1697,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Balance;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetActivations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<ActivationOperation>> GetActivations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Balance"", b.""Hash""
@@ -1655,11 +1727,12 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(account.Id),
-                Balance = row.Balance
+                Balance = row.Balance,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<ActivationOperation>> GetActivations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<ActivationOperation>> GetActivations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""Balance"", b.""Hash""
@@ -1682,7 +1755,8 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Account = Accounts.GetAlias(account.Id),
-                Balance = row.Balance
+                Balance = row.Balance,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -1698,7 +1772,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(string hash)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
@@ -1725,11 +1799,12 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(Block block)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
@@ -1754,7 +1829,8 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -1762,7 +1838,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleBakingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
@@ -1793,7 +1870,8 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -1802,7 +1880,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -1826,6 +1905,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -1904,6 +1984,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.OffenderLostFee;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -1915,7 +1999,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -1937,6 +2022,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -2012,12 +2098,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.OffenderLostFee;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
@@ -2045,11 +2135,12 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
@@ -2079,7 +2170,8 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -2095,7 +2187,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(string hash)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
@@ -2122,11 +2214,12 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(Block block)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
@@ -2151,7 +2244,8 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -2159,7 +2253,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleEndorsingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
@@ -2190,7 +2285,8 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -2199,7 +2295,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -2223,6 +2320,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -2301,6 +2399,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.OffenderLostFee;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -2312,7 +2414,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -2334,6 +2437,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -2409,12 +2513,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.OffenderLostFee;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
@@ -2442,11 +2550,12 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
@@ -2476,7 +2585,8 @@ namespace Tzkt.Api.Repositories
                 Offender = Accounts.GetAlias(row.OffenderId),
                 OffenderLostDeposits = row.OffenderLostDeposit,
                 OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee
+                OffenderLostFees = row.OffenderLostFee,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -2492,7 +2602,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", b.""Hash""
@@ -2515,11 +2625,12 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
-                RevealedLevel = row.RevealedLevel
+                RevealedLevel = row.RevealedLevel,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(Block block)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
@@ -2540,7 +2651,8 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
-                RevealedLevel = row.RevealedLevel
+                RevealedLevel = row.RevealedLevel,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -2548,7 +2660,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""NonceRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
@@ -2572,7 +2685,8 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
-                RevealedLevel = row.RevealedLevel
+                RevealedLevel = row.RevealedLevel,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -2581,7 +2695,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -2601,6 +2716,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -2659,6 +2775,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.RevealedLevel;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -2670,7 +2790,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -2688,6 +2809,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -2743,12 +2865,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.RevealedLevel;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", b.""Hash""
@@ -2772,11 +2898,12 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
-                RevealedLevel = row.RevealedLevel
+                RevealedLevel = row.RevealedLevel,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", b.""Hash""
@@ -2802,7 +2929,8 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
-                RevealedLevel = row.RevealedLevel
+                RevealedLevel = row.RevealedLevel,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -2818,7 +2946,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
@@ -2849,11 +2977,12 @@ namespace Tzkt.Api.Repositories
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
@@ -2884,11 +3013,12 @@ namespace Tzkt.Api.Repositories
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, int nonce)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, int nonce, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
@@ -2919,11 +3049,12 @@ namespace Tzkt.Api.Repositories
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(Block block)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
@@ -2952,7 +3083,8 @@ namespace Tzkt.Api.Repositories
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -2965,7 +3097,8 @@ namespace Tzkt.Api.Repositories
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DelegationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("InitiatorId", initiator, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
@@ -3002,7 +3135,8 @@ namespace Tzkt.Api.Repositories
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -3016,7 +3150,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -3044,6 +3179,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -3140,6 +3276,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -3156,7 +3296,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -3182,6 +3323,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -3275,12 +3417,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
@@ -3314,11 +3460,12 @@ namespace Tzkt.Api.Repositories
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<DelegationOperation>> GetDelegations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
@@ -3354,7 +3501,8 @@ namespace Tzkt.Api.Repositories
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -3370,7 +3518,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
@@ -3422,12 +3570,13 @@ namespace Tzkt.Api.Repositories
                             Kind = contract.KindString
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quotes, row.Level)
                 };
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
@@ -3479,12 +3628,13 @@ namespace Tzkt.Api.Repositories
                             Kind = contract.KindString
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quotes, row.Level)
                 };
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
@@ -3536,12 +3686,13 @@ namespace Tzkt.Api.Repositories
                             Kind = contract.KindString
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quotes, row.Level)
                 };
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(Block block)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
@@ -3590,7 +3741,8 @@ namespace Tzkt.Api.Repositories
                             Kind = contract.KindString
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quotes, block.Level)
                 };
             });
         }
@@ -3605,7 +3757,8 @@ namespace Tzkt.Api.Repositories
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""OriginationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
@@ -3666,7 +3819,8 @@ namespace Tzkt.Api.Repositories
                         Kind = contract.KindString
                     },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quotes, row.Level)
                 };
             });
         }
@@ -3682,7 +3836,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -3716,6 +3871,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -3851,6 +4007,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -3868,7 +4028,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -3900,6 +4061,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -4032,12 +4194,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
@@ -4093,12 +4259,13 @@ namespace Tzkt.Api.Repositories
                             Kind = contract.KindString
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quotes, row.Level)
                 };
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
@@ -4156,7 +4323,8 @@ namespace Tzkt.Api.Repositories
                             Kind = contract.KindString
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
-                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quotes, row.Level)
                 };
             });
         }
@@ -4173,7 +4341,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
@@ -4210,11 +4378,12 @@ namespace Tzkt.Api.Repositories
                 Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
+                HasInternals = row.InternalOperations > 0,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
@@ -4251,11 +4420,12 @@ namespace Tzkt.Api.Repositories
                 Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
+                HasInternals = row.InternalOperations > 0,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
@@ -4292,11 +4462,12 @@ namespace Tzkt.Api.Repositories
                 Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
+                HasInternals = row.InternalOperations > 0,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(Block block)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
@@ -4331,7 +4502,8 @@ namespace Tzkt.Api.Repositories
                 Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
+                HasInternals = row.InternalOperations > 0,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -4345,7 +4517,8 @@ namespace Tzkt.Api.Repositories
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""TransactionOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("InitiatorId", initiator, x => "TargetId")
@@ -4393,7 +4566,8 @@ namespace Tzkt.Api.Repositories
                 Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
+                HasInternals = row.InternalOperations > 0,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -4408,7 +4582,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -4442,6 +4617,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -4567,6 +4743,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.InternalOperations > 0;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -4584,7 +4764,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -4616,6 +4797,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -4738,12 +4920,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.InternalOperations > 0;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
@@ -4782,11 +4968,12 @@ namespace Tzkt.Api.Repositories
                 Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
+                HasInternals = row.InternalOperations > 0,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
@@ -4827,7 +5014,8 @@ namespace Tzkt.Api.Repositories
                 Parameters = row.Parameters,
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                HasInternals = row.InternalOperations > 0
+                HasInternals = row.InternalOperations > 0,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -4843,7 +5031,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetReveals(string hash)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
@@ -4869,11 +5057,12 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, int counter)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, int counter, Symbols quotes)
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
@@ -4899,11 +5088,12 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetReveals(Block block)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(Block block, Symbols quotes)
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
@@ -4927,7 +5117,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, block.Level)
             });
         }
 
@@ -4937,7 +5128,8 @@ namespace Tzkt.Api.Repositories
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevealOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("SenderId", sender)
@@ -4967,7 +5159,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -4978,7 +5171,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -5002,6 +5196,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -5079,6 +5274,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -5092,7 +5291,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -5114,6 +5314,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -5188,12 +5389,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetReveals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
@@ -5219,11 +5424,12 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<RevealOperation>> GetReveals(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<RevealOperation>> GetReveals(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
@@ -5251,7 +5457,8 @@ namespace Tzkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 BakerFee = row.BakerFee,
                 Status = StatusToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null
+                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -5271,7 +5478,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""MigrationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
@@ -5288,7 +5496,8 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(row.AccountId),
                 Kind = MigrationKindToString(row.Kind),
-                BalanceChange = row.BalanceChange
+                BalanceChange = row.BalanceChange,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -5297,7 +5506,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -5316,6 +5526,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -5365,6 +5576,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.BalanceChange;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -5376,7 +5591,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -5393,6 +5609,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -5439,12 +5656,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.BalanceChange;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""Kind"", o.""BalanceChange"", b.""Hash""
@@ -5465,11 +5686,12 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
                 Kind = MigrationKindToString(row.Kind),
-                BalanceChange = row.BalanceChange
+                BalanceChange = row.BalanceChange,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<MigrationOperation>> GetMigrations(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""Kind"", o.""BalanceChange"", b.""Hash""
@@ -5492,7 +5714,8 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Account = Accounts.GetAlias(account.Id),
                 Kind = MigrationKindToString(row.Kind),
-                BalanceChange = row.BalanceChange
+                BalanceChange = row.BalanceChange,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -5512,7 +5735,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevelationPenaltyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
@@ -5530,7 +5754,8 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,
                 LostReward = row.LostReward,
-                LostFees = row.LostFees
+                LostFees = row.LostFees,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -5539,7 +5764,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             var joins = new HashSet<string>(1);
@@ -5559,6 +5785,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
 
@@ -5612,6 +5839,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.LostFees;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -5623,7 +5854,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
@@ -5641,6 +5873,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "quote": columns.Add(@"o.""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -5691,12 +5924,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.LostFees;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.*, b.""Hash""
@@ -5718,11 +5955,12 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,
                 LostReward = row.LostReward,
-                LostFees = row.LostFees
+                LostFees = row.LostFees,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT      o.*, b.""Hash""
@@ -5746,7 +5984,8 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,
                 LostReward = row.LostReward,
-                LostFees = row.LostFees
+                LostFees = row.LostFees,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion
@@ -5766,7 +6005,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quotes)
         {
             var sql = new SqlBuilder(@"SELECT ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees"" FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
@@ -5785,7 +6025,8 @@ namespace Tzkt.Api.Repositories
                 Block = row.Hash,
                 Priority = row.Priority,
                 Reward = row.Reward,
-                Fees = row.Fees
+                Fees = row.Fees,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
@@ -5794,7 +6035,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -5809,6 +6051,7 @@ namespace Tzkt.Api.Repositories
                     case "priority": columns.Add(@"""Priority"""); break;
                     case "reward": columns.Add(@"""Reward"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
+                    case "quote": columns.Add(@"""Level"""); break;
                 }
             }
 
@@ -5863,6 +6106,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Fees;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quotes, row.Level);
+                        break;
                 }
             }
 
@@ -5874,7 +6121,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quotes)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -5887,6 +6135,7 @@ namespace Tzkt.Api.Repositories
                 case "priority": columns.Add(@"""Priority"""); break;
                 case "reward": columns.Add(@"""Reward"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
+                case "quote": columns.Add(@"""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -5938,12 +6187,16 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Fees;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quotes, row.Level);
+                    break;
             }
 
             return result;
         }
 
-        public async Task<IEnumerable<BakingOperation>> GetBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<BakingOperation>> GetBakings(RawAccount account, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees""
@@ -5963,11 +6216,12 @@ namespace Tzkt.Api.Repositories
                 Block = row.Hash,
                 Priority = row.Priority,
                 Reward = row.Reward,
-                Fees = row.Fees
+                Fees = row.Fees,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
 
-        public async Task<IEnumerable<BakingOperation>> GetBakings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit)
+        public async Task<IEnumerable<BakingOperation>> GetBakings(RawAccount account, DateTime from, DateTime to, SortMode sort, int offset, OffsetMode offsetMode, int limit, Symbols quotes)
         {
             var sql = $@"
                 SELECT    ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees""
@@ -5989,7 +6243,8 @@ namespace Tzkt.Api.Repositories
                 Block = row.Hash,
                 Priority = row.Priority,
                 Reward = row.Reward,
-                Fees = row.Fees
+                Fees = row.Fees,
+                Quote = Quotes.Get(quotes, row.Level)
             });
         }
         #endregion

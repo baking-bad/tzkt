@@ -52,5 +52,12 @@ namespace Tzkt.Api.Models
         /// The amount for which the operation updated the balance (micro tez)
         /// </summary>
         public long BalanceChange { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }
