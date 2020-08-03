@@ -41,5 +41,25 @@ namespace Tzkt.Api.Models
         /// State of TzKT indexer synchronization
         /// </summary>
         public bool Synced => KnownLevel == Level;
+
+        /// <summary>
+        /// The height of the block where quotes were updated last time
+        /// </summary>
+        public int QuoteLevel { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/BTC price
+        /// </summary>
+        public double QuoteBtc { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/EUR price
+        /// </summary>
+        public double QuoteEur { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/USD price
+        /// </summary>
+        public double QuoteUsd { get; set; }
     }
 }
