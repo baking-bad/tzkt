@@ -96,5 +96,12 @@ namespace Tzkt.Api.Models
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
         public List<OperationError> Errors { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

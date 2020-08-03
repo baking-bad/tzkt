@@ -32,11 +32,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of operations with the specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<IEnumerable<Operation>> GetByHash([OpHash] string hash)
+        public Task<IEnumerable<Operation>> GetByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.Get(hash);
+            return Operations.Get(hash, quotes);
         }
 
         /// <summary>
@@ -47,11 +48,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}")]
-        public Task<IEnumerable<Operation>> GetByHashCounter([OpHash] string hash, [Min(0)] int counter)
+        public Task<IEnumerable<Operation>> GetByHashCounter([OpHash] string hash, [Min(0)] int counter, Symbols quotes = Symbols.None)
         {
-            return Operations.Get(hash, counter);
+            return Operations.Get(hash, counter, quotes);
         }
 
         /// <summary>
@@ -63,11 +65,12 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
         /// <param name="nonce">Operation nonce (internal)</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}/{nonce}")]
-        public Task<IEnumerable<Operation>> GetByHashCounterNonce([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce)
+        public Task<IEnumerable<Operation>> GetByHashCounterNonce([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce, Symbols quotes = Symbols.None)
         {
-            return Operations.Get(hash, counter, nonce);
+            return Operations.Get(hash, counter, nonce, quotes);
         }
         #endregion
 
@@ -83,6 +86,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("endorsements")]
         public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
@@ -90,7 +94,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level"))
@@ -98,25 +103,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetEndorsements(level, sort, offset, limit));
+                return Ok(await Operations.GetEndorsements(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetEndorsements(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetEndorsements(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -129,11 +134,12 @@ namespace Tzkt.Api.Controllers
         /// Returns an endorsement operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("endorsements/{hash}")]
-        public Task<IEnumerable<EndorsementOperation>> GetEndorsementByHash([OpHash] string hash)
+        public Task<IEnumerable<EndorsementOperation>> GetEndorsementByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetEndorsements(hash);
+            return Operations.GetEndorsements(hash, quotes);
         }
 
         /// <summary>
@@ -147,6 +153,92 @@ namespace Tzkt.Api.Controllers
         public Task<int> GetEndorsementsCount()
         {
             return Task.FromResult(State.GetState().EndorsementOpsCount);
+        }
+        #endregion
+
+        #region ballots
+        /// <summary>
+        /// Get ballots
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of ballot operations.
+        /// </remarks>
+        /// <param name="level">Filters ballots by level.</param>
+        /// <param name="period">Filters ballots by voting period id.</param>
+        /// <param name="proposal">Filters ballots by proposal hash.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts ballots by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("ballots")]
+        public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
+            Int32Parameter level,
+            Int32Parameter period,
+            ProtocolParameter proposal,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, quotes));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values[0], quotes));
+                else
+                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values, quotes));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields[0], quotes));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields, quotes)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get ballot by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns a ballot operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("ballots/{hash}")]
+        public Task<IEnumerable<BallotOperation>> GetBallotByHash([OpHash] string hash, Symbols quotes = Symbols.None)
+        {
+            return Operations.GetBallots(hash, quotes);
+        }
+
+        /// <summary>
+        /// Get ballots count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of ballot operations.
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("ballots/count")]
+        public Task<int> GetBallotsCount()
+        {
+            return Task.FromResult(State.GetState().BallotOpsCount);
         }
         #endregion
 
@@ -165,6 +257,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts proposal operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
@@ -175,7 +268,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level"))
@@ -183,25 +277,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit));
+                return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -214,11 +308,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a proposal operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("proposals/{hash}")]
-        public Task<IEnumerable<ProposalOperation>> GetProposalByHash([OpHash] string hash)
+        public Task<IEnumerable<ProposalOperation>> GetProposalByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetProposals(hash);
+            return Operations.GetProposals(hash, quotes);
         }
 
         /// <summary>
@@ -235,89 +330,6 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
-        #region ballots
-        /// <summary>
-        /// Get ballots
-        /// </summary>
-        /// <remarks>
-        /// Returns a list of ballot operations.
-        /// </remarks>
-        /// <param name="level">Filters ballots by level.</param>
-        /// <param name="period">Filters ballots by voting period id.</param>
-        /// <param name="proposal">Filters ballots by proposal hash.</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts ballots by specified field. Supported fields: `id` (default), `level`.</param>
-        /// <param name="offset">Specifies which or how many items should be skipped</param>
-        /// <param name="limit">Maximum number of items to return</param>
-        /// <returns></returns>
-        [HttpGet("ballots")]
-        public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
-            Int32Parameter level,
-            Int32Parameter period,
-            ProtocolParameter proposal,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
-        {
-            #region validate
-            if (sort != null && !sort.Validate("id", "level"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
-            #endregion
-
-            if (select == null)
-                return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit));
-
-            if (select.Values != null)
-            {
-                if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values[0]));
-                else
-                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values));
-            }
-            else
-            {
-                if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields[0]));
-                else
-                {
-                    return Ok(new SelectionResponse
-                    {
-                        Cols = select.Fields,
-                        Rows = await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields)
-                    });
-                }
-            }
-        }
-
-        /// <summary>
-        /// Get ballot by hash
-        /// </summary>
-        /// <remarks>
-        /// Returns a ballot operation with specified hash.
-        /// </remarks>
-        /// <param name="hash">Operation hash</param>
-        /// <returns></returns>
-        [HttpGet("ballots/{hash}")]
-        public Task<IEnumerable<BallotOperation>> GetBallotByHash([OpHash] string hash)
-        {
-            return Operations.GetBallots(hash);
-        }
-
-        /// <summary>
-        /// Get ballots count
-        /// </summary>
-        /// <remarks>
-        /// Returns the total number of ballot operations.
-        /// </remarks>
-        /// <returns></returns>
-        [HttpGet("ballots/count")]
-        public Task<int> GetBallotsCount()
-        {
-            return Task.FromResult(State.GetState().BallotOpsCount);
-        }
-        #endregion
-
         #region activations
         /// <summary>
         /// Get activations
@@ -330,6 +342,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts activations by specified field. Supported fields: `id` (default), `level`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("activations")]
         public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivations(
@@ -337,7 +350,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "balance"))
@@ -345,25 +359,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetActivations(level, sort, offset, limit));
+                return Ok(await Operations.GetActivations(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetActivations(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetActivations(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -376,11 +390,12 @@ namespace Tzkt.Api.Controllers
         /// Returns an activation operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("activations/{hash}")]
-        public Task<IEnumerable<ActivationOperation>> GetActivationByHash([OpHash] string hash)
+        public Task<IEnumerable<ActivationOperation>> GetActivationByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetActivations(hash);
+            return Operations.GetActivations(hash, quotes);
         }
 
         /// <summary>
@@ -409,6 +424,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_baking")]
         public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
@@ -416,7 +432,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
@@ -424,25 +441,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit));
+                return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -455,11 +472,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a double baking operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_baking/{hash}")]
-        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakingByHash([OpHash] string hash)
+        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakingByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetDoubleBakings(hash);
+            return Operations.GetDoubleBakings(hash, quotes);
         }
 
         /// <summary>
@@ -488,6 +506,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_endorsing")]
         public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
@@ -495,7 +514,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
@@ -503,25 +523,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit));
+                return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -534,11 +554,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a double endorsing operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_endorsing/{hash}")]
-        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsingByHash([OpHash] string hash)
+        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsingByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetDoubleEndorsings(hash);
+            return Operations.GetDoubleEndorsings(hash, quotes);
         }
 
         /// <summary>
@@ -567,6 +588,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id` (default), `level`, `revealedLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations")]
         public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
@@ -574,7 +596,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level", "revealedLevel"))
@@ -582,25 +605,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit));
+                return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -613,11 +636,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a seed nonce revelation operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations/{hash}")]
-        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelationByHash([OpHash] string hash)
+        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelationByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetNonceRevelations(hash);
+            return Operations.GetNonceRevelations(hash, quotes);
         }
 
         /// <summary>
@@ -651,6 +675,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts delegations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegations")]
         public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegations(
@@ -663,7 +688,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (initiator != null)
@@ -719,25 +745,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit));
+                return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -750,11 +776,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a delegation operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegations/{hash}")]
-        public Task<IEnumerable<DelegationOperation>> GetDelegationByHash([OpHash] string hash)
+        public Task<IEnumerable<DelegationOperation>> GetDelegationByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetDelegations(hash);
+            return Operations.GetDelegations(hash, quotes);
         }
 
         /// <summary>
@@ -789,6 +816,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("originations")]
         public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
@@ -802,7 +830,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validates
             if (initiator != null)
@@ -870,25 +899,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit));
+                return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -901,11 +930,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a origination operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("originations/{hash}")]
-        public Task<IEnumerable<OriginationOperation>> GetOriginationByHash([OpHash] string hash)
+        public Task<IEnumerable<OriginationOperation>> GetOriginationByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetOriginations(hash);
+            return Operations.GetOriginations(hash, quotes);
         }
 
         /// <summary>
@@ -940,6 +970,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions")]
         public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactions(
@@ -953,7 +984,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100) 
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None) 
         {
             #region validate
             if (initiator != null)
@@ -1006,25 +1038,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit));
+                return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -1037,11 +1069,12 @@ namespace Tzkt.Api.Controllers
         /// Returns transaction operations with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHash([OpHash] string hash)
+        public Task<IEnumerable<TransactionOperation>> GetTransactionByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetTransactions(hash);
+            return Operations.GetTransactions(hash, quotes);
         }
 
         /// <summary>
@@ -1052,11 +1085,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter([OpHash] string hash, [Min(0)] int counter)
+        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter([OpHash] string hash, [Min(0)] int counter, Symbols quotes = Symbols.None)
         {
-            return Operations.GetTransactions(hash, counter);
+            return Operations.GetTransactions(hash, counter, quotes);
         }
 
         /// <summary>
@@ -1068,11 +1102,12 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
         /// <param name="nonce">Operation nonce (internal)</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}/{nonce}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounterNonce([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce)
+        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounterNonce([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce, Symbols quotes = Symbols.None)
         {
-            return Operations.GetTransactions(hash, counter, nonce);
+            return Operations.GetTransactions(hash, counter, nonce, quotes);
         }
 
         /// <summary>
@@ -1103,6 +1138,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts reveals by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("reveals")]
         public async Task<ActionResult<IEnumerable<RevealOperation>>> GetReveals(
@@ -1112,7 +1148,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sender != null)
@@ -1132,25 +1169,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit));
+                return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -1163,11 +1200,12 @@ namespace Tzkt.Api.Controllers
         /// Returns reveal operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("reveals/{hash}")]
-        public Task<IEnumerable<RevealOperation>> GetRevealByHash([OpHash] string hash)
+        public Task<IEnumerable<RevealOperation>> GetRevealByHash([OpHash] string hash, Symbols quotes = Symbols.None)
         {
-            return Operations.GetReveals(hash);
+            return Operations.GetReveals(hash, quotes);
         }
 
         /// <summary>
@@ -1196,6 +1234,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
@@ -1203,7 +1242,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level"))
@@ -1211,25 +1251,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetMigrations(level, sort, offset, limit));
+                return Ok(await Operations.GetMigrations(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetMigrations(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetMigrations(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -1261,6 +1301,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("revelation_penalties")]
         public async Task<ActionResult<IEnumerable<RevelationPenaltyOperation>>> GetRevelationPenalties(
@@ -1268,7 +1309,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level"))
@@ -1276,25 +1318,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit));
+                return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }
@@ -1326,6 +1368,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
@@ -1333,7 +1376,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quotes = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level"))
@@ -1341,25 +1385,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBakings(level, sort, offset, limit));
+                return Ok(await Operations.GetBakings(level, sort, offset, limit, quotes));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values[0]));
+                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values[0], quotes));
                 else
-                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values));
+                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values, quotes));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Fields[0], quotes));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBakings(level, sort, offset, limit, select.Fields)
+                        Rows = await Operations.GetBakings(level, sort, offset, limit, select.Fields, quotes)
                     });
                 }
             }

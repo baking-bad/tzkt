@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 
+using Tzkt.Api.Models;
+
 namespace Tzkt.Api.Services.Cache
 {
     public class QuotesCache : DbConnection
@@ -45,6 +47,39 @@ namespace Tzkt.Api.Services.Cache
         public double Get(int symbol, int level)
         {
             return level >= Quotes[symbol].Count ? Quotes[symbol][^1] : Quotes[symbol][level];
+        }
+
+        public QuoteShort Get(Symbols symbols, int level)
+        {
+            if (symbols == Symbols.None)
+                return null;
+
+            var quote = new QuoteShort();
+
+            if (level >= Quotes[0].Count)
+            {
+                if (symbols.HasFlag(Symbols.Btc))
+                    quote.Btc = Quotes[0][^1];
+
+                if (symbols.HasFlag(Symbols.Eur))
+                    quote.Eur = Quotes[1][^1];
+
+                if (symbols.HasFlag(Symbols.Usd))
+                    quote.Usd = Quotes[2][^1];
+            }
+            else
+            {
+                if (symbols.HasFlag(Symbols.Btc))
+                    quote.Btc = Quotes[0][level];
+
+                if (symbols.HasFlag(Symbols.Eur))
+                    quote.Eur = Quotes[1][level];
+
+                if (symbols.HasFlag(Symbols.Usd))
+                    quote.Usd = Quotes[2][level];
+            }
+
+            return quote;
         }
 
         public async Task UpdateAsync()

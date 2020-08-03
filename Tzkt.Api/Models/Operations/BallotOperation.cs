@@ -62,5 +62,12 @@ namespace Tzkt.Api.Models
         /// Vote, given in the ballot (`yay`, `nay`, or `pass`)
         /// </summary>
         public string Vote { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

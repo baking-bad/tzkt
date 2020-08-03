@@ -48,5 +48,12 @@ namespace Tzkt.Api.Models
         /// Account activation balance of tezos tokens that were recommended allocations for donations to the Tezos Foundation’s fundraiser
         /// </summary>
         public long Balance { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

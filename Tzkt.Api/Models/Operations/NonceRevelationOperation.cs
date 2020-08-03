@@ -57,5 +57,12 @@ namespace Tzkt.Api.Models
         /// Block height of the block, where seed nonce hash is stored
         /// </summary>
         public int RevealedLevel { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

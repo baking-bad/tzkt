@@ -127,5 +127,12 @@ namespace Tzkt.Api.Models
         /// `false` - no internal operations
         /// </summary>
         public bool HasInternals { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

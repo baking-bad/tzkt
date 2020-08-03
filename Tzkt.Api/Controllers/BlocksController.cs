@@ -111,11 +111,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="hash">Block hash</param>
         /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<Block> GetByHash([BlockHash] string hash, bool operations = false)
+        public Task<Block> GetByHash([BlockHash] string hash, bool operations = false, Symbols quotes = Symbols.None)
         {
-            return Blocks.Get(hash, operations);
+            return Blocks.Get(hash, operations, quotes);
         }
 
         /// <summary>
@@ -126,11 +127,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="level">Block level</param>
         /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
+        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{level:int}")]
-        public Task<Block> GetByLevel([Min(0)] int level, bool operations = false)
+        public Task<Block> GetByLevel([Min(0)] int level, bool operations = false, Symbols quotes = Symbols.None)
         {
-            return Blocks.Get(level, operations);
+            return Blocks.Get(level, operations, quotes);
         }
 
         [OpenApiIgnore]

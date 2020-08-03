@@ -52,5 +52,12 @@ namespace Tzkt.Api.Models
         /// Total fee paid by all operations, included in the block
         /// </summary>
         public long Fees { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

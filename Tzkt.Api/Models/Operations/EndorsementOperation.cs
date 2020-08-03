@@ -54,5 +54,12 @@ namespace Tzkt.Api.Models
         /// Reward of the baker (delegate) for the operation
         /// </summary>
         public long Rewards { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of operation
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

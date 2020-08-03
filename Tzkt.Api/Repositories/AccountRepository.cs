@@ -322,17 +322,17 @@ namespace Tzkt.Api.Repositories
                 case Models.Delegate delegat:
                     delegat.Contracts = await GetRelatedContracts(address, null, null, limit);
                     delegat.Delegators = await GetDelegators(address, limit);
-                    delegat.Operations = await GetOperations(address, types, sort, 0, limit);
+                    delegat.Operations = await GetOperations(address, types, sort, 0, limit, Symbols.None);
                     delegat.Metadata = await GetMetadata(address);
                     break;
                 case User user when user.FirstActivity != null:
                     user.Contracts = await GetRelatedContracts(address, null, null, limit);
-                    user.Operations = await GetOperations(address, types, sort, 0, limit);
+                    user.Operations = await GetOperations(address, types, sort, 0, limit, Symbols.None);
                     user.Metadata = await GetMetadata(address);
                     break;
                 case Contract contract:
                     contract.Contracts = await GetRelatedContracts(address, null, null, limit);
-                    contract.Operations = await GetOperations(address, types, sort, 0, limit);
+                    contract.Operations = await GetOperations(address, types, sort, 0, limit, Symbols.None);
                     contract.Metadata = await GetMetadata(address);
                     break;
             }
@@ -2320,7 +2320,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<Operation>> GetOperations(string address, HashSet<string> types, SortMode sort, int offset, int limit)
+        public async Task<IEnumerable<Operation>> GetOperations(string address, HashSet<string> types, SortMode sort, int offset, int limit, Symbols quotes)
         {
             var account = await Accounts.GetAsync(address);
             var result = new List<Operation>(limit * 2);
@@ -2330,59 +2330,59 @@ namespace Tzkt.Api.Repositories
                 case RawDelegate delegat:
 
                     var endorsements = delegat.EndorsementsCount > 0 && types.Contains(OpTypes.Endorsement)
-                        ? Operations.GetEndorsements(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetEndorsements(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
                     var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
-                        ? Operations.GetBallots(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetBallots(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
                     var proposals = delegat.ProposalsCount > 0 && types.Contains(OpTypes.Proposal)
-                        ? Operations.GetProposals(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetProposals(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
                     var activations = delegat.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetActivations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetActivations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetDoubleBakings(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDoubleBakings(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetDoubleEndorsings(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDoubleEndorsings(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetNonceRevelations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetNonceRevelations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDelegations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetOriginations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetTransactions(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
-                        ? Operations.GetRevelationPenalties(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetRevelationPenalties(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
                     var blockOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetBakings(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     await Task.WhenAll(
@@ -2420,27 +2420,27 @@ namespace Tzkt.Api.Repositories
                 case RawUser user:
 
                     var userActivations = user.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetActivations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetActivations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDelegations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetOriginations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetTransactions(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
@@ -2462,23 +2462,23 @@ namespace Tzkt.Api.Repositories
                 case RawContract contract:
 
                     var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDelegations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetOriginations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetTransactions(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetReveals(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetMigrations(account, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
@@ -2502,7 +2502,7 @@ namespace Tzkt.Api.Repositories
                 : result.OrderByDescending(x => x.Id).Take(limit);
         }
 
-        public async Task<IEnumerable<Operation>> GetOperations(string address, DateTime from, DateTime to, HashSet<string> types, SortMode sort, int offset, int limit)
+        public async Task<IEnumerable<Operation>> GetOperations(string address, DateTime from, DateTime to, HashSet<string> types, SortMode sort, int offset, int limit, Symbols quotes)
         {
             var account = await Accounts.GetAsync(address);
             var result = new List<Operation>(limit * 2);
@@ -2512,59 +2512,59 @@ namespace Tzkt.Api.Repositories
                 case RawDelegate delegat:
 
                     var endorsements = delegat.EndorsementsCount > 0 && types.Contains(OpTypes.Endorsement)
-                        ? Operations.GetEndorsements(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetEndorsements(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
                     var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
-                        ? Operations.GetBallots(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetBallots(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
                     var proposals = delegat.ProposalsCount > 0 && types.Contains(OpTypes.Proposal)
-                        ? Operations.GetProposals(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetProposals(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
                     var activations = delegat.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetActivations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetActivations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetDoubleBakings(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDoubleBakings(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetDoubleEndorsings(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDoubleEndorsings(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetNonceRevelations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetNonceRevelations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDelegations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetOriginations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetTransactions(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
-                        ? Operations.GetRevelationPenalties(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetRevelationPenalties(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
                     var blockOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetBakings(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     await Task.WhenAll(
@@ -2602,27 +2602,27 @@ namespace Tzkt.Api.Repositories
                 case RawUser user:
 
                     var userActivations = user.Activated == true && types.Contains(OpTypes.Activation)
-                        ? Operations.GetActivations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetActivations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDelegations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetOriginations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetTransactions(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
@@ -2644,23 +2644,23 @@ namespace Tzkt.Api.Repositories
                 case RawContract contract:
 
                     var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetDelegations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetOriginations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetTransactions(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetReveals(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit)
+                        ? Operations.GetMigrations(account, from, to, sort, offset, OffsetMode.Id, limit, quotes)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
