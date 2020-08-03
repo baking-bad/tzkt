@@ -48,6 +48,7 @@ namespace Tzkt.Api
             services.AddTransient<BakingRightsRepository>();
             services.AddTransient<CyclesRepository>();
             services.AddTransient<RewardsRepository>(); 
+            services.AddTransient<QuotesRepository>();
 
             services.AddSynchronization();
 

@@ -689,6 +689,115 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, DateTimeParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+            {
+                AppendFilter($@"""{column}"" = @{column}Eq");
+                Params.Add($"{column}Eq", value.Eq);
+            }
+
+            if (value.Ne != null)
+            {
+                AppendFilter($@"""{column}"" != @{column}Ne");
+                Params.Add($"{column}Ne", value.Ne);
+            }
+
+            if (value.Gt != null)
+            {
+                AppendFilter($@"""{column}"" > @{column}Gt");
+                Params.Add($"{column}Gt", value.Gt);
+            }
+
+            if (value.Ge != null)
+            {
+                AppendFilter($@"""{column}"" >= @{column}Ge");
+                Params.Add($"{column}Ge", value.Ge);
+            }
+
+            if (value.Lt != null)
+            {
+                AppendFilter($@"""{column}"" < @{column}Lt");
+                Params.Add($"{column}Lt", value.Lt);
+            }
+
+            if (value.Le != null)
+            {
+                AppendFilter($@"""{column}"" <= @{column}Le");
+                Params.Add($"{column}Le", value.Le);
+            }
+
+            if (value.In != null)
+            {
+                AppendFilter($@"""{column}"" = ANY (@{column}In)");
+                Params.Add($"{column}In", value.In);
+            }
+
+            if (value.Ni != null)
+            {
+                AppendFilter($@"NOT (""{column}"" = ANY (@{column}Ni))");
+                Params.Add($"{column}Ni", value.Ni);
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, DateTimeParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+            if (value.Eq != null)
+            {
+                AppendFilter($@"{column} = @{column}Eq");
+                Params.Add($"{column}Eq", value.Eq);
+            }
+
+            if (value.Ne != null)
+            {
+                AppendFilter($@"{column} != @{column}Ne");
+                Params.Add($"{column}Ne", value.Ne);
+            }
+
+            if (value.Gt != null)
+            {
+                AppendFilter($@"{column} > @{column}Gt");
+                Params.Add($"{column}Gt", value.Gt);
+            }
+
+            if (value.Ge != null)
+            {
+                AppendFilter($@"{column} >= @{column}Ge");
+                Params.Add($"{column}Ge", value.Ge);
+            }
+
+            if (value.Lt != null)
+            {
+                AppendFilter($@"{column} < @{column}Lt");
+                Params.Add($"{column}Lt", value.Lt);
+            }
+
+            if (value.Le != null)
+            {
+                AppendFilter($@"{column} <= @{column}Le");
+                Params.Add($"{column}Le", value.Le);
+            }
+
+            if (value.In != null)
+            {
+                AppendFilter($@"{column} = ANY (@{column}In)");
+                Params.Add($"{column}In", value.In);
+            }
+
+            if (value.Ni != null)
+            {
+                AppendFilter($@"NOT ({column} = ANY (@{column}Ni))");
+                Params.Add($"{column}Ni", value.Ni);
+            }
+
+            return this;
+        }
+
         public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, (string, string)> map)
         {
             var sortAsc = true;
