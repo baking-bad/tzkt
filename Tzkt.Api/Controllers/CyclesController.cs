@@ -48,6 +48,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts cycles by specified field. Supported fields: `index` (default, desc).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cycle>>> Get(
@@ -55,7 +56,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("index"))
@@ -63,25 +65,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit));
+                return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values[0]));
+                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values));
+                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields)
+                        Rows = await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -93,11 +95,13 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a cycle at the specified index.
         /// </remarks>
+        /// <param name="index">Cycle index starting from zero</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{index:int}")]
-        public Task<Cycle> GetByIndex(int index)
+        public Task<Cycle> GetByIndex(int index, Symbols quote = Symbols.None)
         {
-            return Cycles.Get(index);
+            return Cycles.Get(index, quote);
         }
     }
 }

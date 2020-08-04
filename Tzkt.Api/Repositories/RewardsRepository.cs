@@ -13,10 +13,14 @@ namespace Tzkt.Api.Repositories
     public class RewardsRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly ProtocolsCache Protocols;
+        readonly QuotesCache Quotes;
 
-        public RewardsRepository(AccountsCache accounts, IConfiguration config) : base(config)
+        public RewardsRepository(AccountsCache accounts, ProtocolsCache protocols, QuotesCache quotes, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            Protocols = protocols;
+            Quotes = quotes;
         }
 
         #region baker
@@ -29,7 +33,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>($@"SELECT COUNT(*) FROM ""BakerCycles"" WHERE ""BakerId"" = {baker.Id}");
         }
 
-        public async Task<BakerRewards> GetBakerRewards(string address, int cycle)
+        public async Task<BakerRewards> GetBakerRewards(string address, int cycle, Symbols quote)
         {
             if (!(await Accounts.GetAsync(address) is RawDelegate baker))
                 return null;
@@ -45,6 +49,7 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
+            var cycleSize = Protocols.Current.BlocksPerCycle;
             return new BakerRewards
             {
                 DoubleBakingRewards = row.DoubleBakingRewards,
@@ -95,11 +100,18 @@ namespace Tzkt.Api.Repositories
                 UncoveredExtraBlocks = row.UncoveredExtraBlocks,
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks
+                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
+                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
             };
         }
 
-        public async Task<IEnumerable<BakerRewards>> GetBakerRewards(string address, Int32Parameter cycle, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<BakerRewards>> GetBakerRewards(
+            string address,
+            Int32Parameter cycle,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            Symbols quote)
         {
             if (!(await Accounts.GetAsync(address) is RawDelegate baker))
                 return null;
@@ -112,6 +124,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
+            var cycleSize = Protocols.Current.BlocksPerCycle;
             return rows.Select(row => new BakerRewards
             {
                 DoubleBakingRewards = row.DoubleBakingRewards,
@@ -162,11 +175,19 @@ namespace Tzkt.Api.Repositories
                 UncoveredExtraBlocks = row.UncoveredExtraBlocks,
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks
+                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
+                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
             });
         }
 
-        public async Task<object[][]> GetBakerRewards(string address, Int32Parameter cycle, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetBakerRewards(
+            string address,
+            Int32Parameter cycle,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields,
+            Symbols quote)
         {
             if (!(await Accounts.GetAsync(address) is RawDelegate baker))
                 return null;
@@ -225,6 +246,7 @@ namespace Tzkt.Api.Repositories
                     case "uncoveredOwnBlockFees": columns.Add(@"""UncoveredOwnBlockFees"""); break;
                     case "uncoveredOwnBlockRewards": columns.Add(@"""UncoveredOwnBlockRewards"""); break;
                     case "uncoveredOwnBlocks": columns.Add(@"""UncoveredOwnBlocks"""); break;
+                    case "quote": columns.Add(@"""Cycle"""); break;
                 }
             }
 
@@ -443,13 +465,25 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.UncoveredOwnBlocks;
                         break;
+                    case "quote":
+                        var cycleSize = Protocols.Current.BlocksPerCycle;
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
+                        break;
                 }
             }
 
             return result;
         }
 
-        public async Task<object[]> GetBakerRewards(string address, Int32Parameter cycle, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetBakerRewards(
+            string address,
+            Int32Parameter cycle,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field,
+            Symbols quote)
         {
             if (!(await Accounts.GetAsync(address) is RawDelegate baker))
                 return null;
@@ -506,6 +540,7 @@ namespace Tzkt.Api.Repositories
                 case "uncoveredOwnBlockFees": columns.Add(@"""UncoveredOwnBlockFees"""); break;
                 case "uncoveredOwnBlockRewards": columns.Add(@"""UncoveredOwnBlockRewards"""); break;
                 case "uncoveredOwnBlocks": columns.Add(@"""UncoveredOwnBlocks"""); break;
+                case "quote": columns.Add(@"""Cycle"""); break;
             }
 
             if (columns.Count == 0)
@@ -721,6 +756,11 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.UncoveredOwnBlocks;
                     break;
+                case "quote":
+                    var cycleSize = Protocols.Current.BlocksPerCycle;
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
+                    break;
             }
 
             return result;
@@ -737,7 +777,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>($@"SELECT COUNT(*) FROM ""DelegatorCycles"" WHERE ""DelegatorId"" = {acc.Id}");
         }
 
-        public async Task<DelegatorRewards> GetDelegatorRewards(string address, int cycle)
+        public async Task<DelegatorRewards> GetDelegatorRewards(string address, int cycle, Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
             if (acc == null) return null;
@@ -756,6 +796,7 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
+            var cycleSize = Protocols.Current.BlocksPerCycle;
             return new DelegatorRewards
             {
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -802,11 +843,18 @@ namespace Tzkt.Api.Repositories
                 UncoveredExtraBlocks = row.UncoveredExtraBlocks,
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks
+                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
+                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
             };
         }
 
-        public async Task<IEnumerable<DelegatorRewards>> GetDelegatorRewards(string address, Int32Parameter cycle, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<DelegatorRewards>> GetDelegatorRewards(
+            string address,
+            Int32Parameter cycle,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
             if (acc == null) return null;
@@ -825,6 +873,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
+            var cycleSize = Protocols.Current.BlocksPerCycle;
             return rows.Select(row => new DelegatorRewards
             {
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -871,11 +920,19 @@ namespace Tzkt.Api.Repositories
                 UncoveredExtraBlocks = row.UncoveredExtraBlocks,
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks
+                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
+                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
             });
         }
 
-        public async Task<object[][]> GetDelegatorRewards(string address, Int32Parameter cycle, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetDelegatorRewards(
+            string address,
+            Int32Parameter cycle,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields,
+            Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
             if (acc == null) return null;
@@ -932,6 +989,7 @@ namespace Tzkt.Api.Repositories
                     case "uncoveredOwnBlockFees": columns.Add(@"bc.""UncoveredOwnBlockFees"""); join = true; break;
                     case "uncoveredOwnBlockRewards": columns.Add(@"bc.""UncoveredOwnBlockRewards"""); join = true; break;
                     case "uncoveredOwnBlocks": columns.Add(@"bc.""UncoveredOwnBlocks"""); join = true; break;
+                    case "quote": columns.Add(@"""Cycle"""); break;
                 }
             }
 
@@ -1138,13 +1196,25 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.UncoveredOwnBlocks;
                         break;
+                    case "quote":
+                        var cycleSize = Protocols.Current.BlocksPerCycle;
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
+                        break;
                 }
             }
 
             return result;
         }
 
-        public async Task<object[]> GetDelegatorRewards(string address, Int32Parameter cycle, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetDelegatorRewards(
+            string address,
+            Int32Parameter cycle,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field,
+            Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
             if (acc == null) return null;
@@ -1199,6 +1269,7 @@ namespace Tzkt.Api.Repositories
                 case "uncoveredOwnBlockFees": columns.Add(@"bc.""UncoveredOwnBlockFees"""); join = true; break;
                 case "uncoveredOwnBlockRewards": columns.Add(@"bc.""UncoveredOwnBlockRewards"""); join = true; break;
                 case "uncoveredOwnBlocks": columns.Add(@"bc.""UncoveredOwnBlocks"""); join = true; break;
+                case "quote": columns.Add(@"""Cycle"""); break;
             }
 
             if (columns.Count == 0)
@@ -1401,6 +1472,11 @@ namespace Tzkt.Api.Repositories
                 case "uncoveredOwnBlocks":
                     foreach (var row in rows)
                         result[j++] = row.UncoveredOwnBlocks;
+                    break;
+                case "quote":
+                    var cycleSize = Protocols.Current.BlocksPerCycle;
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
                     break;
             }
 

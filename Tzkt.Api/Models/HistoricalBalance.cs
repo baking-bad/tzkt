@@ -18,5 +18,12 @@ namespace Tzkt.Api.Models
         /// Historical balance
         /// </summary>
         public long Balance { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of balance snapshot
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

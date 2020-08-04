@@ -207,7 +207,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
         /// <param name="limit">Number of items to return</param>
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
-        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{address}/operations")]
         public Task<IEnumerable<Operation>> GetOperations(
@@ -218,13 +218,13 @@ namespace Tzkt.Api.Controllers
             [Min(0)] int lastId = 0,
             [Range(0, 1000)] int limit = 100,
             SortMode sort = SortMode.Descending,
-            Symbols quotes = Symbols.None)
+            Symbols quote = Symbols.None)
         {
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
             return from != null || to != null
-                ? Accounts.GetOperations(address, from ?? DateTime.MinValue, to ?? DateTime.MaxValue, types, sort, lastId, limit, quotes)
-                : Accounts.GetOperations(address, types, sort, lastId, limit, quotes);
+                ? Accounts.GetOperations(address, from ?? DateTime.MinValue, to ?? DateTime.MaxValue, types, sort, lastId, limit, quote)
+                : Accounts.GetOperations(address, types, sort, lastId, limit, quote);
         }
 
         /// <summary>
@@ -352,6 +352,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts historical balances by specified field. Supported fields: `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history")]
         public async Task<ActionResult<IEnumerable<HistoricalBalance>>> GetBalanceHistory(
@@ -360,7 +361,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             [Min(0)] int offset = 0,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("level"))
@@ -368,25 +370,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await History.Get(address, step ?? 1, sort, offset, limit));
+                return Ok(await History.Get(address, step ?? 1, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values[0]));
+                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values));
+                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Fields[0]));
+                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await History.Get(address, step ?? 1, sort, offset, limit, select.Fields)
+                        Rows = await History.Get(address, step ?? 1, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

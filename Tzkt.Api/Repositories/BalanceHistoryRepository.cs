@@ -14,11 +14,13 @@ namespace Tzkt.Api.Repositories
     public class BalanceHistoryRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly QuotesCache Quotes;
         readonly TimeCache Time;
 
-        public BalanceHistoryRepository(AccountsCache accounts, TimeCache time, IConfiguration config) : base(config)
+        public BalanceHistoryRepository(AccountsCache accounts, QuotesCache quotes, TimeCache time, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            Quotes = quotes;
             Time = time;
         }
 
@@ -48,7 +50,13 @@ namespace Tzkt.Api.Repositories
             return await db.ExecuteScalarAsync<long>(sql, new { account = account.Id, level });
         }
 
-        public async Task<IEnumerable<HistoricalBalance>> Get(string address, int step, SortParameter sort, int offset, int limit)
+        public async Task<IEnumerable<HistoricalBalance>> Get(
+            string address,
+            int step,
+            SortParameter sort,
+            int offset,
+            int limit,
+            Symbols quote)
         {
             var account = await Accounts.GetAsync(address);
             if (account == null) return Enumerable.Empty<HistoricalBalance>();
@@ -82,11 +90,19 @@ namespace Tzkt.Api.Repositories
             {
                 Level = row.Level,
                 Timestamp = Time[row.Level],
-                Balance = row.Balance
+                Balance = row.Balance,
+                Quote = Quotes.Get(quote, row.Level)
             });
         }
 
-        public async Task<object[][]> Get(string address, int step, SortParameter sort, int offset, int limit, string[] fields)
+        public async Task<object[][]> Get(
+            string address,
+            int step,
+            SortParameter sort,
+            int offset,
+            int limit,
+            string[] fields,
+            Symbols quote)
         {
             var account = await Accounts.GetAsync(address);
             if (account == null) return Array.Empty<object[]>();
@@ -136,13 +152,24 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quote, row.Level);
+                        break;
                 }
             }
 
             return result;
         }
 
-        public async Task<object[]> Get(string address, int step, SortParameter sort, int offset, int limit, string field)
+        public async Task<object[]> Get(
+            string address,
+            int step,
+            SortParameter sort,
+            int offset,
+            int limit,
+            string field,
+            Symbols quote)
         {
             var account = await Accounts.GetAsync(address);
             if (account == null) return Array.Empty<object>();
@@ -189,6 +216,10 @@ namespace Tzkt.Api.Repositories
                 case "balance":
                     foreach (var row in rows)
                         result[j++] = row.Balance;
+                    break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quote, row.Level);
                     break;
             }
 

@@ -47,6 +47,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts cycle rewards by specified field. Supported fields: `cycle` (default, desc).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("bakers/{address}")]
         public async Task<ActionResult<IEnumerable<BakerRewards>>> GetBakerRewards(
@@ -55,7 +56,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("cycle"))
@@ -63,25 +65,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit));
+                return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values[0]));
+                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values));
+                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields)
+                        Rows = await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -95,11 +97,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="address">Baker address</param>
         /// <param name="cycle">Rewards cycle</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("bakers/{address}/{cycle:int}")]
-        public Task<BakerRewards> GetBakerRewardsByCycle([Address] string address, int cycle)
+        public Task<BakerRewards> GetBakerRewardsByCycle([Address] string address, int cycle, Symbols quote = Symbols.None)
         {
-            return Rewards.GetBakerRewards(address, cycle);
+            return Rewards.GetBakerRewards(address, cycle, quote);
         }
 
         /// <summary>
@@ -128,6 +131,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts cycle rewards by specified field. Supported fields: `cycle` (default, desc).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegators/{address}")]
         public async Task<ActionResult<IEnumerable<DelegatorRewards>>> GetDelegatorRewards(
@@ -136,7 +140,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
         {
             #region validate
             if (sort != null && !sort.Validate("cycle"))
@@ -144,25 +149,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit));
+                return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values[0]));
+                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values));
+                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields)
+                        Rows = await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -176,11 +181,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="address">Delegator address</param>
         /// <param name="cycle">Rewards cycle</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegators/{address}/{cycle:int}")]
-        public Task<DelegatorRewards> GetDelegatorRewardsByCycle([Address] string address, int cycle)
+        public Task<DelegatorRewards> GetDelegatorRewardsByCycle([Address] string address, int cycle, Symbols quote = Symbols.None)
         {
-            return Rewards.GetDelegatorRewards(address, cycle);
+            return Rewards.GetDelegatorRewards(address, cycle, quote);
         }
 
         /// <summary>

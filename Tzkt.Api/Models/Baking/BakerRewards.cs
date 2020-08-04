@@ -248,5 +248,12 @@ namespace Tzkt.Api.Models
         /// Fees lost due to missing seed nonce revelation.
         /// </summary>
         public long RevelationLostFees { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the end of the cycle
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }
