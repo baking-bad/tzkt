@@ -178,28 +178,28 @@ namespace Tzkt.Api.Repositories
             csv.Write(delimiter);
             if (account is RawDelegate)
             {
-                csv.Write("Reward, XTZ");
+                csv.Write("Reward XTZ");
                 csv.Write(delimiter);
-                csv.Write($"Reward, {symbolName}");
+                csv.Write($"Reward {symbolName}");
                 csv.Write(delimiter);
-                csv.Write("Loss, XTZ");
+                csv.Write("Loss XTZ");
                 csv.Write(delimiter);
-                csv.Write($"Loss, {symbolName}");
+                csv.Write($"Loss {symbolName}");
                 csv.Write(delimiter);
             }
-            csv.Write("Received, XTZ");
+            csv.Write("Received XTZ");
             csv.Write(delimiter);
-            csv.Write($"Received, {symbolName}");
+            csv.Write($"Received {symbolName}");
             csv.Write(delimiter);
             csv.Write("From address");
             csv.Write(delimiter);
-            csv.Write("Sent, XTZ");
+            csv.Write("Sent XTZ");
             csv.Write(delimiter);
-            csv.Write($"Sent, {symbolName}");
+            csv.Write($"Sent {symbolName}");
             csv.Write(delimiter);
-            csv.Write("Fee, XTZ");
+            csv.Write("Fee XTZ");
             csv.Write(delimiter);
-            csv.Write($"Fee, {symbolName}");
+            csv.Write($"Fee {symbolName}");
             csv.Write(delimiter);
             csv.Write("To address");
             csv.Write(delimiter);
