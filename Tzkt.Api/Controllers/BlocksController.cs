@@ -24,6 +24,7 @@ namespace Tzkt.Api.Controllers
             Blocks = blocks;
             State = state;
         }
+
         /// <summary>
         /// Get blocks count
         /// </summary>
@@ -50,6 +51,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `priority`, `validations`, `reward`, `fees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
@@ -59,7 +61,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
         {
             #region validate
             if (baker != null)
@@ -79,25 +82,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit));
+                return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values[0]));
+                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values));
+                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields)
+                        Rows = await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -111,12 +114,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="hash">Block hash</param>
         /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
-        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<Block> GetByHash([BlockHash] string hash, bool operations = false, Symbols quotes = Symbols.None)
+        public Task<Block> GetByHash([BlockHash] string hash, bool operations = false, Symbols quote = Symbols.None)
         {
-            return Blocks.Get(hash, operations, quotes);
+            return Blocks.Get(hash, operations, quote);
         }
 
         /// <summary>
@@ -127,12 +130,12 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="level">Block level</param>
         /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
-        /// <param name="quotes">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{level:int}")]
-        public Task<Block> GetByLevel([Min(0)] int level, bool operations = false, Symbols quotes = Symbols.None)
+        public Task<Block> GetByLevel([Min(0)] int level, bool operations = false, Symbols quote = Symbols.None)
         {
-            return Blocks.Get(level, operations, quotes);
+            return Blocks.Get(level, operations, quote);
         }
 
         [OpenApiIgnore]

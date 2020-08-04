@@ -14,12 +14,14 @@ namespace Tzkt.Api.Repositories
     {
         readonly AccountsCache Accounts;
         readonly OperationRepository Operations;
+        readonly QuotesCache Quotes;
         readonly StateCache State;
 
-        public BlockRepository(AccountsCache accounts, OperationRepository operations, StateCache state, IConfiguration config) : base(config)
+        public BlockRepository(AccountsCache accounts, OperationRepository operations, QuotesCache quotes, StateCache state, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Operations = operations;
+            Quotes = quotes;
             State = state;
         }
 
@@ -28,7 +30,7 @@ namespace Tzkt.Api.Repositories
             return Task.FromResult(State.GetState().Level + 1);
         }
 
-        public async Task<Block> Get(int level, bool operations, Symbols quotes)
+        public async Task<Block> Get(int level, bool operations, Symbols quote)
         {
             var sql = @"
                 SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
@@ -51,16 +53,17 @@ namespace Tzkt.Api.Repositories
                 Reward = row.Reward,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null
+                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
+                Quote = Quotes.Get(quote, level)
             };
 
             if (operations)
-                await LoadOperations(block, (Data.Models.Operations)row.Operations, quotes);
+                await LoadOperations(block, (Data.Models.Operations)row.Operations, quote);
 
             return block;
         }
 
-        public async Task<Block> Get(string hash, bool operations, Symbols quotes)
+        public async Task<Block> Get(string hash, bool operations, Symbols quote)
         {
             var sql = @"
                 SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
@@ -83,11 +86,12 @@ namespace Tzkt.Api.Repositories
                 Reward = row.Reward,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null
+                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
+                Quote = Quotes.Get(quote, row.Level)
             };
 
             if (operations)
-                await LoadOperations(block, (Data.Models.Operations)row.Operations, quotes);
+                await LoadOperations(block, (Data.Models.Operations)row.Operations, quote);
 
             return block;
         }
@@ -98,7 +102,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter priority,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"" FROM ""Blocks""")
                 .Filter("BakerId", baker)
@@ -128,7 +133,8 @@ namespace Tzkt.Api.Repositories
                 Reward = row.Reward,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null
+                Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null,
+                Quote = Quotes.Get(quote, row.Level)
             });
         }
 
@@ -139,7 +145,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            Symbols quote)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -156,6 +163,7 @@ namespace Tzkt.Api.Repositories
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
                     case "baker": columns.Add(@"""BakerId"""); break;
+                    case "quote": columns.Add(@"""Level"""); break;
                 }
             }
 
@@ -227,6 +235,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
                         break;
+                    case "quote":
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quote, row.Level);
+                        break;
                 }
             }
 
@@ -240,7 +252,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            Symbols quote)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -255,6 +268,7 @@ namespace Tzkt.Api.Repositories
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
                 case "baker": columns.Add(@"""BakerId"""); break;
+                case "quote": columns.Add(@"""Level"""); break;
             }
 
             if (columns.Count == 0)
@@ -323,6 +337,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
                     break;
+                case "quote":
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quote, row.Level);
+                    break;
             }
 
             return result;
@@ -351,50 +369,50 @@ namespace Tzkt.Api.Repositories
             return await db.QueryAsync<DateTime>(sql, new { limit, offset });
         }
 
-        async Task LoadOperations(Block block, Data.Models.Operations operations, Symbols quotes)
+        async Task LoadOperations(Block block, Data.Models.Operations operations, Symbols quote)
         {
             var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements)
-                ? Operations.GetEndorsements(block, quotes)
+                ? Operations.GetEndorsements(block, quote)
                 : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
             var proposals = operations.HasFlag(Data.Models.Operations.Proposals)
-                ? Operations.GetProposals(block, quotes)
+                ? Operations.GetProposals(block, quote)
                 : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
             var ballots = operations.HasFlag(Data.Models.Operations.Ballots)
-                ? Operations.GetBallots(block, quotes)
+                ? Operations.GetBallots(block, quote)
                 : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
             var activations = operations.HasFlag(Data.Models.Operations.Activations)
-                ? Operations.GetActivations(block, quotes)
+                ? Operations.GetActivations(block, quote)
                 : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
             var doubleBaking = operations.HasFlag(Data.Models.Operations.DoubleBakings)
-                ? Operations.GetDoubleBakings(block, quotes)
+                ? Operations.GetDoubleBakings(block, quote)
                 : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
             var doubleEndorsing = operations.HasFlag(Data.Models.Operations.DoubleEndorsings)
-                ? Operations.GetDoubleEndorsings(block, quotes)
+                ? Operations.GetDoubleEndorsings(block, quote)
                 : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
             var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations)
-                ? Operations.GetNonceRevelations(block, quotes)
+                ? Operations.GetNonceRevelations(block, quote)
                 : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
             var delegations = operations.HasFlag(Data.Models.Operations.Delegations)
-                ? Operations.GetDelegations(block, quotes)
+                ? Operations.GetDelegations(block, quote)
                 : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
             var originations = operations.HasFlag(Data.Models.Operations.Originations)
-                ? Operations.GetOriginations(block, quotes)
+                ? Operations.GetOriginations(block, quote)
                 : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
             var transactions = operations.HasFlag(Data.Models.Operations.Transactions)
-                ? Operations.GetTransactions(block, quotes)
+                ? Operations.GetTransactions(block, quote)
                 : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
             var reveals = operations.HasFlag(Data.Models.Operations.Reveals)
-                ? Operations.GetReveals(block, quotes)
+                ? Operations.GetReveals(block, quote)
                 : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
             await Task.WhenAll(

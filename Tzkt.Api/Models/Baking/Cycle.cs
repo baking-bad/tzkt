@@ -48,5 +48,12 @@ namespace Tzkt.Api.Models
         /// Total balance delegated to active bakers
         /// </summary>
         public long TotalDelegated { get; set; }
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the end of the cycle
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

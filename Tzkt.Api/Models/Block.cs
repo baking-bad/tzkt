@@ -122,5 +122,12 @@ namespace Tzkt.Api.Models
         /// </summary>
         public IEnumerable<RevealOperation> Reveals { get; set; }
         #endregion
+
+        #region injecting
+        /// <summary>
+        /// Injected historical quote at the time of block
+        /// </summary>
+        public QuoteShort Quote { get; set; }
+        #endregion
     }
 }

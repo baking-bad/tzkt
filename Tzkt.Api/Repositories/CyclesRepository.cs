@@ -6,12 +6,20 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public class CyclesRepository : DbConnection
     {
-        public CyclesRepository(IConfiguration config) : base(config) { }
+        readonly ProtocolsCache Protocols;
+        readonly QuotesCache Quotes;
+
+        public CyclesRepository(ProtocolsCache protocols, QuotesCache quotes, IConfiguration config) : base(config)
+        {
+            Protocols = protocols;
+            Quotes = quotes;
+        }
 
         public async Task<int> GetCount()
         {
@@ -19,7 +27,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM ""Cycles""");
         }
 
-        public async Task<Cycle> Get(int index)
+        public async Task<Cycle> Get(int index, Symbols quote)
         {
             var sql = @"
                 SELECT  *
@@ -31,6 +39,7 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync(sql, new { index });
             if (row == null) return null;
 
+            var cycleSize = Protocols.Current.BlocksPerCycle;
             return new Cycle
             {
                 Index = row.Index,
@@ -41,11 +50,17 @@ namespace Tzkt.Api.Repositories
                 TotalDelegated = row.TotalDelegated,
                 TotalDelegators = row.TotalDelegators,
                 TotalRolls = row.TotalRolls,
-                TotalStaking = row.TotalStaking
+                TotalStaking = row.TotalStaking,
+                Quote = Quotes.Get(quote, (row.Index + 1) * cycleSize)
             };
         }
 
-        public async Task<IEnumerable<Cycle>> Get(Int32Parameter snapshotIndex, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<Cycle>> Get(
+            Int32Parameter snapshotIndex,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Cycles""")
                 .Filter("SnapshotIndex", snapshotIndex)
@@ -54,6 +69,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
+            var cycleSize = Protocols.Current.BlocksPerCycle;
             return rows.Select(row => new Cycle
             {
                 Index = row.Index,
@@ -64,11 +80,18 @@ namespace Tzkt.Api.Repositories
                 TotalDelegated = row.TotalDelegated,
                 TotalDelegators = row.TotalDelegators,
                 TotalRolls = row.TotalRolls,
-                TotalStaking = row.TotalStaking
+                TotalStaking = row.TotalStaking,
+                Quote = Quotes.Get(quote, (row.Index + 1) * cycleSize)
             });
         }
 
-        public async Task<object[][]> Get(Int32Parameter snapshotIndex, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> Get(
+            Int32Parameter snapshotIndex,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields,
+            Symbols quote)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -84,6 +107,7 @@ namespace Tzkt.Api.Repositories
                     case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                     case "totalRolls": columns.Add(@"""TotalRolls"""); break;
                     case "totalStaking": columns.Add(@"""TotalStaking"""); break;
+                    case "quote": columns.Add(@"""Index"""); break;
                 }
             }
 
@@ -141,13 +165,24 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalStaking;
                         break;
+                    case "quote":
+                        var cycleSize = Protocols.Current.BlocksPerCycle;
+                        foreach (var row in rows)
+                            result[j++][i] = Quotes.Get(quote, (row.Index + 1) * cycleSize);
+                        break;
                 }
             }
 
             return result;
         }
 
-        public async Task<object[]> Get(Int32Parameter snapshotIndex, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> Get(
+            Int32Parameter snapshotIndex,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field,
+            Symbols quote)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -161,6 +196,7 @@ namespace Tzkt.Api.Repositories
                 case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                 case "totalRolls": columns.Add(@"""TotalRolls"""); break;
                 case "totalStaking": columns.Add(@"""TotalStaking"""); break;
+                case "quote": columns.Add(@"""Index"""); break;
             }
 
             if (columns.Count == 0)
@@ -214,6 +250,11 @@ namespace Tzkt.Api.Repositories
                 case "totalStaking":
                     foreach (var row in rows)
                         result[j++] = row.TotalStaking;
+                    break;
+                case "quote":
+                    var cycleSize = Protocols.Current.BlocksPerCycle;
+                    foreach (var row in rows)
+                        result[j++] = Quotes.Get(quote, (row.Index + 1) * cycleSize);
                     break;
             }
 
