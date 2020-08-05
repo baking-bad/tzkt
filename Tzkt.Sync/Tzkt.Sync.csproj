@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <UserSecretsId>dotnet-Tzkt.Sync-0D5638DC-A8DD-449C-8F4B-5DD8ED259849</UserSecretsId>
+    <AssemblyVersion>1.1</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,4 +17,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Tzkt.Data\Tzkt.Data.csproj" />
   </ItemGroup>
+  
 </Project>
