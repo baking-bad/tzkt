@@ -131,6 +131,13 @@ Like this:
     "Endpoint": "https://mainnet-tezos.giganode.io/",
     "Timeout": 60
   },
+  
+  "Quotes": {
+    "Async": true,
+    "Provider": {
+      "Name": "TzktQuotes"
+    }    
+  },
 
   "ConnectionStrings": {
     "DefaultConnection": "server=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;"
@@ -309,6 +316,13 @@ Like this:
     "ChainId": "NetXjD3HPJJjmcd",
     "Endpoint": "https://rpc.tzkt.io/carthagenet/",
     "Timeout": 30
+  },
+  
+  "Quotes": {
+    "Async": true,
+    "Provider": {
+      "Name": "TzktQuotes"
+    }    
   },
 
   "ConnectionStrings": {
@@ -503,6 +517,13 @@ Like this:
     "ChainId": "NetXKakFj1A7ouL",
     "Endpoint": "https://rpc.tzkt.io/zeronet/",
     "Timeout": 30
+  },
+  
+  "Quotes": {
+    "Async": true,
+    "Provider": {
+      "Name": "TzktQuotes"
+    }    
   },
 
   "ConnectionStrings": {
