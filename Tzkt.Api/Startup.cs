@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +15,7 @@ using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
+using Tzkt.Data;
 
 namespace Tzkt.Api
 {
@@ -27,6 +29,9 @@ namespace Tzkt.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<TzktContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+
             services.AddAccountMetadata();
             services.AddProposalMetadata();
             services.AddProtocolMetadata();

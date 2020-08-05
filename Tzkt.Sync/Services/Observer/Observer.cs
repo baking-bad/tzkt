@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Protocols;
 
@@ -33,11 +31,6 @@ namespace Tzkt.Sync.Services
         {
             try
             {
-                #region init database
-                await InitDatabase();
-                Logger.LogInformation("Database initialized");
-                #endregion
-
                 #region init state
                 AppState = await ResetState();
                 Logger.LogInformation($"State initialized: [{AppState.Level}:{AppState.Hash}]");
@@ -127,26 +120,6 @@ namespace Tzkt.Sync.Services
             using var scope = Services.CreateScope();
             var quotes = scope.ServiceProvider.GetRequiredService<QuotesService>();
             await quotes.Init();
-        }
-
-        private async Task InitDatabase()
-        {
-            try
-            {
-                using var scope = Services.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-                var migrations = await db.Database.GetPendingMigrationsAsync();
-                if (migrations.Any())
-                {
-                    Logger.LogWarning($"{migrations.Count()} database migrations were found. Applying migrations...");
-                    await db.Database.MigrateAsync();
-                }
-            }
-            catch
-            {
-                Logger.LogCritical($"Failed to migrate database. It seems like you were using too old version. Try to restore database from the latest snapshot. See https://github.com/baking-bad/tzkt");
-                throw;
-            }
         }
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
