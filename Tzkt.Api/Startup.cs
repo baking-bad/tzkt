@@ -68,7 +68,7 @@ namespace Tzkt.Api
 
             services.AddOpenApiDocument(options =>
             {
-                options.DocumentName = "v1.0";
+                options.DocumentName = "v1.1";
                 options.PostProcess = document =>
                 {
                     document.Info.Title = "TzKT API";
@@ -76,7 +76,7 @@ namespace Tzkt.Api
                     if (File.Exists("Description.md"))
                         document.Info.Description = File.ReadAllText("Description.md");
 
-                    document.Info.Version = "v1.0";
+                    document.Info.Version = "v1.1";
                     document.Info.Contact = new NSwag.OpenApiContact
                     {
                         Name = "Baking Bad Team",
@@ -110,7 +110,7 @@ namespace Tzkt.Api
             app.UseOpenApi(options => 
             {
                 options.Path = "/v1/swagger.json";
-                options.DocumentName = "v1.0";
+                options.DocumentName = "v1.1";
             });
 
             app.UseRouting();
