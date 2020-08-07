@@ -60,7 +60,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Protocol>>> Get(
+        public async Task<ActionResult<IEnumerable<Quote>>> Get(
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
