@@ -15,6 +15,7 @@ namespace Tzkt.Data.Models
         Deactivations       = 0b_0000_0100_0000,
         NewAccounts         = 0b_0000_1000_0000,
         SmartContracts      = 0b_0001_0000_0000,
-        Snapshot            = 0b_0010_0000_0000
+        Snapshot            = 0b_0010_0000_0000,
+        DelegatorContracts  = 0b_0100_0000_0000
     }
 }

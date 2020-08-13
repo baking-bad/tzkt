@@ -138,18 +138,20 @@ namespace Tzkt.Api.Controllers
             return Blocks.Get(level, operations, quote);
         }
 
+        // BCD bootstrap
         [OpenApiIgnore]
         [HttpGet("levels")]
-        public Task<IEnumerable<int>> GetSmartContractBlocks(OffsetParameter offset, [Range(0, 10000)] int limit = 10000)
+        public Task<IEnumerable<int>> GetSpecificBlocks(
+            bool? smartContracts,
+            bool? delegatorContracts,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 10000)
         {
-            return Blocks.GetEventLevels(Data.Models.BlockEvents.SmartContracts, offset, limit);
-        }
+            var events = Data.Models.BlockEvents.None;
+            if (smartContracts == true) events |= Data.Models.BlockEvents.SmartContracts;
+            if (delegatorContracts == true) events |= Data.Models.BlockEvents.DelegatorContracts;
 
-        [OpenApiIgnore]
-        [HttpGet("timestamps")]
-        public Task<IEnumerable<DateTime>> GetTimestamps([Min(0)] int offset = 0, [Range(0, 10000)] int limit = 10000)
-        {
-            return Blocks.GetTimestamps(offset, limit);
+            return Blocks.GetEventLevels(events, offset, limit);
         }
     }
 }

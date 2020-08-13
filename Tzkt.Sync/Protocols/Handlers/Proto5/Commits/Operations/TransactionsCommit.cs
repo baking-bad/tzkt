@@ -178,8 +178,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;
 
-            if (target is Contract c && c.Kind == ContractKind.SmartContract)
-                block.Events |= BlockEvents.SmartContracts;
+            if (target is Contract c)
+                block.Events |= c.Kind == ContractKind.DelegatorContract
+                    ? BlockEvents.DelegatorContracts
+                    : BlockEvents.SmartContracts;
 
             block.Operations |= Operations.Transactions;
             block.Fees += Transaction.BakerFee;
@@ -251,8 +253,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             if (target != null && target != sender) target.TransactionsCount++;
             if (parentSender != sender && parentSender != target) parentSender.TransactionsCount++;
 
-            if (target is Contract c && c.Kind == ContractKind.SmartContract)
-                block.Events |= BlockEvents.SmartContracts;
+            if (target is Contract c)
+                block.Events |= c.Kind == ContractKind.DelegatorContract
+                    ? BlockEvents.DelegatorContracts
+                    : BlockEvents.SmartContracts;
 
             block.Operations |= Operations.Transactions;
             #endregion
