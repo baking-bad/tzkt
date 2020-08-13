@@ -239,8 +239,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 sender.ContractsCount++;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount++;
 
-                if (contract.Kind == ContractKind.SmartContract)
-                    block.Events |= BlockEvents.SmartContracts;
+                block.Events |= contract.Kind == ContractKind.DelegatorContract
+                    ? BlockEvents.DelegatorContracts
+                    : BlockEvents.SmartContracts;
 
                 Db.Contracts.Add(contract);
             }
@@ -318,8 +319,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 sender.ContractsCount++;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount++;
 
-                if (contract.Kind == ContractKind.SmartContract)
-                    block.Events |= BlockEvents.SmartContracts;
+                block.Events |= contract.Kind == ContractKind.DelegatorContract
+                    ? BlockEvents.DelegatorContracts
+                    : BlockEvents.SmartContracts;
 
                 Db.Contracts.Add(contract);
             }
