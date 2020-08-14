@@ -10,6 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto6
     class ActivationsCommit : ProtocolCommit
     {
         public ActivationOperation Activation { get; private set; }
+        public Commitment Commitment { get; private set; }
 
         ActivationsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -28,6 +29,9 @@ namespace Tzkt.Sync.Protocols.Proto6
                 Account = account,
                 Balance = content.Metadata.BalanceUpdates[0].Change
             };
+
+            var btz = Blind.GetBlindedAddress(content.Address, content.Secret);
+            Commitment = await Db.Commitments.FirstAsync(x => x.Address == btz);
         }
 
         public async Task Init(Block block, ActivationOperation activation)
@@ -36,6 +40,8 @@ namespace Tzkt.Sync.Protocols.Proto6
             Activation.Block ??= block;
             Activation.Account ??= (User)await Cache.Accounts.GetAsync(activation.AccountId);
             Activation.Account.Delegate ??= Cache.Accounts.GetDelegate(activation.Account.DelegateId);
+
+            Commitment = await Db.Commitments.FirstAsync(x => x.AccountId == activation.AccountId);
         }
 
         public override Task Apply()
@@ -57,6 +63,9 @@ namespace Tzkt.Sync.Protocols.Proto6
             sender.Activated = true;
 
             block.Operations |= Operations.Activations;
+
+            Commitment.AccountId = sender.Id;
+            Commitment.Level = block.Level;
             #endregion
 
             Db.ActivationOps.Add(Activation);
@@ -81,6 +90,9 @@ namespace Tzkt.Sync.Protocols.Proto6
             if (senderDelegate != null) senderDelegate.StakingBalance -= Activation.Balance;
 
             sender.Activated = null;
+
+            Commitment.AccountId = null;
+            Commitment.Level = null;
             #endregion
 
             Db.ActivationOps.Remove(Activation);

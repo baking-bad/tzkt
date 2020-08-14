@@ -9,12 +9,16 @@ namespace Tzkt.Sync.Protocols.Proto3
         [JsonPropertyName("pkh")]
         public string Address { get; set; }
 
+        [JsonPropertyName("secret")]
+        public string Secret { get; set; }
+
         [JsonPropertyName("metadata")]
         public RawActivationContentMetadata Metadata { get; set; }
 
         #region validation
         public bool IsValidFormat() =>
             !string.IsNullOrEmpty(Address) &&
+            !string.IsNullOrEmpty(Secret) &&
             Metadata?.IsValidFormat() == true;
         #endregion
     }

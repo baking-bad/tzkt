@@ -11,6 +11,7 @@ namespace Tzkt.Data
         #endregion
 
         #region accounts
+        public DbSet<Commitment> Commitments { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Contract> Contracts { get; set; }
         public DbSet<Delegate> Delegates { get; set; }
@@ -71,6 +72,7 @@ namespace Tzkt.Data
             #endregion
 
             #region accounts
+            modelBuilder.BuildCommitmentModel();
             modelBuilder.BuildAccountModel();
             modelBuilder.BuildContractModel();
             modelBuilder.BuildDelegateModel();

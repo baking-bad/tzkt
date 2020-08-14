@@ -21,6 +21,7 @@ namespace Tzkt.Data.Models
         public int ManagerCounter { get; set; }
 
         #region entities count
+        public int CommitmentsCount { get; set; }
         public int AccountsCount { get; set; }
 
         public int BlocksCount { get; set; }

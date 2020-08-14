@@ -67,11 +67,14 @@ namespace Tzkt.Sync.Protocols.Initiator
         [JsonPropertyName("command")]
         public string Command { get; set; }
 
-        //[JsonPropertyName("protocol_parameters")]
-        //public string Parameters { get; set; }
+        [JsonPropertyName("protocol_parameters")]
+        public string Parameters { get; set; }
 
         #region validation
-        public bool IsValidFormat() => true;
+        public bool IsValidFormat() => 
+            Command == "activate" &&
+            !string.IsNullOrEmpty(Hash) &&
+            !string.IsNullOrEmpty(Parameters);
         #endregion
     }
 
