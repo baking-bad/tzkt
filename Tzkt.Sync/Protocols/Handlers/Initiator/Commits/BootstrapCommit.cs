@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Tzkt.Data.Models;
+using Tzkt.Sync.Utils;
 
 namespace Tzkt.Sync.Protocols.Initiator
 {
@@ -11,6 +13,7 @@ namespace Tzkt.Sync.Protocols.Initiator
     {
         public int Level { get; private set; }
         public DateTime Timestamp { get; private set; }
+        public IEnumerable<Commitment> Commitments { get; private set; }
         public List<Account> BootstrapedAccounts { get; private set; }
         public Block Block { get; private set; }
 
@@ -108,6 +111,15 @@ namespace Tzkt.Sync.Protocols.Initiator
                     + (baker.DelegatorsCount > 0 ? delegators.Sum(x => x.Balance) : 0);
             }
             #endregion
+
+            #region parameters
+            var protoParams = Bson.Parse<RawProtoParameters>(rawBlock.Header.Content.Parameters.Substring(8));
+            Commitments = protoParams.Commitments.Select(x => new Commitment
+            {
+                Address = x[0],
+                Balance = long.Parse(x[1])
+            });
+            #endregion
         }
 
         public async Task Init(Block block)
@@ -119,6 +131,8 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public override Task Apply()
         {
+            var state = Cache.AppState.Get();
+
             if (BootstrapedAccounts.Count > 0)
             {
                 Db.Accounts.AddRange(BootstrapedAccounts);
@@ -141,14 +155,28 @@ namespace Tzkt.Sync.Protocols.Initiator
                         BalanceChange = account.Balance
                     });
                 }
-                Cache.AppState.Get().MigrationOpsCount += BootstrapedAccounts.Count;
+                state.MigrationOpsCount += BootstrapedAccounts.Count;
             }
+
+            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            using var writer = conn.BeginBinaryImport(@"COPY ""Commitments"" (""Balance"", ""Address"") FROM STDIN (FORMAT BINARY)");
+
+            foreach (var commitment in Commitments)
+            {
+                writer.StartRow();
+                writer.Write(commitment.Balance);
+                writer.Write(commitment.Address);
+                state.CommitmentsCount++;
+            }
+
+            writer.Complete();
 
             return Task.CompletedTask;
         }
 
         public override async Task Revert()
         {
+            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""Commitments""");
             Db.Accounts.RemoveRange(BootstrapedAccounts);
             Cache.Accounts.Remove(BootstrapedAccounts);
 
@@ -162,6 +190,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             var state = Cache.AppState.Get();
             Db.TryAttach(state);
             state.MigrationOpsCount -= migrationOps.Count;
+            state.CommitmentsCount = 0;
         }
 
         #region static

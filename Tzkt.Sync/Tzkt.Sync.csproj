@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.7" />
     <PackageReference Include="Netezos.Rpc" Version="1.1.1" />
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
+    <PackageReference Include="SauceControl.Blake2Fast" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
