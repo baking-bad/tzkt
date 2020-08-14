@@ -44,30 +44,83 @@ namespace Tzkt.Sync.Protocols.Proto6
             state.NextProtocol = NextProtocol;
             state.Hash = Block.Hash;
 
-            #region count
             state.BlocksCount++;
             if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount++;
+            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount++;
 
-            if (Block.Activations != null) state.ActivationOpsCount += Block.Activations.Count;
-            if (Block.Ballots != null) state.BallotOpsCount += Block.Ballots.Count;
-            if (Block.Delegations != null) state.DelegationOpsCount += Block.Delegations.Count;
-            if (Block.DoubleBakings != null) state.DoubleBakingOpsCount += Block.DoubleBakings.Count;
-            if (Block.DoubleEndorsings != null) state.DoubleEndorsingOpsCount += Block.DoubleEndorsings.Count;
-            if (Block.Endorsements != null) state.EndorsementOpsCount += Block.Endorsements.Count;
-            if (Block.Revelations != null) state.NonceRevelationOpsCount += Block.Revelations.Count;
-            if (Block.Originations != null) state.OriginationOpsCount += Block.Originations.Count;
-            if (Block.Proposals != null) state.ProposalOpsCount += Block.Proposals.Count;
-            if (Block.Reveals != null) state.RevealOpsCount += Block.Reveals.Count;
-            if (Block.Transactions != null) state.TransactionOpsCount += Block.Transactions.Count;
+            state.TotalCreated += Block.Reward;
 
-            if (Block.RevelationPenalties != null) state.RevelationPenaltyOpsCount += Block.RevelationPenalties.Count;
+            if (Block.Activations != null)
+            {
+                state.ActivationOpsCount += Block.Activations.Count;
+                state.TotalActivated += Block.Activations.Sum(x => x.Balance);
+            }
+
+            if (Block.Ballots != null)
+            {
+                state.BallotOpsCount += Block.Ballots.Count;
+            }
+
+            if (Block.Proposals != null)
+            {
+                state.ProposalOpsCount += Block.Proposals.Count;
+            }
+
+            if (Block.Delegations != null)
+            {
+                state.DelegationOpsCount += Block.Delegations.Count;
+            }
+
+            if (Block.DoubleBakings != null)
+            {
+                state.DoubleBakingOpsCount += Block.DoubleBakings.Count;
+                state.TotalBurned += Block.DoubleBakings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+            }
+
+            if (Block.DoubleEndorsings != null)
+            {
+                state.DoubleEndorsingOpsCount += Block.DoubleEndorsings.Count;
+                state.TotalBurned += Block.DoubleEndorsings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+            }
+
+            if (Block.Endorsements != null)
+            {
+                state.EndorsementOpsCount += Block.Endorsements.Count;
+                state.TotalCreated += Block.Endorsements.Sum(x => x.Reward);
+            }
+
+            if (Block.Revelations != null)
+            {
+                state.NonceRevelationOpsCount += Block.Revelations.Count;
+                state.TotalCreated += Block.Revelations.Sum(x => 125_000); //TODO: avoid constants
+            }
+
+            if (Block.Originations != null)
+            {
+                state.OriginationOpsCount += Block.Originations.Count;
+                state.TotalBurned += Block.Originations.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
+            }
+
+            if (Block.Reveals != null)
+            {
+                state.RevealOpsCount += Block.Reveals.Count;
+            }
+
+            if (Block.Transactions != null)
+            {
+                state.TransactionOpsCount += Block.Transactions.Count;
+                state.TotalBurned += Block.Transactions.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
+            }
+
+            if (Block.RevelationPenalties != null)
+            {
+                state.RevelationPenaltyOpsCount += Block.RevelationPenalties.Count;
+                state.TotalBurned += Block.RevelationPenalties.Sum(x => x.LostReward + x.LostFees);
+            }
 
             if (Block.Proposals != null)
                 state.ProposalsCount += Db.ChangeTracker.Entries().Count(
                     x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Added);
-
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount++;
-            #endregion
 
             return Task.CompletedTask;
         }
@@ -88,30 +141,83 @@ namespace Tzkt.Sync.Protocols.Proto6
             state.NextProtocol = prevBlock == null ? "" : NextProtocol;
             state.Hash = prevBlock?.Hash ?? "";
 
-            #region count
             state.BlocksCount--;
             if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount--;
+            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount--;
 
-            if (Block.Activations != null) state.ActivationOpsCount -= Block.Activations.Count;
-            if (Block.Ballots != null) state.BallotOpsCount -= Block.Ballots.Count;
-            if (Block.Delegations != null) state.DelegationOpsCount -= Block.Delegations.Count;
-            if (Block.DoubleBakings != null) state.DoubleBakingOpsCount -= Block.DoubleBakings.Count;
-            if (Block.DoubleEndorsings != null) state.DoubleEndorsingOpsCount -= Block.DoubleEndorsings.Count;
-            if (Block.Endorsements != null) state.EndorsementOpsCount -= Block.Endorsements.Count;
-            if (Block.Revelations != null) state.NonceRevelationOpsCount -= Block.Revelations.Count;
-            if (Block.Originations != null) state.OriginationOpsCount -= Block.Originations.Count;
-            if (Block.Proposals != null) state.ProposalOpsCount -= Block.Proposals.Count;
-            if (Block.Reveals != null) state.RevealOpsCount -= Block.Reveals.Count;
-            if (Block.Transactions != null) state.TransactionOpsCount -= Block.Transactions.Count;
+            state.TotalCreated -= Block.Reward;
 
-            if (Block.RevelationPenalties != null) state.RevelationPenaltyOpsCount -= Block.RevelationPenalties.Count;
+            if (Block.Activations != null)
+            {
+                state.ActivationOpsCount -= Block.Activations.Count;
+                state.TotalActivated -= Block.Activations.Sum(x => x.Balance);
+            }
+
+            if (Block.Ballots != null)
+            {
+                state.BallotOpsCount -= Block.Ballots.Count;
+            }
+
+            if (Block.Proposals != null)
+            {
+                state.ProposalOpsCount -= Block.Proposals.Count;
+            }
+
+            if (Block.Delegations != null)
+            {
+                state.DelegationOpsCount -= Block.Delegations.Count;
+            }
+
+            if (Block.DoubleBakings != null)
+            {
+                state.DoubleBakingOpsCount -= Block.DoubleBakings.Count;
+                state.TotalBurned -= Block.DoubleBakings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+            }
+
+            if (Block.DoubleEndorsings != null)
+            {
+                state.DoubleEndorsingOpsCount -= Block.DoubleEndorsings.Count;
+                state.TotalBurned -= Block.DoubleEndorsings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+            }
+
+            if (Block.Endorsements != null)
+            {
+                state.EndorsementOpsCount -= Block.Endorsements.Count;
+                state.TotalCreated -= Block.Endorsements.Sum(x => x.Reward);
+            }
+
+            if (Block.Revelations != null)
+            {
+                state.NonceRevelationOpsCount -= Block.Revelations.Count;
+                state.TotalCreated -= Block.Revelations.Sum(x => 125_000); //TODO: avoid constants
+            }
+
+            if (Block.Originations != null)
+            {
+                state.OriginationOpsCount -= Block.Originations.Count;
+                state.TotalBurned -= Block.Originations.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
+            }
+
+            if (Block.Reveals != null)
+            {
+                state.RevealOpsCount -= Block.Reveals.Count;
+            }
+
+            if (Block.Transactions != null)
+            {
+                state.TransactionOpsCount -= Block.Transactions.Count;
+                state.TotalBurned -= Block.Transactions.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
+            }
+
+            if (Block.RevelationPenalties != null)
+            {
+                state.RevelationPenaltyOpsCount -= Block.RevelationPenalties.Count;
+                state.TotalBurned -= Block.RevelationPenalties.Sum(x => x.LostReward + x.LostFees);
+            }
 
             if (Block.Proposals != null)
                 state.ProposalsCount -= Db.ChangeTracker.Entries().Count(
                     x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Deleted);
-
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount--;
-            #endregion
 
             Cache.Blocks.Remove(Block);
         }

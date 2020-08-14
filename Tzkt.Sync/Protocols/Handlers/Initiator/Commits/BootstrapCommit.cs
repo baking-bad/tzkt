@@ -155,7 +155,9 @@ namespace Tzkt.Sync.Protocols.Initiator
                         BalanceChange = account.Balance
                     });
                 }
+
                 state.MigrationOpsCount += BootstrapedAccounts.Count;
+                state.TotalBootstrapped = BootstrapedAccounts.Sum(x => x.Balance);
             }
 
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
@@ -166,7 +168,9 @@ namespace Tzkt.Sync.Protocols.Initiator
                 writer.StartRow();
                 writer.Write(commitment.Balance);
                 writer.Write(commitment.Address);
+
                 state.CommitmentsCount++;
+                state.TotalCommitments += commitment.Balance;
             }
 
             writer.Complete();
@@ -190,7 +194,9 @@ namespace Tzkt.Sync.Protocols.Initiator
             var state = Cache.AppState.Get();
             Db.TryAttach(state);
             state.MigrationOpsCount -= migrationOps.Count;
+            state.TotalBootstrapped = 0;
             state.CommitmentsCount = 0;
+            state.TotalCommitments = 0;
         }
 
         #region static

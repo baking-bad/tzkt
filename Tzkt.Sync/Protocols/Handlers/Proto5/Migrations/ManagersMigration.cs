@@ -53,6 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 });
             }
             state.MigrationOpsCount += dict.Values.Count;
+            state.TotalCreated += dict.Values.Count;
         }
 
         public override async Task Revert()
@@ -77,6 +78,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             var state = Cache.AppState.Get();
             Db.TryAttach(state);
             state.MigrationOpsCount -= airDrops.Count;
+            state.TotalCreated -= airDrops.Count;
         }
 
         #region static
