@@ -76,12 +76,16 @@ namespace Tzkt.Sync.Protocols.Proto6
         [JsonPropertyName("priority")]
         public int Priority { get; set; }
 
+        [JsonPropertyName("proof_of_work_nonce")]
+        public string PowNonce { get; set; }
+
         #region validation
         public bool IsValidFormat() =>
             Level >= 0 &&
             !string.IsNullOrEmpty(Predecessor) &&
             Timestamp != DateTime.MinValue &&
-            Priority >= 0;
+            Priority >= 0 &&
+            !string.IsNullOrEmpty(PowNonce);
         #endregion
     }
 
