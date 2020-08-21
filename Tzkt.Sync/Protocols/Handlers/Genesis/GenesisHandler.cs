@@ -51,12 +51,16 @@ namespace Tzkt.Sync.Protocols
 
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
 
+            await StatisticsCommit.Apply(this);
+
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
         public override async Task Revert()
         {
             var currBlock = await Cache.Blocks.CurrentAsync();
+
+            await StatisticsCommit.Revert(this);
 
             await BlockCommit.Revert(this, currBlock);
 

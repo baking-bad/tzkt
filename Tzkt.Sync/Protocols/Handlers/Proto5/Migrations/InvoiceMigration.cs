@@ -35,7 +35,9 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             var state = Cache.AppState.Get();
             state.MigrationOpsCount++;
-            state.TotalCreated += 500_000_000;
+
+            var stats = await Cache.Statistics.GetAsync(state.Level);
+            stats.TotalCreated += 500_000_000;
         }
 
         public override async Task Revert()
@@ -58,7 +60,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             var state = Cache.AppState.Get();
             Db.TryAttach(state);
             state.MigrationOpsCount--;
-            state.TotalCreated -= 500_000_000;
         }
 
         #region static

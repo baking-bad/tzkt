@@ -48,47 +48,26 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount++;
             if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount++;
 
-            state.TotalCreated += Block.Reward;
-
             if (Block.Activations != null)
-            {
                 state.ActivationOpsCount += Block.Activations.Count;
-                state.TotalActivated += Block.Activations.Sum(x => x.Balance);
-            }
 
             if (Block.Delegations != null)
-            {
                 state.DelegationOpsCount += Block.Delegations.Count;
-            }
 
             if (Block.Endorsements != null)
-            {
                 state.EndorsementOpsCount += Block.Endorsements.Count;
-                state.TotalCreated += Block.Endorsements.Sum(x => x.Reward);
-            }
 
             if (Block.Revelations != null)
-            {
                 state.NonceRevelationOpsCount += Block.Revelations.Count;
-                state.TotalCreated += Block.Revelations.Sum(x => 125_000); //TODO: avoid constants
-            }
 
             if (Block.Originations != null)
-            {
                 state.OriginationOpsCount += Block.Originations.Count;
-                state.TotalBurned += Block.Originations.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
-            }
 
             if (Block.Reveals != null)
-            {
                 state.RevealOpsCount += Block.Reveals.Count;
-            }
 
             if (Block.Transactions != null)
-            {
                 state.TransactionOpsCount += Block.Transactions.Count;
-                state.TotalBurned += Block.Transactions.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
-            }
 
             return Task.CompletedTask;
         }
@@ -113,47 +92,26 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount--;
             if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount--;
 
-            state.TotalCreated -= Block.Reward;
-
             if (Block.Activations != null)
-            {
                 state.ActivationOpsCount -= Block.Activations.Count;
-                state.TotalActivated -= Block.Activations.Sum(x => x.Balance);
-            }
 
             if (Block.Delegations != null)
-            {
                 state.DelegationOpsCount -= Block.Delegations.Count;
-            }
 
             if (Block.Endorsements != null)
-            {
                 state.EndorsementOpsCount -= Block.Endorsements.Count;
-                state.TotalCreated -= Block.Endorsements.Sum(x => x.Reward);
-            }
 
             if (Block.Revelations != null)
-            {
                 state.NonceRevelationOpsCount -= Block.Revelations.Count;
-                state.TotalCreated -= Block.Revelations.Sum(x => 125_000); //TODO: avoid constants
-            }
 
             if (Block.Originations != null)
-            {
                 state.OriginationOpsCount -= Block.Originations.Count;
-                state.TotalBurned -= Block.Originations.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
-            }
 
             if (Block.Reveals != null)
-            {
                 state.RevealOpsCount -= Block.Reveals.Count;
-            }
 
             if (Block.Transactions != null)
-            {
                 state.TransactionOpsCount -= Block.Transactions.Count;
-                state.TotalBurned -= Block.Transactions.Sum(x => x.StorageFee ?? 0 + x.AllocationFee ?? 0);
-            }
 
             Cache.Blocks.Remove(Block);
         }

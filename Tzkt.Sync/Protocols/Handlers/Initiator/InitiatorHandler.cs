@@ -84,6 +84,8 @@ namespace Tzkt.Sync.Protocols
                 brCommit.FutureBakingRights,
                 brCommit.FutureEndorsingRights);
 
+            await StatisticsCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts, bootstrapCommit.Commitments);
+
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
@@ -102,6 +104,8 @@ namespace Tzkt.Sync.Protocols
         public override async Task Revert()
         {
             var currBlock = await Cache.Blocks.CurrentAsync();
+
+            await StatisticsCommit.Revert(this);
 
             await BakerCycleCommit.Revert(this);
             await DelegatorCycleCommit.Revert(this);

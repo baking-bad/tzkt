@@ -63,6 +63,10 @@ namespace Tzkt.Data
         public DbSet<Quote> Quotes { get; set; }
         #endregion
 
+        #region statistics
+        public DbSet<Statistics> Statistics { get; set; }
+        #endregion
+
         public TzktContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -122,6 +126,10 @@ namespace Tzkt.Data
 
             #region quotes
             modelBuilder.BuildQuoteModel();
+            #endregion
+
+            #region statistics
+            modelBuilder.BuildStatisticsModel();
             #endregion
         }
     }

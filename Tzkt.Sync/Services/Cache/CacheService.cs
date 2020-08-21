@@ -19,6 +19,7 @@ namespace Tzkt.Sync.Services
         public PeriodsCache Periods { get; private set; }
         public ProposalsCache Proposals { get; private set; }
         public ProtocolsCache Protocols { get; private set; }
+        public StatisticsCache Statistics { get; private set; }
 
         public CacheService(TzktContext db)
         {
@@ -30,6 +31,7 @@ namespace Tzkt.Sync.Services
             Periods = new PeriodsCache(db);
             Proposals = new ProposalsCache(db);
             Protocols = new ProtocolsCache(db);
+            Statistics = new StatisticsCache(db);
         }
 
         public async Task ResetAsync()
@@ -40,7 +42,8 @@ namespace Tzkt.Sync.Services
             Protocols.Reset();
             Proposals.Reset();
             Periods.Reset();
-            
+            Statistics.Reset();
+
             await AppState.ResetAsync();
             await Accounts.ResetAsync();
         }

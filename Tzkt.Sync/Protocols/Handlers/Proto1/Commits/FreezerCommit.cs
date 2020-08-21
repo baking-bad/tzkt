@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class FreezerCommit : ProtocolCommit
     {
-        public IEnumerable<IBalanceUpdate> BalanceUpdates { get; private set; }
+        public IEnumerable<IBalanceUpdate> FreezerUpdates { get; private set; }
         public Protocol Protocol { get; private set; }
 
         FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
@@ -18,7 +18,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
                 Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
-                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2);
+                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
+
+                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2)
+                    .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreservedCycles);
             }
         }
 
@@ -30,15 +33,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
 
                 Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
-                BalanceUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2);
+                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
+
+                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2)
+                    .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreservedCycles);
             }
         }
 
         public override Task Apply()
         {
-            if (BalanceUpdates == null) return Task.CompletedTask;
+            if (FreezerUpdates == null) return Task.CompletedTask;
 
-            foreach (var update in BalanceUpdates)
+            foreach (var update in FreezerUpdates)
             {
                 #region entities
                 var delegat = Cache.Accounts.GetDelegate(update.Target);
@@ -59,6 +65,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     delegat.FrozenFees += feesFreezer.Change;
                 }
+                else
+                {
+                    throw new Exception("unexpected freezer balance update type");
+                }
             }
 
             return Task.CompletedTask;
@@ -66,9 +76,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public override Task Revert()
         {
-            if (BalanceUpdates == null) return Task.CompletedTask;
+            if (FreezerUpdates == null) return Task.CompletedTask;
 
-            foreach (var update in BalanceUpdates)
+            foreach (var update in FreezerUpdates)
             {
                 #region entities
                 var delegat = Cache.Accounts.GetDelegate(update.Target);
@@ -88,6 +98,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 else if (update is FeesUpdate feesFreezer)
                 {
                     delegat.FrozenFees -= feesFreezer.Change;
+                }
+                else
+                {
+                    throw new Exception("unexpected freezer balance update type");
                 }
             }
 
