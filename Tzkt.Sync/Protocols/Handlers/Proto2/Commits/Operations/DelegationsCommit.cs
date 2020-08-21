@@ -38,6 +38,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Sender = sender,
                 Delegate = delegat,
                 PrevDelegate = sender.Delegate,
+                Amount = sender.Balance - content.Fee,
                 Status = content.Metadata.Result.Status switch
                 {
                     "applied" => OperationStatus.Applied,
