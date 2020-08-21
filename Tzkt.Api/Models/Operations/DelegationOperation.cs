@@ -73,6 +73,10 @@ namespace Tzkt.Api.Models
         /// </summary>
         public long BakerFee { get; set; }
 
+        /// <summary>
+        /// Sender's balance at the time of delegation operation (aka delegation amount).
+        /// </summary>
+        public long Amount { get; set; }
 
         /// <summary>
         /// Information about the previous delegate of the account. `null` if there is no previous delegate

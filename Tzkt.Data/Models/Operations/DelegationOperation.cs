@@ -11,6 +11,8 @@ namespace Tzkt.Data.Models
         public int? PrevDelegateId { get; set; }
         public int? ResetDeactivation { get; set; }
 
+        public long Amount { get; set; }
+
         #region relations
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
