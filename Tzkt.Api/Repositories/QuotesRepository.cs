@@ -41,9 +41,12 @@ namespace Tzkt.Api.Repositories
             {
                 Level = state.Level,
                 Timestamp = Time[state.Level],
-                Btc = state.QuoteBtc,
-                Eur = state.QuoteEur,
-                Usd = state.QuoteUsd
+                Btc = Quotes.Get(0),
+                Eur = Quotes.Get(1),
+                Usd = Quotes.Get(2),
+                Cny = Quotes.Get(3),
+                Jpy = Quotes.Get(4),
+                Krw = Quotes.Get(5)
             };
         }
 
@@ -73,6 +76,9 @@ namespace Tzkt.Api.Repositories
                 Btc = row.Btc,
                 Eur = row.Eur,
                 Usd = row.Usd,
+                Cny = row.Cny,
+                Jpy = row.Jpy,
+                Krw = row.Krw,
             });
         }
 
@@ -95,6 +101,9 @@ namespace Tzkt.Api.Repositories
                     case "btc": columns.Add(@"""Btc"""); break;
                     case "eur": columns.Add(@"""Eur"""); break;
                     case "usd": columns.Add(@"""Usd"""); break;
+                    case "cny": columns.Add(@"""Cny"""); break;
+                    case "jpy": columns.Add(@"""Jpy"""); break;
+                    case "krw": columns.Add(@"""Krw"""); break;
                 }
             }
 
@@ -141,6 +150,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Usd;
                         break;
+                    case "cny":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Cny;
+                        break;
+                    case "jpy":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Jpy;
+                        break;
+                    case "krw":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Krw;
+                        break;
                 }
             }
 
@@ -163,6 +184,9 @@ namespace Tzkt.Api.Repositories
                 case "btc": columns.Add(@"""Btc"""); break;
                 case "eur": columns.Add(@"""Eur"""); break;
                 case "usd": columns.Add(@"""Usd"""); break;
+                case "cny": columns.Add(@"""Cny"""); break;
+                case "jpy": columns.Add(@"""Jpy"""); break;
+                case "krw": columns.Add(@"""Krw"""); break;
             }
 
             if (columns.Count == 0)
@@ -205,6 +229,18 @@ namespace Tzkt.Api.Repositories
                 case "usd":
                     foreach (var row in rows)
                         result[j++] = row.Usd;
+                    break;
+                case "cny":
+                    foreach (var row in rows)
+                        result[j++] = row.Cny;
+                    break;
+                case "jpy":
+                    foreach (var row in rows)
+                        result[j++] = row.Jpy;
+                    break;
+                case "krw":
+                    foreach (var row in rows)
+                        result[j++] = row.Krw;
                     break;
             }
 

@@ -28,5 +28,20 @@ namespace Tzkt.Api.Models
         /// XTZ/USD price
         /// </summary>
         public double Usd { get; set; }
+
+        /// <summary>
+        /// XTZ/CNY price
+        /// </summary>
+        public double Cny { get; set; }
+
+        /// <summary>
+        /// XTZ/JPY price
+        /// </summary>
+        public double Jpy { get; set; }
+
+        /// <summary>
+        /// XTZ/KRW price
+        /// </summary>
+        public double Krw { get; set; }
     }
 }

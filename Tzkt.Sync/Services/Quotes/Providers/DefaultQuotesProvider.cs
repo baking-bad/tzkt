@@ -13,7 +13,10 @@ namespace Tzkt.Sync.Services
             var filled = await Task.WhenAll(
                 FillBtcQuotes(quotes, last),
                 FillEurQuotes(quotes, last),
-                FillUsdQuotes(quotes, last));
+                FillUsdQuotes(quotes, last),
+                FillCnyQuotes(quotes, last),
+                FillJpyQuotes(quotes, last),
+                FillKrwQuotes(quotes, last));
 
             return filled.Min();
         }
@@ -114,6 +117,102 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
+        async Task<int> FillCnyQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        {
+            var res = (await GetCny(
+                quotes.First().Timestamp.AddMinutes(-30),
+                quotes.Last().Timestamp)).ToList();
+
+            if (res.Count == 0)
+            {
+                foreach (var quote in quotes)
+                    quote.Cny = last?.Cny ?? 0;
+            }
+            else
+            {
+                var i = 0;
+                foreach (var quote in quotes)
+                {
+                    if (quote.Timestamp < res[0].Timestamp)
+                    {
+                        quote.Cny = last?.Cny ?? 0;
+                    }
+                    else
+                    {
+                        while (i < res.Count - 1 && quote.Timestamp >= res[i + 1].Timestamp) i++;
+
+                        quote.Cny = res[i].Price;
+                    }
+                }
+            }
+
+            return quotes.Count();
+        }
+
+        async Task<int> FillJpyQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        {
+            var res = (await GetJpy(
+                quotes.First().Timestamp.AddMinutes(-30),
+                quotes.Last().Timestamp)).ToList();
+
+            if (res.Count == 0)
+            {
+                foreach (var quote in quotes)
+                    quote.Jpy = last?.Jpy ?? 0;
+            }
+            else
+            {
+                var i = 0;
+                foreach (var quote in quotes)
+                {
+                    if (quote.Timestamp < res[0].Timestamp)
+                    {
+                        quote.Jpy = last?.Jpy ?? 0;
+                    }
+                    else
+                    {
+                        while (i < res.Count - 1 && quote.Timestamp >= res[i + 1].Timestamp) i++;
+
+                        quote.Jpy = res[i].Price;
+                    }
+                }
+            }
+
+            return quotes.Count();
+        }
+
+        async Task<int> FillKrwQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        {
+            var res = (await GetKrw(
+                quotes.First().Timestamp.AddMinutes(-30),
+                quotes.Last().Timestamp)).ToList();
+
+            if (res.Count == 0)
+            {
+                foreach (var quote in quotes)
+                    quote.Krw = last?.Krw ?? 0;
+            }
+            else
+            {
+                var i = 0;
+                foreach (var quote in quotes)
+                {
+                    if (quote.Timestamp < res[0].Timestamp)
+                    {
+                        quote.Krw = last?.Krw ?? 0;
+                    }
+                    else
+                    {
+                        while (i < res.Count - 1 && quote.Timestamp >= res[i + 1].Timestamp) i++;
+
+                        quote.Krw = res[i].Price;
+                    }
+                }
+            }
+
+            return quotes.Count();
+        }
+
         #region virtual
         public virtual Task<IEnumerable<IDefaultQuote>> GetBtc(DateTime from, DateTime to)
             => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
@@ -122,6 +221,15 @@ namespace Tzkt.Sync.Services
             => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
 
         public virtual Task<IEnumerable<IDefaultQuote>> GetUsd(DateTime from, DateTime to)
+            => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
+
+        public virtual Task<IEnumerable<IDefaultQuote>> GetCny(DateTime from, DateTime to)
+            => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
+
+        public virtual Task<IEnumerable<IDefaultQuote>> GetJpy(DateTime from, DateTime to)
+            => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
+
+        public virtual Task<IEnumerable<IDefaultQuote>> GetKrw(DateTime from, DateTime to)
             => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
         #endregion
     }

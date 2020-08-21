@@ -36,6 +36,9 @@ namespace Tzkt.Sync.Services
                     quote.Btc = last?.Btc ?? 0;
                     quote.Eur = last?.Eur ?? 0;
                     quote.Usd = last?.Usd ?? 0;
+                    quote.Cny = last?.Cny ?? 0;
+                    quote.Jpy = last?.Jpy ?? 0;
+                    quote.Krw = last?.Krw ?? 0;
                 }
             }
             else
@@ -48,6 +51,9 @@ namespace Tzkt.Sync.Services
                         quote.Btc = last?.Btc ?? 0;
                         quote.Eur = last?.Eur ?? 0;
                         quote.Usd = last?.Usd ?? 0;
+                        quote.Cny = last?.Cny ?? 0;
+                        quote.Jpy = last?.Jpy ?? 0;
+                        quote.Krw = last?.Krw ?? 0;
                     }
                     else
                     {
@@ -56,6 +62,9 @@ namespace Tzkt.Sync.Services
                         quote.Btc = res[i].Btc;
                         quote.Eur = res[i].Eur;
                         quote.Usd = res[i].Usd;
+                        quote.Cny = res[i].Cny;
+                        quote.Jpy = res[i].Jpy;
+                        quote.Krw = res[i].Krw;
                     }
                 }
             }
@@ -89,6 +98,15 @@ namespace Tzkt.Sync.Services
 
         [JsonPropertyName("usd")]
         public double Usd { get; set; }
+
+        [JsonPropertyName("cny")]
+        public double Cny { get; set; }
+
+        [JsonPropertyName("jpy")]
+        public double Jpy { get; set; }
+
+        [JsonPropertyName("krw")]
+        public double Krw { get; set; }
 
         int IQuote.Level => throw new NotImplementedException();
     }

@@ -32,6 +32,15 @@ namespace Tzkt.Sync.Services
         public override async Task<IEnumerable<IDefaultQuote>> GetUsd(DateTime from, DateTime to)
             => await GetQuotes("usd", from, to);
 
+        public override async Task<IEnumerable<IDefaultQuote>> GetCny(DateTime from, DateTime to)
+            => await GetQuotes("cny", from, to);
+
+        public override async Task<IEnumerable<IDefaultQuote>> GetJpy(DateTime from, DateTime to)
+            => await GetQuotes("jpy", from, to);
+
+        public override async Task<IEnumerable<IDefaultQuote>> GetKrw(DateTime from, DateTime to)
+            => await GetQuotes("krw", from, to);
+
         async Task<List<CoingeckoQuote>> GetQuotes(string currency, DateTime from, DateTime to)
         {
             var _from = (long)(from - DateTime.UnixEpoch).TotalSeconds;

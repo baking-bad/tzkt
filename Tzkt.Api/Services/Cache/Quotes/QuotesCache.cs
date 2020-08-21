@@ -19,13 +19,13 @@ namespace Tzkt.Api.Services.Cache
 
         public QuotesCache(IConfiguration config, ILogger<QuotesCache> logger) : base(config)
         {
-            Quotes = new List<double>[3];
+            Quotes = new List<double>[6];
             Logger = logger;
 
             Logger.LogDebug("Initializing quotes cache...");
 
             var sql = @"
-                SELECT    ""Btc"", ""Eur"", ""Usd""
+                SELECT    ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw""
                 FROM      ""Quotes""
                 ORDER BY  ""Level""";
 
@@ -35,6 +35,9 @@ namespace Tzkt.Api.Services.Cache
             Quotes[0] = rows.Select(x => (double)x.Btc).ToList();
             Quotes[1] = rows.Select(x => (double)x.Eur).ToList();
             Quotes[2] = rows.Select(x => (double)x.Usd).ToList();
+            Quotes[3] = rows.Select(x => (double)x.Cny).ToList();
+            Quotes[4] = rows.Select(x => (double)x.Jpy).ToList();
+            Quotes[5] = rows.Select(x => (double)x.Krw).ToList();
 
             Logger.LogDebug($"Quotes cache initialized with {Quotes[0].Count} items");
         }
@@ -66,6 +69,15 @@ namespace Tzkt.Api.Services.Cache
 
                 if (symbols.HasFlag(Symbols.Usd))
                     quote.Usd = Quotes[2][^1];
+
+                if (symbols.HasFlag(Symbols.Cny))
+                    quote.Cny = Quotes[3][^1];
+
+                if (symbols.HasFlag(Symbols.Jpy))
+                    quote.Jpy = Quotes[4][^1];
+
+                if (symbols.HasFlag(Symbols.Krw))
+                    quote.Krw = Quotes[5][^1];
             }
             else
             {
@@ -77,6 +89,15 @@ namespace Tzkt.Api.Services.Cache
 
                 if (symbols.HasFlag(Symbols.Usd))
                     quote.Usd = Quotes[2][level];
+
+                if (symbols.HasFlag(Symbols.Cny))
+                    quote.Cny = Quotes[3][level];
+
+                if (symbols.HasFlag(Symbols.Jpy))
+                    quote.Jpy = Quotes[4][level];
+
+                if (symbols.HasFlag(Symbols.Krw))
+                    quote.Krw = Quotes[5][level];
             }
 
             return quote;
@@ -85,7 +106,7 @@ namespace Tzkt.Api.Services.Cache
         public async Task UpdateAsync()
         {
             var sql = $@"
-                SELECT    ""Btc"", ""Eur"", ""Usd""
+                SELECT    ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw""
                 FROM      ""Quotes""
                 WHERE     ""Level"" >= {Quotes[0].Count}
                 ORDER BY  ""Level""";
@@ -96,6 +117,9 @@ namespace Tzkt.Api.Services.Cache
             Quotes[0].AddRange(rows.Select(x => (double)x.Btc));
             Quotes[1].AddRange(rows.Select(x => (double)x.Eur));
             Quotes[2].AddRange(rows.Select(x => (double)x.Usd));
+            Quotes[3].AddRange(rows.Select(x => (double)x.Cny));
+            Quotes[4].AddRange(rows.Select(x => (double)x.Jpy));
+            Quotes[5].AddRange(rows.Select(x => (double)x.Krw));
         }
     }
 

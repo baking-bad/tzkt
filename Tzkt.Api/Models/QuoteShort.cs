@@ -20,6 +20,21 @@ namespace Tzkt.Api.Models
         /// XTZ/USD price
         /// </summary>
         public double? Usd { get; set; }
+
+        /// <summary>
+        /// XTZ/CNY price
+        /// </summary>
+        public double? Cny { get; set; }
+
+        /// <summary>
+        /// XTZ/JPY price
+        /// </summary>
+        public double? Jpy { get; set; }
+
+        /// <summary>
+        /// XTZ/KRW price
+        /// </summary>
+        public double? Krw { get; set; }
     }
 
     [Flags]
@@ -29,6 +44,9 @@ namespace Tzkt.Api.Models
         None = 0,
         Btc = 1,
         Eur = 2,
-        Usd = 4
+        Usd = 4,
+        Cny = 8,
+        Jpy = 16,
+        Krw = 32
     }
 }
