@@ -53,15 +53,6 @@ namespace Tzkt.Data.Models
         public double QuoteEur { get; set; }
         public double QuoteUsd { get; set; }
         #endregion
-
-        #region supply
-        public long TotalBootstrapped { get; set; }
-        public long TotalCommitments { get; set; }
-        public long TotalActivated { get; set; }
-
-        public long TotalCreated { get; set; }
-        public long TotalBurned { get; set; }
-        #endregion
     }
 
     public static class AppStateModel

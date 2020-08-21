@@ -173,7 +173,7 @@ namespace Tzkt.Sync.Protocols
             var rawBlock = block as RawBlock;
 
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
-            await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
+            var freezerCommit = await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
 
             #region operations 0
             foreach (var operation in rawBlock.Operations[0])
@@ -276,6 +276,8 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.Snapshots,
                 brCommit.CurrentRights);
 
+            await StatisticsCommit.Apply(this, blockCommit.Block, freezerCommit.FreezerUpdates);
+
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
@@ -351,6 +353,8 @@ namespace Tzkt.Sync.Protocols
                 foreach (var account in currBlock.CreatedAccounts)
                     Cache.Accounts.Add(account);
             #endregion
+
+            await StatisticsCommit.Revert(this);
 
             await BakerCycleCommit.Revert(this, currBlock);
             await DelegatorCycleCommit.Revert(this, currBlock);

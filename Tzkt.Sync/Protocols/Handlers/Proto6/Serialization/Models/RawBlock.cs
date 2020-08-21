@@ -76,6 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto6
         [JsonPropertyName("priority")]
         public int Priority { get; set; }
 
+        [JsonProperty("proof_of_work_nonce")]
         [JsonPropertyName("proof_of_work_nonce")]
         public string PowNonce { get; set; }
 
