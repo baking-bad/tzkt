@@ -176,7 +176,7 @@ namespace Tzkt.Sync.Services
         {
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             if (conn.State != System.Data.ConnectionState.Open) conn.Open();
-            using var writer = conn.BeginBinaryImport(@"COPY ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"") FROM STDIN (FORMAT BINARY)");
+            using var writer = conn.BeginBinaryImport(@"COPY ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"") FROM STDIN (FORMAT BINARY)");
 
             foreach (var q in quotes)
             {
@@ -186,6 +186,9 @@ namespace Tzkt.Sync.Services
                 writer.Write(q.Btc);
                 writer.Write(q.Eur);
                 writer.Write(q.Usd);
+                writer.Write(q.Cny);
+                writer.Write(q.Jpy);
+                writer.Write(q.Krw);
             }
 
             writer.Complete();
@@ -194,26 +197,32 @@ namespace Tzkt.Sync.Services
         void UpdateState(AppState state, Quote quote)
         {
             Db.Database.ExecuteSqlRaw($@"
-                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{1}}, ""QuoteEur"" = {{2}}, ""QuoteUsd"" = {{3}};",
-                quote.Level, quote.Btc, quote.Eur, quote.Usd);
+                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{1}}, ""QuoteEur"" = {{2}}, ""QuoteUsd"" = {{3}}, ""QuoteCny"" = {{4}}, ""QuoteJpy"" = {{5}}, ""QuoteKrw"" = {{6}};",
+                quote.Level, quote.Btc, quote.Eur, quote.Usd, quote.Cny, quote.Jpy, quote.Krw);
 
             state.QuoteLevel = quote.Level;
             state.QuoteBtc = quote.Btc;
             state.QuoteEur = quote.Eur;
             state.QuoteUsd = quote.Usd;
+            state.QuoteCny = quote.Cny;
+            state.QuoteJpy = quote.Jpy;
+            state.QuoteKrw = quote.Krw;
         }
 
         void SaveAndUpdate(AppState state, Quote quote)
         {
             Db.Database.ExecuteSqlRaw($@"
-                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"") VALUES ({{0}}, {{1}}, {{2}}, {{3}}, {{4}});
-                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{2}}, ""QuoteEur"" = {{3}}, ""QuoteUsd"" = {{4}};",
-                quote.Level, quote.Timestamp, quote.Btc, quote.Eur, quote.Usd);
+                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"") VALUES ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}, {{6}}, {{7}});
+                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{2}}, ""QuoteEur"" = {{3}}, ""QuoteUsd"" = {{4}}, ""QuoteCny"" = {{5}}, ""QuoteJpy"" = {{6}}, ""QuoteKrw"" = {{7}};",
+                quote.Level, quote.Timestamp, quote.Btc, quote.Eur, quote.Usd, quote.Cny, quote.Jpy, quote.Krw);
 
             state.QuoteLevel = quote.Level;
             state.QuoteBtc = quote.Btc;
             state.QuoteEur = quote.Eur;
             state.QuoteUsd = quote.Usd;
+            state.QuoteCny = quote.Cny;
+            state.QuoteJpy = quote.Jpy;
+            state.QuoteKrw = quote.Krw;
         }
 
         void SaveAndUpdate(AppState state, IEnumerable<Quote> quotes)
@@ -223,20 +232,23 @@ namespace Tzkt.Sync.Services
 
             var sql = new StringBuilder();
             sql.AppendLine($@"
-                UPDATE ""AppState"" SET ""QuoteLevel"" = {last.Level}, ""QuoteBtc"" = {{0}}, ""QuoteEur"" = {{1}}, ""QuoteUsd"" = {{2}};
-                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"") VALUES");
+                UPDATE ""AppState"" SET ""QuoteLevel"" = {last.Level}, ""QuoteBtc"" = {{0}}, ""QuoteEur"" = {{1}}, ""QuoteUsd"" = {{2}}, ""QuoteCny"" = {{3}}, ""QuoteJpy"" = {{4}}, ""QuoteKrw"" = {{5}};
+                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"") VALUES");
 
-            var param = new List<object>(cnt * 4 + 3);
+            var param = new List<object>(cnt * 7 + 6);
             param.Add(last.Btc);
             param.Add(last.Eur);
             param.Add(last.Usd);
+            param.Add(last.Cny);
+            param.Add(last.Jpy);
+            param.Add(last.Krw);
 
-            var p = 3;
+            var p = 6;
             var i = 0;
 
             foreach (var q in quotes)
             {
-                sql.Append($"({q.Level}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}})");
+                sql.Append($"({q.Level}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}})");
                 if (++i < cnt) sql.AppendLine(",");
                 else sql.AppendLine(";");
 
@@ -244,6 +256,9 @@ namespace Tzkt.Sync.Services
                 param.Add(q.Btc);
                 param.Add(q.Eur);
                 param.Add(q.Usd);
+                param.Add(q.Cny);
+                param.Add(q.Jpy);
+                param.Add(q.Krw);
             }
 
             Db.Database.ExecuteSqlRaw(sql.ToString(), param);
@@ -252,13 +267,19 @@ namespace Tzkt.Sync.Services
             state.QuoteBtc = last.Btc;
             state.QuoteEur = last.Eur;
             state.QuoteUsd = last.Usd;
+            state.QuoteCny = last.Cny;
+            state.QuoteJpy = last.Jpy;
+            state.QuoteKrw = last.Krw;
         }
 
         IQuote LastQuote(AppState state) => state.QuoteLevel == -1 ? null : new Quote
         {
             Btc = state.QuoteBtc,
             Eur = state.QuoteEur,
-            Usd = state.QuoteUsd
+            Usd = state.QuoteUsd,
+            Cny = state.QuoteCny,
+            Jpy = state.QuoteJpy,
+            Krw = state.QuoteKrw
         };
     }
 

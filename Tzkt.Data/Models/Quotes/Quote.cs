@@ -12,6 +12,9 @@ namespace Tzkt.Data.Models
         public double Btc { get; set; }
         public double Eur { get; set; }
         public double Usd { get; set; }
+        public double Cny { get; set; }
+        public double Jpy { get; set; }
+        public double Krw { get; set; }
     }
 
     public static class QuoteModel
