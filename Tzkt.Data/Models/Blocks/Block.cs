@@ -12,7 +12,7 @@ namespace Tzkt.Data.Models
         public string Hash { get; set; }
         public DateTime Timestamp { get; set; }
         public int ProtoCode { get; set; }
-        public int Version { get; set; }
+        public uint Version { get; set; }
 
         public int Priority { get; set; }
         public int Validations { get; set; }

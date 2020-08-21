@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Baker = Cache.Accounts.GetDelegate(rawBlock.Metadata.Baker),
                 Events = events,
                 Reward = protocol.BlockReward0,
-                Version = BitConverter.ToInt32(Hex.Parse(rawBlock.Header.PowNonce.Substring(0, 8)))
+                Version = BitConverter.ToUInt32(Hex.Parse(rawBlock.Header.PowNonce.Substring(0, 8)).Reverse())
             };
         }
 
