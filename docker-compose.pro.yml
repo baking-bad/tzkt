@@ -1,7 +1,20 @@
 version: '3'
 
 services:
-  serv:
+
+  #Nginx Service
+#  webserv:
+#    image: nginx:mainline
+#    container_name: webserv
+#    restart: unless-stopped
+#    tty: true
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+  
+  postgrest:
     image: postgrest/postgrest
     ports:
       - "3000:3000"
