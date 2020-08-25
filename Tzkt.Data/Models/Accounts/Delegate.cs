@@ -25,7 +25,12 @@ namespace Tzkt.Data.Models
         public int NonceRevelationsCount { get; set; }
         public int RevelationPenaltiesCount { get; set; }
 
-        public uint Version { get; set; }
+        public int? SoftwareId { get; set; }
+
+        #region relations
+        [ForeignKey(nameof(SoftwareId))]
+        public Software Software { get; set; }
+        #endregion
 
         #region indirect relations
         public List<Account> DelegatedAccounts { get; set; }
@@ -36,9 +41,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildDelegateModel(this ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Contract>()
+            #region indexes
+            modelBuilder.Entity<Delegate>()
                 .HasIndex(x => new { x.Type, x.Staked })
                 .HasFilter(@"""Type"" = 1");
+            #endregion
+
+            #region relations
+            modelBuilder.Entity<Delegate>()
+                .HasOne(x => x.Software)
+                .WithMany()
+                .HasForeignKey(x => x.SoftwareId)
+                .HasPrincipalKey(x => x.Id);
+            #endregion
         }
     }
 }

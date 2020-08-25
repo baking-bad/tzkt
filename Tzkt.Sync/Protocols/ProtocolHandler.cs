@@ -242,6 +242,7 @@ namespace Tzkt.Sync
                         delegat.Delegate = null;
                         delegat.DelegatedAccounts = null;
                         delegat.FirstBlock = null;
+                        delegat.Software = null;
                         break;
                     case User user:
                         user.Delegate = null;
@@ -272,6 +273,7 @@ namespace Tzkt.Sync
                         b.Transactions = null;
                         b.Migrations = null;
                         b.RevelationPenalties = null;
+                        b.Software = null;
                         break;
                     case VotingPeriod period:
                         period.Epoch = null;

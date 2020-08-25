@@ -12,7 +12,7 @@ namespace Tzkt.Data.Models
         public string Hash { get; set; }
         public DateTime Timestamp { get; set; }
         public int ProtoCode { get; set; }
-        public uint Version { get; set; }
+        public int? SoftwareId { get; set; }
 
         public int Priority { get; set; }
         public int Validations { get; set; }
@@ -35,6 +35,9 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(RevelationId))]
         public NonceRevelationOperation Revelation { get; set; }
+
+        [ForeignKey(nameof(SoftwareId))]
+        public Software Software { get; set; }
         #endregion
 
         #region indirect relations
@@ -102,6 +105,12 @@ namespace Tzkt.Data.Models
                 .WithOne(x => x.RevealedBlock)
                 .HasForeignKey<Block>(x => x.RevelationId)
                 .HasPrincipalKey<NonceRevelationOperation>(x => x.RevealedLevel);
+
+            modelBuilder.Entity<Block>()
+                .HasOne(x => x.Software)
+                .WithMany()
+                .HasForeignKey(x => x.SoftwareId)
+                .HasPrincipalKey(x => x.Id);
             #endregion
         }
     }

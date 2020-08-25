@@ -184,6 +184,7 @@ namespace Tzkt.Sync.Protocols
             var rawBlock = block as RawBlock;
 
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
+            await SoftwareCommit.Apply(this, blockCommit.Block, rawBlock);
             await VotingCommit.Apply(this, blockCommit.Block, rawBlock);
             var freezerCommit = await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
             await RevelationPenaltyCommit.Apply(this, blockCommit.Block, rawBlock);
@@ -465,6 +466,7 @@ namespace Tzkt.Sync.Protocols
             await RevelationPenaltyCommit.Revert(this, currBlock);
             await FreezerCommit.Revert(this, currBlock);
             await VotingCommit.Revert(this, currBlock);
+            await SoftwareCommit.Revert(this, currBlock);
             await BlockCommit.Revert(this, currBlock);
 
             await StateCommit.Revert(this, currBlock);
