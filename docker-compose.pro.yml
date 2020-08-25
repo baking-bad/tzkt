@@ -22,7 +22,7 @@ services:
       POSTGRES_PASSWORD: qwerty
       POSTGRES_DB: tzkt_db
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres:/var/lib/postgresql/data
     expose:
       - 5432
