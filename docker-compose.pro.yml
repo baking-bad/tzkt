@@ -10,7 +10,7 @@ services:
     environment:
       PGRST_DB_URI: postgres://tzkt:qwerty@db:5432/tzkt_db
       PGRST_DB_SCHEMA: public
-      PGRST_DB_ANON_ROLE: tzkt #In production this role should not be the same as the one used for the connection
+      PGRST_DB_ANON_ROLE: pro_user #In production this role should not be the same as the one used for the connection
     depends_on:
       - db
   db:
@@ -25,9 +25,9 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres:/var/lib/postgresql/data
     expose:
-      - 5433
+      - 5432
     ports:
-      - 0.0.0.0:5433:5432
+      - 0.0.0.0:5432:5432
 
   api:
     container_name: tzkt-api

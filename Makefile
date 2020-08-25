@@ -33,11 +33,12 @@ pro-init:
 	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt postgres -c '\l'
 	docker-compose -f docker-compose.pro.yml exec -T db dropdb -U tzkt --if-exists tzkt_db
 	docker-compose -f docker-compose.pro.yml exec -T db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.pro.yml exec -T db createuser -U tzkt pro_user
-	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt postgres -c 'GRANT CONNECT ON DATABASE tzkt_db TO pro_user;'
-	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt postgres -c 'GRANT USAGE ON SCHEMA public TO pro_user;'
-	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt postgres -c 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO pro_user;'
 	docker-compose -f docker-compose.pro.yml exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < tzkt_db.backup
+	docker-compose -f docker-compose.pro.yml exec -T db dropuser -U tzkt pro_user --if-exists
+	docker-compose -f docker-compose.pro.yml exec -T db createuser -U tzkt pro_user -I -L
+	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt tzkt_db -c 'GRANT CONNECT ON DATABASE tzkt_db TO pro_user;'
+	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt tzkt_db -c 'GRANT USAGE ON SCHEMA public TO pro_user;'
+	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt tzkt_db -c 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO pro_user;'
 #	rm tzkt_db.backup
 	docker-compose -f docker-compose.pro.yml build
 
