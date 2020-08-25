@@ -149,12 +149,12 @@ namespace Tzkt.Sync.Services.Cache
 
         public bool DelegateExists(int id)
         {
-            return CachedById.ContainsKey(id);
+            return CachedById.TryGetValue(id, out var account) && account is Data.Models.Delegate;
         }
 
         public bool DelegateExists(string address)
         {
-            return CachedByAddress.ContainsKey(address);
+            return CachedByAddress.TryGetValue(address, out var account) && account is Data.Models.Delegate;
         }
 
         public Data.Models.Delegate GetDelegate(int? id)

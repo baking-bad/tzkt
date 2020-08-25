@@ -51,8 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 Priority = rawBlock.Header.Priority,
                 Baker = Cache.Accounts.GetDelegate(rawBlock.Metadata.Baker),
                 Events = events,
-                Reward = protocol.BlockReward0,
-                Version = BitConverter.ToUInt32(Hex.Parse(rawBlock.Header.PowNonce.Substring(0, 8)).Reverse())
+                Reward = protocol.BlockReward0
             };
         }
 
@@ -78,7 +77,6 @@ namespace Tzkt.Sync.Protocols.Proto4
             baker.FrozenRewards += Block.Reward;
             baker.FrozenDeposits += Block.Protocol.BlockDeposit;
             baker.BlocksCount++;
-            baker.Version = Block.Version;
 
             var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
             if (baker.DeactivationLevel < newDeactivationLevel)

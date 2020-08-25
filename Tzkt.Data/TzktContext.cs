@@ -21,6 +21,7 @@ namespace Tzkt.Data
         #region blocks
         public DbSet<Block> Blocks { get; set; }
         public DbSet<Protocol> Protocols { get; set; }
+        public DbSet<Software> Software { get; set; }
         #endregion
 
         #region operations
@@ -86,6 +87,7 @@ namespace Tzkt.Data
             #region block
             modelBuilder.BuildBlockModel();
             modelBuilder.BuildProtocolModel();
+            modelBuilder.BuildSoftwareModel();
             #endregion
 
             #region operations

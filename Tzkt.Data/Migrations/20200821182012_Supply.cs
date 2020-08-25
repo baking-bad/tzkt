@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -32,11 +33,10 @@ namespace Tzkt.Data.Migrations
                 nullable: false,
                 defaultValue: 0L);
 
-            migrationBuilder.AddColumn<long>(
-                name: "Version",
+            migrationBuilder.AddColumn<int>(
+                name: "SoftwareId",
                 table: "Blocks",
-                nullable: false,
-                defaultValue: 0L);
+                nullable: true);
 
             migrationBuilder.AddColumn<int>(
                 name: "CommitmentsCount",
@@ -62,8 +62,8 @@ namespace Tzkt.Data.Migrations
                 nullable: false,
                 defaultValue: 0.0);
 
-            migrationBuilder.AddColumn<long>(
-                name: "Version",
+            migrationBuilder.AddColumn<int>(
+                name: "SoftwareId",
                 table: "Accounts",
                 nullable: true);
 
@@ -81,6 +81,26 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Commitments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Software",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    BlocksCount = table.Column<int>(nullable: false),
+                    FirstLevel = table.Column<int>(nullable: false),
+                    LastLevel = table.Column<int>(nullable: false),
+                    ShortHash = table.Column<string>(fixedLength: true, maxLength: 8, nullable: false),
+                    CommitDate = table.Column<DateTime>(nullable: true),
+                    CommitHash = table.Column<string>(fixedLength: true, maxLength: 40, nullable: true),
+                    Version = table.Column<string>(nullable: true),
+                    Tags = table.Column<List<string>>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Software", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -104,6 +124,16 @@ namespace Tzkt.Data.Migrations
                 {
                     table.PrimaryKey("PK_Statistics", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blocks_SoftwareId",
+                table: "Blocks",
+                column: "SoftwareId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_SoftwareId",
+                table: "Accounts",
+                column: "SoftwareId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Commitments_Address",
@@ -136,15 +166,50 @@ namespace Tzkt.Data.Migrations
                 table: "Statistics",
                 column: "Level",
                 unique: true);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Accounts_Software_SoftwareId",
+                table: "Accounts",
+                column: "SoftwareId",
+                principalTable: "Software",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Blocks_Software_SoftwareId",
+                table: "Blocks",
+                column: "SoftwareId",
+                principalTable: "Software",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Accounts_Software_SoftwareId",
+                table: "Accounts");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Blocks_Software_SoftwareId",
+                table: "Blocks");
+
             migrationBuilder.DropTable(
                 name: "Commitments");
 
             migrationBuilder.DropTable(
+                name: "Software");
+
+            migrationBuilder.DropTable(
                 name: "Statistics");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Blocks_SoftwareId",
+                table: "Blocks");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Accounts_SoftwareId",
+                table: "Accounts");
 
             migrationBuilder.DropColumn(
                 name: "Cny",
@@ -163,7 +228,7 @@ namespace Tzkt.Data.Migrations
                 table: "DelegationOps");
 
             migrationBuilder.DropColumn(
-                name: "Version",
+                name: "SoftwareId",
                 table: "Blocks");
 
             migrationBuilder.DropColumn(
@@ -183,7 +248,7 @@ namespace Tzkt.Data.Migrations
                 table: "AppState");
 
             migrationBuilder.DropColumn(
-                name: "Version",
+                name: "SoftwareId",
                 table: "Accounts");
         }
     }
