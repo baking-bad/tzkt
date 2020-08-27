@@ -42,17 +42,6 @@ services:
     ports:
       - 0.0.0.0:5432:5432
 
-  api:
-    container_name: tzkt-api
-    restart: always
-    image: bakingbad/tzkt-api:latest
-    depends_on:
-      - db
-    expose:
-      - 5000
-    ports:
-      - 0.0.0.0:5000:5000
-
   sync:
     container_name: tzkt-sync
     restart: always
