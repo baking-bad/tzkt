@@ -2,7 +2,7 @@ init:
 	docker run --name tzkt-snapshot bakingbad/tzkt-snapshot:latest
 	docker cp tzkt-snapshot:/tzkt_db.backup .
 	docker rm tzkt-snapshot
-#	docker rmi bakingbad/tzkt-snapshot
+	docker rmi bakingbad/tzkt-snapshot
 	docker-compose up -d db
 	docker-compose exec -T db psql -U tzkt postgres -c '\l'
 	docker-compose exec -T db dropdb -U tzkt --if-exists tzkt_db
@@ -28,7 +28,7 @@ pro-init:
 	docker run --name tzkt-snapshot bakingbad/tzkt-snapshot:latest
 	docker cp tzkt-snapshot:/tzkt_db.backup .
 	docker rm tzkt-snapshot
-#	docker rmi bakingbad/tzkt-snapshot
+	docker rmi bakingbad/tzkt-snapshot
 	docker-compose -f docker-compose.pro.yml up -d db
 	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt postgres -c '\l'
 	docker-compose -f docker-compose.pro.yml exec -T db dropdb -U tzkt --if-exists tzkt_db
@@ -39,7 +39,7 @@ pro-init:
 	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt tzkt_db -c 'GRANT CONNECT ON DATABASE tzkt_db TO pro_user;'
 	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt tzkt_db -c 'GRANT USAGE ON SCHEMA public TO pro_user;'
 	docker-compose -f docker-compose.pro.yml exec -T db psql -U tzkt tzkt_db -c 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO pro_user;'
-#	rm tzkt_db.backup
+	rm tzkt_db.backup
 	docker-compose -f docker-compose.pro.yml build
 
 pro-start:
