@@ -798,6 +798,80 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, TimestampParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"""{column}"" = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($@"""{column}"" != {value.Ne}");
+
+            if (value.Gt != null)
+                AppendFilter($@"""{column}"" > {value.Gt}");
+
+            if (value.Ge != null)
+                AppendFilter($@"""{column}"" >= {value.Ge}");
+
+            if (value.Lt != null)
+                AppendFilter($@"""{column}"" < {value.Lt}");
+
+            if (value.Le != null)
+                AppendFilter($@"""{column}"" <= {value.Le}");
+
+            if (value.In != null)
+            {
+                AppendFilter($@"""{column}"" = ANY (@{column}In)");
+                Params.Add($"{column}In", value.In);
+            }
+
+            if (value.Ni != null)
+            {
+                AppendFilter($@"NOT (""{column}"" = ANY (@{column}Ni))");
+                Params.Add($"{column}Ni", value.Ni);
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, TimestampParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"{column} = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($@"{column} != {value.Ne}");
+
+            if (value.Gt != null)
+                AppendFilter($@"{column} > {value.Gt}");
+
+            if (value.Ge != null)
+                AppendFilter($@"{column} >= {value.Ge}");
+
+            if (value.Lt != null)
+                AppendFilter($@"{column} < {value.Lt}");
+
+            if (value.Le != null)
+                AppendFilter($@"{column} <= {value.Le}");
+
+            if (value.In != null)
+            {
+                AppendFilter($@"{column} = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", value.In);
+            }
+
+            if (value.Ni != null)
+            {
+                AppendFilter($@"NOT ({column} = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", value.Ni);
+            }
+
+            return this;
+        }
+
         public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, (string, string)> map)
         {
             var sortAsc = true;

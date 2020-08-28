@@ -277,11 +277,11 @@ namespace Tzkt.Api.Repositories
 
             var fromLevel = from > state.Timestamp
                 ? state.Level + (int)(from - state.Timestamp).TotalSeconds / proto.TimeBetweenBlocks
-                : Time.FindLevel(from, Nearest.Higher);
+                : Time.FindLevel(from, SearchMode.ExactOrHigher);
 
             var toLevel = to > state.Timestamp
                 ? state.Level + (int)(to - state.Timestamp).TotalSeconds / proto.TimeBetweenBlocks
-                : Time.FindLevel(to, Nearest.Lower);
+                : Time.FindLevel(to, SearchMode.ExactOrLower);
 
             if (!(rawAccount is RawDelegate) || fromLevel == -1 || toLevel == -1)
                 return Enumerable.Empty<BakingInterval>();

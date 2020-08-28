@@ -46,7 +46,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="activationLevel">Filters commitments by activation level</param>
         /// <param name="balance">Filters commitments by activated balance</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`, `numContracts`.</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `activationLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
