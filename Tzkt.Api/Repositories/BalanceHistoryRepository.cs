@@ -24,6 +24,13 @@ namespace Tzkt.Api.Repositories
             Time = time;
         }
 
+        public Task<long> Get(string address, DateTime timestamp)
+        {
+            var level = Time.FindLevel(timestamp, SearchMode.ExactOrLower);
+            if (level == -1) return Task.FromResult(0L);
+            return Get(address, level);
+        }
+
         public async Task<long> Get(string address, int level)
         {
             var account = await Accounts.GetAsync(address);
