@@ -54,16 +54,16 @@ namespace Tzkt.Api.Services.Cache
             }
         }
 
-        public int FindLevel(DateTime datetime, Nearest mode)
+        public int FindLevel(DateTime datetime, SearchMode mode)
         {
             if (Times.Count == 0)
                 return -1;
 
             if (datetime > Times[^1])
-                return mode == Nearest.Lower ? Times.Count - 1 : -1;
+                return mode == SearchMode.ExactOrLower ? Times.Count - 1 : -1;
 
             if (datetime < Times[0])
-                return mode == Nearest.Higher ? 0 : -1;
+                return mode == SearchMode.ExactOrHigher ? 0 : -1;
 
             #region binary search
             var from = 0;
@@ -88,7 +88,8 @@ namespace Tzkt.Api.Services.Cache
                 }
             }
 
-            return mode == Nearest.Higher ? from : to;
+            return mode == SearchMode.Exact ? -1 :
+                   mode == SearchMode.ExactOrHigher ? from : to;
             #endregion
         }
 
@@ -125,10 +126,11 @@ namespace Tzkt.Api.Services.Cache
         }
     }
 
-    public enum Nearest
+    public enum SearchMode
     {
-        Lower,
-        Higher
+        Exact,
+        ExactOrLower,
+        ExactOrHigher
     }
 
     public static class TimeCacheExt
