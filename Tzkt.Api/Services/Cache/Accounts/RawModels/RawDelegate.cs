@@ -27,5 +27,7 @@ namespace Tzkt.Api.Services.Cache
         public int DoubleEndorsingCount { get; set; }
         public int NonceRevelationsCount { get; set; }
         public int RevelationPenaltiesCount { get; set; }
+
+        public int? SoftwareId { get; set; }
     }
 }

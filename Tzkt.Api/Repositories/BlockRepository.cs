@@ -7,6 +7,7 @@ using Dapper;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Repositories
 {
@@ -16,13 +17,15 @@ namespace Tzkt.Api.Repositories
         readonly OperationRepository Operations;
         readonly QuotesCache Quotes;
         readonly StateCache State;
+        readonly SoftwareMetadataService Software;
 
-        public BlockRepository(AccountsCache accounts, OperationRepository operations, QuotesCache quotes, StateCache state, IConfiguration config) : base(config)
+        public BlockRepository(AccountsCache accounts, OperationRepository operations, QuotesCache quotes, StateCache state, SoftwareMetadataService software, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Operations = operations;
             Quotes = quotes;
             State = state;
+            Software = software;
         }
 
         public Task<int> GetCount()
@@ -33,7 +36,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(int level, bool operations, Symbols quote)
         {
             var sql = @"
-                SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
+                SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
                 FROM    ""Blocks""
                 WHERE   ""Level"" = @level
                 LIMIT   1";
@@ -54,6 +57,7 @@ namespace Tzkt.Api.Repositories
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
+                Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 Quote = Quotes.Get(quote, level)
             };
 
@@ -66,7 +70,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(string hash, bool operations, Symbols quote)
         {
             var sql = @"
-                SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId""
+                SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
                 FROM    ""Blocks""
                 WHERE   ""Hash"" = @hash::character(51)
                 LIMIT   1";
@@ -87,6 +91,7 @@ namespace Tzkt.Api.Repositories
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
+                Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 Quote = Quotes.Get(quote, row.Level)
             };
 
@@ -105,7 +110,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"" FROM ""Blocks""")
+            var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId"" FROM ""Blocks""")
                 .Filter("BakerId", baker)
                 .Filter("Level", level)
                 .Filter("Priority", priority)
@@ -134,6 +139,7 @@ namespace Tzkt.Api.Repositories
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null,
+                Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -163,6 +169,7 @@ namespace Tzkt.Api.Repositories
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
                     case "baker": columns.Add(@"""BakerId"""); break;
+                    case "software": columns.Add(@"""SoftwareId"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
                 }
             }
@@ -235,6 +242,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
                         break;
+                    case "software":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -268,6 +279,7 @@ namespace Tzkt.Api.Repositories
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
                 case "baker": columns.Add(@"""BakerId"""); break;
+                case "software": columns.Add(@"""SoftwareId"""); break;
                 case "quote": columns.Add(@"""Level"""); break;
             }
 
@@ -336,6 +348,10 @@ namespace Tzkt.Api.Repositories
                 case "baker":
                     foreach (var row in rows)
                         result[j++] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
+                    break;
+                case "software":
+                    foreach (var row in rows)
+                        result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                     break;
                 case "quote":
                     foreach (var row in rows)

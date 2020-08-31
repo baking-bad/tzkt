@@ -59,6 +59,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public Alias Baker { get; set; }
 
+        /// <summary>
+        /// Information about baker's software
+        /// </summary>
+        public SoftwareAlias Software { get; set; }
+
         #region operations
         /// <summary>
         /// List of endorsement (is operation, which specifies the head of the chain as seen by the endorser of a given slot)
