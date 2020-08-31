@@ -57,6 +57,7 @@ namespace Tzkt.Api
             services.AddTransient<QuotesRepository>();
             services.AddTransient<CommitmentRepository>();
             services.AddTransient<StatisticsRepository>();
+            services.AddTransient<SoftwareRepository>();
 
             services.AddSynchronization();
 
