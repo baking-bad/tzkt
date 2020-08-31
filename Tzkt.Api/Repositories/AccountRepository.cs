@@ -17,13 +17,15 @@ namespace Tzkt.Api.Repositories
         readonly StateCache State;
         readonly TimeCache Time;
         readonly OperationRepository Operations;
+        readonly SoftwareMetadataService Software;
 
-        public AccountRepository(AccountsCache accounts, StateCache state, TimeCache time, OperationRepository operations, IConfiguration config) : base(config)
+        public AccountRepository(AccountsCache accounts, StateCache state, TimeCache time, OperationRepository operations, SoftwareMetadataService software, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             State = state;
             Time = time;
             Operations = operations;
+            Software = software;
         }
 
         public async Task<Account> Get(string address, bool metadata)
@@ -82,7 +84,8 @@ namespace Tzkt.Api.Repositories
                         NumReveals = delegat.RevealsCount,
                         NumMigrations = delegat.MigrationsCount,
                         NumTransactions = delegat.TransactionsCount,
-                        Metadata = metadata ? accMetadata : null
+                        Metadata = metadata ? accMetadata : null,
+                        Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
                     };
                     #endregion
                 case RawUser user:
@@ -240,6 +243,7 @@ namespace Tzkt.Api.Repositories
                 NumReveals = delegat.RevealsCount,
                 NumMigrations = delegat.MigrationsCount,
                 NumTransactions = delegat.TransactionsCount,
+                Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
             };
         }
 
@@ -467,6 +471,7 @@ namespace Tzkt.Api.Repositories
                             NumReveals = row.RevealsCount,
                             NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount,
+                            Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
                         });
                         #endregion
                         break;
@@ -590,6 +595,7 @@ namespace Tzkt.Api.Repositories
                     case "numReveals": columns.Add(@"""RevealsCount"""); break;
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
+                    case "software": columns.Add(@"""SoftwareId"""); break;
 
                     case "delegate": columns.Add(@"""DelegateId"""); break;
                     case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -813,6 +819,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TransactionsCount;
                         break;
+                    case "software":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                        break;
                     case "delegate":
                         j = 0;
                         foreach (var row in rows)
@@ -924,6 +934,7 @@ namespace Tzkt.Api.Repositories
                 case "numReveals": columns.Add(@"""RevealsCount"""); break;
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
+                case "software": columns.Add(@"""SoftwareId"""); break;
 
                 case "delegate": columns.Add(@"""DelegateId"""); break;
                 case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -1107,6 +1118,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TransactionsCount;
                     break;
+                case "software":
+                    foreach (var row in rows)
+                        result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                    break;
                 case "delegate":
                     foreach (var row in rows)
                     {
@@ -1236,6 +1251,7 @@ namespace Tzkt.Api.Repositories
                     NumReveals = row.RevealsCount,
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
+                    Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
                 };
             });
         }
@@ -1288,6 +1304,7 @@ namespace Tzkt.Api.Repositories
                     case "numReveals": columns.Add(@"""RevealsCount"""); break;
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
+                    case "software": columns.Add(@"""SoftwareId"""); break;
                 }
             }
 
@@ -1501,6 +1518,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TransactionsCount;
                         break;
+                    case "software":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                        break;
                 }
             }
 
@@ -1553,6 +1574,7 @@ namespace Tzkt.Api.Repositories
                 case "numReveals": columns.Add(@"""RevealsCount"""); break;
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
+                case "software": columns.Add(@"""SoftwareId"""); break;
             }
 
             if (columns.Count == 0)
@@ -1725,6 +1747,10 @@ namespace Tzkt.Api.Repositories
                 case "numTransactions":
                     foreach (var row in rows)
                         result[j++] = row.TransactionsCount;
+                    break;
+                case "software":
+                    foreach (var row in rows)
+                        result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                     break;
             }
 

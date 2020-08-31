@@ -12,6 +12,7 @@ using Npgsql;
 using Dapper;
 
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Services.Sync
 {
@@ -26,11 +27,22 @@ namespace Tzkt.Api.Services.Sync
         readonly TimeCache Times;
         readonly ILogger Logger;
 
+        readonly SoftwareMetadataService Software;
+
         int BlocksTime;
         RawState LastState;
         DateTime NextSyncTime;
+        DateTime NextMetadataTime;
 
-        public SyncWorker(AccountsCache accounts, ProtocolsCache protocols, QuotesCache quotes, StateCache state, TimeCache times, IConfiguration config, ILogger<SyncWorker> logger)
+        public SyncWorker(
+            AccountsCache accounts,
+            ProtocolsCache protocols,
+            QuotesCache quotes,
+            StateCache state,
+            TimeCache times,
+            SoftwareMetadataService software,
+            IConfiguration config,
+            ILogger<SyncWorker> logger)
         {
             Config = config.GetSyncConfig();
             ConnectionString = config.GetConnectionString("DefaultConnection");
@@ -39,6 +51,7 @@ namespace Tzkt.Api.Services.Sync
             Quotes = quotes;
             State = state;
             Times = times;
+            Software = software;
             Logger = logger;
         }
 
@@ -50,6 +63,7 @@ namespace Tzkt.Api.Services.Sync
             BlocksTime = await GetBlocksTime();
             LastState = await State.LoadStateAsync();
             NextSyncTime = DateTime.UtcNow.AddSeconds(Config.CheckInterval);
+            NextMetadataTime = DateTime.UtcNow.AddSeconds(Config.MetadataInterval);
 
             Logger.LogInformation($"Sync worker initialized with level {LastState.Level} and blocks time {BlocksTime}s");
             #endregion
@@ -91,6 +105,13 @@ namespace Tzkt.Api.Services.Sync
                         NextSyncTime = DateTimeExt.Min(
                             DateTimeExt.Max(currentState.Timestamp.AddSeconds(BlocksTime), DateTime.UtcNow.AddSeconds(Config.UpdateInterval)),
                             DateTime.UtcNow.AddSeconds(Config.CheckInterval));
+                    }
+
+                    if (DateTime.UtcNow > NextMetadataTime)
+                    {
+                        await Software.Refresh();
+
+                        NextMetadataTime = DateTime.UtcNow.AddSeconds(Config.MetadataInterval);
                     }
 
                     await Task.Delay(500);

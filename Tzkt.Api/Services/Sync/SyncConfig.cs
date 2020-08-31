@@ -10,6 +10,7 @@ namespace Tzkt.Api.Services.Sync
     {
         public int CheckInterval { get; set; } = 20;
         public int UpdateInterval { get; set; } = 1;
+        public int MetadataInterval { get; set; } = 1800;
     }
 
     public static class SyncConfigExt

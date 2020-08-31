@@ -416,7 +416,7 @@ namespace Tzkt.Api.Controllers
         /// Returns account balance at the specified datetime
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="datetime">Datetime at which you want to know account balance (e.g. 2020-01-01, or 2019-12-04T15:32:59Z)</param>
+        /// <param name="datetime">Datetime at which you want to know account balance (e.g. `2020-01-01`, or `2019-12-30T23:42:59Z`)</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{datetime:DateTime}")]
         public Task<long> GetBalanceAtDate([Address] string address, DateTime datetime)
