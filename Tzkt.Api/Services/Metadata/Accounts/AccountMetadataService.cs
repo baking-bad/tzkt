@@ -45,7 +45,7 @@ namespace Tzkt.Api.Services.Metadata
             using var db = GetConnection();
             var links = db.Query<(int Id, string Address)>(sql, new { addresses = accounts.Select(x => x.Address).ToArray() });
 
-            Metadata = accounts.ToDictionary(x => links.First(l => l.Address == x.Address).Id);
+            Metadata = links.ToDictionary(x => x.Id, x => accounts.First(a => a.Address == x.Address));
             Aliases = new List<AccountMetadataAlias>(Metadata.Count);
 
             foreach (var meta in Metadata.Values)

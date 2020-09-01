@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -13,10 +15,12 @@ namespace Tzkt.Api.Controllers
     [Route("v1/statistics")]
     public class StatisticsController : ControllerBase
     {
-        private readonly StatisticsRepository Statistics;
+        readonly StateCache State;
+        readonly StatisticsRepository Statistics;
 
-        public StatisticsController(StatisticsRepository statistics)
+        public StatisticsController(StateCache state, StatisticsRepository statistics)
         {
+            State = state;
             Statistics = statistics;
         }
 
@@ -173,6 +177,45 @@ namespace Tzkt.Api.Controllers
                     {
                         Cols = select.Fields,
                         Rows = await Statistics.Get(StatisticsPeriod.Cyclic, cycle, null, null, null, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get current statistics
+        /// </summary>
+        /// <remarks>
+        /// Returns statistics at the end of a head block.
+        /// </remarks>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select a single field, response will be a single value in both `.fields` and `.values` modes.</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("current")]
+        public async Task<ActionResult<Statistics>> GetCycles(SelectParameter select, Symbols quote = Symbols.None)
+        {
+            var level = new Int32Parameter { Eq = State.GetLevel() };
+
+            if (select == null)
+                return Ok((await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, quote)).FirstOrDefault());
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok((await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Values[0], quote)).FirstOrDefault());
+                else
+                    return Ok((await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Values, quote)).FirstOrDefault());
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok((await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Fields[0], quote)).FirstOrDefault());
+                else
+                {
+                    return Ok(new SelectionSingleResponse
+                    {
+                        Cols = select.Fields,
+                        Vals = (await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Fields, quote)).FirstOrDefault()
                     });
                 }
             }

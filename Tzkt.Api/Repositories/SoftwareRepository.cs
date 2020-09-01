@@ -49,7 +49,7 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel,
                 LastTime = Time[row.LastLevel],
                 ShortHash = row.ShortHash,
-                Tags = row.Tags,
+                Tags = row.Tags == null ? null : new List<string>(row.Tags),
                 Version = row.Version
             });
         }
@@ -131,7 +131,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "tags":
                         foreach (var row in rows)
-                            result[j++][i] = row.Tags;
+                            result[j++][i] = row.Tags == null ? null : new List<string>(row.Tags);
                         break;
                     case "version":
                         foreach (var row in rows)
@@ -214,7 +214,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "tags":
                     foreach (var row in rows)
-                        result[j++] = row.Tags;
+                        result[j++] = row.Tags == null ? null : new List<string>(row.Tags);
                     break;
                 case "version":
                     foreach (var row in rows)
