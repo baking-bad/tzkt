@@ -61,6 +61,19 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get current protocol
+        /// </summary>
+        /// <remarks>
+        /// Returns current protocol.
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("current")]
+        public Task<Protocol> GetCurrent()
+        {
+            return Protocols.Get(State.GetState().Protocol);
+        }
+
+        /// <summary>
         /// Get protocol by code
         /// </summary>
         /// <remarks>

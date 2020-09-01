@@ -45,7 +45,7 @@ namespace Tzkt.Api.Controllers
         public IEnumerable<AccountMetadataAlias> GetAccounts(string search)
         {
             search = search.ToLower();
-            return AccountMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search));
+            return AccountMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
         }
 
         [OpenApiIgnore]
@@ -67,7 +67,7 @@ namespace Tzkt.Api.Controllers
         public IEnumerable<ProposalMetadataAlias> GetProposals(string search)
         {
             search = search.ToLower();
-            return ProposalMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search));
+            return ProposalMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
         }
 
         [OpenApiIgnore]
@@ -89,7 +89,7 @@ namespace Tzkt.Api.Controllers
         public IEnumerable<ProtocolMetadataAlias> GetProtocols(string search)
         {
             search = search.ToLower();
-            return ProtocolMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search));
+            return ProtocolMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
         }
     }
 }
