@@ -29,7 +29,11 @@ namespace Tzkt.Api.Services.Cache
                 ORDER BY  ""Level""";
 
             using var db = GetConnection();
-            Times = db.Query<DateTime>(sql).ToList();
+            var times = db.Query<DateTime>(sql);
+
+            Times = new List<DateTime>(times.Count() + 130_000);
+            foreach (var time in times)
+                Times.Add(time);
 
             Logger.LogDebug($"Time cache initialized with {Times.Count} items");
         }

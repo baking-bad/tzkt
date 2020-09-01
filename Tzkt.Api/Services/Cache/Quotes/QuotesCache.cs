@@ -32,12 +32,19 @@ namespace Tzkt.Api.Services.Cache
             using var db = GetConnection();
             var rows = db.Query(sql);
 
-            Quotes[0] = rows.Select(x => (double)x.Btc).ToList();
-            Quotes[1] = rows.Select(x => (double)x.Eur).ToList();
-            Quotes[2] = rows.Select(x => (double)x.Usd).ToList();
-            Quotes[3] = rows.Select(x => (double)x.Cny).ToList();
-            Quotes[4] = rows.Select(x => (double)x.Jpy).ToList();
-            Quotes[5] = rows.Select(x => (double)x.Krw).ToList();
+            var cnt = rows.Count();
+            for (int i = 0; i < Quotes.Length; i++)
+                Quotes[i] = new List<double>(cnt + 130_000);
+
+            foreach (var row in rows)
+            {
+                Quotes[0].Add(row.Btc);
+                Quotes[1].Add(row.Eur);
+                Quotes[2].Add(row.Usd);
+                Quotes[3].Add(row.Cny);
+                Quotes[4].Add(row.Jpy);
+                Quotes[5].Add(row.Krw);
+            }
 
             Logger.LogDebug($"Quotes cache initialized with {Quotes[0].Count} items");
         }

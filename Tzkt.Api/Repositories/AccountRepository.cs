@@ -632,12 +632,11 @@ namespace Tzkt.Api.Repositories
             for (int i = 0; i < result.Length; i++)
                 result[i] = new object[fields.Length];
 
-            for (int i = 0, j = 0; i < fields.Length; i++)
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
                 switch (fields[i])
                 {
                     case "alias":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var metadata = Accounts.GetMetadata((int)row.Id);
@@ -645,177 +644,142 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "type":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = TypeToString(row.Type);
                         break;
                     case "active":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Staked;
                         break;
                     case "address":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Address;
                         break;
                     case "publicKey":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.PublicKey;
                         break;
                     case "revealed":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Revealed;
                         break;
                     case "balance":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
                     case "frozenDeposits":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenDeposits;
                         break;
                     case "frozenRewards":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenRewards;
                         break;
                     case "frozenFees":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenFees;
                         break;
                     case "counter":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Counter;
                         break;
                     case "activationLevel":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ActivationLevel;
                         break;
                     case "activationTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ActivationLevel == null ? null : Time[row.ActivationLevel];
                         break;
                     case "deactivationLevel":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Staked ? null : (int?)row.DeactivationLevel;
                         break;
                     case "deactivationTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel];
                         break;
                     case "stakingBalance":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.StakingBalance;
                         break;
                     case "firstActivity":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
                         break;
                     case "firstActivityTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = Time[row.FirstLevel];
                         break;
                     case "lastActivity":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.LastLevel;
                         break;
                     case "lastActivityTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = Time[row.LastLevel];
                         break;
                     case "numActivations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Activated == true ? 1 : 0;
                         break;
                     case "numBallots":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.BallotsCount;
                         break;
                     case "numContracts":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ContractsCount;
                         break;
                     case "numDelegators":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegatorsCount;
                         break;
                     case "numBlocks":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.BlocksCount;
                         break;
                     case "numDelegations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegationsCount;
                         break;
                     case "numDoubleBaking":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingCount;
                         break;
                     case "numDoubleEndorsing":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleEndorsingCount;
                         break;
                     case "numEndorsements":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.EndorsementsCount;
                         break;
                     case "numNonceRevelations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.NonceRevelationsCount;
                         break;
                     case "numRevelationPenalties":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.RevelationPenaltiesCount;
                         break;
                     case "numOriginations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.OriginationsCount;
                         break;
                     case "numProposals":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ProposalsCount;
                         break;
                     case "numReveals":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.RevealsCount;
                         break;
                     case "numMigrations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.MigrationsCount;
                         break;
                     case "numTransactions":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.TransactionsCount;
                         break;
@@ -824,7 +788,6 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                         break;
                     case "delegate":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
@@ -838,22 +801,18 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "delegationLevel":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegateId == null ? null : row.DelegationLevel;
                         break;
                     case "delegationTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegateId == null ? null : Time[row.DelegationLevel];
                         break;
                     case "kind":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Kind == null ? null : KindToString(row.Kind);
                         break;
                     case "creator":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
@@ -866,7 +825,6 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "manager":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
@@ -1331,12 +1289,11 @@ namespace Tzkt.Api.Repositories
             for (int i = 0; i < result.Length; i++)
                 result[i] = new object[fields.Length];
 
-            for (int i = 0, j = 0; i < fields.Length; i++)
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
                 switch (fields[i])
                 {
                     case "alias":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var metadata = Accounts.GetMetadata((int)row.Id);
@@ -1344,177 +1301,142 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "type":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = AccountTypes.Delegate;
                         break;
                     case "active":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Staked;
                         break;
                     case "address":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Address;
                         break;
                     case "publicKey":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.PublicKey;
                         break;
                     case "revealed":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Revealed;
                         break;
                     case "balance":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
                     case "frozenDeposits":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenDeposits;
                         break;
                     case "frozenRewards":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenRewards;
                         break;
                     case "frozenFees":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenFees;
                         break;
                     case "counter":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Counter;
                         break;
                     case "activationLevel":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ActivationLevel;
                         break;
                     case "activationTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = Time[row.ActivationLevel];
                         break;
                     case "deactivationLevel":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Staked ? null : (int?)row.DeactivationLevel;
                         break;
                     case "deactivationTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel];
                         break;
                     case "stakingBalance":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.StakingBalance;
                         break;
                     case "firstActivity":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
                         break;
                     case "firstActivityTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = Time[row.FirstLevel];
                         break;
                     case "lastActivity":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.LastLevel;
                         break;
                     case "lastActivityTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = Time[row.LastLevel];
                         break;
                     case "numActivations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Activated == true ? 1 : 0;
                         break;
                     case "numBallots":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.BallotsCount;
                         break;
                     case "numContracts":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ContractsCount;
                         break;
                     case "numDelegators":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegatorsCount;
                         break;
                     case "numBlocks":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.BlocksCount;
                         break;
                     case "numDelegations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegationsCount;
                         break;
                     case "numDoubleBaking":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingCount;
                         break;
                     case "numDoubleEndorsing":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleEndorsingCount;
                         break;
                     case "numEndorsements":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.EndorsementsCount;
                         break;
                     case "numNonceRevelations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.NonceRevelationsCount;
                         break;
                     case "numRevelationPenalties":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.RevelationPenaltiesCount;
                         break;
                     case "numOriginations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.OriginationsCount;
                         break;
                     case "numProposals":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ProposalsCount;
                         break;
                     case "numReveals":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.RevealsCount;
                         break;
                     case "numMigrations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.MigrationsCount;
                         break;
                     case "numTransactions":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.TransactionsCount;
                         break;
@@ -1913,22 +1835,19 @@ namespace Tzkt.Api.Repositories
             for (int i = 0; i < result.Length; i++)
                 result[i] = new object[fields.Length];
 
-            for (int i = 0, j = 0; i < fields.Length; i++)
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
                 switch (fields[i])
                 {
                     case "type":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = AccountTypes.Contract;
                         break;
                     case "kind":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = KindToString(row.Kind);
                         break;
                     case "alias":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var metadata = Accounts.GetMetadata((int)row.Id);
@@ -1936,17 +1855,14 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "address":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Address;
                         break;
                     case "balance":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
                     case "creator":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
@@ -1959,7 +1875,6 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "manager":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
@@ -1973,7 +1888,6 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "delegate":
-                        j = 0;
                         foreach (var row in rows)
                         {
                             var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
@@ -1987,62 +1901,50 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "delegationLevel":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegateId == null ? null : row.DelegationLevel;
                         break;
                     case "delegationTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegateId == null ? null : Time[row.DelegationLevel];
                         break;
                     case "numContracts":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.ContractsCount;
                         break;
                     case "numDelegations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.DelegationsCount;
                         break;
                     case "numOriginations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.OriginationsCount;
                         break;
                     case "numTransactions":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.TransactionsCount;
                         break;
                     case "numReveals":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.RevealsCount;
                         break;
                     case "numMigrations":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.MigrationsCount;
                         break;
                     case "firstActivity":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
                         break;
                     case "firstActivityTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = Time[row.FirstLevel];
                         break;
                     case "lastActivity":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.LastLevel;
                         break;
                     case "lastActivityTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = Time[row.LastLevel];
                         break;
