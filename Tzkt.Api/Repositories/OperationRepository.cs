@@ -3061,7 +3061,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", o.""Amount"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
+                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""Amount"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
