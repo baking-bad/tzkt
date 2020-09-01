@@ -125,37 +125,31 @@ namespace Tzkt.Api.Repositories
             for (int i = 0; i < result.Length; i++)
                 result[i] = new object[fields.Length];
 
-            for (int i = 0, j = 0; i < fields.Length; i++)
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
                 switch (fields[i])
                 {
                     case "activated":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Level != null;
                         break;
                     case "activatedAccount":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.AccountId == null ? null : Accounts.GetAlias(row.AccountId);
                         break;
                     case "activationLevel":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
                         break;
                     case "activationTime":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Level == null ? null : Time[row.Level];
                         break;
                     case "address":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Address;
                         break;
                     case "balance":
-                        j = 0;
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
@@ -208,32 +202,26 @@ namespace Tzkt.Api.Repositories
             switch (field)
             {
                 case "activated":
-                    j = 0;
                     foreach (var row in rows)
                         result[j++] = row.Level != null;
                     break;
                 case "activatedAccount":
-                    j = 0;
                     foreach (var row in rows)
                         result[j++] = row.AccountId == null ? null : Accounts.GetAlias(row.AccountId);
                     break;
                 case "activationLevel":
-                    j = 0;
                     foreach (var row in rows)
                         result[j++] = row.Level;
                     break;
                 case "activationTime":
-                    j = 0;
                     foreach (var row in rows)
                         result[j++] = row.Level == null ? null : Time[row.Level];
                     break;
                 case "address":
-                    j = 0;
                     foreach (var row in rows)
                         result[j++] = row.Address;
                     break;
                 case "balance":
-                    j = 0;
                     foreach (var row in rows)
                         result[j++] = row.Balance;
                     break;

@@ -39,6 +39,7 @@ namespace Tzkt.Api.Services.Cache
             var capacity = count < Config.MaxAccounts
                 ? Math.Min((int)(count * 1.1), Config.MaxAccounts)
                 : Config.MaxAccounts;
+
             var sql = @"
                 SELECT   *
                 FROM     ""Accounts""
