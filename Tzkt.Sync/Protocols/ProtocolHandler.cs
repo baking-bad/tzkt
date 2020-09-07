@@ -228,6 +228,7 @@ namespace Tzkt.Sync
                 "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS" => new Protocols.Proto5.Diagnostics(Db, Node),
                 "PsBABY5HQTSkA4297zNHfsZNKtxULfL18y95qb3m53QJiXGmrbU" => new Protocols.Proto5.Diagnostics(Db, Node),
                 "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb" => new Protocols.Proto6.Diagnostics(Db, Node),
+                "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo" => new Protocols.Proto7.Diagnostics(Db, Node),
                 _ => throw new NotImplementedException($"Diagnostics for the protocol {hash} hasn't been implemented yet")
             };
         }
