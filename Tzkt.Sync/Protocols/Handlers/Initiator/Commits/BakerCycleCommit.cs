@@ -58,7 +58,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
                     bakerCycle.FutureBlocks++;
                     bakerCycle.FutureBlockDeposits += GetBlockDeposit(Block.Protocol, cycle);
-                    //bakerCycle.FutureBlockRewards += GetBlockReward(Block.Protocol, cycle);
+                    bakerCycle.FutureBlockRewards += GetFutureBlockReward(Block.Protocol, cycle);
                 }
                 #endregion
 
@@ -71,7 +71,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
                     bakerCycle.FutureEndorsements += er.Slots.Count;
                     bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(Block.Protocol, cycle, er.Slots.Count);
-                    //bakerCycle.FutureEndorsementRewards += GetEndorsementReward(Block.Protocol, cycle, er.Slots.Count);
+                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(Block.Protocol, cycle, er.Slots.Count);
                 }
                 #endregion
 
@@ -86,7 +86,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
                         bakerCycle.FutureEndorsements += er.Slots.Count;
                         bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(Block.Protocol, cycle, er.Slots.Count);
-                        //bakerCycle.FutureEndorsementRewards += GetEndorsementReward(Block.Protocol, cycle, er.Slots.Count);
+                        bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(Block.Protocol, cycle, er.Slots.Count);
                     }
                 }
                 #endregion
@@ -105,11 +105,17 @@ namespace Tzkt.Sync.Protocols.Initiator
         #region helpers
         //TODO: figure out how to avoid hardcoded constants for future cycles
 
+        long GetFutureBlockReward(Protocol protocol, int cycle)
+            => protocol.BlockReward0 == 0 && cycle < protocol.PreservedCycles + 2 ? 0 : protocol.BlockReward0 * (protocol.BlockReward1 == 0 ? 1: protocol.EndorsersPerBlock); //TODO: use protocol_parameters
+
         long GetBlockDeposit(Protocol protocol, int cycle)
-            => cycle < 64 ? cycle * 8_000_000L : protocol.BlockDeposit;
+            => protocol.BlockDeposit < 512_000_000L && cycle < 64 ? cycle * 8_000_000L : 512_000_000L; //TODO: use protocol_parameters
+
+        long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
+            => protocol.EndorsementReward0 == 0 && cycle < protocol.PreservedCycles + 2 ? 0 : slots * protocol.EndorsementReward0; //TODO: use protocol_parameters
 
         long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
-            => slots * (cycle < 64 ? cycle * 1_000_000L : protocol.EndorsementDeposit);
+            => slots * (protocol.EndorsementDeposit < 64_000_000L && cycle < 64 ? cycle * 1_000_000L : 64_000_000L); //TODO: use protocol_parameters
         #endregion
 
         #region static
