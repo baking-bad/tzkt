@@ -20,6 +20,7 @@ TzKT API is available for the following Tezos networks and on the following base
 - Babylonnet: `https://api.babylon.tzkt.io/` ([view docs](https://api.babylon.tzkt.io))
 - Carthagenet: `https://api.carthage.tzkt.io/` ([view docs](https://api.carthage.tzkt.io))
 - Zeronet: `https://api.zeronet.tzkt.io/` ([view docs](https://api.zeronet.tzkt.io))
+- Delphinet: `https://api.delphi.tzkt.io/` ([view docs](https://api.delphi.tzkt.io))
 
 ### Staging environment
 

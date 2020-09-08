@@ -87,7 +87,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_258.backup" -O tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_270.backup" -O tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -196,12 +196,14 @@ Like this:
 ````js
 {
   "Sync": {
-    "CheckInterval": 20,
-    "UpdateInterval": 10
+    "CheckInterval": 5,
+    "UpdateInterval": 2
   },
 
   "Metadata": {
-    "AccountsPath": "*"
+    "AccountsPath": "*",
+    "ProposalsPath": "*",
+    "ProtocolsPath": "*"
   },
 
   "Cache": {
@@ -273,7 +275,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/cartha_tzkt_226.backup" -O cartha_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/cartha_tzkt_344.backup" -O cartha_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -386,12 +388,14 @@ Like this:
 ````js
 {
   "Sync": {
-    "CheckInterval": 20,
-    "UpdateInterval": 10
+    "CheckInterval": 5,
+    "UpdateInterval": 2
   },
 
   "Metadata": {
-    "AccountsPath": "*"
+    "AccountsPath": "*",
+    "ProposalsPath": "*",
+    "ProtocolsPath": "*"
   },
 
   "Cache": {
@@ -448,207 +452,6 @@ dotnet Tzkt.Api.dll
 //       Hosting environment: Production
 // info: Microsoft.Hosting.Lifetime[0]
 //       Content root path: /home/tzkt/cartha-tzkt-api
-// ....
-````
-
-That's it.
-
-## Install Tzkt Indexer and API for Zeronet
-
-In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Anyway, let's do it from scratch.
-
-### Prepare database
-
-#### Create an empty database and its user
-
-````
-sudo -u postgres psql
-
-postgres=# create database zero_tzkt_db;
-postgres=# create user tzkt with encrypted password 'qwerty';
-postgres=# grant all privileges on database zero_tzkt_db to tzkt;
-postgres=# \q
-````
-
-#### Download fresh snapshot
-
-````c
-cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/zero_tzkt_9936.backup" -O zero_tzkt_db.backup
-````
-
-#### Restore database from the snapshot
-
-````c
-// zeronet restoring takes ~1 min
-sudo -u postgres pg_restore -c --if-exists -v -d zero_tzkt_db -1 zero_tzkt_db.backup
-````
-
-### Clone, build, configure and run Tzkt Indexer
-
-#### Clone
-
-````
-cd ~
-git clone https://github.com/baking-bad/tzkt.git
-````
-
-#### Build indexer
-
-````
-cd ~/tzkt/Tzkt.Sync/
-dotnet publish -o ~/zero-tzkt-sync
-````
-
-#### Configure indexer
-
-Edit configuration file `~/zero-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
-
-Like this:
-
-````json
-{
-  "Protocols": {
-    "Diagnostics": false,
-    "Validation": true
-  },
-
-  "TezosNode": {
-    "ChainId": "NetXKakFj1A7ouL",
-    "Endpoint": "https://rpc.tzkt.io/zeronet/",
-    "Timeout": 30
-  },
-  
-  "Quotes": {
-    "Async": true,
-    "Provider": {
-      "Name": "TzktQuotes"
-    }    
-  },
-
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=zero_tzkt_db;username=tzkt;password=qwerty;"
-  },
-
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Information"
-    }
-  }
-}
-````
-
-#### Run indexer
-
-````c
-cd ~/zero-tzkt-sync
-dotnet Tzkt.Sync.dll
-
-// info: Microsoft.Hosting.Lifetime[0]
-//       Application started. Press Ctrl+C to shut down.
-// info: Microsoft.Hosting.Lifetime[0]
-//       Hosting environment: Production
-// info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/zero-tzkt-sync
-// warn: Tzkt.Sync.Services.Observer[0]
-//       Observer is started
-// info: Tzkt.Sync.Services.Observer[0]
-//       Applied 125790
-// info: Tzkt.Sync.Services.Observer[0]
-//       Applied 125791
-// ....
-````
-
-That's it. If you want to run the indexer as a daemon, take a look at this guide: https://docs.microsoft.com/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-3.1#create-the-service-file.
-
-### Build, configure and run Tzkt API for the zeronet indexer
-
-Suppose you have already created database `zero_tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
-
-#### Build API
-
-````
-cd ~/tzkt/Tzkt.Api/
-dotnet publish -o ~/zero-tzkt-api
-````
-
-#### Configure API
-
-Edit configuration file `~/zero-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
-
-By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates.
-
-If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json`.
-
-Like this:
-
-````js
-{
-  "Sync": {
-    "CheckInterval": 20,
-    "UpdateInterval": 10
-  },
-
-  "Metadata": {
-    "AccountsPath": "*"
-  },
-
-  "Cache": {
-    "LoadRate": 0.75,
-    "MaxAccounts": 32000
-  },
-
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=zero_tzkt_db;username=tzkt;password=qwerty;"
-  },
-
-  "Kestrel": {
-    "EndPoints": {
-      "Http": {
-        "Url": "http://localhost:5020"
-      },
-      "Https": {
-        "Url": "https://localhost:5021"
-      }
-    }
-  },
-
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Information"
-    }
-  },
-
-  "AllowedHosts": "*"
-}
-````
-
-#### Run API
-
-````c
-cd ~/zero-tzkt-api
-dotnet Tzkt.Api.dll
-
-// info: Tzkt.Api.Services.Metadata.AccountMetadataService[0]
-//       Accounts metadata not found
-// info: Tzkt.Api.Services.Sync.SyncWorker[0]
-//       Sync worker initialized with level 205804 and blocks time 30s
-// info: Tzkt.Api.Services.Sync.SyncWorker[0]
-//       Syncronization started
-// info: Microsoft.Hosting.Lifetime[0]
-//       Now listening on: http://localhost:5030
-// info: Microsoft.Hosting.Lifetime[0]
-//       Now listening on: https://localhost:5031
-// info: Microsoft.Hosting.Lifetime[0]
-//       Application started. Press Ctrl+C to shut down.
-// info: Microsoft.Hosting.Lifetime[0]
-//       Hosting environment: Production
-// info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/zero-tzkt-api
 // ....
 ````
 
