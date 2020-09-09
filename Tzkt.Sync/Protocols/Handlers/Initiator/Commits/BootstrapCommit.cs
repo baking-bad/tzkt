@@ -114,7 +114,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
             #region parameters
             var protoParams = Bson.Parse<RawProtoParameters>(rawBlock.Header.Content.Parameters.Substring(8));
-            Commitments = protoParams.Commitments.Select(x => new Commitment
+            Commitments = protoParams.Commitments?.Select(x => new Commitment
             {
                 Address = x[0],
                 Balance = long.Parse(x[1])
@@ -159,19 +159,22 @@ namespace Tzkt.Sync.Protocols.Initiator
                 state.MigrationOpsCount += BootstrapedAccounts.Count;
             }
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            using var writer = conn.BeginBinaryImport(@"COPY ""Commitments"" (""Balance"", ""Address"") FROM STDIN (FORMAT BINARY)");
-
-            foreach (var commitment in Commitments)
+            if (Commitments != null)
             {
-                writer.StartRow();
-                writer.Write(commitment.Balance);
-                writer.Write(commitment.Address);
+                var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+                using var writer = conn.BeginBinaryImport(@"COPY ""Commitments"" (""Balance"", ""Address"") FROM STDIN (FORMAT BINARY)");
 
-                state.CommitmentsCount++;
+                foreach (var commitment in Commitments)
+                {
+                    writer.StartRow();
+                    writer.Write(commitment.Balance);
+                    writer.Write(commitment.Address);
+
+                    state.CommitmentsCount++;
+                }
+
+                writer.Complete();
             }
-
-            writer.Complete();
 
             return Task.CompletedTask;
         }
