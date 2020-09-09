@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Initiator
             {
                 Level = block.Level,
                 TotalBootstrapped = accounts.Sum(x => x.Balance),
-                TotalCommitments = commitments.Sum(x => x.Balance),
+                TotalCommitments = commitments?.Sum(x => x.Balance) ?? 0,
                 TotalVested = accounts.Where(x => x.Type == AccountType.Contract).Sum(x => x.Balance)
             };
 
