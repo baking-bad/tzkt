@@ -1,19 +1,6 @@
 version: '3'
 
 services:
-
-  #Nginx Service
-#  webserv:
-#    image: nginx:mainline
-#    container_name: webserv
-#    restart: unless-stopped
-#    tty: true
-#    ports:
-#      - "80:80"
-#      - "443:443"
-#    volumes:
-#      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
-  
   postgrest:
     image: postgrest/postgrest
     ports:
@@ -35,7 +22,6 @@ services:
       POSTGRES_PASSWORD: qwerty
       POSTGRES_DB: tzkt_db
     volumes:
-#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres:/var/lib/postgresql/data
     expose:
       - 5432
