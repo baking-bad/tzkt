@@ -724,7 +724,7 @@ namespace Tzkt.Api.Controllers
                 if (prevDelegate.Nex != null && prevDelegate.Nex != "initiator" && prevDelegate.Nex != "sender" && prevDelegate.Nex != "newDelegate")
                     return new BadRequest($"{nameof(prevDelegate)}.nex", "The 'prevDelegate' field can be compared with the 'initiator', 'sender' or 'newDelegate' field only.");
 
-                if (prevDelegate.Eq == -1 || prevDelegate.In?.Count == 0 || prevDelegate.Null == true)
+                if (prevDelegate.Eq == -1 || prevDelegate.In?.Count == 0)
                     return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
