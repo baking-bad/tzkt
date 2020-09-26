@@ -1835,6 +1835,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -1842,6 +1844,8 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleBakingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("AccuserId", accuser, x => "OffenderId")
+                .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -1876,6 +1880,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetDoubleBakings(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -1913,6 +1919,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccuserId", accuser, x => "OffenderId")
+                .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -1995,6 +2003,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetDoubleBakings(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -2029,6 +2039,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccuserId", accuser, x => "OffenderId")
+                .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -2250,6 +2262,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -2257,6 +2271,8 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleEndorsingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("AccuserId", accuser, x => "OffenderId")
+                .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -2291,6 +2307,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetDoubleEndorsings(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -2328,6 +2346,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccuserId", accuser, x => "OffenderId")
+                .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -2410,6 +2430,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetDoubleEndorsings(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -2444,6 +2466,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccuserId", accuser, x => "OffenderId")
+                .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x switch
                 {

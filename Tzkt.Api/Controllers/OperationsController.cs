@@ -419,6 +419,8 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double baking operations.
         /// </remarks>
+        /// <param name="accuser">Filters double baking operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
+        /// <param name="offender">Filters double baking operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
         /// <param name="level">Filters double baking operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
@@ -428,6 +430,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_baking")]
         public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
@@ -436,30 +440,54 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
+            if (accuser != null)
+            {
+                if (accuser.Eqx != null && accuser.Eqx != "offender")
+                    return new BadRequest($"{nameof(accuser)}.eqx", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Nex != null && accuser.Nex != "offender")
+                    return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
+                    return Ok(Enumerable.Empty<DoubleBakingOperation>());
+            }
+
+            if (offender != null)
+            {
+                if (offender.Eqx != null && offender.Eqx != "accuser")
+                    return new BadRequest($"{nameof(offender)}.eqx", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Nex != null && offender.Nex != "accuser")
+                    return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
+                    return Ok(Enumerable.Empty<DoubleBakingOperation>());
+            }
+
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleBakings(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -501,6 +529,8 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double endorsing operations.
         /// </remarks>
+        /// <param name="accuser">Filters double endorsing operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
+        /// <param name="offender">Filters double endorsing operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
         /// <param name="level">Filters double endorsing operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
@@ -510,6 +540,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_endorsing")]
         public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
+            AccountParameter accuser,
+            AccountParameter offender,
             Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
@@ -518,30 +550,54 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
+            if (accuser != null)
+            {
+                if (accuser.Eqx != null && accuser.Eqx != "offender")
+                    return new BadRequest($"{nameof(accuser)}.eqx", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Nex != null && accuser.Nex != "offender")
+                    return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
+                    return Ok(Enumerable.Empty<DoubleBakingOperation>());
+            }
+
+            if (offender != null)
+            {
+                if (offender.Eqx != null && offender.Eqx != "accuser")
+                    return new BadRequest($"{nameof(offender)}.eqx", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Nex != null && offender.Nex != "accuser")
+                    return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
+                    return Ok(Enumerable.Empty<DoubleBakingOperation>());
+            }
+
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleEndorsings(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
