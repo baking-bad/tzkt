@@ -4372,14 +4372,18 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region transactions
-        public async Task<int> GetTransactionsCount()
+        public async Task<int> GetTransactionsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""TransactionOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""TransactionOps""")
+                   .Filter("Level", level)
+                   .Filter("Timestamp", timestamp)
+                   .Filter("Status", status);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, Symbols quote)

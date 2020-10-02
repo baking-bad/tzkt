@@ -1172,11 +1172,20 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns the total number of transaction operations.
         /// </remarks>
+        /// <param name="level">Filters transactions by level.</param>
+        /// <param name="timestamp">Filters transactions by timestamp.</param>
+        /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <returns></returns>
         [HttpGet("transactions/count")]
-        public Task<int> GetTransactionsCount()
+        public Task<int> GetTransactionsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status)
         {
-            return Task.FromResult(State.GetState().TransactionOpsCount);
+            if (level == null && timestamp == null && status == null)
+                return Task.FromResult(State.GetState().TransactionOpsCount);
+
+            return Operations.GetTransactionsCount(level, timestamp, status);
         }
         #endregion
 
