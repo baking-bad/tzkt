@@ -1294,6 +1294,8 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
+        /// <param name="kind">Filters migration operations by kind (`bootstrap`, `activate_delegate`, `airdrop`, `proposal_invoice`).</param>
+        /// <param name="balanceChange">Filters migration operations by amount.</param>
         /// <param name="level">Filters migration operations by level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id` (default), `level`.</param>
@@ -1303,6 +1305,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
+            MigrationKindParameter kind,
+            Int64Parameter balanceChange,
             Int32Parameter level,
             SelectParameter select,
             SortParameter sort,
@@ -1316,25 +1320,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetMigrations(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetMigrations(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetMigrations(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

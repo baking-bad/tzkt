@@ -5520,6 +5520,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(
+            MigrationKindParameter kind,
+            Int64Parameter balanceChange,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -5527,6 +5529,8 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""MigrationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("Kind", kind)
+                .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -5547,6 +5551,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetMigrations(
+            MigrationKindParameter kind,
+            Int64Parameter balanceChange,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -5579,6 +5585,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .Filter("Kind", kind)
+                .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -5632,6 +5640,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetMigrations(
+            MigrationKindParameter kind,
+            Int64Parameter balanceChange,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -5661,6 +5671,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .Filter("Kind", kind)
+                .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -6360,10 +6372,10 @@ namespace Tzkt.Api.Repositories
 
         string MigrationKindToString(int kind) => kind switch
         {
-            0 => "bootstrap",
-            1 => "activate_delegate",
-            2 => "airdrop",
-            3 => "proposal_invoice",
+            0 => MigrationKinds.Bootstrap,
+            1 => MigrationKinds.ActivateDelegate,
+            2 => MigrationKinds.Airdrop,
+            3 => MigrationKinds.ProposalInvoice,
             _ => "unknown"
         };
 
