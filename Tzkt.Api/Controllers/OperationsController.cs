@@ -82,6 +82,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of endorsement operations.
         /// </remarks>
         /// <param name="level">Filters endorsements by level.</param>
+        /// <param name="timestamp">Filters endorsements by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -91,6 +92,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("endorsements")]
         public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -103,25 +105,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetEndorsements(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetEndorsements(level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetEndorsements(level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetEndorsements(level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetEndorsements(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetEndorsements(level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetEndorsements(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetEndorsements(level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -164,6 +166,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of ballot operations.
         /// </remarks>
         /// <param name="level">Filters ballots by level.</param>
+        /// <param name="timestamp">Filters ballots by timestamp.</param>
         /// <param name="period">Filters ballots by voting period id.</param>
         /// <param name="proposal">Filters ballots by proposal hash.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -175,6 +178,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("ballots")]
         public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             SelectParameter select,
@@ -189,25 +193,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, quote));
+                return Ok(await Operations.GetBallots(level, timestamp, period, proposal, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetBallots(level, timestamp, period, proposal, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetBallots(level, timestamp, period, proposal, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetBallots(level, timestamp, period, proposal, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBallots(level, period, proposal, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetBallots(level, timestamp, period, proposal, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -250,6 +254,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of proposal operations.
         /// </remarks>
         /// <param name="level">Filters proposal operations by level.</param>
+        /// <param name="timestamp">Filters proposal operations by timestamp.</param>
         /// <param name="period">Filters proposal operations by voting period id.</param>
         /// <param name="proposal">Filters proposal operations by proposal hash.</param>
         /// <param name="duplicated">Specify whether to include or exclude duplicates, which didn't actually upvote a proposal.</param>
@@ -262,6 +267,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -277,25 +283,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, quote));
+                return Ok(await Operations.GetProposals(level, timestamp, period, proposal, duplicated, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetProposals(level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetProposals(level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetProposals(level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetProposals(level, period, proposal, duplicated, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetProposals(level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -338,6 +344,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of activation operations.
         /// </remarks>
         /// <param name="level">Filters activations by level.</param>
+        /// <param name="timestamp">Filters activations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts activations by specified field. Supported fields: `id` (default), `level`, `balance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -347,6 +354,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("activations")]
         public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -359,25 +367,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetActivations(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetActivations(level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetActivations(level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetActivations(level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetActivations(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetActivations(level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetActivations(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetActivations(level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -422,6 +430,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="accuser">Filters double baking operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double baking operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
         /// <param name="level">Filters double baking operations by level.</param>
+        /// <param name="timestamp">Filters double baking operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double baking operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -433,6 +442,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -469,25 +479,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, quote));
+                return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleBakings(accuser, offender, level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -532,6 +542,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="accuser">Filters double endorsing operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double endorsing operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
         /// <param name="level">Filters double endorsing operations by level.</param>
+        /// <param name="timestamp">Filters double endorsing operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -543,6 +554,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -579,25 +591,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, quote));
+                return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleEndorsings(accuser, offender, level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -640,6 +652,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of seed nonce revelation operations.
         /// </remarks>
         /// <param name="level">Filters nonce revelation operations by level.</param>
+        /// <param name="timestamp">Filters nonce revelation operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id` (default), `level`, `revealedLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -649,6 +662,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("nonce_revelations")]
         public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -661,25 +675,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetNonceRevelations(level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetNonceRevelations(level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetNonceRevelations(level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetNonceRevelations(level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetNonceRevelations(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetNonceRevelations(level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -726,6 +740,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `newDelegate`.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `prevDelegate`.</param>
         /// <param name="level">Filters delegations by level.</param>
+        /// <param name="timestamp">Filters delegations by timestamp.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
@@ -740,6 +755,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -801,25 +817,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -867,6 +883,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractManager`.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters origination operations by level.</param>
+        /// <param name="timestamp">Filters origination operations by timestamp.</param>
         /// <param name="status">Filters origination operations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
@@ -882,6 +899,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -955,25 +973,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1020,6 +1038,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
         /// <param name="amount">Filters transactions by amount (microtez).</param>
         /// <param name="level">Filters transactions by level.</param>
+        /// <param name="timestamp">Filters transactions by timestamp.</param>
         /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1035,6 +1054,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter target,
             Int64Parameter amount,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             StringParameter parameters,
             OperationStatusParameter status,
             SelectParameter select,
@@ -1094,25 +1114,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(initiator, sender, target, amount, level, parameters, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1198,6 +1218,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="sender">Filters reveal operations by sender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters reveal operations by level.</param>
+        /// <param name="timestamp">Filters reveal operations by timestamp.</param>
         /// <param name="status">Filters reveal operations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts reveals by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
@@ -1209,6 +1230,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<RevealOperation>>> GetReveals(
             AccountParameter sender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -1234,25 +1256,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetReveals(sender, level, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1297,6 +1319,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="kind">Filters migration operations by kind (`bootstrap`, `activate_delegate`, `airdrop`, `proposal_invoice`).</param>
         /// <param name="balanceChange">Filters migration operations by amount.</param>
         /// <param name="level">Filters migration operations by level.</param>
+        /// <param name="timestamp">Filters migration operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -1308,6 +1331,7 @@ namespace Tzkt.Api.Controllers
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -1320,25 +1344,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, quote));
+                return Ok(await Operations.GetMigrations(kind, balanceChange, level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetMigrations(kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetMigrations(kind, balanceChange, level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetMigrations(kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1366,6 +1390,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of revelation penalty operations (synthetic type).
         /// </remarks>
         /// <param name="level">Filters revelation penalty operations by level.</param>
+        /// <param name="timestamp">Filters revelation penalty operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts revelation penalty operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -1375,6 +1400,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("revelation_penalties")]
         public async Task<ActionResult<IEnumerable<RevelationPenaltyOperation>>> GetRevelationPenalties(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -1387,25 +1413,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetRevelationPenalties(level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetRevelationPenalties(level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetRevelationPenalties(level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetRevelationPenalties(level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetRevelationPenalties(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetRevelationPenalties(level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1433,6 +1459,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
         /// <param name="level">Filters baking operations by level.</param>
+        /// <param name="timestamp">Filters baking operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts baking operations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -1442,6 +1469,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -1454,25 +1482,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBakings(level, sort, offset, limit, quote));
+                return Ok(await Operations.GetBakings(level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetBakings(level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetBakings(level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBakings(level, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetBakings(level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBakings(level, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetBakings(level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

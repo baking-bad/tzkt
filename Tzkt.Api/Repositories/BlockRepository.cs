@@ -104,6 +104,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Block>> Get(
             AccountParameter baker,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter priority,
             SortParameter sort,
             OffsetParameter offset,
@@ -113,6 +114,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId"" FROM ""Blocks""")
                 .Filter("BakerId", baker)
                 .Filter("Level", level)
+                .Filter("Timestamp", timestamp)
                 .Filter("Priority", priority)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -147,6 +149,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[][]> Get(
             AccountParameter baker,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter priority,
             SortParameter sort,
             OffsetParameter offset,
@@ -180,6 +183,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter("BakerId", baker)
                 .Filter("Level", level)
+                .Filter("Timestamp", timestamp)
                 .Filter("Priority", priority)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -259,6 +263,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[]> Get(
             AccountParameter baker,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter priority,
             SortParameter sort,
             OffsetParameter offset,
@@ -289,6 +294,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter("BakerId", baker)
                 .Filter("Level", level)
+                .Filter("Timestamp", timestamp)
                 .Filter("Priority", priority)
                 .Take(sort, offset, limit, x => x switch
                 {

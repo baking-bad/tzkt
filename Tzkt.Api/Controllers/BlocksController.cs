@@ -46,6 +46,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="baker">Filters blocks by baker. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters blocks by level.</param>
+        /// <param name="timestamp">Filters blocks by timestamp.</param>
         /// <param name="priority">Filters blocks by priority.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `priority`, `validations`, `reward`, `fees`.</param>
@@ -57,6 +58,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<Block>>> Get(
             AccountParameter baker,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter priority,
             SelectParameter select,
             SortParameter sort,
@@ -82,25 +84,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, quote));
+                return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Values, quote));
+                    return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Blocks.Get(baker, level, priority, sort, offset, limit, select.Fields, quote)
+                        Rows = await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

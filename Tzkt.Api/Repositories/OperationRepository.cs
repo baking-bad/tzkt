@@ -194,6 +194,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -201,6 +202,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""EndorsementOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -222,6 +224,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetEndorsements(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -255,6 +258,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -312,6 +316,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetEndorsements(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -342,6 +347,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -550,6 +556,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<BallotOperation>> GetBallots(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             SortParameter sort,
@@ -566,6 +573,7 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -601,6 +609,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetBallots(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             SortParameter sort,
@@ -653,6 +662,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -730,6 +740,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetBallots(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             SortParameter sort,
@@ -779,6 +790,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -1041,6 +1053,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<ProposalOperation>> GetProposals(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -1058,6 +1071,7 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
@@ -1094,6 +1108,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetProposals(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -1147,6 +1162,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
@@ -1225,6 +1241,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetProposals(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -1275,6 +1292,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
                 .FilterA(@"period.""Code""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
@@ -1502,6 +1520,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<ActivationOperation>> GetActivations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1509,6 +1528,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""ActivationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1534,6 +1554,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetActivations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1566,6 +1587,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1624,6 +1646,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetActivations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1653,6 +1676,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1838,6 +1862,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1847,6 +1872,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1883,6 +1909,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1922,6 +1949,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2006,6 +2034,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2042,6 +2071,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2265,6 +2295,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2274,6 +2305,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2310,6 +2342,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2349,6 +2382,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2433,6 +2467,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2469,6 +2504,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2682,6 +2718,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2689,6 +2726,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""NonceRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2716,6 +2754,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetNonceRevelations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2749,6 +2788,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -2811,6 +2851,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetNonceRevelations(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2841,6 +2882,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -3122,6 +3164,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -3134,6 +3177,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -3175,6 +3219,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -3222,6 +3267,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -3326,6 +3372,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -3370,6 +3417,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -3795,6 +3843,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -3808,6 +3857,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -3873,6 +3923,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -3926,6 +3977,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -4065,6 +4117,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -4115,6 +4168,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -4558,6 +4612,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter target,
             Int64Parameter amount,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             StringParameter parameters,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4573,6 +4628,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Parameters", parameters)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -4622,6 +4678,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter target,
             Int64Parameter amount,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             StringParameter parameters,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4677,6 +4734,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Parameters", parameters)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -4804,6 +4862,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter target,
             Int64Parameter amount,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             StringParameter parameters,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4856,6 +4915,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Parameters", parameters)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -5170,6 +5230,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(
             AccountParameter sender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -5179,6 +5240,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevealOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -5212,6 +5274,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[][]> GetReveals(
             AccountParameter sender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -5251,6 +5314,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -5332,6 +5396,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[]> GetReveals(
             AccountParameter sender,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -5368,6 +5433,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -5523,6 +5589,7 @@ namespace Tzkt.Api.Repositories
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -5532,6 +5599,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5554,6 +5622,7 @@ namespace Tzkt.Api.Repositories
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -5588,6 +5657,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5643,6 +5713,7 @@ namespace Tzkt.Api.Repositories
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -5674,6 +5745,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5790,6 +5862,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -5797,6 +5870,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevelationPenaltyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5818,6 +5892,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetRevelationPenalties(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -5851,6 +5926,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -5908,6 +5984,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetRevelationPenalties(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -5938,6 +6015,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             using var db = GetConnection();
@@ -6060,6 +6138,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<BakingOperation>> GetBakings(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -6068,6 +6147,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees"" FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
+                .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             using var db = GetConnection();
@@ -6089,6 +6169,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetBakings(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -6118,6 +6199,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
+                .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             using var db = GetConnection();
@@ -6175,6 +6257,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetBakings(
             Int32Parameter level,
+            DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -6201,6 +6284,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
+                .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             using var db = GetConnection();
