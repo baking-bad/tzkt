@@ -42,7 +42,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="search">Part of the account alias to search by</param>
         /// <returns></returns>
         [HttpGet("accounts/{search}")]
-        public IEnumerable<AccountMetadataAlias> GetAccounts(string search)
+        public IEnumerable<AccountMetadataAlias> GetAccounts([Required] string search)
         {
             search = search.ToLower();
             return AccountMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
@@ -64,7 +64,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="search">Part of the proposal alias to search by</param>
         /// <returns></returns>
         [HttpGet("proposals/{search}")]
-        public IEnumerable<ProposalMetadataAlias> GetProposals(string search)
+        public IEnumerable<ProposalMetadataAlias> GetProposals([Required] string search)
         {
             search = search.ToLower();
             return ProposalMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
@@ -86,7 +86,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="search">Part of the protocol alias to search by</param>
         /// <returns></returns>
         [HttpGet("protocols/{search}")]
-        public IEnumerable<ProtocolMetadataAlias> GetProtocols(string search)
+        public IEnumerable<ProtocolMetadataAlias> GetProtocols([Required] string search)
         {
             search = search.ToLower();
             return ProtocolMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
