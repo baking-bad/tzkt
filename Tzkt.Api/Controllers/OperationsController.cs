@@ -511,6 +511,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double baking operations.
         /// </remarks>
+        /// <param name="anyof">Filters double baking operations by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters double baking operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double baking operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
         /// <param name="level">Filters double baking operations by level.</param>
@@ -523,6 +524,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_baking")]
         public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -534,6 +536,15 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
+
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<DoubleBakingOperation>());
+            }
+
             if (accuser != null)
             {
                 if (accuser.Eqx != null && accuser.Eqx != "offender")
@@ -563,25 +574,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, quote));
+                return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleBakings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -630,6 +641,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of double endorsing operations.
         /// </remarks>
+        /// <param name="anyof">Filters double endorsing operations by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters double endorsing operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double endorsing operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
         /// <param name="level">Filters double endorsing operations by level.</param>
@@ -642,6 +654,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_endorsing")]
         public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -653,6 +666,15 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
+
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+            }
+
             if (accuser != null)
             {
                 if (accuser.Eqx != null && accuser.Eqx != "offender")
@@ -682,25 +704,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, quote));
+                return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleEndorsings(accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -749,6 +771,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of seed nonce revelation operations.
         /// </remarks>
+        /// <param name="anyof">Filters nonce revelation operations by any of the specified fields. Example: `anyof.baker.sender=tz1...` will return operations where `baker` OR `sender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="baker">Filters nonce revelation operations by baker. Allowed fields for `.eqx` mode: `sender`.</param>
         /// <param name="sender">Filters nonce revelation operations by sender. Allowed fields for `.eqx` mode: `baker`.</param>
         /// <param name="level">Filters nonce revelation operations by level.</param>
@@ -761,6 +784,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("nonce_revelations")]
         public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
+            AnyOfParameter anyof,
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
@@ -772,6 +796,15 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "baker" && x != "sender"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `baker`, `sender` fields only.");
+
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<NonceRevelationOperation>());
+            }
+
             if (baker != null)
             {
                 if (baker.Eqx != null && baker.Eqx != "sender")
@@ -801,25 +834,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetNonceRevelations(baker, sender, level, timestamp, sort, offset, limit, quote));
+                return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(baker, sender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetNonceRevelations(baker, sender, level, timestamp, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(baker, sender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetNonceRevelations(baker, sender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -868,6 +901,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of delegation operations.
         /// </remarks>
+        /// <param name="anyof">Filters delegations by any of the specified fields. Example: `anyof.prevDelegate.newDelegate=tz1...` will return operations where `prevDelegate` OR `newDelegate` is equal to the specified value. This parameter is useful when you need to retrieve all delegations associated with a specified account.</param>
         /// <param name="initiator">Filters delegations by initiator. Allowed fields for `.eqx` mode: `prevDelegate`, `newDelegate`.</param>
         /// <param name="sender">Filters delegations by sender. Allowed fields for `.eqx` mode: `prevDelegate`, `newDelegate`.</param>
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `newDelegate`.</param>
@@ -883,6 +917,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("delegations")]
         public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
@@ -897,6 +932,15 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "prevDelegate" && x != "newDelegate"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `prevDelegate`, `newDelegate` fields only.");
+
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<DelegationOperation>());
+            }
+
             if (initiator != null)
             {
                 if (initiator.Eqx != null && initiator.Eqx != "prevDelegate" && initiator.Eqx != "newDelegate")
@@ -950,25 +994,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDelegations(initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1017,6 +1061,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of origination operations.
         /// </remarks>
+        /// <param name="anyof">Filters originations by any of the specified fields. Example: `anyof.sender.initiator=tz1...` will return operations where `sender` OR `initiator` is equal to the specified value. This parameter is useful when you need to retrieve all originations associated with a specified account.</param>
         /// <param name="initiator">Filters origination operations by initiator. Allowed fields for `.eqx` mode: `contractManager`, `contractDelegate`.</param>
         /// <param name="sender">Filters origination operations by sender. Allowed fields for `.eqx` mode: `contractManager`, `contractDelegate`.</param>
         /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractDelegate`.</param>
@@ -1033,6 +1078,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("originations")]
         public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter contractManager,
@@ -1048,6 +1094,15 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validates
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "contractManager" && x != "contractDelegate" && x != "originatedContract"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `contractManager`, `contractDelegate`, `originatedContract` fields only.");
+
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<OriginationOperation>());
+            }
+
             if (initiator != null)
             {
                 if (initiator.Eqx != null && initiator.Eqx != "contractManager" && initiator.Eqx != "contractDelegate")
@@ -1113,25 +1168,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1180,6 +1235,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of transaction operations.
         /// </remarks>
+        /// <param name="anyof">Filters transactions by any of the specified fields. Example: `anyof.sender.target=tz1...` will return operations where `sender` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all transactions associated with a specified account.</param>
         /// <param name="initiator">Filters transactions by initiator. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
@@ -1196,6 +1252,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions")]
         public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactions(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
@@ -1211,6 +1268,15 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None) 
         {
             #region validate
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "target"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `target` fields only.");
+
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<TransactionOperation>());
+            }
+
             if (initiator != null)
             {
                 if (initiator.Eqx != null && initiator.Eqx != "target")
@@ -1261,25 +1327,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

@@ -1893,6 +1893,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -1903,6 +1904,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleBakingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
@@ -1940,6 +1942,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetDoubleBakings(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -1980,6 +1983,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
@@ -2065,6 +2069,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetDoubleBakings(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -2102,6 +2107,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleBakingOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
@@ -2328,6 +2334,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -2338,6 +2345,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoubleEndorsingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
@@ -2375,6 +2383,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetDoubleEndorsings(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -2415,6 +2424,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
@@ -2500,6 +2510,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetDoubleEndorsings(
+            AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
             Int32Parameter level,
@@ -2537,6 +2548,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleEndorsingOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Level""", level)
@@ -2755,6 +2767,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(
+            AnyOfParameter anyof,
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
@@ -2765,6 +2778,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""NonceRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(anyof, x => x == "baker" ? @"o.""BakerId""" : @"o.""SenderId""")
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
@@ -2795,6 +2809,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetNonceRevelations(
+            AnyOfParameter anyof,
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
@@ -2831,6 +2846,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(anyof, x => x == "baker" ? @"o.""BakerId""" : @"o.""SenderId""")
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
@@ -2896,6 +2912,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetNonceRevelations(
+            AnyOfParameter anyof,
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
@@ -2929,6 +2946,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(anyof, x => x == "baker" ? @"o.""BakerId""" : @"o.""SenderId""")
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
@@ -3211,6 +3229,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
@@ -3224,6 +3243,13 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DelegationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(anyof, x => x switch
+                {
+                    "initiator" => "InitiatorId",
+                    "sender" => "SenderId",
+                    "prevDelegate" => "PrevDelegateId",
+                    _ => "DelegateId"
+                })
                 .Filter("InitiatorId", initiator, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
@@ -3266,6 +3292,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetDelegations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
@@ -3314,6 +3341,13 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x switch
+                {
+                    "initiator" => "InitiatorId",
+                    "sender" => "SenderId",
+                    "prevDelegate" => "PrevDelegateId",
+                    _ => "DelegateId"
+                })
                 .Filter("InitiatorId", initiator, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
@@ -3419,6 +3453,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetDelegations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter prevDelegate,
@@ -3464,6 +3499,13 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegationOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x switch
+                {
+                    "initiator" => "InitiatorId",
+                    "sender" => "SenderId",
+                    "prevDelegate" => "PrevDelegateId",
+                    _ => "DelegateId"
+                })
                 .Filter("InitiatorId", initiator, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
@@ -3891,6 +3933,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter contractManager,
@@ -3905,6 +3948,14 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""OriginationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(anyof, x => x switch
+                {
+                    "initiator" => "InitiatorId",
+                    "sender" => "SenderId",
+                    "contractManager" => "ManagerId",
+                    "contractDelegate" => "DelegateId",
+                    _ => "ContractId"
+                })
                 .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
@@ -3971,6 +4022,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetOriginations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter contractManager,
@@ -4025,6 +4077,14 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x switch
+                {
+                    "initiator" => "InitiatorId",
+                    "sender" => "SenderId",
+                    "contractManager" => "ManagerId",
+                    "contractDelegate" => "DelegateId",
+                    _ => "ContractId"
+                })
                 .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
@@ -4165,6 +4225,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetOriginations(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter contractManager,
@@ -4216,6 +4277,14 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x switch
+                {
+                    "initiator" => "InitiatorId",
+                    "sender" => "SenderId",
+                    "contractManager" => "ManagerId",
+                    "contractDelegate" => "DelegateId",
+                    _ => "ContractId"
+                })
                 .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
                 .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
@@ -4661,6 +4730,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
@@ -4675,6 +4745,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""TransactionOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
@@ -4727,6 +4798,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetTransactions(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
@@ -4781,6 +4853,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
@@ -4911,6 +4984,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetTransactions(
+            AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
@@ -4962,6 +5036,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
+                .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")

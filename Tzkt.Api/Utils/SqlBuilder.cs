@@ -29,6 +29,22 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(AnyOfParameter anyof, Func<string, string> map)
+        {
+            if (anyof != null)
+                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" = {anyof.Value}"))})");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(AnyOfParameter anyof, Func<string, string> map)
+        {
+            if (anyof != null)
+                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"{map(x)} = {anyof.Value}"))})");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, int value)
         {
             AppendFilter($@"""{column}"" = {value}");
