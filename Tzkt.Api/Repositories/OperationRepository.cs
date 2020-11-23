@@ -130,14 +130,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region endorsements
-        public async Task<int> GetEndorsementsCount()
+        public async Task<int> GetEndorsementsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""EndorsementOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""EndorsementOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash, Symbols quote)
@@ -193,6 +195,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(
+            AccountParameter delegat,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -201,6 +204,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""EndorsementOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("DelegateId", delegat)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -223,6 +227,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetEndorsements(
+            AccountParameter delegat,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -257,6 +262,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
+                .Filter("DelegateId", delegat)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -315,6 +321,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetEndorsements(
+            AccountParameter delegat,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -346,6 +353,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""EndorsementOps"" as o {string.Join(' ', joins)}")
+                .Filter("DelegateId", delegat)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -458,14 +466,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region ballots
-        public async Task<int> GetBallotsCount()
+        public async Task<int> GetBallotsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""BallotOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""BallotOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<BallotOperation>> GetBallots(string hash, Symbols quote)
@@ -555,6 +565,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<BallotOperation>> GetBallots(
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter period,
@@ -572,6 +583,7 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
+                .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"period.""Code""", period)
@@ -608,6 +620,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetBallots(
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter period,
@@ -661,6 +674,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"period.""Code""", period)
@@ -739,6 +753,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetBallots(
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter period,
@@ -789,6 +804,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
+                .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"period.""Code""", period)
@@ -955,14 +971,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region proposals
-        public async Task<int> GetProposalsCount()
+        public async Task<int> GetProposalsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""ProposalOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""ProposalOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash, Symbols quote)
@@ -1052,6 +1070,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<ProposalOperation>> GetProposals(
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter period,
@@ -1070,6 +1089,7 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
                 ")
+                .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
@@ -1107,6 +1127,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetProposals(
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter period,
@@ -1161,6 +1182,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
@@ -1240,6 +1262,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetProposals(
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter period,
@@ -1291,6 +1314,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ProposalOps"" as o {string.Join(' ', joins)}")
+                .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
@@ -1458,14 +1482,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region activations
-        public async Task<int> GetActivationsCount()
+        public async Task<int> GetActivationsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""ActivationOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""ActivationOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<ActivationOperation>> GetActivations(string hash, Symbols quote)
@@ -1519,6 +1545,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<ActivationOperation>> GetActivations(
+            AccountParameter account,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -1527,6 +1554,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""ActivationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("AccountId", account)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -1553,6 +1581,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetActivations(
+            AccountParameter account,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -1586,6 +1615,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccountId", account)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -1645,6 +1675,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetActivations(
+            AccountParameter account,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -1675,6 +1706,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""ActivationOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccountId", account)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -1786,14 +1818,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region double baking
-        public async Task<int> GetDoubleBakingsCount()
+        public async Task<int> GetDoubleBakingsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""DoubleBakingOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DoubleBakingOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(string hash, Symbols quote)
@@ -2219,14 +2253,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region double endorsing
-        public async Task<int> GetDoubleEndorsingsCount()
+        public async Task<int> GetDoubleEndorsingsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""DoubleEndorsingOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DoubleEndorsingOps""")
+                .Filter(@"Level", level)
+                .Filter(@"Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsings(string hash, Symbols quote)
@@ -2652,14 +2688,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region nonce revelations
-        public async Task<int> GetNonceRevelationsCount()
+        public async Task<int> GetNonceRevelationsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""NonceRevelationOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""NonceRevelationOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash, Symbols quote)
@@ -2717,6 +2755,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(
+            AccountParameter baker,
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -2725,6 +2765,8 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""NonceRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
+                .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -2753,6 +2795,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetNonceRevelations(
+            AccountParameter baker,
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -2787,6 +2831,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
+                .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -2850,6 +2896,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetNonceRevelations(
+            AccountParameter baker,
+            AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -2881,6 +2929,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""NonceRevelationOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
+                .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -3002,14 +3052,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region delegations
-        public async Task<int> GetDelegationsCount()
+        public async Task<int> GetDelegationsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""DelegationOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DelegationOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, Symbols quote)
@@ -3597,14 +3649,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region originations
-        public async Task<int> GetOriginationsCount()
+        public async Task<int> GetOriginationsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""OriginationOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""OriginationOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, Symbols quote)
@@ -4432,9 +4486,9 @@ namespace Tzkt.Api.Repositories
             OperationStatusParameter status)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""TransactionOps""")
-                   .Filter("Level", level)
-                   .Filter("Timestamp", timestamp)
-                   .Filter("Status", status);
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp)
+                .Filter("Status", status);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -5126,14 +5180,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region reveals
-        public async Task<int> GetRevealsCount()
+        public async Task<int> GetRevealsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""RevealOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""RevealOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, Symbols quote)
@@ -5575,17 +5631,20 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region migrations
-        public async Task<int> GetMigrationsCount()
+        public async Task<int> GetMigrationsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""MigrationOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""MigrationOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(
+            AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
             Int32Parameter level,
@@ -5596,6 +5655,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""MigrationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter("AccountId", account)
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
@@ -5619,6 +5679,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetMigrations(
+            AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
             Int32Parameter level,
@@ -5654,6 +5715,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccountId", account)
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
@@ -5710,6 +5772,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetMigrations(
+            AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
             Int32Parameter level,
@@ -5742,6 +5805,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""MigrationOps"" as o {string.Join(' ', joins)}")
+                .Filter("AccountId", account)
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Level""", level)
@@ -5850,17 +5914,20 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region revelation penalty
-        public async Task<int> GetRevelationPenaltiesCount()
+        public async Task<int> GetRevelationPenaltiesCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   COUNT(*)
-                FROM     ""RevelationPenaltyOps""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""RevelationPenaltyOps""")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(
+            AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -5869,6 +5936,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevelationPenaltyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -5891,6 +5959,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetRevelationPenalties(
+            AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -5925,6 +5994,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -5983,6 +6053,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetRevelationPenalties(
+            AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -6014,6 +6085,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -6126,17 +6198,21 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region baking
-        public async Task<int> GetBakingsCount()
+        public async Task<int> GetBakingsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
         {
-            var sql = @"
-                SELECT   (""Level"" - 1)
-                FROM     ""AppState""";
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Blocks""")
+                .Filter(@"""BakerId"" IS NOT NULL")
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
-            return await db.QueryFirstAsync<int>(sql);
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<BakingOperation>> GetBakings(
+            AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -6145,6 +6221,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees"" FROM ""Blocks""")
+                .Filter("BakerId", baker)
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -6168,6 +6245,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetBakings(
+            AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -6197,6 +6275,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Filter("BakerId", baker)
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -6256,6 +6335,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetBakings(
+            AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -6282,6 +6362,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Filter("BakerId", baker)
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)

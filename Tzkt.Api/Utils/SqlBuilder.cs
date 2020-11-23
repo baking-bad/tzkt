@@ -231,6 +231,44 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, AccountParameter account, Func<string, string> map = null)
+        {
+            if (account == null) return this;
+
+            if (account.Eq != null)
+                AppendFilter($"{column} = {account.Eq}");
+
+            if (account.Ne != null && account.Ne != -1)
+                AppendFilter($"{column} != {account.Ne}");
+
+            if (account.In != null)
+            {
+                AppendFilter($"{column} = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", account.In);
+            }
+
+            if (account.Ni != null && account.Ni.Count > 0)
+            {
+                AppendFilter($"NOT ({column} = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", account.Ni);
+            }
+
+            if (account.Eqx != null && map != null)
+                AppendFilter($"{column} = {map(account.Eqx)}");
+
+            if (account.Nex != null && map != null)
+                AppendFilter($"{column} != {map(account.Nex)}");
+
+            if (account.Null != null)
+            {
+                AppendFilter(account.Null == true
+                    ? $"{column} IS NULL"
+                    : $"{column} IS NOT NULL");
+            }
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, StringParameter str, Func<string, string> map = null)
         {
             if (str == null) return this;
