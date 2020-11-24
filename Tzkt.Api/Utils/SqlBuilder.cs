@@ -217,7 +217,7 @@ namespace Tzkt.Api
                 AppendFilter($@"""{column}"" = {account.Eq}");
 
             if (account.Ne != null && account.Ne != -1)
-                AppendFilter($@"""{column}"" != {account.Ne}");
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {account.Ne})");
 
             if (account.In != null)
             {
@@ -227,7 +227,7 @@ namespace Tzkt.Api
 
             if (account.Ni != null && account.Ni.Count > 0)
             {
-                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", account.Ni);
             }
 
@@ -255,7 +255,7 @@ namespace Tzkt.Api
                 AppendFilter($"{column} = {account.Eq}");
 
             if (account.Ne != null && account.Ne != -1)
-                AppendFilter($"{column} != {account.Ne}");
+                AppendFilter($"({column} IS NULL OR {column} != {account.Ne})");
 
             if (account.In != null)
             {
@@ -265,7 +265,7 @@ namespace Tzkt.Api
 
             if (account.Ni != null && account.Ni.Count > 0)
             {
-                AppendFilter($"NOT ({column} = ANY (@p{Counter}))");
+                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", account.Ni);
             }
 
@@ -297,7 +297,7 @@ namespace Tzkt.Api
 
             if (str.Ne != null)
             {
-                AppendFilter($@"""{column}"" != @p{Counter}");
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != @p{Counter})");
                 Params.Add($"p{Counter++}", str.Ne);
             }
 
@@ -321,7 +321,7 @@ namespace Tzkt.Api
 
             if (str.Ni != null)
             {
-                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", str.Ni);
             }
 
@@ -423,7 +423,7 @@ namespace Tzkt.Api
                 AppendFilter($@"""{column}"" = {value.Eq}");
 
             if (value.Ne != null)
-                AppendFilter($@"""{column}"" != {value.Ne}");
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {value.Ne})");
 
             if (value.Gt != null)
                 AppendFilter($@"""{column}"" > {value.Gt}");
@@ -445,7 +445,7 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
             {
-                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", value.Ni);
             }
 
@@ -467,7 +467,7 @@ namespace Tzkt.Api
                 AppendFilter($@"{column} = {value.Eq}");
 
             if (value.Ne != null)
-                AppendFilter($@"{column} != {value.Ne}");
+                AppendFilter($@"({column} IS NULL OR {column} != {value.Ne})");
 
             if (value.Gt != null)
                 AppendFilter($@"{column} > {value.Gt}");
@@ -489,7 +489,7 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
             {
-                AppendFilter($@"NOT ({column} = ANY (@p{Counter}))");
+                AppendFilter($@"({column} IS NULL OR NOT ({column} = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", value.Ni);
             }
 
@@ -511,7 +511,7 @@ namespace Tzkt.Api
                 AppendFilter($@"""{column}"" = {value.Eq}");
 
             if (value.Ne != null)
-                AppendFilter($@"""{column}"" != {value.Ne}");
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {value.Ne})");
 
             if (value.Gt != null)
                 AppendFilter($@"""{column}"" > {value.Gt}");
@@ -533,7 +533,7 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
             {
-                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", value.Ni);
             }
 
@@ -561,7 +561,7 @@ namespace Tzkt.Api
                 AppendFilter($@"{column} = {value.Eq}");
 
             if (value.Ne != null)
-                AppendFilter($@"{column} != {value.Ne}");
+                AppendFilter($@"({column} IS NULL OR {column} != {value.Ne})");
 
             if (value.Gt != null)
                 AppendFilter($@"{column} > {value.Gt}");
@@ -583,7 +583,7 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
             {
-                AppendFilter($@"NOT ({column} = ANY (@p{Counter}))");
+                AppendFilter($@"({column} IS NULL OR NOT ({column} = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", value.Ni);
             }
 
@@ -648,7 +648,7 @@ namespace Tzkt.Api
                 AppendFilter($@"""{column}"" = {value.Eq}");
 
             if (value.Ne != null)
-                AppendFilter($@"""{column}"" != {value.Ne}");
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {value.Ne})");
 
             if (value.Gt != null)
                 AppendFilter($@"""{column}"" > {value.Gt}");
@@ -670,7 +670,7 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
             {
-                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", value.Ni);
             }
 
@@ -698,7 +698,7 @@ namespace Tzkt.Api
                 AppendFilter($@"""{column}"" = {value.Eq}");
 
             if (value.Ne != null)
-                AppendFilter($@"""{column}"" != {value.Ne}");
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {value.Ne})");
 
             if (value.Gt != null)
                 AppendFilter($@"""{column}"" > {value.Gt}");
@@ -720,7 +720,7 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
             {
-                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY (@p{Counter})))");
                 Params.Add($"p{Counter++}", value.Ni);
             }
 
