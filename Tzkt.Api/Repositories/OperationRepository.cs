@@ -4044,6 +4044,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter parameters,
+            BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -4057,6 +4058,11 @@ namespace Tzkt.Api.Repositories
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
                 .Filter("Parameters", parameters)
+                .Filter("InternalOperations", hasInternals?.Eq == true
+                    ? new Int32NullParameter { Gt = 0 }
+                    : hasInternals?.Eq == false
+                        ? new Int32NullParameter { Null = true }
+                        : null)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
@@ -4112,6 +4118,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter parameters,
+            BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -4165,6 +4172,11 @@ namespace Tzkt.Api.Repositories
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
                 .Filter("Parameters", parameters)
+                .Filter("InternalOperations", hasInternals?.Eq == true
+                    ? new Int32NullParameter { Gt = 0 }
+                    : hasInternals?.Eq == false
+                        ? new Int32NullParameter { Null = true }
+                        : null)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
@@ -4298,6 +4310,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter parameters,
+            BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -4348,6 +4361,11 @@ namespace Tzkt.Api.Repositories
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
                 .Filter("Parameters", parameters)
+                .Filter("InternalOperations", hasInternals?.Eq == true
+                    ? new Int32NullParameter { Gt = 0 }
+                    : hasInternals?.Eq == false
+                        ? new Int32NullParameter { Null = true }
+                        : null)
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)

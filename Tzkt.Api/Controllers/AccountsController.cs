@@ -204,6 +204,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="type">Comma separated list of operation types to return (endorsement, ballot, proposal, activation, double_baking, double_endorsing, nonce_revelation, delegation, origination, transaction, reveal, migration, revelation_penalty, baking)</param>
         /// <param name="level">Filters operations by level.</param>
         /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
         /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
         /// <param name="limit">Number of items to return</param>
@@ -217,6 +218,7 @@ namespace Tzkt.Api.Controllers
             string type,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            BoolParameter hasInternals,
             SortMode sort = SortMode.Descending,
             int? lastId = null,
             [Range(0, 1000)] int limit = 100,
@@ -242,7 +244,7 @@ namespace Tzkt.Api.Controllers
             if (to != null) timestamp.Lt = to.Value.DateTime;
             #endregion
 
-            return Accounts.GetOperations(address, types, level, timestamp, _sort, _offset, limit, quote);
+            return Accounts.GetOperations(address, types, level, timestamp, hasInternals, _sort, _offset, limit, quote);
         }
 
         /// <summary>

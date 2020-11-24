@@ -2226,6 +2226,7 @@ namespace Tzkt.Api.Repositories
             HashSet<string> types,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            BoolParameter hasInternals,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2277,7 +2278,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = delegat.Id }, null, null, null, null, level, timestamp, null, null, sort, offset, limit, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = delegat.Id }, null, null, null, null, level, timestamp, null, hasInternals, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2344,7 +2345,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = user.Id }, null, null, null, null, level, timestamp, null, null, sort, offset, limit, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = user.Id }, null, null, null, null, level, timestamp, null, hasInternals, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2383,7 +2384,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = contract.Id }, null, null, null, null, level, timestamp, null, null, sort, offset, limit, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = contract.Id }, null, null, null, null, level, timestamp, null, hasInternals, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
