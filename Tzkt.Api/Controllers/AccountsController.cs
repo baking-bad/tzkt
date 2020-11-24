@@ -201,30 +201,48 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of operations related to the specified account.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="from">Start of the datetime range to filter by (ISO 8601, e.g. 2019-11-31)</param>
-        /// <param name="to">End of the datetime range to filter by (ISO 8601, e.g. 2019-12-31)</param>
         /// <param name="type">Comma separated list of operation types to return (endorsement, ballot, proposal, activation, double_baking, double_endorsing, nonce_revelation, delegation, origination, transaction, reveal, migration, revelation_penalty, baking)</param>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
         /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
         /// <param name="limit">Number of items to return</param>
-        /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <param name="from">**DEPRECATED**. Use `timestamp.ge=` intead.</param>
+        /// <param name="to">**DEPRECATED**. Use `timestamp.lt=` intead.</param>
         /// <returns></returns>
         [HttpGet("{address}/operations")]
         public Task<IEnumerable<Operation>> GetOperations(
             [Address] string address,
-            DateTime? from,
-            DateTime? to,
             string type,
-            [Min(0)] int lastId = 0,
-            [Range(0, 1000)] int limit = 100,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
             SortMode sort = SortMode.Descending,
-            Symbols quote = Symbols.None)
+            int? lastId = null,
+            [Range(0, 1000)] int limit = 100,
+            Symbols quote = Symbols.None,
+            DateTime? from = null,
+            DateTime? to = null)
         {
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
-            return from != null || to != null
-                ? Accounts.GetOperations(address, from ?? DateTime.MinValue, to ?? DateTime.MaxValue, types, sort, lastId, limit, quote)
-                : Accounts.GetOperations(address, types, sort, lastId, limit, quote);
+            var _sort = sort == SortMode.Ascending
+                ? new SortParameter { Asc = "Id" }
+                : new SortParameter { Desc = "Id" };
+
+            var _offset = lastId != null
+                ? new OffsetParameter { Cr = lastId }
+                : null;
+
+            #region legacy
+            if (timestamp == null && (from != null || to != null))
+                timestamp = new DateTimeParameter();
+
+            if (from != null) timestamp.Ge = from;
+            if (to != null) timestamp.Lt = to;
+            #endregion
+
+            return Accounts.GetOperations(address, types, level, timestamp, _sort, _offset, limit, quote);
         }
 
         /// <summary>
@@ -239,15 +257,6 @@ namespace Tzkt.Api.Controllers
         public Task<AccountMetadata> GetMetadata([Address] string address)
         {
             return Accounts.GetMetadata(address);
-        }
-
-        [OpenApiIgnore]
-        [HttpGet("{address}/profile")]
-        public Task<Account> GetProfile([Address] string address, string type, [Range(0, 1000)] int n = 20, SortMode sort = SortMode.Descending)
-        {
-            var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
-
-            return Accounts.GetProfile(address, types, sort, n);
         }
 
         /// <summary>
