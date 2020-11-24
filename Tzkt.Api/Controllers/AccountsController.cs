@@ -199,12 +199,29 @@ namespace Tzkt.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Returns a list of operations related to the specified account.
+        /// Note: for better flexibility this endpoint accumulates query parameters (filters) of each `/operations/{type}` endpoint,
+        /// so a particular filter may affect several operation types containing this filter.
+        /// For example, if you specify an `initiator` it will affect all transactions, delegations and originations,
+        /// because all these types have an `initiator` field.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <param name="type">Comma separated list of operation types to return (endorsement, ballot, proposal, activation, double_baking, double_endorsing, nonce_revelation, delegation, origination, transaction, reveal, migration, revelation_penalty, baking)</param>
+        /// <param name="initiator">Filters transactions, delegations and originations by initiator. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="sender">Filters transactions, delegations, originations, reveals and seed nonce revelations by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="accuser">Filters double baking and double endorsing by accuser. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="offender">Filters double baking and double endorsing by offender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="baker">Filters seed nonce revelation operations by baker. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters operations by level.</param>
         /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <param name="parameters">Filters transactions by parameters value. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
+        /// <param name="status">Filters transactions, delegations, originations and reveals by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
         /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
         /// <param name="limit">Number of items to return</param>
@@ -213,12 +230,25 @@ namespace Tzkt.Api.Controllers
         /// <param name="to">**DEPRECATED**. Use `timestamp.lt=` intead.</param>
         /// <returns></returns>
         [HttpGet("{address}/operations")]
-        public Task<IEnumerable<Operation>> GetOperations(
+        public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
             [Address] string address,
             string type,
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter target,
+            AccountParameter prevDelegate,
+            AccountParameter newDelegate,
+            AccountParameter contractManager,
+            AccountParameter contractDelegate,
+            AccountParameter originatedContract,
+            AccountParameter accuser,
+            AccountParameter offender,
+            AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            StringParameter parameters,
             BoolParameter hasInternals,
+            OperationStatusParameter status,
             SortMode sort = SortMode.Descending,
             int? lastId = null,
             [Range(0, 1000)] int limit = 100,
@@ -226,6 +256,116 @@ namespace Tzkt.Api.Controllers
             DateTimeOffset? from = null,
             DateTimeOffset? to = null)
         {
+            #region validate
+            if (initiator != null)
+            {
+                if (initiator.Eqx != null)
+                    return new BadRequest($"{nameof(initiator)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (initiator.Nex != null)
+                    return new BadRequest($"{nameof(initiator)}.eqx", "This parameter doesn't support .eqx mode.");
+            }
+
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+            }
+
+            if (target != null)
+            {
+                if (target.Eqx != null)
+                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (target.Nex != null)
+                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
+            }
+
+            if (prevDelegate != null)
+            {
+                if (prevDelegate.Eqx != null)
+                    return new BadRequest($"{nameof(prevDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (prevDelegate.Nex != null)
+                    return new BadRequest($"{nameof(prevDelegate)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (newDelegate != null)
+            {
+                if (newDelegate.Eqx != null)
+                    return new BadRequest($"{nameof(newDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (newDelegate.Nex != null)
+                    return new BadRequest($"{nameof(newDelegate)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (contractManager != null)
+            {
+                if (contractManager.Eqx != null)
+                    return new BadRequest($"{nameof(contractManager)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (contractManager.Nex != null)
+                    return new BadRequest($"{nameof(contractManager)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (contractDelegate != null)
+            {
+                if (contractDelegate.Eqx != null)
+                    return new BadRequest($"{nameof(contractDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (contractDelegate.Nex != null)
+                    return new BadRequest($"{nameof(contractDelegate)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (originatedContract != null)
+            {
+                if (originatedContract.Eqx != null)
+                    return new BadRequest($"{nameof(originatedContract)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (originatedContract.Nex != null)
+                    return new BadRequest($"{nameof(originatedContract)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (accuser != null)
+            {
+                if (accuser.Eqx != null)
+                    return new BadRequest($"{nameof(accuser)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (accuser.Nex != null)
+                    return new BadRequest($"{nameof(accuser)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (offender != null)
+            {
+                if (offender.Eqx != null)
+                    return new BadRequest($"{nameof(offender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (offender.Nex != null)
+                    return new BadRequest($"{nameof(offender)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (baker != null)
+            {
+                if (baker.Eqx != null)
+                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (baker.Nex != null)
+                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (parameters != null)
+            {
+                if (parameters.Eqx != null)
+                    return new BadRequest($"{nameof(parameters)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (parameters.Nex != null)
+                    return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
+            }
+            #endregion
+
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
             var _sort = sort == SortMode.Ascending
@@ -244,7 +384,7 @@ namespace Tzkt.Api.Controllers
             if (to != null) timestamp.Lt = to.Value.DateTime;
             #endregion
 
-            return Accounts.GetOperations(address, types, level, timestamp, hasInternals, _sort, _offset, limit, quote);
+            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, parameters, hasInternals, status, _sort, _offset, limit, quote));
         }
 
         /// <summary>
