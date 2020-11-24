@@ -221,8 +221,8 @@ namespace Tzkt.Api.Controllers
             int? lastId = null,
             [Range(0, 1000)] int limit = 100,
             Symbols quote = Symbols.None,
-            DateTime? from = null,
-            DateTime? to = null)
+            DateTimeOffset? from = null,
+            DateTimeOffset? to = null)
         {
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
 
@@ -238,8 +238,8 @@ namespace Tzkt.Api.Controllers
             if (timestamp == null && (from != null || to != null))
                 timestamp = new DateTimeParameter();
 
-            if (from != null) timestamp.Ge = from;
-            if (to != null) timestamp.Lt = to;
+            if (from != null) timestamp.Ge = from.Value.DateTime;
+            if (to != null) timestamp.Lt = to.Value.DateTime;
             #endregion
 
             return Accounts.GetOperations(address, types, level, timestamp, _sort, _offset, limit, quote);
@@ -276,8 +276,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/report")]
         public async Task<ActionResult> GetBalanceReport(
             [Address] string address,
-            DateTime? from,
-            DateTime? to,
+            DateTimeOffset? from,
+            DateTimeOffset? to,
             string currency,
             bool historical = false,
             string delimiter = "comma",
@@ -323,8 +323,8 @@ namespace Tzkt.Api.Controllers
             };
             #endregion
 
-            var _from = from ?? DateTime.MinValue;
-            var _to = to ?? DateTime.MaxValue;
+            var _from = from?.DateTime ?? DateTime.MinValue;
+            var _to = to?.DateTime ?? DateTime.MaxValue;
 
             var stream = new MemoryStream();
             var csv = new StreamWriter(stream);
@@ -428,9 +428,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="datetime">Datetime at which you want to know account balance (e.g. `2020-01-01`, or `2019-12-30T23:42:59Z`)</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{datetime:DateTime}")]
-        public Task<long> GetBalanceAtDate([Address] string address, DateTime datetime)
+        public Task<long> GetBalanceAtDate([Address] string address, DateTimeOffset datetime)
         {
-            return History.Get(address, datetime);
+            return History.Get(address, datetime.DateTime);
         }
     }
 }
