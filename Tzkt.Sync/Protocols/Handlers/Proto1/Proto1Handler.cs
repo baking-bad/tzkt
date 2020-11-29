@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -33,59 +34,9 @@ namespace Tzkt.Sync.Protocols
 
         public override Task CancelMigration() => Proto2.DelegatesMigration.Revert(this);
 
-        public override Task LoadEntities(IBlock block)
+        public override async Task InitProtocol(JsonElement block)
         {
-            var rawBlock = block as RawBlock;
-            var accounts = new HashSet<string>(64);
-
-            foreach (var op in rawBlock.Operations[2])
-            {
-                if (op.Contents[0] is RawActivationContent activation)
-                    accounts.Add(activation.Address);
-            }
-
-            foreach (var op in rawBlock.Operations[3])
-            {
-                foreach (var content in op.Contents)
-                {
-                    switch (content)
-                    {
-                        case RawRevealContent reveal:
-                            accounts.Add(reveal.Source);
-                            break;
-                        case RawDelegationContent delegation:
-                            accounts.Add(delegation.Source);
-                            break;
-                        case RawTransactionContent transaction:
-                            accounts.Add(transaction.Source);
-                            if (transaction.Destination != null)
-                                accounts.Add(transaction.Destination);
-
-                            if (transaction.Metadata.InternalResults != null)
-                                foreach (var internalContent in transaction.Metadata.InternalResults)
-                                {
-                                    if (internalContent is RawInternalTransactionResult internalTransaction)
-                                    {
-                                        accounts.Add(internalTransaction.Source);
-                                        if (internalTransaction.Destination != null)
-                                            accounts.Add(internalTransaction.Destination);
-                                    }
-                                }
-                            break;
-                        case RawOriginationContent origination:
-                            accounts.Add(origination.Source);
-                            if (origination.Manager != null)
-                                accounts.Add(origination.Manager);
-                            break;
-                    }
-                }
-            }
-
-            return Cache.Accounts.LoadAsync(accounts);
-        }
-
-        public override async Task InitProtocol(IBlock block)
-        {
+            var level = block.Required("header").RequiredInt32("level");
             var state = Cache.AppState.Get();
             var currProtocol = await Cache.Protocols.GetAsync(state.Protocol);
 
@@ -94,15 +45,15 @@ namespace Tzkt.Sync.Protocols
             {
                 protocol = new Protocol
                 {
-                    Hash = block.Protocol,
+                    Hash = block.RequiredString("protocol"),
                     Code = await Db.Protocols.CountAsync() - 1,
-                    FirstLevel = block.Level,
+                    FirstLevel = level,
                     LastLevel = -1
                 };
                 Db.Protocols.Add(protocol);
                 Cache.Protocols.Add(protocol);
             }
-            else if (block.Level % currProtocol.BlocksPerCycle == 1)
+            else if (level % currProtocol.BlocksPerCycle == 1)
             {
                 protocol = await Cache.Protocols.GetAsync(state.Protocol);
                 Db.TryAttach(protocol);
@@ -110,27 +61,26 @@ namespace Tzkt.Sync.Protocols
 
             if (protocol != null)
             {
-                var stream = await Node.GetConstantsAsync(block.Level);
-                var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
+                var rawConst = await Node.GetAsync($"chains/main/blocks/{level}/context/constants");
 
-                protocol.BlockDeposit = rawConst.BlockDeposit;
-                protocol.BlockReward0 = rawConst.BlockReward;
-                protocol.BlocksPerCommitment = rawConst.BlocksPerCommitment;
-                protocol.BlocksPerCycle = rawConst.BlocksPerCycle;
-                protocol.BlocksPerSnapshot = rawConst.BlocksPerSnapshot;
-                protocol.BlocksPerVoting = rawConst.BlocksPerVoting;
-                protocol.ByteCost = rawConst.ByteCost;
-                protocol.EndorsementDeposit = rawConst.EndorsementDeposit;
-                protocol.EndorsementReward0 = rawConst.EndorsementReward;
-                protocol.EndorsersPerBlock = rawConst.EndorsersPerBlock;
-                protocol.HardBlockGasLimit = rawConst.HardBlockGasLimit;
-                protocol.HardOperationGasLimit = rawConst.HardOperationGasLimit;
-                protocol.HardOperationStorageLimit = rawConst.HardOperationStorageLimit;
-                protocol.OriginationSize = rawConst.OriginationBurn / rawConst.ByteCost;
-                protocol.PreservedCycles = rawConst.PreservedCycles;
-                protocol.RevelationReward = rawConst.RevelationReward;
-                protocol.TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0];
-                protocol.TokensPerRoll = rawConst.TokensPerRoll;
+                protocol.BlockDeposit = rawConst.RequiredInt64("block_security_deposit");
+                protocol.BlockReward0 = rawConst.RequiredInt64("block_reward");
+                protocol.BlocksPerCommitment = rawConst.RequiredInt32("blocks_per_commitment");
+                protocol.BlocksPerCycle = rawConst.RequiredInt32("blocks_per_cycle");
+                protocol.BlocksPerSnapshot = rawConst.RequiredInt32("blocks_per_roll_snapshot");
+                protocol.BlocksPerVoting = rawConst.RequiredInt32("blocks_per_voting_period");
+                protocol.ByteCost = rawConst.RequiredInt32("cost_per_byte");
+                protocol.EndorsementDeposit = rawConst.RequiredInt64("endorsement_security_deposit");
+                protocol.EndorsementReward0 = rawConst.RequiredInt64("endorsement_reward");
+                protocol.EndorsersPerBlock = rawConst.RequiredInt32("endorsers_per_block");
+                protocol.HardBlockGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_block");
+                protocol.HardOperationGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_operation");
+                protocol.HardOperationStorageLimit = rawConst.RequiredInt32("hard_storage_limit_per_operation");
+                protocol.OriginationSize = rawConst.RequiredInt32("origination_burn") / 1000;
+                protocol.PreservedCycles = rawConst.RequiredInt32("preserved_cycles");
+                protocol.RevelationReward = rawConst.RequiredInt64("seed_nonce_revelation_tip");
+                protocol.TimeBetweenBlocks = rawConst.RequiredArray("time_between_blocks", 2)[0].ParseInt32();
+                protocol.TokensPerRoll = rawConst.RequiredInt64("tokens_per_roll");
             }
         }
 
@@ -168,9 +118,9 @@ namespace Tzkt.Sync.Protocols
             currProtocol.TokensPerRoll = rawConst.TokensPerRoll;
         }
 
-        public override async Task Commit(IBlock block)
+        public override async Task Commit(JsonElement block)
         {
-            var rawBlock = block as RawBlock;
+            var rawBlock = JsonSerializer.Deserialize<RawBlock>(block.GetRawText(), Proto1.Serializer.Options);
 
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
             var freezerCommit = await FreezerCommit.Apply(this, blockCommit.Block, rawBlock);
@@ -281,7 +231,7 @@ namespace Tzkt.Sync.Protocols
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
-        public override async Task AfterCommit(IBlock rawBlock)
+        public override async Task AfterCommit(JsonElement rawBlock)
         {
             var block = await Cache.Blocks.CurrentAsync();
             await SnapshotBalanceCommit.Apply(this, block);

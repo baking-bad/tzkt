@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Sync.Services;
 
@@ -13,24 +13,21 @@ namespace Tzkt.Sync.Protocols.Initiator
             Cache = protocol.Cache;
         }
 
-        public Task<IBlock> ValidateBlock(IBlock block)
+        public Task ValidateBlock(JsonElement block)
         {
-            if (!(block is RawBlock rawBlock))
-                throw new ArgumentException("invalid type of the block to validate");
+            if (block.Required("header").RequiredInt32("level") != Cache.AppState.GetNextLevel())
+                throw new ValidationException("invalid block level", true);
 
-            if (rawBlock.Level != Cache.AppState.GetNextLevel())
-                throw new ValidationException($"Invalid block level", true);
+            if (block.Required("header").RequiredString("predecessor") != Cache.AppState.GetHead())
+                throw new ValidationException("invalid block predecessor", true);
 
-            if (rawBlock.Predecessor != Cache.AppState.GetHead())
-                throw new ValidationException($"Invalid block predecessor", true);
+            if (block.RequiredString("protocol") != Cache.AppState.GetNextProtocol())
+                throw new ValidationException("invalid block protocol", true);
 
-            if (rawBlock.Protocol != Cache.AppState.GetNextProtocol())
-                throw new ValidationException($"Invalid block protocol", true);
+            if (block.Required("header").RequiredInt32("level") != 1)
+                throw new ValidationException("initiator block is allowed only at level 1", true);
 
-            if (rawBlock.Level != 1)
-                throw new ValidationException("initiator block is allowed only at level 1");
-
-            return Task.FromResult(block);
+            return Task.CompletedTask;
         }
     }
 }

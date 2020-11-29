@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Tzkt.Data.Models;
@@ -10,321 +10,632 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class Validator : IValidator
     {
-        readonly CacheService Cache;
-        Protocol Protocol;
-        int Cycle;
+        protected readonly CacheService Cache;
 
-        public Validator(ProtocolHandler protocol)
+        protected Protocol Protocol;
+        protected Block LastBlock;
+        protected string Baker;
+        protected int Level;
+        protected int Cycle;
+
+        public Validator(ProtocolHandler protocol) => Cache = protocol.Cache;
+
+        public virtual async Task ValidateBlock(JsonElement block)
         {
-            Cache = protocol.Cache;
-        }
+            var protocol = block.RequiredString("protocol");
+            Protocol = await Cache.Protocols.GetAsync(protocol);
 
-        public async Task<IBlock> ValidateBlock(IBlock block)
-        {
-            Protocol = await Cache.Protocols.GetAsync(block.Protocol);
-            Cycle = (block.Level - 1) / Protocol.BlocksPerCycle;
-
-            if (!(block is Proto1.RawBlock rawBlock))
-                throw new ValidationException("invalid raw block type");
-
-            if (rawBlock.Level != Cache.AppState.GetNextLevel())
-                throw new ValidationException($"invalid block level", true);
-
-            if (rawBlock.Predecessor != Cache.AppState.GetHead())
-                throw new ValidationException($"Invalid block predecessor", true);
-
-            if (rawBlock.Protocol != Cache.AppState.GetNextProtocol())
+            if (protocol != Cache.AppState.GetNextProtocol())
                 throw new ValidationException($"invalid block protocol", true);
 
-            if (!Cache.Accounts.DelegateExists(rawBlock.Metadata.Baker))
-                throw new ValidationException($"invalid block baker '{rawBlock.Metadata.Baker}'");
+            ValidateBlockHeader(block.Required("header"));
+            await ValidateBlockMetadata(block.Required("metadata"));
+            await ValidateOperations(block.RequiredArray("operations", 4));
+        }
 
-            foreach (var baker in rawBlock.Metadata.Deactivated)
+        protected virtual void ValidateBlockHeader(JsonElement header)
+        {
+            Level = header.RequiredInt32("level");
+            Cycle = (Level - 1) /  Protocol.BlocksPerCycle;
+
+            if (Level != Cache.AppState.GetNextLevel())
+                throw new ValidationException($"invalid block level", true);
+
+            if (header.RequiredString("predecessor") != Cache.AppState.GetHead())
+                throw new ValidationException($"invalid block predecessor", true);
+        }
+
+        protected virtual async Task ValidateBlockMetadata(JsonElement metadata)
+        {
+            Baker = metadata.RequiredString("baker");
+
+            if (!Cache.Accounts.DelegateExists(Baker))
+                throw new ValidationException($"non-existent block baker");
+
+            await ValidateBlockVoting(metadata.RequiredString("voting_period_kind"));
+
+            foreach (var baker in metadata.RequiredArray("deactivated").EnumerateArray())
+                if (!Cache.Accounts.DelegateExists(baker.GetString()))
+                    throw new ValidationException($"non-existent deactivated baker {baker}");
+
+            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
+            ValidateBlockRewards(balanceUpdates.Take(Protocol.BlockReward0 > 0 ? 3 : 2));
+            ValidateCycleRewards(balanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2));
+        }
+
+        protected virtual async Task ValidateBlockVoting(string periodKind)
+        {
+            var period = await Cache.Periods.CurrentAsync();
+            var kind = periodKind switch
             {
-                if (!Cache.Accounts.DelegateExists(baker))
-                    throw new ValidationException($"invalid deactivated baker {baker}");
+                "proposal" => VotingPeriods.Proposal,
+                "exploration" => VotingPeriods.Exploration,
+                "testing" => VotingPeriods.Testing,
+                "promotion" => VotingPeriods.Promotion,
+                _ => throw new ValidationException("invalid voting period kind")
+            };
+
+            if (Level <= period.EndLevel)
+            {
+                if (period.Kind != kind)
+                    throw new ValidationException("unexpected voting period");
             }
-
-            if (rawBlock.Metadata.BalanceUpdates.Count > 0)
+            else
             {
-                var contractUpdate = rawBlock.Metadata.BalanceUpdates.FirstOrDefault(x => x is ContractUpdate) as ContractUpdate
-                    ?? throw new ValidationException("invalid block contract balance updates");
+                if ((int)kind != ((int)period.Kind + 1) % 4)
+                    throw new ValidationException("inconsistent voting period");
+            }
+        }
 
-                var depostisUpdate = rawBlock.Metadata.BalanceUpdates.FirstOrDefault(x => x is DepositsUpdate) as DepositsUpdate
-                    ?? throw new ValidationException("invalid block depostis balance updates");
+        protected virtual void ValidateBlockRewards(IEnumerable<BalanceUpdate> balanceUpdates)
+        {
+            if (balanceUpdates.Count() > 0)
+            {
+                var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract)
+                    ?? throw new ValidationException("missed block contract balance update");
 
-                if (contractUpdate.Contract != rawBlock.Metadata.Baker ||
-                    contractUpdate.Change != -Protocol.BlockDeposit)
-                    throw new ValidationException("invalid block contract update");
+                var depostisUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits)
+                    ?? throw new ValidationException("missed block freezer depostis update");
 
-                if (depostisUpdate.Delegate != rawBlock.Metadata.Baker ||
-                    depostisUpdate.Change != Protocol.BlockDeposit)
-                    throw new ValidationException("invalid block depostis update");
+                if (contractUpdate.Account != Baker || contractUpdate.Change != -GetBlockDeposit())
+                    throw new ValidationException("invalid block contract balance update");
 
-                if (Cycle >= (Protocol.PreservedCycles + 2))
+                if (depostisUpdate.Account != Baker || depostisUpdate.Change != GetBlockDeposit())
+                    throw new ValidationException("invalid block freezer depostis update");
+
+                if (balanceUpdates.Count() == 3)
                 {
-                    var rewardsUpdate = rawBlock.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
-                        ?? throw new ValidationException("invalid block rewards updates");
+                    var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards)
+                        ?? throw new ValidationException("missed block freezer rewards update");
 
-                    if (rewardsUpdate.Delegate != rawBlock.Metadata.Baker ||
-                        rewardsUpdate.Change != Protocol.BlockReward0)
-                        throw new ValidationException("invalid block rewards update");
+                    if (rewardsUpdate.Account != Baker || rewardsUpdate.Change != GetBlockReward())
+                        throw new ValidationException("invalid block freezer rewards update");
                 }
             }
+        }
 
-            if (rawBlock.Metadata.BalanceUpdates.Count > (Protocol.BlockReward0 > 0 ? 3 : 2))
+        protected virtual void ValidateCycleRewards(IEnumerable<BalanceUpdate> balanceUpdates)
+        {
+            if (balanceUpdates.Count() > 0)
             {
-                if (rawBlock.Level % Protocol.BlocksPerCycle != 0)
-                    throw new ValidationException("unexpected freezer updates");
+                if (Level % Protocol.BlocksPerCycle != 0)
+                    throw new ValidationException("unexpected cycle rewards");
 
-                foreach (var update in rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2))
+                foreach (var update in balanceUpdates)
                 {
-                    if (update is ContractUpdate contractUpdate &&
-                        !Cache.Accounts.DelegateExists(contractUpdate.Contract))
-                        throw new ValidationException($"unknown delegate {contractUpdate.Contract}");
+                    if (!Cache.Accounts.DelegateExists(update.Account))
+                        throw new ValidationException($"unknown delegate {update.Account}");
 
-                    if (update is FreezerUpdate freezerUpdate)
-                    {
-                        if (!Cache.Accounts.DelegateExists(freezerUpdate.Delegate))
-                            throw new ValidationException($"unknown delegate {freezerUpdate.Delegate}");
-
-                        if (freezerUpdate.Level != Cycle - Protocol.PreservedCycles && freezerUpdate.Level != Cycle - 1)
+                    if (update.Kind != BalanceUpdateKind.Contract)
+                        if (update.Cycle != Cycle - Protocol.PreservedCycles && update.Cycle != Cycle - 1)
                             throw new ValidationException("invalid freezer updates cycle");
-                    }
                 }
             }
+        }
 
-            foreach (var opGroup in rawBlock.Operations)
-                foreach (var op in opGroup)
+        protected virtual async Task ValidateOperations(JsonElement operations)
+        {
+            foreach (var group in operations.EnumerateArray())
+                foreach (var op in group.RequiredArray().EnumerateArray())
                 {
-                    if (String.IsNullOrEmpty(op.Hash))
+                    if (op.RequiredString("hash").Length == 0)
                         throw new ValidationException("invalid operation hash");
 
-                    foreach (var content in op.Contents)
+                    foreach (var content in op.RequiredArray("contents").EnumerateArray())
                     {
-                        if (content is RawEndorsementContent endorsement)
-                            await ValidateEndorsement(endorsement, rawBlock);
-                        else if (content is RawTransactionContent transaction)
-                            await ValidateTransaction(transaction, rawBlock);
-                        else if (content is RawNonceRevelationContent revelation)
-                            await ValidateNonceRevelation(revelation, rawBlock);
-                        else if (content is RawOriginationContent origination)
-                            await ValidateOrigination(origination, rawBlock);
-                        else if (content is RawDelegationContent delegation)
-                            await ValidateDelegation(delegation, rawBlock);
-                        else if (content is RawActivationContent activation)
-                            await ValidateActivation(activation);
-                        else if (content is RawRevealContent reveal)
-                            await ValidateReveal(reveal, rawBlock);
+                        switch (content.RequiredString("kind"))
+                        {
+                            case "endorsement": ValidateEndorsement(content); break;
+                            case "ballot": await ValidateBallot(content); break;
+                            case "proposals": await ValidateProposal(content); break;
+                            case "activate_account": await ValidateActivation(content); break;
+                            case "double_baking_evidence": ValidateDoubleBaking(content); break;
+                            case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
+                            case "seed_nonce_revelation": ValidateSeedNonceRevelation(content); break;
+                            case "delegation": await ValidateDelegation(content); break;
+                            case "origination": await ValidateOrigination(content); break;
+                            case "transaction": await ValidateTransaction(content); break;
+                            case "reveal": await ValidateReveal(content); break;
+                            default:
+                                throw new ValidationException("invalid operation content kind");
+                        }
                     }
                 }
-
-            return block;
         }
 
-        protected async Task ValidateActivation(RawActivationContent activation)
+        protected virtual void ValidateEndorsement(JsonElement content)
         {
-            if (await Cache.Accounts.ExistsAsync(activation.Address, AccountType.User) &&
-                ((await Cache.Accounts.GetAsync(activation.Address)) as User).Activated == true)
-                throw new ValidationException("account is already activated");
-
-            if ((activation.Metadata.BalanceUpdates[0] as ContractUpdate)?.Contract != activation.Address)
-                throw new ValidationException($"invalid activation balance updates");
-        }
-
-        protected async Task ValidateDelegation(RawDelegationContent delegation, RawBlock rawBlock)
-        {
-            if (!await Cache.Accounts.ExistsAsync(delegation.Source))
-                throw new ValidationException("unknown source account");
-
-            ValidateFeeBalanceUpdates(
-                delegation.Metadata.BalanceUpdates,
-                rawBlock.Metadata.Baker,
-                delegation.Source,
-                delegation.Fee,
-                rawBlock.Metadata.LevelInfo.Cycle);
-
-            if (delegation.Metadata.Result.Status == "applied" && delegation.Delegate != null)
-            {
-                if (delegation.Source != delegation.Delegate && !Cache.Accounts.DelegateExists(delegation.Delegate))
-                    throw new ValidationException("unknown delegate account");
-            }
-        }
-
-        protected async Task ValidateEndorsement(RawEndorsementContent endorsement, RawBlock rawBlock)
-        {
-            var lastBlock = await Cache.Blocks.CurrentAsync();
-
-            if (endorsement.Level != lastBlock.Level)
+            if (content.RequiredInt32("level") != Cache.AppState.GetLevel())
                 throw new ValidationException("invalid endorsed block level");
 
-            if (!Cache.Accounts.DelegateExists(endorsement.Metadata.Delegate))
-                throw new ValidationException("invalid endorsement delegate");
+            var metadata = content.Required("metadata");
+            var delegat = metadata.RequiredString("delegate");
+            var slots = metadata.RequiredArray("slots").Count();
 
-            if (endorsement.Metadata.BalanceUpdates.Count != 0 && endorsement.Metadata.BalanceUpdates.Count != (Protocol.BlockReward0 > 0 ? 3 : 2))
-                throw new ValidationException("invalid endorsement balance updates count");
+            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
 
-            if (endorsement.Metadata.BalanceUpdates.Count > 0)
+            if (!Cache.Accounts.DelegateExists(delegat))
+                throw new ValidationException($"unknown endorsement delegate {delegat}");
+
+            if (balanceUpdates.Count > 0)
             {
-                var contractUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is ContractUpdate) as ContractUpdate
-                    ?? throw new ValidationException("invalid endorsement contract balance updates");
+                if (balanceUpdates.Count != (Protocol.BlockReward0 > 0 ? 3 : 2)) // TODO: depend on no_reward_cycles
+                    throw new ValidationException("invalid endorsement balance updates count");
 
-                var depostisUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is DepositsUpdate) as DepositsUpdate
-                    ?? throw new ValidationException("invalid endorsement depostis balance updates");
+                var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract)
+                    ?? throw new ValidationException("missed endorsement contract balance update");
 
-                if (contractUpdate.Contract != endorsement.Metadata.Delegate ||
-                    contractUpdate.Change != -endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
-                    throw new ValidationException("invalid endorsement contract update");
+                var depostisUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits)
+                    ?? throw new ValidationException("missed endorsement freezer depostis update");
 
-                if (depostisUpdate.Delegate != endorsement.Metadata.Delegate ||
-                    depostisUpdate.Change != endorsement.Metadata.Slots.Count * Protocol.EndorsementDeposit)
-                    throw new ValidationException("invalid endorsement depostis update");
+                if (contractUpdate.Account != delegat || contractUpdate.Change != -GetEndorsementDeposit(slots))
+                    throw new ValidationException("invalid endorsement contract balance update");
 
-                if (Cycle >= (Protocol.PreservedCycles + 2))
+                if (depostisUpdate.Account != delegat || depostisUpdate.Change != GetEndorsementDeposit(slots))
+                    throw new ValidationException("invalid endorsement freezer depostis update");
+
+                if (balanceUpdates.Count > 2)
                 {
-                    var rewardsUpdate = endorsement.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate) as RewardsUpdate
-                        ?? throw new ValidationException("invalidendorsement rewards updates");
+                    var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards)
+                        ?? throw new ValidationException("missed block freezer rewards update");
 
-                    if (rewardsUpdate.Delegate != endorsement.Metadata.Delegate ||
-                        rewardsUpdate.Change != GetEndorsementReward(endorsement.Metadata.Slots.Count, lastBlock.Priority))
-                        throw new ValidationException("invalid endorsement rewards update");
+                    if (rewardsUpdate.Account != delegat || rewardsUpdate.Change != GetEndorsementReward(slots))
+                        throw new ValidationException("invalid block freezer rewards update");
                 }
             }
         }
 
-        protected Task ValidateNonceRevelation(RawNonceRevelationContent revelation, RawBlock rawBlock)
+        protected virtual async Task ValidateBallot(JsonElement content)
         {
-            if (revelation.Level % Protocol.BlocksPerCommitment != 0)
+            var period = await Cache.Periods.CurrentAsync();
+            if (period.EndLevel == Cache.AppState.GetLevel()) return; // Voting period is not added yet
+            var proposal = await Cache.Proposals.GetAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
+            
+            if (content.RequiredString("proposal") != proposal.Hash)
+                throw new ValidationException("invalid ballot proposal");
+
+            if (!Cache.Accounts.DelegateExists(content.RequiredString("source")))
+                throw new ValidationException("invalid ballot sender");
+
+            if (content.RequiredInt32("period") != period.Code)
+                throw new ValidationException("invalid ballot voting period");
+        }
+
+        protected virtual async Task ValidateProposal(JsonElement content)
+        {
+            var period = await Cache.Periods.CurrentAsync();
+            if (period.EndLevel == Cache.AppState.GetLevel()) return; // Voting period is not added yet
+
+            if (!Cache.Accounts.DelegateExists(content.RequiredString("source")))
+                throw new ValidationException("invalid proposal sender");
+
+            if (content.RequiredInt32("period") != period.Code)
+                throw new ValidationException("invalid proposal voting period");
+        }
+
+        protected virtual async Task ValidateActivation(JsonElement content)
+        {
+            var account = content.RequiredString("pkh");
+
+            if (await Cache.Accounts.ExistsAsync(account, AccountType.User) &&
+                ((await Cache.Accounts.GetAsync(account)) as User).Activated == true)
+                throw new ValidationException("account is already activated");
+
+            if (content.Required("metadata").RequiredArray("balance_updates", 1)[0].RequiredString("contract") != account)
+                throw new ValidationException("invalid activation balance updates");
+        }
+
+        protected virtual void ValidateDoubleBaking(JsonElement content)
+        {
+            if (content.Required("bh1").RequiredInt32("level") != content.Required("bh2").RequiredInt32("level"))
+                throw new ValidationException("inconsistent double baking evidence");
+
+            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates"));
+            if (balanceUpdates.Count > 0)
+            {
+                var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change > 0);
+                var lostDepositsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits && x.Change < 0);
+                var lostRewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change < 0);
+                var lostFeesUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Fees && x.Change < 0);
+
+                if (balanceUpdates.Count !=  (rewardsUpdate != null ? 1 : 0) + (lostDepositsUpdate != null ? 1 : 0)
+                     + (lostRewardsUpdate != null ? 1 : 0) + (lostFeesUpdate != null ? 1 : 0))
+                    throw new ValidationException("invalid double baking balance updates count");
+
+                if (rewardsUpdate != null && rewardsUpdate.Account != Baker)
+                    throw new ValidationException("invalid double baking reward recipient");
+
+                if ((rewardsUpdate?.Change ?? 0) != -((lostDepositsUpdate?.Change ?? 0) + (lostFeesUpdate?.Change ?? 0)) / 2)
+                    throw new ValidationException("invalid double baking reward amount");
+
+                var offender = lostDepositsUpdate?.Account ?? lostRewardsUpdate?.Account ?? lostFeesUpdate?.Account;
+
+                if (!Cache.Accounts.DelegateExists(offender))
+                    throw new ValidationException("invalid double baking offender");
+
+                if (lostDepositsUpdate != null && lostDepositsUpdate.Account != offender ||
+                    lostRewardsUpdate != null && lostRewardsUpdate.Account != offender ||
+                    lostFeesUpdate != null && lostFeesUpdate.Account != offender)
+                    throw new ValidationException("invalid double baking offender updates");
+
+                var accusedCycle = (content.Required("bh1").RequiredInt32("level") - 1) / Protocol.BlocksPerCycle;
+                if (lostDepositsUpdate != null && lostDepositsUpdate.Cycle != accusedCycle ||
+                    lostRewardsUpdate != null && lostRewardsUpdate.Cycle != accusedCycle ||
+                    lostFeesUpdate != null && lostFeesUpdate.Cycle != accusedCycle)
+                    throw new ValidationException("invalid double baking freezer level");
+            }
+        }
+
+        protected virtual void ValidateDoubleEndorsing(JsonElement content)
+        {
+            if (content.Required("op1").Required("operations").RequiredString("kind") != "endorsement" ||
+                content.Required("op2").Required("operations").RequiredString("kind") != "endorsement")
+                throw new ValidationException("inconsistent double endorsing evidence");
+
+            if (content.Required("op1").Required("operations").RequiredInt32("level")
+                != content.Required("op2").Required("operations").RequiredInt32("level"))
+                throw new ValidationException("inconsistent double endorsing evidence");
+
+            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates"));
+            if (balanceUpdates.Count > 0)
+            {
+                var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change > 0);
+                var lostDepositsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits && x.Change < 0);
+                var lostRewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change < 0);
+                var lostFeesUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Fees && x.Change < 0);
+
+                if (balanceUpdates.Count != (rewardsUpdate != null ? 1 : 0) + (lostDepositsUpdate != null ? 1 : 0)
+                     + (lostRewardsUpdate != null ? 1 : 0) + (lostFeesUpdate != null ? 1 : 0))
+                    throw new ValidationException("invalid double endorsing balance updates count");
+
+                if (rewardsUpdate != null && rewardsUpdate.Account != Baker)
+                    throw new ValidationException("invalid double endorsing reward recipient");
+
+                if ((rewardsUpdate?.Change ?? 0) != -((lostDepositsUpdate?.Change ?? 0) + (lostFeesUpdate?.Change ?? 0)) / 2)
+                    throw new ValidationException("invalid double endorsing reward amount");
+
+                var offender = lostDepositsUpdate?.Account ?? lostRewardsUpdate?.Account ?? lostFeesUpdate?.Account;
+
+                if (!Cache.Accounts.DelegateExists(offender))
+                    throw new ValidationException("invalid double endorsing offender");
+
+                if (lostDepositsUpdate != null && lostDepositsUpdate.Account != offender ||
+                    lostRewardsUpdate != null && lostRewardsUpdate.Account != offender ||
+                    lostFeesUpdate != null && lostFeesUpdate.Account != offender)
+                    throw new ValidationException("invalid double endorsing offender updates");
+
+                var accusedCycle = (content.Required("op1").Required("operations").RequiredInt32("level") - 1) / Protocol.BlocksPerCycle;
+                if (lostDepositsUpdate != null && lostDepositsUpdate.Cycle != accusedCycle ||
+                    lostRewardsUpdate != null && lostRewardsUpdate.Cycle != accusedCycle ||
+                    lostFeesUpdate != null && lostFeesUpdate.Cycle != accusedCycle)
+                    throw new ValidationException("invalid double endorsing freezer level");
+            }
+        }
+
+        protected virtual void ValidateSeedNonceRevelation(JsonElement content)
+        {
+            if (content.RequiredInt32("level") % Protocol.BlocksPerCommitment != 0)
                 throw new ValidationException("invalid seed nonce revelation level");
 
-            if (revelation.Metadata.BalanceUpdates.Count != 1)
-                throw new ValidationException("invalid seed nonce revelation balance updates count");
+            var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates", 1)[0];
 
-            if (!(revelation.Metadata.BalanceUpdates[0] is RewardsUpdate))
-                throw new ValidationException("invalid seed nonce revelation balance update type");
-
-            if (revelation.Metadata.BalanceUpdates[0].Change != Protocol.RevelationReward)
-                throw new ValidationException("invalid seed nonce revelation balance update amount");
-
-            if (!Cache.Accounts.DelegateExists(revelation.Metadata.BalanceUpdates[0].Target) ||
-                revelation.Metadata.BalanceUpdates[0].Target != rawBlock.Metadata.Baker)
+            if (balanceUpdate.RequiredString("delegate") != Baker)
                 throw new ValidationException("invalid seed nonce revelation baker");
 
-            return Task.CompletedTask;
+            if (balanceUpdate.RequiredString("category") != "rewards")
+                throw new ValidationException("invalid seed nonce revelation balance update type");
+
+            if (balanceUpdate.RequiredInt64("change") != Protocol.RevelationReward)
+                throw new ValidationException("invalid seed nonce revelation balance update amount");
         }
 
-        protected async Task ValidateOrigination(RawOriginationContent origination, RawBlock rawBlock)
+        protected virtual async Task ValidateDelegation(JsonElement content)
         {
-            if (!await Cache.Accounts.ExistsAsync(origination.Source))
-                throw new ValidationException("unknown source account");
+            var source = content.RequiredString("source");
+            var delegat = content.RequiredString("delegate");
+
+            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
+                throw new ValidationException("unknown source contract");
+
+            if (content.Required("operation_result").RequiredString("status") == "applied" && delegat != null)
+                if (!Cache.Accounts.DelegateExists(delegat))
+                    throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                origination.Metadata.BalanceUpdates,
-                rawBlock.Metadata.Baker,
-                origination.Source,
-                origination.Fee,
-                rawBlock.Metadata.LevelInfo.Cycle);
+                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates")),
+                source,
+                content.RequiredInt64("fee"));
+        }
 
-            if (origination.Metadata.Result.BalanceUpdates != null)
+        protected virtual async Task ValidateInternalDelegation(JsonElement content, string initiator)
+        {
+            var source = content.RequiredString("source");
+            var delegat = content.RequiredString("delegate");
+
+            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
+                throw new ValidationException("unknown source contract");
+
+            if (content.Required("result").RequiredString("status") == "applied" && delegat != null)
+                if (!Cache.Accounts.DelegateExists(delegat))
+                    throw new ValidationException("unknown delegate account");
+        }
+
+        protected virtual async Task ValidateOrigination(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+            var delegat = content.RequiredString("delegate");
+            var metadata = content.Required("metadata");
+            var result = metadata.Required("operation_result");
+
+            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
+                throw new ValidationException("unknown source contract");
+
+            //if (result.RequiredString("status") == "applied" && delegat != null)
+            //    if (!Cache.Accounts.DelegateExists(delegat))
+            //        throw new ValidationException("unknown delegate account");
+
+            ValidateFeeBalanceUpdates(
+                ParseBalanceUpdates(metadata.RequiredArray("balance_updates")),
+                source,
+                content.RequiredInt64("fee"));
+
+            if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    origination.Metadata.Result.BalanceUpdates,
-                    origination.Source,
-                    origination.Metadata.Result.OriginatedContracts[0],
-                    origination.Balance,
-                    (origination.Metadata.Result.PaidStorageSizeDiff + Protocol.OriginationSize) * Protocol.ByteCost);
+                    ParseBalanceUpdates(resultUpdates),
+                    source,
+                    result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
+                    content.RequiredInt64("balance"),
+                    ((result.OptionalInt32("paid_storage_size_diff") ?? 0) + Protocol.OriginationSize) * Protocol.ByteCost,
+                     0);
         }
 
-        protected async Task ValidateReveal(RawRevealContent reveal, RawBlock rawBlock)
+        protected virtual async Task ValidateInternalOrigination(JsonElement content, string initiator)
         {
-            if (!await Cache.Accounts.ExistsAsync(reveal.Source))
-                throw new ValidationException("unknown source account");
+            var source = content.RequiredString("source");
+            var delegat = content.RequiredString("delegate");
+            var result = content.Required("result");
 
-            ValidateFeeBalanceUpdates(
-                reveal.Metadata.BalanceUpdates,
-                rawBlock.Metadata.Baker,
-                reveal.Source,
-                reveal.Fee,
-                rawBlock.Metadata.LevelInfo.Cycle);
-        }
+            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
+                throw new ValidationException("unknown source contract");
 
-        protected async Task ValidateTransaction(RawTransactionContent transaction, RawBlock rawBlock)
-        {
-            if (!await Cache.Accounts.ExistsAsync(transaction.Source))
-                throw new ValidationException("unknown source account");
+            //if (result.RequiredString("status") == "applied" && delegat != null)
+            //    if (!Cache.Accounts.DelegateExists(delegat))
+            //        throw new ValidationException("unknown delegate account");
 
-            ValidateFeeBalanceUpdates(
-                transaction.Metadata.BalanceUpdates,
-                rawBlock.Metadata.Baker,
-                transaction.Source,
-                transaction.Fee,
-                rawBlock.Metadata.LevelInfo.Cycle);
-
-            if (transaction.Metadata.Result.BalanceUpdates != null)
+            if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    transaction.Metadata.Result.BalanceUpdates,
-                    transaction.Source,
-                    transaction.Destination,
-                    transaction.Amount,
-                    transaction.Metadata.Result.PaidStorageSizeDiff * Protocol.ByteCost);
+                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    source,
+                    result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
+                    content.RequiredInt64("balance"),
+                    ((result.OptionalInt32("paid_storage_size_diff") ?? 0) + Protocol.OriginationSize) * Protocol.ByteCost,
+                    0,
+                    initiator);
+        }
 
-            if (transaction.Metadata.InternalResults?.Count > 0)
+        protected virtual async Task ValidateTransaction(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            var metadata = content.Required("metadata");
+
+            ValidateFeeBalanceUpdates(
+                ParseBalanceUpdates(metadata.RequiredArray("balance_updates")),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = metadata.Required("operation_result");
+
+            if (result.TryGetProperty("balance_updates", out var resultUpdates))
+                ValidateTransferBalanceUpdates(
+                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    source,
+                    content.RequiredString("destination"),
+                    content.RequiredInt64("amount"),
+                    (result.OptionalInt32("paid_storage_size_diff") ?? 0) * Protocol.ByteCost,
+                    (result.OptionalBool("allocated_destination_contract") ?? false) ? Protocol.OriginationSize * Protocol.ByteCost : 0);
+
+            if (metadata.TryGetProperty("internal_operation_results", out var internalResults))
             {
-                foreach (var internalContent in transaction.Metadata.InternalResults.Where(x => x is RawInternalTransactionResult))
+                foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
                 {
-                    var internalTransaction = internalContent as RawInternalTransactionResult;
-
-                    if (!await Cache.Accounts.ExistsAsync(internalTransaction.Source, AccountType.Contract))
-                        throw new ValidationException("unknown source contract");
-
-                    if (internalTransaction.Result.BalanceUpdates != null)
-                        ValidateTransferBalanceUpdates(
-                            internalTransaction.Result.BalanceUpdates,
-                            internalTransaction.Source,
-                            internalTransaction.Destination,
-                            internalTransaction.Amount,
-                            internalTransaction.Result.PaidStorageSizeDiff * Protocol.ByteCost,
-                            transaction.Source);
+                    switch (internalContent.RequiredString("kind"))
+                    {
+                        case "delegation": await ValidateInternalDelegation(internalContent, source); break;
+                        case "origination": await ValidateInternalOrigination(internalContent, source); break;
+                        case "transaction": await ValidateInternalTransaction(internalContent, source); break;
+                        default:
+                            throw new ValidationException("invalid internal operation kind");
+                    }
                 }
             }
         }
 
-        void ValidateFeeBalanceUpdates(List<IBalanceUpdate> updates, string baker, string sender, long fee, int cycle)
+        protected virtual async Task ValidateInternalTransaction(JsonElement content, string initiator)
         {
-            if (updates.Count != (fee != 0 ? 2 : 0))
-                throw new ValidationException($"invalid fee balance updates count");
+            var source = content.RequiredString("source");
+            var result = content.Required("result");
 
-            if (updates.Count > 0)
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            if (result.TryGetProperty("balance_updates", out var resultUpdates))
+                ValidateTransferBalanceUpdates(
+                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    source,
+                    content.RequiredString("destination"),
+                    content.RequiredInt64("amount"),
+                    (result.OptionalInt32("paid_storage_size_diff") ?? 0) * Protocol.ByteCost,
+                    (result.OptionalBool("allocated_destination_contract") ?? false) ? Protocol.OriginationSize * Protocol.ByteCost : 0,
+                    initiator);
+        }
+
+        protected virtual async Task ValidateReveal(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates")),
+                source,
+                content.RequiredInt64("fee"));
+        }
+
+        protected virtual void ValidateFeeBalanceUpdates(List<BalanceUpdate> balanceUpdates, string sender, long fee)
+        {
+            if (balanceUpdates.Count != (fee != 0 ? 2 : 0))
+                throw new ValidationException("invalid fee balance updates count");
+
+            if (fee != 0)
             {
-                if (!updates.Any(x => x is ContractUpdate update && update.Change == -fee && update.Contract == sender))
-                    throw new ValidationException("invalid fee balance updates");
+                if (balanceUpdates[0].Kind != BalanceUpdateKind.Contract ||
+                    balanceUpdates[0].Change != -fee ||
+                    balanceUpdates[0].Account != sender)
+                    throw new ValidationException("invalid fee contract balance update");
 
-                if (!updates.Any(x => x is FeesUpdate update && update.Change == fee && update.Delegate == baker && update.Level == cycle))
-                    throw new ValidationException("invalid fee balance updates");
+                if (balanceUpdates[1].Kind != BalanceUpdateKind.Fees ||
+                    balanceUpdates[1].Change != fee ||
+                    balanceUpdates[1].Account != Baker ||
+                    balanceUpdates[1].Cycle != Cycle)
+                    throw new ValidationException("invalid fee freezer fees update");
             }
         }
 
-        void ValidateTransferBalanceUpdates(List<IBalanceUpdate> updates, string sender, string receiver, long amount, long storageFee, string parent = null)
+        protected virtual void ValidateTransferBalanceUpdates(List<BalanceUpdate> balanceUpdates, string sender, string target, long amount, long storageFee, long allocationFee, string initiator = null)
         {
-            if (updates.Count != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 1 : 0))
-                throw new ValidationException($"invalid transfer balance updates count");
+            if (balanceUpdates.Count != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 1 : 0) + (allocationFee != 0 ? 1 : 0))
+                throw new ValidationException("invalid transfer balance updates count");
 
             if (amount > 0)
             {
-                if (!updates.Any(x => x is ContractUpdate update && update.Change == -amount && update.Contract == sender))
+                if (!balanceUpdates.Any(x =>
+                    x.Kind == BalanceUpdateKind.Contract &&
+                    x.Change == -amount &&
+                    x.Account == sender))
                     throw new ValidationException("invalid transfer balance updates");
 
-                if (!updates.Any(x => x is ContractUpdate update && update.Change == amount && update.Contract == receiver))
+                if (!balanceUpdates.Any(x =>
+                    x.Kind == BalanceUpdateKind.Contract &&
+                    x.Change == amount &&
+                    x.Account == target))
                     throw new ValidationException("invalid transfer balance updates");
             }
 
             if (storageFee > 0)
             {
-                if (!updates.Any(x => x is ContractUpdate update && update.Change == -storageFee && update.Contract == (parent ?? sender)))
+                if (!balanceUpdates.Any(x =>
+                    x.Kind == BalanceUpdateKind.Contract &&
+                    x.Change == -storageFee &&
+                    x.Account == (initiator ?? sender)))
+                    throw new ValidationException("invalid transfer balance updates");
+            }
+
+            if (allocationFee > 0)
+            {
+                if (!balanceUpdates.Any(x =>
+                    x.Kind == BalanceUpdateKind.Contract &&
+                    x.Change == -allocationFee &&
+                    x.Account == (initiator ?? sender)))
                     throw new ValidationException("invalid transfer balance updates");
             }
         }
 
-        long GetEndorsementReward(int slots, int priority)
-            => slots * (long)(Protocol.EndorsementReward0 / (priority + 1.0));
+        protected virtual long GetBlockDeposit()
+        {
+            // TODO: depend on ramp_up_cycles
+            return Protocol.BlockDeposit;
+        }
+
+        protected virtual long GetBlockReward()
+        {
+            // TODO: depend on no_reward_cycles
+            return Protocol.BlockReward0;
+        }
+
+        protected virtual long GetEndorsementDeposit(int slots)
+        {
+            // TODO: depend on ramp_up_cycles
+            return slots * Protocol.EndorsementDeposit;
+        }
+
+        protected virtual long GetEndorsementReward(int slots)
+        {
+            // TODO: depend on no_reward_cycles
+            LastBlock ??= Cache.Blocks.Current();
+            return slots * (long)(Protocol.EndorsementReward0 / (LastBlock.Priority + 1.0));
+        }
+
+        protected virtual List<BalanceUpdate> ParseBalanceUpdates(JsonElement updates)
+        {
+            var res = new List<BalanceUpdate>(4);
+            foreach (var update in updates.EnumerateArray())
+            {
+                res.Add(update.RequiredString("kind") switch
+                {
+                    "contract" => new BalanceUpdate
+                    {
+                        Kind = BalanceUpdateKind.Contract,
+                        Account = update.RequiredString("contract"),
+                        Change = update.RequiredInt64("change")
+                    },
+                    "freezer" => new BalanceUpdate
+                    {
+                        Kind = update.RequiredString("category") switch
+                        {
+                            "deposits" => BalanceUpdateKind.Deposits,
+                            "rewards" => BalanceUpdateKind.Rewards,
+                            "fees" => BalanceUpdateKind.Fees,
+                            _ => throw new ValidationException("invalid freezer category")
+                        },
+                        Account = update.RequiredString("delegate"),
+                        Change = update.RequiredInt64("change"),
+                        Cycle = update.RequiredInt32("level"),
+                    },
+                    _ => throw new ValidationException("invalid balance update kind")
+                });
+            }
+            return res;
+        }
+
+        protected enum BalanceUpdateKind
+        {
+            Contract,
+            Deposits,
+            Rewards,
+            Fees
+        }
+
+        protected class BalanceUpdate
+        {
+            public BalanceUpdateKind Kind { get; set; }
+            public string Account { get; set; }
+            public long Change { get; set; }
+            public int Cycle { get; set; }
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -25,14 +25,16 @@ namespace Tzkt.Sync.Protocols
             Validator = new Validator(this);
         }
 
-        public override Task InitProtocol(IBlock block)
+        public override Task Precache(JsonElement block) => Task.CompletedTask;
+
+        public override Task InitProtocol(JsonElement block)
         {
             var protocol = new Protocol
             {
-                Hash = block.Protocol,
+                Hash = block.RequiredString("protocol"),
                 Code = -1,
-                FirstLevel = block.Level,
-                LastLevel = block.Level
+                FirstLevel = block.Required("header").RequiredInt32("level"),
+                LastLevel = block.Required("header").RequiredInt32("level")
             };
 
             Db.Protocols.Add(protocol);
@@ -45,9 +47,9 @@ namespace Tzkt.Sync.Protocols
             return Task.CompletedTask;
         }
 
-        public override async Task Commit(IBlock block)
+        public override async Task Commit(JsonElement block)
         {
-            var rawBlock = block as RawBlock;
+            var rawBlock = JsonSerializer.Deserialize<RawBlock>(block.GetRawText(), Genesis.Serializer.Options);
 
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
 

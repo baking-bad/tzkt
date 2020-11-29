@@ -161,9 +161,6 @@ namespace Tzkt.Sync.Services
                 var header = await Node.GetHeaderAsync();
                 if (AppState.Level == header.Level) break;
 
-                Logger.LogDebug($"Loading block {AppState.Level + 1}...");
-                using var blockStream = await Node.GetBlockAsync(AppState.Level + 1);
-
                 //if (AppState.Level >= 0)
                 //{
                 //    throw new ValidationException("Test", true);
@@ -173,7 +170,7 @@ namespace Tzkt.Sync.Services
 
                 using var scope = Services.CreateScope();
                 var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
-                AppState = await protocol.CommitBlock(blockStream, header.Level, sync);
+                AppState = await protocol.CommitBlock(header.Level, sync);
 
                 Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
             }
