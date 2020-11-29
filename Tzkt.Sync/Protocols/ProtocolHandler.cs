@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +20,8 @@ namespace Tzkt.Sync
         public abstract IDiagnostics Diagnostics { get; }
         public abstract ISerializer Serializer { get; }
         public abstract IValidator Validator { get; }
+        
+        public IRpc Rpc { get; }
 
         public readonly TezosNode Node;
         public readonly TzktContext Db;
@@ -36,32 +38,35 @@ namespace Tzkt.Sync
             Quotes = quotes;
             Config = config.GetTezosProtocolsConfig();
             Logger = logger;
+
+            Rpc = new DefaultRpc(node);
         }
 
-        public virtual async Task<AppState> CommitBlock(Stream stream, int head, DateTime sync)
+        public virtual async Task<AppState> CommitBlock(int head, DateTime sync)
         {
+            var state = Cache.AppState.Get();
+
+            Logger.LogDebug($"Loading block {state.Level + 1}...");
+            var block = await Rpc.GetBlockAsync(state.Level + 1);
+
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
-                Logger.LogDebug("Deserializing block...");
-                var rawBlock = await Serializer.DeserializeBlock(stream);
-                
                 Logger.LogDebug("Loading entities...");
-                await LoadEntities(rawBlock);
+                await Precache(block);
 
                 Logger.LogDebug("Loading constants...");
-                await InitProtocol(rawBlock);
+                await InitProtocol(block);
 
                 if (Config.Validation)
                 {
                     Logger.LogDebug("Validating block...");
-                    rawBlock = await Validator.ValidateBlock(rawBlock);
+                    await Validator.ValidateBlock(block);
                 }
 
                 Logger.LogDebug("Committing block...");
-                await Commit(rawBlock);
+                await Commit(block);
 
-                var state = Cache.AppState.Get();
                 var protocolEnd = false;
                 if (state.Protocol != state.NextProtocol)
                 {
@@ -71,15 +76,31 @@ namespace Tzkt.Sync
                 }
 
                 Logger.LogDebug("Touch accounts...");
-                TouchAccounts(rawBlock.Level);
+                TouchAccounts();
 
                 if (Config.Diagnostics)
                 {
+                    var level = block.GetProperty("header").RequiredInt32("level");
+                    var opsCount = level < 2 ? 0 :
+                        block.GetProperty("operations")[0].Count() +
+                        block.GetProperty("operations")[1].Count() +
+                        block.GetProperty("operations")[2].Count() +
+                        block.GetProperty("operations")[3]
+                            .EnumerateArray()
+                            .SelectMany(x => x.RequiredArray("contents").EnumerateArray())
+                            .Count() +
+                        block.GetProperty("operations")[3]
+                            .EnumerateArray()
+                            .SelectMany(x => x.RequiredArray("contents").EnumerateArray())
+                            .Where(x => x.RequiredString("kind")[0] == 't' && x.GetProperty("metadata").TryGetProperty("internal_operation_results", out var iops) && iops.Count() > 0)
+                            .SelectMany(x => x.GetProperty("metadata").GetProperty("internal_operation_results").EnumerateArray())
+                            .Count();
+
                     Logger.LogDebug("Diagnostics...");
                     if (!protocolEnd)
-                        await Diagnostics.Run(rawBlock.Level, rawBlock.OperationsCount);
+                        await Diagnostics.Run(level, opsCount);
                     else
-                        await FindDiagnostics(state.NextProtocol).Run(rawBlock.Level, rawBlock.OperationsCount);
+                        await FindDiagnostics(state.NextProtocol).Run(level, opsCount);
                 }
 
                 state.KnownHead = head;
@@ -88,7 +109,7 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Saving...");
                 await Db.SaveChangesAsync();
 
-                await AfterCommit(rawBlock);
+                await AfterCommit(block);
 
                 await Quotes.Commit();
 
@@ -151,11 +172,11 @@ namespace Tzkt.Sync
             return Cache.AppState.Get();
         }
 
-        public virtual void TouchAccounts(int level)
+        public virtual void TouchAccounts()
         {
             var state = Cache.AppState.Get();
             var block = Db.ChangeTracker.Entries()
-                .First(x => x.Entity is Block block && block.Level == level).Entity as Block;
+                .First(x => x.Entity is Block block && block.Level == state.Level).Entity as Block;
 
             foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
             {
@@ -163,13 +184,13 @@ namespace Tzkt.Sync
 
                 if (entry.State == EntityState.Modified)
                 {
-                    account.LastLevel = level;
+                    account.LastLevel = state.Level;
                 }
                 else if (entry.State == EntityState.Added)
                 {
                     state.AccountsCount++;
-                    account.FirstLevel = level;
-                    account.LastLevel = level;
+                    account.FirstLevel = state.Level;
+                    account.LastLevel = state.Level;
                     block.Events |= BlockEvents.NewAccounts;
                 }
             }
@@ -195,7 +216,44 @@ namespace Tzkt.Sync
             }
         }
 
-        public virtual Task LoadEntities(IBlock block) => Task.CompletedTask;
+        public virtual Task Precache(JsonElement block)
+        {
+            var accounts = new HashSet<string>(64);
+            var operations = block.RequiredArray("operations", 4);
+
+            foreach (var op in operations[2].RequiredArray().EnumerateArray())
+            {
+                var content = op.RequiredArray("contents", 1)[0];
+                if (content.RequiredString("kind")[0] == 'a') // activate_account
+                    accounts.Add(content.RequiredString("pkh"));
+            }
+
+            foreach (var op in operations[3].RequiredArray().EnumerateArray())
+            {
+                foreach (var content in op.RequiredArray("contents").EnumerateArray())
+                {
+                    accounts.Add(content.RequiredString("source"));
+                    if (content.RequiredString("kind")[0] == 't') // transaction
+                    {
+                        if (content.TryGetProperty("destination", out var dest))
+                            accounts.Add(dest.GetString());
+
+                        if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResults))
+                            foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
+                            {
+                                accounts.Add(internalContent.RequiredString("source"));
+                                if (internalContent.RequiredString("kind")[0] == 't') // transaction
+                                {
+                                    if (internalContent.TryGetProperty("destination", out var internalDest))
+                                        accounts.Add(internalDest.GetString());
+                                }
+                            }
+                    }
+                }
+            }
+
+            return Cache.Accounts.LoadAsync(accounts);
+        }
 
         public virtual Task Migration() => Task.CompletedTask;
 
@@ -203,11 +261,11 @@ namespace Tzkt.Sync
 
         public abstract Task InitProtocol();
 
-        public abstract Task InitProtocol(IBlock block);
+        public abstract Task InitProtocol(JsonElement block);
 
-        public abstract Task Commit(IBlock block);
+        public abstract Task Commit(JsonElement block);
 
-        public virtual Task AfterCommit(IBlock block) => Task.CompletedTask;
+        public virtual Task AfterCommit(JsonElement block) => Task.CompletedTask;
 
         public virtual Task BeforeRevert() => Task.CompletedTask;
 

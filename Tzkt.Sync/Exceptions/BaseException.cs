@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tzkt.Sync.Protocols
+namespace Tzkt.Sync
 {
     public class BaseException : Exception
     {

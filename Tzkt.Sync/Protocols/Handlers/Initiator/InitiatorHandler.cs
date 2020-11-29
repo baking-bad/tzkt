@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,39 +26,37 @@ namespace Tzkt.Sync.Protocols
             Validator = new Validator(this);
         }
 
-        public override async Task InitProtocol(IBlock block)
+        public override Task Precache(JsonElement block) => Task.CompletedTask;
+
+        public override async Task InitProtocol(JsonElement block)
         {
-            var stream = await Node.GetConstantsAsync(block.Level);
-            var rawConst = await (Serializer as Serializer).DeserializeConstants(stream);
+            var level = block.Required("header").RequiredInt32("level");
+            var rawConst = await Node.GetAsync($"chains/main/blocks/{level}/context/constants");
 
             var protocol = new Protocol
             {
-                Hash = block.Protocol,
+                Hash = block.RequiredString("protocol"),
                 Code = await Db.Protocols.CountAsync() - 1,
-                FirstLevel = block.Level,
-                LastLevel = block.Level,
-                BlockDeposit = rawConst.BlockDeposit,
-                BlockReward0 = rawConst.BlockRewardList?[0] ?? rawConst.BlockReward,
-                BlockReward1 = rawConst.BlockRewardList?[0] ?? 0,
-                BlocksPerCommitment = rawConst.BlocksPerCommitment,
-                BlocksPerCycle = rawConst.BlocksPerCycle,
-                BlocksPerSnapshot = rawConst.BlocksPerSnapshot,
-                BlocksPerVoting = rawConst.BlocksPerVoting,
-                ByteCost = rawConst.ByteCost,
-                EndorsementDeposit = rawConst.EndorsementDeposit,
-                EndorsementReward0 = rawConst.EndorsementRewardList?[0] ?? rawConst.EndorsementReward,
-                EndorsementReward1 = rawConst.EndorsementRewardList?[0] ?? 0,
-                EndorsersPerBlock = rawConst.EndorsersPerBlock,
-                HardBlockGasLimit = rawConst.HardBlockGasLimit,
-                HardOperationGasLimit = rawConst.HardOperationGasLimit,
-                HardOperationStorageLimit = rawConst.HardOperationStorageLimit,
-                OriginationSize = rawConst.OriginationSize == 0
-                    ? rawConst.OriginationBurn / rawConst.ByteCost
-                    : rawConst.OriginationSize,
-                PreservedCycles = rawConst.PreservedCycles,
-                RevelationReward = rawConst.RevelationReward,
-                TimeBetweenBlocks = rawConst.TimeBetweenBlocks[0],
-                TokensPerRoll = rawConst.TokensPerRoll
+                FirstLevel = level,
+                LastLevel = level,
+                BlockDeposit = rawConst.RequiredInt64("block_security_deposit"),
+                BlockReward0 = rawConst.RequiredInt64("block_reward"),
+                BlocksPerCommitment = rawConst.RequiredInt32("blocks_per_commitment"),
+                BlocksPerCycle = rawConst.RequiredInt32("blocks_per_cycle"),
+                BlocksPerSnapshot = rawConst.RequiredInt32("blocks_per_roll_snapshot"),
+                BlocksPerVoting = rawConst.RequiredInt32("blocks_per_voting_period"),
+                ByteCost = rawConst.RequiredInt32("cost_per_byte"),
+                EndorsementDeposit = rawConst.RequiredInt64("endorsement_security_deposit"),
+                EndorsementReward0 = rawConst.RequiredInt64("endorsement_reward"),
+                EndorsersPerBlock = rawConst.RequiredInt32("endorsers_per_block"),
+                HardBlockGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_block"),
+                HardOperationGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_operation"),
+                HardOperationStorageLimit = rawConst.RequiredInt32("hard_storage_limit_per_operation"),
+                OriginationSize = rawConst.RequiredInt32("origination_burn") / 1000,
+                PreservedCycles = rawConst.RequiredInt32("preserved_cycles"),
+                RevelationReward = rawConst.RequiredInt64("seed_nonce_revelation_tip"),
+                TimeBetweenBlocks = rawConst.RequiredArray("time_between_blocks", 2)[0].ParseInt32(),
+                TokensPerRoll = rawConst.RequiredInt64("tokens_per_roll")
             };
 
             Db.Protocols.Add(protocol);
@@ -70,9 +68,9 @@ namespace Tzkt.Sync.Protocols
             return Task.CompletedTask;
         }
 
-        public override async Task Commit(IBlock block)
+        public override async Task Commit(JsonElement block)
         {
-            var rawBlock = block as RawBlock;
+            var rawBlock = JsonSerializer.Deserialize<RawBlock>(block.GetRawText(), Initiator.Serializer.Options);
 
             var blockCommit = await BlockCommit.Apply(this, rawBlock);
             var bootstrapCommit = await BootstrapCommit.Apply(this, blockCommit.Block, rawBlock);
@@ -93,7 +91,7 @@ namespace Tzkt.Sync.Protocols
             await StateCommit.Apply(this, blockCommit.Block, rawBlock);
         }
 
-        public override async Task AfterCommit(IBlock rawBlock)
+        public override async Task AfterCommit(JsonElement rawBlock)
         {
             var block = await Cache.Blocks.CurrentAsync();
             await SnapshotBalanceCommit.Apply(this, block);

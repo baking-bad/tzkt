@@ -1,4 +1,4 @@
-﻿namespace Tzkt.Sync.Protocols
+﻿namespace Tzkt.Sync
 {
     public class ValidationException : BaseException
     {

@@ -35,6 +35,11 @@ namespace Tzkt.Sync.Services.Cache
             CachedBlocks[block.Level] = block;
         }
 
+        public Block Current()
+        {
+            return Get(Cache.AppState.GetLevel());
+        }
+
         public Task<Block> CurrentAsync()
         {
             return GetAsync(Cache.AppState.GetLevel());
@@ -43,6 +48,19 @@ namespace Tzkt.Sync.Services.Cache
         public Task<Block> PreviousAsync()
         {
             return GetAsync(Cache.AppState.GetLevel() - 1);
+        }
+
+        public Block Get(int level)
+        {
+            if (!CachedBlocks.TryGetValue(level, out var block))
+            {
+                block = Db.Blocks.FirstOrDefault(x => x.Level == level)
+                    ?? throw new Exception($"Block #{level} doesn't exist");
+
+                Add(block);
+            }
+
+            return block;
         }
 
         public async Task<Block> GetAsync(int level)

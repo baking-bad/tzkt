@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -9,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto7
 {
     class SnapshotBalanceCommit : ProtocolCommit
     {
-        public RawBlock RawBlock { get; private set; }
+        public JsonElement RawBlock { get; private set; }
         public Block Block { get; private set; }
 
         SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
@@ -71,13 +72,14 @@ namespace Tzkt.Sync.Protocols.Proto7
                 if (Block.Events.HasFlag(BlockEvents.CycleEnd))
                 {
                     var values = string.Empty;
+                    var cycle = RawBlock.GetProperty("metadata").GetProperty("level").RequiredInt32("cycle");
 
-                    foreach (var rewardUpdates in RawBlock.Metadata.BalanceUpdates
-                        .Where(x => x is RewardsUpdate update && update.Cycle != RawBlock.Metadata.LevelInfo.Cycle)
-                        .Select(x => x as RewardsUpdate)
-                        .GroupBy(x => x.Delegate))
+                    foreach (var rewardUpdates in RawBlock.GetProperty("metadata").GetProperty("balance_updates").EnumerateArray()
+                        .Where(x => x.RequiredInt32("level") != cycle)
+                        .Select(x => (x.RequiredString("delegate"), x.RequiredInt32("change")))
+                        .GroupBy(x => x.Item1))
                         values += $@"
-                                ({Cache.Accounts.GetDelegate(rewardUpdates.Key).Id}, {rewardUpdates.Sum(x => -x.Change)}::bigint),";
+                                ({Cache.Accounts.GetDelegate(rewardUpdates.Key).Id}, {rewardUpdates.Sum(x => -x.Item2)}::bigint),";
 
                     if (values.Length > 0)
                     {
@@ -104,9 +106,9 @@ namespace Tzkt.Sync.Protocols.Proto7
         }
 
         #region static
-        public static async Task<SnapshotBalanceCommit> Apply(ProtocolHandler proto, IBlock rawBlock, Block block)
+        public static async Task<SnapshotBalanceCommit> Apply(ProtocolHandler proto, JsonElement rawBlock, Block block)
         {
-            var commit = new SnapshotBalanceCommit(proto) { RawBlock = rawBlock as RawBlock, Block = block };
+            var commit = new SnapshotBalanceCommit(proto) { RawBlock = rawBlock, Block = block };
             await commit.Apply();
             return commit;
         }

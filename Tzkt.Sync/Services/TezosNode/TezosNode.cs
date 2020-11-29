@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace Tzkt.Sync.Services
 {
@@ -21,6 +22,12 @@ namespace Tzkt.Sync.Services
             var nodeConf = config.GetTezosNodeConfig();
             ChainId = nodeConf.ChainId;
             Rpc = new TzktClient(nodeConf.Endpoint, nodeConf.Timeout);
+        }
+
+        public async Task<JsonElement> GetAsync(string url)
+        {
+            using var stream = await Rpc.GetStreamAsync(url);
+            return (await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 256 })).RootElement;
         }
 
         public Task<Stream> GetBlockAsync(int level)
