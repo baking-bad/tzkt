@@ -2,13 +2,13 @@
 using System.Threading.Tasks;
 using Tzkt.Sync.Services;
 
-namespace Tzkt.Sync.Protocols
+namespace Tzkt.Sync.Protocols.Proto1
 {
-    public class DefaultRpc : IRpc
+    class Rpc : IRpc
     {
-        readonly TezosNode Node;
+        protected readonly TezosNode Node;
 
-        public DefaultRpc(TezosNode node) => Node = node;
+        public Rpc(TezosNode node) => Node = node;
 
         #region indexer
         public virtual Task<JsonElement> GetBlockAsync(int level)
@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Protocols
             => Node.GetAsync($"chains/main/blocks/{level}/helpers/endorsing_rights?cycle={cycle}");
 
         public virtual Task<JsonElement> GetLevelBakingRightsAsync(int level, int maxPriority)
-            => Node.GetAsync($"chains/main/blocks/{level}/helpers/baking_rights?level={level}&max_priority={maxPriority}&all=true");
+            => Node.GetAsync($"chains/main/blocks/{level}/helpers/baking_rights?level={level}&max_priority={maxPriority + 1}&all=true");
         #endregion
 
         #region bootstrap

@@ -17,6 +17,7 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
+        public override IRpc Rpc { get; }
 
         public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<InitiatorHandler> logger)
             : base(node, db, cache, quotes, config, logger)
@@ -24,6 +25,7 @@ namespace Tzkt.Sync.Protocols
             Diagnostics = new Diagnostics();
             Serializer = new Serializer();
             Validator = new Validator(this);
+            Rpc = new Rpc(node);
         }
 
         public override Task Precache(JsonElement block) => Task.CompletedTask;

@@ -21,6 +21,7 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
+        public override IRpc Rpc { get; }
 
         public Proto3Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<Proto3Handler> logger)
             : base(node, db, cache, quotes, config, logger)
@@ -28,6 +29,7 @@ namespace Tzkt.Sync.Protocols
             Diagnostics = new Diagnostics(db, node);
             Serializer = new Serializer();
             Validator = new Validator(this);
+            Rpc = new Rpc(node);
         }
 
         public override Task Migration() => Proto4.InvoiceMigration.Apply(this);

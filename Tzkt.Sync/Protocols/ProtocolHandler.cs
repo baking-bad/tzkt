@@ -20,8 +20,7 @@ namespace Tzkt.Sync
         public abstract IDiagnostics Diagnostics { get; }
         public abstract ISerializer Serializer { get; }
         public abstract IValidator Validator { get; }
-        
-        public IRpc Rpc { get; }
+        public abstract IRpc Rpc { get; }
 
         public readonly TezosNode Node;
         public readonly TzktContext Db;
@@ -38,8 +37,6 @@ namespace Tzkt.Sync
             Quotes = quotes;
             Config = config.GetTezosProtocolsConfig();
             Logger = logger;
-
-            Rpc = new DefaultRpc(node);
         }
 
         public virtual async Task<AppState> CommitBlock(int head, DateTime sync)
