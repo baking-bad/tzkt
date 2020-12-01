@@ -47,24 +47,44 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Missed required string {name}");
         }
 
+        public static string OptionalString(this JsonElement el, string name)
+        {
+            if (!el.TryGetProperty(name, out var res))
+                return null;
+            
+            return res.ValueKind == JsonValueKind.String ? res.GetString()
+                : throw new SerializationException($"Expected string but got {res.ValueKind}");
+        }
+
+        public static bool RequiredBool(this JsonElement el, string name)
+        {
+            return el.TryGetProperty(name, out var prop) && prop.ValueKind == JsonValueKind.True || prop.ValueKind == JsonValueKind.False
+                ? prop.ValueKind == JsonValueKind.True
+                : throw new SerializationException($"Missed required bool {name}");
+        }
+
         public static bool? OptionalBool(this JsonElement el, string name)
         {
-            if (el.TryGetProperty(name, out var prop))
-            {
-                return prop.ValueKind == JsonValueKind.True ? true : prop.ValueKind == JsonValueKind.False ? false
-                    : throw new SerializationException($"Invalid bool {name}");
-            }
-            return null;
+            if (!el.TryGetProperty(name, out var prop))
+                return null;
+
+            return prop.ValueKind == JsonValueKind.True ? true : prop.ValueKind == JsonValueKind.False ? false
+                : throw new SerializationException($"Invalid bool {name}");
         }
 
         public static int? OptionalInt32(this JsonElement el, string name)
         {
-            if (el.TryGetProperty(name, out var prop))
-            {
-                return prop.TryParseInt32(out var res) ? res
-                    : throw new SerializationException($"Invalid int {name}");
-            }
-            return null;
+            if (!el.TryGetProperty(name, out var prop))
+                return null;
+
+            return prop.TryParseInt32(out var res) ? res
+                : throw new SerializationException($"Invalid int {name}");
+        }
+
+        public static int RequiredInt32(this JsonElement el)
+        {
+            return el.TryParseInt32(out var res) ? res
+                : throw new SerializationException($"Expected int but got {el.ValueKind}");
         }
 
         public static int RequiredInt32(this JsonElement el, string name)

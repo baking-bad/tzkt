@@ -77,27 +77,11 @@ namespace Tzkt.Sync
 
                 if (Config.Diagnostics)
                 {
-                    var level = block.GetProperty("header").RequiredInt32("level");
-                    var opsCount = level < 2 ? 0 :
-                        block.GetProperty("operations")[0].Count() +
-                        block.GetProperty("operations")[1].Count() +
-                        block.GetProperty("operations")[2].Count() +
-                        block.GetProperty("operations")[3]
-                            .EnumerateArray()
-                            .SelectMany(x => x.RequiredArray("contents").EnumerateArray())
-                            .Count() +
-                        block.GetProperty("operations")[3]
-                            .EnumerateArray()
-                            .SelectMany(x => x.RequiredArray("contents").EnumerateArray())
-                            .Where(x => x.RequiredString("kind")[0] == 't' && x.GetProperty("metadata").TryGetProperty("internal_operation_results", out var iops) && iops.Count() > 0)
-                            .SelectMany(x => x.GetProperty("metadata").GetProperty("internal_operation_results").EnumerateArray())
-                            .Count();
-
                     Logger.LogDebug("Diagnostics...");
                     if (!protocolEnd)
-                        await Diagnostics.Run(level, opsCount);
+                        await Diagnostics.Run(block);
                     else
-                        await FindDiagnostics(state.NextProtocol).Run(level, opsCount);
+                        await FindDiagnostics(state.NextProtocol).Run(block);
                 }
 
                 state.KnownHead = head;
@@ -276,14 +260,14 @@ namespace Tzkt.Sync
                 "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P" => new Protocols.Initiator.Diagnostics(),
                 "PtBMwNZT94N7gXKw4i273CKcSaBrrBnqnt3RATExNKr9KNX2USV" => new Protocols.Initiator.Diagnostics(),
                 "PtYuensgYBb3G3x1hLLbCmcav8ue8Kyd2khADcL5LsT5R1hcXex" => new Protocols.Initiator.Diagnostics(),
-                "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY" => new Protocols.Proto1.Diagnostics(Db, Node),
-                "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt" => new Protocols.Proto2.Diagnostics(Db, Node),
-                "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP" => new Protocols.Proto3.Diagnostics(Db, Node),
-                "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd" => new Protocols.Proto4.Diagnostics(Db, Node),
-                "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS" => new Protocols.Proto5.Diagnostics(Db, Node),
-                "PsBABY5HQTSkA4297zNHfsZNKtxULfL18y95qb3m53QJiXGmrbU" => new Protocols.Proto5.Diagnostics(Db, Node),
-                "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb" => new Protocols.Proto6.Diagnostics(Db, Node),
-                "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo" => new Protocols.Proto7.Diagnostics(Db, Node),
+                "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY" => new Protocols.Proto1.Diagnostics(Db, Rpc),
+                "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt" => new Protocols.Proto2.Diagnostics(Db, Rpc),
+                "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP" => new Protocols.Proto3.Diagnostics(Db, Rpc),
+                "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd" => new Protocols.Proto4.Diagnostics(Db, Rpc),
+                "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS" => new Protocols.Proto5.Diagnostics(Db, Rpc),
+                "PsBABY5HQTSkA4297zNHfsZNKtxULfL18y95qb3m53QJiXGmrbU" => new Protocols.Proto5.Diagnostics(Db, Rpc),
+                "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb" => new Protocols.Proto6.Diagnostics(Db, Rpc),
+                "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo" => new Protocols.Proto7.Diagnostics(Db, Rpc),
                 _ => throw new NotImplementedException($"Diagnostics for the protocol {hash} hasn't been implemented yet")
             };
         }
