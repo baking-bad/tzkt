@@ -26,10 +26,10 @@ namespace Tzkt.Sync.Protocols
         public Proto1Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<Proto1Handler> logger)
             : base(node, db, cache, quotes, config, logger)
         {
-            Diagnostics = new Diagnostics(db, node);
+            Rpc = new Rpc(node);
+            Diagnostics = new Diagnostics(db, Rpc);
             Serializer = new Serializer();
             Validator = new Validator(this);
-            Rpc = new Rpc(node);
         }
 
         public override Task Migration() => Proto2.DelegatesMigration.Apply(this);
