@@ -219,9 +219,30 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region periods
+        public async Task<VotingPeriod> GetPeriod(int index)
+        {
+            var sql = $@"
+                SELECT  ""Code"", ""Kind"", ""StartLevel"", ""EndLevel""
+                FROM    ""VotingPeriods""
+                WHERE   ""Code"" = {index}
+                LIMIT   1";
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync(sql);
+            if (row == null) return null;
+
+            return new VotingPeriod
+            {
+                Index = row.Code,
+                Kind = KindToString(row.Kind),
+                FirstLevel = row.StartLevel,
+                LastLevel = row.EndLevel
+            };
+        }
+
         public async Task<IEnumerable<VotingPeriod>> GetPeriods(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT ""Kind"", ""StartLevel"", ""EndLevel"" FROM ""VotingPeriods""")
+            var sql = new SqlBuilder(@"SELECT ""Code"", ""Kind"", ""StartLevel"", ""EndLevel"" FROM ""VotingPeriods""")
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             using var db = GetConnection();
@@ -229,6 +250,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new VotingPeriod
             {
+                Index = row.Code,
                 Kind = KindToString(row.Kind),
                 FirstLevel = row.StartLevel,
                 LastLevel = row.EndLevel
@@ -243,6 +265,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
+                    case "index": columns.Add(@"""Code"""); break;
                     case "kind": columns.Add(@"""Kind"""); break;
                     case "firstLevel": columns.Add(@"""StartLevel"""); break;
                     case "lastLevel": columns.Add(@"""EndLevel"""); break;
@@ -266,6 +289,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
+                    case "index":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Code;
+                        break;
                     case "kind":
                         foreach (var row in rows)
                             result[j++][i] = KindToString(row.Kind);
@@ -290,6 +317,7 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "index": columns.Add(@"""Code"""); break;
                 case "kind": columns.Add(@"""Kind"""); break;
                 case "firstLevel": columns.Add(@"""StartLevel"""); break;
                 case "lastLevel": columns.Add(@"""EndLevel"""); break;
@@ -310,6 +338,10 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "index":
+                    foreach (var row in rows)
+                        result[j++] = row.Code;
+                    break;
                 case "kind":
                     foreach (var row in rows)
                         result[j++] = KindToString(row.Kind);

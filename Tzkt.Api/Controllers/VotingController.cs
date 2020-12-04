@@ -149,6 +149,20 @@ namespace Tzkt.Api.Controllers
                 }
             }
         }
+
+        /// <summary>
+        /// Get voting period by index
+        /// </summary>
+        /// <remarks>
+        /// Returns a voting period at the specified index.
+        /// </remarks>
+        /// <param name="index">Voting period index starting from zero</param>
+        /// <returns></returns>
+        [HttpGet("periods/{index:int}")]
+        public Task<VotingPeriod> GetPeriod([Min(0)] int index)
+        {
+            return Voting.GetPeriod(index);
+        }
         #endregion
     }
 }

@@ -8,6 +8,11 @@ namespace Tzkt.Api.Models
     public class VotingPeriod
     {
         /// <summary>
+        /// Index of the voting period starting from zero
+        /// </summary>
+        public int Index { get; set; }
+
+        /// <summary>
         /// Kind of the voting period
         /// `proposal` - delegates can submit protocol amendment proposals using the proposal operation
         /// `exploration` -  bakers (delegates) may vote on the top-ranked proposal from the previous Proposal Period using the ballot operation
