@@ -163,6 +163,32 @@ namespace Tzkt.Api.Controllers
         {
             return Voting.GetPeriod(index);
         }
+
+        /// <summary>
+        /// Get voters
+        /// </summary>
+        /// <remarks>
+        /// Returns voters from a voting period at the specified index.
+        /// </remarks>
+        /// <param name="index">Voting period index starting from zero</param>
+        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `rolls`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
+        [HttpGet("periods/{index:int}/voters")]
+        public async Task<ActionResult<IEnumerable<VoterSnapshot>>> GetPeriodVoters(
+            [Min(0)] int index,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id", "rolls"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            return Ok(await Voting.GetVoters(index, sort, offset, limit));
+        }
         #endregion
     }
 }

@@ -358,6 +358,22 @@ namespace Tzkt.Api.Repositories
 
             return result;
         }
+
+        public async Task<IEnumerable<VoterSnapshot>> GetVoters(int index, SortParameter sort, OffsetParameter offset, int limit)
+        {
+            var sql = new SqlBuilder($@"SELECT s.*, p.""Code"" FROM ""VotingSnapshots"" AS s INNER JOIN ""VotingPeriods"" as p on p.""Id"" = s.""PeriodId""")
+                .Filter("Code", index)
+                .Take(sort, offset, limit, x => x == "rolls" ? ("Rolls", "Rolls") : ("Id", "Id"));
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            return rows.Select(row => new VoterSnapshot
+            {
+                Delegate = Accounts.GetAlias(row.DelegateId),
+                Rolls = row.Rolls
+            });
+        }
         #endregion
 
         string KindToString(int kind)
