@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -8,74 +9,79 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class StateCommit : ProtocolCommit
     {
-        public Block Block { get; private set; }
-        public AppState AppState { get; private set; }
-        public string NextProtocol { get; private set; }
+        public StateCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        StateCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public Task Init(Block block, RawBlock rawBlock)
+        public virtual Task Apply(Block block, JsonElement rawBlock)
         {
-            Block = block;
-            NextProtocol = rawBlock.Metadata.NextProtocol;
-            AppState = Cache.AppState.Get();
-            return Task.CompletedTask;
-        }
+            var nextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");
+            var appState = Cache.AppState.Get();
 
-        public async Task Init(Block block)
-        {
-            Block = block;
-            Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            NextProtocol = block.Protocol.Hash;
-            AppState = Cache.AppState.Get();
-        }
-
-        public override Task Apply()
-        {
             #region entities
-            var state = AppState;
-
+            var state = appState;
             Db.TryAttach(state);
             #endregion
 
-            state.Level = Block.Level;
-            state.Timestamp = Block.Timestamp;
-            state.Protocol = Block.Protocol.Hash;
-            state.NextProtocol = NextProtocol;
-            state.Hash = Block.Hash;
+            state.Level = block.Level;
+            state.Timestamp = block.Timestamp;
+            state.Protocol = block.Protocol.Hash;
+            state.NextProtocol = nextProtocol;
+            state.Hash = block.Hash;
 
             state.BlocksCount++;
-            if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount++;
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount++;
+            if (block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount++;
+            if (block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount++;
 
-            if (Block.Activations != null)
-                state.ActivationOpsCount += Block.Activations.Count;
+            if (block.Activations != null)
+                state.ActivationOpsCount += block.Activations.Count;
 
-            if (Block.Delegations != null)
-                state.DelegationOpsCount += Block.Delegations.Count;
+            if (block.Ballots != null)
+                state.BallotOpsCount += block.Ballots.Count;
 
-            if (Block.Endorsements != null)
-                state.EndorsementOpsCount += Block.Endorsements.Count;
+            if (block.Proposals != null)
+                state.ProposalOpsCount += block.Proposals.Count;
 
-            if (Block.Revelations != null)
-                state.NonceRevelationOpsCount += Block.Revelations.Count;
+            if (block.Delegations != null)
+                state.DelegationOpsCount += block.Delegations.Count;
 
-            if (Block.Originations != null)
-                state.OriginationOpsCount += Block.Originations.Count;
+            if (block.DoubleBakings != null)
+                state.DoubleBakingOpsCount += block.DoubleBakings.Count;
 
-            if (Block.Reveals != null)
-                state.RevealOpsCount += Block.Reveals.Count;
+            if (block.DoubleEndorsings != null)
+                state.DoubleEndorsingOpsCount += block.DoubleEndorsings.Count;
 
-            if (Block.Transactions != null)
-                state.TransactionOpsCount += Block.Transactions.Count;
+            if (block.Endorsements != null)
+                state.EndorsementOpsCount += block.Endorsements.Count;
+
+            if (block.Revelations != null)
+                state.NonceRevelationOpsCount += block.Revelations.Count;
+
+            if (block.Originations != null)
+                state.OriginationOpsCount += block.Originations.Count;
+
+            if (block.Reveals != null)
+                state.RevealOpsCount += block.Reveals.Count;
+
+            if (block.Transactions != null)
+                state.TransactionOpsCount += block.Transactions.Count;
+
+            if (block.RevelationPenalties != null)
+                state.RevelationPenaltyOpsCount += block.RevelationPenalties.Count;
+
+            if (block.Proposals != null)
+                state.ProposalsCount += Db.ChangeTracker.Entries().Count(
+                    x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Added);
 
             return Task.CompletedTask;
         }
 
-        public override async Task Revert()
+        public virtual async Task Revert(Block block)
         {
+            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            var nextProtocol = block.Protocol.Hash;
+            var appState = Cache.AppState.Get();
+
             #region entities
-            var state = AppState;
+            var state = appState;
             var prevBlock = await Cache.Blocks.PreviousAsync();
             if (prevBlock != null) prevBlock.Protocol ??= await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
 
@@ -85,55 +91,57 @@ namespace Tzkt.Sync.Protocols.Proto1
             state.Level = prevBlock?.Level ?? -1;
             state.Timestamp = prevBlock?.Timestamp ?? DateTime.MinValue;
             state.Protocol = prevBlock?.Protocol.Hash ?? "";
-            state.NextProtocol = prevBlock == null ? "" : NextProtocol;
+            state.NextProtocol = prevBlock == null ? "" : nextProtocol;
             state.Hash = prevBlock?.Hash ?? "";
 
             state.BlocksCount--;
-            if (Block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount--;
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount--;
+            if (block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount--;
+            if (block.Events.HasFlag(BlockEvents.CycleBegin)) state.CyclesCount--;
 
-            if (Block.Activations != null)
-                state.ActivationOpsCount -= Block.Activations.Count;
+            if (block.Activations != null)
+                state.ActivationOpsCount -= block.Activations.Count;
 
-            if (Block.Delegations != null)
-                state.DelegationOpsCount -= Block.Delegations.Count;
+            if (block.Ballots != null)
+                state.BallotOpsCount -= block.Ballots.Count;
 
-            if (Block.Endorsements != null)
-                state.EndorsementOpsCount -= Block.Endorsements.Count;
+            if (block.Proposals != null)
+                state.ProposalOpsCount -= block.Proposals.Count;
 
-            if (Block.Revelations != null)
-                state.NonceRevelationOpsCount -= Block.Revelations.Count;
+            if (block.Delegations != null)
+                state.DelegationOpsCount -= block.Delegations.Count;
 
-            if (Block.Originations != null)
-                state.OriginationOpsCount -= Block.Originations.Count;
+            if (block.DoubleBakings != null)
+                state.DoubleBakingOpsCount -= block.DoubleBakings.Count;
 
-            if (Block.Reveals != null)
-                state.RevealOpsCount -= Block.Reveals.Count;
+            if (block.DoubleEndorsings != null)
+                state.DoubleEndorsingOpsCount -= block.DoubleEndorsings.Count;
 
-            if (Block.Transactions != null)
-                state.TransactionOpsCount -= Block.Transactions.Count;
+            if (block.Endorsements != null)
+                state.EndorsementOpsCount -= block.Endorsements.Count;
 
-            Cache.Blocks.Remove(Block);
+            if (block.Revelations != null)
+                state.NonceRevelationOpsCount -= block.Revelations.Count;
+
+            if (block.Originations != null)
+                state.OriginationOpsCount -= block.Originations.Count;
+
+            if (block.Reveals != null)
+                state.RevealOpsCount -= block.Reveals.Count;
+
+            if (block.Transactions != null)
+                state.TransactionOpsCount -= block.Transactions.Count;
+
+            if (block.RevelationPenalties != null)
+                state.RevelationPenaltyOpsCount -= block.RevelationPenalties.Count;
+
+            if (block.Proposals != null)
+                state.ProposalsCount -= Db.ChangeTracker.Entries().Count(
+                    x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Deleted);
+
+            Cache.Blocks.Remove(block);
         }
 
-        #region static
-        public static async Task<StateCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
-        {
-            var commit = new StateCommit(proto);
-            await commit.Init(block, rawBlock);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<StateCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new StateCommit(proto);
-            await commit.Init(block);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

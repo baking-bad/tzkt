@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -11,103 +11,99 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class RevealsCommit : ProtocolCommit
     {
-        public RevealOperation Reveal { get; private set; }
-        public string PubKey { get; private set; }
+        public RevealsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        RevealsCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async Task Init(Block block, RawOperation op, RawRevealContent content)
+        public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
-            var sender = await Cache.Accounts.GetAsync(content.Source);
+            #region init
+            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
-            PubKey = content.PublicKey;
-            Reveal = new RevealOperation
+            var pubKey = content.RequiredString("public_key");
+            var result = content.Required("metadata").Required("operation_result");
+            var reveal = new RevealOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                OpHash = op.Hash,
+                OpHash = op.RequiredString("hash"),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                BakerFee = content.Fee,
-                Counter = content.Counter,
-                GasLimit = content.GasLimit,
-                StorageLimit = content.StorageLimit,
+                BakerFee = content.RequiredInt64("fee"),
+                Counter = content.RequiredInt32("counter"),
+                GasLimit = content.RequiredInt32("gas_limit"),
+                StorageLimit = content.RequiredInt32("storage_limit"),
                 Sender = sender,
-                Status = content.Metadata.Result.Status switch
+                Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
                     "backtracked" => OperationStatus.Backtracked,
+                    "failed" => OperationStatus.Failed,
+                    "skipped" => OperationStatus.Skipped,
                     _ => throw new NotImplementedException()
-                }
-            };
-        }
+                },
+                Errors = result.TryGetProperty("errors", out var errors)
+                    ? OperationErrors.Parse(errors)
+                    : null,
+                GasUsed = result.OptionalInt32("consumed_gas") ?? 0
+        };
+            #endregion
 
-        public async Task Init(Block block, RevealOperation reveal)
-        {
-            Reveal = reveal;
-
-            Reveal.Block ??= block;
-            Reveal.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
-
-            Reveal.Sender = await Cache.Accounts.GetAsync(reveal.SenderId);
-            Reveal.Sender.Delegate ??= Cache.Accounts.GetDelegate(reveal.Sender.DelegateId);
-        }
-
-        public override async Task Apply()
-        {
             #region entities
-            var block = Reveal.Block;
+            //var block = reveal.Block;
             var blockBaker = block.Baker;
-
-            var sender = Reveal.Sender;
+            //var sender = reveal.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
-
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
             #endregion
 
             #region apply operation
-            await Spend(sender, Reveal.BakerFee);
-            if (senderDelegate != null) senderDelegate.StakingBalance -= Reveal.BakerFee;
-            blockBaker.FrozenFees += Reveal.BakerFee;
-            blockBaker.Balance += Reveal.BakerFee;
-            blockBaker.StakingBalance += Reveal.BakerFee;
+            await Spend(sender, reveal.BakerFee);
+            if (senderDelegate != null) senderDelegate.StakingBalance -= reveal.BakerFee;
+            blockBaker.FrozenFees += reveal.BakerFee;
+            blockBaker.Balance += reveal.BakerFee;
+            blockBaker.StakingBalance += reveal.BakerFee;
 
             sender.RevealsCount++;
 
             block.Operations |= Operations.Reveals;
-            block.Fees += Reveal.BakerFee;
+            block.Fees += reveal.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, Reveal.Counter);
+            sender.Counter = Math.Max(sender.Counter, reveal.Counter);
             #endregion
 
             #region apply result
             if (sender is User user)
             {
-                user.PublicKey = PubKey;
+                user.PublicKey = pubKey;
                 if (user.Balance > 0) user.Revealed = true;
             }
             #endregion
 
-            Db.RevealOps.Add(Reveal);
+            Db.RevealOps.Add(reveal);
         }
 
-        public override async Task Revert()
+        public virtual async Task Revert(Block block, RevealOperation reveal)
         {
-            #region entities
-            var block = Reveal.Block;
-            var blockBaker = block.Baker;
+            #region init
+            reveal.Block ??= block;
+            reveal.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
 
-            var sender = Reveal.Sender;
+            reveal.Sender ??= await Cache.Accounts.GetAsync(reveal.SenderId);
+            reveal.Sender.Delegate ??= Cache.Accounts.GetDelegate(reveal.Sender.DelegateId);
+            #endregion
+
+            #region entities
+            //var block = reveal.Block;
+            var blockBaker = block.Baker;
+            var sender = reveal.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
-
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
             #endregion
@@ -123,39 +119,22 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            await Return(sender, Reveal.BakerFee, true);
-            if (senderDelegate != null) senderDelegate.StakingBalance += Reveal.BakerFee;
-            blockBaker.FrozenFees -= Reveal.BakerFee;
-            blockBaker.Balance -= Reveal.BakerFee;
-            blockBaker.StakingBalance -= Reveal.BakerFee;
+            await Return(sender, reveal.BakerFee, true);
+            if (senderDelegate != null) senderDelegate.StakingBalance += reveal.BakerFee;
+            blockBaker.FrozenFees -= reveal.BakerFee;
+            blockBaker.Balance -= reveal.BakerFee;
+            blockBaker.StakingBalance -= reveal.BakerFee;
 
             sender.RevealsCount--;
 
-            sender.Counter = Math.Min(sender.Counter, Reveal.Counter - 1);
+            sender.Counter = Math.Min(sender.Counter, reveal.Counter - 1);
             #endregion
 
-            Db.RevealOps.Remove(Reveal);
+            Db.RevealOps.Remove(reveal);
             Cache.AppState.ReleaseManagerCounter();
         }
 
-        #region static
-        public static async Task<RevealsCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawRevealContent content)
-        {
-            var commit = new RevealsCommit(proto);
-            await commit.Init(block, op, content);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<RevealsCommit> Revert(ProtocolHandler proto, Block block, RevealOperation op)
-        {
-            var commit = new RevealsCommit(proto);
-            await commit.Init(block, op);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

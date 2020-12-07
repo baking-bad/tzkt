@@ -9,23 +9,21 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class CycleCommit : ProtocolCommit
     {
-        public Block Block { get; private set; }
-        public Cycle FutureCycle { get; private set; }
-        public Dictionary<int, DelegateSnapshot> Snapshots { get; private set; }
+        public Cycle FutureCycle { get; protected set; }
+        public Dictionary<int, DelegateSnapshot> Snapshots { get; protected set; }
 
-        CycleCommit(ProtocolHandler protocol) : base(protocol) { }
+        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override async Task Apply()
+        public virtual async Task Apply(Block block)
         {
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin))
+            if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var currentCycle = (Block.Level - 1) / Block.Protocol.BlocksPerCycle;
-                var futureCycle = currentCycle + Block.Protocol.PreservedCycles;
+                var currentCycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
+                var futureCycle = currentCycle + block.Protocol.PreservedCycles;
 
-                var cycleStream = await Proto.Node.GetCycleAsync(Block.Level, futureCycle);
-                var rawCycle = await (Proto.Serializer as Serializer).DeserializeCycle(cycleStream);
+                var rawCycle = await Proto.Rpc.GetCycleAsync(block.Level, futureCycle);
 
-                var snapshotLevel = Math.Max(1, (currentCycle - 2) * Block.Protocol.BlocksPerCycle + (rawCycle.RollSnapshot + 1) * Block.Protocol.BlocksPerSnapshot);
+                var snapshotLevel = Math.Max(1, (currentCycle - 2) * block.Protocol.BlocksPerCycle + (rawCycle.RequiredInt32("roll_snapshot") + 1) * block.Protocol.BlocksPerSnapshot);
                 var snapshotBalances = await Db.SnapshotBalances.AsNoTracking().Where(x => x.Level == snapshotLevel).ToListAsync();
 
                 Snapshots = new Dictionary<int, DelegateSnapshot>(512);
@@ -58,26 +56,26 @@ namespace Tzkt.Sync.Protocols.Proto1
                 FutureCycle = new Cycle
                 {
                     Index = futureCycle,
-                    SnapshotIndex = rawCycle.RollSnapshot,
+                    SnapshotIndex = rawCycle.RequiredInt32("roll_snapshot"),
                     SnapshotLevel = snapshotLevel,
-                    TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / Block.Protocol.TokensPerRoll)),
+                    TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / block.Protocol.TokensPerRoll)),
                     TotalStaking = Snapshots.Values.Sum(x => x.StakingBalance),
                     TotalDelegated = Snapshots.Values.Sum(x => x.DelegatedBalance),
                     TotalDelegators = Snapshots.Values.Sum(x => x.DelegatorsCount),
                     TotalBakers = Snapshots.Count,
-                    Seed = rawCycle.RandomSeed
+                    Seed = rawCycle.RequiredString("random_seed")
                 };
 
                 Db.Cycles.Add(FutureCycle);
             }
         }
 
-        public override async Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin))
+            if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                Block.Protocol ??= await Cache.Protocols.GetAsync(Block.ProtoCode);
-                var futureCycle = (Block.Level - 1) / Block.Protocol.BlocksPerCycle + Block.Protocol.PreservedCycles;
+                block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+                var futureCycle = (block.Level - 1) / block.Protocol.BlocksPerCycle + block.Protocol.PreservedCycles;
 
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""Cycles""
@@ -85,21 +83,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        #region static
-        public static async Task<CycleCommit> Apply(ProtocolHandler proto, Block block)
-        {
-            var commit = new CycleCommit(proto) { Block = block };
-            await commit.Apply();
-            return commit;
-        }
-
-        public static async Task<CycleCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new CycleCommit(proto) { Block = block };
-            await commit.Revert();
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
 
         public class DelegateSnapshot
         {

@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -9,113 +8,98 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class EndorsementsCommit : ProtocolCommit
     {
-        public EndorsementOperation Endorsement { get; private set; }
+        public EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public Task Init(Block block, RawOperation op, RawEndorsementContent content)
+        public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
-            Endorsement = new EndorsementOperation
+            #region init
+            var metadata = content.Required("metadata");
+            var reward = metadata
+                    .RequiredArray("balance_updates")
+                    .EnumerateArray()
+                    .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r');
+
+            var endorsement = new EndorsementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                OpHash = op.Hash,
-                Slots = content.Metadata.Slots.Count,
-                Delegate = Cache.Accounts.GetDelegate(content.Metadata.Delegate),
-                Reward = content.Metadata.BalanceUpdates.FirstOrDefault(x => x is RewardsUpdate)?.Change ?? 0
+                OpHash = op.RequiredString("hash"),
+                Slots = metadata.RequiredArray("slots").Count(),
+                Delegate = Cache.Accounts.GetDelegate(metadata.RequiredString("delegate")),
+                Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0
             };
+            #endregion
 
-            return Task.CompletedTask;
-        }
-
-        public async Task Init(Block block, EndorsementOperation endorsement)
-        {
-            Endorsement = endorsement;
-
-            Endorsement.Block ??= block;
-            Endorsement.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-
-            Endorsement.Delegate ??= Cache.Accounts.GetDelegate(endorsement.DelegateId);
-        }
-
-        public override Task Apply()
-        {
             #region entities
-            var block = Endorsement.Block;
-            var sender = Endorsement.Delegate;
+            //var block = endorsement.Block;
+            var sender = endorsement.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(sender);
             #endregion
 
             #region apply operation
-            sender.Balance += Endorsement.Reward;
-            sender.FrozenRewards += Endorsement.Reward;
-            sender.FrozenDeposits += block.Protocol.EndorsementDeposit * Endorsement.Slots;
+            sender.Balance += endorsement.Reward;
+            sender.FrozenRewards += endorsement.Reward;
+            sender.FrozenDeposits += block.Protocol.EndorsementDeposit * endorsement.Slots;
 
             sender.EndorsementsCount++;
 
             block.Operations |= Operations.Endorsements;
-            block.Validations += Endorsement.Slots;
+            block.Validations += endorsement.Slots;
 
-            var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(Endorsement.Block) : GracePeriod.Init(Endorsement.Block);
+            var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(endorsement.Block) : GracePeriod.Init(endorsement.Block);
             if (sender.DeactivationLevel < newDeactivationLevel)
             {
-                Endorsement.ResetDeactivation = sender.DeactivationLevel;
+                if (sender.DeactivationLevel <= endorsement.Level)
+                    await UpdateDelegate(sender, true);
+
+                endorsement.ResetDeactivation = sender.DeactivationLevel;
                 sender.DeactivationLevel = newDeactivationLevel;
             }
             #endregion
 
-            Db.EndorsementOps.Add(Endorsement);
-            return Task.CompletedTask;
+            Db.EndorsementOps.Add(endorsement);
         }
 
-        public override Task Revert()
+        public virtual async Task Revert(Block block, EndorsementOperation endorsement)
         {
+            #region init
+            endorsement.Block ??= block;
+            endorsement.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            endorsement.Delegate ??= Cache.Accounts.GetDelegate(endorsement.DelegateId);
+            #endregion
+
             #region entities
-            var block = Endorsement.Block;
-            var sender = Endorsement.Delegate;
+            //var block = endorsement.Block;
+            var sender = endorsement.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(sender);
             #endregion
 
-            #region apply operation
-            sender.Balance -= Endorsement.Reward;
-            sender.FrozenRewards -= Endorsement.Reward;
-            sender.FrozenDeposits -= block.Protocol.EndorsementDeposit * Endorsement.Slots;
+            #region revert operation
+            sender.Balance -= endorsement.Reward;
+            sender.FrozenRewards -= endorsement.Reward;
+            sender.FrozenDeposits -= block.Protocol.EndorsementDeposit * endorsement.Slots;
 
             sender.EndorsementsCount--;
 
-            if (Endorsement.ResetDeactivation != null)
-                sender.DeactivationLevel = (int)Endorsement.ResetDeactivation;
+            if (endorsement.ResetDeactivation != null)
+            {
+                if (endorsement.ResetDeactivation <= endorsement.Level)
+                    await UpdateDelegate(sender, false);
+
+                sender.DeactivationLevel = (int)endorsement.ResetDeactivation;
+            }
             #endregion
 
-            Db.EndorsementOps.Remove(Endorsement);
-
-            return Task.CompletedTask;
+            Db.EndorsementOps.Remove(endorsement);
         }
 
-        #region static
-        public static async Task<EndorsementsCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawEndorsementContent content)
-        {
-            var commit = new EndorsementsCommit(proto);
-            await commit.Init(block, op, content);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<EndorsementsCommit> Revert(ProtocolHandler proto, Block block, EndorsementOperation op)
-        {
-            var commit = new EndorsementsCommit(proto);
-            await commit.Init(block, op);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

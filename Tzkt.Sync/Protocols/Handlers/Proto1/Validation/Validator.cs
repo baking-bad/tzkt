@@ -82,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             else
             {
-                if ((int)kind != ((int)period.Kind + 1) % 4)
+                if (kind != VotingPeriods.Proposal && (int)kind != (int)period.Kind + 1)
                     throw new ValidationException("inconsistent voting period");
             }
         }
@@ -352,13 +352,13 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual async Task ValidateDelegation(JsonElement content)
         {
             var source = content.RequiredString("source");
-            var delegat = content.RequiredString("delegate");
+            var delegat = content.OptionalString("delegate");
 
-            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
-                throw new ValidationException("unknown source contract");
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
 
-            if (content.Required("operation_result").RequiredString("status") == "applied" && delegat != null)
-                if (!Cache.Accounts.DelegateExists(delegat))
+            if (content.Required("metadata").Required("operation_result").RequiredString("status") == "applied" && delegat != null)
+                if (source != delegat && !Cache.Accounts.DelegateExists(delegat))
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
@@ -367,13 +367,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 content.RequiredInt64("fee"));
         }
 
-        protected virtual async Task ValidateInternalDelegation(JsonElement content, string initiator)
+        protected virtual void ValidateInternalDelegation(JsonElement content, string initiator)
         {
-            var source = content.RequiredString("source");
-            var delegat = content.RequiredString("delegate");
-
-            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
-                throw new ValidationException("unknown source contract");
+            var delegat = content.OptionalString("delegate");
 
             if (content.Required("result").RequiredString("status") == "applied" && delegat != null)
                 if (!Cache.Accounts.DelegateExists(delegat))
@@ -383,12 +379,12 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual async Task ValidateOrigination(JsonElement content)
         {
             var source = content.RequiredString("source");
-            var delegat = content.RequiredString("delegate");
+            var delegat = content.OptionalString("delegate");
             var metadata = content.Required("metadata");
             var result = metadata.Required("operation_result");
 
-            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
-                throw new ValidationException("unknown source contract");
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
 
             //if (result.RequiredString("status") == "applied" && delegat != null)
             //    if (!Cache.Accounts.DelegateExists(delegat))
@@ -409,14 +405,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                      0);
         }
 
-        protected virtual async Task ValidateInternalOrigination(JsonElement content, string initiator)
+        protected virtual void ValidateInternalOrigination(JsonElement content, string initiator)
         {
-            var source = content.RequiredString("source");
-            var delegat = content.RequiredString("delegate");
+            var delegat = content.OptionalString("delegate");
             var result = content.Required("result");
-
-            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
-                throw new ValidationException("unknown source contract");
 
             //if (result.RequiredString("status") == "applied" && delegat != null)
             //    if (!Cache.Accounts.DelegateExists(delegat))
@@ -425,7 +417,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
                     ParseBalanceUpdates(resultUpdates.RequiredArray()),
-                    source,
+                    content.RequiredString("source"),
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
                     ((result.OptionalInt32("paid_storage_size_diff") ?? 0) + Protocol.OriginationSize) * Protocol.ByteCost,
@@ -464,9 +456,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     switch (internalContent.RequiredString("kind"))
                     {
-                        case "delegation": await ValidateInternalDelegation(internalContent, source); break;
-                        case "origination": await ValidateInternalOrigination(internalContent, source); break;
-                        case "transaction": await ValidateInternalTransaction(internalContent, source); break;
+                        case "delegation": ValidateInternalDelegation(internalContent, source); break;
+                        case "origination": ValidateInternalOrigination(internalContent, source); break;
+                        case "transaction": ValidateInternalTransaction(internalContent, source); break;
                         default:
                             throw new ValidationException("invalid internal operation kind");
                     }
@@ -474,18 +466,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected virtual async Task ValidateInternalTransaction(JsonElement content, string initiator)
+        protected virtual void ValidateInternalTransaction(JsonElement content, string initiator)
         {
-            var source = content.RequiredString("source");
             var result = content.Required("result");
-
-            if (!await Cache.Accounts.ExistsAsync(source))
-                throw new ValidationException("unknown source account");
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
                     ParseBalanceUpdates(resultUpdates.RequiredArray()),
-                    source,
+                    content.RequiredString("source"),
                     content.RequiredString("destination"),
                     content.RequiredInt64("amount"),
                     (result.OptionalInt32("paid_storage_size_diff") ?? 0) * Protocol.ByteCost,

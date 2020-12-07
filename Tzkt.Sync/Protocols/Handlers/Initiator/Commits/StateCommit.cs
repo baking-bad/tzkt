@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -13,10 +14,10 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         StateCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public Task Init(Block block, RawBlock rawBlock)
+        public Task Init(Block block, JsonElement rawBlock)
         {
             Block = block;
-            NextProtocol = rawBlock.Metadata.NextProtocol;
+            NextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");
             AppState = Cache.AppState.Get();
             return Task.CompletedTask;
         }
@@ -80,7 +81,7 @@ namespace Tzkt.Sync.Protocols.Initiator
         }
 
         #region static
-        public static async Task<StateCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
+        public static async Task<StateCommit> Apply(ProtocolHandler proto, Block block, JsonElement rawBlock)
         {
             var commit = new StateCommit(proto);
             await commit.Init(block, rawBlock);

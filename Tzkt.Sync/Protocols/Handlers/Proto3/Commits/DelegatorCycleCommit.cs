@@ -1,59 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto3
 {
-    class DelegatorCycleCommit : ProtocolCommit
+    class DelegatorCycleCommit : Proto1.DelegatorCycleCommit
     {
-        public Block Block { get; private set; }
-        public Cycle FutureCycle { get; private set; }
+        public DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public override async Task Apply()
+        public override async Task Apply(Block block, Cycle futureCycle)
         {
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin))
+            if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
-                    SELECT  {FutureCycle.Index}, ""AccountId"", ""DelegateId"", ""Balance""
+                    SELECT  {futureCycle.Index}, ""AccountId"", ""DelegateId"", ""Balance""
                     FROM    ""SnapshotBalances""
-                    WHERE   ""Level"" = {FutureCycle.SnapshotLevel}
+                    WHERE   ""Level"" = {futureCycle.SnapshotLevel}
                     AND     ""DelegateId"" IS NOT NULL");
             }
         }
-
-        public override async Task Revert()
-        {
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin))
-            {
-                Block.Protocol ??= await Cache.Protocols.GetAsync(Block.ProtoCode);
-                var futureCycle = (Block.Level - 1) / Block.Protocol.BlocksPerCycle + Block.Protocol.PreservedCycles;
-
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    DELETE  FROM ""DelegatorCycles""
-                    WHERE   ""Cycle"" = {futureCycle}");
-            }
-        }
-
-        #region static
-        public static async Task<DelegatorCycleCommit> Apply(ProtocolHandler proto, Block block, Cycle futureCycle)
-        {
-            var commit = new DelegatorCycleCommit(proto) { Block = block, FutureCycle = futureCycle };
-            await commit.Apply();
-            return commit;
-        }
-
-        public static async Task<DelegatorCycleCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new DelegatorCycleCommit(proto) { Block = block };
-            await commit.Revert();
-            return commit;
-        }
-        #endregion
     }
 }

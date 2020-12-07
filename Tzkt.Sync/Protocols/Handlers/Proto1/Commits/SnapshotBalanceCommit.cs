@@ -9,17 +9,15 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class SnapshotBalanceCommit : ProtocolCommit
     {
-        public Block Block { get; private set; }
+        public SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async override Task Apply()
+        public virtual async Task Apply(Block block)
         {
-            if (Block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.Snapshot))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"")
-                    SELECT {Block.Level}, (""Balance"" - COALESCE(""FrozenRewards"", 0)), ""Id"", ""DelegateId""
+                    SELECT {block.Level}, (""Balance"" - COALESCE(""FrozenRewards"", 0)), ""Id"", ""DelegateId""
                     FROM ""Accounts""
                     WHERE ""Staked"" = true");
 
@@ -42,16 +40,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var inserted = false;
                     foreach (var weirds in weirdDelegators)
                     {
-                        if (weirds.Sum(x => x.Balance) < Block.Protocol.TokensPerRoll)
+                        if (weirds.Sum(x => x.Balance) < block.Protocol.TokensPerRoll)
                             continue;
 
                         sql += $@"
-                            ({Block.Level}, 0, {weirds.First().WeirdDelegate.Id}, NULL),";
+                            ({block.Level}, 0, {weirds.First().WeirdDelegate.Id}, NULL),";
 
                         foreach (var weird in weirds)
                         {
                             sql += $@"
-                                ({Block.Level}, {weird.Balance}, {weird.Id}, {weird.WeirdDelegateId}),";
+                                ({block.Level}, {weird.Balance}, {weird.Id}, {weird.WeirdDelegateId}),";
                         }
 
                         inserted = true;
@@ -64,30 +62,17 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        public override async Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            if (Block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.Snapshot))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE FROM ""SnapshotBalances""
-                    WHERE ""Level"" = {Block.Level}");
+                    WHERE ""Level"" = {block.Level}");
             }
         }
 
-        #region static
-        public static async Task<SnapshotBalanceCommit> Apply(ProtocolHandler proto, Block block)
-        {
-            var commit = new SnapshotBalanceCommit(proto) { Block = block };
-            await commit.Apply();
-            return commit;
-        }
-
-        public static async Task<SnapshotBalanceCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new SnapshotBalanceCommit(proto) { Block = block };
-            await commit.Revert();
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

@@ -48,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             var endorsements = Block
                 .GetProperty("operations")[0]
                 .EnumerateArray()
-                .Select(x => x.GetProperty("metadata").GetProperty("slots").Count())
+                .Select(x => x.GetProperty("contents")[0].GetProperty("metadata").GetProperty("slots").Count())
                 .Sum();
 
             // TODO: depend on no_reward_cycles

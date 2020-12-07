@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -8,124 +9,95 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class FreezerCommit : ProtocolCommit
     {
-        public IEnumerable<IBalanceUpdate> FreezerUpdates { get; private set; }
-        public Protocol Protocol { get; private set; }
+        public IEnumerable<JsonElement> FreezerUpdates { get; private set; }
 
-        FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
+        public FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(Block block, RawBlock rawBlock)
+        public virtual Task Apply(Block block, JsonElement rawBlock)
         {
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
-                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-
-                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2)
-                    .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreservedCycles);
+                FreezerUpdates = GetFreezerUpdates(block, rawBlock);
             }
-        }
 
-        public async Task Init(Block block)
-        {
-            if (block.Events.HasFlag(BlockEvents.CycleEnd))
-            {
-                var stream = await Proto.Node.GetBlockAsync(block.Level);
-                var rawBlock = (RawBlock)await (Proto.Serializer as Serializer).DeserializeBlock(stream);
-
-                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
-                var cycle = (rawBlock.Level - 1) / Protocol.BlocksPerCycle;
-
-                FreezerUpdates = rawBlock.Metadata.BalanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2)
-                    .Where(x => x is FreezerUpdate fu && fu.Level == cycle - Protocol.PreservedCycles);
-            }
-        }
-
-        public override Task Apply()
-        {
             if (FreezerUpdates == null) return Task.CompletedTask;
 
             foreach (var update in FreezerUpdates)
             {
                 #region entities
-                var delegat = Cache.Accounts.GetDelegate(update.Target);
+                var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
 
                 Db.TryAttach(delegat);
                 #endregion
 
-                if (update is DepositsUpdate depositsFreezer)
+                var change = update.RequiredInt64("change");
+                switch (update.RequiredString("category")[0])
                 {
-                    delegat.FrozenDeposits += depositsFreezer.Change;
-                }
-                else if (update is RewardsUpdate rewardsFreezer)
-                {
-                    delegat.FrozenRewards += rewardsFreezer.Change;
-                    delegat.StakingBalance -= rewardsFreezer.Change;
-                }
-                else if (update is FeesUpdate feesFreezer)
-                {
-                    delegat.FrozenFees += feesFreezer.Change;
-                }
-                else
-                {
-                    throw new Exception("unexpected freezer balance update type");
+                    case 'd':
+                        delegat.FrozenDeposits += change;
+                        break;
+                    case 'r':
+                        delegat.FrozenRewards += change;
+                        delegat.StakingBalance -= change;
+                        break;
+                    case 'f':
+                        delegat.FrozenFees += change;
+                        break;
+                    default:
+                        throw new Exception("unexpected freezer balance update type");
                 }
             }
 
             return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            if (FreezerUpdates == null) return Task.CompletedTask;
+            if (block.Events.HasFlag(BlockEvents.CycleEnd))
+            {
+                var rawBlock = await Proto.Rpc.GetBlockAsync(block.Level);
+                FreezerUpdates = GetFreezerUpdates(block, rawBlock);
+            }
+
+            if (FreezerUpdates == null) return;
 
             foreach (var update in FreezerUpdates)
             {
                 #region entities
-                var delegat = Cache.Accounts.GetDelegate(update.Target);
+                var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
 
                 Db.TryAttach(delegat);
                 #endregion
 
-                if (update is DepositsUpdate depositsFreezer)
+                var change = update.RequiredInt64("change");
+                switch (update.RequiredString("category")[0])
                 {
-                    delegat.FrozenDeposits -= depositsFreezer.Change;
-                }
-                else if (update is RewardsUpdate rewardsFreezer)
-                {
-                    delegat.FrozenRewards -= rewardsFreezer.Change;
-                    delegat.StakingBalance += rewardsFreezer.Change;
-                }
-                else if (update is FeesUpdate feesFreezer)
-                {
-                    delegat.FrozenFees -= feesFreezer.Change;
-                }
-                else
-                {
-                    throw new Exception("unexpected freezer balance update type");
+                    case 'd':
+                        delegat.FrozenDeposits -= change;
+                        break;
+                    case 'r':
+                        delegat.FrozenRewards -= change;
+                        delegat.StakingBalance += change;
+                        break;
+                    case 'f':
+                        delegat.FrozenFees -= change;
+                        break;
+                    default:
+                        throw new Exception("unexpected freezer balance update type");
                 }
             }
-
-            return Task.CompletedTask;
         }
 
-        #region static
-        public static async Task<FreezerCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
+
+        protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
+
+        protected virtual IEnumerable<JsonElement> GetFreezerUpdates(Block block, JsonElement rawBlock)
         {
-            var commit = new FreezerCommit(proto);
-            await commit.Init(block, rawBlock);
-            await commit.Apply();
-
-            return commit;
+            var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
+            return rawBlock.Required("metadata").Required("balance_updates").EnumerateArray().Skip(block.Protocol.BlockReward0 > 0 ? 3 : 2)
+                .Where(x => x.RequiredString("kind")[0] == 'f' && GetFreezerCycle(x) == cycle - block.Protocol.PreservedCycles);
         }
-
-        public static async Task<FreezerCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new FreezerCommit(proto);
-            await commit.Init(block);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
     }
 }

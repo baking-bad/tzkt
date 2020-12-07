@@ -23,7 +23,6 @@ namespace Tzkt.Sync.Protocols
             : base(node, db, cache, quotes, config, logger)
         {
             Diagnostics = new Diagnostics();
-            Serializer = new Serializer();
             Validator = new Validator(this);
             Rpc = new Rpc(node);
         }
@@ -54,7 +53,7 @@ namespace Tzkt.Sync.Protocols
                 HardBlockGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_block"),
                 HardOperationGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_operation"),
                 HardOperationStorageLimit = rawConst.RequiredInt32("hard_storage_limit_per_operation"),
-                OriginationSize = rawConst.RequiredInt32("origination_burn") / 1000,
+                OriginationSize = rawConst.RequiredInt32("origination_burn") / rawConst.RequiredInt32("cost_per_byte"),
                 PreservedCycles = rawConst.RequiredInt32("preserved_cycles"),
                 RevelationReward = rawConst.RequiredInt64("seed_nonce_revelation_tip"),
                 TimeBetweenBlocks = rawConst.RequiredArray("time_between_blocks", 2)[0].ParseInt32(),
@@ -72,11 +71,9 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Commit(JsonElement block)
         {
-            var rawBlock = JsonSerializer.Deserialize<RawBlock>(block.GetRawText(), Initiator.Serializer.Options);
-
-            var blockCommit = await BlockCommit.Apply(this, rawBlock);
-            var bootstrapCommit = await BootstrapCommit.Apply(this, blockCommit.Block, rawBlock);
-            await VotingCommit.Apply(this, rawBlock);
+            var blockCommit = await BlockCommit.Apply(this, block);
+            var bootstrapCommit = await BootstrapCommit.Apply(this, blockCommit.Block, block);
+            await VotingCommit.Apply(this, blockCommit.Block);
 
             var brCommit = await BakingRightsCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
             await CycleCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
@@ -90,7 +87,7 @@ namespace Tzkt.Sync.Protocols
 
             await StatisticsCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts, bootstrapCommit.Commitments);
 
-            await StateCommit.Apply(this, blockCommit.Block, rawBlock);
+            await StateCommit.Apply(this, blockCommit.Block, block);
         }
 
         public override async Task AfterCommit(JsonElement rawBlock)

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text.Json;
 
 namespace Tzkt.Sync
@@ -56,6 +57,12 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Expected string but got {res.ValueKind}");
         }
 
+        public static DateTime RequiredDateTime(this JsonElement el, string name)
+        {
+            return el.TryGetProperty(name, out var res) && res.ValueKind == JsonValueKind.String ? res.GetDateTimeOffset().DateTime
+                : throw new SerializationException($"Missed required string {name}");
+        }
+
         public static bool RequiredBool(this JsonElement el, string name)
         {
             return el.TryGetProperty(name, out var prop) && prop.ValueKind == JsonValueKind.True || prop.ValueKind == JsonValueKind.False
@@ -91,6 +98,12 @@ namespace Tzkt.Sync
         {
             return el.TryGetProperty(name, out var prop) && prop.TryParseInt32(out var res) ? res
                 : throw new SerializationException($"Missed required int {name}");
+        }
+
+        public static long RequiredInt64(this JsonElement el)
+        {
+            return el.TryParseInt64(out var res) ? res
+                : throw new SerializationException($"Expected long but got {el.ValueKind}");
         }
 
         public static long RequiredInt64(this JsonElement el, string name)

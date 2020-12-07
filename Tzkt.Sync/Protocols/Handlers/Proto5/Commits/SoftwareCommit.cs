@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -8,76 +6,41 @@ namespace Tzkt.Sync.Protocols.Proto5
 {
     class SoftwareCommit : ProtocolCommit
     {
-        public Block Block { get; private set; }
-        public Software Software { get; private set; }
+        public SoftwareCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        SoftwareCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async Task Init(RawBlock rawBlock, Block block)
+        public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
-            Block = block;
-
-            var version = rawBlock.Header.PowNonce.Substring(0, 8);
-            Software = await Cache.Software.GetOrCreateAsync(version, () => new Software
+            var version = rawBlock.Required("header").RequiredString("proof_of_work_nonce").Substring(0, 8);
+            var software = await Cache.Software.GetOrCreateAsync(version, () => new Software
             {
                 FirstLevel = block.Level,
                 ShortHash = version
             });
-        }
 
-        public async Task Init(Block block)
-        {
-            Block = block;
-            Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
-
-            Software = await Cache.Software.GetAsync(block.SoftwareId);
-        }
-
-        public override Task Apply()
-        {
-            if (Software.BlocksCount == 0)
-                Db.Software.Add(Software);
+            if (software.BlocksCount == 0)
+                Db.Software.Add(software);
             else
-                Db.TryAttach(Software);
+                Db.TryAttach(software);
 
-            Software.BlocksCount++;
-            Software.LastLevel = Block.Level;
+            software.BlocksCount++;
+            software.LastLevel = block.Level;
 
-            Block.Software = Software;
-            Block.Baker.Software = Software;
-
-            return Task.CompletedTask;
+            block.Software = software;
+            block.Baker.Software = software;
         }
 
-        public override Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            Db.TryAttach(Software);
-            Software.BlocksCount--;
+            var software = await Cache.Software.GetAsync(block.SoftwareId);
+
+            Db.TryAttach(software);
+            software.BlocksCount--;
 
             // don't revert Baker.SoftwareId and Software.LastLevel
             // don't remove emptied software for historical purposes
-
-            return Task.CompletedTask;
         }
 
-        #region static
-        public static async Task<SoftwareCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
-        {
-            var commit = new SoftwareCommit(proto);
-            await commit.Init(rawBlock, block);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<SoftwareCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new SoftwareCommit(proto);
-            await commit.Init(block);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

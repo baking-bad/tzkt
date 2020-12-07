@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -11,15 +12,15 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         BlockCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(RawBlock rawBlock)
+        public async Task Init(JsonElement block)
         {
             Block = new Block
             {
                 Id = Cache.AppState.NextOperationId(),
-                Hash = rawBlock.Hash,
-                Level = rawBlock.Level,
-                Protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol),
-                Timestamp = rawBlock.Header.Timestamp,
+                Hash = block.RequiredString("hash"),
+                Level = block.Required("header").RequiredInt32("level"),
+                Protocol = await Cache.Protocols.GetAsync(block.RequiredString("protocol")),
+                Timestamp = block.Required("header").RequiredDateTime("timestamp"),
                 Events = BlockEvents.ProtocolBegin | BlockEvents.ProtocolEnd
             };
         }
@@ -50,10 +51,10 @@ namespace Tzkt.Sync.Protocols.Genesis
         }
 
         #region static
-        public static async Task<BlockCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
+        public static async Task<BlockCommit> Apply(ProtocolHandler proto, JsonElement block)
         {
             var commit = new BlockCommit(proto);
-            await commit.Init(rawBlock);
+            await commit.Init(block);
             await commit.Apply();
 
             return commit;

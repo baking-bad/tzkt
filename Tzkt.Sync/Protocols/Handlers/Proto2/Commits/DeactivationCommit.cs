@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -9,55 +9,45 @@ namespace Tzkt.Sync.Protocols.Proto2
 {
     class DeactivationCommit : ProtocolCommit
     {
-        public Block Block { get; private set; }
-        public List<Data.Models.Delegate> Delegates { get; private set; }
-        public int DeactivationLevel { get; private set; }
+        public DeactivationCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        DeactivationCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async Task Init(Block block, RawBlock rawBlock)
+        public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
+            #region init
+            var deactivationLevel = rawBlock.Required("header").RequiredInt32("level");
+            List<Delegate> delegates = null;
+
             if (block.Events.HasFlag(BlockEvents.Deactivations))
             {
-                DeactivationLevel = rawBlock.Level;
-                Delegates = await Db.Delegates
+                var deactivated = rawBlock
+                    .Required("metadata")
+                    .RequiredArray("deactivated")
+                    .EnumerateArray()
+                    .Select(x => x.RequiredString())
+                    .ToList();
+
+                delegates = await Db.Delegates
                     .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.Staked && rawBlock.Metadata.Deactivated.Contains(x.Address))
+                    .Where(x => x.Staked && deactivated.Contains(x.Address))
                     .ToListAsync();
             }
             else if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                DeactivationLevel = rawBlock.Level;
-                Delegates = await Db.Delegates
+                delegates = await Db.Delegates
                     .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.Staked && x.DeactivationLevel == rawBlock.Level)
+                    .Where(x => x.Staked && x.DeactivationLevel == deactivationLevel)
                     .ToListAsync();
             }
-        }
+            #endregion
 
-        public async Task Init(Block block)
-        {
-            if (block.Events.HasFlag(BlockEvents.Deactivations) || block.Events.HasFlag(BlockEvents.CycleBegin))
-            {
-                Block = block;
-                DeactivationLevel = block.Level;
-                Delegates = await Db.Delegates
-                    .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.DeactivationLevel == block.Level)
-                    .ToListAsync();
-            }
-        }
+            if (delegates == null) return;
 
-        public override Task Apply()
-        {
-            if (Delegates == null) return Task.CompletedTask;
-
-            foreach (var delegat in Delegates)
+            foreach (var delegat in delegates)
             {
                 Cache.Accounts.Add(delegat);
                 Db.TryAttach(delegat);
 
-                delegat.DeactivationLevel = DeactivationLevel;
+                delegat.DeactivationLevel = deactivationLevel;
                 delegat.Staked = false;
 
                 foreach (var delegator in delegat.DelegatedAccounts)
@@ -68,22 +58,33 @@ namespace Tzkt.Sync.Protocols.Proto2
                     delegator.Staked = false;
                 }
             }
-
-            return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            if (Delegates == null) return Task.CompletedTask;
+            #region init
+            var deactivationLevel = block.Level;
+            List<Data.Models.Delegate> delegates = null;
 
-            foreach (var delegat in Delegates)
+            if (block.Events.HasFlag(BlockEvents.Deactivations) || block.Events.HasFlag(BlockEvents.CycleBegin))
+            {
+                delegates = await Db.Delegates
+                    .Include(x => x.DelegatedAccounts)
+                    .Where(x => x.DeactivationLevel == deactivationLevel)
+                    .ToListAsync();
+            }
+            #endregion
+
+            if (delegates == null) return;
+
+            foreach (var delegat in delegates)
             {
                 Cache.Accounts.Add(delegat);
                 Db.TryAttach(delegat);
 
-                delegat.DeactivationLevel = Block.Events.HasFlag(BlockEvents.CycleEnd)
-                    ? DeactivationLevel + 1
-                    : DeactivationLevel;
+                delegat.DeactivationLevel = block.Events.HasFlag(BlockEvents.CycleEnd)
+                    ? deactivationLevel + 1
+                    : deactivationLevel;
 
                 delegat.Staked = true;
 
@@ -95,28 +96,9 @@ namespace Tzkt.Sync.Protocols.Proto2
                     delegator.Staked = true;
                 }
             }
-
-            return Task.CompletedTask;
         }
 
-        #region static
-        public static async Task<DeactivationCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
-        {
-            var commit = new DeactivationCommit(proto);
-            await commit.Init(block, rawBlock);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<DeactivationCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new DeactivationCommit(proto);
-            await commit.Init(block);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

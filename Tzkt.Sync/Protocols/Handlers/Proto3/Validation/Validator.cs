@@ -32,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
             else
             {
-                if ((int)kind != ((int)period.Kind + 1) % 4)
+                if (kind != VotingPeriods.Proposal && (int)kind != (int)period.Kind + 1)
                     throw new ValidationException("inconsistent voting period");
             }
         }
@@ -41,12 +41,12 @@ namespace Tzkt.Sync.Protocols.Proto3
         protected override async Task ValidateOrigination(JsonElement content)
         {
             var source = content.RequiredString("source");
-            var delegat = content.RequiredString("delegate");
+            var delegat = content.OptionalString("delegate");
             var metadata = content.Required("metadata");
             var result = metadata.Required("operation_result");
 
-            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
-                throw new ValidationException("unknown source contract");
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
 
             if (result.RequiredString("status") == "applied" && delegat != null)
                 if (!Cache.Accounts.DelegateExists(delegat))
@@ -68,14 +68,10 @@ namespace Tzkt.Sync.Protocols.Proto3
         }
 
         // fixed non-existent delegate & separate allocation fee
-        protected override async Task ValidateInternalOrigination(JsonElement content, string initiator)
+        protected override void ValidateInternalOrigination(JsonElement content, string initiator)
         {
-            var source = content.RequiredString("source");
-            var delegat = content.RequiredString("delegate");
+            var delegat = content.OptionalString("delegate");
             var result = content.Required("result");
-
-            if (!await Cache.Accounts.ExistsAsync(source, AccountType.Contract))
-                throw new ValidationException("unknown source contract");
 
             if (result.RequiredString("status") == "applied" && delegat != null)
                 if (!Cache.Accounts.DelegateExists(delegat))
@@ -84,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
                     ParseBalanceUpdates(resultUpdates.RequiredArray()),
-                    source,
+                    content.RequiredString("source"),
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
                     (result.OptionalInt32("paid_storage_size_diff") ?? 0) * Protocol.ByteCost,

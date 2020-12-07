@@ -1,60 +1,57 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto4
 {
     class DoubleEndorsingCommit : ProtocolCommit
     {
-        public DoubleEndorsingOperation DoubleEndorsing { get; private set; }
+        public DoubleEndorsingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        DoubleEndorsingCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public Task Init(Block block, RawOperation op, RawDoubleEndorsingEvidenceContent content)
+        public virtual Task Apply(Block block, JsonElement op, JsonElement content)
         {
-            DoubleEndorsing = new DoubleEndorsingOperation
+            #region init
+            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
+
+            var offenderAddr = balanceUpdates
+                .First(x => x.RequiredInt64("change") < 0).RequiredString("delegate");
+
+            var rewards = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'r' && x.RequiredInt64("change") > 0);
+
+            var lostDeposits = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'd' && x.RequiredInt64("change") < 0);
+
+            var lostRewards = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'r' && x.RequiredInt64("change") < 0);
+
+            var lostFees = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'f' && x.RequiredInt64("change") < 0);
+
+            var doubleEndorsing = new DoubleEndorsingOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                OpHash = op.Hash,
+                OpHash = op.RequiredString("hash"),
 
-                AccusedLevel = content.Op1.Operations.Level,
+                AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level"),
                 Accuser = block.Baker,
-                Offender = Cache.Accounts.GetDelegate(content.Metadata.BalanceUpdates.First(x => x.Change < 0).Target),
-                
-                AccuserReward = content.Metadata.BalanceUpdates.Where(x => x.Change > 0).Sum(x => x.Change),
-                OffenderLostDeposit = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is DepositsUpdate).Sum(x => -x.Change),
-                OffenderLostReward = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is RewardsUpdate).Sum(x => -x.Change),
-                OffenderLostFee = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is FeesUpdate).Sum(x => -x.Change)
+                Offender = Cache.Accounts.GetDelegate(offenderAddr),
+
+                AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
+                OffenderLostDeposit = lostDeposits.ValueKind != JsonValueKind.Undefined ? -lostDeposits.RequiredInt64("change") : 0,
+                OffenderLostReward = lostRewards.ValueKind != JsonValueKind.Undefined ? -lostRewards.RequiredInt64("change") : 0,
+                OffenderLostFee = lostFees.ValueKind != JsonValueKind.Undefined ? -lostFees.RequiredInt64("change") : 0,
             };
+            #endregion
 
-            return Task.CompletedTask;
-        }
-
-        public Task Init(Block block, DoubleEndorsingOperation doubleEndorsing)
-        {
-            DoubleEndorsing = doubleEndorsing;
-
-            DoubleEndorsing.Block ??= block;
-            DoubleEndorsing.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
-
-            DoubleEndorsing.Accuser ??= Cache.Accounts.GetDelegate(doubleEndorsing.AccuserId);
-            DoubleEndorsing.Offender ??= Cache.Accounts.GetDelegate(doubleEndorsing.OffenderId);
-
-            return Task.CompletedTask;
-        }
-
-        public override Task Apply()
-        {
             #region entities
-            var block = DoubleEndorsing.Block;
-            var accuser = DoubleEndorsing.Accuser;
-            var offender = DoubleEndorsing.Offender;
+            //var block = doubleEndorsing.Block;
+            var accuser = doubleEndorsing.Accuser;
+            var offender = doubleEndorsing.Offender;
 
             //Db.TryAttach(block);
             Db.TryAttach(accuser);
@@ -62,19 +59,19 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             #region apply operation
-            accuser.Balance += DoubleEndorsing.AccuserReward;
-            accuser.FrozenRewards += DoubleEndorsing.AccuserReward;
+            accuser.Balance += doubleEndorsing.AccuserReward;
+            accuser.FrozenRewards += doubleEndorsing.AccuserReward;
 
-            offender.Balance -= DoubleEndorsing.OffenderLostDeposit;
-            offender.FrozenDeposits -= DoubleEndorsing.OffenderLostDeposit;
-            offender.StakingBalance -= DoubleEndorsing.OffenderLostDeposit;
+            offender.Balance -= doubleEndorsing.OffenderLostDeposit;
+            offender.FrozenDeposits -= doubleEndorsing.OffenderLostDeposit;
+            offender.StakingBalance -= doubleEndorsing.OffenderLostDeposit;
 
-            offender.Balance -= DoubleEndorsing.OffenderLostReward;
-            offender.FrozenRewards -= DoubleEndorsing.OffenderLostReward;
+            offender.Balance -= doubleEndorsing.OffenderLostReward;
+            offender.FrozenRewards -= doubleEndorsing.OffenderLostReward;
 
-            offender.Balance -= DoubleEndorsing.OffenderLostFee;
-            offender.FrozenFees -= DoubleEndorsing.OffenderLostFee;
-            offender.StakingBalance -= DoubleEndorsing.OffenderLostFee;
+            offender.Balance -= doubleEndorsing.OffenderLostFee;
+            offender.FrozenFees -= doubleEndorsing.OffenderLostFee;
+            offender.StakingBalance -= doubleEndorsing.OffenderLostFee;
 
             accuser.DoubleEndorsingCount++;
             if (offender != accuser) offender.DoubleEndorsingCount++;
@@ -82,17 +79,24 @@ namespace Tzkt.Sync.Protocols.Proto4
             block.Operations |= Operations.DoubleEndorsings;
             #endregion
 
-            Db.DoubleEndorsingOps.Add(DoubleEndorsing);
-
+            Db.DoubleEndorsingOps.Add(doubleEndorsing);
             return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public virtual Task Revert(Block block, DoubleEndorsingOperation doubleEndorsing)
         {
+            #region init
+            doubleEndorsing.Block ??= block;
+            doubleEndorsing.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+
+            doubleEndorsing.Accuser ??= Cache.Accounts.GetDelegate(doubleEndorsing.AccuserId);
+            doubleEndorsing.Offender ??= Cache.Accounts.GetDelegate(doubleEndorsing.OffenderId);
+            #endregion
+
             #region entities
-            var block = DoubleEndorsing.Block;
-            var accuser = DoubleEndorsing.Accuser;
-            var offender = DoubleEndorsing.Offender;
+            //var block = doubleEndorsing.Block;
+            var accuser = doubleEndorsing.Accuser;
+            var offender = doubleEndorsing.Offender;
 
             //Db.TryAttach(block);
             Db.TryAttach(accuser);
@@ -100,47 +104,29 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             #region apply operation
-            accuser.Balance -= DoubleEndorsing.AccuserReward;
-            accuser.FrozenRewards -= DoubleEndorsing.AccuserReward;
+            accuser.Balance -= doubleEndorsing.AccuserReward;
+            accuser.FrozenRewards -= doubleEndorsing.AccuserReward;
 
-            offender.Balance += DoubleEndorsing.OffenderLostDeposit;
-            offender.FrozenDeposits += DoubleEndorsing.OffenderLostDeposit;
-            offender.StakingBalance += DoubleEndorsing.OffenderLostDeposit;
+            offender.Balance += doubleEndorsing.OffenderLostDeposit;
+            offender.FrozenDeposits += doubleEndorsing.OffenderLostDeposit;
+            offender.StakingBalance += doubleEndorsing.OffenderLostDeposit;
 
-            offender.Balance += DoubleEndorsing.OffenderLostReward;
-            offender.FrozenRewards += DoubleEndorsing.OffenderLostReward;
+            offender.Balance += doubleEndorsing.OffenderLostReward;
+            offender.FrozenRewards += doubleEndorsing.OffenderLostReward;
 
-            offender.Balance += DoubleEndorsing.OffenderLostFee;
-            offender.FrozenFees += DoubleEndorsing.OffenderLostFee;
-            offender.StakingBalance += DoubleEndorsing.OffenderLostFee;
+            offender.Balance += doubleEndorsing.OffenderLostFee;
+            offender.FrozenFees += doubleEndorsing.OffenderLostFee;
+            offender.StakingBalance += doubleEndorsing.OffenderLostFee;
 
             accuser.DoubleEndorsingCount--;
             if (offender != accuser) offender.DoubleEndorsingCount--;
             #endregion
 
-            Db.DoubleEndorsingOps.Remove(DoubleEndorsing);
-
+            Db.DoubleEndorsingOps.Remove(doubleEndorsing);
             return Task.CompletedTask;
         }
 
-        #region static
-        public static async Task<DoubleEndorsingCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawDoubleEndorsingEvidenceContent content)
-        {
-            var commit = new DoubleEndorsingCommit(proto);
-            await commit.Init(block, op, content);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<DoubleEndorsingCommit> Revert(ProtocolHandler proto, Block block, DoubleEndorsingOperation op)
-        {
-            var commit = new DoubleEndorsingCommit(proto);
-            await commit.Init(block, op);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

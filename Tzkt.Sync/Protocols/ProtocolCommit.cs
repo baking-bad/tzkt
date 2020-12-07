@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
@@ -49,6 +49,17 @@ namespace Tzkt.Sync.Protocols
                 (account as User).Revealed = true;
 
             return Task.CompletedTask;
+        }
+
+        protected async Task UpdateDelegate(Delegate delegat, bool staked)
+        {
+            delegat.Staked = staked;
+            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
+            {
+                Cache.Accounts.Add(delegator);
+                Db.TryAttach(delegator);
+                delegator.Staked = staked;
+            }
         }
     }
 }
