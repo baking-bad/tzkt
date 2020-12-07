@@ -18,7 +18,6 @@ namespace Tzkt.Sync
     {
         public abstract string Protocol { get; }
         public abstract IDiagnostics Diagnostics { get; }
-        public abstract ISerializer Serializer { get; }
         public abstract IValidator Validator { get; }
         public abstract IRpc Rpc { get; }
 
