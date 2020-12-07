@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -9,29 +8,33 @@ namespace Tzkt.Sync.Protocols.Proto3
 {
     class BallotsCommit : ProtocolCommit
     {
-        public BallotOperation Ballot  { get; private set; }
+        public BallotsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        BallotsCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async Task Init(Block block, RawOperation op, RawBallotContent content)
+        public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
+            #region init
             var period = await Cache.Periods.CurrentAsync();
             var proposal = await Cache.Proposals.GetAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
-            var sender = Cache.Accounts.GetDelegate(content.Source);
-            var rolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
+            var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
 
-            Ballot = new BallotOperation
+            var rolls = 0;
+            if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
+                rolls = (int)(sender.StakingBalance / block.Protocol.TokensPerRoll);
+            else
+                rolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
+
+            var ballot = new BallotOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                OpHash = op.Hash,
+                OpHash = op.RequiredString("hash"),
                 Sender = sender,
                 Rolls = rolls,
                 Period = period,
                 Proposal = proposal,
-                Vote = content.Ballot switch
+                Vote = content.RequiredString("ballot") switch
                 {
                     "yay" => Vote.Yay,
                     "nay" => Vote.Nay,
@@ -39,24 +42,13 @@ namespace Tzkt.Sync.Protocols.Proto3
                     _ => throw new Exception("invalid ballot value")
                 }
             };
-        }
+            #endregion
 
-        public async Task Init(Block block, BallotOperation ballot)
-        {
-            Ballot = ballot;
-            Ballot.Block ??= block;
-            Ballot.Sender ??= Cache.Accounts.GetDelegate(ballot.SenderId);
-            Ballot.Period ??= await Cache.Periods.CurrentAsync();
-            Ballot.Proposal ??= await Cache.Proposals.GetAsync(ballot.ProposalId);
-        }
-
-        public override Task Apply()
-        {
             #region entities
-            var block = Ballot.Block;
-            var period = Ballot.Period;
-            var sender = Ballot.Sender;
-            var proposal = Ballot.Proposal;
+            //var block = ballot.Block;
+            //var period = ballot.Period;
+            //var sender = ballot.Sender;
+            //var proposal = ballot.Proposal;
 
             //Db.TryAttach(block);
             Db.TryAttach(period);
@@ -67,17 +59,17 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region apply operation
             if (period is ExplorationPeriod exploration)
             {
-                exploration.Abstainings += Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
-                exploration.Approvals += Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
-                exploration.Refusals += Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
-                exploration.Participation += Ballot.Rolls;
+                exploration.Abstainings += ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
+                exploration.Approvals += ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
+                exploration.Refusals += ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
+                exploration.Participation += ballot.Rolls;
             }
             else if (period is PromotionPeriod promotion)
             {
-                promotion.Abstainings += Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
-                promotion.Approvals += Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
-                promotion.Refusals += Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
-                promotion.Participation += Ballot.Rolls;
+                promotion.Abstainings += ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
+                promotion.Approvals += ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
+                promotion.Refusals += ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
+                promotion.Participation += ballot.Rolls;
             }
 
             sender.BallotsCount++;
@@ -85,18 +77,23 @@ namespace Tzkt.Sync.Protocols.Proto3
             block.Operations |= Operations.Ballots;
             #endregion
 
-            Db.BallotOps.Add(Ballot);
-
-            return Task.CompletedTask;
+            Db.BallotOps.Add(ballot);
         }
 
-        public override Task Revert()
+        public virtual async Task Revert(Block block, BallotOperation ballot)
         {
+            #region init
+            ballot.Block ??= block;
+            ballot.Sender ??= Cache.Accounts.GetDelegate(ballot.SenderId);
+            ballot.Period ??= await Cache.Periods.CurrentAsync();
+            ballot.Proposal ??= await Cache.Proposals.GetAsync(ballot.ProposalId);
+            #endregion
+
             #region entities
             //var block = proposal.Block;
-            var sender = Ballot.Sender;
-            var period = Ballot.Period;
-            var proposal = Ballot.Proposal;
+            var sender = ballot.Sender;
+            var period = ballot.Period;
+            var proposal = ballot.Proposal;
 
             //Db.TryAttach(block);
             Db.TryAttach(sender);
@@ -107,45 +104,26 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region revert operation
             if (period is ExplorationPeriod exploration)
             {
-                exploration.Abstainings -= Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
-                exploration.Approvals -= Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
-                exploration.Refusals -= Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
-                exploration.Participation -= Ballot.Rolls;
+                exploration.Abstainings -= ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
+                exploration.Approvals -= ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
+                exploration.Refusals -= ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
+                exploration.Participation -= ballot.Rolls;
             }
             else if (period is PromotionPeriod promotion)
             {
-                promotion.Abstainings -= Ballot.Vote == Vote.Pass ? Ballot.Rolls : 0;
-                promotion.Approvals -= Ballot.Vote == Vote.Yay ? Ballot.Rolls : 0;
-                promotion.Refusals -= Ballot.Vote == Vote.Nay ? Ballot.Rolls : 0;
-                promotion.Participation -= Ballot.Rolls;
+                promotion.Abstainings -= ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
+                promotion.Approvals -= ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
+                promotion.Refusals -= ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
+                promotion.Participation -= ballot.Rolls;
             }
 
             sender.BallotsCount--;
             #endregion
 
-            Db.BallotOps.Remove(Ballot);
-
-            return Task.CompletedTask;
+            Db.BallotOps.Remove(ballot);
         }
 
-        #region static
-        public static async Task<BallotsCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawBallotContent content)
-        {
-            var commit = new BallotsCommit(proto);
-            await commit.Init(block, op, content);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<BallotsCommit> Revert(ProtocolHandler proto, Block block, BallotOperation op)
-        {
-            var commit = new BallotsCommit(proto);
-            await commit.Init(block, op);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

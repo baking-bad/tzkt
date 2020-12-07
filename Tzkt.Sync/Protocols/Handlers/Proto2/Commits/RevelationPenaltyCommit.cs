@@ -1,41 +1,40 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto2
 {
     class RevelationPenaltyCommit : ProtocolCommit
     {
-        public List<RevelationPenaltyOperation> RevelationPanlties { get; private set; }
+        public RevelationPenaltyCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        RevelationPenaltyCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async Task Init(Block block, RawBlock rawBlock)
+        public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
+            #region init
+            List<RevelationPenaltyOperation> revelationPanlties = null;
+
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
-                var cycle = (rawBlock.Level - 1) / protocol.BlocksPerCycle;
-                
-                if (rawBlock.Metadata.BalanceUpdates.Skip(protocol.BlockReward0 > 0 ? 3 : 2)
-                    .Any(x => x is FreezerUpdate fu && fu.Level != cycle - protocol.PreservedCycles))
+                var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
+
+                if (HasPanltiesUpdates(block, rawBlock))
                 {
-                    RevelationPanlties = new List<RevelationPenaltyOperation>();
+                    revelationPanlties = new List<RevelationPenaltyOperation>();
 
                     var missedBlocks = await Db.Blocks
                         .Include(x => x.Baker)
-                        .Where(x => x.Level % protocol.BlocksPerCommitment == 0 &&
-                            (x.Level - 1) / protocol.BlocksPerCycle == cycle - 1 &&
+                        .Where(x => x.Level % block.Protocol.BlocksPerCommitment == 0 &&
+                            (x.Level - 1) / block.Protocol.BlocksPerCycle == cycle - 1 &&
                             x.RevelationId == null)
                         .ToListAsync();
 
                     foreach (var missedBlock in missedBlocks)
                     {
                         Cache.Accounts.Add(missedBlock.Baker);
-                        RevelationPanlties.Add(new RevelationPenaltyOperation
+                        revelationPanlties.Add(new RevelationPenaltyOperation
                         {
                             Id = Cache.AppState.NextOperationId(),
                             Baker = missedBlock.Baker,
@@ -49,31 +48,14 @@ namespace Tzkt.Sync.Protocols.Proto2
                     }
                 }
             }
-        }
+            #endregion
 
-        public Task Init(Block block)
-        {
-            if (block.RevelationPenalties?.Count > 0)
-            {
-                RevelationPanlties = block.RevelationPenalties;
-                foreach (var penalty in RevelationPanlties)
-                {
-                    penalty.Block ??= block;
-                    penalty.Baker ??= Cache.Accounts.GetDelegate(penalty.BakerId);
-                }
-            }
+            if (revelationPanlties == null) return;
 
-            return Task.CompletedTask;
-        }
-
-        public override Task Apply()
-        {
-            if (RevelationPanlties == null) return Task.CompletedTask;
-
-            foreach (var penalty in RevelationPanlties)
+            foreach (var penalty in revelationPanlties)
             {
                 #region entities
-                var block = penalty.Block;
+                //var block = penalty.Block;
                 var delegat = penalty.Baker;
 
                 Db.TryAttach(delegat);
@@ -92,18 +74,30 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 Db.RevelationPenaltyOps.Add(penalty);
             }
-
-            return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public virtual Task Revert(Block block)
         {
-            if (RevelationPanlties == null) return Task.CompletedTask;
+            #region init
+            List<RevelationPenaltyOperation> revelationPanlties = null;
 
-            foreach (var penalty in RevelationPanlties)
+            if (block.RevelationPenalties?.Count > 0)
+            {
+                revelationPanlties = block.RevelationPenalties;
+                foreach (var penalty in revelationPanlties)
+                {
+                    penalty.Block ??= block;
+                    penalty.Baker ??= Cache.Accounts.GetDelegate(penalty.BakerId);
+                }
+            }
+            #endregion
+
+            if (revelationPanlties == null) return Task.CompletedTask;
+
+            foreach (var penalty in revelationPanlties)
             {
                 #region entities
-                var block = penalty.Block;
+                //var block = penalty.Block;
                 var delegat = penalty.Baker;
 
                 Db.TryAttach(delegat);
@@ -125,24 +119,16 @@ namespace Tzkt.Sync.Protocols.Proto2
             return Task.CompletedTask;
         }
 
-        #region static
-        public static async Task<RevelationPenaltyCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
+
+        protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
+
+        protected virtual bool HasPanltiesUpdates(Block block, JsonElement rawBlock)
         {
-            var commit = new RevelationPenaltyCommit(proto);
-            await commit.Init(block, rawBlock);
-            await commit.Apply();
-
-            return commit;
+            var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
+            return rawBlock.Required("metadata").RequiredArray("balance_updates").EnumerateArray().Skip(block.Protocol.BlockReward0 > 0 ? 3 : 2)
+                .Any(x => x.RequiredString("kind")[0] == 'f' && GetFreezerCycle(x) != cycle - block.Protocol.PreservedCycles);
         }
-
-        public static async Task<RevelationPenaltyCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new RevelationPenaltyCommit(proto);
-            await commit.Init(block);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
     }
 }

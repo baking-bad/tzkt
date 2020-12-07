@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -9,17 +10,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class StatisticsCommit : ProtocolCommit
     {
-        public Block Block { get; private set; }
-        public Statistics Statistics { get; private set; }
+        public StatisticsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        StatisticsCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async Task Init(Block block, IEnumerable<IBalanceUpdate> freezerUpdates)
+        public virtual async Task Apply(Block block, IEnumerable<JsonElement> freezerUpdates)
         {
             var prev = await Cache.Statistics.GetAsync(block.Level - 1);
-            
-            Block = block;
-            Statistics = new Statistics
+            var statistics = new Statistics
             {
                 Level = block.Level,
                 TotalActivated = prev.TotalActivated,
@@ -32,44 +28,65 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
 
             if (block.Activations != null)
-                Statistics.TotalActivated += block.Activations.Sum(x => x.Balance);
+                statistics.TotalActivated += block.Activations.Sum(x => x.Balance);
+
+            if (block.DoubleBakings != null)
+            {
+                var lost = block.DoubleBakings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+                statistics.TotalBurned += lost;
+                statistics.TotalFrozen -= lost;
+            }
+
+            if (block.DoubleEndorsings != null)
+            {
+                var lost = block.DoubleEndorsings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+                statistics.TotalBurned += lost;
+                statistics.TotalFrozen -= lost;
+            }
 
             if (block.Originations != null)
             {
                 var originations = block.Originations.Where(x => x.Status == OperationStatus.Applied);
                 if (originations.Any())
-                    Statistics.TotalBurned += originations.Sum(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+                    statistics.TotalBurned += originations.Sum(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             }
 
             if (block.Transactions != null)
             {
                 var transactions = block.Transactions.Where(x => x.Status == OperationStatus.Applied);
                 if (transactions.Any())
-                    Statistics.TotalBurned += transactions.Sum(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+                    statistics.TotalBurned += transactions.Sum(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            }
+
+            if (block.RevelationPenalties != null)
+            {
+                var lost = block.RevelationPenalties.Sum(x => x.LostReward + x.LostFees);
+                statistics.TotalBurned += lost;
+                statistics.TotalFrozen -= lost;
             }
 
             if (block.Endorsements != null)
             {
                 var rewards = block.Endorsements.Sum(x => x.Reward);
-                Statistics.TotalCreated += rewards;
-                Statistics.TotalFrozen += rewards;
-                Statistics.TotalFrozen += block.Protocol.EndorsementDeposit * block.Endorsements.Sum(x => x.Slots);
+                statistics.TotalCreated += rewards;
+                statistics.TotalFrozen += rewards;
+                statistics.TotalFrozen += block.Protocol.EndorsementDeposit * block.Endorsements.Sum(x => x.Slots);
             }
 
             if (block.Revelations != null)
             {
                 var rewards = block.Revelations.Count * block.Protocol.RevelationReward;
-                Statistics.TotalCreated += rewards;
-                Statistics.TotalFrozen += rewards;
+                statistics.TotalCreated += rewards;
+                statistics.TotalFrozen += rewards;
             }
 
-            Statistics.TotalCreated += block.Reward;
-            Statistics.TotalFrozen += block.Protocol.BlockDeposit;
-            Statistics.TotalFrozen += block.Reward;
-            Statistics.TotalFrozen += block.Fees;
+            statistics.TotalCreated += block.Reward;
+            statistics.TotalFrozen += block.Protocol.BlockDeposit;
+            statistics.TotalFrozen += block.Reward;
+            statistics.TotalFrozen += block.Fees;
 
             if (freezerUpdates != null && freezerUpdates.Any())
-                Statistics.TotalFrozen += freezerUpdates.Sum(x => x.Change);
+                statistics.TotalFrozen += freezerUpdates.Sum(x => x.RequiredInt64("change"));
 
             if (block.Transactions != null)
             {
@@ -77,27 +94,24 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var vestedReceived = block.Transactions.Where(x => x.Status == OperationStatus.Applied && x.Target.Type == AccountType.Contract && x.Target.FirstLevel == 1);
 
                 if (vestedSent.Any())
-                    Statistics.TotalVested -= vestedSent.Sum(x => x.Amount);
+                    statistics.TotalVested -= vestedSent.Sum(x => x.Amount);
 
                 if (vestedReceived.Any())
-                    Statistics.TotalVested += vestedReceived.Sum(x => x.Amount);
+                    statistics.TotalVested += vestedReceived.Sum(x => x.Amount);
             }
-        }
 
-        public override async Task Apply()
-        {
-            if (Block.Level % Block.Protocol.BlocksPerCycle == 0)
-                Statistics.Cycle = (Block.Level - 1) / Block.Protocol.BlocksPerCycle;
+            if (block.Level % block.Protocol.BlocksPerCycle == 0)
+                statistics.Cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
 
-            if (Block.Timestamp.AddSeconds(Block.Protocol.TimeBetweenBlocks).Ticks / (10_000_000L * 3600 * 24) != Block.Timestamp.Ticks / (10_000_000L * 3600 * 24))
-                Statistics.Date = Block.Timestamp.Date;
+            if (block.Timestamp.AddSeconds(block.Protocol.TimeBetweenBlocks).Ticks / (10_000_000L * 3600 * 24) != block.Timestamp.Ticks / (10_000_000L * 3600 * 24))
+                statistics.Date = block.Timestamp.Date;
             else
             {
-                var prevStats = await Cache.Statistics.GetAsync(Block.Level - 1);
+                var prevStats = await Cache.Statistics.GetAsync(block.Level - 1);
                 if (prevStats.Date == null)
                 {
                     var prevBlock = await Cache.Blocks.CurrentAsync();
-                    if (prevBlock.Timestamp.Ticks / (10_000_000L * 3600 * 24) != Block.Timestamp.Ticks / (10_000_000L * 3600 * 24))
+                    if (prevBlock.Timestamp.Ticks / (10_000_000L * 3600 * 24) != block.Timestamp.Ticks / (10_000_000L * 3600 * 24))
                     {
                         Db.TryAttach(prevStats);
                         prevStats.Date = prevBlock.Timestamp.Date;
@@ -105,34 +119,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
             }
 
-            Db.Statistics.Add(Statistics);
-            Cache.Statistics.Add(Statistics);
+            Db.Statistics.Add(statistics);
+            Cache.Statistics.Add(statistics);
         }
 
-        public override async Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            var state = Cache.AppState.Get();
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""Statistics"" WHERE ""Level"" = {state.Level}");
+            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""Statistics"" WHERE ""Level"" = {block.Level}");
             Cache.Statistics.Reset();
         }
 
-        #region static
-        public static async Task<StatisticsCommit> Apply(ProtocolHandler proto, Block block, IEnumerable<IBalanceUpdate> freezerUpdates)
-        {
-            var commit = new StatisticsCommit(proto);
-            await commit.Init(block, freezerUpdates);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<StatisticsCommit> Revert(ProtocolHandler proto)
-        {
-            var commit = new StatisticsCommit(proto);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

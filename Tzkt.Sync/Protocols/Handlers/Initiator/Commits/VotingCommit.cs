@@ -12,21 +12,19 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         VotingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(RawBlock rawBlock)
+        public async Task InitCommit(Block block)
         {
-            var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
-
             VotingPeriod = new ProposalPeriod
             {
                 Code = 0,
-                Epoch = new VotingEpoch { Level = rawBlock.Level },
+                Epoch = new VotingEpoch { Level = block.Level },
                 Kind = VotingPeriods.Proposal,
-                StartLevel = rawBlock.Level,
-                EndLevel = protocol.BlocksPerVoting
+                StartLevel = block.Level,
+                EndLevel = block.Protocol.BlocksPerVoting
             };
         }
 
-        public async Task Init(Block block)
+        public async Task InitRevert(Block block)
         {
             VotingPeriod = await Db.VotingPeriods.Include(x => x.Epoch).SingleAsync();
         }
@@ -52,10 +50,10 @@ namespace Tzkt.Sync.Protocols.Initiator
         }
 
         #region static
-        public static async Task<VotingCommit> Apply(ProtocolHandler proto, RawBlock rawBlock)
+        public static async Task<VotingCommit> Apply(ProtocolHandler proto, Block block)
         {
             var commit = new VotingCommit(proto);
-            await commit.Init(rawBlock);
+            await commit.InitCommit(block);
             await commit.Apply();
 
             return commit;
@@ -64,7 +62,7 @@ namespace Tzkt.Sync.Protocols.Initiator
         public static async Task<VotingCommit> Revert(ProtocolHandler proto, Block block)
         {
             var commit = new VotingCommit(proto);
-            await commit.Init(block);
+            await commit.InitRevert(block);
             await commit.Revert();
 
             return commit;

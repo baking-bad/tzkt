@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -10,21 +8,18 @@ namespace Tzkt.Sync.Protocols.Proto2
 {
     class SnapshotBalanceCommit : ProtocolCommit
     {
-        public JsonElement RawBlock { get; private set; }
-        public Block Block { get; private set; }
+        public SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async override Task Apply()
+        public async Task Apply(Block block, JsonElement rawBlock)
         {
-            if (Block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.Snapshot))
             {
                 #region remove outdated
                 var delete = string.Empty;
-                var outdatedLevel = Block.Level - (Block.Protocol.PreservedCycles + 3) * Block.Protocol.BlocksPerCycle;
+                var outdatedLevel = block.Level - (block.Protocol.PreservedCycles + 3) * block.Protocol.BlocksPerCycle;
                 if (outdatedLevel > 0)
                 {
-                    delete += outdatedLevel == Block.Protocol.BlocksPerSnapshot
+                    delete += outdatedLevel == block.Protocol.BlocksPerSnapshot
                         ? $@"DELETE FROM ""SnapshotBalances"" WHERE ""Level"" <= {outdatedLevel};"
                         : $@"DELETE FROM ""SnapshotBalances"" WHERE ""Level"" = {outdatedLevel};";
                 }
@@ -34,18 +29,18 @@ namespace Tzkt.Sync.Protocols.Proto2
                 await Db.Database.ExecuteSqlRawAsync($@"
                     {delete}
                     INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"")
-                    SELECT {Block.Level}, (""Balance"" - COALESCE(""FrozenRewards"", 0)), ""Id"", ""DelegateId""
+                    SELECT {block.Level}, (""Balance"" - COALESCE(""FrozenRewards"", 0)), ""Id"", ""DelegateId""
                     FROM ""Accounts""
                     WHERE ""Staked"" = true;");
                 #endregion
 
                 #region ignore just deactivated
-                if (Block.Events.HasFlag(BlockEvents.Deactivations))
+                if (block.Events.HasFlag(BlockEvents.Deactivations))
                 {
                     var deactivated = await Db.Delegates
                         .AsNoTracking()
                         .Include(x => x.DelegatedAccounts)
-                        .Where(x => x.DeactivationLevel == Block.Level)
+                        .Where(x => x.DeactivationLevel == block.Level)
                         .ToListAsync();
 
                     if (deactivated.Any())
@@ -56,11 +51,11 @@ namespace Tzkt.Sync.Protocols.Proto2
                         foreach (var baker in deactivated)
                         {
                             sql += $@"
-                                ({Block.Level}, {baker.Balance - baker.FrozenRewards}, {baker.Id}, NULL),";
+                                ({block.Level}, {baker.Balance - baker.FrozenRewards}, {baker.Id}, NULL),";
 
                             foreach (var delegator in baker.DelegatedAccounts)
                                 sql += $@"
-                                    ({Block.Level}, {delegator.Balance}, {delegator.Id}, {delegator.DelegateId}),";
+                                    ({block.Level}, {delegator.Balance}, {delegator.Id}, {delegator.DelegateId}),";
                         }
 
                         await Db.Database.ExecuteSqlRawAsync(sql[..^1]);
@@ -69,14 +64,14 @@ namespace Tzkt.Sync.Protocols.Proto2
                 #endregion
 
                 #region revert unfrozen rewards
-                if (Block.Events.HasFlag(BlockEvents.CycleEnd))
+                if (block.Events.HasFlag(BlockEvents.CycleEnd))
                 {
                     var values = string.Empty;
-                    var cycle = RawBlock.GetProperty("metadata").GetProperty("level").RequiredInt32("cycle");
+                    var cycle = rawBlock.GetProperty("metadata").GetProperty("level").RequiredInt32("cycle");
 
-                    foreach (var rewardUpdates in RawBlock.GetProperty("metadata").GetProperty("balance_updates").EnumerateArray()
-                        .Where(x => x.RequiredInt32("level") != cycle)
-                        .Select(x => (x.RequiredString("delegate"), x.RequiredInt32("change")))
+                    foreach (var rewardUpdates in rawBlock.GetProperty("metadata").GetProperty("balance_updates").EnumerateArray()
+                        .Where(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r' && GetFreezerCycle(x) != cycle)
+                        .Select(x => (x.RequiredString("delegate"), x.RequiredInt64("change")))
                         .GroupBy(x => x.Item1))
                         values += $@"
                                 ({Cache.Accounts.GetDelegate(rewardUpdates.Key).Id}, {rewardUpdates.Sum(x => -x.Item2)}::bigint),";
@@ -87,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                             UPDATE  ""SnapshotBalances"" as sb
                             SET     ""Balance"" = ""Balance"" - rw.value
                             FROM    (VALUES {values[..^1]}) as rw(delegate, value)
-                            WHERE   sb.""Level"" = {Block.Level}
+                            WHERE   sb.""Level"" = {block.Level}
                             AND     sb.""AccountId"" = rw.delegate;");
                     }
                 }
@@ -95,30 +90,19 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
         }
 
-        public override async Task Revert()
+        public async Task Revert(Block block)
         {
-            if (Block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.Snapshot))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE FROM ""SnapshotBalances""
-                    WHERE ""Level"" = {Block.Level}");
+                    WHERE ""Level"" = {block.Level}");
             }
         }
 
-        #region static
-        public static async Task<SnapshotBalanceCommit> Apply(ProtocolHandler proto, JsonElement rawBlock, Block block)
-        {
-            var commit = new SnapshotBalanceCommit(proto) { RawBlock = rawBlock, Block = block };
-            await commit.Apply();
-            return commit;
-        }
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
 
-        public static async Task<SnapshotBalanceCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new SnapshotBalanceCommit(proto) { Block = block };
-            await commit.Revert();
-            return commit;
-        }
-        #endregion
+        protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
     }
 }

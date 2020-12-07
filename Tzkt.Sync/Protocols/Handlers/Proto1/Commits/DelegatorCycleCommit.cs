@@ -9,24 +9,21 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class DelegatorCycleCommit : ProtocolCommit
     {
-        public Block Block { get; private set; }
-        public Cycle FutureCycle { get; private set; }
+        public DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public override async Task Apply()
+        public virtual async Task Apply(Block block, Cycle futureCycle)
         {
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin))
+            if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
-                    SELECT  {FutureCycle.Index}, ""AccountId"", ""DelegateId"", ""Balance""
+                    SELECT  {futureCycle.Index}, ""AccountId"", ""DelegateId"", ""Balance""
                     FROM    ""SnapshotBalances""
-                    WHERE   ""Level"" = {FutureCycle.SnapshotLevel}
+                    WHERE   ""Level"" = {futureCycle.SnapshotLevel}
                     AND     ""DelegateId"" IS NOT NULL");
 
                 #region weird delegators
-                var cycle = (Block.Level - 1) / Block.Protocol.BlocksPerCycle;
+                var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
                 if (cycle > 0)
                 {
                     //one-way change...
@@ -41,12 +38,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        public override async Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            if (Block.Events.HasFlag(BlockEvents.CycleBegin))
+            if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                Block.Protocol ??= await Cache.Protocols.GetAsync(Block.ProtoCode);
-                var futureCycle = (Block.Level - 1) / Block.Protocol.BlocksPerCycle + Block.Protocol.PreservedCycles;
+                block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+                var futureCycle = (block.Level - 1) / block.Protocol.BlocksPerCycle + block.Protocol.PreservedCycles;
 
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""DelegatorCycles""
@@ -54,20 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        #region static
-        public static async Task<DelegatorCycleCommit> Apply(ProtocolHandler proto, Block block, Cycle futureCycle)
-        {
-            var commit = new DelegatorCycleCommit(proto) { Block = block, FutureCycle = futureCycle };
-            await commit.Apply();
-            return commit;
-        }
-
-        public static async Task<DelegatorCycleCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new DelegatorCycleCommit(proto) { Block = block };
-            await commit.Revert();
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

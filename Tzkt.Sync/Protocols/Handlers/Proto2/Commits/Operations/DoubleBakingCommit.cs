@@ -1,60 +1,57 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto2
 {
     class DoubleBakingCommit : ProtocolCommit
     {
-        public DoubleBakingOperation DoubleBaking { get; private set; }
+        public DoubleBakingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        DoubleBakingCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public Task Init(Block block, RawOperation op, RawDoubleBakingEvidenceContent content)
+        public virtual Task Apply(Block block, JsonElement op, JsonElement content)
         {
-            DoubleBaking = new DoubleBakingOperation
+            #region init
+            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
+
+            var offenderAddr = balanceUpdates
+                .First(x => x.RequiredInt64("change") < 0).RequiredString("delegate");
+
+            var rewards = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'r' && x.RequiredInt64("change") > 0);
+
+            var lostDeposits = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'd' && x.RequiredInt64("change") < 0);
+
+            var lostRewards = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'r' && x.RequiredInt64("change") < 0);
+
+            var lostFees = balanceUpdates
+                .FirstOrDefault(x => x.RequiredString("category")[0] == 'f' && x.RequiredInt64("change") < 0);
+
+            var doubleBaking = new DoubleBakingOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                OpHash = op.Hash,
+                OpHash = op.RequiredString("hash"),
 
-                AccusedLevel = content.Block1.Level,
+                AccusedLevel = content.Required("bh1").RequiredInt32("level"),
                 Accuser = block.Baker,
-                Offender = Cache.Accounts.GetDelegate(content.Metadata.BalanceUpdates.First(x => x.Change < 0).Target),
-                
-                AccuserReward = content.Metadata.BalanceUpdates.Where(x => x.Change > 0).Sum(x => x.Change),
-                OffenderLostDeposit = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is DepositsUpdate).Sum(x => -x.Change),
-                OffenderLostReward = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is RewardsUpdate).Sum(x => -x.Change),
-                OffenderLostFee = content.Metadata.BalanceUpdates.Where(x => x.Change < 0 && x is FeesUpdate).Sum(x => -x.Change)
+                Offender = Cache.Accounts.GetDelegate(offenderAddr),
+
+                AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
+                OffenderLostDeposit = lostDeposits.ValueKind != JsonValueKind.Undefined ? -lostDeposits.RequiredInt64("change") : 0,
+                OffenderLostReward = lostRewards.ValueKind != JsonValueKind.Undefined ? -lostRewards.RequiredInt64("change") : 0,
+                OffenderLostFee = lostFees.ValueKind != JsonValueKind.Undefined ? -lostFees.RequiredInt64("change") : 0,
             };
+            #endregion
 
-            return Task.CompletedTask;
-        }
-
-        public Task Init(Block block, DoubleBakingOperation doubleBaking)
-        {
-            DoubleBaking = doubleBaking;
-
-            DoubleBaking.Block ??= block;
-            DoubleBaking.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
-
-            DoubleBaking.Accuser ??= Cache.Accounts.GetDelegate(doubleBaking.AccuserId);
-            DoubleBaking.Offender ??= Cache.Accounts.GetDelegate(doubleBaking.OffenderId);
-
-            return Task.CompletedTask;
-        }
-
-        public override Task Apply()
-        {
             #region entities
-            var block = DoubleBaking.Block;
-            var accuser = DoubleBaking.Accuser;
-            var offender = DoubleBaking.Offender;
+            //var block = doubleBaking.Block;
+            var accuser = doubleBaking.Accuser;
+            var offender = doubleBaking.Offender;
 
             //Db.TryAttach(block);
             Db.TryAttach(accuser);
@@ -62,19 +59,19 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            accuser.Balance += DoubleBaking.AccuserReward;
-            accuser.FrozenRewards += DoubleBaking.AccuserReward;
+            accuser.Balance += doubleBaking.AccuserReward;
+            accuser.FrozenRewards += doubleBaking.AccuserReward;
 
-            offender.Balance -= DoubleBaking.OffenderLostDeposit;
-            offender.FrozenDeposits -= DoubleBaking.OffenderLostDeposit;
-            offender.StakingBalance -= DoubleBaking.OffenderLostDeposit;
+            offender.Balance -= doubleBaking.OffenderLostDeposit;
+            offender.FrozenDeposits -= doubleBaking.OffenderLostDeposit;
+            offender.StakingBalance -= doubleBaking.OffenderLostDeposit;
 
-            offender.Balance -= DoubleBaking.OffenderLostReward;
-            offender.FrozenRewards -= DoubleBaking.OffenderLostReward;
+            offender.Balance -= doubleBaking.OffenderLostReward;
+            offender.FrozenRewards -= doubleBaking.OffenderLostReward;
 
-            offender.Balance -= DoubleBaking.OffenderLostFee;
-            offender.FrozenFees -= DoubleBaking.OffenderLostFee;
-            offender.StakingBalance -= DoubleBaking.OffenderLostFee;
+            offender.Balance -= doubleBaking.OffenderLostFee;
+            offender.FrozenFees -= doubleBaking.OffenderLostFee;
+            offender.StakingBalance -= doubleBaking.OffenderLostFee;
 
             accuser.DoubleBakingCount++;
             if (offender != accuser) offender.DoubleBakingCount++;
@@ -82,17 +79,24 @@ namespace Tzkt.Sync.Protocols.Proto2
             block.Operations |= Operations.DoubleBakings;
             #endregion
 
-            Db.DoubleBakingOps.Add(DoubleBaking);
-
+            Db.DoubleBakingOps.Add(doubleBaking);
             return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public virtual Task Revert(Block block, DoubleBakingOperation doubleBaking)
         {
+            #region init
+            doubleBaking.Block ??= block;
+            doubleBaking.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+
+            doubleBaking.Accuser ??= Cache.Accounts.GetDelegate(doubleBaking.AccuserId);
+            doubleBaking.Offender ??= Cache.Accounts.GetDelegate(doubleBaking.OffenderId);
+            #endregion
+
             #region entities
-            var block = DoubleBaking.Block;
-            var accuser = DoubleBaking.Accuser;
-            var offender = DoubleBaking.Offender;
+            //var block = doubleBaking.Block;
+            var accuser = doubleBaking.Accuser;
+            var offender = doubleBaking.Offender;
 
             //Db.TryAttach(block);
             Db.TryAttach(accuser);
@@ -100,47 +104,29 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            accuser.Balance -= DoubleBaking.AccuserReward;
-            accuser.FrozenRewards -= DoubleBaking.AccuserReward;
+            accuser.Balance -= doubleBaking.AccuserReward;
+            accuser.FrozenRewards -= doubleBaking.AccuserReward;
 
-            offender.Balance += DoubleBaking.OffenderLostDeposit;
-            offender.FrozenDeposits += DoubleBaking.OffenderLostDeposit;
-            offender.StakingBalance += DoubleBaking.OffenderLostDeposit;
+            offender.Balance += doubleBaking.OffenderLostDeposit;
+            offender.FrozenDeposits += doubleBaking.OffenderLostDeposit;
+            offender.StakingBalance += doubleBaking.OffenderLostDeposit;
 
-            offender.Balance += DoubleBaking.OffenderLostReward;
-            offender.FrozenRewards += DoubleBaking.OffenderLostReward;
+            offender.Balance += doubleBaking.OffenderLostReward;
+            offender.FrozenRewards += doubleBaking.OffenderLostReward;
 
-            offender.Balance += DoubleBaking.OffenderLostFee;
-            offender.FrozenFees += DoubleBaking.OffenderLostFee;
-            offender.StakingBalance += DoubleBaking.OffenderLostFee;
+            offender.Balance += doubleBaking.OffenderLostFee;
+            offender.FrozenFees += doubleBaking.OffenderLostFee;
+            offender.StakingBalance += doubleBaking.OffenderLostFee;
 
             accuser.DoubleBakingCount--;
             if (offender != accuser) offender.DoubleBakingCount--;
             #endregion
 
-            Db.DoubleBakingOps.Remove(DoubleBaking);
-
+            Db.DoubleBakingOps.Remove(doubleBaking);
             return Task.CompletedTask;
         }
 
-        #region static
-        public static async Task<DoubleBakingCommit> Apply(ProtocolHandler proto, Block block, RawOperation op, RawDoubleBakingEvidenceContent content)
-        {
-            var commit = new DoubleBakingCommit(proto);
-            await commit.Init(block, op, content);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<DoubleBakingCommit> Revert(ProtocolHandler proto, Block block, DoubleBakingOperation op)
-        {
-            var commit = new DoubleBakingCommit(proto);
-            await commit.Init(block, op);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

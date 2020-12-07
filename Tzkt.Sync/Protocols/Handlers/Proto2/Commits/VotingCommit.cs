@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -9,145 +8,123 @@ namespace Tzkt.Sync.Protocols.Proto2
 {
     class VotingCommit : ProtocolCommit
     {
-        public BlockEvents Event { get; private set; }
-        public VotingPeriod Period { get; private set; }
+        public VotingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        VotingCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public async Task Init(Block block, RawBlock rawBlock)
+        public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
+            #region init
+            var events = BlockEvents.None;
+            VotingPeriod period = null;
+
             if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
             {
-                Event = BlockEvents.VotingPeriodEnd;
-                Period = await Cache.Periods.CurrentAsync();
-                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
+                events = BlockEvents.VotingPeriodEnd;
+                period = await Cache.Periods.CurrentAsync();
+                period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == period.EpochId);
             }
             else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
             {
-                Event = BlockEvents.VotingPeriodBegin;
-                var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
+                events = BlockEvents.VotingPeriodBegin;
+                period = await Cache.Periods.CurrentAsync();
+                period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == period.EpochId);
 
-                Period = await Cache.Periods.CurrentAsync();
-                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
-
-                Period = rawBlock.Metadata.VotingPeriod switch
+                period = rawBlock.Required("metadata").RequiredString("voting_period_kind") switch
                 {
                     "proposal" => new ProposalPeriod
                     {
-                        Code = Period.Code + 1,
-                        Epoch = new VotingEpoch { Level = rawBlock.Level },
+                        Code = period.Code + 1,
+                        Epoch = new VotingEpoch { Level = block.Level },
                         Kind = VotingPeriods.Proposal,
-                        StartLevel = rawBlock.Level,
-                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
+                        StartLevel = block.Level,
+                        EndLevel = block.Level + block.Protocol.BlocksPerVoting - 1
                     },
                     "exploration" => new ExplorationPeriod
                     {
-                        Code = Period.Code + 1,
-                        Epoch = Period.Epoch,
+                        Code = period.Code + 1,
+                        Epoch = period.Epoch,
                         Kind = VotingPeriods.Exploration,
-                        StartLevel = rawBlock.Level,
-                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
+                        StartLevel = block.Level,
+                        EndLevel = block.Level + block.Protocol.BlocksPerVoting - 1
                     },
                     "testing" => new TestingPeriod
                     {
-                        Code = Period.Code + 1,
-                        Epoch = Period.Epoch,
+                        Code = period.Code + 1,
+                        Epoch = period.Epoch,
                         Kind = VotingPeriods.Testing,
-                        StartLevel = rawBlock.Level,
-                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
+                        StartLevel = block.Level,
+                        EndLevel = block.Level + block.Protocol.BlocksPerVoting - 1
                     },
                     "promotion" => new PromotionPeriod
                     {
-                        Code = Period.Code + 1,
-                        Epoch = Period.Epoch,
+                        Code = period.Code + 1,
+                        Epoch = period.Epoch,
                         Kind = VotingPeriods.Promotion,
-                        StartLevel = rawBlock.Level,
-                        EndLevel = rawBlock.Level + protocol.BlocksPerVoting - 1
+                        StartLevel = block.Level,
+                        EndLevel = block.Level + block.Protocol.BlocksPerVoting - 1
                     },
                     _ => throw new Exception("invalid voting period")
                 };
             }
-        }
+            #endregion
 
-        public async Task Init(Block block)
-        {
-            if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
-            {
-                Event = BlockEvents.VotingPeriodEnd;
-                Period = await Cache.Periods.CurrentAsync();
-                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
-            }
-            else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
-            {
-                Event = BlockEvents.VotingPeriodBegin;
-                Period = await Cache.Periods.CurrentAsync();
-                Period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == Period.EpochId);
-            }
-        }
-
-        public override Task Apply()
-        {
-            if (Event == BlockEvents.VotingPeriodEnd)
+            if (events == BlockEvents.VotingPeriodEnd)
             {
                 #region entities
-                var epoch = Period.Epoch;
+                var epoch = period.Epoch;
 
                 Db.TryAttach(epoch);
                 #endregion
 
                 epoch.Progress++;
             }
-            else if (Event == BlockEvents.VotingPeriodBegin)
+            else if (events == BlockEvents.VotingPeriodBegin)
             {
-                Db.VotingPeriods.Add(Period);
-                Cache.Periods.Add(Period);
+                Db.VotingPeriods.Add(period);
+                Cache.Periods.Add(period);
             }
-
-            return Task.CompletedTask;
         }
 
-        public override Task Revert()
+        public virtual async Task Revert(Block block)
         {
-            if (Event == BlockEvents.VotingPeriodEnd)
+            #region init
+            var events = BlockEvents.None;
+            VotingPeriod period = null;
+
+            if (block.Events.HasFlag(BlockEvents.VotingPeriodEnd))
+            {
+                events = BlockEvents.VotingPeriodEnd;
+                period = await Cache.Periods.CurrentAsync();
+                period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == period.EpochId);
+            }
+            else if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
+            {
+                events = BlockEvents.VotingPeriodBegin;
+                period = await Cache.Periods.CurrentAsync();
+                period.Epoch ??= await Db.VotingEpoches.FirstOrDefaultAsync(x => x.Id == period.EpochId);
+            }
+            #endregion
+
+            if (events == BlockEvents.VotingPeriodEnd)
             {
                 #region entities
-                var epoch = Period.Epoch;
+                var epoch = period.Epoch;
 
                 Db.TryAttach(epoch);
                 #endregion
 
                 epoch.Progress--;
             }
-            else if (Event == BlockEvents.VotingPeriodBegin)
+            else if (events == BlockEvents.VotingPeriodBegin)
             {
-                if (Period.Epoch.Progress == 0)
-                    Db.VotingEpoches.Remove(Period.Epoch);
+                if (period.Epoch.Progress == 0)
+                    Db.VotingEpoches.Remove(period.Epoch);
 
-                Db.VotingPeriods.Remove(Period);
+                Db.VotingPeriods.Remove(period);
                 Cache.Periods.Remove();
             }
-
-            return Task.CompletedTask;
         }
 
-        #region static
-        public static async Task<VotingCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
-        {
-            var commit = new VotingCommit(proto);
-            await commit.Init(block, rawBlock);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<VotingCommit> Revert(ProtocolHandler proto, Block block)
-        {
-            var commit = new VotingCommit(proto);
-            await commit.Init(block);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
+        public override Task Apply() => Task.CompletedTask;
+        public override Task Revert() => Task.CompletedTask;
     }
 }

@@ -22,7 +22,6 @@ namespace Tzkt.Sync.Protocols
             : base(node, db, cache, quotes, config, logger)
         {
             Diagnostics = new Diagnostics();
-            Serializer = new Serializer();
             Validator = new Validator(this);
             Rpc = new Rpc(node);
         }
@@ -51,13 +50,11 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Commit(JsonElement block)
         {
-            var rawBlock = JsonSerializer.Deserialize<RawBlock>(block.GetRawText(), Genesis.Serializer.Options);
-
-            var blockCommit = await BlockCommit.Apply(this, rawBlock);
+            var blockCommit = await BlockCommit.Apply(this, block);
 
             await StatisticsCommit.Apply(this);
 
-            await StateCommit.Apply(this, blockCommit.Block, rawBlock);
+            await StateCommit.Apply(this, blockCommit.Block, block);
         }
 
         public override async Task Revert()

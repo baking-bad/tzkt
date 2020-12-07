@@ -35,9 +35,7 @@ namespace Tzkt.Sync.Protocols.Initiator
 
             for (int cycle = 0; cycle <= Block.Protocol.PreservedCycles; cycle++)
             {
-                var cycleStream = await Proto.Node.GetCycleAsync(1, cycle);
-                var rawCycle = await(Proto.Serializer as Serializer).DeserializeCycle(cycleStream);
-
+                var rawCycle = await Proto.Rpc.GetCycleAsync(1, cycle);
                 Db.Cycles.Add(new Cycle
                 {
                     Index = cycle,
@@ -48,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Initiator
                     TotalDelegated = totalDelegated,
                     TotalDelegators = totalDelegators,
                     TotalBakers = totalBakers,
-                    Seed = rawCycle.RandomSeed
+                    Seed = rawCycle.RequiredString("random_seed")
                 });
             }
         }

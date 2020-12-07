@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using Npgsql;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Utils;
@@ -11,40 +13,34 @@ namespace Tzkt.Sync.Protocols.Initiator
 {
     class BootstrapCommit : ProtocolCommit
     {
-        public int Level { get; private set; }
-        public DateTime Timestamp { get; private set; }
         public IEnumerable<Commitment> Commitments { get; private set; }
         public List<Account> BootstrapedAccounts { get; private set; }
         public Block Block { get; private set; }
 
         BootstrapCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Init(Block block, RawBlock rawBlock)
+        public async Task Init(Block block, JsonElement rawBlock)
         {
-            var protocol = await Cache.Protocols.GetAsync(rawBlock.Protocol);
             BootstrapedAccounts = new List<Account>(65);
-            Timestamp = rawBlock.Header.Timestamp;
-            Level = rawBlock.Level;
             Block = block;
 
-            var stream = await Proto.Node.GetContractsAsync(level: 1);
-            var contracts = await (Proto.Serializer as Serializer).DeserializeContracts(stream);
+            var contracts = await Proto.Rpc.GetAllContractsAsync(block.Level);
             var delegates = new List<Data.Models.Delegate>(8);
 
             #region bootstrap delegates
-            foreach (var data in contracts.Where(x => x.Delegate == x.Address))
+            foreach (var data in contracts.EnumerateArray().Where(x => x[0].RequiredString() == x[1].OptionalString("delegate")))
             {
                 var baker = new Data.Models.Delegate
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = data.Address,
-                    FirstLevel = rawBlock.Level,
-                    LastLevel = rawBlock.Level,
+                    Address = data[0].RequiredString(),
+                    Balance = data[1].RequiredInt64("balance"),
+                    Counter = data[1].RequiredInt32("counter"),
+                    PublicKey = data[1].RequiredString("manager"),
+                    FirstLevel = block.Level,
+                    LastLevel = block.Level,
                     ActivationLevel = 1,
-                    DeactivationLevel = GracePeriod.Init(1, protocol.BlocksPerCycle, protocol.PreservedCycles),
-                    Balance = data.Balance,
-                    Counter = data.Counter,
-                    PublicKey = data.Manager,
+                    DeactivationLevel = GracePeriod.Init(1, block.Protocol.BlocksPerCycle, block.Protocol.PreservedCycles),
                     Staked = true,
                     Revealed = true,
                     Type = AccountType.Delegate
@@ -56,16 +52,16 @@ namespace Tzkt.Sync.Protocols.Initiator
             #endregion
 
             #region bootstrap users
-            foreach (var data in contracts.Where(x => x.Address[0] == 't' && String.IsNullOrEmpty(x.Delegate)))
+            foreach (var data in contracts.EnumerateArray().Where(x => x[0].RequiredString()[0] == 't' && string.IsNullOrEmpty(x[1].OptionalString("delegate"))))
             {
                 var user = new User
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = data.Address,
-                    FirstLevel = rawBlock.Level,
-                    LastLevel = rawBlock.Level,
-                    Balance = data.Balance,
-                    Counter = data.Counter,
+                    Address = data[0].RequiredString(),
+                    Balance = data[1].RequiredInt64("balance"),
+                    Counter = data[1].RequiredInt32("counter"),
+                    FirstLevel = block.Level,
+                    LastLevel = block.Level,
                     Type = AccountType.User
                 };
                 Cache.Accounts.Add(user);
@@ -74,24 +70,24 @@ namespace Tzkt.Sync.Protocols.Initiator
             #endregion
 
             #region bootstrap contracts
-            foreach (var data in contracts.Where(x => x.Address[0] == 'K'))
+            foreach (var data in contracts.EnumerateArray().Where(x => x[0].RequiredString()[0] == 'K'))
             {
-                var manager = (User)await Cache.Accounts.GetAsync(data.Manager);
+                var manager = (User)await Cache.Accounts.GetAsync(data[1].RequiredString("manager"));
                 manager.ContractsCount++;
 
                 var contract = new Contract
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = data.Address,
-                    FirstLevel = rawBlock.Level,
-                    LastLevel = rawBlock.Level,
-                    Balance = data.Balance,
-                    Counter = data.Counter,
+                    Address = data[0].RequiredString(),
+                    Balance = data[1].RequiredInt64("balance"),
+                    Counter = data[1].RequiredInt32("counter"),
+                    FirstLevel = block.Level,
+                    LastLevel = block.Level,
                     Spendable = false,
                     DelegationLevel = 1,
-                    Delegate = Cache.Accounts.GetDelegate(data.Delegate),
+                    Delegate = Cache.Accounts.GetDelegate(data[1].OptionalString("delegate")),
                     Manager = manager,
-                    Staked = !String.IsNullOrEmpty(data.Delegate),
+                    Staked = !string.IsNullOrEmpty(data[1].OptionalString("delegate")),
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                 };
@@ -113,19 +109,17 @@ namespace Tzkt.Sync.Protocols.Initiator
             #endregion
 
             #region parameters
-            var protoParams = Bson.Parse<RawProtoParameters>(rawBlock.Header.Content.Parameters.Substring(8));
-            Commitments = protoParams.Commitments?.Select(x => new Commitment
+            var protoParams = Bson.Parse(rawBlock.Required("header").Required("content").RequiredString("protocol_parameters").Substring(8));
+            Commitments = protoParams["commitments"]?.Select(x => new Commitment
             {
-                Address = x[0],
-                Balance = long.Parse(x[1])
+                Address = x[0].Value<string>(),
+                Balance = x[1].Value<long>()
             });
             #endregion
         }
 
         public async Task Init(Block block)
         {
-            Level = block.Level;
-            Timestamp = block.Timestamp;
             BootstrapedAccounts = await Db.Accounts.Where(x => x.Counter == 0).ToListAsync();
         }
 
@@ -148,8 +142,8 @@ namespace Tzkt.Sync.Protocols.Initiator
                     {
                         Id = Cache.AppState.NextOperationId(),
                         Block = Block,
-                        Level = Level,
-                        Timestamp = Timestamp,
+                        Level = Block.Level,
+                        Timestamp = Block.Timestamp,
                         Account = account,
                         Kind = MigrationKind.Bootstrap,
                         BalanceChange = account.Balance
@@ -199,7 +193,7 @@ namespace Tzkt.Sync.Protocols.Initiator
         }
 
         #region static
-        public static async Task<BootstrapCommit> Apply(ProtocolHandler proto, Block block, RawBlock rawBlock)
+        public static async Task<BootstrapCommit> Apply(ProtocolHandler proto, Block block, JsonElement rawBlock)
         {
             var commit = new BootstrapCommit(proto);
             await commit.Init(block, rawBlock);

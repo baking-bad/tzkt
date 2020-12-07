@@ -24,23 +24,28 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual Task Run(JsonElement block)
         {
             var ops = block.GetProperty("operations");
-            var opsCount = ops[0].Count() + ops[2].Count();
-            foreach (var op in ops[1].EnumerateArray())
+            var opsCount = 0;
+
+            if (ops.EnumerateArray().Any())
             {
-                var content = op.RequiredArray("contents")[0];
-                if (content.RequiredString("kind")[0] == 'p')
-                    opsCount += content.RequiredArray("proposals").Count();
-                else
-                    opsCount++;
-            }
-            foreach (var op in ops[3].EnumerateArray())
-            {
-                foreach (var content in op.Required("contents").EnumerateArray())
+                opsCount += ops[0].Count() + ops[2].Count();
+                foreach (var op in ops[1].EnumerateArray())
                 {
-                    opsCount++;
-                    if (content.RequiredString("kind")[0] == 't' &&
-                        content.Required("metadata").TryGetProperty("internal_operation_results", out var internalContents))
-                        opsCount += internalContents.Count();
+                    var content = op.RequiredArray("contents")[0];
+                    if (content.RequiredString("kind")[0] == 'p')
+                        opsCount += content.RequiredArray("proposals").Count();
+                    else
+                        opsCount++;
+                }
+                foreach (var op in ops[3].EnumerateArray())
+                {
+                    foreach (var content in op.Required("contents").EnumerateArray())
+                    {
+                        opsCount++;
+                        if (content.RequiredString("kind")[0] == 't' &&
+                            content.Required("metadata").TryGetProperty("internal_operation_results", out var internalContents))
+                            opsCount += internalContents.Count();
+                    }
                 }
             }
 
