@@ -19,7 +19,6 @@ namespace Tzkt.Sync.Protocols
     {
         public override string Protocol => "Proto 3";
         public override IDiagnostics Diagnostics { get; }
-        public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 

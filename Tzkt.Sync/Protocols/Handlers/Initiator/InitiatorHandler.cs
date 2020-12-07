@@ -15,7 +15,6 @@ namespace Tzkt.Sync.Protocols
     {
         public override string Protocol => "Initiator";
         public override IDiagnostics Diagnostics { get; }
-        public override ISerializer Serializer { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 

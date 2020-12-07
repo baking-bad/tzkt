@@ -30,36 +30,6 @@ namespace Tzkt.Sync.Services
             return (await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 256 })).RootElement;
         }
 
-        public Task<Stream> GetBlockAsync(int level)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}");
-
-        public Task<Stream> GetConstantsAsync(int level)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/constants");
-
-        public Task<Stream> GetContractsAsync(int level)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/raw/json/contracts/index?depth=1");
-
-        public Task<Stream> GetGlobalCounterAsync(int level)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/raw/json/contracts/global_counter");
-
-        public Task<Stream> GetContractAsync(int level, string address)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/contracts/{address}");
-
-        public Task<Stream> GetDelegateAsync(int level, string address)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/delegates/{address}");
-
-        public Task<Stream> GetBakingRightsAsync(int level, int cycle, int maxPriority)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/baking_rights?cycle={cycle}&max_priority={maxPriority}&all=true");
-
-        public Task<Stream> GetLevelBakingRightsAsync(int level, int maxPriority)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/baking_rights?level={level}&max_priority={maxPriority}&all=true");
-
-        public Task<Stream> GetEndorsingRightsAsync(int level, int cycle)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/helpers/endorsing_rights?cycle={cycle}");
-
-        public Task<Stream> GetCycleAsync(int level, int cycle)
-            => Rpc.GetStreamAsync($"chains/main/blocks/{level}/context/raw/json/cycle/{cycle}");
-
         public async Task<Header> GetHeaderAsync()
         {
             if (DateTime.UtcNow >= NextBlock)
