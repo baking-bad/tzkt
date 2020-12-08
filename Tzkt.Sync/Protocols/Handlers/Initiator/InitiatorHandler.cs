@@ -14,7 +14,6 @@ namespace Tzkt.Sync.Protocols
 {
     class InitiatorHandler : ProtocolHandler
     {
-        public override string Protocol => "Initiator";
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
@@ -30,7 +29,7 @@ namespace Tzkt.Sync.Protocols
         public override Task Activate(AppState state, JsonElement block) => Task.CompletedTask;
         public override Task Deactivate(AppState state) => Task.CompletedTask;
 
-        public override Task Precache(JsonElement block) => Task.CompletedTask;
+        public override Task WarmUpCache(JsonElement block) => Task.CompletedTask;
 
         public override Task Commit(JsonElement rawBlock)
         {

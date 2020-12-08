@@ -125,8 +125,5 @@ namespace Tzkt.Sync.Protocols.Proto4
             Db.DoubleEndorsingOps.Remove(doubleEndorsing);
             return Task.CompletedTask;
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

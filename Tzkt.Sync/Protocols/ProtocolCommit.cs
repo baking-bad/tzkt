@@ -9,7 +9,7 @@ using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols
 {
-    public abstract class ProtocolCommit : ICommit
+    public abstract class ProtocolCommit
     {
         protected readonly TzktContext Db;
         protected readonly CacheService Cache;
@@ -23,10 +23,6 @@ namespace Tzkt.Sync.Protocols
             Cache = protocol.Cache;
             Logger = protocol.Logger;
         }
-
-        public abstract Task Apply();
-
-        public abstract Task Revert();
 
         public Task Spend(Account account, long amount)
         {

@@ -119,9 +119,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             return Task.CompletedTask;
         }
 
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
-
         protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
 
         protected virtual bool HasPanltiesUpdates(Block block, JsonElement rawBlock)

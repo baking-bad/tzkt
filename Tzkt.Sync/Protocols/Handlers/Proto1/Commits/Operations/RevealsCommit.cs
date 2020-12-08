@@ -133,8 +133,5 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.RevealOps.Remove(reveal);
             Cache.AppState.ReleaseManagerCounter();
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

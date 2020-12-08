@@ -98,8 +98,5 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.EndorsementOps.Remove(endorsement);
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

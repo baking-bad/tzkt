@@ -53,8 +53,5 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual Task MigrateContext(AppState state) => Task.CompletedTask;
         protected virtual Task RevertContext(AppState state) => Task.CompletedTask;
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

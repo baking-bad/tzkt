@@ -39,8 +39,5 @@ namespace Tzkt.Sync.Protocols.Proto5
             // don't revert Baker.SoftwareId and Software.LastLevel
             // don't remove emptied software for historical purposes
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

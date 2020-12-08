@@ -454,8 +454,5 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ? BlockEvents.SmartContracts
                 : BlockEvents.None;
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

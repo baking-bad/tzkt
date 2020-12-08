@@ -17,7 +17,6 @@ namespace Tzkt.Sync.Protocols
 {
     class Proto5Handler : ProtocolHandler
     {
-        public override string Protocol => "Proto 5";
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }

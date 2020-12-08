@@ -123,8 +123,5 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Cache.Periods.Remove();
             }
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

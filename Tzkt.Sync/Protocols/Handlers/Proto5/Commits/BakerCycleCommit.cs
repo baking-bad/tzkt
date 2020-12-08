@@ -690,9 +690,6 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
         }
 
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
-
         #region helpers
         //TODO: figure out how to avoid hardcoded constants for future cycles
 

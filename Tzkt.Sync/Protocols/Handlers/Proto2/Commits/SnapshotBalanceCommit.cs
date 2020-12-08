@@ -100,9 +100,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
         }
 
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
-
         protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
     }
 }
