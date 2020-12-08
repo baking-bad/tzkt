@@ -144,7 +144,7 @@ namespace Tzkt.Sync.Services
                 Logger.LogError($"Invalid head [{AppState.Level}:{AppState.Hash}]. Reverting...");
 
                 using var scope = Services.CreateScope();
-                var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Protocol);
+                var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Level, AppState.Protocol);
                 AppState = await protoHandler.RevertLastBlock(header.Predecessor);
 
                 Logger.LogInformation($"Reverted to [{AppState.Level}:{AppState.Hash}]");
@@ -169,7 +169,7 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug($"Applying block...");
 
                 using var scope = Services.CreateScope();
-                var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.NextProtocol);
+                var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
                 AppState = await protocol.CommitBlock(header.Level, sync);
 
                 Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");

@@ -22,100 +22,16 @@ namespace Tzkt.Sync.Protocols
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public Proto1Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<Proto1Handler> logger)
-            : base(node, db, cache, quotes, config, logger)
+        public Proto1Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto1Handler> logger)
+            : base(node, db, cache, quotes, services, config, logger)
         {
             Rpc = new Rpc(node);
             Diagnostics = new Diagnostics(db, Rpc);
             Validator = new Validator(this);
         }
 
-        public override Task Migration() => Proto2.DelegatesMigration.Apply(this);
-
-        public override Task CancelMigration() => Proto2.DelegatesMigration.Revert(this);
-
-        public override async Task InitProtocol(JsonElement block)
-        {
-            var level = block.Required("header").RequiredInt32("level");
-            var state = Cache.AppState.Get();
-            var currProtocol = await Cache.Protocols.GetAsync(state.Protocol);
-
-            Protocol protocol = null;
-            if (state.Protocol != state.NextProtocol)
-            {
-                protocol = new Protocol
-                {
-                    Hash = block.RequiredString("protocol"),
-                    Code = await Db.Protocols.CountAsync() - 1,
-                    FirstLevel = level,
-                    LastLevel = -1
-                };
-                Db.Protocols.Add(protocol);
-                Cache.Protocols.Add(protocol);
-            }
-            else if (level % currProtocol.BlocksPerCycle == 1)
-            {
-                protocol = await Cache.Protocols.GetAsync(state.Protocol);
-                Db.TryAttach(protocol);
-            }
-
-            if (protocol != null)
-            {
-                var rawConst = await Node.GetAsync($"chains/main/blocks/{level}/context/constants");
-
-                protocol.BlockDeposit = rawConst.RequiredInt64("block_security_deposit");
-                protocol.BlockReward0 = rawConst.RequiredInt64("block_reward");
-                protocol.BlocksPerCommitment = rawConst.RequiredInt32("blocks_per_commitment");
-                protocol.BlocksPerCycle = rawConst.RequiredInt32("blocks_per_cycle");
-                protocol.BlocksPerSnapshot = rawConst.RequiredInt32("blocks_per_roll_snapshot");
-                protocol.BlocksPerVoting = rawConst.RequiredInt32("blocks_per_voting_period");
-                protocol.ByteCost = rawConst.RequiredInt32("cost_per_byte");
-                protocol.EndorsementDeposit = rawConst.RequiredInt64("endorsement_security_deposit");
-                protocol.EndorsementReward0 = rawConst.RequiredInt64("endorsement_reward");
-                protocol.EndorsersPerBlock = rawConst.RequiredInt32("endorsers_per_block");
-                protocol.HardBlockGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_block");
-                protocol.HardOperationGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_operation");
-                protocol.HardOperationStorageLimit = rawConst.RequiredInt32("hard_storage_limit_per_operation");
-                protocol.OriginationSize = rawConst.RequiredInt32("origination_burn") / 1000;
-                protocol.PreservedCycles = rawConst.RequiredInt32("preserved_cycles");
-                protocol.RevelationReward = rawConst.RequiredInt64("seed_nonce_revelation_tip");
-                protocol.TimeBetweenBlocks = rawConst.RequiredArray("time_between_blocks", 2)[0].ParseInt32();
-                protocol.TokensPerRoll = rawConst.RequiredInt64("tokens_per_roll");
-            }
-        }
-
-        public override async Task InitProtocol()
-        {
-            var state = Cache.AppState.Get();
-            var currProtocol = await Cache.Protocols.GetAsync(state.Protocol);
-
-            if (state.Protocol == state.NextProtocol &&
-                state.Level % currProtocol.BlocksPerCycle != 0)
-                return;
-            
-            var rawConst = await Node.GetAsync($"chains/main/blocks/{state.Level - 1}/context/constants");
-
-            Db.TryAttach(currProtocol);
-
-            currProtocol.BlockDeposit = rawConst.RequiredInt64("block_security_deposit");
-            currProtocol.BlockReward0 = rawConst.RequiredInt64("block_reward");
-            currProtocol.BlocksPerCommitment = rawConst.RequiredInt32("blocks_per_commitment");
-            currProtocol.BlocksPerCycle = rawConst.RequiredInt32("blocks_per_cycle");
-            currProtocol.BlocksPerSnapshot = rawConst.RequiredInt32("blocks_per_roll_snapshot");
-            currProtocol.BlocksPerVoting = rawConst.RequiredInt32("blocks_per_voting_period");
-            currProtocol.ByteCost = rawConst.RequiredInt32("cost_per_byte");
-            currProtocol.EndorsementDeposit = rawConst.RequiredInt64("endorsement_security_deposit");
-            currProtocol.EndorsementReward0 = rawConst.RequiredInt64("endorsement_reward");
-            currProtocol.EndorsersPerBlock = rawConst.RequiredInt32("endorsers_per_block");
-            currProtocol.HardBlockGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_block");
-            currProtocol.HardOperationGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_operation");
-            currProtocol.HardOperationStorageLimit = rawConst.RequiredInt32("hard_storage_limit_per_operation");
-            currProtocol.OriginationSize = rawConst.RequiredInt32("origination_burn") / rawConst.RequiredInt32("cost_per_byte");
-            currProtocol.PreservedCycles = rawConst.RequiredInt32("preserved_cycles");
-            currProtocol.RevelationReward = rawConst.RequiredInt64("seed_nonce_revelation_tip");
-            currProtocol.TimeBetweenBlocks = rawConst.RequiredArray("time_between_blocks", 2)[0].ParseInt32();
-            currProtocol.TokensPerRoll = rawConst.RequiredInt64("tokens_per_roll");
-        }
+        public override Task Activate(AppState state, JsonElement block) => new ProtoActivator(this).Activate(state, block);
+        public override Task Deactivate(AppState state) => new ProtoActivator(this).Deactivate(state);
 
         public override async Task Commit(JsonElement block)
         {
@@ -254,6 +170,7 @@ namespace Tzkt.Sync.Protocols
         public override async Task Revert()
         {
             var currBlock = await Cache.Blocks.CurrentAsync();
+            Db.TryAttach(currBlock);
 
             #region load operations
             var query = Db.Blocks.AsQueryable();

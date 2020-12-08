@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
             var state = entries.FirstOrDefault(x => x.Entity is AppState).Entity as AppState;
-            var proto = entries.FirstOrDefault(x => x.Entity is Protocol).Entity as Protocol; // TODO: add current cycle to the appstate an use it instead
+            var proto = entries.FirstOrDefault(x => x.Entity is Protocol p && p.Hash == state.NextProtocol).Entity as Protocol; // TODO: add current cycle to the appstate an use it instead
 
             var accounts = entries.Where(x =>
                 x.Entity is Account &&

@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 ShortHash = version
             });
 
-            if (software.BlocksCount == 0)
+            if (software.Id == 0)
                 Db.Software.Add(software);
             else
                 Db.TryAttach(software);

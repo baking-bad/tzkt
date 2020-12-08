@@ -1,5 +1,7 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -17,8 +19,8 @@ namespace Tzkt.Sync.Protocols
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public GenesisHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<GenesisHandler> logger)
-            : base(node, db, cache, quotes, config, logger)
+        public GenesisHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<GenesisHandler> logger)
+            : base(node, db, cache, quotes, services, config, logger)
         {
             Diagnostics = new Diagnostics();
             Validator = new Validator(this);
@@ -27,44 +29,75 @@ namespace Tzkt.Sync.Protocols
 
         public override Task Precache(JsonElement block) => Task.CompletedTask;
 
-        public override Task InitProtocol(JsonElement block)
+        public override Task Commit(JsonElement rawBlock)
         {
+            #region add protocol
             var protocol = new Protocol
             {
-                Hash = block.RequiredString("protocol"),
+                Hash = rawBlock.RequiredString("protocol"),
                 Code = -1,
-                FirstLevel = block.Required("header").RequiredInt32("level"),
-                LastLevel = block.Required("header").RequiredInt32("level")
+                FirstLevel = 0,
+                LastLevel = 0
             };
-
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
+            #endregion
+
+            #region add block
+            var block = new Block
+            {
+                Id = Cache.AppState.NextOperationId(),
+                Hash = rawBlock.RequiredString("hash"),
+                Level = rawBlock.Required("header").RequiredInt32("level"),
+                Protocol = protocol,
+                Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),
+                Events = BlockEvents.ProtocolBegin | BlockEvents.ProtocolEnd
+            };
+            Db.Blocks.Add(block);
+            Cache.Blocks.Add(block);
+            #endregion
+
+            #region add empty stats
+            var stats = new Statistics();
+            Db.Statistics.Add(stats);
+            Cache.Statistics.Add(stats);
+            #endregion
+
+            #region update state
+            var state = Cache.AppState.Get();
+            state.Level = block.Level;
+            state.Timestamp = block.Timestamp;
+            state.Protocol = block.Protocol.Hash;
+            state.NextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");
+            state.Hash = block.Hash;
+            state.BlocksCount++;
+            state.ProtocolsCount++;
+            #endregion
+
             return Task.CompletedTask;
-        }
-
-        public override Task InitProtocol()
-        {
-            return Task.CompletedTask;
-        }
-
-        public override async Task Commit(JsonElement block)
-        {
-            var blockCommit = await BlockCommit.Apply(this, block);
-
-            await StatisticsCommit.Apply(this);
-
-            await StateCommit.Apply(this, blockCommit.Block, block);
         }
 
         public override async Task Revert()
         {
-            var currBlock = await Cache.Blocks.CurrentAsync();
+            await Db.Database.ExecuteSqlRawAsync(@"
+                DELETE FROM ""Statistics"";
+                DELETE FROM ""Protocols"";
+                DELETE FROM ""Blocks"";");
 
-            await StatisticsCommit.Revert(this);
+            Cache.Statistics.Reset();
+            Cache.Protocols.Reset();
+            Cache.Blocks.Reset();
 
-            await BlockCommit.Revert(this, currBlock);
-
-            await StateCommit.Revert(this, currBlock);
+            #region update state
+            var state = Cache.AppState.Get();
+            state.Level = -1;
+            state.Timestamp = DateTime.MinValue;
+            state.Protocol = "";
+            state.NextProtocol = "";
+            state.Hash = "";
+            state.BlocksCount--;
+            state.ProtocolsCount--;
+            #endregion
         }
     }
 }
