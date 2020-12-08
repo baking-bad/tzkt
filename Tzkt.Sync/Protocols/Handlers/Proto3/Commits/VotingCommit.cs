@@ -223,8 +223,5 @@ namespace Tzkt.Sync.Protocols.Proto3
                     Db.VotingSnapshots.RemoveRange(rolls);
             }
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

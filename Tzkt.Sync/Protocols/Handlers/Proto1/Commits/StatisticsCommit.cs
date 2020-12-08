@@ -128,8 +128,5 @@ namespace Tzkt.Sync.Protocols.Proto1
             await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""Statistics"" WHERE ""Level"" = {block.Level}");
             Cache.Statistics.Reset();
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

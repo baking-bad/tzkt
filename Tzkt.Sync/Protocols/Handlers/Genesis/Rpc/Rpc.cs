@@ -26,6 +26,12 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         public Task<JsonElement> GetLevelBakingRightsAsync(int level, int maxPriority)
             => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetContractAsync(int level, string address)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetDelegateAsync(int level, string address)
+            => throw new InvalidOperationException();
         #endregion
 
         #region bootstrap
@@ -35,12 +41,6 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         #region diagnostics
         public Task<JsonElement> GetGlobalCounterAsync(int level)
-            => throw new InvalidOperationException();
-
-        public Task<JsonElement> GetContractAsync(int level, string address)
-            => throw new InvalidOperationException();
-
-        public Task<JsonElement> GetDelegateAsync(int level, string address)
             => throw new InvalidOperationException();
         #endregion
     }

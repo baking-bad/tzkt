@@ -11,6 +11,8 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetBakingRightsAsync(int level, int cycle);
         Task<JsonElement> GetEndorsingRightsAsync(int level, int cycle);
         Task<JsonElement> GetLevelBakingRightsAsync(int level, int maxPriority);
+        Task<JsonElement> GetContractAsync(int level, string address);
+        Task<JsonElement> GetDelegateAsync(int level, string address);
         #endregion
 
         #region bootstrap
@@ -19,8 +21,6 @@ namespace Tzkt.Sync.Protocols
         
         #region diagnostics
         Task<JsonElement> GetGlobalCounterAsync(int level);
-        Task<JsonElement> GetContractAsync(int level, string address);
-        Task<JsonElement> GetDelegateAsync(int level, string address);
         #endregion
     }
 }

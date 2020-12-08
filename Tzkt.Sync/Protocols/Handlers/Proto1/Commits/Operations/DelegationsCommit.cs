@@ -408,9 +408,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.DelegationOps.Remove(delegation);
         }
 
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
-
         void UpgradeUser(DelegationOperation delegation)
         {
             var user = delegation.Sender as User;

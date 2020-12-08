@@ -16,7 +16,6 @@ namespace Tzkt.Sync
 {
     public abstract class ProtocolHandler
     {
-        public abstract string Protocol { get; }
         public abstract IDiagnostics Diagnostics { get; }
         public abstract IValidator Validator { get; }
         public abstract IRpc Rpc { get; }
@@ -25,9 +24,9 @@ namespace Tzkt.Sync
         public readonly TzktContext Db;
         public readonly CacheService Cache;
         public readonly QuotesService Quotes;
+        public readonly IServiceProvider Services;
         public readonly TezosProtocolsConfig Config;
         public readonly ILogger Logger;
-        public readonly IServiceProvider Services;
         
         public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger)
         {
@@ -44,55 +43,55 @@ namespace Tzkt.Sync
         {
             var state = Cache.AppState.Get();
 
-            Logger.LogDebug($"Loading block {state.Level + 1}...");
+            Logger.LogDebug($"Load block {state.Level + 1}");
             var block = await Rpc.GetBlockAsync(state.Level + 1);
 
+            Logger.LogDebug("Begin DB transaction");
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
-                Logger.LogDebug("Loading entities...");
-                await Precache(block);
+                Logger.LogDebug("Warm up cache");
+                await WarmUpCache(block);
 
                 if (Config.Validation)
                 {
-                    Logger.LogDebug("Validating block...");
+                    Logger.LogDebug("Validate block");
                     await Validator.ValidateBlock(block);
                 }
 
-                Logger.LogDebug("Committing block...");
+                Logger.LogDebug("Process block");
                 await Commit(block);
 
-                var protocolEnd = false;
+                var nextProtocol = this;
                 if (state.Protocol != state.NextProtocol)
                 {
-                    protocolEnd = true;
-                    Logger.LogDebug("Activating next protocol...");
-                    var nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                    Logger.LogDebug($"Activate next protocol {state.NextProtocol.Substring(0, 8)}");
+                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
                     await nextProtocol.Activate(state, block);
                 }
 
-                Logger.LogDebug("Touch accounts...");
+                Logger.LogDebug("Touch accounts");
                 TouchAccounts();
 
                 if (Config.Diagnostics)
                 {
-                    Logger.LogDebug("Diagnostics...");
-                    if (!protocolEnd)
-                        await Diagnostics.Run(block);
-                    else
-                        await FindDiagnostics(state.NextProtocol).Run(block);
+                    Logger.LogDebug("Diagnostics");
+                    await nextProtocol.Diagnostics.Run(block);
                 }
 
                 state.KnownHead = head;
                 state.LastSync = sync;
  
-                Logger.LogDebug("Saving...");
+                Logger.LogDebug("Save changes");
                 await Db.SaveChangesAsync();
 
+                Logger.LogDebug("Save post-changes");
                 await AfterCommit(block);
 
+                Logger.LogDebug("Process quotes");
                 await Quotes.Commit();
 
+                Logger.LogDebug("Commit DB transaction");
                 await tx.CommitAsync();
             }
             catch (Exception)
@@ -102,17 +101,19 @@ namespace Tzkt.Sync
             }
 
             ClearCachedRelations();
-
             return Cache.AppState.Get();
         }
         
         public virtual async Task<AppState> RevertLastBlock(string predecessor)
         {
+            Logger.LogDebug("Begin DB transaction");
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
+                Logger.LogDebug("Revert quotes");
                 await Quotes.Revert();
 
+                Logger.LogDebug("Revert post-changes");
                 await BeforeRevert();
 
                 var state = Cache.AppState.Get();
@@ -120,25 +121,27 @@ namespace Tzkt.Sync
 
                 if (state.Protocol != state.NextProtocol)
                 {
-                    Logger.LogDebug("Deactivating current protocol...");
+                    Logger.LogDebug("Deactivate latest protocol");
                     var nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
                     await nextProtocol.Deactivate(state);
                 }
 
-                Logger.LogDebug("Reverting...");
+                Logger.LogDebug("Revert block");
                 await Revert();
 
-                Logger.LogDebug("Clear accounts...");
+                Logger.LogDebug("Touch accounts");
                 ClearAccounts(state.Level + 1);
 
                 if (Config.Diagnostics && state.Hash == predecessor)
                 {
-                    Logger.LogDebug("Diagnostics...");
+                    Logger.LogDebug("Diagnostics");
                     await Diagnostics.Run(state.Level);
                 }
 
-                Logger.LogDebug("Saving...");
+                Logger.LogDebug("Save changes");
                 await Db.SaveChangesAsync();
+
+                Logger.LogDebug("Commit DB transaction");
                 await tx.CommitAsync();
             }
             catch (Exception)
@@ -148,55 +151,10 @@ namespace Tzkt.Sync
             }
 
             ClearCachedRelations();
-
             return Cache.AppState.Get();
         }
 
-        public virtual void TouchAccounts()
-        {
-            var state = Cache.AppState.Get();
-            var block = Db.ChangeTracker.Entries()
-                .First(x => x.Entity is Block block && block.Level == state.Level).Entity as Block;
-
-            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
-            {
-                var account = entry.Entity as Account;
-
-                if (entry.State == EntityState.Modified)
-                {
-                    account.LastLevel = state.Level;
-                }
-                else if (entry.State == EntityState.Added)
-                {
-                    state.AccountsCount++;
-                    account.FirstLevel = state.Level;
-                    account.LastLevel = state.Level;
-                    block.Events |= BlockEvents.NewAccounts;
-                }
-            }
-        }
-
-        public virtual void ClearAccounts(int level)
-        {
-            var state = Cache.AppState.Get();
-
-            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
-            {
-                var account = entry.Entity as Account;
-
-                if (entry.State == EntityState.Modified)
-                    account.LastLevel = level;
-                
-                if (account.FirstLevel == level)
-                {
-                    Db.Remove(account);
-                    Cache.Accounts.Remove(account);
-                    state.AccountsCount--;
-                }
-            }
-        }
-
-        public virtual Task Precache(JsonElement block)
+        public virtual Task WarmUpCache(JsonElement block)
         {
             var accounts = new HashSet<string>(64);
             var operations = block.RequiredArray("operations", 4);
@@ -239,32 +197,56 @@ namespace Tzkt.Sync
 
         public virtual Task Deactivate(AppState state) => Task.CompletedTask;
 
-        public abstract Task Commit(JsonElement block);
-
         public virtual Task AfterCommit(JsonElement block) => Task.CompletedTask;
 
         public virtual Task BeforeRevert() => Task.CompletedTask;
 
+        public abstract Task Commit(JsonElement block);
+
         public abstract Task Revert();
 
-        IDiagnostics FindDiagnostics(string hash)
+        void TouchAccounts()
         {
-            return hash switch
+            var state = Cache.AppState.Get();
+            var block = Db.ChangeTracker.Entries()
+                .First(x => x.Entity is Block block && block.Level == state.Level).Entity as Block;
+
+            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
             {
-                "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i" => new Protocols.Genesis.Diagnostics(),
-                "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P" => new Protocols.Initiator.Diagnostics(),
-                "PtBMwNZT94N7gXKw4i273CKcSaBrrBnqnt3RATExNKr9KNX2USV" => new Protocols.Initiator.Diagnostics(),
-                "PtYuensgYBb3G3x1hLLbCmcav8ue8Kyd2khADcL5LsT5R1hcXex" => new Protocols.Initiator.Diagnostics(),
-                "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY" => new Protocols.Proto1.Diagnostics(Db, Rpc),
-                "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt" => new Protocols.Proto2.Diagnostics(Db, Rpc),
-                "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP" => new Protocols.Proto3.Diagnostics(Db, Rpc),
-                "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd" => new Protocols.Proto4.Diagnostics(Db, Rpc),
-                "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS" => new Protocols.Proto5.Diagnostics(Db, Rpc),
-                "PsBABY5HQTSkA4297zNHfsZNKtxULfL18y95qb3m53QJiXGmrbU" => new Protocols.Proto5.Diagnostics(Db, Rpc),
-                "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb" => new Protocols.Proto6.Diagnostics(Db, Rpc),
-                "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo" => new Protocols.Proto7.Diagnostics(Db, Rpc),
-                _ => throw new NotImplementedException($"Diagnostics for the protocol {hash} hasn't been implemented yet")
-            };
+                var account = entry.Entity as Account;
+
+                if (entry.State == EntityState.Modified)
+                {
+                    account.LastLevel = state.Level;
+                }
+                else if (entry.State == EntityState.Added)
+                {
+                    state.AccountsCount++;
+                    account.FirstLevel = state.Level;
+                    account.LastLevel = state.Level;
+                    block.Events |= BlockEvents.NewAccounts;
+                }
+            }
+        }
+
+        void ClearAccounts(int level)
+        {
+            var state = Cache.AppState.Get();
+
+            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
+            {
+                var account = entry.Entity as Account;
+
+                if (entry.State == EntityState.Modified)
+                    account.LastLevel = level;
+
+                if (account.FirstLevel == level)
+                {
+                    Db.Remove(account);
+                    Cache.Accounts.Remove(account);
+                    state.AccountsCount--;
+                }
+            }
         }
 
         void ClearCachedRelations()

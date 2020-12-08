@@ -125,8 +125,5 @@ namespace Tzkt.Sync.Protocols.Proto2
             Db.DoubleBakingOps.Remove(doubleBaking);
             return Task.CompletedTask;
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

@@ -115,8 +115,5 @@ namespace Tzkt.Sync.Protocols.Proto3
 
             Db.ProposalOps.Remove(proposalOp);
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }

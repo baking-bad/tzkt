@@ -17,12 +17,11 @@ namespace Tzkt.Sync.Protocols
 {
     class Proto6Handler : ProtocolHandler
     {
-        public override string Protocol => "Proto 6";
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public Proto6Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto5Handler> logger)
+        public Proto6Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto6Handler> logger)
             : base(node, db, cache, quotes, services, config, logger)
         {
             Rpc = new Rpc(node);

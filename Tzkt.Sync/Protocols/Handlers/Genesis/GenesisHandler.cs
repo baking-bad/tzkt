@@ -14,7 +14,6 @@ namespace Tzkt.Sync.Protocols
 {
     class GenesisHandler : ProtocolHandler
     {
-        public override string Protocol => "Genesis";
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
@@ -27,7 +26,7 @@ namespace Tzkt.Sync.Protocols
             Rpc = new Rpc(node);
         }
 
-        public override Task Precache(JsonElement block) => Task.CompletedTask;
+        public override Task WarmUpCache(JsonElement block) => Task.CompletedTask;
 
         public override Task Commit(JsonElement rawBlock)
         {

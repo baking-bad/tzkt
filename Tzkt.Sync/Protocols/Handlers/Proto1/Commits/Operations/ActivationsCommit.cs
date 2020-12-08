@@ -78,8 +78,5 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.ActivationOps.Remove(activation);
         }
-
-        public override Task Apply() => Task.CompletedTask;
-        public override Task Revert() => Task.CompletedTask;
     }
 }
