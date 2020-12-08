@@ -1,22 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
-    class ManagersMigration : ProtocolCommit
+    class ProtoActivator : Proto4.ProtoActivator
     {
-        ManagersMigration(ProtocolHandler protocol) : base(protocol) { }
+        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
-        public override async Task Apply()
+        // Airdrop
+        // Proposal invoice
+
+        protected override async Task MigrateContext(AppState state)
         {
-            var state = Cache.AppState.Get();
             var block = await Cache.Blocks.CurrentAsync();
+            var statistics = await Cache.Statistics.GetAsync(state.Level);
 
+            #region airdrop
             var emptiedManagers = await Db.Contracts
                 .AsNoTracking()
                 .Include(x => x.Manager)
@@ -52,14 +54,38 @@ namespace Tzkt.Sync.Protocols.Proto5
                     BalanceChange = 1
                 });
             }
-            state.MigrationOpsCount += dict.Values.Count;
 
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            stats.TotalCreated += dict.Values.Count;
+            state.MigrationOpsCount += dict.Values.Count;
+            statistics.TotalCreated += dict.Values.Count;
+            #endregion
+
+            #region invoice
+            var account = await Cache.Accounts.GetAsync("KT1DUfaMfTRZZkvZAYQT5b3byXnvqoAykc43");
+
+            Db.TryAttach(account);
+            account.Balance += 500_000_000;
+            account.MigrationsCount++;
+
+            block.Operations |= Operations.Migrations;
+            Db.MigrationOps.Add(new MigrationOperation
+            {
+                Id = Cache.AppState.NextOperationId(),
+                Block = block,
+                Level = block.Level,
+                Timestamp = block.Timestamp,
+                Account = account,
+                Kind = MigrationKind.ProposalInvoice,
+                BalanceChange = 500_000_000
+            });
+
+            state.MigrationOpsCount++;
+            statistics.TotalCreated += 500_000_000;
+            #endregion
         }
 
-        public override async Task Revert()
+        protected override async Task RevertContext(AppState state)
         {
+            #region airdrop
             var airDrops = await Db.MigrationOps
                 .AsNoTracking()
                 .Include(x => x.Account)
@@ -77,27 +103,25 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             Db.MigrationOps.RemoveRange(airDrops);
 
-            var state = Cache.AppState.Get();
-            Db.TryAttach(state);
             state.MigrationOpsCount -= airDrops.Count;
+            #endregion
+
+            #region invoice
+            var invoice = await Db.MigrationOps
+                .AsNoTracking()
+                .Include(x => x.Account)
+                .FirstOrDefaultAsync(x => x.Level == state.Level && x.Kind == MigrationKind.ProposalInvoice);
+
+            Db.TryAttach(invoice.Account);
+            Cache.Accounts.Add(invoice.Account);
+
+            invoice.Account.Balance -= 500_000_000;
+            invoice.Account.MigrationsCount--;
+
+            Db.MigrationOps.Remove(invoice);
+
+            state.MigrationOpsCount--;
+            #endregion
         }
-
-        #region static
-        public static async Task<ManagersMigration> Apply(ProtocolHandler proto)
-        {
-            var commit = new ManagersMigration(proto);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<ManagersMigration> Revert(ProtocolHandler proto)
-        {
-            var commit = new ManagersMigration(proto);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
     }
 }

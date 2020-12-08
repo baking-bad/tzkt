@@ -27,13 +27,15 @@ namespace Tzkt.Sync
         public readonly QuotesService Quotes;
         public readonly TezosProtocolsConfig Config;
         public readonly ILogger Logger;
+        public readonly IServiceProvider Services;
         
-        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger logger)
+        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger)
         {
             Node = node;
             Db = db;
             Cache = cache;
             Quotes = quotes;
+            Services = services;
             Config = config.GetTezosProtocolsConfig();
             Logger = logger;
         }
@@ -51,9 +53,6 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Loading entities...");
                 await Precache(block);
 
-                Logger.LogDebug("Loading constants...");
-                await InitProtocol(block);
-
                 if (Config.Validation)
                 {
                     Logger.LogDebug("Validating block...");
@@ -67,8 +66,9 @@ namespace Tzkt.Sync
                 if (state.Protocol != state.NextProtocol)
                 {
                     protocolEnd = true;
-                    Logger.LogDebug("Migrating context...");
-                    await Migration();
+                    Logger.LogDebug("Activating next protocol...");
+                    var nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                    await nextProtocol.Activate(state, block);
                 }
 
                 Logger.LogDebug("Touch accounts...");
@@ -116,14 +116,14 @@ namespace Tzkt.Sync
                 await BeforeRevert();
 
                 var state = Cache.AppState.Get();
+                Db.TryAttach(state);
+
                 if (state.Protocol != state.NextProtocol)
                 {
-                    Logger.LogDebug("Migrating context...");
-                    await CancelMigration();
+                    Logger.LogDebug("Deactivating current protocol...");
+                    var nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                    await nextProtocol.Deactivate(state);
                 }
-
-                Logger.LogDebug("Loading protocol...");
-                await InitProtocol();
 
                 Logger.LogDebug("Reverting...");
                 await Revert();
@@ -235,13 +235,9 @@ namespace Tzkt.Sync
             return Cache.Accounts.LoadAsync(accounts);
         }
 
-        public virtual Task Migration() => Task.CompletedTask;
+        public virtual Task Activate(AppState state, JsonElement block) => Task.CompletedTask;
 
-        public virtual Task CancelMigration() => Task.CompletedTask;
-
-        public abstract Task InitProtocol();
-
-        public abstract Task InitProtocol(JsonElement block);
+        public virtual Task Deactivate(AppState state) => Task.CompletedTask;
 
         public abstract Task Commit(JsonElement block);
 

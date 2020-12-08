@@ -3,19 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data.Models;
-using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto2
 {
-    class DelegatesMigration : ProtocolCommit
+    class ProtoActivator : Proto1.ProtoActivator
     {
-        DelegatesMigration(ProtocolHandler protocol) : base(protocol) { }
+        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
-        public override async Task Apply()
+        // Activate weird delegates
+
+        protected override async Task MigrateContext(AppState state)
         {
-            var state = Cache.AppState.Get();
             var block = await Cache.Blocks.CurrentAsync();
             var protocol = await Cache.Protocols.GetAsync(block.ProtoCode);
 
@@ -26,7 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     x.DelegateId == null &&
                     x.WeirdDelegateId != null &&
                     x.WeirdDelegate.Balance > 0)
-                .Select(x => new 
+                .Select(x => new
                 {
                     Contract = x,
                     Delegate = x.WeirdDelegate
@@ -97,7 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
         }
 
-        public override async Task Revert()
+        protected override async Task RevertContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
 
@@ -142,8 +141,6 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             Db.MigrationOps.RemoveRange(migrationOps);
 
-            var state = Cache.AppState.Get();
-            Db.TryAttach(state);
             state.MigrationOpsCount -= migrationOps.Count;
 
             var ids = delegates.Select(x => x.Id).ToList();
@@ -235,23 +232,5 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             return user;
         }
-
-        #region static
-        public static async Task<DelegatesMigration> Apply(ProtocolHandler proto)
-        {
-            var commit = new DelegatesMigration(proto);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<DelegatesMigration> Revert(ProtocolHandler proto)
-        {
-            var commit = new DelegatesMigration(proto);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
     }
 }

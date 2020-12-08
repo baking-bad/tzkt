@@ -18,7 +18,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             var state = appState;
-            Db.TryAttach(state);
             #endregion
 
             state.Level = block.Level;
@@ -84,8 +83,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             var state = appState;
             var prevBlock = await Cache.Blocks.PreviousAsync();
             if (prevBlock != null) prevBlock.Protocol ??= await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
-
-            Db.TryAttach(state);
             #endregion
 
             state.Level = prevBlock?.Level ?? -1;

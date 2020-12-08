@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,105 +19,98 @@ namespace Tzkt.Sync.Protocols
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IConfiguration config, ILogger<InitiatorHandler> logger)
-            : base(node, db, cache, quotes, config, logger)
+        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<InitiatorHandler> logger)
+            : base(node, db, cache, quotes, services, config, logger)
         {
             Diagnostics = new Diagnostics();
             Validator = new Validator(this);
             Rpc = new Rpc(node);
         }
 
+        public override Task Activate(AppState state, JsonElement block) => Task.CompletedTask;
+        public override Task Deactivate(AppState state) => Task.CompletedTask;
+
         public override Task Precache(JsonElement block) => Task.CompletedTask;
 
-        public override async Task InitProtocol(JsonElement block)
+        public override Task Commit(JsonElement rawBlock)
         {
-            var level = block.Required("header").RequiredInt32("level");
-            var rawConst = await Node.GetAsync($"chains/main/blocks/{level}/context/constants");
-
+            #region add protocol
             var protocol = new Protocol
             {
-                Hash = block.RequiredString("protocol"),
-                Code = await Db.Protocols.CountAsync() - 1,
-                FirstLevel = level,
-                LastLevel = level,
-                BlockDeposit = rawConst.RequiredInt64("block_security_deposit"),
-                BlockReward0 = rawConst.RequiredInt64("block_reward"),
-                BlocksPerCommitment = rawConst.RequiredInt32("blocks_per_commitment"),
-                BlocksPerCycle = rawConst.RequiredInt32("blocks_per_cycle"),
-                BlocksPerSnapshot = rawConst.RequiredInt32("blocks_per_roll_snapshot"),
-                BlocksPerVoting = rawConst.RequiredInt32("blocks_per_voting_period"),
-                ByteCost = rawConst.RequiredInt32("cost_per_byte"),
-                EndorsementDeposit = rawConst.RequiredInt64("endorsement_security_deposit"),
-                EndorsementReward0 = rawConst.RequiredInt64("endorsement_reward"),
-                EndorsersPerBlock = rawConst.RequiredInt32("endorsers_per_block"),
-                HardBlockGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_block"),
-                HardOperationGasLimit = rawConst.RequiredInt32("hard_gas_limit_per_operation"),
-                HardOperationStorageLimit = rawConst.RequiredInt32("hard_storage_limit_per_operation"),
-                OriginationSize = rawConst.RequiredInt32("origination_burn") / rawConst.RequiredInt32("cost_per_byte"),
-                PreservedCycles = rawConst.RequiredInt32("preserved_cycles"),
-                RevelationReward = rawConst.RequiredInt64("seed_nonce_revelation_tip"),
-                TimeBetweenBlocks = rawConst.RequiredArray("time_between_blocks", 2)[0].ParseInt32(),
-                TokensPerRoll = rawConst.RequiredInt64("tokens_per_roll")
+                Hash = rawBlock.RequiredString("protocol"),
+                Code = 0,
+                FirstLevel = 1,
+                LastLevel = 1
             };
-
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
-        }
+            #endregion
 
-        public override Task InitProtocol()
-        {
+            #region add block
+            var block = new Block
+            {
+                Id = Cache.AppState.NextOperationId(),
+                Hash = rawBlock.RequiredString("hash"),
+                Level = rawBlock.Required("header").RequiredInt32("level"),
+                Protocol = protocol,
+                Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),
+                Events = BlockEvents.CycleBegin
+                    | BlockEvents.ProtocolBegin
+                    | BlockEvents.ProtocolEnd
+                    | BlockEvents.VotingPeriodBegin
+                    | BlockEvents.Snapshot
+            };
+            Db.Blocks.Add(block);
+            Cache.Blocks.Add(block);
+            #endregion
+
+            #region add empty stats
+            var stats = new Statistics { Level = block.Level };
+            Db.Statistics.Add(stats);
+            Cache.Statistics.Add(stats);
+            #endregion
+
+            #region update state
+            var state = Cache.AppState.Get();
+            state.Level = block.Level;
+            state.Timestamp = block.Timestamp;
+            state.Protocol = block.Protocol.Hash;
+            state.NextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");
+            state.Hash = block.Hash;
+            state.BlocksCount++;
+            state.ProtocolsCount++;
+            #endregion
+
             return Task.CompletedTask;
-        }
-
-        public override async Task Commit(JsonElement block)
-        {
-            var blockCommit = await BlockCommit.Apply(this, block);
-            var bootstrapCommit = await BootstrapCommit.Apply(this, blockCommit.Block, block);
-            await VotingCommit.Apply(this, blockCommit.Block);
-
-            var brCommit = await BakingRightsCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
-            await CycleCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
-            await DelegatorCycleCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts);
-            
-            await BakerCycleCommit.Apply(this,
-                blockCommit.Block,
-                bootstrapCommit.BootstrapedAccounts,
-                brCommit.FutureBakingRights,
-                brCommit.FutureEndorsingRights);
-
-            await StatisticsCommit.Apply(this, blockCommit.Block, bootstrapCommit.BootstrapedAccounts, bootstrapCommit.Commitments);
-
-            await StateCommit.Apply(this, blockCommit.Block, block);
-        }
-
-        public override async Task AfterCommit(JsonElement rawBlock)
-        {
-            var block = await Cache.Blocks.CurrentAsync();
-            await SnapshotBalanceCommit.Apply(this, block);
-        }
-
-        public override async Task BeforeRevert()
-        {
-            var block = await Cache.Blocks.CurrentAsync();
-            await SnapshotBalanceCommit.Revert(this, block);
         }
 
         public override async Task Revert()
         {
-            var currBlock = await Cache.Blocks.CurrentAsync();
+            var curr = Cache.Blocks.Current();
+            curr.Protocol ??= await Cache.Protocols.GetAsync(curr.ProtoCode);
 
-            await StatisticsCommit.Revert(this);
+            var prev = await Cache.Blocks.PreviousAsync();
+            prev.Protocol ??= await Cache.Protocols.GetAsync(prev.ProtoCode);
 
-            await BakerCycleCommit.Revert(this);
-            await DelegatorCycleCommit.Revert(this);
-            await CycleCommit.Revert(this);
-            await BakingRightsCommit.Revert(this);
+            await Db.Database.ExecuteSqlRawAsync($@"
+                DELETE FROM ""Statistics"" WHERE ""Level"" = {curr.Level};
+                DELETE FROM ""Protocols"" WHERE ""FirstLevel"" = {curr.Level};
+                DELETE FROM ""Blocks"" WHERE ""Level"" = {curr.Level};");
 
-            await VotingCommit.Revert(this, currBlock);
-            await BootstrapCommit.Revert(this, currBlock);
-            await BlockCommit.Revert(this, currBlock);
+            Cache.Statistics.Reset();
+            Cache.Protocols.Reset();
+            Cache.Blocks.Reset();
 
-            await StateCommit.Revert(this, currBlock);
+            #region update state
+            var state = Cache.AppState.Get();
+            state.Level = prev.Level;
+            state.Timestamp = prev.Timestamp;
+            state.Protocol = prev.Protocol.Hash;
+            state.NextProtocol = curr.Protocol.Hash;
+            state.Hash = prev.Hash;
+            state.BlocksCount--;
+            state.ProtocolsCount--;
+            #endregion
         }
     }
 }

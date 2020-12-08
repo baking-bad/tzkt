@@ -1,18 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-
+using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto4
 {
-    class InvoiceMigration : ProtocolCommit
+    class ProtoActivator : Proto3.ProtoActivator
     {
-        InvoiceMigration(ProtocolHandler protocol) : base(protocol) { }
+        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
-        public override async Task Apply()
+        protected override void SetParameters(Protocol protocol, JToken parameters)
+        {
+            base.SetParameters(protocol, parameters);
+            protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 8_000_000;
+            protocol.HardOperationGasLimit = parameters["hard_gas_limit_per_operation"]?.Value<int>() ?? 800_000;
+            protocol.TokensPerRoll = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
+        }
+
+        protected override void UpgradeParameters(Protocol protocol, Protocol prev)
+        {
+            base.UpgradeParameters(protocol, prev);
+            protocol.HardBlockGasLimit = 8_000_000;
+            protocol.HardOperationGasLimit = 800_000;
+            protocol.TokensPerRoll = 8_000_000_000;
+        }
+
+        // Proposal invoice
+
+        protected override async Task MigrateContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
             var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
@@ -33,14 +48,13 @@ namespace Tzkt.Sync.Protocols.Proto4
                 BalanceChange = 100_000_000
             });
 
-            var state = Cache.AppState.Get();
             state.MigrationOpsCount++;
 
             var stats = await Cache.Statistics.GetAsync(state.Level);
             stats.TotalCreated += 100_000_000;
         }
 
-        public override async Task Revert()
+        protected override async Task RevertContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
 
@@ -57,27 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             Db.MigrationOps.Remove(invoice);
 
-            var state = Cache.AppState.Get();
-            Db.TryAttach(state);
             state.MigrationOpsCount--;
         }
-
-        #region static
-        public static async Task<InvoiceMigration> Apply(ProtocolHandler proto)
-        {
-            var commit = new InvoiceMigration(proto);
-            await commit.Apply();
-
-            return commit;
-        }
-
-        public static async Task<InvoiceMigration> Revert(ProtocolHandler proto)
-        {
-            var commit = new InvoiceMigration(proto);
-            await commit.Revert();
-
-            return commit;
-        }
-        #endregion
     }
 }

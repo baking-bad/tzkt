@@ -108,16 +108,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
             baker.BlocksCount--;
 
-            if (Block.Events.HasFlag(BlockEvents.ProtocolBegin))
-            {
-                Db.Protocols.Remove(proto);
-                Cache.Protocols.Remove(proto);
-            }
-            else if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
-            {
-                proto.LastLevel = -1;
-            }
-
             if (Block.ResetDeactivation != null)
             {
                 if (Block.ResetDeactivation <= Block.Level)
