@@ -373,8 +373,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             //Db.TryAttach(block);
             //Db.TryAttach(parentTx);
-            //Db.TryAttach(parentSender);
-            //Db.TryAttach(parentDelegate);
+            Db.TryAttach(parentSender);
+            Db.TryAttach(parentDelegate);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
             Db.TryAttach(target);

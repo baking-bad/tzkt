@@ -12,6 +12,9 @@ namespace Tzkt.Data.Models
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
 
+        public int RampUpCycles { get; set; }
+        public int NoRewardCycles { get; set; }
+
         public int PreservedCycles { get; set; }
 
         public int BlocksPerCycle { get; set; }

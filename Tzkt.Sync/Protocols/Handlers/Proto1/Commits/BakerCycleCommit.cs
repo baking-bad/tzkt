@@ -112,7 +112,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (bakerCycle.FutureEndorsementRewards != 0) // FutureEndorsementRewards is always 0 for weirds
                         bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots);
 
-                    var successReward = GetEndorsementReward(block.Protocol, (int)endorsingRight.Slots, prevBlock.Priority);
+                    var successReward = GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, prevBlock.Priority);
 
                     var prevRights = prevBakingRights
                         .Where(x => x.Type == BakingRightType.Baking && x.BakerId == rights.Key)
@@ -120,7 +120,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         .ToList();
 
                     var maxReward = prevRights.FirstOrDefault()?.Status > BakingRightStatus.Realized
-                        ? GetEndorsementReward(block.Protocol, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
+                        ? GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
@@ -161,10 +161,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (bakingRights[0].Priority == 0 && bakerCycle.FutureBlockRewards != 0) // FutureBlockRewards is always 0 for weirds
                         bakerCycle.FutureBlockRewards -= GetFutureBlockReward(block.Protocol, cycle);
 
-                    var successReward = GetBlockReward(block.Protocol, (int)bakingRights[0].Priority, block.Validations);
+                    var successReward = GetBlockReward(block.Protocol, cycle, (int)bakingRights[0].Priority, block.Validations);
                     
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, (int)bakingRights[^1].Priority, block.Validations)
+                        ? GetBlockReward(block.Protocol, cycle, (int)bakingRights[^1].Priority, block.Validations)
                         : 0;
 
                     //var maxReward = endorsingRight?.Status > BakingRightStatus.Realized
@@ -544,7 +544,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots);
 
-                    var successReward = GetEndorsementReward(block.Protocol, (int)endorsingRight.Slots, prevBlock.Priority);
+                    var successReward = GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, prevBlock.Priority);
 
                     var prevRights = prevBakingRights
                         .Where(x => x.Type == BakingRightType.Baking && x.BakerId == rights.Key)
@@ -552,7 +552,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         .ToList();
 
                     var maxReward = prevRights.FirstOrDefault()?.Status > BakingRightStatus.Realized
-                        ? GetEndorsementReward(block.Protocol, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
+                        ? GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
@@ -593,10 +593,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (bakingRights[0].Priority == 0)
                         bakerCycle.FutureBlockRewards += GetFutureBlockReward(block.Protocol, cycle);
 
-                    var successReward = GetBlockReward(block.Protocol, (int)bakingRights[0].Priority, block.Validations);
+                    var successReward = GetBlockReward(block.Protocol, cycle, (int)bakingRights[0].Priority, block.Validations);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, (int)bakingRights[^1].Priority, block.Validations)
+                        ? GetBlockReward(block.Protocol, cycle, (int)bakingRights[^1].Priority, block.Validations)
                         : 0;
 
                     //var maxReward = endorsingRight?.Status > BakingRightStatus.Realized
@@ -742,25 +742,27 @@ namespace Tzkt.Sync.Protocols.Proto1
         }
 
         #region helpers
-        //TODO: figure out how to avoid hardcoded constants for future cycles
+        protected long GetFutureBlockReward(Protocol protocol, int cycle)
+            => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;
 
         protected long GetBlockDeposit(Protocol protocol, int cycle)
-            => cycle < 64 ? cycle * 8_000_000L : 512_000_000L;
-
-        protected long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
-            => slots * (cycle < 64 ? cycle * 1_000_000L : 64_000_000L);
-
-        protected long GetFutureBlockReward(Protocol protocol, int cycle)
-            => cycle < protocol.PreservedCycles + 2 ? 0 : 16_000_000L;
+            => cycle < protocol.RampUpCycles
+                ? (protocol.BlockDeposit * cycle / protocol.RampUpCycles)
+                : protocol.BlockDeposit;
 
         protected long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
-            => cycle < protocol.PreservedCycles + 2 ? 0 : slots * 2_000_000L;
+            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
 
-        protected long GetBlockReward(Protocol protocol, int priority, int slots)
-            => protocol.BlockReward0;
+        protected long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
+            => cycle < protocol.RampUpCycles
+                ? (slots * protocol.EndorsementDeposit * cycle / protocol.RampUpCycles)
+                : (slots * protocol.EndorsementDeposit);
 
-        protected long GetEndorsementReward(Protocol protocol, int slots, int prevPriority)
-            => slots * (long)(protocol.EndorsementReward0 / (prevPriority + 1.0));
+        protected long GetBlockReward(Protocol protocol, int cycle, int priority, int slots)
+            => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;
+
+        protected long GetEndorsementReward(Protocol protocol, int cycle, int slots, int prevPriority)
+            => cycle < protocol.NoRewardCycles ? 0 : (slots * (long)(protocol.EndorsementReward0 / (prevPriority + 1.0)));
         #endregion
     }
 }

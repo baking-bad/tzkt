@@ -18,6 +18,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .RequiredArray("balance_updates")
                     .EnumerateArray()
                     .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r');
+            var deposit = metadata
+                    .RequiredArray("balance_updates")
+                    .EnumerateArray()
+                    .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
 
             var endorsement = new EndorsementOperation
             {
@@ -28,7 +32,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 OpHash = op.RequiredString("hash"),
                 Slots = metadata.RequiredArray("slots").Count(),
                 Delegate = Cache.Accounts.GetDelegate(metadata.RequiredString("delegate")),
-                Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0
+                Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0,
+                Deposit = deposit.ValueKind != JsonValueKind.Undefined ? deposit.RequiredInt64("change") : 0
             };
             #endregion
 
@@ -43,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region apply operation
             sender.Balance += endorsement.Reward;
             sender.FrozenRewards += endorsement.Reward;
-            sender.FrozenDeposits += block.Protocol.EndorsementDeposit * endorsement.Slots;
+            sender.FrozenDeposits += endorsement.Deposit;
 
             sender.EndorsementsCount++;
 
@@ -83,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert operation
             sender.Balance -= endorsement.Reward;
             sender.FrozenRewards -= endorsement.Reward;
-            sender.FrozenDeposits -= block.Protocol.EndorsementDeposit * endorsement.Slots;
+            sender.FrozenDeposits -= endorsement.Deposit;
 
             sender.EndorsementsCount--;
 

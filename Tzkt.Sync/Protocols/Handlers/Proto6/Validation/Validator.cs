@@ -32,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                     throw new ValidationException($"non-existent deactivated baker {baker}");
 
             var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
-            var rewardUpdates = Protocol.BlockReward0 == 0 || Block.RequiredArray("operations", 4)[0].Count() == 0 ? 2 : 3;
+            var rewardUpdates = Cycle < Protocol.NoRewardCycles || Block.RequiredArray("operations", 4)[0].Count() == 0 ? 2 : 3;
 
             ValidateBlockRewards(balanceUpdates.Take(rewardUpdates));
             ValidateCycleRewards(balanceUpdates.Skip(rewardUpdates));
@@ -51,8 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                 .Select(x => x.GetProperty("contents")[0].GetProperty("metadata").GetProperty("slots").Count())
                 .Sum();
 
-            // TODO: depend on no_reward_cycles
-            return (priority == 0 ? Protocol.BlockReward0 : Protocol.BlockReward1) * endorsements;
+            return Cycle < Protocol.NoRewardCycles ? 0 : (priority == 0 ? Protocol.BlockReward0 : Protocol.BlockReward1) * endorsements;
         }
 
         // new formula
@@ -62,8 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                 .GetProperty("header")
                 .RequiredInt32("priority");
 
-            // TODO: depend on no_reward_cycles
-            return (priority == 0 ? Protocol.EndorsementReward0 : Protocol.EndorsementReward1) * slots;
+            return Cycle < Protocol.NoRewardCycles ? 0 : (priority == 0 ? Protocol.EndorsementReward0 : Protocol.EndorsementReward1) * slots;
         }
     }
 }

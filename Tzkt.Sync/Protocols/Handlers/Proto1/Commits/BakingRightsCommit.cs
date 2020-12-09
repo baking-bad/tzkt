@@ -120,7 +120,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     var baker = Cache.Accounts.GetDelegate(cr.BakerId);
                     var available = baker.Balance - baker.FrozenDeposits - baker.FrozenRewards - baker.FrozenFees;
-                    var required = cr.Type == BakingRightType.Baking ? block.Protocol.BlockDeposit : block.Protocol.EndorsementDeposit;
+                    var required = cr.Type == BakingRightType.Baking
+                        ? (cycle < block.Protocol.RampUpCycles
+                            ? (block.Protocol.BlockDeposit * cycle / block.Protocol.RampUpCycles)
+                            : block.Protocol.BlockDeposit)
+                        : (cycle < block.Protocol.RampUpCycles 
+                            ? (cr.Slots * block.Protocol.EndorsementDeposit * cycle / block.Protocol.RampUpCycles)
+                            : (cr.Slots * block.Protocol.EndorsementDeposit));
 
                     if (available < required)
                         cr.Status = BakingRightStatus.Uncovered;

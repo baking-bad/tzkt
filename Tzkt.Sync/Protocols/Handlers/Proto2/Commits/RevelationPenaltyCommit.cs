@@ -124,7 +124,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         protected virtual bool HasPanltiesUpdates(Block block, JsonElement rawBlock)
         {
             var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-            return rawBlock.Required("metadata").RequiredArray("balance_updates").EnumerateArray().Skip(block.Protocol.BlockReward0 > 0 ? 3 : 2)
+            return rawBlock.Required("metadata").RequiredArray("balance_updates").EnumerateArray().Skip(cycle < block.Protocol.NoRewardCycles ? 2 : 3)
                 .Any(x => x.RequiredString("kind")[0] == 'f' && GetFreezerCycle(x) != cycle - block.Protocol.PreservedCycles);
         }
     }

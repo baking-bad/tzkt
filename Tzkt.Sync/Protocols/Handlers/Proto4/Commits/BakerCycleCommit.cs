@@ -108,7 +108,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 {
                     bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots);
 
-                    var successReward = GetEndorsementReward(block.Protocol, (int)endorsingRight.Slots, prevBlock.Priority);
+                    var successReward = GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, prevBlock.Priority);
 
                     var prevRights = prevBakingRights
                         .Where(x => x.Type == BakingRightType.Baking && x.BakerId == rights.Key)
@@ -116,7 +116,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         .ToList();
 
                     var maxReward = prevRights.FirstOrDefault()?.Status > BakingRightStatus.Realized
-                        ? GetEndorsementReward(block.Protocol, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
+                        ? GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
@@ -157,10 +157,10 @@ namespace Tzkt.Sync.Protocols.Proto4
                     if (bakingRights[0].Priority == 0)
                         bakerCycle.FutureBlockRewards -= GetFutureBlockReward(block.Protocol, cycle);
 
-                    var successReward = GetBlockReward(block.Protocol, (int)bakingRights[0].Priority, block.Validations);
+                    var successReward = GetBlockReward(block.Protocol, cycle, (int)bakingRights[0].Priority, block.Validations);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, (int)bakingRights[^1].Priority, block.Validations)
+                        ? GetBlockReward(block.Protocol, cycle, (int)bakingRights[^1].Priority, block.Validations)
                         : 0;
 
                     //var maxReward = endorsingRight?.Status > BakingRightStatus.Realized

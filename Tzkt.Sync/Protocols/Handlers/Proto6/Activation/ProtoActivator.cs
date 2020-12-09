@@ -11,6 +11,8 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
+            protocol.RampUpCycles = parameters["security_deposit_ramp_up_cycles"]?.Value<int>() ?? 0;
+            protocol.NoRewardCycles = parameters["no_reward_cycles"]?.Value<int>() ?? 0;
             protocol.BlockDeposit = parameters["block_security_deposit"]?.Value<long>() ?? 512_000_000;
             protocol.BlockReward0 = parameters["baking_reward_per_endorsement"]?[0].Value<long>() ?? 1_250_000;
             protocol.BlockReward1 = parameters["baking_reward_per_endorsement"]?[1].Value<long>() ?? 187_500;
@@ -43,6 +45,12 @@ namespace Tzkt.Sync.Protocols.Proto6
             protocol.HardBlockGasLimit = 10_400_000;
             protocol.HardOperationGasLimit = 1_040_000;
         }
+
+        protected override long GetFutureBlockReward(Protocol protocol, int cycle)
+            => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.EndorsersPerBlock);
+
+        protected override long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
+            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
 
         // migrate baker cycles
 

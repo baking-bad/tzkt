@@ -10,6 +10,7 @@ namespace Tzkt.Data.Models
         public int DelegateId { get; set; }
         public int Slots { get; set; }
         public long Reward { get; set; }
+        public long Deposit { get; set; }
 
         public int? ResetDeactivation { get; set; }
 
