@@ -355,8 +355,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            var sender = delegation.Sender;
             var parentSender = delegation.Initiator;
+            var sender = delegation.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             var newDelegate = delegation.Delegate;
@@ -382,6 +382,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             //Db.TryAttach(block);
 
+            Db.TryAttach(parentSender);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
 

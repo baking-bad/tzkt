@@ -395,8 +395,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             var contractManager = origination.Manager;
 
             //Db.TryAttach(parentTx);
-            //Db.TryAttach(parentSender);
-            //Db.TryAttach(parentDelegate);
+            Db.TryAttach(parentSender);
+            Db.TryAttach(parentDelegate);
 
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);

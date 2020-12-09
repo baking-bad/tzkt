@@ -24,6 +24,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .EnumerateArray()
                     .Take(3)
                     .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r');
+            var deposit = metadata
+                    .RequiredArray("balance_updates")
+                    .EnumerateArray()
+                    .Take(3)
+                    .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
 
             if (level % protocol.BlocksPerCycle == 1)
                 events |= BlockEvents.CycleBegin;
@@ -56,7 +61,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Priority = rawBlock.Required("header").RequiredInt32("priority"),
                 Baker = Cache.Accounts.GetDelegate(rawBlock.Required("metadata").RequiredString("baker")),
                 Events = events,
-                Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0
+                Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0,
+                Deposit = deposit.ValueKind != JsonValueKind.Undefined ? deposit.RequiredInt64("change") : 0
             };
 
             #region entities
@@ -69,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             baker.Balance += Block.Reward;
             baker.FrozenRewards += Block.Reward;
-            baker.FrozenDeposits += Block.Protocol.BlockDeposit;
+            baker.FrozenDeposits += Block.Deposit;
             baker.BlocksCount++;
 
             var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
@@ -105,7 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             baker.Balance -= Block.Reward;
             baker.FrozenRewards -= Block.Reward;
-            baker.FrozenDeposits -= Block.Protocol.BlockDeposit;
+            baker.FrozenDeposits -= Block.Deposit;
             baker.BlocksCount--;
 
             if (Block.ResetDeactivation != null)

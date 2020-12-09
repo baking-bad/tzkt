@@ -39,6 +39,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual void SetParameters(Protocol protocol, JToken parameters)
         {
+            protocol.RampUpCycles = parameters["security_deposit_ramp_up_cycles"]?.Value<int>() ?? 0;
+            protocol.NoRewardCycles = parameters["no_reward_cycles"]?.Value<int>() ?? 0;
             protocol.BlockDeposit = parameters["block_security_deposit"]?.Value<long>() ?? 512_000_000;
             protocol.BlockReward0 = parameters["block_reward"]?.Value<long>() ?? 16_000_000;
             protocol.BlockReward1 = 0;
@@ -95,6 +97,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual void UpgradeParameters(Protocol protocol, Protocol prev)
         {
+            protocol.RampUpCycles = prev.RampUpCycles;
+            protocol.NoRewardCycles = prev.NoRewardCycles;
             protocol.BlockDeposit = prev.BlockDeposit;
             protocol.BlockReward0 = prev.BlockReward0;
             protocol.BlockReward1 = prev.BlockReward1;

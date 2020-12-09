@@ -102,19 +102,21 @@ namespace Tzkt.Sync.Protocols.Proto1
         }
 
         #region helpers
-        //TODO: figure out how to avoid hardcoded constants for future cycles
+        protected virtual long GetFutureBlockReward(Protocol protocol, int cycle)
+            => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;
 
-        long GetFutureBlockReward(Protocol protocol, int cycle)
-            => 0; //TODO: use protocol_parameters
+        protected virtual long GetBlockDeposit(Protocol protocol, int cycle)
+            => cycle < protocol.RampUpCycles
+                ? (protocol.BlockDeposit * cycle / protocol.RampUpCycles)
+                : protocol.BlockDeposit;
 
-        long GetBlockDeposit(Protocol protocol, int cycle)
-            => cycle * 8_000_000L; //TODO: use protocol_parameters
+        protected virtual long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
+            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
 
-        long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
-            => 0; //TODO: use protocol_parameters
-
-        long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
-            => slots * cycle * 1_000_000L; //TODO: use protocol_parameters
+        protected virtual long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
+            => cycle < protocol.RampUpCycles
+                ? (slots * protocol.EndorsementDeposit * cycle / protocol.RampUpCycles)
+                : (slots * protocol.EndorsementDeposit);
         #endregion
     }
 }

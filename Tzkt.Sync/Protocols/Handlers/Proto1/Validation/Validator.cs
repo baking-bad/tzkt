@@ -59,8 +59,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     throw new ValidationException($"non-existent deactivated baker {baker}");
 
             var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
-            ValidateBlockRewards(balanceUpdates.Take(Protocol.BlockReward0 > 0 ? 3 : 2));
-            ValidateCycleRewards(balanceUpdates.Skip(Protocol.BlockReward0 > 0 ? 3 : 2));
+            ValidateBlockRewards(balanceUpdates.Take(Cycle < Protocol.NoRewardCycles ? 2 : 3));
+            ValidateCycleRewards(balanceUpdates.Skip(Cycle < Protocol.NoRewardCycles ? 2 : 3));
         }
 
         protected virtual async Task ValidateBlockVoting(string periodKind)
@@ -179,7 +179,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (balanceUpdates.Count > 0)
             {
-                if (balanceUpdates.Count != (Protocol.BlockReward0 > 0 ? 3 : 2)) // TODO: depend on no_reward_cycles
+                if (balanceUpdates.Count != (Cycle < Protocol.NoRewardCycles ? 2 : 3))
                     throw new ValidationException("invalid endorsement balance updates count");
 
                 var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract)
@@ -555,27 +555,27 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual long GetBlockDeposit()
         {
-            // TODO: depend on ramp_up_cycles
-            return Protocol.BlockDeposit;
+            return Cycle < Protocol.RampUpCycles
+                ? (Protocol.BlockDeposit * Cycle / Protocol.RampUpCycles)
+                : Protocol.BlockDeposit;
         }
 
         protected virtual long GetBlockReward()
         {
-            // TODO: depend on no_reward_cycles
-            return Protocol.BlockReward0;
+            return Cycle < Protocol.NoRewardCycles ? 0 : Protocol.BlockReward0;
         }
 
         protected virtual long GetEndorsementDeposit(int slots)
         {
-            // TODO: depend on ramp_up_cycles
-            return slots * Protocol.EndorsementDeposit;
+            return Cycle < Protocol.RampUpCycles
+                ? (slots * Protocol.EndorsementDeposit * Cycle / Protocol.RampUpCycles)
+                : (slots * Protocol.EndorsementDeposit);
         }
 
         protected virtual long GetEndorsementReward(int slots)
         {
-            // TODO: depend on no_reward_cycles
             LastBlock ??= Cache.Blocks.Current();
-            return slots * (long)(Protocol.EndorsementReward0 / (LastBlock.Priority + 1.0));
+            return Cycle < Protocol.NoRewardCycles ? 0 : (slots * (long)(Protocol.EndorsementReward0 / (LastBlock.Priority + 1.0)));
         }
 
         protected virtual List<BalanceUpdate> ParseBalanceUpdates(JsonElement updates)

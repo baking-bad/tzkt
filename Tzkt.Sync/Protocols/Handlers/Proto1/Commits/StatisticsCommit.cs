@@ -68,9 +68,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Endorsements != null)
             {
                 var rewards = block.Endorsements.Sum(x => x.Reward);
+                var deposits = block.Endorsements.Sum(x => x.Deposit);
                 statistics.TotalCreated += rewards;
+                statistics.TotalFrozen += deposits;
                 statistics.TotalFrozen += rewards;
-                statistics.TotalFrozen += block.Protocol.EndorsementDeposit * block.Endorsements.Sum(x => x.Slots);
             }
 
             if (block.Revelations != null)
@@ -81,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
 
             statistics.TotalCreated += block.Reward;
-            statistics.TotalFrozen += block.Protocol.BlockDeposit;
+            statistics.TotalFrozen += block.Deposit;
             statistics.TotalFrozen += block.Reward;
             statistics.TotalFrozen += block.Fees;
 

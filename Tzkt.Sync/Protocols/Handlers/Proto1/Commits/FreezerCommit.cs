@@ -93,7 +93,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual IEnumerable<JsonElement> GetFreezerUpdates(Block block, JsonElement rawBlock)
         {
             var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-            return rawBlock.Required("metadata").Required("balance_updates").EnumerateArray().Skip(block.Protocol.BlockReward0 > 0 ? 3 : 2)
+            return rawBlock.Required("metadata").Required("balance_updates").EnumerateArray().Skip(cycle < block.Protocol.NoRewardCycles ? 2 : 3)
                 .Where(x => x.RequiredString("kind")[0] == 'f' && GetFreezerCycle(x) == cycle - block.Protocol.PreservedCycles);
         }
     }

@@ -31,8 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 .Select(x => x.GetProperty("contents")[0].GetProperty("metadata").GetProperty("slots").Count())
                 .Sum();
 
-            // TODO: depend on no_reward_cycles
-            return Protocol.BlockReward0 * (8 + 2 * endorsements / Protocol.EndorsersPerBlock) / 10 / (priority + 1);
+            return Cycle < Protocol.NoRewardCycles ? 0 : (Protocol.BlockReward0 * (8 + 2 * endorsements / Protocol.EndorsersPerBlock) / 10 / (priority + 1));
         }
 
         // new formula
@@ -42,8 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 .GetProperty("header")
                 .RequiredInt32("priority");
 
-            // TODO: depend on no_reward_cycles
-            return slots * (long)(Protocol.EndorsementReward0 / (priority + 1.0));
+            return Cycle < Protocol.NoRewardCycles ? 0 : (slots * (long)(Protocol.EndorsementReward0 / (priority + 1.0)));
         }
     }
 }

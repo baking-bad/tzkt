@@ -19,6 +19,7 @@ namespace Tzkt.Data.Models
         public BlockEvents Events { get; set; }
         public Operations Operations { get; set; }
 
+        public long Deposit { get; set; }
         public long Reward { get; set; }
         public long Fees { get; set; }
 
