@@ -16,6 +16,9 @@ namespace Tzkt.Data.Models
         public string NextProtocol { get; set; }
         public string Hash { get; set; }
 
+        public int VotingEpoch { get; set; }
+        public int VotingPeriod { get; set; }
+
         public int AccountCounter { get; set; }
         public int OperationCounter { get; set; }
         public int ManagerCounter { get; set; }
@@ -71,6 +74,8 @@ namespace Tzkt.Data.Models
                     Protocol = "",
                     NextProtocol = "",
                     Hash = "",
+                    VotingEpoch = -1,
+                    VotingPeriod = -1,
                     QuoteLevel = -1
                 });
         }

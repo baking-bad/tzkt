@@ -50,6 +50,8 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
+                    RampUpCycles = row.RampUpCycles,
+                    NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
                         ? new List<long> { row.BlockReward0 }
@@ -71,7 +73,10 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
-                    TokensPerRoll = row.TokensPerRoll
+                    TokensPerRoll = row.TokensPerRoll,
+                    ProposalQuorum = row.ProposalQuorum / 100.0,
+                    BallotQuorumMin = row.BallotQuorumMin / 100.0,
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
                 Metadata = ProtocolMetadata[row.Hash]
             };
@@ -97,6 +102,8 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
+                    RampUpCycles = row.RampUpCycles,
+                    NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
                         ? new List<long> { row.BlockReward0 }
@@ -118,7 +125,10 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
-                    TokensPerRoll = row.TokensPerRoll
+                    TokensPerRoll = row.TokensPerRoll,
+                    ProposalQuorum = row.ProposalQuorum / 100.0,
+                    BallotQuorumMin = row.BallotQuorumMin / 100.0,
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
                 Metadata = ProtocolMetadata[row.Hash]
             };
@@ -144,6 +154,8 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
+                    RampUpCycles = row.RampUpCycles,
+                    NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
                         ? new List<long> { row.BlockReward0 }
@@ -165,7 +177,10 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
-                    TokensPerRoll = row.TokensPerRoll
+                    TokensPerRoll = row.TokensPerRoll,
+                    ProposalQuorum = row.ProposalQuorum / 100.0,
+                    BallotQuorumMin = row.BallotQuorumMin / 100.0,
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
                 Metadata = ProtocolMetadata[row.Hash]
             };
@@ -193,6 +208,8 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
+                    RampUpCycles = row.RampUpCycles,
+                    NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
                         ? new List<long> { row.BlockReward0 }
@@ -214,7 +231,10 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     RevelationReward = row.RevelationReward,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
-                    TokensPerRoll = row.TokensPerRoll
+                    TokensPerRoll = row.TokensPerRoll,
+                    ProposalQuorum = row.ProposalQuorum / 100.0,
+                    BallotQuorumMin = row.BallotQuorumMin / 100.0,
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
                 Metadata = ProtocolMetadata[row.Hash]
             });

@@ -56,8 +56,7 @@ namespace Tzkt.Sync.Protocols
                 Events = BlockEvents.CycleBegin
                     | BlockEvents.ProtocolBegin
                     | BlockEvents.ProtocolEnd
-                    | BlockEvents.VotingPeriodBegin
-                    | BlockEvents.Snapshot
+                    | BlockEvents.BalanceSnapshot
             };
             Db.Blocks.Add(block);
             Cache.Blocks.Add(block);
@@ -78,6 +77,8 @@ namespace Tzkt.Sync.Protocols
             state.Hash = block.Hash;
             state.BlocksCount++;
             state.ProtocolsCount++;
+            state.VotingEpoch = 0;
+            state.VotingPeriod = 0;
             #endregion
 
             return Task.CompletedTask;

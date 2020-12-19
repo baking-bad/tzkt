@@ -13,15 +13,13 @@ namespace Tzkt.Sync.Protocols.Proto3
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var period = await Cache.Periods.CurrentAsync();
-            var proposal = await Cache.Proposals.GetAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
+            var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
+            var proposal = await Cache.Proposals.GetAsync(content.RequiredString("proposal"));
             var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
 
-            var rolls = 0;
-            if (block.Events.HasFlag(BlockEvents.VotingPeriodBegin))
-                rolls = (int)(sender.StakingBalance / block.Protocol.TokensPerRoll);
-            else
-                rolls = (await Db.VotingSnapshots.FirstAsync(x => x.PeriodId == period.Id && x.DelegateId == sender.Id)).Rolls;
+            var snapshot = await Db.VotingSnapshots
+                .FirstOrDefaultAsync(x => x.Period == period.Index && x.BakerId == sender.Id)
+                    ?? throw new ValidationException("Ballot sender is not on the voters list");
 
             var ballot = new BallotOperation
             {
@@ -31,8 +29,9 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Sender = sender,
-                Rolls = rolls,
-                Period = period,
+                Rolls = snapshot.Rolls,
+                Epoch = period.Epoch,
+                Period = period.Index,
                 Proposal = proposal,
                 Vote = content.RequiredString("ballot") switch
                 {
@@ -45,31 +44,31 @@ namespace Tzkt.Sync.Protocols.Proto3
             #endregion
 
             #region entities
-            //var block = ballot.Block;
-            //var period = ballot.Period;
-            //var sender = ballot.Sender;
-            //var proposal = ballot.Proposal;
-
             //Db.TryAttach(block);
             Db.TryAttach(period);
-            Db.TryAttach(sender);
             Db.TryAttach(proposal);
+            Db.TryAttach(sender);
+            //Db.TryAttach(snapshot);
             #endregion
 
             #region apply operation
-            if (period is ExplorationPeriod exploration)
+            if (ballot.Vote == Vote.Yay)
             {
-                exploration.Abstainings += ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
-                exploration.Approvals += ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
-                exploration.Refusals += ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
-                exploration.Participation += ballot.Rolls;
+                period.YayBallots++;
+                period.YayRolls += ballot.Rolls;
+                snapshot.Status = VoterStatus.VotedYay;
             }
-            else if (period is PromotionPeriod promotion)
+            else if (ballot.Vote == Vote.Nay)
             {
-                promotion.Abstainings += ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
-                promotion.Approvals += ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
-                promotion.Refusals += ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
-                promotion.Participation += ballot.Rolls;
+                period.NayBallots++;
+                period.NayRolls += ballot.Rolls;
+                snapshot.Status = VoterStatus.VotedNay;
+            }
+            else
+            {
+                period.PassBallots++;
+                period.PassRolls += ballot.Rolls;
+                snapshot.Status = VoterStatus.VotedPass;
             }
 
             sender.BallotsCount++;
@@ -85,36 +84,41 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region init
             ballot.Block ??= block;
             ballot.Sender ??= Cache.Accounts.GetDelegate(ballot.SenderId);
-            ballot.Period ??= await Cache.Periods.CurrentAsync();
             ballot.Proposal ??= await Cache.Proposals.GetAsync(ballot.ProposalId);
+
+            var snapshot = await Db.VotingSnapshots
+                .FirstAsync(x => x.Period == ballot.Period && x.BakerId == ballot.Sender.Id);
+
+            var period = await Cache.Periods.GetAsync(ballot.Period);
             #endregion
 
             #region entities
-            //var block = proposal.Block;
             var sender = ballot.Sender;
-            var period = ballot.Period;
-            var proposal = ballot.Proposal;
 
             //Db.TryAttach(block);
             Db.TryAttach(sender);
             Db.TryAttach(period);
-            Db.TryAttach(proposal);
+            //Db.TryAttach(snapshot);
             #endregion
 
             #region revert operation
-            if (period is ExplorationPeriod exploration)
+            if (ballot.Vote == Vote.Yay)
             {
-                exploration.Abstainings -= ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
-                exploration.Approvals -= ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
-                exploration.Refusals -= ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
-                exploration.Participation -= ballot.Rolls;
+                period.YayBallots--;
+                period.YayRolls -= ballot.Rolls;
+                snapshot.Status = VoterStatus.None;
             }
-            else if (period is PromotionPeriod promotion)
+            else if (ballot.Vote == Vote.Nay)
             {
-                promotion.Abstainings -= ballot.Vote == Vote.Pass ? ballot.Rolls : 0;
-                promotion.Approvals -= ballot.Vote == Vote.Yay ? ballot.Rolls : 0;
-                promotion.Refusals -= ballot.Vote == Vote.Nay ? ballot.Rolls : 0;
-                promotion.Participation -= ballot.Rolls;
+                period.NayBallots--;
+                period.NayRolls -= ballot.Rolls;
+                snapshot.Status = VoterStatus.None;
+            }
+            else
+            {
+                period.PassBallots--;
+                period.PassRolls -= ballot.Rolls;
+                snapshot.Status = VoterStatus.None;
             }
 
             sender.BallotsCount--;

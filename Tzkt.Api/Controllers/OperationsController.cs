@@ -189,7 +189,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="delegate">Filters ballots by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters ballots by level.</param>
         /// <param name="timestamp">Filters ballots by timestamp.</param>
-        /// <param name="period">Filters ballots by voting period id.</param>
+        /// <param name="epoch">Filters ballots by voting epoch.</param>
+        /// <param name="period">Filters ballots by voting period.</param>
         /// <param name="proposal">Filters ballots by proposal hash.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts ballots by specified field. Supported fields: `id` (default), `level`.</param>
@@ -202,6 +203,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter @delegate,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             SelectParameter select,
@@ -228,25 +230,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBallots(@delegate, level, timestamp, period, proposal, sort, offset, limit, quote));
+                return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, period, proposal, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, period, proposal, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, period, proposal, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBallots(@delegate, level, timestamp, period, proposal, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -298,7 +300,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="delegate">Filters proposal operations by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters proposal operations by level.</param>
         /// <param name="timestamp">Filters proposal operations by timestamp.</param>
-        /// <param name="period">Filters proposal operations by voting period id.</param>
+        /// <param name="epoch">Filters proposal operations by voting epoch.</param>
+        /// <param name="period">Filters proposal operations by voting period.</param>
         /// <param name="proposal">Filters proposal operations by proposal hash.</param>
         /// <param name="duplicated">Specify whether to include or exclude duplicates, which didn't actually upvote a proposal.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -312,6 +315,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter @delegate,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -339,25 +343,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetProposals(@delegate, level, timestamp, period, proposal, duplicated, sort, offset, limit, quote));
+                return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetProposals(@delegate, level, timestamp, period, proposal, duplicated, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

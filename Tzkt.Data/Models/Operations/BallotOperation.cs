@@ -6,7 +6,8 @@ namespace Tzkt.Data.Models
 {
     public class BallotOperation : BaseOperation
     {
-        public int PeriodId { get; set; }
+        public int Epoch { get; set; }
+        public int Period { get; set; }
         public int ProposalId { get; set; }
         public int SenderId { get; set; }
         public int Rolls { get; set; }
@@ -19,9 +20,6 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(ProposalId))]
         public Proposal Proposal { get; set; }
-
-        [ForeignKey(nameof(PeriodId))]
-        public VotingPeriod Period { get; set; }
         #endregion
     }
 
@@ -30,6 +28,12 @@ namespace Tzkt.Data.Models
         public static void BuildBallotOperationModel(this ModelBuilder modelBuilder)
         {
             #region indexes
+            modelBuilder.Entity<BallotOperation>()
+                .HasIndex(x => x.Epoch);
+
+            modelBuilder.Entity<BallotOperation>()
+                .HasIndex(x => x.Period);
+
             modelBuilder.Entity<BallotOperation>()
                 .HasIndex(x => x.Level);
 

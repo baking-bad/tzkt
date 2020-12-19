@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 BootstrapDelegatorCycles(protocol, accounts);
                 BootstrapBakerCycles(protocol, accounts, bakingRights, endorsingRights);
                 BootstrapSnapshotBalances(accounts);
-                BootstrapVoting(protocol);
+                BootstrapVoting(protocol, accounts);
                 await BootstrapCommitments(parameters);
             }
             else // upgrade

@@ -49,6 +49,30 @@ namespace Tzkt.Sync.Services.Cache
             return proposal;
         }
 
+        public async Task<Proposal> GetAsync(string hash)
+        {
+            if (!CachedByHash.TryGetValue(hash, out var proposal))
+            {
+                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash)
+                    ?? throw new Exception($"Proposal {hash} doesn't exist");
+
+                Add(proposal);
+            }
+
+            return proposal;
+        }
+
+        public async Task<Proposal> GetOrDefaultAsync(string hash)
+        {
+            if (!CachedByHash.TryGetValue(hash, out var proposal))
+            {
+                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash);
+                if (proposal != null) Add(proposal);
+            }
+
+            return proposal;
+        }
+
         public async Task<Proposal> GetOrCreateAsync(string hash, Func<Proposal> create)
         {
             if (!CachedByHash.TryGetValue(hash, out var proposal))

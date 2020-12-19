@@ -30,6 +30,8 @@ namespace Tzkt.Api.Repositories
                 Level = appState.Level,
                 Protocol = appState.Protocol,
                 Timestamp = appState.Timestamp,
+                VotingEpoch = appState.VotingEpoch,
+                VotingPeriod = appState.VotingPeriod,
                 QuoteLevel = appState.QuoteLevel,
                 QuoteBtc = appState.QuoteBtc,
                 QuoteEur = appState.QuoteEur,

@@ -36,7 +36,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(int level, bool operations, Symbols quote)
         {
             var sql = @"
-                SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
+                SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
                 FROM    ""Blocks""
                 WHERE   ""Level"" = @level
                 LIMIT   1";
@@ -53,6 +53,7 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 Priority = row.Priority,
                 Validations = row.Validations,
+                Deposit = row.Deposit,
                 Reward = row.Reward,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
@@ -70,7 +71,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(string hash, bool operations, Symbols quote)
         {
             var sql = @"
-                SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
+                SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
                 FROM    ""Blocks""
                 WHERE   ""Hash"" = @hash::character(51)
                 LIMIT   1";
@@ -87,6 +88,7 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 Priority = row.Priority,
                 Validations = row.Validations,
+                Deposit = row.Deposit,
                 Reward = row.Reward,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
@@ -111,7 +113,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId"" FROM ""Blocks""")
+            var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId"" FROM ""Blocks""")
                 .Filter("BakerId", baker)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -137,6 +139,7 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 Priority = row.Priority,
                 Validations = row.Validations,
+                Deposit = row.Deposit,
                 Reward = row.Reward,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
@@ -168,6 +171,7 @@ namespace Tzkt.Api.Repositories
                     case "proto": columns.Add(@"""ProtoCode"""); break;
                     case "priority": columns.Add(@"""Priority"""); break;
                     case "validations": columns.Add(@"""Validations"""); break;
+                    case "deposit": columns.Add(@"""Deposit"""); break;
                     case "reward": columns.Add(@"""Reward"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
@@ -230,6 +234,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Validations;
                         break;
+                    case "deposit":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Deposit;
+                        break;
                     case "reward":
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
@@ -280,6 +288,7 @@ namespace Tzkt.Api.Repositories
                 case "proto": columns.Add(@"""ProtoCode"""); break;
                 case "priority": columns.Add(@"""Priority"""); break;
                 case "validations": columns.Add(@"""Validations"""); break;
+                case "deposit": columns.Add(@"""Deposit"""); break;
                 case "reward": columns.Add(@"""Reward"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
@@ -338,6 +347,10 @@ namespace Tzkt.Api.Repositories
                 case "validations":
                     foreach (var row in rows)
                         result[j++] = row.Validations;
+                    break;
+                case "deposit":
+                    foreach (var row in rows)
+                        result[j++] = row.Deposit;
                     break;
                 case "reward":
                     foreach (var row in rows)

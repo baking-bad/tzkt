@@ -2259,11 +2259,11 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
                     var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
-                        ? Operations.GetBallots(_delegat, level, timestamp, null, null, sort, offset, limit, quote)
+                        ? Operations.GetBallots(_delegat, level, timestamp, null, null, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
                     var proposals = delegat.ProposalsCount > 0 && types.Contains(OpTypes.Proposal)
-                        ? Operations.GetProposals(_delegat, level, timestamp, null, null, null, sort, offset, limit, quote)
+                        ? Operations.GetProposals(_delegat, level, timestamp, null, null, null, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
                     var activations = delegat.Activated == true && types.Contains(OpTypes.Activation)

@@ -25,7 +25,9 @@ namespace Tzkt.Sync.Protocols.Proto6
             if (!Cache.Accounts.DelegateExists(Baker))
                 throw new ValidationException($"non-existent block baker");
 
-            await ValidateBlockVoting(metadata.RequiredString("voting_period_kind"));
+            await ValidateBlockVoting(
+                metadata.Required("level").RequiredInt32("voting_period"),
+                metadata.RequiredString("voting_period_kind"));
 
             foreach (var baker in metadata.RequiredArray("deactivated").EnumerateArray())
                 if (!Cache.Accounts.DelegateExists(baker.GetString()))

@@ -28,6 +28,16 @@ namespace Tzkt.Api.Models
         public DateTime Timestamp { get; set; }
 
         /// <summary>
+        /// Current voring epoch index, starting from zero
+        /// </summary>
+        public int VotingEpoch { get; set; }
+
+        /// <summary>
+        /// Current voting period index, starting from zero
+        /// </summary>
+        public int VotingPeriod { get; set; }
+
+        /// <summary>
         /// The height of the last known block from the genesis block
         /// </summary>
         public int KnownLevel { get; set; }

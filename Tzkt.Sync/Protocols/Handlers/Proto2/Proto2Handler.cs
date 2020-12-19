@@ -37,8 +37,6 @@ namespace Tzkt.Sync.Protocols
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
-            await new VotingCommit(this).Apply(blockCommit.Block, block);
-
             var freezerCommit = new FreezerCommit(this);
             await freezerCommit.Apply(blockCommit.Block, block);
 
@@ -158,7 +156,7 @@ namespace Tzkt.Sync.Protocols
                 brCommit.CurrentRights);
 
             await new StatisticsCommit(this).Apply(blockCommit.Block, freezerCommit.FreezerUpdates);
-
+            await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
 
@@ -223,6 +221,7 @@ namespace Tzkt.Sync.Protocols
             }
             #endregion
 
+            await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new BakerCycleCommit(this).Revert(currBlock);
@@ -269,7 +268,6 @@ namespace Tzkt.Sync.Protocols
             await new DeactivationCommit(this).Revert(currBlock);
             await new RevelationPenaltyCommit(this).Revert(currBlock);
             await new FreezerCommit(this).Revert(currBlock);
-            await new VotingCommit(this).Revert(currBlock);
             await new BlockCommit(this).Revert(currBlock);
 
             await new StateCommit(this).Revert(currBlock);

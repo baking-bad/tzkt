@@ -6,7 +6,8 @@ namespace Tzkt.Data.Models
 {
     public class ProposalOperation : BaseOperation
     {
-        public int PeriodId { get; set; }
+        public int Epoch { get; set; }
+        public int Period { get; set; }
         public int ProposalId { get; set; }
         public int SenderId { get; set; }
         public int Rolls { get; set; }
@@ -14,9 +15,6 @@ namespace Tzkt.Data.Models
         public bool Duplicated { get; set; }
 
         #region relations
-        [ForeignKey(nameof(PeriodId))]
-        public VotingPeriod Period { get; set; }
-
         [ForeignKey(nameof(ProposalId))]
         public Proposal Proposal { get; set; }
 
@@ -30,6 +28,12 @@ namespace Tzkt.Data.Models
         public static void BuildProposalOperationModel(this ModelBuilder modelBuilder)
         {
             #region indexes
+            modelBuilder.Entity<ProposalOperation>()
+                .HasIndex(x => x.Epoch);
+
+            modelBuilder.Entity<ProposalOperation>()
+                .HasIndex(x => x.Period);
+
             modelBuilder.Entity<ProposalOperation>()
                 .HasIndex(x => x.Level);
 

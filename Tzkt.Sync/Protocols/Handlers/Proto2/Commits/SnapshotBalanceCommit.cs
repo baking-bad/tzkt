@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Apply(Block block, JsonElement rawBlock)
         {
-            if (block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.BalanceSnapshot))
             {
                 #region remove outdated
                 var delete = string.Empty;
@@ -92,7 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         public async Task Revert(Block block)
         {
-            if (block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.BalanceSnapshot))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE FROM ""SnapshotBalances""

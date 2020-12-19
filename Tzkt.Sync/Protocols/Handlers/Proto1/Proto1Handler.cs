@@ -150,7 +150,7 @@ namespace Tzkt.Sync.Protocols
                 brCommit.CurrentRights);
 
             await new StatisticsCommit(this).Apply(blockCommit.Block, freezerCommit.FreezerUpdates);
-
+            await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
 
@@ -228,6 +228,7 @@ namespace Tzkt.Sync.Protocols
                     Cache.Accounts.Add(account);
             #endregion
 
+            await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new BakerCycleCommit(this).Revert(currBlock);
