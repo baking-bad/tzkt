@@ -57,10 +57,17 @@ namespace Tzkt.Sync
             {
                 logger.LogInformation("Initialize database");
 
-                var migrations = db.Database.GetPendingMigrations();
-                if (migrations.Any())
+                if (db.Database.GetAppliedMigrations().Any() &&
+                    db.Database.GetAppliedMigrations().First() != db.Database.GetMigrations().First())
                 {
-                    logger.LogWarning($"{migrations.Count()} database migrations were found. Applying migrations...");
+                    attempt = 10;
+                    throw new Exception($"can't migrate database. Please, restore it from the snapshot with the latest version.");
+                }
+
+                var pending = db.Database.GetPendingMigrations();
+                if (pending.Any())
+                {
+                    logger.LogWarning($"{pending.Count()} database migrations were found. Applying migrations...");
                     db.Database.Migrate();
                 }
 
@@ -69,7 +76,7 @@ namespace Tzkt.Sync
             }
             catch (Exception ex)
             {
-                logger.LogCritical($"Failed to initialize database: {ex.Message}. Try again...");
+                logger.LogCritical($"Failed to initialize database: {ex.Message}");
                 if (attempt >= 10) throw;
                 Thread.Sleep(1000);
 
