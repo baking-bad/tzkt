@@ -13,11 +13,13 @@ namespace Tzkt.Api.Repositories
 {
     public class VotingRepository : DbConnection
     {
+        readonly StateCache State;
         readonly AccountsCache Accounts;
         readonly ProposalMetadataService ProposalMetadata;
 
-        public VotingRepository(AccountsCache accounts, ProposalMetadataService proposalMetadata, IConfiguration config) : base(config)
+        public VotingRepository(StateCache state, AccountsCache accounts, ProposalMetadataService proposalMetadata, IConfiguration config) : base(config)
         {
+            State = state;
             Accounts = accounts;
             ProposalMetadata = proposalMetadata;
         }
@@ -614,6 +616,164 @@ namespace Tzkt.Api.Repositories
                 Rolls = row.Rolls,
                 Status = VoterStatusToString(row.Status)
             });
+        }
+        #endregion
+
+        #region epochs
+        public async Task<VotingEpoch> GetEpoch(int index)
+        {
+            var sql = $@"
+                SELECT  *
+                FROM     ""VotingPeriods""
+                WHERE    ""Epoch"" = {index}
+                ORDER BY ""Index""";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql);
+            if (!rows.Any()) return null;
+
+            return new VotingEpoch
+            {
+                Index = rows.First().Epoch,
+                FirstLevel = rows.First().FirstLevel,
+                LastLevel = rows.Last().LastLevel,
+                Status = GetEpochStatus(rows),
+                Periods = rows.Select(row => new VotingPeriod
+                {
+                    Index = row.Index,
+                    Epoch = row.Epoch,
+                    FirstLevel = row.FirstLevel,
+                    LastLevel = row.LastLevel,
+                    Kind = KindToString(row.Kind),
+                    Status = PeriodStatusToString(row.Status),
+                    TotalBakers = row.TotalBakers,
+                    TotalRolls = row.TotalRolls,
+                    UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
+                    ProposalsCount = row.ProposalsCount,
+                    TopUpvotes = row.TopUpvotes,
+                    TopRolls = row.TopRolls,
+                    BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
+                    Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
+                    YayBallots = row.YayBallots,
+                    YayRolls = row.YayRolls,
+                    NayBallots = row.NayBallots,
+                    NayRolls = row.NayRolls,
+                    PassBallots = row.PassBallots,
+                    PassRolls = row.PassRolls
+                })
+            };
+        }
+
+        public async Task<IEnumerable<VotingEpoch>> GetEpochs(SortParameter sort, OffsetParameter offset, int limit)
+        {
+            var sql = new SqlBuilder(@"SELECT * FROM ""VotingPeriods""")
+                .Take(sort, offset, limit * 5, x => ("Id", "Id"));
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            if (!rows.Any()) return Enumerable.Empty<VotingEpoch>();
+
+            return rows
+                .GroupBy(x => x.Epoch)
+                .Select(group =>
+                {
+                    var periods = group.OrderBy(x => x.Index);
+                    return new VotingEpoch
+                    {
+                        Index = group.Key,
+                        FirstLevel = periods.First().FirstLevel,
+                        LastLevel = periods.Last().LastLevel,
+                        Status = GetEpochStatus(periods),
+                        Periods = periods.Select(row => new VotingPeriod
+                        {
+                            Index = row.Index,
+                            Epoch = row.Epoch,
+                            FirstLevel = row.FirstLevel,
+                            LastLevel = row.LastLevel,
+                            Kind = KindToString(row.Kind),
+                            Status = PeriodStatusToString(row.Status),
+                            TotalBakers = row.TotalBakers,
+                            TotalRolls = row.TotalRolls,
+                            UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
+                            ProposalsCount = row.ProposalsCount,
+                            TopUpvotes = row.TopUpvotes,
+                            TopRolls = row.TopRolls,
+                            BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
+                            Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
+                            YayBallots = row.YayBallots,
+                            YayRolls = row.YayRolls,
+                            NayBallots = row.NayBallots,
+                            NayRolls = row.NayRolls,
+                            PassBallots = row.PassBallots,
+                            PassRolls = row.PassRolls
+                        })
+                    };
+                });
+        }
+
+        public async Task<VotingEpoch> GetLatestVoting()
+        {
+            var sql = $@"
+                SELECT  period.*
+                FROM    ""VotingPeriods"" as p
+                INNER JOIN ""VotingPeriods"" as period on period.""Epoch"" = p.""Epoch""
+                WHERE   p.""ProposalsCount"" IS NOT NULL
+                AND     p.""ProposalsCount"" > 0
+                ORDER BY p.""Index"" DESC
+                LIMIT 5";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql);
+            if (!rows.Any()) return null;
+
+            var epoch = rows.First().Epoch;
+            rows = rows.Where(x => x.Epoch == epoch).OrderBy(x => x.Index);
+
+            return new VotingEpoch
+            {
+                Index = rows.First().Epoch,
+                FirstLevel = rows.First().FirstLevel,
+                LastLevel = rows.Last().LastLevel,
+                Status = GetEpochStatus(rows),
+                Periods = rows.Select(row => new VotingPeriod
+                {
+                    Index = row.Index,
+                    Epoch = row.Epoch,
+                    FirstLevel = row.FirstLevel,
+                    LastLevel = row.LastLevel,
+                    Kind = KindToString(row.Kind),
+                    Status = PeriodStatusToString(row.Status),
+                    TotalBakers = row.TotalBakers,
+                    TotalRolls = row.TotalRolls,
+                    UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
+                    ProposalsCount = row.ProposalsCount,
+                    TopUpvotes = row.TopUpvotes,
+                    TopRolls = row.TopRolls,
+                    BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
+                    Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
+                    YayBallots = row.YayBallots,
+                    YayRolls = row.YayRolls,
+                    NayBallots = row.NayBallots,
+                    NayRolls = row.NayRolls,
+                    PassBallots = row.PassBallots,
+                    PassRolls = row.PassRolls
+                })
+            };
+        }
+
+        string GetEpochStatus(IEnumerable<dynamic> periods)
+        {
+            if (periods.First().Status == (int)Data.Models.PeriodStatus.NoProposals)
+                return "no_proposals";
+
+            if (periods.Last().Status == (int)Data.Models.PeriodStatus.Active)
+                return "voting";
+
+            if (periods.Last().Status == (int)Data.Models.PeriodStatus.Success &&
+                periods.Last().Epoch != State.GetState().VotingEpoch)
+                return "completed";
+
+            return "failed";
         }
         #endregion
 
