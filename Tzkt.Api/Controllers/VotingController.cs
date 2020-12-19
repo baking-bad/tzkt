@@ -192,5 +192,71 @@ namespace Tzkt.Api.Controllers
             return Ok(await Voting.GetVoters(index, sort, offset, limit));
         }
         #endregion
+
+        #region epochs
+        /// <summary>
+        /// Get voting epochs
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of voting epochs.
+        /// </remarks>
+        /// <param name="sort">Sorts voting epochs by specified field. Supported fields: `id` (default).</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
+        [HttpGet("epochs")]
+        public async Task<ActionResult<IEnumerable<VotingEpoch>>> GetEpochs(
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            return Ok(await Voting.GetEpochs(sort, offset, limit));
+        }
+
+        /// <summary>
+        /// Get voting epoch by index
+        /// </summary>
+        /// <remarks>
+        /// Returns a voting epoch at the specified index.
+        /// </remarks>
+        /// <param name="index">Voting epoch index starting from zero</param>
+        /// <returns></returns>
+        [HttpGet("epochs/{index:int}")]
+        public Task<VotingEpoch> GetEpoch([Min(0)] int index)
+        {
+            return Voting.GetEpoch(index);
+        }
+
+        /// <summary>
+        /// Get current voting epoch
+        /// </summary>
+        /// <remarks>
+        /// Returns the current voting epoch
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("epochs/current")]
+        public Task<VotingEpoch> GetCurrentEpoch()
+        {
+            return Voting.GetEpoch(State.GetState().VotingEpoch);
+        }
+
+        /// <summary>
+        /// Get latest voting
+        /// </summary>
+        /// <remarks>
+        /// Returns the latest epoch with at least one proposal
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("epochs/latest_voting")]
+        public Task<VotingEpoch> GetLatestVoting()
+        {
+            return Voting.GetLatestVoting();
+        }
+        #endregion
     }
 }
