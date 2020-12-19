@@ -145,7 +145,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""DelegateId"", o.""Slots"", o.""Reward"", b.""Hash""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""DelegateId"", o.""Slots"", o.""Reward"", o.""Deposit"", b.""Hash""
                 FROM        ""EndorsementOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -165,6 +165,7 @@ namespace Tzkt.Api.Repositories
                 Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
                 Rewards = row.Reward,
+                Deposit = row.Deposit,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -172,7 +173,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<EndorsementOperation>> GetEndorsements(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward""
+                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward"", ""Deposit""
                 FROM        ""EndorsementOps""
                 WHERE       ""Level"" = @level
                 ORDER BY    ""Id""";
@@ -190,6 +191,7 @@ namespace Tzkt.Api.Repositories
                 Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
                 Rewards = row.Reward,
+                Deposit = row.Deposit,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -222,6 +224,7 @@ namespace Tzkt.Api.Repositories
                 Delegate = Accounts.GetAlias(row.DelegateId),
                 Slots = row.Slots,
                 Rewards = row.Reward,
+                Deposit = row.Deposit,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -250,6 +253,7 @@ namespace Tzkt.Api.Repositories
                     case "delegate": columns.Add(@"o.""DelegateId"""); break;
                     case "slots": columns.Add(@"o.""Slots"""); break;
                     case "rewards": columns.Add(@"o.""Reward"""); break;
+                    case "deposit": columns.Add(@"o.""Deposit"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -310,6 +314,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
                         break;
+                    case "deposit":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Deposit;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -342,6 +350,7 @@ namespace Tzkt.Api.Repositories
                 case "delegate": columns.Add(@"o.""DelegateId"""); break;
                 case "slots": columns.Add(@"o.""Slots"""); break;
                 case "rewards": columns.Add(@"o.""Reward"""); break;
+                case "deposit": columns.Add(@"o.""Deposit"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -399,6 +408,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Reward;
                     break;
+                case "deposit":
+                    foreach (var row in rows)
+                        result[j++] = row.Deposit;
+                    break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
@@ -425,15 +438,17 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
-                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
+                            b.""Hash"",
+                            proposal.""Hash"" as proposal,
+                            period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""BallotOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
                 INNER JOIN  ""Proposals"" as proposal
                         ON  proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period
-                        ON  period.""Id"" = o.""PeriodId""
+                        ON  period.""Index"" = o.""Period""
                 WHERE       o.""OpHash"" = @hash::character(51)
                 LIMIT       1";
 
@@ -449,7 +464,8 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Period = new PeriodInfo
                 {
-                    Id = row.Code,
+                    Index = row.Period,
+                    Epoch = row.Epoch,
                     Kind = PeriodToString(row.Kind),
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
@@ -469,13 +485,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", proposal.""Hash"" as proposal,
-                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
+                            proposal.""Hash"" as proposal,
+                            period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""BallotOps"" as o
                 INNER JOIN  ""Proposals"" as proposal
                         ON  proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period
-                        ON  period.""Id"" = o.""PeriodId""
+                        ON  period.""Index"" = o.""Period""
                 WHERE       o.""Level"" = @level
                 ORDER BY    o.""Id""";
 
@@ -491,7 +508,8 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Period = new PeriodInfo
                 {
-                    Id = row.Code,
+                    Index = row.Period,
+                    Epoch = row.Epoch,
                     Kind = PeriodToString(row.Kind),
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
@@ -512,6 +530,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             SortParameter sort,
@@ -520,17 +539,20 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", b.""Hash"", proposal.""Hash"" as proposal,
-                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
+                            b.""Hash"",
+                            proposal.""Hash"" as proposal,
+                            period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""BallotOps"" as o
                 INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
-                INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
+                INNER JOIN  ""VotingPeriods"" as period ON period.""Index"" = o.""Period""
                 ")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
-                .FilterA(@"period.""Code""", period)
+                .FilterA(@"o.""Epoch""", epoch)
+                .FilterA(@"o.""Period""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -546,7 +568,8 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Period = new PeriodInfo
                 {
-                    Id = row.Code,
+                    Index = row.Period,
+                    Epoch = row.Epoch,
                     Kind = PeriodToString(row.Kind),
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
@@ -567,6 +590,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             SortParameter sort,
@@ -594,11 +618,12 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                         break;
                     case "period": 
-                        columns.Add(@"period.""Code""");
+                        columns.Add(@"o.""Epoch""");
+                        columns.Add(@"o.""Period""");
                         columns.Add(@"period.""Kind""");
                         columns.Add(@"period.""StartLevel""");
                         columns.Add(@"period.""EndLevel""");
-                        joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                        joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
                         break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -609,7 +634,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (period != null)
-                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
 
             if (proposal != null)
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
@@ -621,7 +646,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
-                .FilterA(@"period.""Code""", period)
+                .FilterA(@"o.""Epoch""", epoch)
+                .FilterA(@"o.""Period""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -660,7 +686,8 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = new PeriodInfo
                             {
-                                Id = row.Code,
+                                Index = row.Period,
+                                Epoch = row.Epoch,
                                 Kind = PeriodToString(row.Kind),
                                 StartLevel = row.StartLevel,
                                 EndLevel = row.EndLevel
@@ -700,6 +727,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             SortParameter sort,
@@ -725,11 +753,12 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                     break;
                 case "period":
-                    columns.Add(@"period.""Code""");
+                    columns.Add(@"o.""Epoch""");
+                    columns.Add(@"o.""Period""");
                     columns.Add(@"period.""Kind""");
                     columns.Add(@"period.""StartLevel""");
                     columns.Add(@"period.""EndLevel""");
-                    joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                    joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
                     break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -739,7 +768,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (period != null)
-                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
 
             if (proposal != null)
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
@@ -751,7 +780,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
-                .FilterA(@"period.""Code""", period)
+                .FilterA(@"o.""Epoch""", epoch)
+                .FilterA(@"o.""Period""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -788,7 +818,8 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = new PeriodInfo
                         {
-                            Id = row.Code,
+                            Index = row.Period,
+                            Epoch = row.Epoch,
                             Kind = PeriodToString(row.Kind),
                             StartLevel = row.StartLevel,
                             EndLevel = row.EndLevel
@@ -840,15 +871,17 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
-                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
+                            b.""Hash"",
+                            proposal.""Hash"" as proposal,
+                            period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
                 INNER JOIN  ""Proposals"" as proposal
                         ON  proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period
-                        ON  period.""Id"" = o.""PeriodId""
+                        ON  period.""Index"" = o.""Period""
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
 
@@ -866,7 +899,8 @@ namespace Tzkt.Api.Repositories
                 Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
-                    Id = row.Code,
+                    Index = row.Period,
+                    Epoch = row.Epoch,
                     Kind = PeriodToString(row.Kind),
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
@@ -884,13 +918,14 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", proposal.""Hash"" as proposal,
-                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
+                            proposal.""Hash"" as proposal,
+                            period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Proposals"" as proposal
                         ON  proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period
-                        ON  period.""Id"" = o.""PeriodId""
+                        ON  period.""Index"" = o.""Period""
                 WHERE       o.""Level"" = @level
                 ORDER BY    o.""Id""";
 
@@ -908,7 +943,8 @@ namespace Tzkt.Api.Repositories
                 Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
-                    Id = row.Code,
+                    Index = row.Period,
+                    Epoch = row.Epoch,
                     Kind = PeriodToString(row.Kind),
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
@@ -927,6 +963,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -936,18 +973,21 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", b.""Hash"", proposal.""Hash"" as proposal,
-                            period.""Code"", period.""Kind"", period.""StartLevel"", period.""EndLevel""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
+                            b.""Hash"",
+                            proposal.""Hash"" as proposal,
+                            period.""Kind"", period.""StartLevel"", period.""EndLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
-                INNER JOIN  ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""
+                INNER JOIN  ""VotingPeriods"" as period ON period.""Index"" = o.""Period""
                 ")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
-                .FilterA(@"period.""Code""", period)
+                .FilterA(@"o.""Epoch""", epoch)
+                .FilterA(@"o.""Period""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -965,7 +1005,8 @@ namespace Tzkt.Api.Repositories
                 Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
-                    Id = row.Code,
+                    Index = row.Period,
+                    Epoch = row.Epoch,
                     Kind = PeriodToString(row.Kind),
                     StartLevel = row.StartLevel,
                     EndLevel = row.EndLevel
@@ -984,6 +1025,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -1012,11 +1054,12 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                         break;
                     case "period":
-                        columns.Add(@"period.""Code""");
+                        columns.Add(@"o.""Epoch""");
+                        columns.Add(@"o.""Period""");
                         columns.Add(@"period.""Kind""");
                         columns.Add(@"period.""StartLevel""");
                         columns.Add(@"period.""EndLevel""");
-                        joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                        joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
                         break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -1027,7 +1070,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (period != null)
-                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
 
             if (proposal != null)
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
@@ -1040,7 +1083,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
-                .FilterA(@"period.""Code""", period)
+                .FilterA(@"o.""Epoch""", epoch)
+                .FilterA(@"o.""Period""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -1087,7 +1131,8 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = new PeriodInfo
                             {
-                                Id = row.Code,
+                                Index = row.Period,
+                                Epoch = row.Epoch,
                                 Kind = PeriodToString(row.Kind),
                                 StartLevel = row.StartLevel,
                                 EndLevel = row.EndLevel
@@ -1119,6 +1164,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
             BoolParameter duplicated,
@@ -1145,11 +1191,12 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                     break;
                 case "period":
-                    columns.Add(@"period.""Code""");
+                    columns.Add(@"o.""Epoch""");
+                    columns.Add(@"o.""Period""");
                     columns.Add(@"period.""Kind""");
                     columns.Add(@"period.""StartLevel""");
                     columns.Add(@"period.""EndLevel""");
-                    joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                    joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
                     break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -1159,7 +1206,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (period != null)
-                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Id"" = o.""PeriodId""");
+                joins.Add(@"INNER JOIN ""VotingPeriods"" as period ON period.""Index"" = o.""Period""");
 
             if (proposal != null)
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
@@ -1172,7 +1219,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Duplicated""", duplicated)
-                .FilterA(@"period.""Code""", period)
+                .FilterA(@"o.""Epoch""", epoch)
+                .FilterA(@"o.""Period""", period)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -1217,7 +1265,8 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = new PeriodInfo
                         {
-                            Id = row.Code,
+                            Index = row.Period,
+                            Epoch = row.Epoch,
                             Kind = PeriodToString(row.Kind),
                             StartLevel = row.StartLevel,
                             EndLevel = row.EndLevel
@@ -5355,7 +5404,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var sql = new SqlBuilder(@"SELECT ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Reward"", ""Fees"" FROM ""Blocks""")
+            var sql = new SqlBuilder(@"SELECT ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Deposit"", ""Reward"", ""Fees"" FROM ""Blocks""")
                 .Filter("BakerId", baker)
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
@@ -5373,6 +5422,7 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 Block = row.Hash,
                 Priority = row.Priority,
+                Deposit = row.Deposit,
                 Reward = row.Reward,
                 Fees = row.Fees,
                 Quote = Quotes.Get(quote, row.Level)
@@ -5400,6 +5450,7 @@ namespace Tzkt.Api.Repositories
                     case "baker": columns.Add(@"""BakerId"""); break;
                     case "block": columns.Add(@"""Hash"""); break;
                     case "priority": columns.Add(@"""Priority"""); break;
+                    case "deposit": columns.Add(@"""Deposit"""); break;
                     case "reward": columns.Add(@"""Reward"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
@@ -5451,6 +5502,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Priority;
                         break;
+                    case "deposit":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Deposit;
+                        break;
                     case "reward":
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
@@ -5488,6 +5543,7 @@ namespace Tzkt.Api.Repositories
                 case "baker": columns.Add(@"""BakerId"""); break;
                 case "block": columns.Add(@"""Hash"""); break;
                 case "priority": columns.Add(@"""Priority"""); break;
+                case "deposit": columns.Add(@"""Deposit"""); break;
                 case "reward": columns.Add(@"""Reward"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "quote": columns.Add(@"""Level"""); break;
@@ -5535,6 +5591,10 @@ namespace Tzkt.Api.Repositories
                 case "priority":
                     foreach (var row in rows)
                         result[j++] = row.Priority;
+                    break;
+                case "deposit":
+                    foreach (var row in rows)
+                        result[j++] = row.Deposit;
                     break;
                 case "reward":
                     foreach (var row in rows)

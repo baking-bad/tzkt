@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task Apply(Block block)
         {
-            if (block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.BalanceSnapshot))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"")
@@ -64,7 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task Revert(Block block)
         {
-            if (block.Events.HasFlag(BlockEvents.Snapshot))
+            if (block.Events.HasFlag(BlockEvents.BalanceSnapshot))
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE FROM ""SnapshotBalances""

@@ -19,6 +19,10 @@ namespace Tzkt.Api.Services.Cache
 
         public DateTime Timestamp { get; set; }
 
+        public int VotingEpoch { get; set; }
+
+        public int VotingPeriod { get; set; }
+
         public int OperationCounter { get; set; }
 
         #region entities count

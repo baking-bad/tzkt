@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -8,33 +6,39 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public int Level { get; set; }
-        public int PeriodId { get; set; }
-        public int DelegateId { get; set; }
-
+        public int Period { get; set; }
+        public int BakerId { get; set; }
         public int Rolls { get; set; }
 
-        #region relations
-        [ForeignKey(nameof(PeriodId))]
-        public VotingPeriod Period { get; set; }
-        #endregion
+        public VoterStatus Status { get; set; }
     }
 
     public static class VotingSnapshotModel
     {
         public static void BuildVotingSnapshotModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<VotingSnapshot>()
-                .HasIndex(x => x.Level);
-
-            modelBuilder.Entity<VotingSnapshot>()
-                .HasIndex(x => new { x.PeriodId, x.DelegateId });
-            #endregion
-
             #region keys
-            modelBuilder.Entity<VotingEpoch>()
+            modelBuilder.Entity<VotingSnapshot>()
                 .HasKey(x => x.Id);
             #endregion
+
+            #region indexes
+            modelBuilder.Entity<VotingSnapshot>()
+                .HasIndex(x => x.Period);
+
+            modelBuilder.Entity<VotingSnapshot>()
+                .HasIndex(x => new { x.Period, x.BakerId })
+                .IsUnique();
+            #endregion
         }
+    }
+
+    public enum VoterStatus
+    {
+        None,
+        Upvoted,
+        VotedYay,
+        VotedNay,
+        VotedPass
     }
 }

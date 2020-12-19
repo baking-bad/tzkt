@@ -51,6 +51,11 @@ namespace Tzkt.Api.Models
         public int Slots { get; set; }
 
         /// <summary>
+        /// Security deposit frozen on the baker's account
+        /// </summary>
+        public long Deposit { get; set; }
+
+        /// <summary>
         /// Reward of the baker (delegate) for the operation
         /// </summary>
         public long Rewards { get; set; }

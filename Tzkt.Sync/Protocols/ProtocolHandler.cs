@@ -81,7 +81,7 @@ namespace Tzkt.Sync
 
                 state.KnownHead = head;
                 state.LastSync = sync;
- 
+
                 Logger.LogDebug("Save changes");
                 await Db.SaveChangesAsync();
 
@@ -291,22 +291,6 @@ namespace Tzkt.Sync
                         b.Migrations = null;
                         b.RevelationPenalties = null;
                         b.Software = null;
-                        break;
-                    case VotingPeriod period:
-                        period.Epoch = null;
-                        if (period is ExplorationPeriod exploration)
-                            exploration.Proposal = null;
-                        else if (period is PromotionPeriod promotion)
-                            promotion.Proposal = null;
-                        else if (period is TestingPeriod testing)
-                            testing.Proposal = null;
-                        break;
-                    case Proposal proposal:
-                        proposal.ExplorationPeriod = null;
-                        proposal.Initiator = null;
-                        proposal.PromotionPeriod = null;
-                        proposal.ProposalPeriod = null;
-                        proposal.TestingPeriod = null;
                         break;
                 }
             }

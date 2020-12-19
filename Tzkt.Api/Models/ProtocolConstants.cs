@@ -7,9 +7,18 @@ namespace Tzkt.Api.Models
 {
     public class ProtocolConstants
     {
-        //TODO Think about it
         /// <summary>
-        /// A number of cycles in which the bakers security deposit and rewards are frozen. Currently it is 5 cycles which is approximately 15 days
+        /// The number of cycles where security deposit is ramping up
+        /// </summary>
+        public int RampUpCycles { get; set; }
+
+        /// <summary>
+        /// The number of cycles with no baking rewards
+        /// </summary>
+        public int NoRewardCycles { get; set; }
+
+        /// <summary>
+        /// A number of cycles in which baker's security deposit and rewards are frozen
         /// </summary>
         public int PreservedCycles { get; set; }
 
@@ -98,5 +107,20 @@ namespace Tzkt.Api.Models
         /// Cost of one storage byte in the blockchain (micro tez)
         /// </summary>
         public int ByteCost { get; set; }
+
+        /// <summary>
+        /// Percentage of the total number of rolls required to select a proposal on the proposal period
+        /// </summary>
+        public double ProposalQuorum { get; set; }
+        
+        /// <summary>
+        /// The minimum value of quorum percentage on the exploration and promotion periods
+        /// </summary>
+        public double BallotQuorumMin { get; set; }
+
+        /// <summary>
+        /// The maximum value of quorum percentage on the exploration and promotion periods
+        /// </summary>
+        public double BallotQuorumMax { get; set; }
     }
 }

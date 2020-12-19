@@ -12,27 +12,31 @@ namespace Tzkt.Sync.Protocols.Proto3
         public Validator(ProtocolHandler protocol) : base(protocol) { }
 
         // new period king enum & wtf
-        protected override async Task ValidateBlockVoting(string periodKind)
+        protected override async Task ValidateBlockVoting(int periodIndex, string periodKind)
         {
-            var period = await Cache.Periods.CurrentAsync();
+            if (Cache.AppState.Get().VotingPeriod != periodIndex)
+                throw new ValidationException("invalid voting period index");
+
+            var period = await Cache.Periods.GetAsync(periodIndex);
+
             var kind = periodKind switch
             {
-                "proposal" => VotingPeriods.Proposal,
-                "testing_vote" => VotingPeriods.Exploration,
-                "testing" => VotingPeriods.Testing,
-                "promotion_vote" => VotingPeriods.Promotion,
+                "proposal" => PeriodKind.Proposal,
+                "testing_vote" => PeriodKind.Exploration,
+                "testing" => PeriodKind.Testing,
+                "promotion_vote" => PeriodKind.Promotion,
                 _ => throw new ValidationException("invalid voting period kind")
             };
 
             // WTF: [level:360448] - Exploration period started before the proposals period ended.
-            if (Level < period.EndLevel)
+            if (Level < period.LastLevel)
             {
                 if (period.Kind != kind)
                     throw new ValidationException("unexpected voting period");
             }
             else
             {
-                if (kind != VotingPeriods.Proposal && (int)kind != (int)period.Kind + 1)
+                if (kind != PeriodKind.Proposal && (int)kind != (int)period.Kind + 1)
                     throw new ValidationException("inconsistent voting period");
             }
         }

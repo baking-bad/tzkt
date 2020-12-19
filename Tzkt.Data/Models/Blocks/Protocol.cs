@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
-    //TODO: add link to proposal
     public class Protocol
     {
         public int Id { get; set; }
@@ -42,6 +40,10 @@ namespace Tzkt.Data.Models
 
         public int OriginationSize { get; set; }
         public int ByteCost { get; set; }
+
+        public int ProposalQuorum { get; set; }
+        public int BallotQuorumMin { get; set; }
+        public int BallotQuorumMax { get; set; }
     }
 
     public static class ProtocolModel

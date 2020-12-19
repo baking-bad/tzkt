@@ -61,6 +61,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             protocol.RevelationReward = parameters["seed_nonce_revelation_tip"]?.Value<long>() ?? 125_000;
             protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0].Value<int>() ?? 60;
             protocol.TokensPerRoll = parameters["tokens_per_roll"]?.Value<long>() ?? 10_000_000_000;
+            protocol.BallotQuorumMin = 0;
+            protocol.BallotQuorumMax = 10000;
+            protocol.ProposalQuorum = 0;
         }
 
         public async Task UpgradeProtocol(AppState state)
@@ -119,6 +122,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             protocol.RevelationReward = prev.RevelationReward;
             protocol.TimeBetweenBlocks = prev.TimeBetweenBlocks;
             protocol.TokensPerRoll = prev.TokensPerRoll;
+            protocol.BallotQuorumMin = prev.BallotQuorumMin;
+            protocol.BallotQuorumMax = prev.BallotQuorumMax;
+            protocol.ProposalQuorum = prev.ProposalQuorum;
         }
     }
 }

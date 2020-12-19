@@ -199,6 +199,13 @@ namespace Tzkt.Sync.Services.Cache
             return null;
         }
 
+        public IEnumerable<Data.Models.Delegate> GetDelegates()
+        {
+            return CachedById.Values
+                .Where(x => x.Type == AccountType.Delegate)
+                .Select(x => (Data.Models.Delegate)x);
+        }
+
         Account CreateUser(string address)
         {
             var account = new User

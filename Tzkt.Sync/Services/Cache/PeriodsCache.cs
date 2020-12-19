@@ -11,7 +11,9 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class PeriodsCache
     {
-        static VotingPeriod VotingPeriod = null;
+        public const int MaxPeriods = 16; //TODO: set limits in app settings
+
+        static readonly Dictionary<int, VotingPeriod> Cached = new Dictionary<int, VotingPeriod>(17);
 
         readonly TzktContext Db;
 
@@ -22,25 +24,43 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Reset()
         {
-            VotingPeriod = null;
+            Cached.Clear();
         }
 
         public void Add(VotingPeriod period)
         {
-            VotingPeriod = period;
+            CheckSpace();
+            Cached[period.Index] = period;
         }
 
-        public async Task<VotingPeriod> CurrentAsync()
+        public async Task<VotingPeriod> GetAsync(int index)
         {
-            VotingPeriod ??= await Db.VotingPeriods.OrderByDescending(x => x.StartLevel).FirstOrDefaultAsync()
-                ?? throw new Exception("Failed to get voting period");
+            if (!Cached.TryGetValue(index, out var period))
+            {
+                period = await Db.VotingPeriods.FirstOrDefaultAsync(x => x.Index == index)
+                    ?? throw new Exception($"Voting period #{index} not found");
 
-            return VotingPeriod;
+                Add(period);
+            }
+
+            return period;
         }
 
-        public void Remove()
+        public void Remove(VotingPeriod period)
         {
-            VotingPeriod = null;
+            Cached.Remove(period.Index);
+        }
+
+        void CheckSpace()
+        {
+            if (Cached.Count >= MaxPeriods)
+            {
+                var oldest = Cached.Values
+                    .Take(MaxPeriods / 4);
+
+                foreach (var index in oldest.Select(x => x.Index).ToList())
+                    Cached.Remove(index);
+            }
         }
     }
 }

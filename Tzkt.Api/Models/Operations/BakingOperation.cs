@@ -44,6 +44,11 @@ namespace Tzkt.Api.Models
         public int Priority { get; set; }
 
         /// <summary>
+        /// Security deposit frozen on the baker's account for producing the block (micro tez)
+        /// </summary>
+        public long Deposit { get; set; }
+
+        /// <summary>
         /// Reward of the baker for producing the block (micro tez)
         /// </summary>
         public long Reward { get; set; }

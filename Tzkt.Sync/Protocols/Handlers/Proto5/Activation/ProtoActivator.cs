@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
@@ -9,6 +10,22 @@ namespace Tzkt.Sync.Protocols.Proto5
     class ProtoActivator : Proto4.ProtoActivator
     {
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
+
+        protected override void SetParameters(Protocol protocol, JToken parameters)
+        {
+            base.SetParameters(protocol, parameters);
+            protocol.BallotQuorumMin = parameters["quorum_min"]?.Value<int>() ?? 2000;
+            protocol.BallotQuorumMax = parameters["quorum_max"]?.Value<int>() ?? 7000;
+            protocol.ProposalQuorum = parameters["min_proposal_quorum"]?.Value<int>() ?? 500;
+        }
+
+        protected override void UpgradeParameters(Protocol protocol, Protocol prev)
+        {
+            base.UpgradeParameters(protocol, prev);
+            protocol.BallotQuorumMin = 2000;
+            protocol.BallotQuorumMax = 7000;
+            protocol.ProposalQuorum = 500;
+        }
 
         // Airdrop
         // Proposal invoice

@@ -52,7 +52,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!Cache.Accounts.DelegateExists(Baker))
                 throw new ValidationException($"non-existent block baker");
 
-            await ValidateBlockVoting(metadata.RequiredString("voting_period_kind"));
+            await ValidateBlockVoting(
+                metadata.Required("level").RequiredInt32("voting_period"),
+                metadata.RequiredString("voting_period_kind"));
 
             foreach (var baker in metadata.RequiredArray("deactivated").EnumerateArray())
                 if (!Cache.Accounts.DelegateExists(baker.GetString()))
@@ -63,26 +65,30 @@ namespace Tzkt.Sync.Protocols.Proto1
             ValidateCycleRewards(balanceUpdates.Skip(Cycle < Protocol.NoRewardCycles ? 2 : 3));
         }
 
-        protected virtual async Task ValidateBlockVoting(string periodKind)
+        protected virtual async Task ValidateBlockVoting(int periodIndex, string periodKind)
         {
-            var period = await Cache.Periods.CurrentAsync();
+            if (Cache.AppState.Get().VotingPeriod != periodIndex)
+                throw new ValidationException("invalid voting period index");
+
+            var period = await Cache.Periods.GetAsync(periodIndex);
+
             var kind = periodKind switch
             {
-                "proposal" => VotingPeriods.Proposal,
-                "exploration" => VotingPeriods.Exploration,
-                "testing" => VotingPeriods.Testing,
-                "promotion" => VotingPeriods.Promotion,
+                "proposal" => PeriodKind.Proposal,
+                "exploration" => PeriodKind.Exploration,
+                "testing" => PeriodKind.Testing,
+                "promotion" => PeriodKind.Promotion,
                 _ => throw new ValidationException("invalid voting period kind")
             };
 
-            if (Level <= period.EndLevel)
+            if (Level <= period.LastLevel)
             {
                 if (period.Kind != kind)
                     throw new ValidationException("unexpected voting period");
             }
             else
             {
-                if (kind != VotingPeriods.Proposal && (int)kind != (int)period.Kind + 1)
+                if (kind != PeriodKind.Proposal && (int)kind != (int)period.Kind + 1)
                     throw new ValidationException("inconsistent voting period");
             }
         }
@@ -147,7 +153,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         {
                             case "endorsement": ValidateEndorsement(content); break;
                             case "ballot": await ValidateBallot(content); break;
-                            case "proposals": await ValidateProposal(content); break;
+                            case "proposals": ValidateProposal(content); break;
                             case "activate_account": await ValidateActivation(content); break;
                             case "double_baking_evidence": ValidateDoubleBaking(content); break;
                             case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
@@ -207,30 +213,28 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual async Task ValidateBallot(JsonElement content)
         {
-            var period = await Cache.Periods.CurrentAsync();
-            if (period.EndLevel == Cache.AppState.GetLevel()) return; // Voting period is not added yet
-            var proposal = await Cache.Proposals.GetAsync((period as ExplorationPeriod)?.ProposalId ?? (period as PromotionPeriod).ProposalId);
-            
-            if (content.RequiredString("proposal") != proposal.Hash)
+            var periodIndex = content.RequiredInt32("period");
+
+            if (Cache.AppState.Get().VotingPeriod != periodIndex)
+                throw new ValidationException("invalid ballot voting period");
+
+            var proposal = await Cache.Proposals.GetOrDefaultAsync(content.RequiredString("proposal"));
+            if (proposal?.Status != ProposalStatus.Active)
                 throw new ValidationException("invalid ballot proposal");
 
             if (!Cache.Accounts.DelegateExists(content.RequiredString("source")))
                 throw new ValidationException("invalid ballot sender");
-
-            if (content.RequiredInt32("period") != period.Code)
-                throw new ValidationException("invalid ballot voting period");
         }
 
-        protected virtual async Task ValidateProposal(JsonElement content)
+        protected virtual void ValidateProposal(JsonElement content)
         {
-            var period = await Cache.Periods.CurrentAsync();
-            if (period.EndLevel == Cache.AppState.GetLevel()) return; // Voting period is not added yet
+            var periodIndex = content.RequiredInt32("period");
+
+            if (Cache.AppState.Get().VotingPeriod != periodIndex)
+                throw new ValidationException("invalid ballot voting period");
 
             if (!Cache.Accounts.DelegateExists(content.RequiredString("source")))
                 throw new ValidationException("invalid proposal sender");
-
-            if (content.RequiredInt32("period") != period.Code)
-                throw new ValidationException("invalid proposal voting period");
         }
 
         protected virtual async Task ValidateActivation(JsonElement content)

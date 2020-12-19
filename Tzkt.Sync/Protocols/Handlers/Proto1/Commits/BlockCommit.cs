@@ -15,7 +15,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var level = rawBlock.Required("header").RequiredInt32("level");
             var protocol = await Cache.Protocols.GetAsync(rawBlock.RequiredString("protocol"));
-            var votingPeriod = await Cache.Periods.CurrentAsync();
             var events = BlockEvents.None;
 
             var metadata = rawBlock.Required("metadata");
@@ -40,16 +39,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             else if (metadata.RequiredString("protocol") != metadata.RequiredString("next_protocol"))
                 events |= BlockEvents.ProtocolEnd;
 
-            if (level == votingPeriod.EndLevel)
-                events |= BlockEvents.VotingPeriodEnd;
-            else if (level > votingPeriod.EndLevel)
-                events |= BlockEvents.VotingPeriodBegin;
-
             if (metadata.RequiredArray("deactivated").Count() > 0)
                 events |= BlockEvents.Deactivations;
 
             if (level % protocol.BlocksPerSnapshot == 0)
-                events |= BlockEvents.Snapshot;
+                events |= BlockEvents.BalanceSnapshot;
 
             Block = new Block
             {

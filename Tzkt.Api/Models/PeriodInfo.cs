@@ -8,9 +8,14 @@ namespace Tzkt.Api.Models
     public class PeriodInfo
     {
         /// <summary>
-        /// Protocol-level voting period counter
+        /// Voting period index, starting from zero
         /// </summary>
-        public int Id { get; set; }
+        public int Index { get; set; }
+
+        /// <summary>
+        /// Voting epoch index, starting from zero
+        /// </summary>
+        public int Epoch { get; set; }
 
         /// <summary>
         /// Kind of the voting period
