@@ -249,6 +249,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("TransactionOpsCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("VotingEpoch")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VotingPeriod")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("AppState");
@@ -292,7 +298,9 @@ namespace Tzkt.Data.Migrations
                             RevealOpsCount = 0,
                             RevelationPenaltyOpsCount = 0,
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            TransactionOpsCount = 0
+                            TransactionOpsCount = 0,
+                            VotingEpoch = -1,
+                            VotingPeriod = -1
                         });
                 });
 
@@ -517,6 +525,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<int>("Epoch")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -526,7 +537,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
-                    b.Property<int>("PeriodId")
+                    b.Property<int>("Period")
                         .HasColumnType("integer");
 
                     b.Property<int>("ProposalId")
@@ -546,11 +557,13 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Epoch");
+
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("PeriodId");
+                    b.HasIndex("Period");
 
                     b.HasIndex("ProposalId");
 
@@ -568,6 +581,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int?>("BakerId")
                         .HasColumnType("integer");
+
+                    b.Property<long>("Deposit")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("Events")
                         .HasColumnType("integer");
@@ -947,6 +963,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("DelegateId")
                         .HasColumnType("integer");
 
+                    b.Property<long>("Deposit")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -1147,7 +1166,10 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("ExplorationPeriodId")
+                    b.Property<int>("Epoch")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FirstPeriod")
                         .HasColumnType("integer");
 
                     b.Property<string>("Hash")
@@ -1158,16 +1180,13 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("InitiatorId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("PromotionPeriodId")
+                    b.Property<int>("LastPeriod")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProposalPeriodId")
+                    b.Property<int>("Rolls")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TestingPeriodId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Upvotes")
@@ -1175,18 +1194,9 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExplorationPeriodId")
-                        .IsUnique();
+                    b.HasIndex("Epoch");
 
-                    b.HasIndex("InitiatorId");
-
-                    b.HasIndex("PromotionPeriodId")
-                        .IsUnique();
-
-                    b.HasIndex("ProposalPeriodId");
-
-                    b.HasIndex("TestingPeriodId")
-                        .IsUnique();
+                    b.HasIndex("Hash");
 
                     b.ToTable("Proposals");
                 });
@@ -1201,6 +1211,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<bool>("Duplicated")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("Epoch")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -1210,7 +1223,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength(true)
                         .HasMaxLength(51);
 
-                    b.Property<int>("PeriodId")
+                    b.Property<int>("Period")
                         .HasColumnType("integer");
 
                     b.Property<int>("ProposalId")
@@ -1227,11 +1240,13 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Epoch");
+
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("PeriodId");
+                    b.HasIndex("Period");
 
                     b.HasIndex("ProposalId");
 
@@ -1246,6 +1261,12 @@ namespace Tzkt.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("BallotQuorumMax")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BallotQuorumMin")
+                        .HasColumnType("integer");
 
                     b.Property<long>("BlockDeposit")
                         .HasColumnType("bigint");
@@ -1307,10 +1328,19 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
 
+                    b.Property<int>("NoRewardCycles")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OriginationSize")
                         .HasColumnType("integer");
 
                     b.Property<int>("PreservedCycles")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProposalQuorum")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RampUpCycles")
                         .HasColumnType("integer");
 
                     b.Property<long>("RevelationReward")
@@ -1671,24 +1701,6 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("TransactionOps");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.VotingEpoch", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Progress")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("VotingEpoches");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.VotingPeriod", b =>
                 {
                     b.Property<int>("Id")
@@ -1696,28 +1708,82 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("Code")
+                    b.Property<int?>("BallotsQuorum")
                         .HasColumnType("integer");
 
-                    b.Property<int>("EndLevel")
+                    b.Property<int>("Epoch")
                         .HasColumnType("integer");
 
-                    b.Property<int>("EpochId")
+                    b.Property<int>("FirstLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Index")
                         .HasColumnType("integer");
 
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
-                    b.Property<int>("StartLevel")
+                    b.Property<int>("LastLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("NayBallots")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("NayRolls")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParticipationEma")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PassBallots")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PassRolls")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ProposalsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Supermajority")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TopRolls")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TopUpvotes")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalBakers")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalRolls")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UpvotesQuorum")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("YayBallots")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("YayRolls")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EpochId");
+                    b.HasAlternateKey("Index");
+
+                    b.HasIndex("Epoch");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("Index")
+                        .IsUnique();
 
                     b.ToTable("VotingPeriods");
-
-                    b.HasDiscriminator<int>("Kind");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.VotingSnapshot", b =>
@@ -1727,23 +1793,27 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("DelegateId")
+                    b.Property<int>("BakerId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PeriodId")
+                    b.Property<int>("Period")
                         .HasColumnType("integer");
 
                     b.Property<int>("Rolls")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Level");
+                    b.HasIndex("Period");
 
-                    b.HasIndex("PeriodId", "DelegateId");
+                    b.HasIndex("Period", "BakerId")
+                        .IsUnique();
 
                     b.ToTable("VotingSnapshots");
                 });
@@ -1794,87 +1864,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.HasDiscriminator().HasValue((byte)0);
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.ExplorationPeriod", b =>
-                {
-                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
-
-                    b.Property<int>("Abstainings")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Approvals")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Participation")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ProposalId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quorum")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Refusals")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalStake")
-                        .HasColumnType("integer");
-
-                    b.HasDiscriminator().HasValue(1);
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.PromotionPeriod", b =>
-                {
-                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
-
-                    b.Property<int>("Abstainings")
-                        .HasColumnName("PromotionPeriod_Abstainings")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Approvals")
-                        .HasColumnName("PromotionPeriod_Approvals")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Participation")
-                        .HasColumnName("PromotionPeriod_Participation")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ProposalId")
-                        .HasColumnName("PromotionPeriod_ProposalId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quorum")
-                        .HasColumnName("PromotionPeriod_Quorum")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Refusals")
-                        .HasColumnName("PromotionPeriod_Refusals")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalStake")
-                        .HasColumnName("PromotionPeriod_TotalStake")
-                        .HasColumnType("integer");
-
-                    b.HasDiscriminator().HasValue(3);
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.ProposalPeriod", b =>
-                {
-                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
-
-                    b.HasDiscriminator().HasValue(0);
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TestingPeriod", b =>
-                {
-                    b.HasBaseType("Tzkt.Data.Models.VotingPeriod");
-
-                    b.Property<int>("ProposalId")
-                        .HasColumnName("TestingPeriod_ProposalId")
-                        .HasColumnType("integer");
-
-                    b.HasDiscriminator().HasValue(2);
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Delegate", b =>
@@ -1973,12 +1962,6 @@ namespace Tzkt.Data.Migrations
                         .WithMany("Ballots")
                         .HasForeignKey("Level")
                         .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2176,45 +2159,12 @@ namespace Tzkt.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.Proposal", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.ExplorationPeriod", "ExplorationPeriod")
-                        .WithOne("Proposal")
-                        .HasForeignKey("Tzkt.Data.Models.Proposal", "ExplorationPeriodId");
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Initiator")
-                        .WithMany()
-                        .HasForeignKey("InitiatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.PromotionPeriod", "PromotionPeriod")
-                        .WithOne("Proposal")
-                        .HasForeignKey("Tzkt.Data.Models.Proposal", "PromotionPeriodId");
-
-                    b.HasOne("Tzkt.Data.Models.ProposalPeriod", "ProposalPeriod")
-                        .WithMany()
-                        .HasForeignKey("ProposalPeriodId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.TestingPeriod", "TestingPeriod")
-                        .WithOne("Proposal")
-                        .HasForeignKey("Tzkt.Data.Models.Proposal", "TestingPeriodId");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.ProposalOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Block", "Block")
                         .WithMany("Proposals")
                         .HasForeignKey("Level")
                         .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2285,24 +2235,6 @@ namespace Tzkt.Data.Migrations
                     b.HasOne("Tzkt.Data.Models.Account", "Target")
                         .WithMany()
                         .HasForeignKey("TargetId");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.VotingPeriod", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.VotingEpoch", "Epoch")
-                        .WithMany()
-                        .HasForeignKey("EpochId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.VotingSnapshot", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.VotingPeriod", "Period")
-                        .WithMany()
-                        .HasForeignKey("PeriodId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>

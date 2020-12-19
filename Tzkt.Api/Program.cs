@@ -39,20 +39,27 @@ namespace Tzkt.Api
             {
                 logger.LogInformation("Initialize database");
 
-                var migrations = db.Database.GetPendingMigrations();
-                if (migrations.Any())
-                    throw new Exception($"{migrations.Count()} database migrations are pending");
+                if (db.Database.GetAppliedMigrations().Any() &&
+                    db.Database.GetAppliedMigrations().First() != db.Database.GetMigrations().First())
+                {
+                    attempt = 10;
+                    throw new Exception($"can't migrate database. Please, restore it from the snapshot with the latest version.");
+                }
+
+                var pending = db.Database.GetPendingMigrations();
+                if (pending.Any())
+                    throw new Exception($"{pending.Count()} database migrations are pending.");
 
                 var state = db.AppState.Single();
                 if (state.Level < 1)
-                    throw new Exception("database is empty, at least two blocks are needed");
+                    throw new Exception("database is empty, at least two blocks are needed.");
 
                 logger.LogInformation("Database initialized");
                 return host;
             }
             catch (Exception ex)
             {
-                logger.LogCritical($"Failed to initialize database: {ex.Message}. Try again...");
+                logger.LogCritical($"Failed to initialize database: {ex.Message}");
                 if (attempt >= 10) throw;
                 Thread.Sleep(1000);
 
