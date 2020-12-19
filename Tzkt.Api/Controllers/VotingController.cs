@@ -167,12 +167,26 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get voters
+        /// Get current voting period
         /// </summary>
         /// <remarks>
-        /// Returns voters from a voting period at the specified index.
+        /// Returns current voting period.
+        /// </remarks>
+        /// <returns></returns>
+        [HttpGet("periods/current")]
+        public Task<VotingPeriod> GetCurrentPeriod()
+        {
+            return Voting.GetPeriod(State.GetState().VotingPeriod);
+        }
+
+        /// <summary>
+        /// Get period voters
+        /// </summary>
+        /// <remarks>
+        /// Returns voters from the voting period at the specified index.
         /// </remarks>
         /// <param name="index">Voting period index starting from zero</param>
+        /// <param name="status">Filters voters by status (`none`, `upvoted`, `voted_yay`, `voted_nay`, `voted_pass`)</param>
         /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `rolls`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -180,6 +194,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("periods/{index:int}/voters")]
         public async Task<ActionResult<IEnumerable<VoterSnapshot>>> GetPeriodVoters(
             [Min(0)] int index,
+            VoterStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
@@ -189,7 +204,33 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            return Ok(await Voting.GetVoters(index, sort, offset, limit));
+            return Ok(await Voting.GetVoters(index, status, sort, offset, limit));
+        }
+
+        /// <summary>
+        /// Get current period voters
+        /// </summary>
+        /// <remarks>
+        /// Returns voters from the current period.
+        /// </remarks>
+        /// <param name="status">Filters voters by status (`none`, `upvoted`, `voted_yay`, `voted_nay`, `voted_pass`)</param>
+        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `rolls`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
+        [HttpGet("periods/current/voters")]
+        public async Task<ActionResult<IEnumerable<VoterSnapshot>>> GetPeriodVoters(
+            VoterStatusParameter status,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id", "rolls"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            return Ok(await Voting.GetVoters(State.GetState().VotingPeriod, status, sort, offset, limit));
         }
         #endregion
 
