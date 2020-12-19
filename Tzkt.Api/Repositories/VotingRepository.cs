@@ -599,12 +599,14 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<VoterSnapshot>> GetVoters(
             int period,
+            VoterStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
         {
             var sql = new SqlBuilder($@"SELECT * FROM ""VotingSnapshots""")
                 .Filter("Period", period)
+                .Filter("Status", status)
                 .Take(sort, offset, limit, x => x == "rolls" ? ("Rolls", "Rolls") : ("Id", "Id"));
 
             using var db = GetConnection();
@@ -818,11 +820,11 @@ namespace Tzkt.Api.Repositories
         {
             return status switch
             {
-                0 => "none",
-                1 => "upvoted",
-                2 => "voted_yay",
-                3 => "voted_nay",
-                4 => "voted_pass",
+                0 => VoterStatuses.None,
+                1 => VoterStatuses.Upvoted,
+                2 => VoterStatuses.VotedYay,
+                3 => VoterStatuses.VotedNay,
+                4 => VoterStatuses.VotedPass,
                 _ => "unknown"
             };
         }

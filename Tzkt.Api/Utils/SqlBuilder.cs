@@ -134,6 +134,31 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, VoterStatusParameter status)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+                AppendFilter($@"""{column}"" = {status.Eq}");
+
+            if (status.Ne != null)
+                AppendFilter($@"""{column}"" != {status.Ne}");
+
+            if (status.In != null)
+            {
+                AppendFilter($@"""{column}"" = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", status.In);
+            }
+
+            if (status.Ni != null && status.Ni.Count > 0)
+            {
+                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", status.Ni);
+            }
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, OperationStatusParameter status)
         {
             if (status == null) return this;
