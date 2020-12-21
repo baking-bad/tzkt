@@ -11,15 +11,17 @@ namespace Tzkt.Sync.Protocols.Proto3
     {
         public Validator(ProtocolHandler protocol) : base(protocol) { }
 
-        // new period king enum & wtf
-        protected override async Task ValidateBlockVoting(int periodIndex, string periodKind)
+        // new period kind enum & wtf
+        protected override async Task ValidateBlockVoting(JsonElement metadata)
         {
+            var periodIndex = metadata.Required("level").RequiredInt32("voting_period");
+
             if (Cache.AppState.Get().VotingPeriod != periodIndex)
                 throw new ValidationException("invalid voting period index");
 
             var period = await Cache.Periods.GetAsync(periodIndex);
 
-            var kind = periodKind switch
+            var kind = metadata.RequiredString("voting_period_kind") switch
             {
                 "proposal" => PeriodKind.Proposal,
                 "testing_vote" => PeriodKind.Exploration,

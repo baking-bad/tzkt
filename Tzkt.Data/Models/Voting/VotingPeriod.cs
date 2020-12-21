@@ -70,7 +70,8 @@ namespace Tzkt.Data.Models
         Proposal,
         Exploration,
         Testing,
-        Promotion
+        Promotion,
+        Adoption
     }
 
     public enum PeriodStatus
