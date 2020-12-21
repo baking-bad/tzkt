@@ -87,7 +87,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_270.backup" -O tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_309.backup" -O tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -254,7 +254,7 @@ dotnet Tzkt.Api.dll
 
 That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates. If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json` (see example below).
 
-## Install Tzkt Indexer and API for Carthagenet
+## Install Tzkt Indexer and API for Delphinet
 
 In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Anyway, let's do it from scratch.
 
@@ -265,9 +265,9 @@ In general the steps are the same as for the mainnet, you just need to use diffe
 ````
 sudo -u postgres psql
 
-postgres=# create database cartha_tzkt_db;
+postgres=# create database delphi_tzkt_db;
 postgres=# create user tzkt with encrypted password 'qwerty';
-postgres=# grant all privileges on database cartha_tzkt_db to tzkt;
+postgres=# grant all privileges on database delphi_tzkt_db to tzkt;
 postgres=# \q
 ````
 
@@ -275,14 +275,14 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/cartha_tzkt_344.backup" -O cartha_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_143.backup" -O delphi_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
 
 ````c
-// carthagenet restoring takes ~1 min
-sudo -u postgres pg_restore -c --if-exists -v -d cartha_tzkt_db -1 cartha_tzkt_db.backup
+// delphinet restoring takes ~1 min
+sudo -u postgres pg_restore -c --if-exists -v -d delphi_tzkt_db -1 delphi_tzkt_db.backup
 ````
 
 ### Clone, build, configure and run Tzkt Indexer
@@ -298,12 +298,12 @@ git clone https://github.com/baking-bad/tzkt.git
 
 ````
 cd ~/tzkt/Tzkt.Sync/
-dotnet publish -o ~/cartha-tzkt-sync
+dotnet publish -o ~/delphi-tzkt-sync
 ````
 
 #### Configure indexer
 
-Edit configuration file `~/cartha-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
+Edit configuration file `~/delphi-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
 
 Like this:
 
@@ -315,20 +315,18 @@ Like this:
   },
 
   "TezosNode": {
-    "ChainId": "NetXjD3HPJJjmcd",
-    "Endpoint": "https://rpc.tzkt.io/carthagenet/",
+    "ChainId": "NetXm8tYqnMWky1",
+    "Endpoint": "https://rpc.tzkt.io/delphinet/",
     "Timeout": 30
   },
   
   "Quotes": {
     "Async": true,
-    "Provider": {
-      "Name": "TzktQuotes"
-    }    
+    "Provider": null
   },
 
   "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=cartha_tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "server=localhost;port=5432;database=delphi_tzkt_db;username=tzkt;password=qwerty;"
   },
 
   "Logging": {
@@ -344,7 +342,7 @@ Like this:
 #### Run indexer
 
 ````c
-cd ~/cartha-tzkt-sync
+cd ~/delphi-tzkt-sync
 dotnet Tzkt.Sync.dll
 
 // info: Microsoft.Hosting.Lifetime[0]
@@ -352,7 +350,7 @@ dotnet Tzkt.Sync.dll
 // info: Microsoft.Hosting.Lifetime[0]
 //       Hosting environment: Production
 // info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/cartha-tzkt-sync
+//       Content root path: /home/tzkt/delphi-tzkt-sync
 // warn: Tzkt.Sync.Services.Observer[0]
 //       Observer is started
 // info: Tzkt.Sync.Services.Observer[0]
@@ -364,20 +362,20 @@ dotnet Tzkt.Sync.dll
 
 That's it. If you want to run the indexer as a daemon, take a look at this guide: https://docs.microsoft.com/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-3.1#create-the-service-file.
 
-### Build, configure and run Tzkt API for the carthagenet indexer
+### Build, configure and run Tzkt API for the delphinet indexer
 
-Suppose you have already created database `cartha_tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
+Suppose you have already created database `delphi_tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
 
 #### Build API
 
 ````
 cd ~/tzkt/Tzkt.Api/
-dotnet publish -o ~/cartha-tzkt-api
+dotnet publish -o ~/delphi-tzkt-api
 ````
 
 #### Configure API
 
-Edit configuration file `~/cartha-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
+Edit configuration file `~/delphi-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
 
 By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates.
 
@@ -404,7 +402,7 @@ Like this:
   },
 
   "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=cartha_tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "server=localhost;port=5432;database=delphi_tzkt_db;username=tzkt;password=qwerty;"
   },
 
   "Kestrel": {
@@ -433,7 +431,7 @@ Like this:
 #### Run API
 
 ````c
-cd ~/cartha-tzkt-api
+cd ~/delphi-tzkt-api
 dotnet Tzkt.Api.dll
 
 // info: Tzkt.Api.Services.Metadata.AccountMetadataService[0]
@@ -451,7 +449,7 @@ dotnet Tzkt.Api.dll
 // info: Microsoft.Hosting.Lifetime[0]
 //       Hosting environment: Production
 // info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/cartha-tzkt-api
+//       Content root path: /home/tzkt/delphi-tzkt-api
 // ....
 ````
 
@@ -460,6 +458,7 @@ That's it.
 ## Have a question?
 
 Feel free to contact us via:
+- Slack: https://tezos-dev.slack.com #baking-bad
 - Telegram: https://t.me/baking_bad_chat
 - Twitter: https://twitter.com/TezosBakingBad
 - Email: hello@baking-bad.org
