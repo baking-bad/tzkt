@@ -52,9 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!Cache.Accounts.DelegateExists(Baker))
                 throw new ValidationException($"non-existent block baker");
 
-            await ValidateBlockVoting(
-                metadata.Required("level").RequiredInt32("voting_period"),
-                metadata.RequiredString("voting_period_kind"));
+            await ValidateBlockVoting(metadata);
 
             foreach (var baker in metadata.RequiredArray("deactivated").EnumerateArray())
                 if (!Cache.Accounts.DelegateExists(baker.GetString()))
@@ -65,14 +63,16 @@ namespace Tzkt.Sync.Protocols.Proto1
             ValidateCycleRewards(balanceUpdates.Skip(Cycle < Protocol.NoRewardCycles ? 2 : 3));
         }
 
-        protected virtual async Task ValidateBlockVoting(int periodIndex, string periodKind)
+        protected virtual async Task ValidateBlockVoting(JsonElement metadata)
         {
+            var periodIndex = metadata.Required("level").RequiredInt32("voting_period");
+
             if (Cache.AppState.Get().VotingPeriod != periodIndex)
                 throw new ValidationException("invalid voting period index");
 
             var period = await Cache.Periods.GetAsync(periodIndex);
 
-            var kind = periodKind switch
+            var kind = metadata.RequiredString("voting_period_kind") switch
             {
                 "proposal" => PeriodKind.Proposal,
                 "exploration" => PeriodKind.Exploration,
