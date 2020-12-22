@@ -31,11 +31,11 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// The height of the block in which the period starts
         /// </summary>
-        public int StartLevel { get; set; }
+        public int FirstLevel { get; set; }
 
         /// <summary>
         /// The height of the block in which the period ends
         /// </summary>
-        public int EndLevel { get; set; }
+        public int LastLevel { get; set; }
     }
 }
