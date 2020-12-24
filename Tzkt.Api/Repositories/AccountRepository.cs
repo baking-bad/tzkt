@@ -2424,7 +2424,7 @@ namespace Tzkt.Api.Repositories
                     break;
             }
 
-            return sort.Desc == null
+            return sort?.Desc == null
                 ? result.OrderBy(x => x.Id).Take(limit)
                 : result.OrderByDescending(x => x.Id).Take(limit);
         }
