@@ -17,8 +17,8 @@ by placing the label **"Powered by TzKT API"** with a direct link to [tzkt.io](h
 TzKT API is available for the following Tezos networks and on the following base URLs:
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
-- Carthagenet: `https://api.carthagenet.tzkt.io/` ([view docs](https://api.carthage.tzkt.io))
-- Delphinet: `https://api.delphinet.tzkt.io/` ([view docs](https://api.delphi.tzkt.io))
+- Delphinet: `https://api.delphinet.tzkt.io/` ([view docs](https://api.delphinet.tzkt.io))
+- Edonet: `https://api.edonet.tzkt.io/` ([view docs](https://api.edonet.tzkt.io))
 
 ### Staging environment
 
@@ -40,4 +40,4 @@ Feel free to ask any questions about TzKT Explorer and Tezos in general. Our tea
 - Email: hello@baking-bad.org
 - Twitter: https://twitter.com/TezosBakingBad
 - Telegram: [tg://resolve?domain=baking_bad_chat](tg://resolve?domain=baking_bad_chat)
-- Slack: https://tezos-dev.slack.com #baking-bad
+- Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L

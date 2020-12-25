@@ -2,7 +2,7 @@
 [![Made With](https://img.shields.io/badge/made%20with-C%23-success.svg?)](https://docs.microsoft.com/en-gb/dotnet/csharp/language-reference/)
 [![License: MIT](https://img.shields.io/github/license/baking-bad/netezos.svg)](https://opensource.org/licenses/MIT)
 
-TzKT is a lightweight Tezos blockchain indexer with an advanced API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
+TzKT is a lightweight [Tezos](https://tezos.com/) blockchain indexer with an advanced API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
 
 The indexer fetches raw data from the Tezos node, then processes it and stores in the database in such a way as to provide effective access to the blockchain data. For example, getting operations by hash, or getting all operations of the particular account, or getting detailed baking rewards, etc. None of this can be accessed via node RPC, but TzKT indexer makes this data (and much more) available.
 
@@ -254,9 +254,19 @@ dotnet Tzkt.Api.dll
 
 That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates. If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json` (see example below).
 
-## Install Tzkt Indexer and API for Delphinet
+## Install Tzkt Indexer and API for testnets
 
-In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Anyway, let's do it from scratch.
+In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Here are some presets for testnets:
+ - Delphinet:
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_148.backup
+   - RPC node: https://delphinet-tezos.giganode.io/
+   - Chain id: NetXm8tYqnMWky1   
+ - Edonet:
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/edo_tzkt_34.backup
+   - RPC node: https://edonet-tezos.giganode.io/
+   - Chain id: NetXSp4gfdanies
+
+Anyway, let's do it, for reference, from scratch for the delphinet.
 
 ### Prepare database
 
@@ -275,7 +285,7 @@ postgres=# \q
 
 ````c
 cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_143.backup" -O delphi_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_148.backup" -O delphi_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -458,7 +468,7 @@ That's it.
 ## Have a question?
 
 Feel free to contact us via:
-- Slack: https://tezos-dev.slack.com #baking-bad
+- Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L
 - Telegram: https://t.me/baking_bad_chat
 - Twitter: https://twitter.com/TezosBakingBad
 - Email: hello@baking-bad.org
