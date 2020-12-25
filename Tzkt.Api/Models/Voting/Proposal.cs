@@ -56,5 +56,10 @@ namespace Tzkt.Api.Models
         /// Information about the proposal
         /// </summary>
         public ProposalMetadata Metadata { get; set; }
+
+        /// <summary>
+        /// **DEPRECATED**. Use `firstPeriod` instead.
+        /// </summary>
+        public int Period => FirstPeriod;
     }
 }
