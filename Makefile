@@ -9,7 +9,7 @@ init:
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
 	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < tzkt_db.backup
 	rm tzkt_db.backup
-	docker-compose build
+	docker-compose pull
 
 start:
 	docker-compose up -d
