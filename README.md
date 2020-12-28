@@ -86,15 +86,14 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_309.backup" -O tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_309.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
 
 ````c
 // mainnet restoring takes ~10 min
-sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -1 tzkt_db.backup
+sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -1 /tmp/tzkt_db.backup
 ````
 
 ### Clone, build, configure and run Tzkt Indexer
