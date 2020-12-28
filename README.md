@@ -283,15 +283,14 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-cd ~
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_148.backup" -O delphi_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_148.backup" -O /tmp/delphi_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
 
 ````c
 // delphinet restoring takes ~1 min
-sudo -u postgres pg_restore -c --if-exists -v -d delphi_tzkt_db -1 delphi_tzkt_db.backup
+sudo -u postgres pg_restore -c --if-exists -v -d delphi_tzkt_db -1 /tmp/delphi_tzkt_db.backup
 ````
 
 ### Clone, build, configure and run Tzkt Indexer
