@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public Proto8Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto7Handler> logger)
+        public Proto8Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto8Handler> logger)
             : base(node, db, cache, quotes, services, config, logger)
         {
             Rpc = new Rpc(node);

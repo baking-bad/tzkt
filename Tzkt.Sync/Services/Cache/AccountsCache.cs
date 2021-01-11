@@ -59,7 +59,6 @@ namespace Tzkt.Sync.Services.Cache
                     {
                         var account = CreateUser(address);
 
-                        Db.Accounts.Add(account);
                         CachedById[account.Id] = account;
                         CachedByAddress[account.Address] = account;
                     }
