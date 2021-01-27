@@ -154,6 +154,7 @@ namespace Tzkt.Api.Repositories
                         Alias = accMetadata?.Alias,
                         Address = contract.Address,
                         Kind = KindToString(contract.Kind),
+                        Tzips = GetTzips(contract.Tzips),
                         Balance = contract.Balance,
                         Creator = creator == null ? null
                             : new CreatorInfo
@@ -279,6 +280,7 @@ namespace Tzkt.Api.Repositories
                 Alias = metadata?.Alias,
                 Address = contract.Address,
                 Kind = KindToString(contract.Kind),
+                Tzips = GetTzips(contract.Tzips),
                 Balance = contract.Balance,
                 Creator = creator == null ? null
                     : new CreatorInfo
@@ -473,6 +475,7 @@ namespace Tzkt.Api.Repositories
                             Alias = metadata?.Alias,
                             Address = row.Address,
                             Kind = KindToString(row.Kind),
+                            Tzips = GetTzips(row.Tzips),
                             Balance = row.Balance,
                             Creator = creator == null ? null
                             : new CreatorInfo
@@ -575,6 +578,7 @@ namespace Tzkt.Api.Repositories
                     case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
 
                     case "kind": columns.Add(@"""Kind"""); break;
+                    case "tzips": columns.Add(@"""Tzips"""); break;
                     case "creator": columns.Add(@"""CreatorId"""); break;
                     case "manager": columns.Add(@"""ManagerId"""); break;
                 }
@@ -785,6 +789,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Kind == null ? null : KindToString(row.Kind);
                         break;
+                    case "tzips":
+                        foreach (var row in rows)
+                            result[j++][i] = GetTzips(row.Tzips);
+                        break;
                     case "creator":
                         foreach (var row in rows)
                         {
@@ -872,6 +880,7 @@ namespace Tzkt.Api.Repositories
                 case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
 
                 case "kind": columns.Add(@"""Kind"""); break;
+                case "tzips": columns.Add(@"""Tzips"""); break;
                 case "creator": columns.Add(@"""CreatorId"""); break;
                 case "manager": columns.Add(@"""ManagerId"""); break;
             }
@@ -1077,6 +1086,10 @@ namespace Tzkt.Api.Repositories
                 case "kind":
                     foreach (var row in rows)
                         result[j++] = row.Kind == null ? null : KindToString(row.Kind);
+                    break;
+                case "tzips":
+                    foreach (var row in rows)
+                        result[j++] = GetTzips(row.Tzips);
                     break;
                 case "creator":
                     foreach (var row in rows)
@@ -1712,6 +1725,7 @@ namespace Tzkt.Api.Repositories
                     Alias = metadata?.Alias,
                     Address = row.Address,
                     Kind = KindToString(row.Kind),
+                    Tzips = GetTzips(row.Tzips),
                     Balance = row.Balance,
                     Creator = creator == null ? null
                         : new CreatorInfo
@@ -1765,6 +1779,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type": columns.Add(@"""Type"""); break;
                     case "kind": columns.Add(@"""Kind"""); break;
+                    case "tzips": columns.Add(@"""Tzips"""); break;
                     case "alias": columns.Add(@"""Id"""); break;
                     case "address": columns.Add(@"""Address"""); break;
                     case "balance": columns.Add(@"""Balance"""); break;
@@ -1819,6 +1834,10 @@ namespace Tzkt.Api.Repositories
                     case "kind":
                         foreach (var row in rows)
                             result[j++][i] = KindToString(row.Kind);
+                        break;
+                    case "tzips":
+                        foreach (var row in rows)
+                            result[j++][i] = GetTzips(row.Tzips);
                         break;
                     case "alias":
                         foreach (var row in rows)
@@ -1940,6 +1959,7 @@ namespace Tzkt.Api.Repositories
             {
                 case "type": columns.Add(@"""Type"""); break;
                 case "kind": columns.Add(@"""Kind"""); break;
+                case "tzips": columns.Add(@"""Tzips"""); break;
                 case "alias": columns.Add(@"""Id"""); break;
                 case "address": columns.Add(@"""Address"""); break;
                 case "balance": columns.Add(@"""Balance"""); break;
@@ -1990,6 +2010,10 @@ namespace Tzkt.Api.Repositories
                 case "kind":
                     foreach (var row in rows)
                         result[j++] = KindToString(row.Kind);
+                    break;
+                case "tzips":
+                    foreach (var row in rows)
+                        result[j++] = GetTzips(row.Tzips);
                     break;
                 case "alias":
                     foreach (var row in rows)
@@ -2451,5 +2475,20 @@ namespace Tzkt.Api.Repositories
             2 => ContractKinds.Asset,
             _ => "unknown"
         };
+
+        IEnumerable<string> GetTzips(int? value)
+        {
+            if (value == null || value == 0) return null;
+            var res = new List<string>(1);
+
+            if (((int)value & (int)Data.Models.Tzip.FA2) > 0)
+                res.Add("fa2");
+            else if (((int)value & (int)Data.Models.Tzip.FA12) > 0)
+                res.Add("fa12");
+            else if (((int)value & (int)Data.Models.Tzip.FA1) > 0)
+                res.Add("fa1");
+
+            return res;
+        }
     }
 }

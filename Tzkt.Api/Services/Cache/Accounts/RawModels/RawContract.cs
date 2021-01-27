@@ -10,6 +10,7 @@ namespace Tzkt.Api.Services.Cache
         public override string Type => AccountTypes.Contract;
 
         public int Kind { get; set; }
+        public int? Tzips { get; set; }
 
         public int? CreatorId { get; set; }
         public int? ManagerId { get; set; }

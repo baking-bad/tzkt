@@ -16,6 +16,11 @@ namespace Tzkt.Api.Models
         /// where `delegator_contract` - manager.tz smart contract for delegation purpose only
         /// </summary>
         public string Kind { get; set; }
+
+        /// <summary>
+        /// List of implemented standards (TZIPs)
+        /// </summary>
+        public IEnumerable<string> Tzips { get; set; }
         
         /// <summary>
         /// Name of the project behind the contract or contract description
