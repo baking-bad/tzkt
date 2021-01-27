@@ -219,7 +219,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="baker">Filters seed nonce revelation operations by baker. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters operations by level.</param>
         /// <param name="timestamp">Filters operations by timestamp.</param>
-        /// <param name="parameters">Filters transactions by parameters value. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
+        /// <param name="params">Filters transactions by parameters. Note, this query parameter supports the following format: `?params{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?params.token_id=...` or `?params.sigs.0.ne=...`.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="status">Filters transactions, delegations, originations and reveals by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
@@ -246,7 +248,8 @@ namespace Tzkt.Api.Controllers
             AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            StringParameter parameters,
+            StringParameter entrypoint,
+            JsonParameter @params,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortMode sort = SortMode.Descending,
@@ -355,15 +358,6 @@ namespace Tzkt.Api.Controllers
                 if (baker.Nex != null)
                     return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
             }
-
-            if (parameters != null)
-            {
-                if (parameters.Eqx != null)
-                    return new BadRequest($"{nameof(parameters)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (parameters.Nex != null)
-                    return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
-            }
             #endregion
 
             var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
@@ -384,7 +378,7 @@ namespace Tzkt.Api.Controllers
             if (to != null) timestamp.Lt = to.Value.DateTime;
             #endregion
 
-            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, parameters, hasInternals, status, _sort, _offset, limit, quote));
+            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, @params, hasInternals, status, _sort, _offset, limit, quote));
         }
 
         /// <summary>

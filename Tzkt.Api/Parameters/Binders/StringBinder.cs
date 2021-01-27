@@ -34,12 +34,6 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetStringList($"{model}.ni", ref hasValue, out var ni))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetString($"{model}.eqx", ref hasValue, out var eqx))
-                return Task.CompletedTask;
-
-            if (!bindingContext.TryGetString($"{model}.nex", ref hasValue, out var nex))
-                return Task.CompletedTask;
-
             if (!bindingContext.TryGetBool($"{model}.null", ref hasValue, out var isNull))
                 return Task.CompletedTask;
 
@@ -65,8 +59,6 @@ namespace Tzkt.Api
                     .Replace("ъуъ", "*"),
                 In = @in,
                 Ni = ni,
-                Eqx = eqx,
-                Nex = nex,
                 Null = isNull
             });
 

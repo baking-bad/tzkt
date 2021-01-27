@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
@@ -11,7 +10,11 @@ namespace Tzkt.Data.Models
         public int? ResetDeactivation { get; set; }
 
         public long Amount { get; set; }
-        public string Parameters { get; set; }
+
+        public string Entrypoint { get; set; }
+        public byte[] RawParameters { get; set; }
+        [Column(TypeName = "jsonb")]
+        public string JsonParameters { get; set; }
 
         public InternalOperations? InternalOperations { get; set; }
 
