@@ -18,6 +18,7 @@ namespace Tzkt.Api.Services.Cache
         {
             0 => ContractKinds.Delegator,
             1 => ContractKinds.SmartContract,
+            2 => ContractKinds.Asset,
             _ => "unknown"
         };
     }

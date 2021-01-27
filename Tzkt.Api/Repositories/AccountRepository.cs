@@ -2448,6 +2448,7 @@ namespace Tzkt.Api.Repositories
         {
             0 => ContractKinds.Delegator,
             1 => ContractKinds.SmartContract,
+            2 => ContractKinds.Asset,
             _ => "unknown"
         };
     }
