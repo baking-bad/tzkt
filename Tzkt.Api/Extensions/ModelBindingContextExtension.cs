@@ -437,6 +437,11 @@ namespace Tzkt.Api
                         hasValue = true;
                         result = 1;
                     }
+                    else if (valueObject.FirstValue == ContractKinds.Asset)
+                    {
+                        hasValue = true;
+                        result = 2;
+                    }
                     else
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid contract kind.");
