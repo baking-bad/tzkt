@@ -350,17 +350,83 @@ namespace Tzkt.Api
                 Params.Add($"p{Counter++}", str.Ni);
             }
 
-            if (str.Eqx != null && map != null)
-                AppendFilter($@"""{column}"" = ""{map(str.Eqx)}""");
-
-            if (str.Nex != null && map != null)
-                AppendFilter($@"""{column}"" != ""{map(str.Nex)}""");
-
             if (str.Null != null)
             {
                 AppendFilter(str.Null == true
                     ? $@"""{column}"" IS NULL"
                     : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, JsonParameter json, Func<string, string> map = null)
+        {
+            if (json == null) return this;
+            
+            if (json.Eq != null)
+            {
+                foreach (var (path, value) in json.Eq)
+                {
+                    AppendFilter($@"""{column}""#>>'{{{path}}}' = @p{Counter}");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Ne != null)
+            {
+                foreach (var (path, value) in json.Ne)
+                {
+                    AppendFilter($@"""{column}""#>>'{{{path}}}' != @p{Counter}");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.As != null)
+            {
+                foreach (var (path, value) in json.As)
+                {
+                    AppendFilter($@"""{column}""#>>'{{{path}}}' LIKE @p{Counter}");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Un != null)
+            {
+                foreach (var (path, value) in json.Un)
+                {
+                    AppendFilter($@"NOT (""{column}""#>>'{{{path}}}' LIKE @p{Counter})");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.In != null)
+            {
+                foreach (var (path, value) in json.In)
+                {
+                    AppendFilter($@"""{column}""#>>'{{{path}}}' = ANY (@p{Counter})");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Ni != null)
+            {
+                foreach (var (path, value) in json.Ni)
+                {
+                    AppendFilter($@"NOT (""{column}""#>>'{{{path}}}' = ANY (@p{Counter}))");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Null != null)
+            {
+                foreach (var (path, value) in json.Null)
+                {
+                    if (value && path.Length > 0)
+                        AppendFilter($@"""{column}"" IS NOT NULL");
+
+                    AppendFilter($@"""{column}""#>>'{{{path}}}' IS {(value ? "" : "NOT ")}NULL");
+                }
             }
 
             return this;

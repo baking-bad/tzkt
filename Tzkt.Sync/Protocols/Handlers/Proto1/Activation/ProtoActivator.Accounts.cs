@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -82,6 +83,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Kind = ContractKind.SmartContract,
                 };
 
+                #region script
+                var code = Micheline.FromJson(data[1].Required("code")) as MichelineArray;
+
+                var script = new Script
+                {
+                    ContractId = contract.Id,
+                    ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes(),
+                    StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes(),
+                    CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes(),
+                };
+
+                Db.Scripts.Add(script);
+                Cache.Scripts.Add(contract, script);
+                #endregion
+
                 manager.ContractsCount++;
                 delegat.DelegatorsCount++;
                 delegat.StakingBalance += contract.Balance;
@@ -132,9 +148,11 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             await Db.Database.ExecuteSqlRawAsync(@"
                 DELETE FROM ""Accounts"";
-                DELETE FROM ""MigrationOps"";");
+                DELETE FROM ""MigrationOps"";
+                DELETE FROM ""Scripts"";");
 
             await Cache.Accounts.ResetAsync();
+            Cache.Scripts.Reset();
 
             var state = Cache.AppState.Get();
             state.AccountsCount = 0;

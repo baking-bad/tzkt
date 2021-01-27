@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +7,8 @@ namespace Tzkt.Data.Models
     public class Contract : Account
     {
         public ContractKind Kind { get; set; }
+        public Tzip? Tzips { get; set; }
+
         public bool? Spendable { get; set; }
 
         public int? CreatorId { get; set; }
@@ -28,7 +30,17 @@ namespace Tzkt.Data.Models
     public enum ContractKind : byte
     {
         DelegatorContract,
-        SmartContract
+        SmartContract,
+        Asset
+    }
+
+    [Flags]
+    public enum Tzip
+    {
+        None    = 0b_0000,
+        FA1     = 0b_0001, // tzip-5
+        FA12    = 0b_0011, // tzip-7
+        FA2     = 0b_0100, // tzip-12
     }
 
     public static class ContractModel

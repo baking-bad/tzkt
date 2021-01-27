@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
@@ -104,9 +101,19 @@ namespace Tzkt.Api.Models
         public long Amount { get; set; }
 
         /// <summary>
-        /// Parameters/code, passed to the target contract
+        /// Entrypoint called on the target contract
         /// </summary>
-        public string Parameters { get; set; }
+        public string Entrypoint { get; set; }
+
+        /// <summary>
+        /// Parameters converted to human-readable JSON
+        /// </summary>
+        public string Params { get; set; }
+
+        /// <summary>
+        /// Raw parameters in micheline format
+        /// </summary>
+        public string RawParams { get; set; }
 
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
@@ -134,5 +141,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public QuoteShort Quote { get; set; }
         #endregion
+
+        /// <summary>
+        /// **DEPRECATED**. Use `params` or `rawParams` instead.
+        /// </summary>
+        public string Parameters => Entrypoint == null ? null
+            : $"{{\"entrypoint\":\"{Entrypoint}\",\"value\":{RawParams}}}";
     }
 }

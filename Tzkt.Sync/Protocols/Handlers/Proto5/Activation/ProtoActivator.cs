@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -98,6 +99,26 @@ namespace Tzkt.Sync.Protocols.Proto5
             state.MigrationOpsCount++;
             statistics.TotalCreated += 500_000_000;
             #endregion
+
+            #region scripts
+            var smartContracts = await Db.Contracts
+                .AsNoTracking()
+                .Where(x => x.Kind > ContractKind.DelegatorContract)
+                .ToListAsync();
+
+            foreach (var contract in smartContracts)
+            {
+                var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
+                var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                
+                var script = await Cache.Scripts.GetAsync(contract);
+                Db.TryAttach(script);
+
+                script.ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
+                script.StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
+                script.CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+            }
+            #endregion
         }
 
         protected override async Task RevertContext(AppState state)
@@ -138,6 +159,26 @@ namespace Tzkt.Sync.Protocols.Proto5
             Db.MigrationOps.Remove(invoice);
 
             state.MigrationOpsCount--;
+            #endregion
+
+            #region scripts
+            var smartContracts = await Db.Contracts
+                .AsNoTracking()
+                .Where(x => x.Kind > ContractKind.DelegatorContract)
+                .ToListAsync();
+
+            foreach (var contract in smartContracts)
+            {
+                var rawContract = await Proto.Rpc.GetContractAsync(state.Level - 1, contract.Address);
+                var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+
+                var script = await Cache.Scripts.GetAsync(contract);
+                Db.TryAttach(script);
+
+                script.ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
+                script.StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
+                script.CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+            }
             #endregion
         }
     }

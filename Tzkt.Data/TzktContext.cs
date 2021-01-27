@@ -63,6 +63,10 @@ namespace Tzkt.Data
         public DbSet<Statistics> Statistics { get; set; }
         #endregion
 
+        #region scripts
+        public DbSet<Script> Scripts { get; set; }
+        #endregion
+
         public TzktContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -122,6 +126,10 @@ namespace Tzkt.Data
 
             #region statistics
             modelBuilder.BuildStatisticsModel();
+            #endregion
+
+            #region scripts
+            modelBuilder.BuildScriptModel();
             #endregion
         }
     }

@@ -1,13 +1,26 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Text.Json;
-using Tzkt.Sync.Utils;
+using Schema = Netezos.Contracts.Contract;
+using Netezos.Encoding;
 
 namespace Tzkt.Sync.Protocols
 {
     static class ManagerTz
     {
-        const string Code = @"[{""prim"":""parameter"",""args"":[{""prim"":""or"",""args"":[{""prim"":""lambda"",""args"":[{""prim"":""unit""},{""prim"":""list"",""args"":[{""prim"":""operation""}]}],""annots"":[""%do""]},{""prim"":""unit"",""annots"":[""%default""]}]}]},{""prim"":""storage"",""args"":[{""prim"":""key_hash""}]},{""prim"":""code"",""args"":[[[[{""prim"":""DUP""},{""prim"":""CAR""},{""prim"":""DIP"",""args"":[[{""prim"":""CDR""}]]}]],{""prim"":""IF_LEFT"",""args"":[[{""prim"":""PUSH"",""args"":[{""prim"":""mutez""},{""int"":""0""}]},{""prim"":""AMOUNT""},[[{""prim"":""COMPARE""},{""prim"":""EQ""}],{""prim"":""IF"",""args"":[[],[[{""prim"":""UNIT""},{""prim"":""FAILWITH""}]]]}],[{""prim"":""DIP"",""args"":[[{""prim"":""DUP""}]]},{""prim"":""SWAP""}],{""prim"":""IMPLICIT_ACCOUNT""},{""prim"":""ADDRESS""},{""prim"":""SENDER""},[[{""prim"":""COMPARE""},{""prim"":""EQ""}],{""prim"":""IF"",""args"":[[],[[{""prim"":""UNIT""},{""prim"":""FAILWITH""}]]]}],{""prim"":""UNIT""},{""prim"":""EXEC""},{""prim"":""PAIR""}],[{""prim"":""DROP""},{""prim"":""NIL"",""args"":[{""prim"":""operation""}]},{""prim"":""PAIR""}]]}]]}]";
+        const string Code =
+            @"[{""prim"":""parameter"",""args"":[{""prim"":""or"",""args"":[{""prim"":""lambda"",""args"":[{""prim"":" +
+            @"""unit""},{""prim"":""list"",""args"":[{""prim"":""operation""}]}],""annots"":[""%do""]},{""prim"":""un" +
+            @"it"",""annots"":[""%default""]}]}]},{""prim"":""storage"",""args"":[{""prim"":""key_hash""}]},{""prim""" +
+            @":""code"",""args"":[[[[{""prim"":""DUP""},{""prim"":""CAR""},{""prim"":""DIP"",""args"":[[{""prim"":""C" +
+            @"DR""}]]}]],{""prim"":""IF_LEFT"",""args"":[[{""prim"":""PUSH"",""args"":[{""prim"":""mutez""},{""int"":" +
+            @"""0""}]},{""prim"":""AMOUNT""},[[{""prim"":""COMPARE""},{""prim"":""EQ""}],{""prim"":""IF"",""args"":[[" +
+            @"],[[{""prim"":""UNIT""},{""prim"":""FAILWITH""}]]]}],[{""prim"":""DIP"",""args"":[[{""prim"":""DUP""}]]" +
+            @"},{""prim"":""SWAP""}],{""prim"":""IMPLICIT_ACCOUNT""},{""prim"":""ADDRESS""},{""prim"":""SENDER""},[[{" +
+            @"""prim"":""COMPARE""},{""prim"":""EQ""}],{""prim"":""IF"",""args"":[[],[[{""prim"":""UNIT""},{""prim"":" +
+            @"""FAILWITH""}]]]}],{""prim"":""UNIT""},{""prim"":""EXEC""},{""prim"":""PAIR""}],[{""prim"":""DROP""},{""" +
+            @"prim"":""NIL"",""args"":[{""prim"":""operation""}]},{""prim"":""PAIR""}]]}]]}]";
+
+        public static Schema Schema { get; } = new Schema(Micheline.FromJson(Code));
 
         public static bool Test(JsonElement code, JsonElement storage)
         {

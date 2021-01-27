@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Netezos.Encoding;
 
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -44,9 +44,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 Sender = sender,
                 Target = target,
-                Parameters = content.TryGetProperty("parameters", out var param)
-                    ? OperationParameters.Parse(param)
-                    : null,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -67,6 +64,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ? (long?)block.Protocol.OriginationSize * block.Protocol.ByteCost
                     : null
             };
+
+            if (content.TryGetProperty("parameters", out var parameters))
+                await ProcessParameters(transaction, parameters);
             #endregion
 
             #region entities
@@ -165,9 +165,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Nonce = content.RequiredInt32("nonce"),
                 Sender = sender, 
                 Target = target,
-                Parameters = content.TryGetProperty("parameters", out var param)
-                    ? OperationParameters.Parse(param)
-                    : null,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -188,6 +185,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ? (long?)block.Protocol.OriginationSize * block.Protocol.ByteCost
                     : null
             };
+
+            if (content.TryGetProperty("parameters", out var parameters))
+                await ProcessParameters(transaction, parameters);
             #endregion
 
             #region entities
@@ -453,6 +453,49 @@ namespace Tzkt.Sync.Protocols.Proto1
             return target is Contract c && c.Kind == ContractKind.SmartContract
                 ? BlockEvents.SmartContracts
                 : BlockEvents.None;
+        }
+
+        protected virtual async Task ProcessParameters(TransactionOperation transaction, JsonElement parameters)
+        {
+            if (transaction.Target is User) return;
+            var (rawEp, rawParam) = ("default", Micheline.FromJson(parameters));
+
+            if (transaction.Target is Contract contract)
+            {
+                if (contract.Kind == ContractKind.DelegatorContract)
+                {
+                    if (rawParam is MichelinePrim p && p.Prim == PrimType.unit)
+                        return;
+
+                    transaction.Entrypoint = rawEp;
+                    transaction.RawParameters = rawParam.ToBytes();
+                }
+                else
+                {
+                    try
+                    {
+                        var script = await Cache.Scripts.GetAsync(contract);
+                        var (normEp, normParam) = script.Schema.NormalizeParameters(rawEp, rawParam);
+
+                        transaction.Entrypoint = normEp;
+                        transaction.RawParameters = normParam.ToBytes();
+                        transaction.JsonParameters = script.Schema.HumanizeParameters(normEp, normParam);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Entrypoint ??= rawEp;
+                        transaction.RawParameters ??= rawParam.ToBytes();
+
+                        if (transaction.Status == OperationStatus.Applied)
+                            Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                transaction.Entrypoint = rawEp;
+                transaction.RawParameters = rawParam.ToBytes();
+            }
         }
     }
 }

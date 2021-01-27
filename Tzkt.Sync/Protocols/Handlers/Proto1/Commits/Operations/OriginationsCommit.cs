@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Netezos.Encoding;
 
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = (result.OptionalInt32("paid_storage_size_diff") ?? 0) * block.Protocol.ByteCost,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
-            };
+            };            
             #endregion
 
             #region entities
@@ -142,6 +142,36 @@ namespace Tzkt.Sync.Protocols.Proto1
                 block.Events |= GetBlockEvents(contract);
 
                 Db.Contracts.Add(contract);
+                if (contract.Kind > ContractKind.DelegatorContract)
+                {
+                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
+
+                    var script = new Script
+                    {
+                        ContractId = contract.Id,
+                        ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes(),
+                        StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes(),
+                        CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes(),
+                    };
+
+                    contract.Tzips = Tzip.None;
+                    if (Netezos.Contracts.Tzip5.IsFA1(script.Schema))
+                    {
+                        if (Netezos.Contracts.Tzip7.IsFA12(script.Schema))
+                            contract.Tzips |= Tzip.FA12;
+
+                        contract.Tzips |= Tzip.FA1;
+                        contract.Kind = ContractKind.Asset;
+                    }
+                    if (Netezos.Contracts.Tzip12.IsFA2(script.Schema))
+                    {
+                        contract.Tzips |= Tzip.FA2;
+                        contract.Kind = ContractKind.Asset;
+                    }
+
+                    Db.Scripts.Add(script);
+                    Cache.Scripts.Add(contract, script);
+                }
             }
             #endregion
 
@@ -281,6 +311,36 @@ namespace Tzkt.Sync.Protocols.Proto1
                 block.Events |= GetBlockEvents(contract);
 
                 Db.Contracts.Add(contract);
+                if (contract.Kind > ContractKind.DelegatorContract)
+                {
+                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
+
+                    var script = new Script
+                    {
+                        ContractId = contract.Id,
+                        ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes(),
+                        StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes(),
+                        CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes(),
+                    };
+
+                    contract.Tzips = Tzip.None;
+                    if (Netezos.Contracts.Tzip5.IsFA1(script.Schema))
+                    {
+                        if (Netezos.Contracts.Tzip7.IsFA12(script.Schema))
+                            contract.Tzips |= Tzip.FA12;
+
+                        contract.Tzips |= Tzip.FA1;
+                        contract.Kind = ContractKind.Asset;
+                    }
+                    if (Netezos.Contracts.Tzip12.IsFA2(script.Schema))
+                    {
+                        contract.Tzips |= Tzip.FA2;
+                        contract.Kind = ContractKind.Asset;
+                    }
+
+                    Db.Scripts.Add(script);
+                    Cache.Scripts.Add(contract, script);
+                }
             }
             #endregion
 
@@ -342,6 +402,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 sender.ContractsCount--;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
+
+                if (contract.Kind > ContractKind.DelegatorContract)
+                {
+                    var script = await Cache.Scripts.GetAsync(contract);
+                    Db.Scripts.Remove(script);
+                    Cache.Scripts.Remove(contract);
+                }
 
                 Db.Contracts.Remove(contract);
                 Cache.Accounts.Remove(contract);
@@ -434,6 +501,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 sender.ContractsCount--;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
+
+                if (contract.Kind > ContractKind.DelegatorContract)
+                {
+                    var script = await Cache.Scripts.GetAsync(contract);
+                    Db.Scripts.Remove(script);
+                    Cache.Scripts.Remove(contract);
+                }
 
                 Db.Contracts.Remove(contract);
                 Cache.Accounts.Remove(contract);

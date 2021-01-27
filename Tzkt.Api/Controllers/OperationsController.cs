@@ -51,7 +51,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}")]
-        public Task<IEnumerable<Operation>> GetByHashCounter([OpHash] string hash, [Min(0)] int counter, Symbols quote = Symbols.None)
+        public Task<IEnumerable<Operation>> GetByHashCounter(
+            [OpHash] string hash,
+            [Min(0)] int counter,
+            Symbols quote = Symbols.None)
         {
             return Operations.Get(hash, counter, quote);
         }
@@ -68,7 +71,11 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}/{nonce}")]
-        public Task<IEnumerable<Operation>> GetByHashCounterNonce([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce, Symbols quote = Symbols.None)
+        public Task<IEnumerable<Operation>> GetByHashCounterNonce(
+            [OpHash] string hash,
+            [Min(0)] int counter,
+            [Min(0)] int nonce,
+            Symbols quote = Symbols.None)
         {
             return Operations.Get(hash, counter, nonce, quote);
         }
@@ -1247,7 +1254,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
-        /// <param name="parameters">Filters transactions by parameters value.  Allowed fields for `.eqx` mode: not supported.</param>
+        /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
+        /// <param name="params">Filters transactions by parameters. Note, this query parameter supports the following format: `?params{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?params.token_id=...` or `?params.sigs.0.ne=...`.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
@@ -1264,7 +1273,8 @@ namespace Tzkt.Api.Controllers
             Int64Parameter amount,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            StringParameter parameters,
+            StringParameter entrypoint,
+            JsonParameter @params,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SelectParameter select,
@@ -1319,39 +1329,30 @@ namespace Tzkt.Api.Controllers
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
-            if (parameters != null)
-            {
-                if (parameters.Eqx != null)
-                    return new BadRequest($"{nameof(parameters)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (parameters.Nex != null)
-                    return new BadRequest($"{nameof(parameters)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
             if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "amount"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, hasInternals, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, hasInternals, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, hasInternals, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, hasInternals, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, parameters, hasInternals, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -1383,7 +1384,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter([OpHash] string hash, [Min(0)] int counter, Symbols quote = Symbols.None)
+        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter(
+            [OpHash] string hash,
+            [Min(0)] int counter,
+            Symbols quote = Symbols.None)
         {
             return Operations.GetTransactions(hash, counter, quote);
         }
@@ -1400,7 +1404,11 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}/{nonce}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounterNonce([OpHash] string hash, [Min(0)] int counter, [Min(0)] int nonce, Symbols quote = Symbols.None)
+        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounterNonce(
+            [OpHash] string hash,
+            [Min(0)] int counter,
+            [Min(0)] int nonce,
+            Symbols quote = Symbols.None)
         {
             return Operations.GetTransactions(hash, counter, nonce, quote);
         }

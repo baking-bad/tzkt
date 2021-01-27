@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Netezos.Encoding;
 using Dapper;
 
 using Tzkt.Api.Models;
@@ -3921,8 +3921,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
-                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""Nonce"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                SELECT      o.*
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -3952,7 +3951,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
-                Parameters = row.Parameters,
+                Entrypoint = row.Entrypoint,
+                Params = row.JsonParameters,
+                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -3963,8 +3964,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
-                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""Nonce"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                SELECT      o.*
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -3994,7 +3994,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
-                Parameters = row.Parameters,
+                Entrypoint = row.Entrypoint,
+                Params = row.JsonParameters,
+                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4005,8 +4007,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""Parameters"",
-                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"", o.""Status"", o.""TargetId"", o.""Amount"", o.""InternalOperations"", o.""Errors"", b.""Hash""
+                SELECT      o.*
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -4036,7 +4037,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
-                Parameters = row.Parameters,
+                Entrypoint = row.Entrypoint,
+                Params = row.JsonParameters,
+                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4047,8 +4050,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", ""Parameters"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""TargetId"", ""Amount"", ""InternalOperations"", ""Errors""
+                SELECT    *
                 FROM      ""TransactionOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -4076,7 +4078,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
-                Parameters = row.Parameters,
+                Entrypoint = row.Entrypoint,
+                Params = row.JsonParameters,
+                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4092,7 +4096,8 @@ namespace Tzkt.Api.Repositories
             Int64Parameter amount,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            StringParameter parameters,
+            StringParameter entrypoint,
+            JsonParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4106,7 +4111,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
-                .Filter("Parameters", parameters)
+                .Filter("Entrypoint", entrypoint)
+                .Filter("JsonParameters", parameters)
                 .Filter("InternalOperations", hasInternals?.Eq == true
                     ? new Int32NullParameter { Gt = 0 }
                     : hasInternals?.Eq == false
@@ -4150,7 +4156,9 @@ namespace Tzkt.Api.Repositories
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
-                Parameters = row.Parameters,
+                Entrypoint = row.Entrypoint,
+                Params = row.JsonParameters,
+                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4166,7 +4174,8 @@ namespace Tzkt.Api.Repositories
             Int64Parameter amount,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            StringParameter parameters,
+            StringParameter entrypoint,
+            JsonParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4199,7 +4208,13 @@ namespace Tzkt.Api.Repositories
                     case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                     case "target": columns.Add(@"o.""TargetId"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
-                    case "parameters": columns.Add(@"o.""Parameters"""); break;
+                    case "entrypoint": columns.Add(@"o.""Entrypoint"""); break;
+                    case "params": columns.Add($@"o.""JsonParameters"""); break;
+                    case "rawParams": columns.Add($@"o.""RawParameters"""); break;
+                    case "parameters": // backward compatibility
+                        columns.Add($@"o.""Entrypoint""");
+                        columns.Add($@"o.""RawParameters""");
+                        break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
@@ -4220,7 +4235,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
-                .Filter("Parameters", parameters)
+                .Filter("Entrypoint", entrypoint)
+                .Filter("JsonParameters", parameters)
                 .Filter("InternalOperations", hasInternals?.Eq == true
                     ? new Int32NullParameter { Gt = 0 }
                     : hasInternals?.Eq == false
@@ -4324,9 +4340,22 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Amount;
                         break;
+                    case "entrypoint":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Entrypoint;
+                        break;
+                    case "params":
+                        foreach (var row in rows)
+                            result[j++][i] = row.JsonParameters;
+                        break;
+                    case "rawParams":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters);
+                        break;
                     case "parameters":
                         foreach (var row in rows)
-                            result[j++][i] = row.Parameters;
+                            result[j++][i] = row.RawParameters == null ? null
+                                : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}";
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -4358,7 +4387,8 @@ namespace Tzkt.Api.Repositories
             Int64Parameter amount,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            StringParameter parameters,
+            StringParameter entrypoint,
+            JsonParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4389,7 +4419,13 @@ namespace Tzkt.Api.Repositories
                 case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                 case "target": columns.Add(@"o.""TargetId"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
-                case "parameters": columns.Add(@"o.""Parameters"""); break;
+                case "entrypoint": columns.Add(@"o.""Entrypoint"""); break;
+                case "params": columns.Add($@"o.""JsonParameters"""); break;
+                case "rawParams": columns.Add($@"o.""RawParameters"""); break;
+                case "parameters": // backward compatibility
+                    columns.Add($@"o.""Entrypoint""");
+                    columns.Add($@"o.""RawParameters""");
+                    break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
@@ -4409,7 +4445,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
-                .Filter("Parameters", parameters)
+                .Filter("Entrypoint", entrypoint)
+                .Filter("JsonParameters", parameters)
                 .Filter("InternalOperations", hasInternals?.Eq == true
                     ? new Int32NullParameter { Gt = 0 }
                     : hasInternals?.Eq == false
@@ -4511,9 +4548,22 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Amount;
                     break;
+                case "entrypoint":
+                    foreach (var row in rows)
+                        result[j++] = row.Entrypoint;
+                    break;
+                case "params":
+                    foreach (var row in rows)
+                        result[j++] = row.JsonParameters;
+                    break;
+                case "rawParams":
+                    foreach (var row in rows)
+                        result[j++] = row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters);
+                    break;
                 case "parameters":
                     foreach (var row in rows)
-                        result[j++] = row.Parameters;
+                        result[j++] = row.RawParameters == null ? null
+                            : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}";
                     break;
                 case "status":
                     foreach (var row in rows)
