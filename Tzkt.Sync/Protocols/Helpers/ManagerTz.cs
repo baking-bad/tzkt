@@ -1,34 +1,19 @@
 ﻿using System.Linq;
 using System.Text.Json;
-using Netezos.Contracts;
 using Netezos.Encoding;
+using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols
 {
     static class ManagerTz
     {
-        const string Code =
-            @"[{""prim"":""parameter"",""args"":[{""prim"":""or"",""args"":[{""prim"":""lambda"",""args"":[{""prim"":" +
-            @"""unit""},{""prim"":""list"",""args"":[{""prim"":""operation""}]}],""annots"":[""%do""]},{""prim"":""un" +
-            @"it"",""annots"":[""%default""]}]}]},{""prim"":""storage"",""args"":[{""prim"":""key_hash""}]},{""prim""" +
-            @":""code"",""args"":[[[[{""prim"":""DUP""},{""prim"":""CAR""},{""prim"":""DIP"",""args"":[[{""prim"":""C" +
-            @"DR""}]]}]],{""prim"":""IF_LEFT"",""args"":[[{""prim"":""PUSH"",""args"":[{""prim"":""mutez""},{""int"":" +
-            @"""0""}]},{""prim"":""AMOUNT""},[[{""prim"":""COMPARE""},{""prim"":""EQ""}],{""prim"":""IF"",""args"":[[" +
-            @"],[[{""prim"":""UNIT""},{""prim"":""FAILWITH""}]]]}],[{""prim"":""DIP"",""args"":[[{""prim"":""DUP""}]]" +
-            @"},{""prim"":""SWAP""}],{""prim"":""IMPLICIT_ACCOUNT""},{""prim"":""ADDRESS""},{""prim"":""SENDER""},[[{" +
-            @"""prim"":""COMPARE""},{""prim"":""EQ""}],{""prim"":""IF"",""args"":[[],[[{""prim"":""UNIT""},{""prim"":" +
-            @"""FAILWITH""}]]]}],{""prim"":""UNIT""},{""prim"":""EXEC""},{""prim"":""PAIR""}],[{""prim"":""DROP""},{""" +
-            @"prim"":""NIL"",""args"":[{""prim"":""operation""}]},{""prim"":""PAIR""}]]}]]}]";
-
-        public static ContractScript Schema { get; } = new ContractScript(Micheline.FromJson(Code));
-
         public static bool Test(JsonElement code, JsonElement storage)
         {
             if (storage.ValueKind != JsonValueKind.Object || storage.EnumerateObject().Count() != 1 ||
                 (!storage.TryGetProperty("string", out _) && !storage.TryGetProperty("bytes", out _)))
                 return false;
 
-            return JsonSerializer.Serialize(code) == Code;
+            return Script.ManagerTzBytes.IsEqual(Micheline.FromJson(code).ToBytes());
         }
 
         public static string GetManager(JsonElement storage)

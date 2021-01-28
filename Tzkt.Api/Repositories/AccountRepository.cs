@@ -4,11 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
+using Netezos.Contracts;
+using Netezos.Encoding;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
-using Netezos.Encoding;
 
 namespace Tzkt.Api.Repositories
 {
@@ -2127,6 +2128,9 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (!(rawAccount is RawContract contract)) return null;
 
+            if (contract.Kind == 0)
+                return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToBytes();
+
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
             if (row == null) return null;
@@ -2145,6 +2149,9 @@ namespace Tzkt.Api.Repositories
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (!(rawAccount is RawContract contract)) return null;
+
+            if (contract.Kind == 0)
+                return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes);
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
@@ -2165,6 +2172,9 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (!(rawAccount is RawContract contract)) return null;
 
+            if (contract.Kind == 0)
+                return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToMichelson();
+
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
             if (row == null) return null;
@@ -2177,6 +2187,70 @@ namespace Tzkt.Api.Repositories
             };
 
             return code.ToMichelson();
+        }
+
+        public async Task<Entrypoint> GetEntrypoint(string address, string name, bool json, bool micheline, bool michelson)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (!(rawAccount is RawContract contract)) return null;
+
+            ContractParameter param;
+            if (contract.Kind == 0)
+            {
+                param = Data.Models.Script.ManagerTz.Parameter;
+            }
+            else
+            {
+                using var db = GetConnection();
+                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+                if (row == null) return null;
+                param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
+            }
+            if (!param.Entrypoints.TryGetValue(name, out var ep)) return null;
+            
+            var mich = micheline ? ep.ToMicheline() : null;
+            return new Entrypoint
+            {
+                Name = name,
+                JsonParameters = json ? ep.Humanize() : null,
+                MichelineParameters = mich,
+                MichelsonParameters = michelson ? (mich ?? ep.ToMicheline()).ToMichelson() : null,
+                Unused = !param.IsEntrypointUseful(name)
+            };
+        }
+
+        public async Task<IEnumerable<Entrypoint>> GetEntrypoints(string address, bool all, bool json, bool micheline, bool michelson)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (!(rawAccount is RawContract contract)) return Enumerable.Empty<Entrypoint>();
+
+            ContractParameter param;
+            if (contract.Kind == 0)
+            {
+                param = Data.Models.Script.ManagerTz.Parameter;
+            }
+            else
+            {
+                using var db = GetConnection();
+                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+                if (row == null) return Enumerable.Empty<Entrypoint>();
+                param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
+            }
+
+            return param.Entrypoints
+                .Where(x => all || param.IsEntrypointUseful(x.Key))
+                .Select(x =>
+                {
+                    var mich = micheline ? x.Value.ToMicheline() : null;
+                    return new Entrypoint
+                    {
+                        Name = x.Key,
+                        JsonParameters = json ? x.Value.Humanize() : null,
+                        MichelineParameters = mich,
+                        MichelsonParameters = michelson ? (mich ?? x.Value.ToMicheline()).ToMichelson() : null,
+                        Unused = all ? !param.IsEntrypointUseful(x.Key) : false
+                    };
+                });
         }
         #endregion
 
