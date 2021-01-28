@@ -116,5 +116,44 @@ namespace Tzkt.Api.Controllers
                 return await Accounts.GetMichelsonCode(address);
             return await Accounts.GetByteCode(address);
         }
+
+        /// <summary>
+        /// Get contract entrypoints
+        /// </summary>
+        /// <remarks>
+        /// Returns entrypoints of the specified contract.
+        /// </remarks>
+        /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="all">If true, returns all entrypoints, including unused ones.
+        /// Unused means that the entrypoint can be normalized to a more specific one.
+        /// For example here `(or %entry1 (unit %entry2) (nat %entry3))` the `%entry1` is unused entrypoint
+        /// because it can be normalized to `%entry2` or `%entry3`</param>
+        /// <param name="json">Include parameters schema in human-readable JSON format</param>
+        /// <param name="micheline">Include parameters schema in micheline format</param>
+        /// <param name="michelson">Include parameters schema in michelson format</param>
+        /// <returns></returns>
+        [HttpGet("{address}/entrypoints")]
+        public Task<IEnumerable<Entrypoint>> GetEntrypoints([Address] string address, bool all = false, bool json = true, bool micheline = false, bool michelson = false)
+        {
+            return Accounts.GetEntrypoints(address, all, json, micheline, michelson);
+        }
+
+        /// <summary>
+        /// Get entrypoint by name
+        /// </summary>
+        /// <remarks>
+        /// Returns contract's entrypoint with specified name.
+        /// </remarks>
+        /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="name">Entrypoint name</param>
+        /// <param name="json">Include parameters schema in human-readable JSON format</param>
+        /// <param name="micheline">Include parameters schema in micheline format</param>
+        /// <param name="michelson">Include parameters schema in michelson format</param>
+        /// <returns></returns>
+        [HttpGet("{address}/entrypoints/{name}")]
+        public Task<Entrypoint> GetEntrypointByName([Address] string address, string name, bool json = true, bool micheline = false, bool michelson = false)
+        {
+            return Accounts.GetEntrypoint(address, name, json, micheline, michelson);
+        }
     }
 }

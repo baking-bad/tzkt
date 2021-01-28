@@ -31,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 var schema = contract.Kind > ContractKind.DelegatorContract
                     ? (await Cache.Scripts.GetAsync(contract)).Schema
-                    : ManagerTz.Schema;
+                    : Script.ManagerTz;
 
                 try
                 {
