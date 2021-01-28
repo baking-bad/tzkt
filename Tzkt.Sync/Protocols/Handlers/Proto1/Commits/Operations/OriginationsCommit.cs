@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Netezos.Contracts;
 using Netezos.Encoding;
 
 using Tzkt.Data.Models;
@@ -155,15 +156,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     };
 
                     contract.Tzips = Tzip.None;
-                    if (Netezos.Contracts.Tzip5.IsFA1(script.Schema))
+                    if (script.Schema.IsFA1())
                     {
-                        if (Netezos.Contracts.Tzip7.IsFA12(script.Schema))
+                        if (script.Schema.IsFA12())
                             contract.Tzips |= Tzip.FA12;
 
                         contract.Tzips |= Tzip.FA1;
                         contract.Kind = ContractKind.Asset;
                     }
-                    if (Netezos.Contracts.Tzip12.IsFA2(script.Schema))
+                    if (script.Schema.IsFA2())
                     {
                         contract.Tzips |= Tzip.FA2;
                         contract.Kind = ContractKind.Asset;
@@ -324,15 +325,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     };
 
                     contract.Tzips = Tzip.None;
-                    if (Netezos.Contracts.Tzip5.IsFA1(script.Schema))
+                    if (script.Schema.IsFA1())
                     {
-                        if (Netezos.Contracts.Tzip7.IsFA12(script.Schema))
+                        if (script.Schema.IsFA12())
                             contract.Tzips |= Tzip.FA12;
 
                         contract.Tzips |= Tzip.FA1;
                         contract.Kind = ContractKind.Asset;
                     }
-                    if (Netezos.Contracts.Tzip12.IsFA2(script.Schema))
+                    if (script.Schema.IsFA2())
                     {
                         contract.Tzips |= Tzip.FA2;
                         contract.Kind = ContractKind.Asset;

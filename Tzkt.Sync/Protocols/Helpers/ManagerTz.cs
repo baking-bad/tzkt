@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Text.Json;
-using Schema = Netezos.Contracts.Contract;
+using Netezos.Contracts;
 using Netezos.Encoding;
 
 namespace Tzkt.Sync.Protocols
@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols
             @"""FAILWITH""}]]]}],{""prim"":""UNIT""},{""prim"":""EXEC""},{""prim"":""PAIR""}],[{""prim"":""DROP""},{""" +
             @"prim"":""NIL"",""args"":[{""prim"":""operation""}]},{""prim"":""PAIR""}]]}]]}]";
 
-        public static Schema Schema { get; } = new Schema(Micheline.FromJson(Code));
+        public static ContractScript Schema { get; } = new ContractScript(Micheline.FromJson(Code));
 
         public static bool Test(JsonElement code, JsonElement storage)
         {
