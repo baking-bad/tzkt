@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using Schema=Netezos.Contracts.Contract;
+using Netezos.Contracts;
 using Netezos.Encoding;
 
 namespace Tzkt.Data.Models
@@ -16,14 +16,14 @@ namespace Tzkt.Data.Models
 
         #region schema
         [NotMapped]
-        Schema _Schema = null;
+        ContractScript _Schema = null;
 
         [NotMapped]
-        public Schema Schema
+        public ContractScript Schema
         {
             get
             {
-                _Schema ??= new Schema(Micheline.FromBytes(ParameterSchema), Micheline.FromBytes(StorageSchema));
+                _Schema ??= new ContractScript(Micheline.FromBytes(ParameterSchema), Micheline.FromBytes(StorageSchema));
                 return _Schema;
             }
         }

@@ -8,6 +8,7 @@ using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
+using Netezos.Encoding;
 
 namespace Tzkt.Api.Repositories
 {
@@ -2119,6 +2120,63 @@ namespace Tzkt.Api.Repositories
             }
 
             return result;
+        }
+
+        public async Task<byte[]> GetByteCode(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (!(rawAccount is RawContract contract)) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+            if (row == null) return null;
+
+            var code = new MichelineArray
+            {
+                Micheline.FromBytes(row.ParameterSchema),
+                Micheline.FromBytes(row.StorageSchema),
+                Micheline.FromBytes(row.CodeSchema)
+            };
+
+            return code.ToBytes();
+        }
+
+        public async Task<IMicheline> GetMichelineCode(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (!(rawAccount is RawContract contract)) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+            if (row == null) return null;
+
+            var code = new MichelineArray
+            {
+                Micheline.FromBytes(row.ParameterSchema),
+                Micheline.FromBytes(row.StorageSchema),
+                Micheline.FromBytes(row.CodeSchema)
+            };
+
+            return code;
+        }
+
+        public async Task<string> GetMichelsonCode(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (!(rawAccount is RawContract contract)) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+            if (row == null) return null;
+
+            var code = new MichelineArray
+            {
+                Micheline.FromBytes(row.ParameterSchema),
+                Micheline.FromBytes(row.StorageSchema),
+                Micheline.FromBytes(row.CodeSchema)
+            };
+
+            return code.ToMichelson();
         }
         #endregion
 

@@ -97,5 +97,24 @@ namespace Tzkt.Api.Controllers
         {
             return Accounts.GetContract(address);
         }
+
+        /// <summary>
+        /// Get contract code
+        /// </summary>
+        /// <remarks>
+        /// Returns a code of the specified contract.
+        /// </remarks>
+        /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="format">Code format (`0` - micheline, `1` - michelson, `2` - bytes (base64))</param>
+        /// <returns></returns>
+        [HttpGet("{address}/code")]
+        public async Task<object> GetCode([Address] string address, [Range(0, 2)] int format = 0)
+        {
+            if (format == 0)
+                return await Accounts.GetMichelineCode(address);
+            else if (format == 1)
+                return await Accounts.GetMichelsonCode(address);
+            return await Accounts.GetByteCode(address);
+        }
     }
 }

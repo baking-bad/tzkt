@@ -64,6 +64,7 @@ namespace Tzkt.Api
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
+                    options.JsonSerializerOptions.MaxDepth = 1024;
                     options.JsonSerializerOptions.IgnoreNullValues = true;
                     options.JsonSerializerOptions.Converters.Add(new AccountConverter());
                     options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
