@@ -35,7 +35,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public Task<int> GetCount()
         {
-            return Task.FromResult(State.GetState().BlocksCount);
+            return Task.FromResult(State.Current.BlocksCount);
         }
 
         /// <summary>

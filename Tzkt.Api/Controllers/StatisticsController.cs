@@ -194,7 +194,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("current")]
         public async Task<ActionResult<Statistics>> GetCycles(SelectParameter select, Symbols quote = Symbols.None)
         {
-            var level = new Int32Parameter { Eq = State.GetLevel() };
+            var level = new Int32Parameter { Eq = State.Current.Level };
 
             if (select == null)
                 return Ok((await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, quote)).FirstOrDefault());

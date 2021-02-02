@@ -35,7 +35,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("proposals/count")]
         public Task<int> GetProposalsCount()
         {
-            return Task.FromResult(State.GetState().ProposalsCount);
+            return Task.FromResult(State.Current.ProposalsCount);
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("periods/current")]
         public Task<VotingPeriod> GetCurrentPeriod()
         {
-            return Voting.GetPeriod(State.GetState().VotingPeriod);
+            return Voting.GetPeriod(State.Current.VotingPeriod);
         }
 
         /// <summary>
@@ -230,7 +230,7 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            return Ok(await Voting.GetVoters(State.GetState().VotingPeriod, status, sort, offset, limit));
+            return Ok(await Voting.GetVoters(State.Current.VotingPeriod, status, sort, offset, limit));
         }
         #endregion
 
@@ -283,7 +283,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("epochs/current")]
         public Task<VotingEpoch> GetCurrentEpoch()
         {
-            return Voting.GetEpoch(State.GetState().VotingEpoch);
+            return Voting.GetEpoch(State.Current.VotingEpoch);
         }
 
         /// <summary>

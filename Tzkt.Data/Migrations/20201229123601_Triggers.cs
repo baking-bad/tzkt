@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Tzkt.Data.Migrations
 {
@@ -11,7 +9,7 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.Sql(@"
                 CREATE OR REPLACE FUNCTION notify_state() RETURNS TRIGGER AS $$
                     BEGIN
-                    NOTIFY state_changed;
+                    PERFORM pg_notify('state_changed', NEW.""Level"" || ':' || NEW.""Hash"");
                     RETURN null;
                     END;
                 $$ LANGUAGE plpgsql;");
@@ -19,7 +17,7 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.Sql(@"
                 CREATE TRIGGER state_changed
                     AFTER UPDATE ON ""AppState""
-                    FOR EACH STATEMENT
+                    FOR EACH ROW
                     EXECUTE PROCEDURE notify_state();");
         }
 

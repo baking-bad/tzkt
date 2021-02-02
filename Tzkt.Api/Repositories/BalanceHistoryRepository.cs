@@ -13,12 +13,14 @@ namespace Tzkt.Api.Repositories
 {
     public class BalanceHistoryRepository : DbConnection
     {
+        readonly StateCache State;
         readonly AccountsCache Accounts;
         readonly QuotesCache Quotes;
         readonly TimeCache Time;
 
-        public BalanceHistoryRepository(AccountsCache accounts, QuotesCache quotes, TimeCache time, IConfiguration config) : base(config)
+        public BalanceHistoryRepository(StateCache state, AccountsCache accounts, QuotesCache quotes, TimeCache time, IConfiguration config) : base(config)
         {
+            State = state;
             Accounts = accounts;
             Quotes = quotes;
             Time = time;
@@ -85,7 +87,7 @@ namespace Tzkt.Api.Repositories
                     GROUP BY lvl
                     ORDER BY lvl
                 ) as gr
-                WHERE lvl < {Time.Count}
+                WHERE lvl <= {State.Current.Level}
                 {orderBy}
                 OFFSET @offset
                 LIMIT @limit";
@@ -131,7 +133,7 @@ namespace Tzkt.Api.Repositories
                     GROUP BY lvl
                     ORDER BY lvl
                 ) as gr
-                WHERE lvl < {Time.Count}
+                WHERE lvl <= {State.Current.Level}
                 {orderBy}
                 OFFSET @offset
                 LIMIT @limit";
@@ -198,7 +200,7 @@ namespace Tzkt.Api.Repositories
                     GROUP BY lvl
                     ORDER BY lvl
                 ) as gr
-                WHERE lvl < {Time.Count}
+                WHERE lvl <= {State.Current.Level}
                 {orderBy}
                 OFFSET @offset
                 LIMIT @limit";

@@ -72,15 +72,12 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var state = State.GetState();
-            var proto = Protocols.Current;
-
             return rows.Select(row => new BakingRight
             {
                 Type = TypeToString(row.Type),
                 Cycle = row.Cycle,
                 Level = row.Level,
-                Timestamp = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level],
+                Timestamp = Time[row.Level],
                 Baker = Accounts.GetAlias(row.BakerId),
                 Priority = row.Priority,
                 Slots = row.Slots,
@@ -154,10 +151,8 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = row.Level;
                         break;
                     case "timestamp":
-                        var state = State.GetState();
-                        var proto = Protocols.Current;
                         foreach (var row in rows)
-                            result[j++][i] = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level];
+                            result[j++][i] = Time[row.Level];
                         break;
                     case "baker":
                         foreach (var row in rows)
@@ -242,10 +237,8 @@ namespace Tzkt.Api.Repositories
                         result[j++] = row.Level;
                     break;
                 case "timestamp":
-                    var state = State.GetState();
-                    var proto = Protocols.Current;
                     foreach (var row in rows)
-                        result[j++] = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level];
+                        result[j++] = Time[row.Level];
                     break;
                 case "baker":
                     foreach (var row in rows)
@@ -270,7 +263,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<BakingInterval>> GetSchedule(string address, DateTime from, DateTime to, int maxPriority)
         {
-            var state = State.GetState();
+            var state = State.Current;
             var proto = Protocols.Current;
 
             var rawAccount = await Accounts.GetAsync(address);

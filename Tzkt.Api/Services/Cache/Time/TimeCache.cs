@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,47 +11,53 @@ namespace Tzkt.Api.Services.Cache
 {
     public class TimeCache : DbConnection
     {
-        readonly static SemaphoreSlim Sema = new SemaphoreSlim(1, 1);
-
         readonly List<DateTime> Times;
+
+        readonly StateCache State;
+        readonly ProtocolsCache Protocols;
         readonly ILogger Logger;
 
-        public TimeCache(IConfiguration config, ILogger<TimeCache> logger) : base(config)
+        public TimeCache(StateCache state, ProtocolsCache protocols, IConfiguration config, ILogger<TimeCache> logger) : base(config)
         {
+            logger.LogDebug("Initializing timestamps cache...");
+
+            State = state;
+            Protocols = protocols;
             Logger = logger;
 
-            Logger.LogDebug("Initializing time cache...");
-
-            var sql = @"
-                SELECT    ""Timestamp""
-                FROM      ""Blocks""
-                ORDER BY  ""Level""";
-
             using var db = GetConnection();
-            var times = db.Query<DateTime>(sql);
+            var times = db.Query<DateTime>(@"SELECT ""Timestamp"" FROM ""Blocks"" ORDER BY ""Level""");
 
             Times = new List<DateTime>(times.Count() + 130_000);
-            foreach (var time in times)
-                Times.Add(time);
+            Times.AddRange(times);
 
-            Logger.LogDebug($"Time cache initialized with {Times.Count} items");
+            logger.LogInformation("Loaded {1} timestamps", Times.Count);
         }
 
-        public int Count => Times.Count;
+        public async Task UpdateAsync()
+        {
+            Logger.LogDebug("Updating timestamps cache...");
+            var sql = @"SELECT ""Level"", ""Timestamp"" FROM ""Blocks"" WHERE ""Level"" > @fromLevel ORDER BY ""Level""";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { fromLevel = Math.Min(Times.Count - 1, State.ValidLevel) });
+
+            foreach (var row in rows)
+            {
+                if (row.Level < Times.Count)
+                    Times[row.Level] = row.Timestamp;
+                else
+                    Times.Add(row.Timestamp);
+            }
+            Logger.LogDebug("{1} timestamps updated", rows.Count());
+        }
 
         public DateTime this[int level]
         {
             get
             {
-                if (Times.Count <= level)
-                {
-                    Sema.Wait();
-
-                    if (Times.Count <= level)
-                        Update();
-
-                    Sema.Release();
-                }
+                if (level >= Times.Count)
+                    return Times[^1].AddSeconds((level - Times.Count - 1) * Protocols.Current.TimeBetweenBlocks);
                 
                 return Times[level];
             }
@@ -95,38 +100,6 @@ namespace Tzkt.Api.Services.Cache
             return mode == SearchMode.Exact ? -1 :
                    mode == SearchMode.ExactOrHigher ? from : to;
             #endregion
-        }
-
-        public void Update()
-        {
-            var sql = @"
-                SELECT    ""Timestamp""
-                FROM      ""Blocks""
-                WHERE     ""Level"" >= @fromLevel
-                ORDER BY  ""Level""";
-
-            using var db = GetConnection();
-            var items = db.Query<DateTime>(sql, new { fromLevel = Times.Count });
-
-            Times.AddRange(items);
-        }
-
-        public async Task UpdateAsync()
-        {
-            await Sema.WaitAsync();
-
-            var sql = @"
-                SELECT    ""Timestamp""
-                FROM      ""Blocks""
-                WHERE     ""Level"" >= @fromLevel
-                ORDER BY  ""Level""";
-
-            using var db = GetConnection();
-            var items = await db.QueryAsync<DateTime>(sql, new { fromLevel = Times.Count });
-
-            Times.AddRange(items);
-
-            Sema.Release();
         }
     }
 

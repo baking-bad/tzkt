@@ -33,7 +33,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public Task<int> GetCount()
         {
-            return Task.FromResult(State.GetState().ProtocolsCount);
+            return Task.FromResult(State.Current.ProtocolsCount);
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("current")]
         public Task<Protocol> GetCurrent()
         {
-            return Protocols.Get(State.GetState().Protocol);
+            return Protocols.Get(State.Current.Protocol);
         }
 
         /// <summary>

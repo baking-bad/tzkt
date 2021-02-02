@@ -772,7 +772,7 @@ namespace Tzkt.Api.Repositories
                 return "voting";
 
             if (periods.Last().Status == (int)Data.Models.PeriodStatus.Success &&
-                periods.Last().Epoch != State.GetState().VotingEpoch)
+                periods.Last().Epoch != State.Current.VotingEpoch)
                 return "completed";
 
             return "failed";

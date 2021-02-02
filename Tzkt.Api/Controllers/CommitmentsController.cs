@@ -105,7 +105,7 @@ namespace Tzkt.Api.Controllers
             #region optimize
             if (balance == null)
             {
-                var state = State.GetState();
+                var state = State.Current;
 
                 if (activated == null)
                     return Task.FromResult(state.CommitmentsCount);

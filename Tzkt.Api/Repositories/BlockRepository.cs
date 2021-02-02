@@ -30,7 +30,7 @@ namespace Tzkt.Api.Repositories
 
         public Task<int> GetCount()
         {
-            return Task.FromResult(State.GetState().Level + 1);
+            return Task.FromResult(State.Current.Level + 1);
         }
 
         public async Task<Block> Get(int level, bool operations, Symbols quote)

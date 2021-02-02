@@ -180,7 +180,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().EndorsementOpsCount);
+                return Task.FromResult(State.Current.EndorsementOpsCount);
 
             return Operations.GetEndorsementsCount(level, timestamp);
         }
@@ -291,7 +291,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().BallotOpsCount);
+                return Task.FromResult(State.Current.BallotOpsCount);
 
             return Operations.GetBallotsCount(level, timestamp);
         }
@@ -404,7 +404,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().ProposalOpsCount);
+                return Task.FromResult(State.Current.ProposalOpsCount);
 
             return Operations.GetProposalsCount(level, timestamp);
         }
@@ -509,7 +509,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().ActivationOpsCount);
+                return Task.FromResult(State.Current.ActivationOpsCount);
 
             return Operations.GetActivationsCount(level, timestamp);
         }
@@ -639,7 +639,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().DoubleBakingOpsCount);
+                return Task.FromResult(State.Current.DoubleBakingOpsCount);
 
             return Operations.GetDoubleBakingsCount(level, timestamp);
         }
@@ -769,7 +769,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().DoubleEndorsingOpsCount);
+                return Task.FromResult(State.Current.DoubleEndorsingOpsCount);
 
             return Operations.GetDoubleEndorsingsCount(level, timestamp);
         }
@@ -899,7 +899,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().NonceRevelationOpsCount);
+                return Task.FromResult(State.Current.NonceRevelationOpsCount);
 
             return Operations.GetNonceRevelationsCount(level, timestamp);
         }
@@ -1059,7 +1059,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().DelegationOpsCount);
+                return Task.FromResult(State.Current.DelegationOpsCount);
 
             return Operations.GetDelegationsCount(level, timestamp);
         }
@@ -1233,7 +1233,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().OriginationOpsCount);
+                return Task.FromResult(State.Current.OriginationOpsCount);
 
             return Operations.GetOriginationsCount(level, timestamp);
         }
@@ -1430,7 +1430,7 @@ namespace Tzkt.Api.Controllers
             OperationStatusParameter status)
         {
             if (level == null && timestamp == null && status == null)
-                return Task.FromResult(State.GetState().TransactionOpsCount);
+                return Task.FromResult(State.Current.TransactionOpsCount);
 
             return Operations.GetTransactionsCount(level, timestamp, status);
         }
@@ -1537,7 +1537,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().RevealOpsCount);
+                return Task.FromResult(State.Current.RevealOpsCount);
 
             return Operations.GetRevealsCount(level, timestamp);
         }
@@ -1631,7 +1631,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().MigrationOpsCount);
+                return Task.FromResult(State.Current.MigrationOpsCount);
 
             return Operations.GetMigrationsCount(level, timestamp);
         }
@@ -1721,7 +1721,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().RevelationPenaltyOpsCount);
+                return Task.FromResult(State.Current.RevelationPenaltyOpsCount);
 
             return Operations.GetRevelationPenaltiesCount(level, timestamp);
         }
@@ -1811,7 +1811,7 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.GetState().BlocksCount - 2);
+                return Task.FromResult(State.Current.BlocksCount - 2);
 
             return Operations.GetBakingsCount(level, timestamp);
         }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,52 +11,44 @@ namespace Tzkt.Api.Services.Cache
 {
     public class StateCache : DbConnection
     {
-        RawState State;
+        const string StateSql = @"SELECT * FROM ""AppState"" LIMIT 1";
 
-        readonly CacheConfig Config;
+        public RawState Current { get; private set; }
+        public bool Reorganized { get; private set; }
+        public int ValidLevel { get; private set; }
+
         readonly ILogger Logger;
 
         public StateCache(IConfiguration config, ILogger<StateCache> logger) : base(config)
         {
-            Config = config.GetCacheConfig();
+            logger.LogDebug("Initializing state cache...");
             Logger = logger;
-
-            Logger.LogDebug("Initializing state cache...");
-
-            State = LoadState();
-
-            Logger.LogDebug($"State cache initialized at {State.Level} level");
-        }
-
-        public RawState GetState() => State;
-
-        public RawState LoadState()
-        {
-            var sql = @"
-                SELECT  *
-                FROM    ""AppState""
-                LIMIT   1";
-
             using var db = GetConnection();
-            return db.QueryFirst<RawState>(sql);
+            Current =  db.QueryFirst<RawState>(StateSql);
+            logger.LogInformation("Loaded state [{1}:{2}]", Current.Level, Current.Hash);
         }
 
-        public async Task<RawState> LoadStateAsync()
+        public void Update(RawState newState, List<(int Level, string Hash)> changes)
         {
-            var sql = @"
-                SELECT  *
-                FROM    ""AppState""
-                LIMIT   1";
+            Logger.LogDebug("Updating state cache with {1} changes...", changes.Count);
 
-            using var db = GetConnection();
-            return await db.QueryFirstAsync<RawState>(sql);
+            var validLevel = Current.Level;
+            foreach (var (level, _) in changes.Where(x => x.Level <= Current.Level && x.Hash != Current.Hash))
+                validLevel = Math.Min(validLevel, level - 1);
+
+            Reorganized = validLevel != Current.Level;
+            ValidLevel = validLevel;
+            Current = newState;
+
+            if (Reorganized) Logger.LogDebug("Reorg after block #{1} detected", validLevel);
+            Logger.LogDebug("New state [{1}:{2}]", Current.Level, Current.Hash);
         }
 
-        public int GetLevel() => State.Level;
-
-        public int GetCounter() => State.OperationCounter;
-
-        public void Update(RawState state) => State = state;
+        public async Task<RawState> LoadAsync()
+        {
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<RawState>(StateSql);
+        }
     }
 
     public static class StateCacheExt
