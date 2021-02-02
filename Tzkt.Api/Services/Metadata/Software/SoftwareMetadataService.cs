@@ -63,21 +63,6 @@ namespace Tzkt.Api.Services.Metadata
                 }
             }
         }
-
-        public async Task Refresh()
-        {
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(@"SELECT ""Id"", ""FirstLevel"", ""Version"", ""CommitDate"" FROM ""Software""");
-
-            foreach (var row in rows)
-            {
-                if (Aliases.TryGetValue((int)row.Id, out var alias) && alias.Version != row.Version)
-                {
-                    alias.Version = row.Version;
-                    alias.Date = row.CommitDate ?? Time[row.FirstLevel];
-                }
-            }
-        }
     }
 
     public static class SoftwareMetadataServiceExt

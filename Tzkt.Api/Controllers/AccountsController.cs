@@ -112,7 +112,7 @@ namespace Tzkt.Api.Controllers
         {
             #region optimize
             if (type == null && kind == null && balance == null && staked == null)
-                return Task.FromResult(State.GetState().AccountsCount);
+                return Task.FromResult(State.Current.AccountsCount);
 
             if (kind?.Eq != null && type == null)
                 type = new AccountTypeParameter { Eq = 2 };

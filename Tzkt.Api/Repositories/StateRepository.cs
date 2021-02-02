@@ -20,8 +20,7 @@ namespace Tzkt.Api.Repositories
 
         public Task<State> Get()
         {
-            var appState = State.GetState();
-
+            var appState = State.Current;
             return Task.FromResult(new State
             {
                 KnownLevel = appState.KnownHead,

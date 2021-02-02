@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
-
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Services.Cache
@@ -15,14 +13,16 @@ namespace Tzkt.Api.Services.Cache
     public class QuotesCache : DbConnection
     {
         readonly List<double>[] Quotes;
+        readonly StateCache State;
         readonly ILogger Logger;
 
-        public QuotesCache(IConfiguration config, ILogger<QuotesCache> logger) : base(config)
+        public QuotesCache(StateCache state, IConfiguration config, ILogger<QuotesCache> logger) : base(config)
         {
-            Quotes = new List<double>[6];
-            Logger = logger;
+            logger.LogDebug("Initializing quotes cache...");
 
-            Logger.LogDebug("Initializing quotes cache...");
+            Quotes = new List<double>[6];
+            State = state;
+            Logger = logger;
 
             var sql = @"
                 SELECT    ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw""
@@ -46,7 +46,43 @@ namespace Tzkt.Api.Services.Cache
                 Quotes[5].Add(row.Krw);
             }
 
-            Logger.LogDebug($"Quotes cache initialized with {Quotes[0].Count} items");
+            logger.LogInformation("Loaded {1} quotes", Quotes[0].Count);
+        }
+
+        public async Task UpdateAsync()
+        {
+            Logger.LogDebug("Updating quotes cache");
+            var sql = $@"
+                SELECT    ""Level"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw""
+                FROM      ""Quotes""
+                WHERE     ""Level"" > @fromLevel
+                ORDER BY  ""Level""";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { fromLevel = Math.Min(Quotes[0].Count - 1, State.ValidLevel) });
+
+            foreach (var row in rows)
+            {
+                if (row.Level < Quotes[0].Count)
+                {
+                    Quotes[0][row.Level] = row.Btc;
+                    Quotes[1][row.Level] = row.Eur;
+                    Quotes[2][row.Level] = row.Usd;
+                    Quotes[3][row.Level] = row.Cny;
+                    Quotes[4][row.Level] = row.Jpy;
+                    Quotes[5][row.Level] = row.Krw;
+                }
+                else
+                {
+                    Quotes[0].Add(row.Btc);
+                    Quotes[1].Add(row.Eur);
+                    Quotes[2].Add(row.Usd);
+                    Quotes[3].Add(row.Cny);
+                    Quotes[4].Add(row.Jpy);
+                    Quotes[5].Add(row.Krw);
+                }
+            }
+            Logger.LogDebug("{1} quotes updates", rows.Count());
         }
 
         public double Get(int symbol)
@@ -108,25 +144,6 @@ namespace Tzkt.Api.Services.Cache
             }
 
             return quote;
-        }
-
-        public async Task UpdateAsync()
-        {
-            var sql = $@"
-                SELECT    ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw""
-                FROM      ""Quotes""
-                WHERE     ""Level"" >= {Quotes[0].Count}
-                ORDER BY  ""Level""";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql);
-
-            Quotes[0].AddRange(rows.Select(x => (double)x.Btc));
-            Quotes[1].AddRange(rows.Select(x => (double)x.Eur));
-            Quotes[2].AddRange(rows.Select(x => (double)x.Usd));
-            Quotes[3].AddRange(rows.Select(x => (double)x.Cny));
-            Quotes[4].AddRange(rows.Select(x => (double)x.Jpy));
-            Quotes[5].AddRange(rows.Select(x => (double)x.Krw));
         }
     }
 

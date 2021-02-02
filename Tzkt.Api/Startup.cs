@@ -59,7 +59,7 @@ namespace Tzkt.Api
             services.AddTransient<StatisticsRepository>();
             services.AddTransient<SoftwareRepository>();
 
-            services.AddSynchronization();
+            services.AddStateListener();
 
             services.AddControllers()
                 .AddJsonOptions(options =>

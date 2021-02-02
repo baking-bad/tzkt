@@ -25,7 +25,7 @@ namespace Tzkt.Api.Repositories
 
         public int GetCount()
         {
-            return State.GetState().QuoteLevel + 1;
+            return State.Current.QuoteLevel + 1;
             //var sql = @"
             //    SELECT   COUNT(*)
             //    FROM     ""Quotes""";
@@ -36,7 +36,7 @@ namespace Tzkt.Api.Repositories
 
         public Quote GetLast()
         {
-            var state = State.GetState();
+            var state = State.Current;
             return new Quote
             {
                 Level = state.Level,

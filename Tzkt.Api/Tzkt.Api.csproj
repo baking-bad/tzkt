@@ -24,9 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.35" />
-    <PackageReference Include="Npgsql" Version="4.1.4" />
-    <PackageReference Include="NSwag.AspNetCore" Version="13.7.0" />
+    <PackageReference Include="Dapper" Version="2.0.78" />
+    <PackageReference Include="Npgsql" Version="5.0.3" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.10.1" />
   </ItemGroup>
 
   <ItemGroup>

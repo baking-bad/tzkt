@@ -34,7 +34,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public Task<int> GetCount()
         {
-            return Task.FromResult(State.GetState().CyclesCount);
+            return Task.FromResult(State.Current.CyclesCount);
         }
 
         /// <summary>
