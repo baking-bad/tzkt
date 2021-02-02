@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
@@ -73,6 +73,10 @@ namespace Tzkt.Data.Models
                 .HasValue<User>(AccountType.User)
                 .HasValue<Delegate>(AccountType.Delegate)
                 .HasValue<Contract>(AccountType.Contract);
+
+            modelBuilder.Entity<Account>()
+                .Property(x => x.Type)
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Save);
 
             modelBuilder.Entity<Account>()
                 .Property(x => x.Address)
