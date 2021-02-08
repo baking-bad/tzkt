@@ -33,14 +33,14 @@ namespace Tzkt.Api.Services.Cache
             Logger.LogDebug("Updating state cache with {1} changes...", changes.Count);
 
             var validLevel = Current.Level;
-            foreach (var (level, _) in changes.Where(x => x.Level <= Current.Level && x.Hash != Current.Hash))
-                validLevel = Math.Min(validLevel, level - 1);
+            foreach (var (level, _) in changes.Where(x => x.Level < Current.Level))
+                validLevel = Math.Min(validLevel, level);
 
             Reorganized = validLevel != Current.Level;
             ValidLevel = validLevel;
             Current = newState;
 
-            if (Reorganized) Logger.LogDebug("Reorg after block #{1} detected", validLevel);
+            if (Reorganized) Logger.LogDebug("Reorg after block {1} detected", validLevel);
             Logger.LogDebug("New state [{1}:{2}]", Current.Level, Current.Hash);
         }
 

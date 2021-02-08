@@ -18,10 +18,10 @@ namespace Tzkt.Api.Repositories
             State = state;
         }
 
-        public Task<State> Get()
+        public State Get()
         {
             var appState = State.Current;
-            return Task.FromResult(new State
+            return new State
             {
                 KnownLevel = appState.KnownHead,
                 LastSync = appState.LastSync,
@@ -35,7 +35,7 @@ namespace Tzkt.Api.Repositories
                 QuoteBtc = appState.QuoteBtc,
                 QuoteEur = appState.QuoteEur,
                 QuoteUsd = appState.QuoteUsd
-            });
+            };
         }
     }
 }

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +13,9 @@ using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
+using Tzkt.Api.Websocket;
+using Tzkt.Api.Websocket.Hubs;
+using Tzkt.Api.Websocket.Processors;
 using Tzkt.Data;
 
 namespace Tzkt.Api
@@ -106,6 +107,35 @@ namespace Tzkt.Api
                     document.Produces = new[] { "application/json" };
                 };
             });
+
+            #region websocket
+            if (Configuration.GetWebsocketConfig().Enabled)
+            {
+                services.AddTransient<HeadProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, HeadProcessor<DefaultHub>>();
+
+                services.AddTransient<BlocksProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, BlocksProcessor<DefaultHub>>();
+
+                services.AddTransient<OperationsProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, OperationsProcessor<DefaultHub>>();
+
+                services.AddSignalR(options =>
+                {
+                    options.EnableDetailedErrors = true;
+                    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+                })
+                .AddJsonProtocol(jsonOptions =>
+                {
+                    jsonOptions.PayloadSerializerOptions.MaxDepth = 1024;
+                    jsonOptions.PayloadSerializerOptions.IgnoreNullValues = true;
+                    jsonOptions.PayloadSerializerOptions.Converters.Add(new AccountConverter());
+                    jsonOptions.PayloadSerializerOptions.Converters.Add(new DateTimeConverter());
+                    jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationConverter());
+                    jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
+                });
+            }
+            #endregion
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -128,6 +158,10 @@ namespace Tzkt.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                if (Configuration.GetWebsocketConfig().Enabled)
+                {
+                    endpoints.MapHub<DefaultHub>("/v1/events");
+                }
             });
         }
     }
