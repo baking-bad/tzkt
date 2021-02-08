@@ -39,7 +39,7 @@ namespace Tzkt.Api.Repositories
                     ? new EmptyAccount
                     {
                         Address = address,
-                        Counter = State.Current.OperationCounter,
+                        Counter = State.Current.ManagerCounter,
                     }
                     : null;
 
@@ -103,7 +103,7 @@ namespace Tzkt.Api.Repositories
                         Alias = accMetadata?.Alias,
                         Address = user.Address,
                         Balance = user.Balance,
-                        Counter = user.Balance > 0 ? user.Counter : State.Current.OperationCounter,
+                        Counter = user.Balance > 0 ? user.Counter : State.Current.ManagerCounter,
                         FirstActivity = user.FirstLevel,
                         FirstActivityTime = Time[user.FirstLevel],
                         LastActivity = user.LastLevel,
@@ -381,7 +381,7 @@ namespace Tzkt.Api.Repositories
                             Alias = metadata?.Alias,
                             Address = row.Address,
                             Balance = row.Balance,
-                            Counter = row.Balance > 0 ? row.Counter : State.Current.OperationCounter,
+                            Counter = row.Balance > 0 ? row.Counter : State.Current.ManagerCounter,
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,

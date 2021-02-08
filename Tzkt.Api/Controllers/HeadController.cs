@@ -27,7 +27,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet]
-        public Task<State> Get()
+        public State Get()
         {
             return State.Get();
         }

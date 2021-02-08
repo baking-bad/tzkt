@@ -50,7 +50,7 @@ namespace Tzkt.Api.Repositories
                     SELECT SUM(""Change"")::bigint
                     FROM ({union}) as u"
                 : $@"
-                    SELECT      acc.""Balance"" - (SUM(""Change"") OVER ())::bigint
+                    SELECT      acc.""Balance"" - COALESCE((SUM(""Change"") OVER ())::bigint, 0)
                     FROM        ({union}) as u
                     INNER JOIN  ""Accounts"" as acc
                             ON  acc.""Id"" = {account.Id}";
