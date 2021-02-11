@@ -42,6 +42,7 @@ namespace Tzkt.Sync
                     case "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo":
                         return services.GetRequiredService<Proto7Handler>();
                     case "PtEdoTezd3RHSC31mpxxo1npxFjoWWcFgQtxapi51Z8TLu6v6Uq":
+                    case "PtEdo2ZkT9oKpimTah6x2embF25oss54njMuPzkJTEi5RqfdZFA":
                         return services.GetRequiredService<Proto8Handler>();
                     default:
                         throw new NotImplementedException($"Protocol '{protocol}' is not supported");
