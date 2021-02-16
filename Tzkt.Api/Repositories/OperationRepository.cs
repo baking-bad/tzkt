@@ -3921,7 +3921,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.*
+                SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -3964,7 +3964,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, Symbols quote)
         {
             var sql = @"
-                SELECT      o.*
+                SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -4007,7 +4007,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce, Symbols quote)
         {
             var sql = @"
-                SELECT      o.*
+                SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""

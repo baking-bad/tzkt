@@ -2126,13 +2126,13 @@ namespace Tzkt.Api.Repositories
         public async Task<byte[]> GetByteCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (!(rawAccount is RawContract contract)) return null;
+            if (rawAccount is not RawContract contract) return null;
 
             if (contract.Kind == 0)
-                return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToBytes();
+                return Data.Models.Script.ManagerTzBytes;
 
             using var db = GetConnection();
-            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
             var code = new MichelineArray
@@ -2148,13 +2148,13 @@ namespace Tzkt.Api.Repositories
         public async Task<IMicheline> GetMichelineCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (!(rawAccount is RawContract contract)) return null;
+            if (rawAccount is not RawContract contract) return null;
 
             if (contract.Kind == 0)
                 return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes);
 
             using var db = GetConnection();
-            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
             var code = new MichelineArray
@@ -2170,13 +2170,13 @@ namespace Tzkt.Api.Repositories
         public async Task<string> GetMichelsonCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (!(rawAccount is RawContract contract)) return null;
+            if (rawAccount is not RawContract contract) return null;
 
             if (contract.Kind == 0)
                 return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToMichelson();
 
             using var db = GetConnection();
-            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
             var code = new MichelineArray
@@ -2192,7 +2192,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Entrypoint> GetEntrypoint(string address, string name, bool json, bool micheline, bool michelson)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (!(rawAccount is RawContract contract)) return null;
+            if (rawAccount is not RawContract contract) return null;
 
             ContractParameter param;
             if (contract.Kind == 0)
@@ -2202,7 +2202,7 @@ namespace Tzkt.Api.Repositories
             else
             {
                 using var db = GetConnection();
-                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
                 if (row == null) return null;
                 param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
             }
@@ -2222,7 +2222,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Entrypoint>> GetEntrypoints(string address, bool all, bool json, bool micheline, bool michelson)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (!(rawAccount is RawContract contract)) return Enumerable.Empty<Entrypoint>();
+            if (rawAccount is not RawContract contract) return Enumerable.Empty<Entrypoint>();
 
             ContractParameter param;
             if (contract.Kind == 0)
@@ -2232,7 +2232,7 @@ namespace Tzkt.Api.Repositories
             else
             {
                 using var db = GetConnection();
-                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id}");
+                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
                 if (row == null) return Enumerable.Empty<Entrypoint>();
                 param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
             }
@@ -2248,9 +2248,363 @@ namespace Tzkt.Api.Repositories
                         JsonParameters = json ? x.Value.Humanize() : null,
                         MichelineParameters = mich,
                         MichelsonParameters = michelson ? (mich ?? x.Value.ToMicheline()).ToMichelson() : null,
-                        Unused = all ? !param.IsEntrypointUseful(x.Key) : false
+                        Unused = all && !param.IsEntrypointUseful(x.Key)
                     };
                 });
+        }
+
+        public async Task<string> GetStorageValue(string address, string[] path)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            // path value should already be valid
+            var jsonPath = path == null ? string.Empty : $@"#>>'{{{string.Join(',', path)}}}'";
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT   ""JsonValue""{jsonPath} as ""JsonValue""
+                FROM     ""Storages""
+                WHERE    ""ContractId"" = {contract.Id} AND ""Current"" = true
+                LIMIT    1");
+
+            return row?.JsonValue;
+        }
+
+        public async Task<string> GetStorageValue(string address, string[] path, int level)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            if (level < contract.FirstLevel)
+                return null;
+
+            if (level >= contract.LastLevel)
+                return await GetStorageValue(address, path);
+
+            // path value should already be valid
+            var jsonPath = path == null ? string.Empty : $@"#>>'{{{string.Join(',', path)}}}'";
+            
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT   ""JsonValue""{jsonPath} as ""JsonValue""
+                FROM     ""Storages""
+                WHERE    ""ContractId"" = {contract.Id}
+                AND      ""Level"" <= {level}
+                ORDER BY ""Level"" DESC, ""TransactionId"" DESC
+                LIMIT    1");
+
+            return row?.JsonValue;
+        }
+
+        public async Task<IMicheline> GetRawStorageValue(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT   ""RawValue""
+                FROM     ""Storages""
+                WHERE    ""ContractId"" = {contract.Id} AND ""Current"" = true
+                LIMIT    1");
+
+            if (row == null) return null;
+            return Micheline.FromBytes(row.RawValue);
+        }
+
+        public async Task<IMicheline> GetRawStorageValue(string address, int level)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            if (level < contract.FirstLevel)
+                return null;
+
+            if (level >= contract.LastLevel)
+                return await GetRawStorageValue(address);
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT   ""RawValue""
+                FROM     ""Storages""
+                WHERE    ""ContractId"" = {contract.Id}
+                AND      ""Level"" <= {level}
+                ORDER BY ""Level"" DESC, ""TransactionId"" DESC
+                LIMIT    1");
+
+            if (row == null) return null;
+            return Micheline.FromBytes(row.RawValue);
+        }
+
+        public async Task<string> GetStorageSchema(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT      ""StorageSchema""
+                FROM        ""Scripts""
+                WHERE       ""ContractId"" = {contract.Id} AND ""Current"" = true
+                LIMIT       1");
+
+            if (row == null) return null;
+            var schema = new ContractStorage(Micheline.FromBytes(row.StorageSchema));
+            return schema.Humanize();
+        }
+
+        public async Task<string> GetStorageSchema(string address, int level)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            if (level < contract.FirstLevel)
+                return null;
+
+            if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
+                return await GetStorageSchema(address);
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT      ss.""StorageSchema"", COALESCE(o_op.""Level"", m_op.""Level"") as ""ScriptLevel""
+                FROM        ""Scripts"" as ss
+                LEFT JOIN   ""MigrationOps"" as m_op
+                       ON   m_op.""Id"" = ss.""MigrationId""
+                LEFT JOIN   ""OriginationOps"" as o_op
+                       ON   o_op.""Id"" = ss.""OriginationId""
+                WHERE       ss.""ContractId"" = {contract.Id}
+                AND         COALESCE(o_op.""Level"", m_op.""Level"") <= {level}
+                ORDER BY    ""ScriptLevel"" DESC
+                LIMIT       1");
+
+            if (row == null) return null;
+            var schema = new ContractStorage(Micheline.FromBytes(row.StorageSchema));
+            return schema.Humanize();
+        }
+
+        public async Task<IMicheline> GetRawStorageSchema(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT      ""StorageSchema""
+                FROM        ""Scripts""
+                WHERE       ""ContractId"" = {contract.Id} AND ""Current"" = true
+                LIMIT       1");
+
+            if (row == null) return null;
+            return (Micheline.FromBytes(row.StorageSchema) as MichelinePrim).Args[0];
+        }
+
+        public async Task<IMicheline> GetRawStorageSchema(string address, int level)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            if (level < contract.FirstLevel)
+                return null;
+
+            if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
+                return await GetRawStorageSchema(address);
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT      ss.""StorageSchema"", COALESCE(o_op.""Level"", m_op.""Level"") as ""ScriptLevel""
+                FROM        ""Scripts"" as ss
+                LEFT JOIN   ""MigrationOps"" as m_op
+                       ON   m_op.""Id"" = ss.""MigrationId""
+                LEFT JOIN   ""OriginationOps"" as o_op
+                       ON   o_op.""Id"" = ss.""OriginationId""
+                WHERE       ss.""ContractId"" = {contract.Id}
+                AND         COALESCE(o_op.""Level"", m_op.""Level"") <= {level}
+                ORDER BY    ""ScriptLevel"" DESC
+                LIMIT       1");
+
+            if (row == null) return null;
+            return (Micheline.FromBytes(row.StorageSchema) as MichelinePrim).Args[0];
+        }
+
+        public async Task<IEnumerable<StorageRecord>> GetStorageHistory(string address, int lastId, int limit)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord>();
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync($@"
+                SELECT      ss.""Level"",
+                            ss.""JsonValue"",
+                            ss.""MigrationId"",
+                            ss.""TransactionId"",
+                            ss.""OriginationId"",
+                            o_op.""Timestamp""  as ""OriginationTimestamp"",
+                            o_op.""OpHash""     as ""OriginationHash"",
+                            o_op.""Counter""    as ""OriginationCounter"",
+                            o_op.""Nonce""      as ""OriginationNonce"",
+                            t_op.""Timestamp""  as ""TransactionTimestamp"",
+                            t_op.""OpHash""     as ""TransactionHash"",
+                            t_op.""Counter""    as ""TransactionCounter"",
+                            t_op.""Nonce""      as ""TransactionNonce"",
+                            t_op.""Entrypoint"" as ""TransactionEntrypoint"",
+                            t_op.""JsonParameters"" as ""TransactionJsonParameters"",
+                            m_op.""Timestamp""  as ""MigrationTimestamp""
+                FROM        ""Storages"" as ss
+                LEFT JOIN   ""MigrationOps"" as m_op
+                       ON   m_op.""Id"" = ss.""MigrationId""
+                LEFT JOIN   ""TransactionOps"" as t_op
+                       ON   t_op.""Id"" = ss.""TransactionId""
+                LEFT JOIN   ""OriginationOps"" as o_op
+                       ON   o_op.""Id"" = ss.""OriginationId""
+                WHERE       ss.""ContractId"" = {contract.Id}
+                {(lastId > 0 ? $@"AND COALESCE(ss.""TransactionId"", ss.""OriginationId"", ss.""MigrationId"") < {lastId}" : "")}
+                ORDER BY    ss.""Level"" DESC, ss.""TransactionId"" DESC
+                LIMIT       {limit}");
+            if (!rows.Any()) return Enumerable.Empty<StorageRecord>();
+
+            return rows.Select(row =>
+            {
+                int id;
+                DateTime timestamp;
+                SourceOperation source;
+
+                if (row.TransactionId != null)
+                {
+                    id = row.TransactionId;
+                    timestamp = row.TransactionTimestamp;
+                    source = new SourceOperation
+                    {
+                        Type = "transaction",
+                        Hash = row.TransactionHash,
+                        Counter = row.TransactionCounter,
+                        Nonce = row.TransactionNonce,
+                        Entrypoint = row.TransactionEntrypoint,
+                        Params = row.TransactionJsonParameters
+                    };
+                }
+                else if (row.OriginationId != null)
+                {
+                    id = row.OriginationId;
+                    timestamp = row.OriginationTimestamp;
+                    source = new SourceOperation
+                    {
+                        Type = "origination",
+                        Hash = row.OriginationHash,
+                        Counter = row.OriginationCounter,
+                        Nonce = row.OriginationNonce
+                    };
+                }
+                else
+                {
+                    id = row.MigrationId;
+                    timestamp = row.MigrationTimestamp;
+                    source = new SourceOperation
+                    {
+                        Type = "migration"
+                    };
+                }
+
+                return new StorageRecord
+                {
+                    Id = id,
+                    Timestamp = timestamp,
+                    Operation = source,
+                    Level = row.Level,
+                    Value = row.JsonValue,
+                };
+            });
+        }
+
+        public async Task<IEnumerable<RawStorageRecord>> GetRawStorageHistory(string address, int lastId, int limit)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return Enumerable.Empty<RawStorageRecord>();
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync($@"
+                SELECT      ss.""Level"",
+                            ss.""RawValue"",
+                            ss.""MigrationId"",
+                            ss.""TransactionId"",
+                            ss.""OriginationId"",
+                            o_op.""Timestamp""  as ""OriginationTimestamp"",
+                            o_op.""OpHash""     as ""OriginationHash"",
+                            o_op.""Counter""    as ""OriginationCounter"",
+                            o_op.""Nonce""      as ""OriginationNonce"",
+                            t_op.""Timestamp""  as ""TransactionTimestamp"",
+                            t_op.""OpHash""     as ""TransactionHash"",
+                            t_op.""Counter""    as ""TransactionCounter"",
+                            t_op.""Nonce""      as ""TransactionNonce"",
+                            t_op.""Entrypoint"" as ""TransactionEntrypoint"",
+                            t_op.""RawParameters"" as ""TransactionRawParameters"",
+                            m_op.""Timestamp""  as ""MigrationTimestamp""
+                FROM        ""Storages"" as ss
+                LEFT JOIN   ""MigrationOps"" as m_op
+                       ON   m_op.""Id"" = ss.""MigrationId""
+                LEFT JOIN   ""TransactionOps"" as t_op
+                       ON   t_op.""Id"" = ss.""TransactionId""
+                LEFT JOIN   ""OriginationOps"" as o_op
+                       ON   o_op.""Id"" = ss.""OriginationId""
+                WHERE       ss.""ContractId"" = {contract.Id}
+                {(lastId > 0 ? $@"AND COALESCE(ss.""TransactionId"", ss.""OriginationId"", ss.""MigrationId"") < {lastId}" : "")}
+                ORDER BY    ss.""Level"" DESC, ss.""TransactionId"" DESC
+                LIMIT       {limit}");
+            if (!rows.Any()) return Enumerable.Empty<RawStorageRecord>();
+
+            return rows.Select(row =>
+            {
+                int id;
+                DateTime timestamp;
+                SourceOperationRaw source;
+
+                if (row.TransactionId != null)
+                {
+                    id = row.TransactionId;
+                    timestamp = row.TransactionTimestamp;
+                    source = new SourceOperationRaw
+                    {
+                        Type = "transaction",
+                        Hash = row.TransactionHash,
+                        Counter = row.TransactionCounter,
+                        Nonce = row.TransactionNonce,
+                        Entrypoint = row.TransactionEntrypoint,
+                        Params = row.TransactionRawParameters != null
+                            ? Micheline.FromBytes(row.TransactionRawParameters)
+                            : null
+                    };
+                }
+                else if (row.OriginationId != null)
+                {
+                    id = row.OriginationId;
+                    timestamp = row.OriginationTimestamp;
+                    source = new SourceOperationRaw
+                    {
+                        Type = "origination",
+                        Hash = row.OriginationHash,
+                        Counter = row.OriginationCounter,
+                        Nonce = row.OriginationNonce
+                    };
+                }
+                else
+                {
+                    id = row.MigrationId;
+                    timestamp = row.MigrationTimestamp;
+                    source = new SourceOperationRaw
+                    {
+                        Type = "migration"
+                    };
+                }
+
+                return new RawStorageRecord
+                {
+                    Id = id,
+                    Timestamp = timestamp,
+                    Operation = source,
+                    Level = row.Level,
+                    Value = Micheline.FromBytes(row.RawValue),
+                };
+            });
         }
         #endregion
 

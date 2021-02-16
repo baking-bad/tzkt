@@ -30,6 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         // Airdrop
         // Proposal invoice
+        // Code change
 
         protected override async Task MigrateContext(AppState state)
         {
@@ -102,21 +103,86 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region scripts
             var smartContracts = await Db.Contracts
-                .AsNoTracking()
                 .Where(x => x.Kind > ContractKind.DelegatorContract)
+                .ToListAsync();
+
+            var scripts = await Db.Scripts
+                .AsNoTracking()
                 .ToListAsync();
 
             foreach (var contract in smartContracts)
             {
-                var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
-                var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
-                
-                var script = await Cache.Scripts.GetAsync(contract);
-                Db.TryAttach(script);
+                Cache.Accounts.Add(contract);
 
-                script.ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
-                script.StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
-                script.CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+                var script = scripts.First(x => x.ContractId == contract.Id);
+                var storage = await Cache.Storages.GetAsync(contract);
+
+                var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
+
+                var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
+                var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
+                var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+
+                var newSchema = new Netezos.Contracts.ContractScript(code);
+                var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
+
+                if (script.ParameterSchema.IsEqual(micheParameter) &&
+                    script.StorageSchema.IsEqual(micheStorage) &&
+                    script.CodeSchema.IsEqual(micheCode) &&
+                    storage.RawValue.IsEqual(newRawStorageValue))
+                    continue;
+
+                Db.TryAttach(script);
+                script.Current = false;
+
+                Db.TryAttach(storage);
+                storage.Current = false;
+
+                var migration = new MigrationOperation
+                {
+                    Id = Cache.AppState.NextOperationId(),
+                    Block = block,
+                    Level = block.Level,
+                    Timestamp = block.Timestamp,
+                    Account = contract,
+                    Kind = MigrationKind.CodeChange
+                };
+                var newScript = new Script
+                {
+                    ContractId = contract.Id,
+                    MigrationId = migration.Id,
+                    ParameterSchema = micheParameter,
+                    StorageSchema = micheStorage,
+                    CodeSchema = micheCode,
+                    Current = true
+                };
+                var newStorage = new Storage
+                {
+                    Level = migration.Level,
+                    ContractId = contract.Id,
+                    MigrationId = migration.Id,
+                    RawValue = newRawStorageValue,
+                    JsonValue = newScript.Schema.HumanizeStorage(newStorageValue),
+                    Current = true
+                };
+
+                migration.OldScript = script;
+                migration.OldStorage = storage;
+                migration.NewScript = newScript;
+                migration.NewStorage = newStorage;
+
+                contract.MigrationsCount++;
+                state.MigrationOpsCount++;
+
+                Db.MigrationOps.Add(migration);
+
+                Db.Scripts.Add(newScript);
+                Cache.Schemas.Add(contract, newScript.Schema);
+
+                Db.Storages.Add(newStorage);
+                Cache.Storages.Add(contract, newStorage);
             }
             #endregion
         }
@@ -162,23 +228,34 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region scripts
-            var smartContracts = await Db.Contracts
-                .AsNoTracking()
-                .Where(x => x.Kind > ContractKind.DelegatorContract)
+            var codeChanges = await Db.MigrationOps
+                .Include(x => x.Account)
+                .Include(x => x.OldScript)
+                .Include(x => x.OldStorage)
+                .Include(x => x.NewScript)
+                .Include(x => x.NewStorage)
+                .Where(x => x.Kind == MigrationKind.CodeChange)
                 .ToListAsync();
 
-            foreach (var contract in smartContracts)
+            foreach (var change in codeChanges)
             {
-                var rawContract = await Proto.Rpc.GetContractAsync(state.Level - 1, contract.Address);
-                var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                var contract = change.Account as Contract;
+                Cache.Accounts.Add(contract);
 
-                var script = await Cache.Scripts.GetAsync(contract);
-                Db.TryAttach(script);
+                change.OldScript.Current = true;
+                Cache.Schemas.Add(contract, change.OldScript.Schema);
 
-                script.ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
-                script.StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
-                script.CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+                change.OldStorage.Current = true;
+                Cache.Storages.Add(contract, change.OldStorage);
+
+                Db.Scripts.Remove(change.NewScript);
+                Db.Storages.Remove(change.NewStorage);
+
+                contract.MigrationsCount--;
             }
+
+            Db.MigrationOps.RemoveRange(codeChanges);
+            state.MigrationOpsCount -= codeChanges.Count;
             #endregion
         }
     }

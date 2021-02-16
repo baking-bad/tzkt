@@ -18,7 +18,8 @@ namespace Tzkt.Sync.Services
         public ProtocolsCache Protocols { get; private set; }
         public StatisticsCache Statistics { get; private set; }
         public SoftwareCache Software { get; private set; }
-        public ScriptsCache Scripts { get; private set; }
+        public SchemasCache Schemas { get; private set; }
+        public StoragesCache Storages { get; private set; }
 
         public CacheService(TzktContext db)
         {
@@ -32,7 +33,8 @@ namespace Tzkt.Sync.Services
             Protocols = new ProtocolsCache(db);
             Statistics = new StatisticsCache(db);
             Software = new SoftwareCache(db);
-            Scripts = new ScriptsCache(db);
+            Schemas = new SchemasCache(db);
+            Storages = new StoragesCache(db);
         }
 
         public async Task ResetAsync()
@@ -45,7 +47,8 @@ namespace Tzkt.Sync.Services
             Periods.Reset();
             Statistics.Reset();
             Software.Reset();
-            Scripts.Reset();
+            Schemas.Reset();
+            Storages.Reset();
 
             await AppState.ResetAsync();
             await Accounts.ResetAsync();

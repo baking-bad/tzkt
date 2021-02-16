@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Netezos.Encoding;
 
@@ -65,7 +66,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     : null
             };
 
-            if (content.TryGetProperty("parameters", out var parameters))
+
+            if (transaction.Target is not User && content.TryGetProperty("parameters", out var parameters))
                 await ProcessParameters(transaction, parameters);
             #endregion
 
@@ -127,6 +129,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
 
                 await ResetGracePeriod(transaction);
+
+                if (result.TryGetProperty("storage", out var storage))
+                    await ProcessStorage(transaction, storage);
             }
             #endregion
 
@@ -186,7 +191,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     : null
             };
 
-            if (content.TryGetProperty("parameters", out var parameters))
+            if (transaction.Target is not User && content.TryGetProperty("parameters", out var parameters))
                 await ProcessParameters(transaction, parameters);
             #endregion
 
@@ -249,6 +254,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
 
                 await ResetGracePeriod(transaction);
+
+                if (result.TryGetProperty("storage", out var storage))
+                    await ProcessStorage(transaction, storage);
             }
             #endregion
 
@@ -325,6 +333,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     senderDelegate.StakingBalance += transaction.StorageFee ?? 0;
                     senderDelegate.StakingBalance += transaction.AllocationFee ?? 0;
                 }
+
+                if (transaction.StorageId != null)
+                    await RevertStorage(transaction);
             }
             #endregion
 
@@ -418,6 +429,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     parentDelegate.StakingBalance += transaction.StorageFee ?? 0;
                     parentDelegate.StakingBalance += transaction.AllocationFee ?? 0;
                 }
+
+                if (transaction.StorageId != null)
+                    await RevertStorage(transaction);
             }
             #endregion
 
@@ -457,14 +471,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual async Task ProcessParameters(TransactionOperation transaction, JsonElement parameters)
         {
-            if (transaction.Target is User) return;
             var (rawEp, rawParam) = ("default", Micheline.FromJson(parameters));
 
             if (transaction.Target is Contract contract)
             {
                 if (contract.Kind == ContractKind.DelegatorContract)
                 {
-                    if (rawParam is MichelinePrim p && p.Prim == PrimType.unit)
+                    if (rawParam is MichelinePrim p && p.Prim == PrimType.Unit)
                         return;
 
                     transaction.Entrypoint = rawEp;
@@ -474,12 +487,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     try
                     {
-                        var script = await Cache.Scripts.GetAsync(contract);
-                        var (normEp, normParam) = script.Schema.NormalizeParameters(rawEp, rawParam);
+                        var schema = await Cache.Schemas.GetAsync(contract);
+                        var (normEp, normParam) = schema.NormalizeParameter(rawEp, rawParam);
 
                         transaction.Entrypoint = normEp;
                         transaction.RawParameters = normParam.ToBytes();
-                        transaction.JsonParameters = script.Schema.HumanizeParameters(normEp, normParam);
+                        transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
                     }
                     catch (Exception ex)
                     {
@@ -495,6 +508,62 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 transaction.Entrypoint = rawEp;
                 transaction.RawParameters = rawParam.ToBytes();
+            }
+        }
+
+        protected virtual async Task ProcessStorage(TransactionOperation transaction, JsonElement storage)
+        {
+            if (transaction.Target is not Contract contract || contract.Kind == ContractKind.DelegatorContract)
+                return;
+
+            var schema = await Cache.Schemas.GetAsync(contract);
+            var currentStorage = await Cache.Storages.GetAsync(contract);
+
+            var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(storage), false);
+            var newStorageBytes = newStorageMicheline.ToBytes();
+
+            if (newStorageBytes.IsEqual(currentStorage.RawValue))
+            {
+                Db.TryAttach(currentStorage);
+                transaction.Storage = currentStorage;
+                return;
+            }
+
+            var newStorage = new Storage
+            {
+                Level = transaction.Level,
+                ContractId = contract.Id,
+                TransactionId = transaction.Id,
+                RawValue = newStorageBytes,
+                JsonValue = schema.HumanizeStorage(newStorageMicheline),
+                Current = true,
+            };
+
+            Db.TryAttach(currentStorage);
+            currentStorage.Current = false;
+
+            Db.Storages.Add(newStorage);
+            Cache.Storages.Add(contract, newStorage);
+
+            transaction.Storage = newStorage;
+        }
+
+        public async Task RevertStorage(TransactionOperation transaction)
+        {
+            var contract = transaction.Target as Contract;
+            var storage = await Cache.Storages.GetAsync(contract);
+
+            if (storage.TransactionId == transaction.Id)
+            {
+                var prevStorage = await Db.Storages
+                    .Where(x => x.ContractId == contract.Id && !x.Current)
+                    .OrderByDescending(x => x.Id)
+                    .FirstAsync();
+
+                prevStorage.Current = true;
+                Cache.Storages.Add(contract, prevStorage);
+
+                Db.Storages.Remove(storage);
             }
         }
     }

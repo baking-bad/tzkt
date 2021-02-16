@@ -24,24 +24,23 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         protected override async Task ProcessParameters(TransactionOperation transaction, JsonElement param)
         {
-            if (transaction.Target is User) return;
             var (rawEp, rawParam) = (param.RequiredString("entrypoint"), Micheline.FromJson(param.Required("value")));
 
             if (transaction.Target is Contract contract)
             {
                 var schema = contract.Kind > ContractKind.DelegatorContract
-                    ? (await Cache.Scripts.GetAsync(contract)).Schema
+                    ? (await Cache.Schemas.GetAsync(contract))
                     : Script.ManagerTz;
 
                 try
                 {
-                    var (normEp, normParam) = schema.NormalizeParameters(rawEp, rawParam);
+                    var (normEp, normParam) = schema.NormalizeParameter(rawEp, rawParam);
 
                     transaction.Entrypoint = normEp;
                     transaction.RawParameters = normParam.ToBytes();
 
                     if (contract.Kind > ContractKind.DelegatorContract)
-                        transaction.JsonParameters = schema.HumanizeParameters(normEp, normParam);
+                        transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
                 }
                 catch (Exception ex)
                 {
