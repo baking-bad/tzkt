@@ -143,36 +143,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 block.Events |= GetBlockEvents(contract);
 
                 Db.Contracts.Add(contract);
+
                 if (contract.Kind > ContractKind.DelegatorContract)
-                {
-                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
-
-                    var script = new Script
-                    {
-                        ContractId = contract.Id,
-                        ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes(),
-                        StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes(),
-                        CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes(),
-                    };
-
-                    contract.Tzips = Tzip.None;
-                    if (script.Schema.IsFA1())
-                    {
-                        if (script.Schema.IsFA12())
-                            contract.Tzips |= Tzip.FA12;
-
-                        contract.Tzips |= Tzip.FA1;
-                        contract.Kind = ContractKind.Asset;
-                    }
-                    if (script.Schema.IsFA2())
-                    {
-                        contract.Tzips |= Tzip.FA2;
-                        contract.Kind = ContractKind.Asset;
-                    }
-
-                    Db.Scripts.Add(script);
-                    Cache.Scripts.Add(contract, script);
-                }
+                    await ProcessScript(origination, content);
             }
             #endregion
 
@@ -312,36 +285,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 block.Events |= GetBlockEvents(contract);
 
                 Db.Contracts.Add(contract);
+
                 if (contract.Kind > ContractKind.DelegatorContract)
-                {
-                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
-
-                    var script = new Script
-                    {
-                        ContractId = contract.Id,
-                        ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes(),
-                        StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes(),
-                        CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes(),
-                    };
-
-                    contract.Tzips = Tzip.None;
-                    if (script.Schema.IsFA1())
-                    {
-                        if (script.Schema.IsFA12())
-                            contract.Tzips |= Tzip.FA12;
-
-                        contract.Tzips |= Tzip.FA1;
-                        contract.Kind = ContractKind.Asset;
-                    }
-                    if (script.Schema.IsFA2())
-                    {
-                        contract.Tzips |= Tzip.FA2;
-                        contract.Kind = ContractKind.Asset;
-                    }
-
-                    Db.Scripts.Add(script);
-                    Cache.Scripts.Add(contract, script);
-                }
+                    await ProcessScript(origination, content);
             }
             #endregion
 
@@ -405,11 +351,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 if (contract.Kind > ContractKind.DelegatorContract)
-                {
-                    var script = await Cache.Scripts.GetAsync(contract);
-                    Db.Scripts.Remove(script);
-                    Cache.Scripts.Remove(contract);
-                }
+                    await RevertScript(origination);
 
                 Db.Contracts.Remove(contract);
                 Cache.Accounts.Remove(contract);
@@ -504,11 +446,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 if (contract.Kind > ContractKind.DelegatorContract)
-                {
-                    var script = await Cache.Scripts.GetAsync(contract);
-                    Db.Scripts.Remove(script);
-                    Cache.Scripts.Remove(contract);
-                }
+                    await RevertScript(origination);
 
                 Db.Contracts.Remove(contract);
                 Cache.Accounts.Remove(contract);
@@ -554,6 +492,97 @@ namespace Tzkt.Sync.Protocols.Proto1
             return contract.Kind == ContractKind.SmartContract
                 ? BlockEvents.SmartContracts
                 : BlockEvents.None;
+        }
+
+        protected async Task ProcessScript(OriginationOperation origination, JsonElement content)
+        {
+            var contract = origination.Contract;
+
+            var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
+            var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
+            var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
+            var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
+            var script = new Script
+            {
+                ContractId = contract.Id,
+                OriginationId = origination.Id,
+                ParameterSchema = micheParameter.ToBytes(),
+                StorageSchema = micheStorage.ToBytes(),
+                CodeSchema = micheCode.ToBytes(),
+                Current = true
+            };
+
+            contract.Tzips = Tzip.None;
+            if (script.Schema.IsFA1())
+            {
+                if (script.Schema.IsFA12())
+                    contract.Tzips |= Tzip.FA12;
+
+                contract.Tzips |= Tzip.FA1;
+                contract.Kind = ContractKind.Asset;
+            }
+            if (script.Schema.IsFA2())
+            {
+                contract.Tzips |= Tzip.FA2;
+                contract.Kind = ContractKind.Asset;
+            }
+
+            IMicheline storageValue;
+            if (HasLazyStorages(micheStorage))
+            {
+                // get from RPC because we don't know the IDs of allocated big_maps and sapling_states
+                var rawContract = await Proto.Rpc.GetContractAsync(origination.Level, contract.Address);
+                storageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+            }
+            else
+            {
+                storageValue = Micheline.FromJson(content.Required("script").Required("storage"));
+            }
+            var storage = new Storage
+            {
+                Level = origination.Level,
+                ContractId = contract.Id,
+                OriginationId = origination.Id,
+                RawValue = script.Schema.OptimizeStorage(storageValue, false).ToBytes(),
+                JsonValue = script.Schema.HumanizeStorage(storageValue),
+                Current = true
+            };
+
+            Db.Scripts.Add(script);
+            Cache.Schemas.Add(contract, script.Schema);
+
+            Db.Storages.Add(storage);
+            Cache.Storages.Add(contract, storage);
+
+            origination.Script = script;
+            origination.Storage = storage;
+        }
+
+        protected async Task RevertScript(OriginationOperation origination)
+        {
+            var contract = origination.Contract;
+
+            Db.Scripts.Remove(new Script { Id = (int)origination.ScriptId });
+            Cache.Schemas.Remove(contract);
+
+            var storage = await Cache.Storages.GetAsync(contract);
+            Db.Storages.Remove(storage);
+            Cache.Storages.Remove(contract);
+        }
+
+        protected bool HasLazyStorages(IMicheline micheline)
+        {
+            if (micheline is MichelinePrim prim)
+            {
+                if (prim.Prim == PrimType.big_map || prim.Prim == PrimType.sapling_state)
+                    return true;
+
+                if (prim.Args != null)
+                    foreach (var arg in prim.Args)
+                        if (HasLazyStorages(arg))
+                            return true;
+            }
+            return false;
         }
     }
 }

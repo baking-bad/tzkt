@@ -9,6 +9,8 @@ namespace Tzkt.Data.Models
         public int? ManagerId { get; set; }
         public int? DelegateId { get; set; }
         public int? ContractId { get; set; }
+        public int? ScriptId { get; set; }
+        public int? StorageId { get; set; }
 
         public long Balance { get; set; }
 
@@ -21,6 +23,12 @@ namespace Tzkt.Data.Models
 
         [ForeignKey(nameof(ManagerId))]
         public User Manager { get; set; }
+
+        [ForeignKey(nameof(ScriptId))]
+        public Script Script { get; set; }
+
+        [ForeignKey(nameof(StorageId))]
+        public Storage Storage { get; set; }
         #endregion
     }
 

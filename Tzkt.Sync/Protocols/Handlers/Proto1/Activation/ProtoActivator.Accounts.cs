@@ -85,17 +85,33 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 #region script
                 var code = Micheline.FromJson(data[1].Required("code")) as MichelineArray;
-
+                var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
+                var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
+                var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
                 var script = new Script
                 {
                     ContractId = contract.Id,
-                    ParameterSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes(),
-                    StorageSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes(),
-                    CodeSchema = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes(),
+                    ParameterSchema = micheParameter.ToBytes(),
+                    StorageSchema = micheStorage.ToBytes(),
+                    CodeSchema = micheCode.ToBytes(),
+                    Current = true
                 };
 
                 Db.Scripts.Add(script);
-                Cache.Scripts.Add(contract, script);
+                Cache.Schemas.Add(contract, script.Schema);
+
+                var storageValue = Micheline.FromJson(data[1].Required("storage"));
+                var storage = new Storage
+                {
+                    Level = 1,
+                    ContractId = contract.Id,
+                    RawValue = script.Schema.OptimizeStorage(storageValue, false).ToBytes(),
+                    JsonValue = script.Schema.HumanizeStorage(storageValue),
+                    Current = true
+                };
+
+                Db.Storages.Add(storage);
+                Cache.Storages.Add(contract, storage);
                 #endregion
 
                 manager.ContractsCount++;
@@ -118,7 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             foreach (var account in accounts)
             {
-                Db.MigrationOps.Add(new MigrationOperation
+                var migration = new MigrationOperation
                 {
                     Id = Cache.AppState.NextOperationId(),
                     Block = block,
@@ -126,8 +142,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Timestamp = block.Timestamp,
                     Account = account,
                     Kind = MigrationKind.Bootstrap,
-                    BalanceChange = account.Balance
-                });
+                    BalanceChange = account.Balance,
+                };
+
+                if (account is Contract contract)
+                {
+                    var script = Db.ChangeTracker.Entries()
+                        .First(x => x.Entity is Script s && s.ContractId == contract.Id).Entity as Script;
+                    var storage = await Cache.Storages.GetAsync(contract);
+                    
+                    script.MigrationId = migration.Id;
+                    storage.MigrationId = migration.Id;
+
+                    migration.NewScript = script;
+                    migration.NewStorage = storage;
+                }
+
+                Db.MigrationOps.Add(migration);
                 account.MigrationsCount++;
             }
 
@@ -149,10 +180,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             await Db.Database.ExecuteSqlRawAsync(@"
                 DELETE FROM ""Accounts"";
                 DELETE FROM ""MigrationOps"";
-                DELETE FROM ""Scripts"";");
+                DELETE FROM ""Scripts"";
+                DELETE FROM ""Storages"";");
 
             await Cache.Accounts.ResetAsync();
-            Cache.Scripts.Reset();
+            Cache.Schemas.Reset();
+            Cache.Storages.Reset();
 
             var state = Cache.AppState.Get();
             state.AccountsCount = 0;

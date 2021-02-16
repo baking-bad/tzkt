@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -15,7 +16,17 @@ namespace Tzkt.Api
 
             foreach (var key in bindingContext.HttpContext.Request.Query.Keys.Where(x => x == model || x.StartsWith($"{model}.")))
             {
-                var arr = key.Split(".", StringSplitOptions.RemoveEmptyEntries);
+                var sKey = key.Replace("..", "*");
+                var arr = sKey.Split(".", StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    arr[i] = arr[i].Replace("*", ".");
+                    if (!Regex.IsMatch(arr[i], "^[0-9A-z_.%@]+$"))
+                    {
+                        bindingContext.ModelState.AddModelError(key, $"Invalid path value '{arr[i]}'");
+                        return Task.CompletedTask;
+                    }
+                }
                 var hasValue = false;
 
                 switch (arr[^1])

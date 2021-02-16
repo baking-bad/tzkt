@@ -40,7 +40,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task LoadAsync(IEnumerable<string> addresses)
         {
-            var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToList();
+            var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToHashSet();
             if (missed.Count > 0)
             {
                 CheckSpaceFor(missed.Count);

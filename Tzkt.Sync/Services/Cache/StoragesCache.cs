@@ -9,38 +9,38 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class ScriptsCache
+    public class StoragesCache
     {
         public const int MaxItems = 256; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, Script> CachedById = new Dictionary<int, Script>(257);
+        static readonly Dictionary<int, Storage> CachedByContractId = new Dictionary<int, Storage>(257);
 
         readonly TzktContext Db;
 
-        public ScriptsCache(TzktContext db)
+        public StoragesCache(TzktContext db)
         {
             Db = db;
         }
 
         public void Reset()
         {
-            CachedById.Clear();
+            CachedByContractId.Clear();
         }
 
-        public void Add(Contract contract, Script script)
+        public void Add(Contract contract, Storage storage)
         {
             CheckSpace();
-            CachedById[contract.Id] = script;
+            CachedByContractId[contract.Id] = storage;
         }
 
-        public async Task<Script> GetAsync(Contract contract)
+        public async Task<Storage> GetAsync(Contract contract)
         {
             if (contract == null) return null;
 
-            if (!CachedById.TryGetValue(contract.Id, out var item))
+            if (!CachedByContractId.TryGetValue(contract.Id, out var item))
             {
-                item = await Db.Scripts.FirstOrDefaultAsync(x => x.ContractId == contract.Id)
-                    ?? throw new Exception($"Script for contract #{contract.Id} doesn't exist");
+                item = await Db.Storages.FirstOrDefaultAsync(x => x.ContractId == contract.Id && x.Current)
+                    ?? throw new Exception($"Storage for contract #{contract.Id} doesn't exist");
 
                 Add(contract, item);
             }
@@ -50,18 +50,18 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Remove(Contract contract)
         {
-            CachedById.Remove(contract.Id);
+            CachedByContractId.Remove(contract.Id);
         }
 
         void CheckSpace()
         {
-            if (CachedById.Count >= MaxItems)
+            if (CachedByContractId.Count >= MaxItems)
             {
-                var oldest = CachedById.Values
+                var oldest = CachedByContractId.Values
                     .Take(MaxItems / 4);
 
                 foreach (var key in oldest.Select(x => x.ContractId).ToList())
-                    CachedById.Remove(key);
+                    CachedByContractId.Remove(key);
             }
         }
     }

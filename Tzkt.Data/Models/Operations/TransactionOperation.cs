@@ -13,14 +13,18 @@ namespace Tzkt.Data.Models
 
         public string Entrypoint { get; set; }
         public byte[] RawParameters { get; set; }
-        [Column(TypeName = "jsonb")]
         public string JsonParameters { get; set; }
+
+        public int? StorageId { get; set; }
 
         public InternalOperations? InternalOperations { get; set; }
 
         #region relations
         [ForeignKey(nameof(TargetId))]
         public Account Target { get; set; }
+
+        [ForeignKey(nameof(StorageId))]
+        public Storage Storage { get; set; }
         #endregion
     }
 
@@ -56,6 +60,10 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(51)
                 .IsRequired();
+
+            modelBuilder.Entity<TransactionOperation>()
+                .Property(x => x.JsonParameters)
+                .HasColumnType("jsonb");
             #endregion
             
             #region relations

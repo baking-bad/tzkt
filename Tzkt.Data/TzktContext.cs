@@ -65,6 +65,7 @@ namespace Tzkt.Data
 
         #region scripts
         public DbSet<Script> Scripts { get; set; }
+        public DbSet<Storage> Storages { get; set; }
         #endregion
 
         public TzktContext(DbContextOptions options) : base(options) { }
@@ -130,6 +131,7 @@ namespace Tzkt.Data
 
             #region scripts
             modelBuilder.BuildScriptModel();
+            modelBuilder.BuildStorageModel();
             #endregion
         }
     }

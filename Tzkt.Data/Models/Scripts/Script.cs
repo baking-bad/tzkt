@@ -9,6 +9,9 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public int ContractId { get; set; }
+        public int? OriginationId { get; set; }
+        public int? MigrationId { get; set; }
+        public bool Current { get; set; }
 
         public byte[] ParameterSchema { get; set; }
         public byte[] StorageSchema { get; set; }
@@ -53,16 +56,13 @@ namespace Tzkt.Data.Models
                 .IsUnique();
 
             modelBuilder.Entity<Script>()
-                .HasIndex(x => x.ContractId)
-                .IsUnique();
+                .HasIndex(x => new { x.ContractId, x.Current })
+                .HasFilter($@"""{nameof(Script.Current)}"" = true");
             #endregion
 
             #region keys
             modelBuilder.Entity<Script>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Script>()
-                .HasAlternateKey(x => x.ContractId);
             #endregion
         }
     }

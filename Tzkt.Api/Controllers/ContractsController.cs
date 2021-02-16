@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-
+using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 
@@ -154,6 +155,65 @@ namespace Tzkt.Api.Controllers
         public Task<Entrypoint> GetEntrypointByName([Address] string address, string name, bool json = true, bool micheline = false, bool michelson = false)
         {
             return Accounts.GetEntrypoint(address, name, json, micheline, michelson);
+        }
+
+        [HttpGet("{address}/storage")]
+        public async Task<ActionResult> GetStorage([Address] string address, [Min(0)] int level = 0, string path = null)
+        {
+            #region safe path
+            string[] safePath = null;
+            if (path != null)
+            {
+                var arr = path.Split(",", StringSplitOptions.RemoveEmptyEntries);
+                
+                for (int i = 0; i < arr.Length; i++)
+                    if (!Regex.IsMatch(arr[i], "^[0-9A-z_.%@]+$"))
+                        return new BadRequest(nameof(path), $"Invalid path value '{arr[i]}'");
+
+                if (arr.Length > 0)
+                    safePath = arr;
+            }
+            #endregion
+
+            if (level == 0)
+                return this.Json(await Accounts.GetStorageValue(address, safePath));
+            return this.Json(await Accounts.GetStorageValue(address, safePath, level));
+        }
+
+        [HttpGet("{address}/storage/schema")]
+        public async Task<ActionResult> GetStorageSchema([Address] string address, [Min(0)] int level = 0)
+        {
+            if (level == 0)
+                return this.Json(await Accounts.GetStorageSchema(address));
+            return this.Json(await Accounts.GetStorageSchema(address, level));
+        }
+
+        [HttpGet("{address}/storage/history")]
+        public Task<IEnumerable<StorageRecord>> GetStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        {
+            return Accounts.GetStorageHistory(address, lastId, limit);
+        }
+
+        [HttpGet("{address}/storage/raw")]
+        public Task<IMicheline> GetRawStorage([Address] string address, [Min(0)] int level = 0)
+        {
+            if (level == 0)
+                return Accounts.GetRawStorageValue(address);
+            return Accounts.GetRawStorageValue(address, level);
+        }
+
+        [HttpGet("{address}/storage/raw/schema")]
+        public Task<IMicheline> GetRawStorageSchema([Address] string address, [Min(0)] int level = 0)
+        {
+            if (level == 0)
+                return Accounts.GetRawStorageSchema(address);
+            return Accounts.GetRawStorageSchema(address, level);
+        }
+
+        [HttpGet("{address}/storage/raw/history")]
+        public Task<IEnumerable<RawStorageRecord>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        {
+            return Accounts.GetRawStorageHistory(address, lastId, limit);
         }
     }
 }
