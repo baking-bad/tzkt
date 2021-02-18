@@ -10,6 +10,7 @@ The indexer fetches raw data from the Tezos node, then processes it and stores i
 - **More detailed data.** TzKT not only collects blockchain data, but also processes and extends it with unique properties or even entities. For example, TzKT was the first indexer introduced synthetic operation types such as "migration" or "revelation penalty", which fill in the gaps in account history (because this data is missed in the blockchain), and the only indexer that correctly distinguishes smart contracts among all contracts.
 - **Data quality comes first!** You will never see an incorrect account balance, or total rolls, or missed operations, etc. TzKT was built by professionals who know Tezos from A to Z (or, in other words, from TZ to KT 😼).
 - **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly. In addition to basic data access TzKT API has a lot of cool features such as exporting account statements, calculating historical balances (at any block), injecting metadata and much more. See the [API documentation](https://api.tzkt.io), automatically generated using Swagger (Open API 3 specification).
+- **Websocket API.** TzKT allows subscribing to various blockchain events, such as new block or new transaction, and receive data immediately via websocket. TzKT uses SignalR, which is very easy to use and for which there are many client libraries for different languages.
 - **Low resource consumption.** TzKT is fairly lightweight. The indexer consumes up to 128MB of RAM, and the API up to 256MB-1024MB, depending on the configured cache size.
 - **No local node needed.** TzKT indexer works well even with remote RPC node. By default it uses [tezos.giganode.io](https://tezos.giganode.io/), the most performant public RPC node in Tezos, which is more than enough for most cases.
 - **Quick start.** Indexer bootstrap takes ~15 minutes by using snapshots publicly available for all supported networks. Of course, you can run full synchronization from scratch as well.
@@ -47,25 +48,25 @@ sudo apt update
 sudo apt install git
 ````
 
-#### Install .NET Core 3.1 SDK
+#### Install .NET 5.0 SDK
 
 ````
-wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 sudo dpkg -i packages-microsoft-prod.deb
-sudo add-apt-repository universe
+
 sudo apt update
-sudo apt install apt-transport-https
+sudo apt install -y apt-transport-https
 sudo apt update
-sudo apt -y install dotnet-sdk-3.1
+sudo apt install -y dotnet-sdk-5.0
 ````
 
 #### Install Postgresql 12
 
 ````
-echo "deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+wget -q -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
 sudo apt update
-sudo apt -y install postgresql-12 postgresql-client-12
+sudo apt -y install postgresql-13 postgresql-client-13
 ````
 
 ## Install Tzkt Indexer and API for mainnet
@@ -86,13 +87,13 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_1.3.2.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_329.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
 
 ````c
-// mainnet restoring takes ~10 min
+// mainnet restoring takes ~10 min (of course, depending on hardware)
 sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -1 /tmp/tzkt_db.backup
 ````
 
@@ -194,15 +195,16 @@ Like this:
 
 ````js
 {
-  "Sync": {
-    "CheckInterval": 5,
-    "UpdateInterval": 2
-  },
-
   "Metadata": {
     "AccountsPath": "*",
     "ProposalsPath": "*",
     "ProtocolsPath": "*"
+  },  
+  
+  "Websocket": {
+    "Enabled": true,
+    "MaxConnections": 100,
+    "MaxAccountSubscriptions": 10
   },
 
   "Cache": {
@@ -393,20 +395,21 @@ Like this:
 
 ````js
 {
-  "Sync": {
-    "CheckInterval": 5,
-    "UpdateInterval": 2
-  },
-
   "Metadata": {
     "AccountsPath": "*",
     "ProposalsPath": "*",
     "ProtocolsPath": "*"
   },
-
+    
   "Cache": {
     "LoadRate": 0.75,
     "MaxAccounts": 32000
+  },
+       
+  "Websocket": {
+    "Enabled": true,
+    "MaxConnections": 100,
+    "MaxAccountSubscriptions": 10
   },
 
   "ConnectionStrings": {
@@ -417,9 +420,6 @@ Like this:
     "EndPoints": {
       "Http": {
         "Url": "http://localhost:5010"
-      },
-      "Https": {
-        "Url": "https://localhost:5011"
       }
     }
   },

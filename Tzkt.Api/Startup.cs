@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +11,7 @@ using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
+using Tzkt.Api.Swagger;
 using Tzkt.Api.Websocket;
 using Tzkt.Api.Websocket.Hubs;
 using Tzkt.Api.Websocket.Processors;
@@ -77,36 +76,7 @@ namespace Tzkt.Api
                     options.InvalidModelStateResponseFactory = context => new BadRequest(context);
                 });
 
-            services.AddOpenApiDocument(options =>
-            {
-                options.DocumentName = "v1.3.1";
-                options.PostProcess = document =>
-                {
-                    document.Info.Title = "TzKT API";
-
-                    if (File.Exists("Description.md"))
-                        document.Info.Description = File.ReadAllText("Description.md");
-
-                    document.Info.Version = "v1.3.1";
-                    document.Info.Contact = new NSwag.OpenApiContact
-                    {
-                        Name = "Baking Bad Team",
-                        Email = "hello@baking-bad.org",
-                        Url = "https://baking-bad.org/docs"
-                    };
-                    document.Info.ExtensionData = new Dictionary<string, object>
-                    {
-                        {
-                            "x-logo", new
-                            {
-                                url = "https://tzkt.io/logo.png",
-                                href = "https://tzkt.io/"
-                            }
-                        }
-                    };
-                    document.Produces = new[] { "application/json" };
-                };
-            });
+            services.AddOpenApiDocument();
 
             #region websocket
             if (Configuration.GetWebsocketConfig().Enabled)
@@ -145,13 +115,13 @@ namespace Tzkt.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCors(builder => builder.AllowAnyOrigin());
+            app.UseCors(builder => builder
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .SetIsOriginAllowed(_ => true)
+                .AllowCredentials());
 
-            app.UseOpenApi(options => 
-            {
-                options.Path = "/v1/swagger.json";
-                options.DocumentName = "v1.3.1";
-            });
+            app.UseOpenApi();
 
             app.UseRouting();
 
