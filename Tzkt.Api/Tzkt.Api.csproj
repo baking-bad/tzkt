@@ -15,10 +15,22 @@
   
   <ItemGroup>
     <None Remove="Description.md" />
+    <None Remove="Swagger\WsExamples.md" />
+    <None Remove="Swagger\WsGetStarted.md" />
+    <None Remove="Swagger\WsSubscriptions.md" />
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="Description.md">
+    <Content Include="Swagger\WsExamples.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Swagger\WsSubscriptions.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Swagger\WsGetStarted.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Swagger\Description.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

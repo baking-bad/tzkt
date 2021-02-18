@@ -164,11 +164,15 @@ namespace Tzkt.Api.Controllers
             string[] safePath = null;
             if (path != null)
             {
-                var arr = path.Split(",", StringSplitOptions.RemoveEmptyEntries);
-                
+                var arr = path.Replace("..", "*").Split(".", StringSplitOptions.RemoveEmptyEntries);
+
                 for (int i = 0; i < arr.Length; i++)
+                {
+                    arr[i] = arr[i].Replace("*", ".");
+
                     if (!Regex.IsMatch(arr[i], "^[0-9A-z_.%@]+$"))
                         return new BadRequest(nameof(path), $"Invalid path value '{arr[i]}'");
+                }
 
                 if (arr.Length > 0)
                     safePath = arr;
