@@ -116,12 +116,17 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="hash">Block hash</param>
         /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<Block> GetByHash([BlockHash] string hash, bool operations = false, Symbols quote = Symbols.None)
+        public Task<Block> GetByHash(
+            [BlockHash] string hash,
+            bool operations = false,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
         {
-            return Blocks.Get(hash, operations, quote);
+            return Blocks.Get(hash, operations, micheline, quote);
         }
 
         /// <summary>
@@ -132,12 +137,17 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="level">Block level</param>
         /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{level:int}")]
-        public Task<Block> GetByLevel([Min(0)] int level, bool operations = false, Symbols quote = Symbols.None)
+        public Task<Block> GetByLevel(
+            [Min(0)] int level,
+            bool operations = false,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
         {
-            return Blocks.Get(level, operations, quote);
+            return Blocks.Get(level, operations, micheline, quote);
         }
 
         // BCD bootstrap

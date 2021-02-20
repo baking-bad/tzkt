@@ -113,7 +113,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
                 var transactions = ActiveOps.HasFlag(Operations.Transactions)
-                    ? Repo.GetTransactions(null, null, null, null, null, level, null, null, null, null, null, null, null, limit, symbols)
+                    ? Repo.GetTransactions(null, null, null, null, null, level, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TransactionOperation>());
 
                 var reveals = ActiveOps.HasFlag(Operations.Reveals)

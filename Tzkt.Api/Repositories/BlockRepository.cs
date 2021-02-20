@@ -33,7 +33,7 @@ namespace Tzkt.Api.Repositories
             return Task.FromResult(State.Current.Level + 1);
         }
 
-        public async Task<Block> Get(int level, bool operations, Symbols quote)
+        public async Task<Block> Get(int level, bool operations, MichelineFormat format, Symbols quote)
         {
             var sql = @"
                 SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
@@ -63,12 +63,12 @@ namespace Tzkt.Api.Repositories
             };
 
             if (operations)
-                await LoadOperations(block, (Data.Models.Operations)row.Operations, quote);
+                await LoadOperations(block, (Data.Models.Operations)row.Operations, format, quote);
 
             return block;
         }
 
-        public async Task<Block> Get(string hash, bool operations, Symbols quote)
+        public async Task<Block> Get(string hash, bool operations, MichelineFormat format, Symbols quote)
         {
             var sql = @"
                 SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
@@ -98,7 +98,7 @@ namespace Tzkt.Api.Repositories
             };
 
             if (operations)
-                await LoadOperations(block, (Data.Models.Operations)row.Operations, quote);
+                await LoadOperations(block, (Data.Models.Operations)row.Operations, format, quote);
 
             return block;
         }
@@ -404,7 +404,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryAsync<DateTime>(sql, new { limit, offset });
         }
 
-        async Task LoadOperations(Block block, Data.Models.Operations operations, Symbols quote)
+        async Task LoadOperations(Block block, Data.Models.Operations operations, MichelineFormat format, Symbols quote)
         {
             var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements)
                 ? Operations.GetEndorsements(block, quote)
@@ -443,7 +443,7 @@ namespace Tzkt.Api.Repositories
                 : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
             var transactions = operations.HasFlag(Data.Models.Operations.Transactions)
-                ? Operations.GetTransactions(block, quote)
+                ? Operations.GetTransactions(block, format, quote)
                 : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
             var reveals = operations.HasFlag(Data.Models.Operations.Reveals)
