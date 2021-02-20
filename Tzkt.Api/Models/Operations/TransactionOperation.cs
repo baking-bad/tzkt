@@ -106,14 +106,9 @@ namespace Tzkt.Api.Models
         public string Entrypoint { get; set; }
 
         /// <summary>
-        /// Parameters converted to human-readable JSON
+        /// Parameters passed to the called entrypoint converted to human-readable JSON. Note: you can configure parameters format by setting `micheline` query parameter.
         /// </summary>
-        public string Params { get; set; }
-
-        /// <summary>
-        /// Raw parameters in micheline format
-        /// </summary>
-        public string RawParams { get; set; }
+        public object Params { get; set; }
 
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
@@ -143,9 +138,8 @@ namespace Tzkt.Api.Models
         #endregion
 
         /// <summary>
-        /// **DEPRECATED**. Use `params` or `rawParams` instead.
+        /// **DEPRECATED**. Use `entrypoint` and `params` instead.
         /// </summary>
-        public string Parameters => Entrypoint == null ? null
-            : $"{{\"entrypoint\":\"{Entrypoint}\",\"value\":{RawParams}}}";
+        public string Parameters { get; set; }
     }
 }

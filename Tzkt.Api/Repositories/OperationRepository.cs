@@ -26,12 +26,12 @@ namespace Tzkt.Api.Repositories
         }
 
         #region operations
-        public async Task<IEnumerable<Operation>> Get(string hash, Symbols quote)
+        public async Task<IEnumerable<Operation>> Get(string hash, MichelineFormat format, Symbols quote)
         {
             #region test manager operations
             var delegations = GetDelegations(hash, quote);
             var originations = GetOriginations(hash, quote);
-            var transactions = GetTransactions(hash, quote);
+            var transactions = GetTransactions(hash, format, quote);
             var reveals = GetReveals(hash, quote);
 
             await Task.WhenAll(delegations, originations, transactions, reveals);
@@ -86,11 +86,11 @@ namespace Tzkt.Api.Repositories
             return new List<Operation>(0);
         }
 
-        public async Task<IEnumerable<Operation>> Get(string hash, int counter, Symbols quote)
+        public async Task<IEnumerable<Operation>> Get(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var delegations = GetDelegations(hash, counter, quote);
             var originations = GetOriginations(hash, counter, quote);
-            var transactions = GetTransactions(hash, counter, quote);
+            var transactions = GetTransactions(hash, counter, format, quote);
             var reveals = GetReveals(hash, counter, quote);
 
             await Task.WhenAll(delegations, originations, transactions, reveals);
@@ -108,11 +108,11 @@ namespace Tzkt.Api.Repositories
             return new List<Operation>(0);
         }
 
-        public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce, Symbols quote)
+        public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
             var delegations = GetDelegations(hash, counter, nonce, quote);
             var originations = GetOriginations(hash, counter, nonce, quote);
-            var transactions = GetTransactions(hash, counter, nonce, quote);
+            var transactions = GetTransactions(hash, counter, nonce, format, quote);
 
             await Task.WhenAll(delegations, originations, transactions);
 
@@ -3918,7 +3918,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, Symbols quote)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, MichelineFormat format, Symbols quote)
         {
             var sql = @"
                 SELECT      o.*, b.""Hash""
@@ -3952,16 +3952,23 @@ namespace Tzkt.Api.Repositories
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
-                Params = row.JsonParameters,
-                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
+                Params = format switch
+                {
+                    MichelineFormat.Json => row.JsonParameters == null ? null : new StringAsJson(row.JsonParameters),
+                    MichelineFormat.JsonString => row.JsonParameters,
+                    MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
+                    MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level)
+                Quote = Quotes.Get(quote, row.Level),
+                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, Symbols quote)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var sql = @"
                 SELECT      o.*, b.""Hash""
@@ -3995,16 +4002,23 @@ namespace Tzkt.Api.Repositories
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
-                Params = row.JsonParameters,
-                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
+                Params = format switch
+                {
+                    MichelineFormat.Json => row.JsonParameters == null ? null : new StringAsJson(row.JsonParameters),
+                    MichelineFormat.JsonString => row.JsonParameters,
+                    MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
+                    MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level)
+                Quote = Quotes.Get(quote, row.Level),
+                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce, Symbols quote)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
             var sql = @"
                 SELECT      o.*, b.""Hash""
@@ -4038,16 +4052,23 @@ namespace Tzkt.Api.Repositories
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
-                Params = row.JsonParameters,
-                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
+                Params = format switch
+                {
+                    MichelineFormat.Json => row.JsonParameters == null ? null : new StringAsJson(row.JsonParameters),
+                    MichelineFormat.JsonString => row.JsonParameters,
+                    MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
+                    MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level)
+                Quote = Quotes.Get(quote, row.Level),
+                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
             });
         }
 
-        public async Task<IEnumerable<TransactionOperation>> GetTransactions(Block block, Symbols quote)
+        public async Task<IEnumerable<TransactionOperation>> GetTransactions(Block block, MichelineFormat format, Symbols quote)
         {
             var sql = @"
                 SELECT    *
@@ -4079,12 +4100,19 @@ namespace Tzkt.Api.Repositories
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
-                Params = row.JsonParameters,
-                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
+                Params = format switch
+                {
+                    MichelineFormat.Json => row.JsonParameters == null ? null : new StringAsJson(row.JsonParameters),
+                    MichelineFormat.JsonString => row.JsonParameters,
+                    MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
+                    MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, block.Level)
+                Quote = Quotes.Get(quote, block.Level),
+                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
             });
         }
 
@@ -4103,6 +4131,7 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
+            MichelineFormat format,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""TransactionOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
@@ -4157,12 +4186,19 @@ namespace Tzkt.Api.Repositories
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
-                Params = row.JsonParameters,
-                RawParams = row.RawParameters == null ? null : Micheline.ToJson((byte[])row.RawParameters),
+                Params = format switch
+                {
+                    MichelineFormat.Json => row.JsonParameters == null ? null : new StringAsJson(row.JsonParameters),
+                    MichelineFormat.JsonString => row.JsonParameters,
+                    MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
+                    MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level)
+                Quote = Quotes.Get(quote, row.Level),
+                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
             });
         }
 
@@ -4182,6 +4218,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit,
             string[] fields,
+            MichelineFormat format,
             Symbols quote)
         {
             var columns = new HashSet<string>(fields.Length);
@@ -4209,11 +4246,15 @@ namespace Tzkt.Api.Repositories
                     case "target": columns.Add(@"o.""TargetId"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
                     case "entrypoint": columns.Add(@"o.""Entrypoint"""); break;
-                    case "params": columns.Add($@"o.""JsonParameters"""); break;
-                    case "rawParams": columns.Add($@"o.""RawParameters"""); break;
-                    case "parameters": // backward compatibility
-                        columns.Add($@"o.""Entrypoint""");
-                        columns.Add($@"o.""RawParameters""");
+                    case "params":
+                        columns.Add(format switch
+                        {
+                            MichelineFormat.Json => $@"o.""JsonParameters""",
+                            MichelineFormat.JsonString => $@"o.""JsonParameters""",
+                            MichelineFormat.Raw => $@"o.""RawParameters""",
+                            MichelineFormat.RawString => $@"o.""RawParameters""",
+                            _ => throw new Exception("Invalid MichelineFormat value")
+                        });
                         break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
@@ -4223,6 +4264,10 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
+                    case "parameters": // backward compatibility
+                        columns.Add($@"o.""Entrypoint""");
+                        columns.Add($@"o.""RawParameters""");
+                        break;
                 }
             }
 
@@ -4346,16 +4391,14 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "params":
                         foreach (var row in rows)
-                            result[j++][i] = row.JsonParameters;
-                        break;
-                    case "rawParams":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters);
-                        break;
-                    case "parameters":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RawParameters == null ? null
-                                : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}";
+                            result[j++][i] = format switch
+                            {
+                                MichelineFormat.Json => row.JsonParameters == null ? null : new StringAsJson(row.JsonParameters),
+                                MichelineFormat.JsonString => row.JsonParameters,
+                                MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
+                                MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                                _ => throw new Exception("Invalid MichelineFormat value")
+                            };
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -4372,6 +4415,11 @@ namespace Tzkt.Api.Repositories
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
+                        break;
+                    case "parameters":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RawParameters == null ? null
+                                : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}";
                         break;
                 }
             }
@@ -4395,6 +4443,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit,
             string field,
+            MichelineFormat format,
             Symbols quote)
         {
             var columns = new HashSet<string>(1);
@@ -4420,11 +4469,15 @@ namespace Tzkt.Api.Repositories
                 case "target": columns.Add(@"o.""TargetId"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
                 case "entrypoint": columns.Add(@"o.""Entrypoint"""); break;
-                case "params": columns.Add($@"o.""JsonParameters"""); break;
-                case "rawParams": columns.Add($@"o.""RawParameters"""); break;
-                case "parameters": // backward compatibility
-                    columns.Add($@"o.""Entrypoint""");
-                    columns.Add($@"o.""RawParameters""");
+                case "params":
+                    columns.Add(format switch
+                    {
+                        MichelineFormat.Json => $@"o.""JsonParameters""",
+                        MichelineFormat.JsonString => $@"o.""JsonParameters""",
+                        MichelineFormat.Raw => $@"o.""RawParameters""",
+                        MichelineFormat.RawString => $@"o.""RawParameters""",
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    });
                     break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
@@ -4434,6 +4487,10 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
+                case "parameters": // backward compatibility
+                    columns.Add($@"o.""Entrypoint""");
+                    columns.Add($@"o.""RawParameters""");
+                    break;
             }
 
             if (columns.Count == 0)
@@ -4554,16 +4611,14 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "params":
                     foreach (var row in rows)
-                        result[j++] = row.JsonParameters;
-                    break;
-                case "rawParams":
-                    foreach (var row in rows)
-                        result[j++] = row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters);
-                    break;
-                case "parameters":
-                    foreach (var row in rows)
-                        result[j++] = row.RawParameters == null ? null
-                            : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}";
+                        result[j++] = format switch
+                        {
+                            MichelineFormat.Json => row.JsonParameters == null ? null : new StringAsJson(row.JsonParameters),
+                            MichelineFormat.JsonString => row.JsonParameters,
+                            MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
+                            MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                            _ => throw new Exception("Invalid MichelineFormat value")
+                        };
                     break;
                 case "status":
                     foreach (var row in rows)
@@ -4580,6 +4635,11 @@ namespace Tzkt.Api.Repositories
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
+                    break;
+                case "parameters":
+                    foreach (var row in rows)
+                        result[j++] = row.RawParameters == null ? null
+                            : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}";
                     break;
             }
 

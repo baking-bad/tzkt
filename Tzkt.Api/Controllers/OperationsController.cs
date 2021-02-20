@@ -32,12 +32,16 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of operations with the specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<IEnumerable<Operation>> GetByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<Operation>> GetByHash(
+            [OpHash] string hash,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
         {
-            return Operations.Get(hash, quote);
+            return Operations.Get(hash, micheline, quote);
         }
 
         /// <summary>
@@ -48,15 +52,17 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}")]
         public Task<IEnumerable<Operation>> GetByHashCounter(
             [OpHash] string hash,
             [Min(0)] int counter,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.Get(hash, counter, quote);
+            return Operations.Get(hash, counter, micheline, quote);
         }
 
         /// <summary>
@@ -68,6 +74,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
         /// <param name="nonce">Operation nonce (internal)</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}/{nonce}")]
@@ -75,9 +82,10 @@ namespace Tzkt.Api.Controllers
             [OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.Get(hash, counter, nonce, quote);
+            return Operations.Get(hash, counter, nonce, micheline, quote);
         }
         #endregion
 
@@ -1262,6 +1270,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions")]
@@ -1281,6 +1290,7 @@ namespace Tzkt.Api.Controllers
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None) 
         {
             #region validate
@@ -1334,25 +1344,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, @params, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }
@@ -1365,12 +1375,16 @@ namespace Tzkt.Api.Controllers
         /// Returns transaction operations with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<TransactionOperation>> GetTransactionByHash(
+            [OpHash] string hash,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetTransactions(hash, quote);
+            return Operations.GetTransactions(hash, micheline, quote);
         }
 
         /// <summary>
@@ -1381,15 +1395,17 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}")]
         public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter(
             [OpHash] string hash,
             [Min(0)] int counter,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetTransactions(hash, counter, quote);
+            return Operations.GetTransactions(hash, counter, micheline, quote);
         }
 
         /// <summary>
@@ -1401,6 +1417,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
         /// <param name="nonce">Operation nonce (internal)</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}/{nonce}")]
@@ -1408,9 +1425,10 @@ namespace Tzkt.Api.Controllers
             [OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetTransactions(hash, counter, nonce, quote);
+            return Operations.GetTransactions(hash, counter, nonce, micheline, quote);
         }
 
         /// <summary>

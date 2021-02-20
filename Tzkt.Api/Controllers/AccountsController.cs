@@ -227,6 +227,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
         /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
         /// <param name="limit">Number of items to return</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <param name="from">**DEPRECATED**. Use `timestamp.ge=` intead.</param>
         /// <param name="to">**DEPRECATED**. Use `timestamp.lt=` intead.</param>
@@ -255,6 +256,7 @@ namespace Tzkt.Api.Controllers
             SortMode sort = SortMode.Descending,
             int? lastId = null,
             [Range(0, 1000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None,
             DateTimeOffset? from = null,
             DateTimeOffset? to = null)
@@ -378,7 +380,7 @@ namespace Tzkt.Api.Controllers
             if (to != null) timestamp.Lt = to.Value.DateTime;
             #endregion
 
-            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, @params, hasInternals, status, _sort, _offset, limit, quote));
+            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, @params, hasInternals, status, _sort, _offset, limit, micheline, quote));
         }
 
         /// <summary>
