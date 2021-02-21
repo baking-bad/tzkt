@@ -623,6 +623,30 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
+        public async Task<VoterSnapshot> GetVoter(int period, string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawDelegate baker) return null;
+
+            var sql = $@"
+                SELECT  *
+                FROM    ""VotingSnapshots""
+                WHERE   ""Period"" = {period}
+                AND     ""BakerId"" = {baker.Id}
+                LIMIT   1";
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync(sql);
+            if (row == null) return null;
+
+            return new VoterSnapshot
+            {
+                Delegate = Accounts.GetAlias(row.BakerId),
+                Rolls = row.Rolls,
+                Status = VoterStatusToString(row.Status)
+            };
+        }
+
         public async Task<IEnumerable<VoterSnapshot>> GetVoters(
             int period,
             VoterStatusParameter status,
