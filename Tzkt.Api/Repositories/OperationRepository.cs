@@ -30,7 +30,7 @@ namespace Tzkt.Api.Repositories
         {
             #region test manager operations
             var delegations = GetDelegations(hash, quote);
-            var originations = GetOriginations(hash, quote);
+            var originations = GetOriginations(hash, format, quote);
             var transactions = GetTransactions(hash, format, quote);
             var reveals = GetReveals(hash, quote);
 
@@ -89,7 +89,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var delegations = GetDelegations(hash, counter, quote);
-            var originations = GetOriginations(hash, counter, quote);
+            var originations = GetOriginations(hash, counter, format, quote);
             var transactions = GetTransactions(hash, counter, format, quote);
             var reveals = GetReveals(hash, counter, quote);
 
@@ -111,7 +111,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
             var delegations = GetDelegations(hash, counter, nonce, quote);
-            var originations = GetOriginations(hash, counter, nonce, quote);
+            var originations = GetOriginations(hash, counter, nonce, format, quote);
             var transactions = GetTransactions(hash, counter, nonce, format, quote);
 
             await Task.WhenAll(delegations, originations, transactions);
@@ -3184,15 +3184,20 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, Symbols quote)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
                             o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"",
+                            b.""Hash"", st.""{((int)format < 2 ? "JsonValue" : "RawValue")}"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
+                LEFT  JOIN  ""Storages"" as st 
+                        ON  st.""Id"" = o.""StorageId""
+                LEFT  JOIN  ""Scripts"" as sc
+                        ON  sc.""Id"" = o.""ScriptId""
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
 
@@ -3206,6 +3211,13 @@ namespace Tzkt.Api.Repositories
 
                 var contractMetadata = contract == null ? null
                     : Accounts.GetMetadata(contract.Id);
+
+                var code = row.ParameterSchema == null ? null : new MichelineArray
+                {
+                    Micheline.FromBytes(row.ParameterSchema),
+                    Micheline.FromBytes(row.StorageSchema),
+                    Micheline.FromBytes(row.CodeSchema)
+                };
 
                 return new OriginationOperation
                 {
@@ -3227,6 +3239,15 @@ namespace Tzkt.Api.Repositories
                     AllocationFee = row.AllocationFee ?? 0,
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
+                    Code = (int)format % 2 == 0 ? code : code.ToJson(),
+                    Storage = format switch
+                    {
+                        MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                        MichelineFormat.JsonString => row.JsonValue,
+                        MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                        MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    },
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3242,15 +3263,20 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, Symbols quote)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
                             o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"",
+                            b.""Hash"", st.""{((int)format < 2 ? "JsonValue" : "RawValue")}"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
+                LEFT  JOIN  ""Storages"" as st 
+                        ON  st.""Id"" = o.""StorageId""
+                LEFT  JOIN  ""Scripts"" as sc
+                        ON  sc.""Id"" = o.""ScriptId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
                 ORDER BY    o.""Id""";
 
@@ -3264,6 +3290,13 @@ namespace Tzkt.Api.Repositories
 
                 var contractMetadata = contract == null ? null
                     : Accounts.GetMetadata(contract.Id);
+
+                var code = row.ParameterSchema == null ? null : new MichelineArray
+                {
+                    Micheline.FromBytes(row.ParameterSchema),
+                    Micheline.FromBytes(row.StorageSchema),
+                    Micheline.FromBytes(row.CodeSchema)
+                };
 
                 return new OriginationOperation
                 {
@@ -3285,6 +3318,15 @@ namespace Tzkt.Api.Repositories
                     AllocationFee = row.AllocationFee ?? 0,
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
+                    Code = (int)format % 2 == 0 ? code : code.ToJson(),
+                    Storage = format switch
+                    {
+                        MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                        MichelineFormat.JsonString => row.JsonValue,
+                        MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                        MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    },
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3300,15 +3342,20 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce, Symbols quote)
+        public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
+            var sql = $@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
                             o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", b.""Hash""
+                            o.""Status"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"",
+                            b.""Hash"", st.""{((int)format < 2 ? "JsonValue" : "RawValue")}"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
+                LEFT  JOIN  ""Storages"" as st 
+                        ON  st.""Id"" = o.""StorageId""
+                LEFT  JOIN  ""Scripts"" as sc
+                        ON  sc.""Id"" = o.""ScriptId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
                 LIMIT       1";
 
@@ -3322,6 +3369,13 @@ namespace Tzkt.Api.Repositories
 
                 var contractMetadata = contract == null ? null
                     : Accounts.GetMetadata(contract.Id);
+
+                var code = row.ParameterSchema == null ? null : new MichelineArray
+                {
+                    Micheline.FromBytes(row.ParameterSchema),
+                    Micheline.FromBytes(row.StorageSchema),
+                    Micheline.FromBytes(row.CodeSchema)
+                };
 
                 return new OriginationOperation
                 {
@@ -3343,6 +3397,15 @@ namespace Tzkt.Api.Repositories
                     AllocationFee = row.AllocationFee ?? 0,
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
+                    Code = (int)format % 2 == 0 ? code : code.ToJson(),
+                    Storage = format switch
+                    {
+                        MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                        MichelineFormat.JsonString => row.JsonValue,
+                        MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                        MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    },
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3516,6 +3579,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit,
             string[] fields,
+            MichelineFormat format,
             Symbols quote)
         {
             var columns = new HashSet<string>(fields.Length);
@@ -3549,6 +3613,16 @@ namespace Tzkt.Api.Repositories
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                        break;
+                    case "code":
+                        columns.Add(@"sc.""ParameterSchema""");
+                        columns.Add(@"sc.""StorageSchema""");
+                        columns.Add(@"sc.""CodeSchema""");
+                        joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
+                        break;
+                    case "storage":
+                        columns.Add((int)format < 2 ? @"st.""JsonValue""" : @"st.""RawValue""");
+                        joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""Id"" = o.""StorageId""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                 }
@@ -3669,6 +3743,29 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
+                    case "code":
+                        foreach (var row in rows)
+                        {
+                            var code = row.ParameterSchema == null ? null : new MichelineArray
+                            {
+                                Micheline.FromBytes(row.ParameterSchema),
+                                Micheline.FromBytes(row.StorageSchema),
+                                Micheline.FromBytes(row.CodeSchema)
+                            };
+                            result[j++][i] = (int)format % 2 == 0 ? code : code.ToJson();
+                        }
+                        break;
+                    case "storage":
+                        foreach (var row in rows)
+                            result[j++][i] = format switch
+                            {
+                                MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                                MichelineFormat.JsonString => row.JsonValue,
+                                MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                                MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                                _ => throw new Exception("Invalid MichelineFormat value")
+                            };
+                        break;
                     case "status":
                         foreach (var row in rows)
                             result[j++][i] = StatusToString(row.Status);
@@ -3719,6 +3816,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit,
             string field,
+            MichelineFormat format,
             Symbols quote)
         {
             var columns = new HashSet<string>(1);
@@ -3750,6 +3848,16 @@ namespace Tzkt.Api.Repositories
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
+                    break;
+                case "code":
+                    columns.Add(@"sc.""ParameterSchema""");
+                    columns.Add(@"sc.""StorageSchema""");
+                    columns.Add(@"sc.""CodeSchema""");
+                    joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
+                    break;
+                case "storage":
+                    columns.Add((int)format < 2 ? @"st.""JsonValue""" : @"st.""RawValue""");
+                    joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""Id"" = o.""StorageId""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
             }
@@ -3867,6 +3975,29 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Balance;
                     break;
+                case "code":
+                    foreach (var row in rows)
+                    {
+                        var code = row.ParameterSchema == null ? null : new MichelineArray
+                            {
+                                Micheline.FromBytes(row.ParameterSchema),
+                                Micheline.FromBytes(row.StorageSchema),
+                                Micheline.FromBytes(row.CodeSchema)
+                            };
+                        result[j++] = (int)format % 2 == 0 ? code : code.ToJson();
+                    }
+                    break;
+                case "storage":
+                    foreach (var row in rows)
+                        result[j++] = format switch
+                        {
+                            MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                            MichelineFormat.JsonString => row.JsonValue,
+                            MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                            MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                            _ => throw new Exception("Invalid MichelineFormat value")
+                        };
+                    break;
                 case "status":
                     foreach (var row in rows)
                         result[j++] = StatusToString(row.Status);
@@ -3920,11 +4051,13 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
-                SELECT      o.*, b.""Hash""
+            var sql = $@"
+                SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
+                LEFT  JOIN  ""Storages"" as s 
+                        ON  s.""Id"" = o.""StorageId""
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
 
@@ -3960,6 +4093,14 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
+                Storage = format switch
+                {
+                    MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                    MichelineFormat.JsonString => row.JsonValue,
+                    MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -3970,11 +4111,13 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
-                SELECT      o.*, b.""Hash""
+            var sql = $@"
+                SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
+                LEFT  JOIN  ""Storages"" as s 
+                        ON  s.""Id"" = o.""StorageId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
                 ORDER BY    o.""Id""";
 
@@ -4010,6 +4153,14 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
+                Storage = format switch
+                {
+                    MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                    MichelineFormat.JsonString => row.JsonValue,
+                    MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4020,11 +4171,13 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
-                SELECT      o.*, b.""Hash""
+            var sql = $@"
+                SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
+                LEFT  JOIN  ""Storages"" as s 
+                        ON  s.""Id"" = o.""StorageId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
                 LIMIT       1";
 
@@ -4058,6 +4211,14 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.JsonString => row.JsonParameters,
                     MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
                     MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
+                Storage = format switch
+                {
+                    MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                    MichelineFormat.JsonString => row.JsonValue,
+                    MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
                 Status = StatusToString(row.Status),
@@ -4256,6 +4417,17 @@ namespace Tzkt.Api.Repositories
                             _ => throw new Exception("Invalid MichelineFormat value")
                         });
                         break;
+                    case "storage":
+                        columns.Add(format switch
+                        {
+                            MichelineFormat.Json => $@"s.""JsonValue""",
+                            MichelineFormat.JsonString => $@"s.""JsonValue""",
+                            MichelineFormat.Raw => $@"s.""RawValue""",
+                            MichelineFormat.RawString => $@"s.""RawValue""",
+                            _ => throw new Exception("Invalid MichelineFormat value")
+                        });
+                        joins.Add(@"LEFT JOIN ""Storages"" as s ON s.""Id"" = o.""StorageId""");
+                        break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
@@ -4388,7 +4560,7 @@ namespace Tzkt.Api.Repositories
                     case "entrypoint":
                         foreach (var row in rows)
                             result[j++][i] = row.Entrypoint;
-                        break;
+                        break; 
                     case "params":
                         foreach (var row in rows)
                             result[j++][i] = format switch
@@ -4397,6 +4569,17 @@ namespace Tzkt.Api.Repositories
                                 MichelineFormat.JsonString => row.JsonParameters,
                                 MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
                                 MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                                _ => throw new Exception("Invalid MichelineFormat value")
+                            };
+                        break;
+                    case "storage":
+                        foreach (var row in rows)
+                            result[j++][i] = format switch
+                            {
+                                MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                                MichelineFormat.JsonString => row.JsonValue,
+                                MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                                MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             };
                         break;
@@ -4478,6 +4661,17 @@ namespace Tzkt.Api.Repositories
                         MichelineFormat.RawString => $@"o.""RawParameters""",
                         _ => throw new Exception("Invalid MichelineFormat value")
                     });
+                    break;
+                case "storage":
+                    columns.Add(format switch
+                    {
+                        MichelineFormat.Json => $@"s.""JsonValue""",
+                        MichelineFormat.JsonString => $@"s.""JsonValue""",
+                        MichelineFormat.Raw => $@"s.""RawValue""",
+                        MichelineFormat.RawString => $@"s.""RawValue""",
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    });
+                    joins.Add(@"LEFT JOIN ""Storages"" as s ON s.""Id"" = o.""StorageId""");
                     break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
@@ -4617,6 +4811,17 @@ namespace Tzkt.Api.Repositories
                             MichelineFormat.JsonString => row.JsonParameters,
                             MichelineFormat.Raw => row.RawParameters == null ? null : new StringAsJson(Micheline.ToJson(row.RawParameters)),
                             MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
+                            _ => throw new Exception("Invalid MichelineFormat value")
+                        };
+                    break;
+                case "storage":
+                    foreach (var row in rows)
+                        result[j++] = format switch
+                        {
+                            MichelineFormat.Json => row.JsonValue == null ? null : new StringAsJson(row.JsonValue),
+                            MichelineFormat.JsonString => row.JsonValue,
+                            MichelineFormat.Raw => row.RawValue == null ? null : new StringAsJson(Micheline.ToJson(row.RawValue)),
+                            MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                             _ => throw new Exception("Invalid MichelineFormat value")
                         };
                     break;

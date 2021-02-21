@@ -1093,6 +1093,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("originations")]
@@ -1110,6 +1111,7 @@ namespace Tzkt.Api.Controllers
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
             #region validates
@@ -1192,20 +1194,20 @@ namespace Tzkt.Api.Controllers
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }
@@ -1215,15 +1217,19 @@ namespace Tzkt.Api.Controllers
         /// Get origination by hash
         /// </summary>
         /// <remarks>
-        /// Returns a origination operation with specified hash.
+        /// Returns origination operations with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("originations/{hash}")]
-        public Task<IEnumerable<OriginationOperation>> GetOriginationByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<OriginationOperation>> GetOriginationByHash(
+            [OpHash] string hash,
+            MichelineFormat micheline,
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetOriginations(hash, quote);
+            return Operations.GetOriginations(hash, micheline, quote);
         }
 
         /// <summary>
