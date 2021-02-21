@@ -109,6 +109,16 @@ namespace Tzkt.Api.Models
         public Alias ContractDelegate { get; set; }
 
         /// <summary>
+        /// Contract code. Note: you can configure code format by setting `micheline` query parameter (`0 | 2` - raw micheline, `1 | 3` - raw micheline string).
+        /// </summary>
+        public object Code { get; set; }
+
+        /// <summary>
+        /// Initial contract storage value converted to human-readable JSON. Note: you can configure storage format by setting `micheline` query parameter.
+        /// </summary>
+        public object Storage { get; set; }
+
+        /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
         /// `failed` - an operation which failed with some particular error (not enough balance, gas limit, etc),
         /// `backtracked` - an operation which was a successful but reverted due to one of the following operations in the same operation group was failed,
