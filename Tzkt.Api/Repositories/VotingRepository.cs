@@ -14,12 +14,14 @@ namespace Tzkt.Api.Repositories
     public class VotingRepository : DbConnection
     {
         readonly StateCache State;
+        readonly TimeCache Time;
         readonly AccountsCache Accounts;
         readonly ProposalMetadataService ProposalMetadata;
 
-        public VotingRepository(StateCache state, AccountsCache accounts, ProposalMetadataService proposalMetadata, IConfiguration config) : base(config)
+        public VotingRepository(StateCache state, TimeCache time, AccountsCache accounts, ProposalMetadataService proposalMetadata, IConfiguration config) : base(config)
         {
             State = state;
+            Time = time;
             Accounts = accounts;
             ProposalMetadata = proposalMetadata;
         }
@@ -282,7 +284,9 @@ namespace Tzkt.Api.Repositories
                 Index = row.Index,
                 Epoch = row.Epoch,
                 FirstLevel = row.FirstLevel,
+                StartTime = Time[row.FirstLevel],
                 LastLevel = row.LastLevel,
+                EndTime = Time[row.LastLevel],
                 Kind = KindToString(row.Kind),
                 Status = PeriodStatusToString(row.Status),
                 TotalBakers = row.TotalBakers,
@@ -315,7 +319,9 @@ namespace Tzkt.Api.Repositories
                 Index = row.Index,
                 Epoch = row.Epoch,
                 FirstLevel = row.FirstLevel,
+                StartTime = Time[row.FirstLevel],
                 LastLevel = row.LastLevel,
+                EndTime = Time[row.LastLevel],
                 Kind = KindToString(row.Kind),
                 Status = PeriodStatusToString(row.Status),
                 TotalBakers = row.TotalBakers,
@@ -346,7 +352,9 @@ namespace Tzkt.Api.Repositories
                     case "index": columns.Add(@"""Index"""); break;
                     case "epoch": columns.Add(@"""Epoch"""); break;
                     case "firstLevel": columns.Add(@"""FirstLevel"""); break;
+                    case "startTime": columns.Add(@"""FirstLevel"""); break;
                     case "lastLevel": columns.Add(@"""LastLevel"""); break;
+                    case "endTime": columns.Add(@"""LastLevel"""); break;
                     case "kind": columns.Add(@"""Kind"""); break;
                     case "status": columns.Add(@"""Status"""); break;
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
@@ -395,9 +403,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
                         break;
+                    case "startTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Time[row.FirstLevel];
+                        break;
                     case "lastLevel":
                         foreach (var row in rows)
                             result[j++][i] = row.LastLevel;
+                        break;
+                    case "endTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Time[row.LastLevel];
                         break;
                     case "kind":
                         foreach (var row in rows)
@@ -478,7 +494,9 @@ namespace Tzkt.Api.Repositories
                 case "index": columns.Add(@"""Index"""); break;
                 case "epoch": columns.Add(@"""Epoch"""); break;
                 case "firstLevel": columns.Add(@"""FirstLevel"""); break;
+                case "startTime": columns.Add(@"""FirstLevel"""); break;
                 case "lastLevel": columns.Add(@"""LastLevel"""); break;
+                case "endTime": columns.Add(@"""LastLevel"""); break;
                 case "kind": columns.Add(@"""Kind"""); break;
                 case "status": columns.Add(@"""Status"""); break;
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
@@ -524,9 +542,17 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.FirstLevel;
                     break;
+                case "startTime":
+                    foreach (var row in rows)
+                        result[j++] = Time[row.FirstLevel];
+                    break;
                 case "lastLevel":
                     foreach (var row in rows)
                         result[j++] = row.LastLevel;
+                    break;
+                case "endTime":
+                    foreach (var row in rows)
+                        result[j++] = Time[row.LastLevel];
                     break;
                 case "kind":
                     foreach (var row in rows)
@@ -638,14 +664,18 @@ namespace Tzkt.Api.Repositories
             {
                 Index = rows.First().Epoch,
                 FirstLevel = rows.First().FirstLevel,
+                StartTime = Time[rows.First().FirstLevel],
                 LastLevel = rows.Last().LastLevel,
+                EndTime = Time[rows.Last().LastLevel],
                 Status = GetEpochStatus(rows),
                 Periods = rows.Select(row => new VotingPeriod
                 {
                     Index = row.Index,
                     Epoch = row.Epoch,
                     FirstLevel = row.FirstLevel,
+                    StartTime = Time[row.FirstLevel],
                     LastLevel = row.LastLevel,
+                    EndTime = Time[row.LastLevel],
                     Kind = KindToString(row.Kind),
                     Status = PeriodStatusToString(row.Status),
                     TotalBakers = row.TotalBakers,
@@ -684,14 +714,18 @@ namespace Tzkt.Api.Repositories
                     {
                         Index = group.Key,
                         FirstLevel = periods.First().FirstLevel,
+                        StartTime = Time[periods.First().FirstLevel],
                         LastLevel = periods.Last().LastLevel,
+                        EndTime = Time[periods.Last().LastLevel],
                         Status = GetEpochStatus(periods),
                         Periods = periods.Select(row => new VotingPeriod
                         {
                             Index = row.Index,
                             Epoch = row.Epoch,
                             FirstLevel = row.FirstLevel,
+                            StartTime = Time[row.FirstLevel],
                             LastLevel = row.LastLevel,
+                            EndTime = Time[row.LastLevel],
                             Kind = KindToString(row.Kind),
                             Status = PeriodStatusToString(row.Status),
                             TotalBakers = row.TotalBakers,
@@ -735,14 +769,18 @@ namespace Tzkt.Api.Repositories
             {
                 Index = rows.First().Epoch,
                 FirstLevel = rows.First().FirstLevel,
+                StartTime = Time[rows.First().FirstLevel],
                 LastLevel = rows.Last().LastLevel,
+                EndTime = Time[rows.Last().LastLevel],
                 Status = GetEpochStatus(rows),
                 Periods = rows.Select(row => new VotingPeriod
                 {
                     Index = row.Index,
                     Epoch = row.Epoch,
                     FirstLevel = row.FirstLevel,
+                    StartTime = Time[row.FirstLevel],
                     LastLevel = row.LastLevel,
+                    EndTime = Time[row.LastLevel],
                     Kind = KindToString(row.Kind),
                     Status = PeriodStatusToString(row.Status),
                     TotalBakers = row.TotalBakers,

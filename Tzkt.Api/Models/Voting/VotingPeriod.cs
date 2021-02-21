@@ -23,9 +23,19 @@ namespace Tzkt.Api.Models
         public int FirstLevel { get; set; }
 
         /// <summary>
+        /// The timestamp of the block in which the period starts
+        /// </summary>
+        public DateTime StartTime { get; set; }
+
+        /// <summary>
         /// The height of the block in which the period ends
         /// </summary>
         public int LastLevel { get; set; }
+
+        /// <summary>
+        /// The timestamp of the block in which the period ends
+        /// </summary>
+        public DateTime EndTime { get; set; }
 
         /// <summary>
         /// Kind of the voting period:

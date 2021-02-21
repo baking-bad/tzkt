@@ -18,9 +18,19 @@ namespace Tzkt.Api.Models
         public int FirstLevel { get; set; }
 
         /// <summary>
+        /// The timestamp of the block in which the epoch starts
+        /// </summary>
+        public DateTime StartTime { get; set; }
+
+        /// <summary>
         /// The height of the block in which the epoch ends
         /// </summary>
         public int LastLevel { get; set; }
+
+        /// <summary>
+        /// The timestamp of the block in which the epoch ends
+        /// </summary>
+        public DateTime EndTime { get; set; }
 
         /// <summary>
         /// Status of the voting epoch:
