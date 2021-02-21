@@ -45,7 +45,21 @@ namespace Tzkt.Api.Controllers
         public IEnumerable<AccountMetadataAlias> GetAccounts([Required] string search)
         {
             search = search.ToLower();
-            return AccountMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
+            var res = new List<(AccountMetadataAlias, int)>();
+
+            foreach (var item in AccountMetadata.Aliases)
+            {
+                var alias = item.Alias.ToLower();
+
+                if (alias == search)
+                    res.Add((item, 0));
+                else if (alias.StartsWith(search))
+                    res.Add((item, 1));
+                else if (alias.Contains(search))
+                    res.Add((item, 2));
+            }
+
+            return res.OrderBy(x => x.Item2).ThenBy(x => x.Item1.Alias).Select(x => x.Item1).Take(10);
         }
 
         [OpenApiIgnore]
