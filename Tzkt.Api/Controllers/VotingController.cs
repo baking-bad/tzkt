@@ -208,6 +208,21 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get period voter
+        /// </summary>
+        /// <remarks>
+        /// Returns a voter with the specified address from the voting period at the specified index.
+        /// </remarks>
+        /// <param name="index">Voting period index starting from zero</param>
+        /// <param name="address">Voter address</param>
+        /// <returns></returns>
+        [HttpGet("periods/{index:int}/voters/{address}")]
+        public Task<VoterSnapshot> GetPeriodVoter([Min(0)] int index, [Address] string address)
+        {
+            return Voting.GetVoter(index, address);
+        }
+
+        /// <summary>
         /// Get current period voters
         /// </summary>
         /// <remarks>
@@ -231,6 +246,20 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             return Ok(await Voting.GetVoters(State.Current.VotingPeriod, status, sort, offset, limit));
+        }
+
+        /// <summary>
+        /// Get current period voter
+        /// </summary>
+        /// <remarks>
+        /// Returns a voter with the specified address from the current period.
+        /// </remarks>
+        /// <param name="address">Voter address</param>
+        /// <returns></returns>
+        [HttpGet("periods/current/voters/{address}")]
+        public Task<VoterSnapshot> GetPeriodVoter([Address] string address)
+        {
+            return Voting.GetVoter(State.Current.VotingPeriod, address);
         }
         #endregion
 
