@@ -2189,6 +2189,28 @@ namespace Tzkt.Api.Repositories
             return code.ToMichelson();
         }
 
+        public async Task<IMicheline> BuildEntrypointParameters(string address, string name, object value)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            ContractParameter param;
+            if (contract.Kind == 0)
+            {
+                param = Data.Models.Script.ManagerTz.Parameter;
+            }
+            else
+            {
+                using var db = GetConnection();
+                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+                if (row == null) return null;
+                param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
+            }
+            if (!param.Entrypoints.ContainsKey(name)) return null;
+
+            return param.BuildOptimized(name, value);
+        }
+
         public async Task<Entrypoint> GetEntrypoint(string address, string name, bool json, bool micheline, bool michelson)
         {
             var rawAccount = await Accounts.GetAsync(address);
