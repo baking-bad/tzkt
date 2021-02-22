@@ -145,7 +145,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             var id = Cache.AppState.NextOperationId();
 
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.RequiredString("source"))?.Contract;
+                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.RequiredString("source"))?.Contract
+                    ?? throw new ValidationException("Transaction source address doesn't exist");
 
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 

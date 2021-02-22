@@ -157,6 +157,16 @@ namespace Tzkt.Api.Controllers
             return Accounts.GetEntrypoint(address, name, json, micheline, michelson);
         }
 
+        /// <summary>
+        /// Get contract storage
+        /// </summary>
+        /// <remarks>
+        /// Returns contract storage value in JSON format.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="level">Level at which storage value should be taken. If `0` or not specified, the current value will be returned.</param>
+        /// <param name="path">Path in the JSON value (point-separated list of field names, e.g. `path=settings.refund_time` to return</param>
+        /// <returns></returns>
         [HttpGet("{address}/storage")]
         public async Task<ActionResult> GetStorage([Address] string address, [Min(0)] int level = 0, string path = null)
         {
@@ -184,6 +194,15 @@ namespace Tzkt.Api.Controllers
             return this.Json(await Accounts.GetStorageValue(address, safePath, level));
         }
 
+        /// <summary>
+        /// Get contract storage schema
+        /// </summary>
+        /// <remarks>
+        /// Returns JSON schema of the contract storage.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="level">Level at which storage schema should be taken. If `0` or not specified, the current schema will be returned.</param>
+        /// <returns></returns>
         [HttpGet("{address}/storage/schema")]
         public async Task<ActionResult> GetStorageSchema([Address] string address, [Min(0)] int level = 0)
         {
@@ -192,12 +211,31 @@ namespace Tzkt.Api.Controllers
             return this.Json(await Accounts.GetStorageSchema(address, level));
         }
 
+        /// <summary>
+        /// Get contract storage history
+        /// </summary>
+        /// <remarks>
+        /// Returns contract storage historical values.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="lastId">Id of the last item received (for pagination)</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
         [HttpGet("{address}/storage/history")]
         public Task<IEnumerable<StorageRecord>> GetStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetStorageHistory(address, lastId, limit);
         }
 
+        /// <summary>
+        /// Get raw contract storage
+        /// </summary>
+        /// <remarks>
+        /// Returns raw contract storage value in micheline format.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="level">Level at which storage value should be taken. If `0` or not specified, the current value will be returned.</param>
+        /// <returns></returns>
         [HttpGet("{address}/storage/raw")]
         public Task<IMicheline> GetRawStorage([Address] string address, [Min(0)] int level = 0)
         {
@@ -206,6 +244,15 @@ namespace Tzkt.Api.Controllers
             return Accounts.GetRawStorageValue(address, level);
         }
 
+        /// <summary>
+        /// Get raw contract storage schema
+        /// </summary>
+        /// <remarks>
+        /// Returns micheline schema (type) of the contract storage.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="level">Level at which storage schema should be taken. If `0` or not specified, the current schema will be returned.</param>
+        /// <returns></returns>
         [HttpGet("{address}/storage/raw/schema")]
         public Task<IMicheline> GetRawStorageSchema([Address] string address, [Min(0)] int level = 0)
         {
@@ -214,6 +261,16 @@ namespace Tzkt.Api.Controllers
             return Accounts.GetRawStorageSchema(address, level);
         }
 
+        /// <summary>
+        /// Get raw contract storage history
+        /// </summary>
+        /// <remarks>
+        /// Returns raw contract storage historical values.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="lastId">Id of the last item received (for pagination)</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
         [HttpGet("{address}/storage/raw/history")]
         public Task<IEnumerable<RawStorageRecord>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {

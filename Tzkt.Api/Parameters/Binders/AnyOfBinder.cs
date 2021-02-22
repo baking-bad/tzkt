@@ -17,8 +17,6 @@ namespace Tzkt.Api
 
         public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            var model = bindingContext.ModelName;
-
             var key = bindingContext.HttpContext.Request.Query.Keys.FirstOrDefault(x => x.StartsWith("anyof"));
             if (key == null)
             {

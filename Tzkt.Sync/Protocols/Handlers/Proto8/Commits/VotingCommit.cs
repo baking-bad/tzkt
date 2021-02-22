@@ -24,21 +24,15 @@ namespace Tzkt.Sync.Protocols.Proto8
         // new voting period
         protected override VotingPeriod StartNextPeriod(Block block, VotingPeriod current)
         {
-            switch (current.Kind)
+            return current.Kind switch
             {
-                case PeriodKind.Proposal:
-                    return StartBallotPeriod(block, current, PeriodKind.Exploration);
-                case PeriodKind.Exploration:
-                    return StartWaitingPeriod(block, current, PeriodKind.Testing);
-                case PeriodKind.Testing:
-                    return StartBallotPeriod(block, current, PeriodKind.Promotion);
-                case PeriodKind.Promotion:
-                    return StartWaitingPeriod(block, current, PeriodKind.Adoption);
-                case PeriodKind.Adoption:
-                    return StartProposalPeriod(block, current);
-                default:
-                    throw new Exception("Invalid voting period kind");
-            }
+                PeriodKind.Proposal => StartBallotPeriod(block, current, PeriodKind.Exploration),
+                PeriodKind.Exploration => StartWaitingPeriod(block, current, PeriodKind.Testing),
+                PeriodKind.Testing => StartBallotPeriod(block, current, PeriodKind.Promotion),
+                PeriodKind.Promotion => StartWaitingPeriod(block, current, PeriodKind.Adoption),
+                PeriodKind.Adoption => StartProposalPeriod(block, current),
+                _ => throw new Exception("Invalid voting period kind")
+            };
         }
     }
 }

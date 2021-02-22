@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
         #region baker
         public async Task<int> GetBakerRewardsCount(string address)
         {
-            if (!(await Accounts.GetAsync(address) is RawDelegate baker))
+            if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return 0;
 
             using var db = GetConnection();
@@ -35,7 +35,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<BakerRewards> GetBakerRewards(string address, int cycle, Symbols quote)
         {
-            if (!(await Accounts.GetAsync(address) is RawDelegate baker))
+            if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return null;
 
             var sql = $@"
@@ -113,7 +113,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            if (!(await Accounts.GetAsync(address) is RawDelegate baker))
+            if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return null;
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BakerCycles""")
@@ -189,7 +189,7 @@ namespace Tzkt.Api.Repositories
             string[] fields,
             Symbols quote)
         {
-            if (!(await Accounts.GetAsync(address) is RawDelegate baker))
+            if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return null;
 
             var columns = new HashSet<string>(fields.Length);
@@ -485,7 +485,7 @@ namespace Tzkt.Api.Repositories
             string field,
             Symbols quote)
         {
-            if (!(await Accounts.GetAsync(address) is RawDelegate baker))
+            if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return null;
 
             var columns = new HashSet<string>(1);
@@ -1487,7 +1487,7 @@ namespace Tzkt.Api.Repositories
         #region split
         public async Task<RewardSplit> GetRewardSplit(string address, int cycle, int offset, int limit)
         {
-            if (!(await Accounts.GetAsync(address) is RawDelegate baker))
+            if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return null;
 
             var sqlRewards = $@"
@@ -1583,11 +1583,11 @@ namespace Tzkt.Api.Repositories
 
         public async Task<SplitDelegator> GetRewardSplitDelegator(string baker, int cycle, string delegator)
         {
-            if (!(await Accounts.GetAsync(baker) is RawDelegate bakerAccount))
+            if (await Accounts.GetAsync(baker) is not RawDelegate bakerAccount)
                 return null;
 
-            if (!(await Accounts.GetAsync(delegator) is RawAccount delegatorAccount))
-                    return null;
+            if (await Accounts.GetAsync(delegator) is not RawAccount delegatorAccount)
+                return null;
 
             var sql = $@"
                 SELECT      ""Balance""

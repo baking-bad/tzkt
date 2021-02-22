@@ -204,7 +204,7 @@ namespace Tzkt.Api.Repositories
         {
             var rawAccount = await Accounts.GetAsync(address);
 
-            if (!(rawAccount is RawDelegate delegat))
+            if (rawAccount is not RawDelegate delegat)
                 return null;
 
             var metadata = Accounts.GetMetadata(delegat.Id);
@@ -254,7 +254,7 @@ namespace Tzkt.Api.Repositories
         {
             var rawAccount = await Accounts.GetAsync(address);
 
-            if (!(rawAccount is RawContract contract))
+            if (rawAccount is not RawContract contract)
                 return null;
 
             var metadata = Accounts.GetMetadata(contract.Id);
@@ -2697,8 +2697,7 @@ namespace Tzkt.Api.Repositories
         
         public async Task<IEnumerable<Delegator>> GetDelegators(string address, int limit = 100, int offset = 0)
         {
-            var delegat = await Accounts.GetAsync(address) as RawDelegate;
-            if (delegat == null || delegat.DelegatorsCount == 0)
+            if (await Accounts.GetAsync(address) is not RawDelegate delegat || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
             var sql = @"
@@ -2737,8 +2736,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var delegat = await Accounts.GetAsync(address) as RawDelegate;
-            if (delegat == null || delegat.DelegatorsCount == 0)
+            if (await Accounts.GetAsync(address) is not RawDelegate delegat || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
             var sql = new SqlBuilder(@"SELECT ""Id"", ""Address"", ""Type"", ""Balance"", ""DelegationLevel"" FROM ""Accounts""")

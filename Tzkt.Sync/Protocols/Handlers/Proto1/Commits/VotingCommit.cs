@@ -132,19 +132,14 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual VotingPeriod StartNextPeriod(Block block, VotingPeriod current)
         {
-            switch (current.Kind)
+            return current.Kind switch
             {
-                case PeriodKind.Proposal:
-                    return StartBallotPeriod(block, current, PeriodKind.Exploration);
-                case PeriodKind.Exploration:
-                    return StartWaitingPeriod(block, current, PeriodKind.Testing);
-                case PeriodKind.Testing:
-                    return StartBallotPeriod(block, current, PeriodKind.Promotion);
-                case PeriodKind.Promotion:
-                    return StartProposalPeriod(block, current);
-                default:
-                    throw new Exception("Invalid voting period kind");
-            }
+                PeriodKind.Proposal => StartBallotPeriod(block, current, PeriodKind.Exploration),
+                PeriodKind.Exploration => StartWaitingPeriod(block, current, PeriodKind.Testing),
+                PeriodKind.Testing => StartBallotPeriod(block, current, PeriodKind.Promotion),
+                PeriodKind.Promotion => StartProposalPeriod(block, current),
+                _ => throw new Exception("Invalid voting period kind")
+            };
         }
 
         protected VotingPeriod StartProposalPeriod(Block block, VotingPeriod current)

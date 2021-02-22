@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             var dict = new Dictionary<string, User>(8000);
             foreach (var manager in emptiedManagers)
-                dict[manager.Address] = manager as User;
+                dict[manager.Address] = manager;
 
             foreach (var manager in dict.Values)
             {

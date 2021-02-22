@@ -29,12 +29,10 @@ namespace Tzkt.Sync.Utils
 
         static byte[] CheckSum(byte[] data)
         {
-            using (var shA256 = new SHA256Managed())
-            {
-                var hash1 = shA256.ComputeHash(data);
-                var hash2 = shA256.ComputeHash(hash1);
-                return new[] { hash2[0], hash2[1], hash2[2], hash2[3], };
-            }
+            using var shA256 = new SHA256Managed();
+            var hash1 = shA256.ComputeHash(data);
+            var hash2 = shA256.ComputeHash(hash1);
+            return new[] { hash2[0], hash2[1], hash2[2], hash2[3], };
         }
 
         static byte[] VerifyAndRemoveCheckSum(byte[] bytes)
@@ -42,10 +40,10 @@ namespace Tzkt.Sync.Utils
             var data = bytes.GetBytes(0, bytes.Length - 4);
 
             var checkSum = CheckSum(data);
-            if (bytes[bytes.Length - 4] != checkSum[0] ||
-                bytes[bytes.Length - 3] != checkSum[1] ||
-                bytes[bytes.Length - 2] != checkSum[2] ||
-                bytes[bytes.Length - 1] != checkSum[3])
+            if (bytes[^4] != checkSum[0] ||
+                bytes[^3] != checkSum[1] ||
+                bytes[^2] != checkSum[2] ||
+                bytes[^1] != checkSum[3])
                 throw new FormatException("Checksum is invalid");
 
             return data;

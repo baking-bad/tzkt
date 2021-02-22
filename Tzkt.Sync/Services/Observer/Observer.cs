@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Services
                     catch (Exception ex)
                     {
                         Logger.LogError($"Failed to check updates. {ex.Message}");
-                        await Task.Delay(3000);
+                        await Task.Delay(3000, CancellationToken.None);
                         continue;
                     }
                     #endregion
@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Services
                         catch (Exception exx)
                         {
                             Logger.LogError($"Failed to rebase branch. {exx.Message}");
-                            await Task.Delay(3000);
+                            await Task.Delay(3000, CancellationToken.None);
                             if (!await ResetState(cancelToken)) break;
                             continue;
                         }
@@ -84,7 +84,7 @@ namespace Tzkt.Sync.Services
                     catch (Exception ex)
                     {
                         Logger.LogError($"Failed to apply updates. {ex.Message}");
-                        await Task.Delay(3000);
+                        await Task.Delay(3000, CancellationToken.None);
                         if (!await ResetState(cancelToken)) break;
                         continue;
                     }
@@ -118,7 +118,7 @@ namespace Tzkt.Sync.Services
                 catch (Exception ex)
                 {
                     Logger.LogError($"Failed to reset state. {ex.Message}");
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, CancellationToken.None);
                 }
             }
             return !cancelToken.IsCancellationRequested;
@@ -138,7 +138,7 @@ namespace Tzkt.Sync.Services
                 if (cancelToken.IsCancellationRequested)
                     return false;
 
-                await Task.Delay(1000);
+                await Task.Delay(1000, CancellationToken.None);
             }
             return true;
         }

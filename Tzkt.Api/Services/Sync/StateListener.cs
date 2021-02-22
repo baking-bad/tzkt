@@ -27,7 +27,7 @@ namespace Tzkt.Api.Services.Sync
         readonly ILogger Logger;
 
         Task Notifying = Task.CompletedTask;
-        List<(int Level, string Hash)> Changes = new List<(int, string)>(4);
+        readonly List<(int Level, string Hash)> Changes = new List<(int, string)>(4);
 
         public StateListener(
             StateCache state,
@@ -93,7 +93,7 @@ namespace Tzkt.Api.Services.Sync
                 return;
             }
 
-            lock (this)
+            lock (Changes)
             {
                 Changes.Add((level, data[1]));
 
@@ -123,7 +123,7 @@ namespace Tzkt.Api.Services.Sync
                     }
 
                     newState = await State.LoadAsync();
-                    lock (this)
+                    lock (Changes)
                     {
                         if (newState.Hash != Changes[^1].Hash)
                         {
@@ -154,7 +154,7 @@ namespace Tzkt.Api.Services.Sync
 
                 Logger.LogDebug("Notification processed");
 
-                lock (this)
+                lock (Changes)
                 {
                     if (Changes.Count > 0)
                     {
