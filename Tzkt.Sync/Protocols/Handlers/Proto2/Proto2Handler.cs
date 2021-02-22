@@ -63,13 +63,7 @@ namespace Tzkt.Sync.Protocols
             #endregion
 
             #region operations 1
-            foreach (var operation in operations[1].EnumerateArray())
-            {
-                foreach (var content in operation.RequiredArray("contents", 1).EnumerateArray())
-                {
-                    throw new NotImplementedException($"'{content.GetType()}' is not implemented");
-                }
-            }
+            // there were no voting operations
             #endregion
 
             #region operations 2

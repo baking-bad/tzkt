@@ -12,7 +12,7 @@ namespace Tzkt.Api
         public DynamicParameters Params { get; private set; }
         public string Query => Builder.ToString();
         
-        StringBuilder Builder;
+        readonly StringBuilder Builder;
         bool Filters;
         int Counter;
 

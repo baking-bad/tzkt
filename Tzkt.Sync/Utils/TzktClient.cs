@@ -20,7 +20,7 @@ namespace Tzkt.Sync
         {
             get
             {
-                lock (this)
+                lock (BaseAddress)
                 {
                     if (DateTime.UtcNow > _Expiration)
                     {

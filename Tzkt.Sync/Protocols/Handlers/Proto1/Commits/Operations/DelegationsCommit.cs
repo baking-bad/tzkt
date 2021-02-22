@@ -139,7 +139,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.RequiredString("source"))?.Contract;
+                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.RequiredString("source"))?.Contract
+                    ?? throw new ValidationException("Delegation source address doesn't exist");
 
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
             var newDelegate = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));

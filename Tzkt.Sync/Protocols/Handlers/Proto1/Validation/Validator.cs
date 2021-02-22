@@ -95,7 +95,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual void ValidateBlockRewards(IEnumerable<BalanceUpdate> balanceUpdates)
         {
-            if (balanceUpdates.Count() > 0)
+            if (balanceUpdates.Any())
             {
                 var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract)
                     ?? throw new ValidationException("missed block contract balance update");
@@ -122,7 +122,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual void ValidateCycleRewards(IEnumerable<BalanceUpdate> balanceUpdates)
         {
-            if (balanceUpdates.Count() > 0)
+            if (balanceUpdates.Any())
             {
                 if (Level % Protocol.BlocksPerCycle != 0)
                     throw new ValidationException("unexpected cycle rewards");
@@ -383,7 +383,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual async Task ValidateOrigination(JsonElement content)
         {
             var source = content.RequiredString("source");
-            var delegat = content.OptionalString("delegate");
             var metadata = content.Required("metadata");
             var result = metadata.Required("operation_result");
 
@@ -411,7 +410,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual void ValidateInternalOrigination(JsonElement content, string initiator)
         {
-            var delegat = content.OptionalString("delegate");
             var result = content.Required("result");
 
             //if (result.RequiredString("status") == "applied" && delegat != null)

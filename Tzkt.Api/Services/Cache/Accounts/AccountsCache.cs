@@ -15,6 +15,7 @@ namespace Tzkt.Api.Services.Cache
 {
     public class AccountsCache : DbConnection
     {
+        readonly object Crit = new();
         readonly Dictionary<int, RawAccount> AccountsById;
         readonly Dictionary<string, RawAccount> AccountsByAddress;
         int LastUpdate;
@@ -77,7 +78,7 @@ namespace Tzkt.Api.Services.Cache
             if (State.Reorganized)
             {
                 List<RawAccount> corrupted;
-                lock (this)
+                lock (Crit)
                 {
                     corrupted = AccountsByAddress.Values
                         .Where(x => x.LastLevel > fromLevel)
@@ -236,7 +237,7 @@ namespace Tzkt.Api.Services.Cache
 
         bool TryGetSafe(int id, out RawAccount account)
         {
-            lock (this)
+            lock (Crit)
             {
                 return AccountsById.TryGetValue(id, out account);
             }
@@ -244,7 +245,7 @@ namespace Tzkt.Api.Services.Cache
 
         bool TryGetSafe(string address, out RawAccount account)
         {
-            lock (this)
+            lock (Crit)
             {
                 return AccountsByAddress.TryGetValue(address, out account);
             }
@@ -252,7 +253,7 @@ namespace Tzkt.Api.Services.Cache
 
         void Add(RawAccount account)
         {
-            lock (this)
+            lock (Crit)
             {
                 #region check limits
                 if (Config.MaxAccounts > 0 && AccountsByAddress.Count >= Config.MaxAccounts)
