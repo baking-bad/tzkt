@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -155,6 +155,53 @@ namespace Tzkt.Api.Controllers
         public Task<Entrypoint> GetEntrypointByName([Address] string address, string name, bool json = true, bool micheline = false, bool michelson = false)
         {
             return Accounts.GetEntrypoint(address, name, json, micheline, michelson);
+        }
+
+        /// <summary>
+        /// Build entrypoint parameters
+        /// </summary>
+        /// <remarks>
+        /// Returns micheline parameters converted from its JSON representation.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Entrypoint name</param>
+        /// <param name="value">Json parameters</param>
+        /// <returns></returns>
+        [HttpGet("{address}/entrypoints/{name}/build")]
+        public async Task<ActionResult> BuildEntrypointParameters([Address] string address, string name, string value)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(value);
+                return Ok(await Accounts.BuildEntrypointParameters(address, name, doc.RootElement));
+            }
+            catch (Exception ex)
+            {
+                return new BadRequest(nameof(value), ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Build entrypoint parameters
+        /// </summary>
+        /// <remarks>
+        /// Returns micheline parameters converted from its JSON representation.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Entrypoint name</param>
+        /// <param name="value">Json parameters</param>
+        /// <returns></returns>
+        [HttpPost("{address}/entrypoints/{name}/build")]
+        public async Task<ActionResult> BuildEntrypointParameters([Address] string address, string name, [FromBody] object value)
+        {
+            try
+            {
+                return Ok(await Accounts.BuildEntrypointParameters(address, name, value));
+            }
+            catch (Exception ex)
+            {
+                return new BadRequest(nameof(value), ex.Message);
+            }
         }
 
         /// <summary>
