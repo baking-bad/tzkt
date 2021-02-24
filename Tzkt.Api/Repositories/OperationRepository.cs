@@ -4286,7 +4286,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
-            JsonParameter parameters,
+            JsonParameter @params,
+            StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4295,6 +4296,19 @@ namespace Tzkt.Api.Repositories
             MichelineFormat format,
             Symbols quote)
         {
+            #region backward compatibility
+            // TODO: remove it asap
+            var realSort = sort;
+            var realOffset = offset;
+            var realLimit = limit;
+            if (parameters != null)
+            {
+                realSort = null;
+                realOffset = null;
+                realLimit = 1_000_000;
+            }
+            #endregion
+
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""TransactionOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
@@ -4302,7 +4316,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
                 .Filter("Entrypoint", entrypoint)
-                .Filter("JsonParameters", parameters)
+                .Filter("JsonParameters", @params)
                 .Filter("InternalOperations", hasInternals?.Eq == true
                     ? new Int32NullParameter { Gt = 0 }
                     : hasInternals?.Eq == false
@@ -4311,7 +4325,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
-                .Take(sort, offset, limit, x => x switch
+                .Take(realSort, realOffset, realLimit, x => x switch
                 {
                     "level" => ("Id", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
@@ -4326,7 +4340,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            return rows.Select(row => new TransactionOperation
+            var res = rows.Select(row => new TransactionOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -4361,6 +4375,73 @@ namespace Tzkt.Api.Repositories
                 Quote = Quotes.Get(quote, row.Level),
                 Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
             });
+
+            #region backward compatibility
+            // TODO: remove it asap
+            if (parameters != null)
+            {
+                if (parameters.Eq != null)
+                    res = res.Where(x => x.Parameters == parameters.Eq);
+                if (parameters.Ne != null)
+                    res = res.Where(x => x.Parameters != parameters.Ne);
+                if (parameters.In != null)
+                    res = res.Where(x => parameters.In.Contains(x.Parameters));
+                if (parameters.Ni != null)
+                    res = res.Where(x => !parameters.Ni.Contains(x.Parameters));
+                if (parameters.Null == true)
+                    res = res.Where(x => x.Parameters == null);
+                if (parameters.Null == false)
+                    res = res.Where(x => x.Parameters != null);
+                if (parameters.As != null)
+                {
+                    var pattern = $"^{parameters.As.Replace("%", ".*")}$";
+                    res = res.Where(x => System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
+                }
+                if (parameters.Un != null)
+                {
+                    var pattern = $"^{parameters.Un.Replace("%", ".*")}$";
+                    res = res.Where(x => !System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
+                }
+
+                if (sort?.Asc != null)
+                {
+                    res = sort.Asc switch
+                    {
+                        "level" => res.OrderBy(x => x.Level),
+                        "gasUsed" => res.OrderBy(x => x.GasUsed),
+                        "storageUsed" => res.OrderBy(x => x.StorageUsed),
+                        "bakerFee" => res.OrderBy(x => x.BakerFee),
+                        "storageFee" => res.OrderBy(x => x.StorageFee),
+                        "allocationFee" => res.OrderBy(x => x.AllocationFee),
+                        "amount" => res.OrderBy(x => x.Amount),
+                        _ => res.OrderBy(x => x.Id)
+                    };
+                }
+                else if (sort?.Desc != null)
+                {
+                    res = sort.Desc switch
+                    {
+                        "level" => res.OrderByDescending(x => x.Level),
+                        "gasUsed" => res.OrderByDescending(x => x.GasUsed),
+                        "storageUsed" => res.OrderByDescending(x => x.StorageUsed),
+                        "bakerFee" => res.OrderByDescending(x => x.BakerFee),
+                        "storageFee" => res.OrderByDescending(x => x.StorageFee),
+                        "allocationFee" => res.OrderByDescending(x => x.AllocationFee),
+                        "amount" => res.OrderByDescending(x => x.Amount),
+                        _ => res.OrderByDescending(x => x.Id)
+                    };
+                }
+
+                if (offset?.El != null)
+                    res = res.Skip((int)offset.El);
+                else if (offset?.Pg != null)
+                    res = res.Skip((int)offset.Pg * limit);
+
+                return res.Take(limit);
+            }
+            #endregion
+
+            return res;
         }
 
         public async Task<object[][]> GetTransactions(
@@ -4372,7 +4453,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
-            JsonParameter parameters,
+            JsonParameter @params,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4453,7 +4534,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
                 .Filter("Entrypoint", entrypoint)
-                .Filter("JsonParameters", parameters)
+                .Filter("JsonParameters", @params)
                 .Filter("InternalOperations", hasInternals?.Eq == true
                     ? new Int32NullParameter { Gt = 0 }
                     : hasInternals?.Eq == false
@@ -4619,7 +4700,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
-            JsonParameter parameters,
+            JsonParameter @params,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -4697,7 +4778,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
                 .Filter("Entrypoint", entrypoint)
-                .Filter("JsonParameters", parameters)
+                .Filter("JsonParameters", @params)
                 .Filter("InternalOperations", hasInternals?.Eq == true
                     ? new Int32NullParameter { Gt = 0 }
                     : hasInternals?.Eq == false
