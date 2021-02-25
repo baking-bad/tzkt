@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 
@@ -378,6 +379,58 @@ namespace Tzkt.Api
                 foreach (var (path, value) in json.Ne)
                 {
                     AppendFilter($@"""{column}""#>>'{{{path}}}' != @p{Counter}");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Gt != null)
+            {
+                foreach (var (path, value) in json.Gt)
+                {
+                    var col = $@"""{column}""#>>'{{{path}}}'";
+                    var len = $"greatest(length({col}), {value.Length})";
+                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
+                        ? $@"lpad({col}, {len}, '0') > lpad(@p{Counter}, {len}, '0')"
+                        : $@"{col} > @p{Counter}");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Ge != null)
+            {
+                foreach (var (path, value) in json.Ge)
+                {
+                    var col = $@"""{column}""#>>'{{{path}}}'";
+                    var len = $"greatest(length({col}), {value.Length})";
+                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
+                        ? $@"lpad({col}, {len}, '0') >= lpad(@p{Counter}, {len}, '0')"
+                        : $@"{col} >= @p{Counter}");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Lt != null)
+            {
+                foreach (var (path, value) in json.Lt)
+                {
+                    var col = $@"""{column}""#>>'{{{path}}}'";
+                    var len = $"greatest(length({col}), {value.Length})";
+                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
+                        ? $@"lpad({col}, {len}, '0') < lpad(@p{Counter}, {len}, '0')"
+                        : $@"{col} < @p{Counter}");
+                    Params.Add($"p{Counter++}", value);
+                }
+            }
+
+            if (json.Le != null)
+            {
+                foreach (var (path, value) in json.Le)
+                {
+                    var col = $@"""{column}""#>>'{{{path}}}'";
+                    var len = $"greatest(length({col}), {value.Length})";
+                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
+                        ? $@"lpad({col}, {len}, '0') <= lpad(@p{Counter}, {len}, '0')"
+                        : $@"{col} <= @p{Counter}");
                     Params.Add($"p{Counter++}", value);
                 }
             }

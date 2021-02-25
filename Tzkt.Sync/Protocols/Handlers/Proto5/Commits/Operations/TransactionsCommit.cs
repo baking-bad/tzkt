@@ -38,9 +38,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                     transaction.Entrypoint = normEp;
                     transaction.RawParameters = normParam.ToBytes();
-
-                    if (contract.Kind > ContractKind.DelegatorContract)
-                        transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
+                    transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
                 }
                 catch (Exception ex)
                 {
