@@ -269,7 +269,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/history")]
-        public Task<IEnumerable<StorageRecord>> GetStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public Task<IEnumerable<StorageRecord<JsonString>>> GetStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetStorageHistory(address, lastId, limit);
         }
@@ -319,7 +319,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/history")]
-        public Task<IEnumerable<RawStorageRecord>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public Task<IEnumerable<StorageRecord<IMicheline>>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetRawStorageHistory(address, lastId, limit);
         }

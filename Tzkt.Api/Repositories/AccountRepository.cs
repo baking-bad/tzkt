@@ -2485,10 +2485,10 @@ namespace Tzkt.Api.Repositories
             return (Micheline.FromBytes(row.StorageSchema) as MichelinePrim).Args[0];
         }
 
-        public async Task<IEnumerable<StorageRecord>> GetStorageHistory(string address, int lastId, int limit)
+        public async Task<IEnumerable<StorageRecord<JsonString>>> GetStorageHistory(string address, int lastId, int limit)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord>();
+            if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord<JsonString>>();
 
             using var db = GetConnection();
             var rows = await db.QueryAsync($@"
@@ -2519,33 +2519,36 @@ namespace Tzkt.Api.Repositories
                 {(lastId > 0 ? $@"AND COALESCE(ss.""TransactionId"", ss.""OriginationId"", ss.""MigrationId"") < {lastId}" : "")}
                 ORDER BY    ss.""Level"" DESC, ss.""TransactionId"" DESC
                 LIMIT       {limit}");
-            if (!rows.Any()) return Enumerable.Empty<StorageRecord>();
+            if (!rows.Any()) return Enumerable.Empty<StorageRecord<JsonString>>();
 
             return rows.Select(row =>
             {
                 int id;
                 DateTime timestamp;
-                SourceOperation source;
+                SourceOperation<JsonString> source;
 
                 if (row.TransactionId != null)
                 {
                     id = row.TransactionId;
                     timestamp = row.TransactionTimestamp;
-                    source = new SourceOperation
+                    source = new SourceOperation<JsonString>
                     {
                         Type = "transaction",
                         Hash = row.TransactionHash,
                         Counter = row.TransactionCounter,
                         Nonce = row.TransactionNonce,
-                        Entrypoint = row.TransactionEntrypoint,
-                        Params = row.TransactionJsonParameters
+                        Parameter = row.TransactionEntrypoint == null ? null : new SourceOperationParameter<JsonString>
+                        {
+                            Entrypoint = row.TransactionEntrypoint,
+                            Value = row.TransactionJsonParameters
+                        }
                     };
                 }
                 else if (row.OriginationId != null)
                 {
                     id = row.OriginationId;
                     timestamp = row.OriginationTimestamp;
-                    source = new SourceOperation
+                    source = new SourceOperation<JsonString>
                     {
                         Type = "origination",
                         Hash = row.OriginationHash,
@@ -2557,13 +2560,13 @@ namespace Tzkt.Api.Repositories
                 {
                     id = row.MigrationId;
                     timestamp = row.MigrationTimestamp;
-                    source = new SourceOperation
+                    source = new SourceOperation<JsonString>
                     {
                         Type = "migration"
                     };
                 }
 
-                return new StorageRecord
+                return new StorageRecord<JsonString>
                 {
                     Id = id,
                     Timestamp = timestamp,
@@ -2574,10 +2577,10 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<RawStorageRecord>> GetRawStorageHistory(string address, int lastId, int limit)
+        public async Task<IEnumerable<StorageRecord<IMicheline>>> GetRawStorageHistory(string address, int lastId, int limit)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (rawAccount is not RawContract contract) return Enumerable.Empty<RawStorageRecord>();
+            if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord<IMicheline>>();
 
             using var db = GetConnection();
             var rows = await db.QueryAsync($@"
@@ -2608,35 +2611,38 @@ namespace Tzkt.Api.Repositories
                 {(lastId > 0 ? $@"AND COALESCE(ss.""TransactionId"", ss.""OriginationId"", ss.""MigrationId"") < {lastId}" : "")}
                 ORDER BY    ss.""Level"" DESC, ss.""TransactionId"" DESC
                 LIMIT       {limit}");
-            if (!rows.Any()) return Enumerable.Empty<RawStorageRecord>();
+            if (!rows.Any()) return Enumerable.Empty<StorageRecord<IMicheline>>();
 
             return rows.Select(row =>
             {
                 int id;
                 DateTime timestamp;
-                SourceOperationRaw source;
+                SourceOperation<IMicheline> source;
 
                 if (row.TransactionId != null)
                 {
                     id = row.TransactionId;
                     timestamp = row.TransactionTimestamp;
-                    source = new SourceOperationRaw
+                    source = new SourceOperation<IMicheline>
                     {
                         Type = "transaction",
                         Hash = row.TransactionHash,
                         Counter = row.TransactionCounter,
                         Nonce = row.TransactionNonce,
-                        Entrypoint = row.TransactionEntrypoint,
-                        Params = row.TransactionRawParameters != null
-                            ? Micheline.FromBytes(row.TransactionRawParameters)
-                            : null
+                        Parameter = row.TransactionEntrypoint == null ? null : new SourceOperationParameter<IMicheline>
+                        {
+                            Entrypoint = row.TransactionEntrypoint,
+                            Value = row.TransactionRawParameters != null
+                                ? Micheline.FromBytes(row.TransactionRawParameters)
+                                : null
+                        }
                     };
                 }
                 else if (row.OriginationId != null)
                 {
                     id = row.OriginationId;
                     timestamp = row.OriginationTimestamp;
-                    source = new SourceOperationRaw
+                    source = new SourceOperation<IMicheline>
                     {
                         Type = "origination",
                         Hash = row.OriginationHash,
@@ -2648,13 +2654,13 @@ namespace Tzkt.Api.Repositories
                 {
                     id = row.MigrationId;
                     timestamp = row.MigrationTimestamp;
-                    source = new SourceOperationRaw
+                    source = new SourceOperation<IMicheline>
                     {
                         Type = "migration"
                     };
                 }
 
-                return new RawStorageRecord
+                return new StorageRecord<IMicheline>
                 {
                     Id = id,
                     Timestamp = timestamp,
@@ -2804,7 +2810,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
-            JsonParameter @params,
+            JsonParameter parameter,
             StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
@@ -2860,7 +2866,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = delegat.Id }, initiator, sender, target, null, level, timestamp, entrypoint, @params, parameters, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = delegat.Id }, initiator, sender, target, null, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2927,7 +2933,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = user.Id }, initiator, sender, target, null, level, timestamp, entrypoint, @params, parameters, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = user.Id }, initiator, sender, target, null, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2966,7 +2972,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = contract.Id }, initiator, sender, target, null, level, timestamp, entrypoint, @params, parameters, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = contract.Id }, initiator, sender, target, null, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)

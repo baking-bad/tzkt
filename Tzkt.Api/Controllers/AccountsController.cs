@@ -220,9 +220,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters operations by level.</param>
         /// <param name="timestamp">Filters operations by timestamp.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
-        /// <param name="params">Filters transactions by parameters. Note, this query parameter supports the following format: `?params{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by, for example: `?params.token_id=...` or `?params.sigs.0.ne=...`.</param>
-        /// <param name="parameters">**DEPRECATED**. Use `entrypoint` and `params` instead.</param>
+        /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
+        /// <param name="parameters">**DEPRECATED**. Use `entrypoint` and `parameter` instead.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="status">Filters transactions, delegations, originations and reveals by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
@@ -251,7 +251,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
-            JsonParameter @params,
+            JsonParameter parameter,
             StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
@@ -382,7 +382,7 @@ namespace Tzkt.Api.Controllers
             if (to != null) timestamp.Lt = to.Value.DateTime;
             #endregion
 
-            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, @params, parameters, hasInternals, status, _sort, _offset, limit, micheline, quote));
+            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, _sort, _offset, limit, micheline, quote));
         }
 
         /// <summary>

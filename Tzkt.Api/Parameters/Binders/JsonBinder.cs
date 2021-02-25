@@ -53,6 +53,50 @@ namespace Tzkt.Api
                             res.Ne.Add((string.Join(',', arr[1..^1]), ne));
                         }
                         break;
+                    case "gt":
+                        hasValue = false;
+                        if (!bindingContext.TryGetString(key, ref hasValue, out var gt))
+                            return Task.CompletedTask;
+                        if (hasValue)
+                        {
+                            res ??= new JsonParameter();
+                            res.Gt ??= new List<(string, string)>();
+                            res.Gt.Add((string.Join(',', arr[1..^1]), gt));
+                        }
+                        break;
+                    case "ge":
+                        hasValue = false;
+                        if (!bindingContext.TryGetString(key, ref hasValue, out var ge))
+                            return Task.CompletedTask;
+                        if (hasValue)
+                        {
+                            res ??= new JsonParameter();
+                            res.Ge ??= new List<(string, string)>();
+                            res.Ge.Add((string.Join(',', arr[1..^1]), ge));
+                        }
+                        break;
+                    case "lt":
+                        hasValue = false;
+                        if (!bindingContext.TryGetString(key, ref hasValue, out var lt))
+                            return Task.CompletedTask;
+                        if (hasValue)
+                        {
+                            res ??= new JsonParameter();
+                            res.Lt ??= new List<(string, string)>();
+                            res.Lt.Add((string.Join(',', arr[1..^1]), lt));
+                        }
+                        break;
+                    case "le":
+                        hasValue = false;
+                        if (!bindingContext.TryGetString(key, ref hasValue, out var le))
+                            return Task.CompletedTask;
+                        if (hasValue)
+                        {
+                            res ??= new JsonParameter();
+                            res.Le ??= new List<(string, string)>();
+                            res.Le.Add((string.Join(',', arr[1..^1]), le));
+                        }
+                        break;
                     case "as":
                         hasValue = false;
                         if (!bindingContext.TryGetString(key, ref hasValue, out var @as))

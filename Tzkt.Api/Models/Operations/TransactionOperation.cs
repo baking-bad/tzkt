@@ -101,14 +101,9 @@ namespace Tzkt.Api.Models
         public long Amount { get; set; }
 
         /// <summary>
-        /// Entrypoint called on the target contract
+        /// Transaction parameter, including called entrypoint and value passed to the entrypoint.
         /// </summary>
-        public string Entrypoint { get; set; }
-
-        /// <summary>
-        /// Parameters passed to the called entrypoint converted to human-readable JSON. Note: you can configure parameters format by setting `micheline` query parameter.
-        /// </summary>
-        public object Params { get; set; }
+        public TxParameter Parameter { get; set; }
 
         /// <summary>
         /// Contract storage after executing the transaction converted to human-readable JSON. Note: you can configure storage format by setting `micheline` query parameter.
@@ -143,8 +138,21 @@ namespace Tzkt.Api.Models
         #endregion
 
         /// <summary>
-        /// **DEPRECATED**. Use `entrypoint` and `params` instead.
+        /// **DEPRECATED**. Use `entrypoint` and `parameter` instead.
         /// </summary>
         public string Parameters { get; set; }
+    }
+
+    public class TxParameter
+    {
+        /// <summary>
+        /// Entrypoint called on the target contract
+        /// </summary>
+        public string Entrypoint { get; set; }
+
+        /// <summary>
+        /// Value passed to the called entrypoint converted to human-readable JSON. Note: you can configure parameters format by setting `micheline` query parameter.
+        /// </summary>
+        public object Value { get; set; }
     }
 }
