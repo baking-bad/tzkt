@@ -4409,13 +4409,13 @@ namespace Tzkt.Api.Repositories
                     res = res.Where(x => x.Parameters != null);
                 if (parameters.As != null)
                 {
-                    var pattern = $"^{parameters.As.Replace("%", ".*")}$";
-                    res = res.Where(x => System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
+                    var pattern = $"^{parameters.As.Replace("%", ".*").Replace("[", "\\[").Replace("]", "\\]").Replace("{", "\\{").Replace("}", "\\}")}$";
+                    res = res.Where(x => x.Parameters != null && System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
                 }
                 if (parameters.Un != null)
                 {
-                    var pattern = $"^{parameters.Un.Replace("%", ".*")}$";
-                    res = res.Where(x => !System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
+                    var pattern = $"^{parameters.Un.Replace("%", ".*").Replace("[", "\\[").Replace("]", "\\]").Replace("{", "\\{").Replace("}", "\\}")}$";
+                    res = res.Where(x => x.Parameters != null && !System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
                 }
 
                 if (sort?.Asc != null)
