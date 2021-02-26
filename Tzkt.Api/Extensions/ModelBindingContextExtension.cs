@@ -453,6 +453,56 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetContractKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (rawValue == ContractKinds.Asset)
+                        {
+                            hasValue = true;
+                            result.Add(2);
+                        }
+                        else if (rawValue == ContractKinds.SmartContract)
+                        {
+                            hasValue = true;
+                            result.Add(1);
+                        }
+                        else if (rawValue == ContractKinds.Delegator)
+                        {
+                            hasValue = true;
+                            result.Add(0);
+                        }
+                        else
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid contract kind.");
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetVoterStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

@@ -107,6 +107,18 @@ namespace Tzkt.Api
             if (kind.Ne != null)
                 AppendFilter($@"""{column}"" != {kind.Ne}");
 
+            if (kind.In != null)
+            {
+                AppendFilter($@"""{column}"" = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", kind.In);
+            }
+
+            if (kind.Ni != null && kind.Ni.Count > 0)
+            {
+                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", kind.Ni);
+            }
+
             return this;
         }
 

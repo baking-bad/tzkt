@@ -22,6 +22,12 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetContractKind($"{model}.ne", ref hasValue, out var ne))
                 return Task.CompletedTask;
 
+            if (!bindingContext.TryGetContractKindList($"{model}.in", ref hasValue, out var @in))
+                return Task.CompletedTask;
+
+            if (!bindingContext.TryGetContractKindList($"{model}.ni", ref hasValue, out var ni))
+                return Task.CompletedTask;
+
             if (!hasValue)
             {
                 bindingContext.Result = ModelBindingResult.Success(null);
@@ -31,7 +37,9 @@ namespace Tzkt.Api
             bindingContext.Result = ModelBindingResult.Success(new ContractKindParameter
             {
                 Eq = value ?? eq,
-                Ne = ne
+                Ne = ne,
+                In = @in,
+                Ni = ni
             });
 
             return Task.CompletedTask;

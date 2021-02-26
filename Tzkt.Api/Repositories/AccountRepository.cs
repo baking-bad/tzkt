@@ -3031,11 +3031,11 @@ namespace Tzkt.Api.Repositories
             if (value == null || value == 0) return null;
             var res = new List<string>(1);
 
-            if (((int)value & (int)Data.Models.Tzip.FA2) > 0)
+            if (((int)value & (int)Data.Models.Tzip.FA2) == (int)Data.Models.Tzip.FA2)
                 res.Add("fa2");
-            else if (((int)value & (int)Data.Models.Tzip.FA12) > 0)
+            else if (((int)value & (int)Data.Models.Tzip.FA12) == (int)Data.Models.Tzip.FA12)
                 res.Add("fa12");
-            else if (((int)value & (int)Data.Models.Tzip.FA1) > 0)
+            else if (((int)value & (int)Data.Models.Tzip.FA1) == (int)Data.Models.Tzip.FA1)
                 res.Add("fa1");
 
             return res;
