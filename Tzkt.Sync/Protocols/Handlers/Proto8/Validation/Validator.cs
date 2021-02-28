@@ -13,12 +13,6 @@ namespace Tzkt.Sync.Protocols.Proto8
         {
             var rawPeriod = metadata.Required("voting_period_info").Required("voting_period");
             var periodIndex = rawPeriod.RequiredInt32("index");
-
-            if (Cache.AppState.Get().VotingPeriod != periodIndex)
-                throw new ValidationException("invalid voting period index");
-
-            var period = await Cache.Periods.GetAsync(periodIndex);
-
             var kind = rawPeriod.RequiredString("kind") switch
             {
                 "proposal" => PeriodKind.Proposal,
@@ -29,15 +23,25 @@ namespace Tzkt.Sync.Protocols.Proto8
                 _ => throw new ValidationException("invalid voting period kind")
             };
 
+            var period = await Cache.Periods.GetAsync(Cache.AppState.Get().VotingPeriod);
+
             if (Level < period.LastLevel)
             {
-                if (period.Kind != kind)
+                if (periodIndex != period.Index)
+                    throw new ValidationException("invalid voting period index");
+
+                if (kind != period.Kind)
                     throw new ValidationException("unexpected voting period");
             }
             else
             {
-                if (kind != PeriodKind.Proposal && (int)kind != (int)period.Kind + 1)
-                    throw new ValidationException("inconsistent voting period");
+                // WTF: period start time on mainnet [level:1363968] differs from edo2net [level:45056]
+
+                //if (periodIndex != period.Index + 1)
+                //    throw new ValidationException("invalid voting period index");
+
+                //if (kind != PeriodKind.Proposal && (int)kind != (int)period.Kind + 1)
+                //    throw new ValidationException("inconsistent voting period");
             }
         }
     }
