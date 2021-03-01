@@ -4,7 +4,7 @@ services:
   db:
     container_name: tzkt-db
     restart: always
-    image: postgres:12
+    image: postgres:13
     environment:
       POSTGRES_USER: tzkt
       POSTGRES_PASSWORD: qwerty
@@ -12,9 +12,9 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     expose:
-      - 5432
+      - 5444
     ports:
-      - 0.0.0.0:5432:5432
+      - 0.0.0.0:5444:5432
 
   api:
     container_name: tzkt-api
