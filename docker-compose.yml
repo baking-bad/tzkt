@@ -12,9 +12,9 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     expose:
-      - 5444
+      - 5432
     ports:
-      - 0.0.0.0:5444:5432
+      - 0.0.0.0:5432:5432
 
   api:
     container_name: tzkt-api
