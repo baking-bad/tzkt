@@ -1,6 +1,6 @@
 # Introduction
 
-TzKT Explorer provides a free REST-like API and Websocket API for accessing detailed Tezos blockchain data and helps developers build more services and applications on top of Tezos.
+TzKT Explorer provides a free REST-like API and WebSocket API for accessing detailed Tezos blockchain data and helps developers build more services and applications on top of Tezos.
 TzKT is an open-source project, so you can easily clone and build it and use it as a self-hosted service to avoid any risks depending on third-party services.
 
 TzKT API is available for the following Tezos networks with the following base URLs:

@@ -8,7 +8,7 @@ namespace Tzkt.Api.Swagger
 {
     public static class Swagger
     {
-        const string Version = "v1.4.0-preview1";
+        const string Version = "v1.4";
         const string Path = "/v1/swagger.json";
 
         public static void AddOpenApiDocument(this IServiceCollection services)
@@ -66,7 +66,7 @@ namespace Tzkt.Api.Swagger
                                 },
                                 new
                                 {
-                                    name = "Websocket API",
+                                    name = "WebSocket API",
                                     tags = document.Tags.Select(x => x.Name).ToList()
                                 }
                             }
