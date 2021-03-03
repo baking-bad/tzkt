@@ -1,4 +1,4 @@
-TzKT Events is a Websocket API based on [SignalR](https://docs.microsoft.com/aspnet/signalr/overview/getting-started/introduction-to-signalr)
+TzKT Events is a WebSocket API based on [SignalR](https://docs.microsoft.com/aspnet/signalr/overview/getting-started/introduction-to-signalr)
 that enables receiving data from the Tezos blockchain in real-time.
 
 This is a very useful feature, especially when you need to receive updates immediately, as soon as they appear on the node and are indexed by the indexer.
@@ -8,7 +8,7 @@ Events base URL: `https://{baseUrl}/v1/events`
 
 ## Message types
 
-After connecting to the websocket and subscribing to some events the client starts receiving messages from the server.
+After connecting to the WebSocket and subscribing to some events the client starts receiving messages from the server.
 There are three message types that the server sends to the client:
 
 #### 1. State message
