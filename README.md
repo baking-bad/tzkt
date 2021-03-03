@@ -60,7 +60,7 @@ sudo apt update
 sudo apt install -y dotnet-sdk-5.0
 ````
 
-#### Install Postgresql 12
+#### Install Postgresql 13
 
 ````
 wget -q -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
