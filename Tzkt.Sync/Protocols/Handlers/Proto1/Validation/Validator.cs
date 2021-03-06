@@ -203,10 +203,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (balanceUpdates.Count > 2)
                 {
                     var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards)
-                        ?? throw new ValidationException("missed block freezer rewards update");
+                        ?? throw new ValidationException("missed endorsement freezer rewards update");
 
                     if (rewardsUpdate.Account != delegat || rewardsUpdate.Change != GetEndorsementReward(slots))
-                        throw new ValidationException("invalid block freezer rewards update");
+                        throw new ValidationException("invalid endorsement freezer rewards update");
                 }
             }
         }
@@ -231,7 +231,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var periodIndex = content.RequiredInt32("period");
 
             if (Cache.AppState.Get().VotingPeriod != periodIndex)
-                throw new ValidationException("invalid ballot voting period");
+                throw new ValidationException("invalid proposal voting period");
 
             if (!Cache.Accounts.DelegateExists(content.RequiredString("source")))
                 throw new ValidationException("invalid proposal sender");

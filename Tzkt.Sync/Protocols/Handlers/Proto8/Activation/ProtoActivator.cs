@@ -1,5 +1,5 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -23,10 +23,13 @@ namespace Tzkt.Sync.Protocols.Proto8
 
         protected override Task MigrateContext(AppState state)
         {
-            return Db.Database.ExecuteSqlRawAsync($@"
-                UPDATE  ""VotingPeriods""
-                SET     ""LastLevel"" = ""FirstLevel"" + 20479
-                WHERE   ""Index"" IN (SELECT MAX(""Index"") from ""VotingPeriods"")");
+            var period = Db.ChangeTracker
+                .Entries()
+                .First(x => x.Entity is VotingPeriod p && p.Index == state.VotingPeriod)
+                .Entity as VotingPeriod;
+
+            period.LastLevel = period.FirstLevel + 20_479;
+            return Task.CompletedTask;
         }
     }
 }
