@@ -27,6 +27,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of delegate accounts.
         /// </remarks>
         /// <param name="active">Delegate status to filter by (true - only active, false - only deactivated, undefined - all delegates)</param>
+        /// <param name="lastActivity">Filters delegates by last activity level (where the delegate was updated)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `activationLevel`, `deactivationLevel`, `stakingBalance`, `balance`, `numDelegators`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -35,6 +36,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Models.Delegate>>> Get(
             BoolParameter active,
+            Int32Parameter lastActivity,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -46,25 +48,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Accounts.GetDelegates(active, sort, offset, limit));
+                return Ok(await Accounts.GetDelegates(active, lastActivity, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.GetDelegates(active, sort, offset, limit, select.Values[0]));
+                    return Ok(await Accounts.GetDelegates(active, lastActivity, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Accounts.GetDelegates(active, sort, offset, limit, select.Values));
+                    return Ok(await Accounts.GetDelegates(active, lastActivity, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.GetDelegates(active, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Accounts.GetDelegates(active, lastActivity, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Accounts.GetDelegates(active, sort, offset, limit, select.Fields)
+                        Rows = await Accounts.GetDelegates(active, lastActivity, sort, offset, limit, select.Fields)
                     });
                 }
             }

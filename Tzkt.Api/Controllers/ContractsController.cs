@@ -28,6 +28,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of contract accounts.
         /// </remarks>
         /// <param name="kind">Contract kind to filter by (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="lastActivity">Filters contracts by last activity level (where the contract was updated)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -36,6 +37,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Contract>>> Get(
             ContractKindParameter kind,
+            Int32Parameter lastActivity,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -47,25 +49,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Accounts.GetContracts(kind, sort, offset, limit));
+                return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, sort, offset, limit, select.Values[0]));
+                    return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Accounts.GetContracts(kind, sort, offset, limit, select.Values));
+                    return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                          Cols = select.Fields,
-                         Rows = await Accounts.GetContracts(kind, sort, offset, limit, select.Fields)
+                         Rows = await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Fields)
                     });
                 }
             }

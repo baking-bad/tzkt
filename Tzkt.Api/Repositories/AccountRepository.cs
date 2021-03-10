@@ -339,6 +339,7 @@ namespace Tzkt.Api.Repositories
             ContractKindParameter kind,
             Int64Parameter balance,
             BoolParameter staked,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
@@ -348,6 +349,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Filter("Balance", balance)
                 .Filter("Staked", staked)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -527,6 +529,7 @@ namespace Tzkt.Api.Repositories
             ContractKindParameter kind,
             Int64Parameter balance,
             BoolParameter staked,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -594,6 +597,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Filter("Balance", balance)
                 .Filter("Staked", staked)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -831,6 +835,7 @@ namespace Tzkt.Api.Repositories
             ContractKindParameter kind,
             Int64Parameter balance,
             BoolParameter staked,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -895,6 +900,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Kind", kind)
                 .Filter("Balance", balance)
                 .Filter("Staked", staked)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -1137,6 +1143,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Models.Delegate>> GetDelegates(
             BoolParameter active,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
@@ -1144,6 +1151,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
                 .Filter("Type", 1)
                 .Filter("Staked", active)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "activationLevel" => ("ActivationLevel", "ActivationLevel"),
@@ -1204,6 +1212,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetDelegates(
             BoolParameter active,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1260,6 +1269,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 1)
                 .Filter("Staked", active)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "activationLevel" => ("ActivationLevel", "ActivationLevel"),
@@ -1440,6 +1450,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetDelegates(
             BoolParameter active,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1493,6 +1504,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 1)
                 .Filter("Staked", active)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "activationLevel" => ("ActivationLevel", "ActivationLevel"),
@@ -1681,6 +1693,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Contract>> GetContracts(
             ContractKindParameter kind,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
@@ -1688,6 +1701,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
                 .Filter("Type", 2)
                 .Filter("Kind", kind)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -1769,6 +1783,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetContracts(
             ContractKindParameter kind,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1809,6 +1824,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 2)
                 .Filter("Kind", kind)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -1951,6 +1967,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetContracts(
             ContractKindParameter kind,
+            Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1988,6 +2005,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 2)
                 .Filter("Kind", kind)
+                .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
