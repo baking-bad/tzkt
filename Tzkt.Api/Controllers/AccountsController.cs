@@ -39,6 +39,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="delegate">Filters accounts by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="balance">Filters accounts by balance</param>
         /// <param name="staked">Filters accounts by participation in staking</param>
         /// <param name="lastActivity">Filters accounts by last activity level (where the account was updated)</param>
@@ -51,6 +52,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<Account>>> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            AccountParameter @delegate,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -60,6 +62,18 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
+            if (@delegate != null)
+            {
+                if (@delegate.Eqx != null)
+                    return new BadRequest($"{nameof(@delegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (@delegate.Nex != null)
+                    return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (@delegate.Eq == -1 || @delegate.In?.Count == 0)
+                    return Ok(Enumerable.Empty<Account>());
+            }
+
             if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions", "numContracts"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
@@ -70,25 +84,25 @@ namespace Tzkt.Api.Controllers
             #endregion
             
             if (select == null)
-                return Ok(await Accounts.Get(type, kind, balance, staked, lastActivity, sort, offset, limit));
+                return Ok(await Accounts.Get(type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.Get(type, kind, balance, staked, lastActivity, sort, offset, limit, select.Values[0]));
+                    return Ok(await Accounts.Get(type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Accounts.Get(type, kind, balance, staked, lastActivity, sort, offset, limit, select.Values));
+                    return Ok(await Accounts.Get(type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.Get(type, kind, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Accounts.Get(type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Accounts.Get(type, kind, balance, staked, lastActivity, sort, offset, limit, select.Fields)
+                        Rows = await Accounts.Get(type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields)
                     });
                 }
             }

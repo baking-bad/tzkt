@@ -337,6 +337,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Account>> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            AccountParameter @delegate,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -347,6 +348,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
+                .Filter("DelegateId", @delegate)
                 .Filter("Balance", balance)
                 .Filter("Staked", staked)
                 .Filter("LastLevel", lastActivity)
@@ -527,6 +529,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[][]> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            AccountParameter @delegate,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -595,6 +598,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
+                .Filter("DelegateId", @delegate)
                 .Filter("Balance", balance)
                 .Filter("Staked", staked)
                 .Filter("LastLevel", lastActivity)
@@ -833,6 +837,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[]> Get(
             AccountTypeParameter type,
             ContractKindParameter kind,
+            AccountParameter @delegate,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -898,6 +903,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
+                .Filter("DelegateId", @delegate)
                 .Filter("Balance", balance)
                 .Filter("Staked", staked)
                 .Filter("LastLevel", lastActivity)
@@ -1693,6 +1699,9 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Contract>> GetContracts(
             ContractKindParameter kind,
+            AccountParameter creator,
+            AccountParameter manager,
+            AccountParameter @delegate,
             Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
@@ -1700,6 +1709,9 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
                 .Filter("Type", 2)
+                .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
+                .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
+                .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
                 .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
@@ -1783,6 +1795,9 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetContracts(
             ContractKindParameter kind,
+            AccountParameter creator,
+            AccountParameter manager,
+            AccountParameter @delegate,
             Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
@@ -1823,6 +1838,9 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 2)
+                .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
+                .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
+                .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
                 .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
@@ -1875,25 +1893,25 @@ namespace Tzkt.Api.Repositories
                     case "creator":
                         foreach (var row in rows)
                         {
-                            var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                            var creatorMetadata = creator == null ? null : Accounts.GetMetadata(creator.Id);
-                            result[j++][i] = creator == null ? null : new CreatorInfo
+                            var _creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
+                            var creatorMetadata = _creator == null ? null : Accounts.GetMetadata(_creator.Id);
+                            result[j++][i] = _creator == null ? null : new CreatorInfo
                             {
                                 Alias = creatorMetadata?.Alias,
-                                Address = creator.Address
+                                Address = _creator.Address
                             };
                         }
                         break;
                     case "manager":
                         foreach (var row in rows)
                         {
-                            var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                            var managerMetadata = manager == null ? null : Accounts.GetMetadata(manager.Id);
-                            result[j++][i] = manager == null ? null : new ManagerInfo
+                            var _manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
+                            var managerMetadata = _manager == null ? null : Accounts.GetMetadata(_manager.Id);
+                            result[j++][i] = _manager == null ? null : new ManagerInfo
                             {
                                 Alias = managerMetadata?.Alias,
-                                Address = manager.Address,
-                                PublicKey = manager.PublicKey,
+                                Address = _manager.Address,
+                                PublicKey = _manager.PublicKey,
                             };
                         }
                         break;
@@ -1967,6 +1985,9 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetContracts(
             ContractKindParameter kind,
+            AccountParameter creator,
+            AccountParameter manager,
+            AccountParameter @delegate,
             Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
@@ -2004,6 +2025,9 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 2)
+                .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
+                .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
+                .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
                 .Filter("LastLevel", lastActivity)
                 .Take(sort, offset, limit, x => x switch
@@ -2053,25 +2077,25 @@ namespace Tzkt.Api.Repositories
                 case "creator":
                     foreach (var row in rows)
                     {
-                        var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                        var creatorMetadata = creator == null ? null : Accounts.GetMetadata(creator.Id);
-                        result[j++] = creator == null ? null : new CreatorInfo
+                        var _creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
+                        var creatorMetadata = _creator == null ? null : Accounts.GetMetadata(_creator.Id);
+                        result[j++] = _creator == null ? null : new CreatorInfo
                         {
                             Alias = creatorMetadata?.Alias,
-                            Address = creator.Address
+                            Address = _creator.Address
                         };
                     }
                     break;
                 case "manager":
                     foreach (var row in rows)
                     {
-                        var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                        var managerMetadata = manager == null ? null : Accounts.GetMetadata(manager.Id);
-                        result[j++] = manager == null ? null : new ManagerInfo
+                        var _manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
+                        var managerMetadata = _manager == null ? null : Accounts.GetMetadata(_manager.Id);
+                        result[j++] = _manager == null ? null : new ManagerInfo
                         {
                             Alias = managerMetadata?.Alias,
-                            Address = manager.Address,
-                            PublicKey = manager.PublicKey,
+                            Address = _manager.Address,
+                            PublicKey = _manager.PublicKey,
                         };
                     }
                     break;

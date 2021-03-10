@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -28,6 +29,9 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of contract accounts.
         /// </remarks>
         /// <param name="kind">Contract kind to filter by (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="creator">Filters contracts by creator. Allowed fields for `.eqx` mode: `manager`, `delegate`.</param>
+        /// <param name="manager">Filters contracts by manager. Allowed fields for `.eqx` mode: `creator`, `delegate`.</param>
+        /// <param name="delegate">Filters contracts by delegate. Allowed fields for `.eqx` mode: `manager`, `creator`.</param>
         /// <param name="lastActivity">Filters contracts by last activity level (where the contract was updated)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
@@ -37,37 +41,76 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Contract>>> Get(
             ContractKindParameter kind,
+            AccountParameter creator,
+            AccountParameter manager,
+            AccountParameter @delegate,
             Int32Parameter lastActivity,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
         {
-            #region validate
+            #region validates
+            if (creator != null)
+            {
+                if (creator.Eqx != null && creator.Eqx != "manager" && creator.Eqx != "delegate")
+                    return new BadRequest($"{nameof(creator)}.eqx", "The 'creator' field can be compared with the 'manager' or 'delegate' field only.");
+
+                if (creator.Nex != null && creator.Nex != "manager" && creator.Nex != "delegate")
+                    return new BadRequest($"{nameof(creator)}.nex", "The 'creator' field can be compared with the 'manager' or 'delegate' field only.");
+
+                if (creator.Eq == -1 || creator.In?.Count == 0)
+                    return Ok(Enumerable.Empty<Contract>());
+            }
+
+            if (manager != null)
+            {
+                if (manager.Eqx != null && manager.Eqx != "creator" && manager.Eqx != "delegate")
+                    return new BadRequest($"{nameof(manager)}.eqx", "The 'manager' field can be compared with the 'creator' or 'delegate' field only.");
+
+                if (manager.Nex != null && manager.Nex != "creator" && manager.Nex != "delegate")
+                    return new BadRequest($"{nameof(manager)}.nex", "The 'manager' field can be compared with the 'creator' or 'delegate' field only.");
+
+                if (manager.Eq == -1 || manager.In?.Count == 0)
+                    return Ok(Enumerable.Empty<Contract>());
+            }
+
+            if (@delegate != null)
+            {
+                if (@delegate.Eqx != null && @delegate.Eqx != "creator" && @delegate.Eqx != "manager")
+                    return new BadRequest($"{nameof(@delegate)}.eqx", "The 'delegate' field can be compared with the 'creator' or 'manager' field only.");
+
+                if (@delegate.Nex != null && @delegate.Nex != "creator" && @delegate.Nex != "manager")
+                    return new BadRequest($"{nameof(@delegate)}.nex", "The 'delegate' field can be compared with the 'creator' or 'manager' field only.");
+
+                if (@delegate.Eq == -1 || @delegate.In?.Count == 0)
+                    return Ok(Enumerable.Empty<Contract>());
+            }
+
             if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit));
+                return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Values[0]));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Values));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                          Cols = select.Fields,
-                         Rows = await Accounts.GetContracts(kind, lastActivity, sort, offset, limit, select.Fields)
+                         Rows = await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields)
                     });
                 }
             }
