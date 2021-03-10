@@ -37,6 +37,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="includeStorage">Specifies whether to include contract storage value in response.</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Contract>>> Get(
@@ -48,7 +49,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            bool includeStorage = false)
         {
             #region validates
             if (creator != null)
@@ -92,25 +94,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit));
+                return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, includeStorage));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values[0]));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values[0], includeStorage));
                 else
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values, includeStorage));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields[0], includeStorage));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                          Cols = select.Fields,
-                         Rows = await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields)
+                         Rows = await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields, includeStorage)
                     });
                 }
             }

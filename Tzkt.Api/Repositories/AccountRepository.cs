@@ -1705,9 +1705,19 @@ namespace Tzkt.Api.Repositories
             Int32Parameter lastActivity,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            bool includeStorage)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
+            var query = includeStorage
+                ? @"
+                    SELECT      acc.*, st.""JsonValue""
+                    FROM        ""Accounts"" AS acc
+                    LEFT JOIN   ""Storages"" AS st
+                           ON   st.""ContractId"" = acc.""Id"" AND st.""Current"" = true
+                "
+                : @"SELECT * FROM ""Accounts""";
+
+            var sql = new SqlBuilder(query)
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -1788,7 +1798,8 @@ namespace Tzkt.Api.Repositories
                     NumOriginations = row.OriginationsCount,
                     NumReveals = row.RevealsCount,
                     NumMigrations = row.MigrationsCount,
-                    NumTransactions = row.TransactionsCount
+                    NumTransactions = row.TransactionsCount,
+                    Storage = row.JsonValue == null ? null : new JsonString((string)row.JsonValue)
                 };
             });
         }
@@ -1802,41 +1813,48 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            bool includeStorage)
         {
             var columns = new HashSet<string>(fields.Length + 2);
+            var joins = new HashSet<string>(1);
+
             foreach (var field in fields)
             {
                 switch (field)
                 {
-                    case "type": columns.Add(@"""Type"""); break;
-                    case "kind": columns.Add(@"""Kind"""); break;
-                    case "tzips": columns.Add(@"""Tzips"""); break;
-                    case "alias": columns.Add(@"""Id"""); break;
-                    case "address": columns.Add(@"""Address"""); break;
-                    case "balance": columns.Add(@"""Balance"""); break;
-                    case "creator": columns.Add(@"""CreatorId"""); break;
-                    case "manager": columns.Add(@"""ManagerId"""); break;
-                    case "delegate": columns.Add(@"""DelegateId"""); break;
-                    case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
-                    case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
-                    case "numContracts": columns.Add(@"""ContractsCount"""); break;
-                    case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
-                    case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
-                    case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
-                    case "numReveals": columns.Add(@"""RevealsCount"""); break;
-                    case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
-                    case "firstActivity": columns.Add(@"""FirstLevel"""); break;
-                    case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
-                    case "lastActivity": columns.Add(@"""LastLevel"""); break;
-                    case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
+                    case "type": columns.Add(@"acc.""Type"""); break;
+                    case "kind": columns.Add(@"acc.""Kind"""); break;
+                    case "tzips": columns.Add(@"acc.""Tzips"""); break;
+                    case "alias": columns.Add(@"acc.""Id"""); break;
+                    case "address": columns.Add(@"acc.""Address"""); break;
+                    case "balance": columns.Add(@"acc.""Balance"""); break;
+                    case "creator": columns.Add(@"acc.""CreatorId"""); break;
+                    case "manager": columns.Add(@"acc.""ManagerId"""); break;
+                    case "delegate": columns.Add(@"acc.""DelegateId"""); break;
+                    case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
+                    case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
+                    case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
+                    case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
+                    case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
+                    case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
+                    case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
+                    case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
+                    case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
+                    case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
+                    case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
+                    case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
+                    case "storage" when includeStorage:
+                        columns.Add(@"st.""JsonValue""");
+                        joins.Add(@"INNER JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
+                        break;
                 }
             }
 
             if (columns.Count == 0)
                 return Array.Empty<object[]>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -1850,7 +1868,7 @@ namespace Tzkt.Api.Repositories
                     "lastActivity" => ("LastLevel", "LastLevel"),
                     "numTransactions" => ("TransactionsCount", "TransactionsCount"),
                     _ => ("Id", "Id")
-                });
+                }, "acc");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -1976,6 +1994,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Time[row.LastLevel];
                         break;
+                    case "storage":
+                        foreach (var row in rows)
+                            result[j++][i] = row.JsonValue == null ? null : new JsonString((string)row.JsonValue);
+                        break;
                 }
             }
 
@@ -1992,38 +2014,45 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            bool includeStorage)
         {
             var columns = new HashSet<string>(3);
+            var joins = new HashSet<string>(1);
+
             switch (field)
             {
-                case "type": columns.Add(@"""Type"""); break;
-                case "kind": columns.Add(@"""Kind"""); break;
-                case "tzips": columns.Add(@"""Tzips"""); break;
-                case "alias": columns.Add(@"""Id"""); break;
-                case "address": columns.Add(@"""Address"""); break;
-                case "balance": columns.Add(@"""Balance"""); break;
-                case "creator": columns.Add(@"""CreatorId"""); break;
-                case "manager": columns.Add(@"""ManagerId"""); break;
-                case "delegate": columns.Add(@"""DelegateId"""); break;
-                case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
-                case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
-                case "numContracts": columns.Add(@"""ContractsCount"""); break;
-                case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
-                case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
-                case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
-                case "numReveals": columns.Add(@"""RevealsCount"""); break;
-                case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
-                case "firstActivity": columns.Add(@"""FirstLevel"""); break;
-                case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
-                case "lastActivity": columns.Add(@"""LastLevel"""); break;
-                case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
+                case "type": columns.Add(@"acc.""Type"""); break;
+                case "kind": columns.Add(@"acc.""Kind"""); break;
+                case "tzips": columns.Add(@"acc.""Tzips"""); break;
+                case "alias": columns.Add(@"acc.""Id"""); break;
+                case "address": columns.Add(@"acc.""Address"""); break;
+                case "balance": columns.Add(@"acc.""Balance"""); break;
+                case "creator": columns.Add(@"acc.""CreatorId"""); break;
+                case "manager": columns.Add(@"acc.""ManagerId"""); break;
+                case "delegate": columns.Add(@"acc.""DelegateId"""); break;
+                case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
+                case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
+                case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
+                case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
+                case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
+                case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
+                case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
+                case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
+                case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
+                case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
+                case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
+                case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
+                case "storage" when includeStorage:
+                    columns.Add(@"st.""JsonValue""");
+                    joins.Add(@"INNER JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Array.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -2037,7 +2066,7 @@ namespace Tzkt.Api.Repositories
                     "lastActivity" => ("LastLevel", "LastLevel"),
                     "numTransactions" => ("TransactionsCount", "TransactionsCount"),
                     _ => ("Id", "Id")
-                });
+                }, "acc");
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -2159,6 +2188,10 @@ namespace Tzkt.Api.Repositories
                 case "lastActivityTime":
                     foreach (var row in rows)
                         result[j++] = Time[row.LastLevel];
+                    break;
+                case "storage":
+                    foreach (var row in rows)
+                        result[j++] = row.JsonValue == null ? null : new JsonString((string)row.JsonValue);
                     break;
             }
 

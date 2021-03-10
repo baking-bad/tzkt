@@ -113,6 +113,10 @@ namespace Tzkt.Api.Models
         /// </summary>
         public DateTime LastActivityTime { get; set; }
 
+        /// <summary>
+        /// Contract storage value. Omitted by default. Use `?includeStorage=true` to include it in response.
+        /// </summary>
+        public object Storage { get; set; }
         
         /// <summary>
         /// List of contracts, related to the contract
