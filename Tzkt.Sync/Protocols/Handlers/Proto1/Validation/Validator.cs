@@ -71,15 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 throw new ValidationException("invalid voting period index");
 
             var period = await Cache.Periods.GetAsync(periodIndex);
-
-            var kind = metadata.RequiredString("voting_period_kind") switch
-            {
-                "proposal" => PeriodKind.Proposal,
-                "exploration" => PeriodKind.Exploration,
-                "testing" => PeriodKind.Testing,
-                "promotion" => PeriodKind.Promotion,
-                _ => throw new ValidationException("invalid voting period kind")
-            };
+            var kind = ParsePeriodKind(metadata.RequiredString("voting_period_kind"));
 
             if (Level <= period.LastLevel)
             {
@@ -174,7 +166,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (content.RequiredInt32("level") != Cache.AppState.GetLevel())
                 throw new ValidationException("invalid endorsed block level");
 
-            var metadata = content.Required("metadata");
+            ValidateEndorsementMetadata(content.Required("metadata"));
+        }
+
+        protected void ValidateEndorsementMetadata(JsonElement metadata)
+        {
             var delegat = metadata.RequiredString("delegate");
             var slots = metadata.RequiredArray("slots").Count();
 
@@ -579,6 +575,15 @@ namespace Tzkt.Sync.Protocols.Proto1
             LastBlock ??= Cache.Blocks.Current();
             return Cycle < Protocol.NoRewardCycles ? 0 : (slots * (long)(Protocol.EndorsementReward0 / (LastBlock.Priority + 1.0)));
         }
+
+        protected virtual PeriodKind ParsePeriodKind(string kind) => kind switch
+        {
+            "proposal" => PeriodKind.Proposal,
+            "exploration" => PeriodKind.Exploration,
+            "testing" => PeriodKind.Testing,
+            "promotion" => PeriodKind.Promotion,
+            _ => throw new ValidationException("invalid voting period kind")
+        };
 
         protected virtual List<BalanceUpdate> ParseBalanceUpdates(JsonElement updates)
         {
