@@ -13,15 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto8
         {
             var rawPeriod = metadata.Required("voting_period_info").Required("voting_period");
             var periodIndex = rawPeriod.RequiredInt32("index");
-            var kind = rawPeriod.RequiredString("kind") switch
-            {
-                "proposal" => PeriodKind.Proposal,
-                "testing_vote" => PeriodKind.Exploration,
-                "testing" => PeriodKind.Testing,
-                "promotion_vote" => PeriodKind.Promotion,
-                "adoption" => PeriodKind.Adoption,
-                _ => throw new ValidationException("invalid voting period kind")
-            };
+            var kind = ParsePeriodKind(rawPeriod.RequiredString("kind"));
 
             var period = await Cache.Periods.GetAsync(Cache.AppState.Get().VotingPeriod);
 
@@ -44,5 +36,15 @@ namespace Tzkt.Sync.Protocols.Proto8
                 //    throw new ValidationException("inconsistent voting period");
             }
         }
+
+        protected override PeriodKind ParsePeriodKind(string kind) => kind switch
+        {
+            "proposal" => PeriodKind.Proposal,
+            "testing_vote" => PeriodKind.Exploration,
+            "testing" => PeriodKind.Testing,
+            "promotion_vote" => PeriodKind.Promotion,
+            "adoption" => PeriodKind.Adoption,
+            _ => throw new ValidationException("invalid voting period kind")
+        };
     }
 }
