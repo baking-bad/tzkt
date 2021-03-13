@@ -115,3 +115,39 @@ connection.on("operations", (msg) => {
 
 init();
 ````
+
+---
+
+## Python simple client
+
+Install SignalR package via pypi:
+
+````sh
+> pip install signalrcore
+````
+
+See more details [here](https://github.com/mandrewcito/signalrcore#signalr-core-client).
+
+````python
+from signalrcore.hub_connection_builder import HubConnectionBuilder
+
+connection = HubConnectionBuilder()\
+    .with_url('https://api.tzkt.io/v1/events')\
+    .with_automatic_reconnect({
+        "type": "interval",
+        "keep_alive_interval": 10,
+        "intervals": [1, 3, 5, 6, 7, 87, 3]
+    })\
+    .build()
+
+connection.on_open(lambda: print("connection opened"))
+connection.on_close(lambda: print("connection closed"))
+connection.on("head", print)
+connection.on("operations", print)
+
+connection.start()
+connection.send('SubscribeToHead', [])
+connection.send('SubscribeToOperations', 
+                [{'address': 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton', 
+                  'types': 'transaction'}])
+````
