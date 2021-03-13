@@ -487,10 +487,17 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Null)
                 {
-                    if (value && path.Length > 0)
-                        AppendFilter($@"""{column}"" IS NOT NULL");
+                    if (path.Length == 0)
+                    {
+                        AppendFilter($@"""{column}"" IS {(value ? "" : "NOT ")}NULL");
+                    }
+                    else
+                    {
+                        if (value)
+                            AppendFilter($@"""{column}"" IS NOT NULL");
 
-                    AppendFilter($@"""{column}""#>>'{{{path}}}' IS {(value ? "" : "NOT ")}NULL");
+                        AppendFilter($@"""{column}""#>>'{{{path}}}' IS {(value ? "" : "NOT ")}NULL");
+                    }
                 }
             }
 

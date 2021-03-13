@@ -4306,7 +4306,8 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit,
             MichelineFormat format,
-            Symbols quote)
+            Symbols quote,
+            bool includeStorage = false)
         {
             #region backward compatibility
             // TODO: remove it asap
@@ -4321,7 +4322,21 @@ namespace Tzkt.Api.Repositories
             }
             #endregion
 
-            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""TransactionOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+            var query = includeStorage
+                ? $@"
+                    SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
+                    FROM        ""TransactionOps"" AS o
+                    INNER JOIN  ""Blocks"" as b
+                            ON  b.""Level"" = o.""Level""
+                    LEFT  JOIN  ""Storages"" as s
+                            ON  s.""Id"" = o.""StorageId"""
+                : @"
+                    SELECT      o.*, b.""Hash""
+                    FROM        ""TransactionOps"" AS o
+                    INNER JOIN  ""Blocks"" as b
+                            ON  b.""Level"" = o.""Level""";
+
+            var sql = new SqlBuilder(query)
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
@@ -4383,6 +4398,14 @@ namespace Tzkt.Api.Repositories
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
+                },
+                Storage = !includeStorage ? null : format switch
+                {
+                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                    MichelineFormat.JsonString => row.JsonValue,
+                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                    _ => throw new Exception("Invalid MichelineFormat value")
                 },
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
