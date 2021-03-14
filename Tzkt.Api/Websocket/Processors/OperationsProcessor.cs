@@ -274,9 +274,13 @@ namespace Tzkt.Api.Websocket.Processors
                 #region send
                 foreach (var (connectionId, operations) in toSend.Where(x => x.Value.Count > 0))
                 {
+                    var data = operations.Count > 1
+                        ? Distinct(operations).OrderBy(x => x.Id)
+                        : (IEnumerable<Operation>)operations;
+
                     sendings.Add(Context.Clients
                         .Client(connectionId)
-                        .SendData(OperationsChannel, operations.OrderBy(x => x.Id), State.Current.Level));
+                        .SendData(OperationsChannel, data, State.Current.Level));
 
                     Logger.LogDebug("{0} operations sent to {1}", operations.Count, connectionId);
                 }
@@ -430,6 +434,19 @@ namespace Tzkt.Api.Websocket.Processors
                 };
             }
             return res;
+        }
+
+        private static IEnumerable<Operation> Distinct(List<Operation> ops)
+        {
+            var hashset = new HashSet<int>(ops.Count);
+            foreach (var op in ops)
+            {
+                if (!hashset.Contains(op.Id))
+                {
+                    hashset.Add(op.Id);
+                    yield return op;
+                }
+            }
         }
     }
 }
