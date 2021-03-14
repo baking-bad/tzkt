@@ -19,6 +19,9 @@ namespace Tzkt.Api.Services.Metadata
         readonly MetadataConfig Config;
         readonly ILogger Logger;
 
+        // temporary
+        readonly FileSystemWatcher Watcher;
+
         public AccountMetadataService(IConfiguration config, ILogger<AccountMetadataService> logger) : base(config)
         {
             Config = config.GetMetadataConfig();
@@ -61,9 +64,89 @@ namespace Tzkt.Api.Services.Metadata
             }
 
             Logger.LogDebug($"Loaded {Metadata.Count} accounts metadata");
+
+            // temporary
+            var fi = new FileInfo(Config.AccountsPath);
+            Watcher = new FileSystemWatcher(fi.Directory.FullName, fi.Name);
+            Watcher.NotifyFilter = NotifyFilters.Size;
+            Watcher.Changed += Watcher_Changed;
+            Watcher.Error += Watcher_Error;
+            Watcher.EnableRaisingEvents = true;
         }
 
         public AccountMetadata this[int id] => Metadata.TryGetValue(id, out var meta) ? meta : null;
+
+        // temporary
+        private void Watcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            try
+            {
+                Logger.LogWarning("Updating account aliases");
+                var json = File.ReadAllText(Config.AccountsPath);
+                var accounts = JsonSerializer.Deserialize<List<AccountMetadata>>(json);
+
+                var dic1 = Metadata.Values.ToDictionary(x => Aliases.First(a => a.Alias == x.Alias).Address);
+                var changed = new List<AccountMetadata>();
+
+                foreach (var acc2 in accounts)
+                    if (!dic1.TryGetValue(acc2.Address, out var acc1) ||
+                        acc2.Alias != acc1.Alias ||
+                        acc2.Description != acc1.Description ||
+                        acc2.Email != acc1.Email ||
+                        acc2.Github != acc1.Github ||
+                        acc2.Logo != acc1.Logo ||
+                        acc2.Site != acc1.Site ||
+                        acc2.Telegram != acc1.Telegram ||
+                        acc2.Twitter != acc1.Twitter)
+                        changed.Add(acc2);
+
+                Logger.LogWarning($"{changed.Count} changes detected");
+                if (changed.Count > 0)
+                {
+                    using var db = GetConnection();
+                    var links = db.Query<(int Id, string Address)>(
+                        @"
+                            SELECT  ""Id"", ""Address""
+                            FROM    ""Accounts""
+                            WHERE   ""Address"" = ANY (@addresses)
+                        ",
+                        new { addresses = changed.Select(x => x.Address).ToArray() });
+
+                    foreach (var (Id, Address) in links)
+                    {
+                        var acc = changed.First(x => x.Address == Address);
+                        if (!Metadata.ContainsKey(Id))
+                        {
+                            Aliases.Add(new AccountMetadataAlias
+                            {
+                                Address = acc.Address,
+                                Alias = acc.Alias,
+                                Logo = acc.Logo
+                            });
+                            Metadata.Add(Id, acc);
+                        }
+                        else
+                        {
+                            var alias = Aliases.First(x => x.Address == Address);
+                            alias.Alias = acc.Alias;
+                            alias.Logo = acc.Logo;
+                            Metadata[Id] = acc;
+                        }
+                    }
+                    Logger.LogWarning($"{links.Count()} changes applied");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to refresh account aliases: {ex.Message}");
+            }
+        }
+
+        // temporary
+        private void Watcher_Error(object sender, ErrorEventArgs e)
+        {
+            Logger.LogError($"File watcher error: {e?.GetException()?.Message}");
+        }
     }
 
     public static class AccountMetadataServiceExt
