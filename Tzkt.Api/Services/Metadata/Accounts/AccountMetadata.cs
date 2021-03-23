@@ -56,6 +56,12 @@ namespace Tzkt.Api.Services.Metadata
         [JsonPropertyName("github")]
         public string Github { get; set; }
 
+        [JsonPropertyName("instagram")]
+        public string Instagram { get; set; }
+
+        [JsonPropertyName("facebook")]
+        public string Facebook { get; set; }
+
         public override string ToString() => Alias ?? Address;
     }
 }

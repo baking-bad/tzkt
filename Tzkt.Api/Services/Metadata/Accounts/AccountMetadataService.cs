@@ -92,10 +92,19 @@ namespace Tzkt.Api.Services.Metadata
                     if (!dic1.TryGetValue(acc2.Address, out var acc1) ||
                         acc2.Alias != acc1.Alias ||
                         acc2.Description != acc1.Description ||
+                        acc2.Discord != acc1.Discord ||
                         acc2.Email != acc1.Email ||
+                        acc2.Facebook != acc1.Facebook ||
                         acc2.Github != acc1.Github ||
+                        acc2.Instagram != acc1.Instagram ||
+                        acc2.Kind != acc1.Kind ||
                         acc2.Logo != acc1.Logo ||
+                        acc2.Owner != acc1.Owner ||
+                        acc2.Reddit != acc1.Reddit ||
+                        acc2.Riot != acc1.Riot ||
                         acc2.Site != acc1.Site ||
+                        acc2.Slack != acc1.Slack ||
+                        acc2.Support != acc1.Support ||
                         acc2.Telegram != acc1.Telegram ||
                         acc2.Twitter != acc1.Twitter)
                         changed.Add(acc2);
