@@ -14,5 +14,7 @@ namespace Tzkt.Api
         public const string Airdrop = "airdrop";
 
         public const string ProposalInvoice = "proposal_invoice";
+
+        public const string CodeChange = "code_change";
     }
 }

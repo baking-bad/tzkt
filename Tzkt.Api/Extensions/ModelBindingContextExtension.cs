@@ -611,30 +611,31 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (valueObject.FirstValue == MigrationKinds.Bootstrap)
+                    switch (valueObject.FirstValue)
                     {
-                        hasValue = true;
-                        result = 0;
-                    }
-                    else if (valueObject.FirstValue == MigrationKinds.ActivateDelegate)
-                    {
-                        hasValue = true;
-                        result = 1;
-                    }
-                    else if (valueObject.FirstValue == MigrationKinds.Airdrop)
-                    {
-                        hasValue = true;
-                        result = 2;
-                    }
-                    else if (valueObject.FirstValue == MigrationKinds.ProposalInvoice)
-                    {
-                        hasValue = true;
-                        result = 3;
-                    }
-                    else
-                    {
-                        bindingContext.ModelState.TryAddModelError(name, "Invalid migration kind.");
-                        return false;
+                        case MigrationKinds.Bootstrap:
+                            hasValue = true;
+                            result = 0;
+                            break;
+                        case MigrationKinds.ActivateDelegate:
+                            hasValue = true;
+                            result = 1;
+                            break;
+                        case MigrationKinds.Airdrop:
+                            hasValue = true;
+                            result = 2;
+                            break;
+                        case MigrationKinds.ProposalInvoice:
+                            hasValue = true;
+                            result = 3;
+                            break;
+                        case MigrationKinds.CodeChange:
+                            hasValue = true;
+                            result = 4;
+                            break;
+                        default:
+                            bindingContext.ModelState.TryAddModelError(name, "Invalid migration kind.");
+                            return false;
                     }
                 }
             }
@@ -665,30 +666,31 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (rawValue == MigrationKinds.Bootstrap)
+                        switch (rawValue)
                         {
-                            hasValue = true;
-                            result.Add(0);
-                        }
-                        else if (rawValue == MigrationKinds.ActivateDelegate)
-                        {
-                            hasValue = true;
-                            result.Add(1);
-                        }
-                        else if (rawValue == MigrationKinds.Airdrop)
-                        {
-                            hasValue = true;
-                            result.Add(2);
-                        }
-                        else if (rawValue == MigrationKinds.ProposalInvoice)
-                        {
-                            hasValue = true;
-                            result.Add(3);
-                        }
-                        else
-                        {
-                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid migration kind.");
-                            return false;
+                            case MigrationKinds.Bootstrap:
+                                hasValue = true;
+                                result.Add(0);
+                                break;
+                            case MigrationKinds.ActivateDelegate:
+                                hasValue = true;
+                                result.Add(1);
+                                break;
+                            case MigrationKinds.Airdrop:
+                                hasValue = true;
+                                result.Add(2);
+                                break;
+                            case MigrationKinds.ProposalInvoice:
+                                hasValue = true;
+                                result.Add(3);
+                                break;
+                            case MigrationKinds.CodeChange:
+                                hasValue = true;
+                                result.Add(4);
+                                break;
+                            default:
+                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid migration kind.");
+                                return false;
                         }
                     }
                 }

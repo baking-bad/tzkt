@@ -6054,6 +6054,7 @@ namespace Tzkt.Api.Repositories
             1 => MigrationKinds.ActivateDelegate,
             2 => MigrationKinds.Airdrop,
             3 => MigrationKinds.ProposalInvoice,
+            4 => MigrationKinds.CodeChange,
             _ => "unknown"
         };
 
