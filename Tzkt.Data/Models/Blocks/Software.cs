@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -12,12 +10,7 @@ namespace Tzkt.Data.Models
         public int LastLevel { get; set; }
         public string ShortHash { get; set; }
 
-        #region off-chain
-        public DateTime? CommitDate { get; set; }
-        public string CommitHash { get; set; }
-        public string Version { get; set; }
-        public List<string> Tags { get; set; }
-        #endregion
+        public string Metadata { get; set; }
     }
 
     public static class SoftwareModel
@@ -37,9 +30,8 @@ namespace Tzkt.Data.Models
                 .IsRequired();
 
             modelBuilder.Entity<Software>()
-                .Property(x => x.CommitHash)
-                .IsFixedLength(true)
-                .HasMaxLength(40);
+                .Property(x => x.Metadata)
+                .HasColumnType("jsonb");
             #endregion
         }
     }

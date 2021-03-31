@@ -44,6 +44,8 @@ namespace Tzkt.Data.Models
         public int ProposalQuorum { get; set; }
         public int BallotQuorumMin { get; set; }
         public int BallotQuorumMax { get; set; }
+
+        public string Metadata { get; set; }
     }
 
     public static class ProtocolModel
@@ -64,6 +66,10 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(51)
                 .IsRequired();
+
+            modelBuilder.Entity<Protocol>()
+                .Property(x => x.Metadata)
+                .HasColumnType("jsonb");
             #endregion
         }
     }

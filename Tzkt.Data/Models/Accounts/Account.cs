@@ -28,6 +28,8 @@ namespace Tzkt.Data.Models
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
 
+        public string Metadata { get; set; }
+
         #region relations
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
@@ -60,6 +62,11 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Account>()
                 .HasIndex(x => x.DelegateId);
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.Metadata)
+                .HasMethod("GIN")
+                .HasOperators("jsonb_path_ops");
             #endregion
 
             #region keys
@@ -83,6 +90,10 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(36)
                 .IsRequired();
+
+            modelBuilder.Entity<Account>()
+                .Property(x => x.Metadata)
+                .HasColumnType("jsonb");
             #endregion
 
             #region relations
