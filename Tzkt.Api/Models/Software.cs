@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Tzkt.Api.Models
 {
@@ -36,23 +36,8 @@ namespace Tzkt.Api.Models
         public int BlocksCount { get; set; }
 
         /// <summary>
-        /// Offchain data: commit date
+        /// Offchain metadata
         /// </summary>
-        public DateTime? CommitDate { get; set; }
-
-        /// <summary>
-        /// Offchain data: commit hash
-        /// </summary>
-        public string CommitHash { get; set; }
-
-        /// <summary>
-        /// Offchain data: software version (commit tag)
-        /// </summary>
-        public string Version { get; set; }
-
-        /// <summary>
-        /// Offchain data: software tags, e.g. `docker`, `staging` etc.
-        /// </summary>
-        public List<string> Tags { get; set; }
+        public JsonString Metadata { get; set; }
     }
 }

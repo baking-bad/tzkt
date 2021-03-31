@@ -42,15 +42,12 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => new Software
             {
                 BlocksCount = row.BlocksCount,
-                CommitDate = row.CommitDate,
-                CommitHash = row.CommitHash,
                 FirstLevel = row.FirstLevel,
                 FirstTime = Time[row.FirstLevel],
                 LastLevel = row.LastLevel,
                 LastTime = Time[row.LastLevel],
                 ShortHash = row.ShortHash,
-                Tags = row.Tags == null ? null : new List<string>(row.Tags),
-                Version = row.Version
+                Metadata = new JsonString(row.Metadata)
             });
         }
 
@@ -62,15 +59,12 @@ namespace Tzkt.Api.Repositories
                 switch (field)
                 {
                     case "blocksCount": columns.Add(@"""BlocksCount"""); break;
-                    case "commitDate": columns.Add(@"""CommitDate"""); break;
-                    case "commitHash": columns.Add(@"""CommitHash"""); break;
                     case "firstLevel": columns.Add(@"""FirstLevel"""); break;
                     case "firstTime": columns.Add(@"""FirstLevel"""); break;
                     case "lastLevel": columns.Add(@"""LastLevel"""); break;
                     case "lastTime": columns.Add(@"""LastLevel"""); break;
                     case "shortHash": columns.Add(@"""ShortHash"""); break;
-                    case "tags": columns.Add(@"""Tags"""); break;
-                    case "version": columns.Add(@"""Version"""); break;
+                    case "metadata": columns.Add(@"""Metadata"""); break;
                 }
             }
 
@@ -101,14 +95,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.BlocksCount;
                         break;
-                    case "commitDate":
-                        foreach (var row in rows)
-                            result[j++][i] = row.CommitDate;
-                        break;
-                    case "commitHash":
-                        foreach (var row in rows)
-                            result[j++][i] = row.CommitHash;
-                        break;
                     case "firstLevel":
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
@@ -129,13 +115,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.ShortHash;
                         break;
-                    case "tags":
+                    case "metadata":
                         foreach (var row in rows)
-                            result[j++][i] = row.Tags == null ? null : new List<string>(row.Tags);
-                        break;
-                    case "version":
-                        foreach (var row in rows)
-                            result[j++][i] = row.Version;
+                            result[j++][i] = new JsonString(row.Metadata);
                         break;
                 }
             }
@@ -149,15 +131,12 @@ namespace Tzkt.Api.Repositories
             switch (field)
             {
                 case "blocksCount": columns.Add(@"""BlocksCount"""); break;
-                case "commitDate": columns.Add(@"""CommitDate"""); break;
-                case "commitHash": columns.Add(@"""CommitHash"""); break;
                 case "firstLevel": columns.Add(@"""FirstLevel"""); break;
                 case "firstTime": columns.Add(@"""FirstLevel"""); break;
                 case "lastLevel": columns.Add(@"""LastLevel"""); break;
                 case "lastTime": columns.Add(@"""LastLevel"""); break;
                 case "shortHash": columns.Add(@"""ShortHash"""); break;
-                case "tags": columns.Add(@"""Tags"""); break;
-                case "version": columns.Add(@"""Version"""); break;
+                case "metadata": columns.Add(@"""Metadata"""); break;
             }
 
             if (columns.Count == 0)
@@ -184,14 +163,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.BlocksCount;
                     break;
-                case "commitDate":
-                    foreach (var row in rows)
-                        result[j++] = row.CommitDate;
-                    break;
-                case "commitHash":
-                    foreach (var row in rows)
-                        result[j++] = row.CommitHash;
-                    break;
                 case "firstLevel":
                     foreach (var row in rows)
                         result[j++] = row.FirstLevel;
@@ -212,13 +183,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.ShortHash;
                     break;
-                case "tags":
+                case "metadata":
                     foreach (var row in rows)
-                        result[j++] = row.Tags == null ? null : new List<string>(row.Tags);
-                    break;
-                case "version":
-                    foreach (var row in rows)
-                        result[j++] = row.Version;
+                        result[j++] = new JsonString(row.Metadata);
                     break;
             }
 
