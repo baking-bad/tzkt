@@ -254,7 +254,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Originations;
+            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+            parentTx.InternalOriginations = (short?)((parentTx.InternalOriginations ?? 0) + 1);
 
             sender.OriginationsCount++;
             if (contractManager != null && contractManager != sender) contractManager.OriginationsCount++;

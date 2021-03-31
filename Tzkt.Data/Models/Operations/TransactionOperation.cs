@@ -17,7 +17,10 @@ namespace Tzkt.Data.Models
 
         public int? StorageId { get; set; }
 
-        public InternalOperations? InternalOperations { get; set; }
+        public short? InternalOperations { get; set; }
+        public short? InternalDelegations { get; set; }
+        public short? InternalOriginations { get; set; }
+        public short? InternalTransactions { get; set; }
 
         #region relations
         [ForeignKey(nameof(TargetId))]

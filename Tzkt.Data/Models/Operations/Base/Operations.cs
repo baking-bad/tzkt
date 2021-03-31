@@ -26,14 +26,4 @@ namespace Tzkt.Data.Models
         RevelationPenalty   = 0b_0001_0000_0000_0000,
         Baking              = 0b_0010_0000_0000_0000
     }
-
-    [Flags]
-    public enum InternalOperations : byte
-    {
-        None            = 0b_0000,
-
-        Delegations     = 0b_0001,
-        Originations    = 0b_0010,
-        Transactions    = 0b_0100
-    }
 }

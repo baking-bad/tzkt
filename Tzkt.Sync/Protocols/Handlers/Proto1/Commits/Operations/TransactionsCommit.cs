@@ -223,7 +223,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Transactions;
+            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+            parentTx.InternalTransactions = (short?)((parentTx.InternalTransactions ?? 0) + 1);
 
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;
