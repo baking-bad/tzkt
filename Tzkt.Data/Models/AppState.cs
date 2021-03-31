@@ -10,6 +10,7 @@ namespace Tzkt.Data.Models
         public int KnownHead { get; set; }
         public DateTime LastSync { get; set; }
 
+        public int Cycle { get; set; }
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
         public string Protocol { get; set; }
@@ -72,6 +73,7 @@ namespace Tzkt.Data.Models
                 new AppState
                 {
                     Id = -1,
+                    Cycle = -1,
                     Level = -1,
                     Timestamp = DateTime.MinValue,
                     Protocol = "",
