@@ -58,6 +58,7 @@ namespace Tzkt.Api
             services.AddTransient<CommitmentRepository>();
             services.AddTransient<StatisticsRepository>();
             services.AddTransient<SoftwareRepository>();
+            services.AddTransient<BigMapsRepository>();
 
             services.AddStateListener();
 
