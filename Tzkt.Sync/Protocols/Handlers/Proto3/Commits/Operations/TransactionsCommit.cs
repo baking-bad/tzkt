@@ -2,7 +2,7 @@
 
 namespace Tzkt.Sync.Protocols.Proto3
 {
-    class TransactionsCommit : Proto1.TransactionsCommit
+    class TransactionsCommit : Proto2.TransactionsCommit
     {
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 

@@ -12,9 +12,9 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class SchemasCache
     {
-        public const int MaxItems = 256; //TODO: set limits in app settings
+        public const int MaxItems = 1024; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, ContractScript> CachedById = new Dictionary<int, ContractScript>(257);
+        static readonly Dictionary<int, ContractScript> CachedById = new Dictionary<int, ContractScript>(1027);
 
         readonly TzktContext Db;
 
@@ -40,7 +40,7 @@ namespace Tzkt.Sync.Services.Cache
 
             if (!CachedById.TryGetValue(contract.Id, out var item))
             {
-                item = (await Db.Scripts.FirstOrDefaultAsync(x => x.ContractId == contract.Id && x.Current)).Schema
+                item = (await Db.Scripts.FirstOrDefaultAsync(x => x.ContractId == contract.Id && x.Current))?.Schema
                     ?? throw new Exception($"Script for contract #{contract.Id} doesn't exist");
 
                 Add(contract, item);
@@ -59,6 +59,7 @@ namespace Tzkt.Sync.Services.Cache
             if (CachedById.Count >= MaxItems)
             {
                 var oldest = CachedById.Keys
+                    .OrderBy(x => x)
                     .Take(MaxItems / 4)
                     .ToList();
 

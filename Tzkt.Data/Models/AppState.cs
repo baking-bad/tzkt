@@ -22,6 +22,9 @@ namespace Tzkt.Data.Models
         public int AccountCounter { get; set; }
         public int OperationCounter { get; set; }
         public int ManagerCounter { get; set; }
+        public int BigMapCounter { get; set; }
+        public int BigMapKeyCounter { get; set; }
+        public int BigMapUpdateCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }

@@ -20,6 +20,8 @@ namespace Tzkt.Sync.Services
         public SoftwareCache Software { get; private set; }
         public SchemasCache Schemas { get; private set; }
         public StoragesCache Storages { get; private set; }
+        public BigMapsCache BigMaps { get; private set; }
+        public BigMapKeysCache BigMapKeys { get; private set; }
 
         public CacheService(TzktContext db)
         {
@@ -35,6 +37,8 @@ namespace Tzkt.Sync.Services
             Software = new SoftwareCache(db);
             Schemas = new SchemasCache(db);
             Storages = new StoragesCache(db);
+            BigMaps = new BigMapsCache(db);
+            BigMapKeys = new BigMapKeysCache(db);
         }
 
         public async Task ResetAsync()
@@ -49,6 +53,8 @@ namespace Tzkt.Sync.Services
             Software.Reset();
             Schemas.Reset();
             Storages.Reset();
+            BigMaps.Reset();
+            BigMapKeys.Reset();
 
             await AppState.ResetAsync();
             await Accounts.ResetAsync();

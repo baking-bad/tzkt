@@ -59,6 +59,24 @@ namespace Tzkt.Sync.Services.Cache
             return ++AppState.OperationCounter;
         }
 
+        public int NextBigMapId()
+        {
+            Db.TryAttach(AppState);
+            return ++AppState.BigMapCounter;
+        }
+
+        public int NextBigMapKeyId()
+        {
+            Db.TryAttach(AppState);
+            return ++AppState.BigMapKeyCounter;
+        }
+
+        public int NextBigMapUpdateId()
+        {
+            Db.TryAttach(AppState);
+            return ++AppState.BigMapUpdateCounter;
+        }
+
         public int GetManagerCounter()
         {
             return AppState.ManagerCounter;
