@@ -10,6 +10,26 @@ namespace Tzkt.Api.Models
         public int Index { get; set; }
 
         /// <summary>
+        /// Level of the first block in the cycle
+        /// </summary>
+        public int FirstLevel { get; set; }
+
+        /// <summary>
+        /// Timestamp of the first block in the cycle
+        /// </summary>
+        public DateTime StartTime { get; set; }
+
+        /// <summary>
+        /// Level of the last block in the cycle
+        /// </summary>
+        public int LastLevel { get; set; }
+
+        /// <summary>
+        /// Timestamp of the last block in the cycle
+        /// </summary>
+        public DateTime EndTime { get; set; }
+
+        /// <summary>
         /// Index of the snapshot
         /// </summary>
         public int SnapshotIndex { get; set; }

@@ -26,6 +26,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Db.Cycles.Add(new Cycle
                 {
                     Index = cycle,
+                    FirstLevel = cycle * protocol.BlocksPerCycle + 1,
+                    LastLevel = (cycle + 1) * protocol.BlocksPerCycle,
                     SnapshotIndex = 0,
                     SnapshotLevel = 1,
                     TotalRolls = totalRolls,
