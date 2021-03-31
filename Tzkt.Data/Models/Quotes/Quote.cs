@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -15,6 +15,7 @@ namespace Tzkt.Data.Models
         public double Cny { get; set; }
         public double Jpy { get; set; }
         public double Krw { get; set; }
+        public double Eth { get; set; }
     }
 
     public static class QuoteModel

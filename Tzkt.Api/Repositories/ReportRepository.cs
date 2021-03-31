@@ -170,7 +170,17 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
 
             #region write header
-            var symbolName = symbol == 2 ? "USD" : symbol == 1 ? "EUR" : "BTC";
+            var symbolName = symbol switch
+            {
+                0 => "BTC",
+                1 => "EUR",
+                2 => "USD",
+                3 => "CNY",
+                4 => "JPY",
+                5 => "KRW",
+                6 => "ETH",
+                _ => ""
+            };
 
             csv.Write("Block level");
             csv.Write(delimiter);
@@ -302,7 +312,17 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
 
             #region write header
-            var symbolName = symbol == 2 ? "USD" : symbol == 1 ? "EUR" : "BTC";
+            var symbolName = symbol switch
+            {
+                0 => "BTC",
+                1 => "EUR",
+                2 => "USD",
+                3 => "CNY",
+                4 => "JPY",
+                5 => "KRW",
+                6 => "ETH",
+                _ => ""
+            };
 
             csv.Write("Block level");
             csv.Write(delimiter);

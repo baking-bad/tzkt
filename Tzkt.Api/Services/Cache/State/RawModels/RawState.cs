@@ -51,6 +51,10 @@ namespace Tzkt.Api.Services.Cache
         public double QuoteBtc { get; set; }
         public double QuoteEur { get; set; }
         public double QuoteUsd { get; set; }
+        public double QuoteCny { get; set; }
+        public double QuoteJpy { get; set; }
+        public double QuoteKrw { get; set; }
+        public double QuoteEth { get; set; }
         #endregion
     }
 }

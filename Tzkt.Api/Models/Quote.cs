@@ -43,5 +43,10 @@ namespace Tzkt.Api.Models
         /// XTZ/KRW price
         /// </summary>
         public double Krw { get; set; }
+
+        /// <summary>
+        /// XTZ/ETH price
+        /// </summary>
+        public double Eth { get; set; }
     }
 }

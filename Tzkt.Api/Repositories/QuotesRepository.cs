@@ -46,7 +46,8 @@ namespace Tzkt.Api.Repositories
                 Usd = Quotes.Get(2),
                 Cny = Quotes.Get(3),
                 Jpy = Quotes.Get(4),
-                Krw = Quotes.Get(5)
+                Krw = Quotes.Get(5),
+                Eth = Quotes.Get(6)
             };
         }
 
@@ -79,6 +80,7 @@ namespace Tzkt.Api.Repositories
                 Cny = row.Cny,
                 Jpy = row.Jpy,
                 Krw = row.Krw,
+                Eth = row.Eth
             });
         }
 
@@ -104,6 +106,7 @@ namespace Tzkt.Api.Repositories
                     case "cny": columns.Add(@"""Cny"""); break;
                     case "jpy": columns.Add(@"""Jpy"""); break;
                     case "krw": columns.Add(@"""Krw"""); break;
+                    case "eth": columns.Add(@"""Eth"""); break;
                 }
             }
 
@@ -162,6 +165,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Krw;
                         break;
+                    case "eth":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Eth;
+                        break;
                 }
             }
 
@@ -187,6 +194,7 @@ namespace Tzkt.Api.Repositories
                 case "cny": columns.Add(@"""Cny"""); break;
                 case "jpy": columns.Add(@"""Jpy"""); break;
                 case "krw": columns.Add(@"""Krw"""); break;
+                case "eth": columns.Add(@"""Eth"""); break;
             }
 
             if (columns.Count == 0)
@@ -241,6 +249,10 @@ namespace Tzkt.Api.Repositories
                 case "krw":
                     foreach (var row in rows)
                         result[j++] = row.Krw;
+                    break;
+                case "eth":
+                    foreach (var row in rows)
+                        result[j++] = row.Eth;
                     break;
             }
 

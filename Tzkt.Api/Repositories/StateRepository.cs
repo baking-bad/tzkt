@@ -34,7 +34,11 @@ namespace Tzkt.Api.Repositories
                 QuoteLevel = appState.QuoteLevel,
                 QuoteBtc = appState.QuoteBtc,
                 QuoteEur = appState.QuoteEur,
-                QuoteUsd = appState.QuoteUsd
+                QuoteUsd = appState.QuoteUsd,
+                QuoteCny = appState.QuoteCny,
+                QuoteJpy = appState.QuoteJpy,
+                QuoteKrw = appState.QuoteKrw,
+                QuoteEth = appState.QuoteEth
             };
         }
     }

@@ -71,5 +71,25 @@ namespace Tzkt.Api.Models
         /// Last known XTZ/USD price
         /// </summary>
         public double QuoteUsd { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/CNY price
+        /// </summary>
+        public double QuoteCny { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/JPY price
+        /// </summary>
+        public double QuoteJpy { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/KRW price
+        /// </summary>
+        public double QuoteKrw { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/ETH price
+        /// </summary>
+        public double QuoteEth { get; set; }
     }
 }

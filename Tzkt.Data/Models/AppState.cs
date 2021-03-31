@@ -62,6 +62,7 @@ namespace Tzkt.Data.Models
         public double QuoteCny { get; set; }
         public double QuoteJpy { get; set; }
         public double QuoteKrw { get; set; }
+        public double QuoteEth { get; set; }
         #endregion
     }
 
