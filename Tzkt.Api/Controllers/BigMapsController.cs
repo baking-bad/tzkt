@@ -198,21 +198,51 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                switch (key[0])
-                {
-                    case '{':
-                    case '[':
-                    case '"':
-                    case 't' when key == "true":
-                    case 'f' when key == "false":
-                    case 'n' when key == "null":
-                        break;
-                    default:
-                        key = $"\"{key}\"";
-                        break;
-                }
-                using var doc = JsonDocument.Parse(key);
+                using var doc = JsonDocument.Parse(WrapKey(key));
                 return Ok(await BigMaps.GetKey(ptr, doc.RootElement.GetRawText(), micheline));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest(nameof(key), "invalid json value");
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get key history
+        /// </summary>
+        /// <remarks>
+        /// Returns updates history for the specified bigmap key.
+        /// </remarks>
+        /// <param name="ptr">Bigmap pointer</param>
+        /// <param name="key">Plain key, for example, `.../keys/abcde/history`.
+        /// If the key is complex (an object or an array), you can specify it as is, for example, `.../keys/{"address":"tz123","token":123}/history`.</param>
+        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default).</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - micheline, `3` - micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{ptr:int}/keys/{key}/history")]
+        public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetKeyHistory(
+            [Min(0)] int ptr,
+            string key,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id"))
+                return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
+            #endregion
+
+            try
+            {
+                using var doc = JsonDocument.Parse(WrapKey(key));
+                return Ok(await BigMaps.GetKeyUpdates(ptr, doc.RootElement.GetRawText(), sort, offset, limit, micheline));
             }
             catch (JsonException)
             {
@@ -241,6 +271,52 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             return BigMaps.GetKeyByHash(ptr, hash, micheline);
+        }
+
+        /// <summary>
+        /// Get key by hash history
+        /// </summary>
+        /// <remarks>
+        /// Returns updates history for the bigmap key with the specified key hash.
+        /// </remarks>
+        /// <param name="ptr">Bigmap pointer</param>
+        /// <param name="hash">Key hash</param>
+        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default).</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - micheline, `3` - micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{ptr:int}/keys/{hash:regex(^expr[[0-9A-z]]{{50}}$)}/history")]
+        public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetKeyByHashHistory(
+            [Min(0)] int ptr,
+            string hash,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id"))
+                return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
+            #endregion
+
+            return Ok(await BigMaps.GetKeyByHashUpdates(ptr, hash, sort, offset, limit, micheline));
+        }
+
+        string WrapKey(string key)
+        {
+            switch (key[0])
+            {
+                case '{':
+                case '[':
+                case '"':
+                case 't' when key == "true":
+                case 'f' when key == "false":
+                case 'n' when key == "null":
+                    return key;
+                default:
+                    return $"\"{key}\"";
+            }
         }
     }
 }

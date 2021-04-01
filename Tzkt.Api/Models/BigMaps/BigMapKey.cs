@@ -1,7 +1,12 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Text.Json.Serialization;
+
+namespace Tzkt.Api.Models
 {
     public class BigMapKey
     {
+        [JsonIgnore]
+        public int Id { get; set; }
+
         /// <summary>
         /// Bigmap key status: `true` - active, `false` - removed
         /// </summary>

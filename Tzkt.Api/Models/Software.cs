@@ -38,6 +38,6 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Offchain metadata
         /// </summary>
-        public JsonString Metadata { get; set; }
+        public RawJson Metadata { get; set; }
     }
 }

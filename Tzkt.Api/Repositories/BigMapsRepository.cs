@@ -14,12 +14,15 @@ namespace Tzkt.Api.Repositories
     public class BigMapsRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly TimeCache Times;
 
-        public BigMapsRepository(AccountsCache accounts, IConfiguration config) : base(config)
+        public BigMapsRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            Times = times;
         }
 
+        #region bigmaps
         public async Task<int> GetCount()
         {
             using var db = GetConnection();
@@ -187,14 +190,14 @@ namespace Tzkt.Api.Repositories
                     case "keyType":
                         foreach (var row in rows)
                             result[j++][i] = (int)micheline < 2
-                                ? new JsonString(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
-                                : new JsonString(Micheline.ToJson(row.KeyType));
+                                ? new RawJson(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
+                                : new RawJson(Micheline.ToJson(row.KeyType));
                         break;
                     case "valueType":
                         foreach (var row in rows)
                             result[j++][i] = (int)micheline < 2
-                                ? new JsonString(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
-                                : new JsonString(Micheline.ToJson(row.ValueType));
+                                ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
+                                : new RawJson(Micheline.ToJson(row.ValueType));
                         break;
                 }
             }
@@ -292,20 +295,22 @@ namespace Tzkt.Api.Repositories
                 case "keyType":
                     foreach (var row in rows)
                         result[j++] = (int)micheline < 2
-                            ? new JsonString(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
-                            : Micheline.FromBytes(row.KeyType);
+                            ? new RawJson(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
+                            : new RawJson(Micheline.ToJson(row.KeyType));
                     break;
                 case "valueType":
                     foreach (var row in rows)
                         result[j++] = (int)micheline < 2
-                            ? new JsonString(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
-                            : Micheline.FromBytes(row.ValueType);
+                            ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
+                            : new RawJson(Micheline.ToJson(row.ValueType));
                     break;
             }
 
             return result;
         }
+        #endregion
 
+        #region bigmap keys
         public async Task<BigMapKey> GetKey(
             int ptr,
             string key,
@@ -454,9 +459,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = micheline switch
                             {
-                                MichelineFormat.Json => new JsonString(row.JsonKey),
+                                MichelineFormat.Json => new RawJson(row.JsonKey),
                                 MichelineFormat.JsonString => row.JsonKey,
-                                MichelineFormat.Raw => new JsonString(Micheline.ToJson(row.RawKey)),
+                                MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
                                 MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
                                 _ => null
                             };
@@ -465,9 +470,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = micheline switch
                             {
-                                MichelineFormat.Json => new JsonString(row.JsonValue),
+                                MichelineFormat.Json => new RawJson(row.JsonValue),
                                 MichelineFormat.JsonString => row.JsonValue,
-                                MichelineFormat.Raw => new JsonString(Micheline.ToJson(row.RawValue)),
+                                MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
                                 MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
                                 _ => null
                             };
@@ -554,9 +559,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = micheline switch
                         {
-                            MichelineFormat.Json => new JsonString(row.JsonKey),
+                            MichelineFormat.Json => new RawJson(row.JsonKey),
                             MichelineFormat.JsonString => row.JsonKey,
-                            MichelineFormat.Raw => new JsonString(Micheline.ToJson(row.RawKey)),
+                            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
                             MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
                             _ => null
                         };
@@ -565,9 +570,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = micheline switch
                         {
-                            MichelineFormat.Json => new JsonString(row.JsonValue),
+                            MichelineFormat.Json => new RawJson(row.JsonValue),
                             MichelineFormat.JsonString => row.JsonValue,
-                            MichelineFormat.Raw => new JsonString(Micheline.ToJson(row.RawValue)),
+                            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
                             MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
                             _ => null
                         };
@@ -576,6 +581,63 @@ namespace Tzkt.Api.Repositories
 
             return result;
         }
+        #endregion
+
+        #region bigmap key updates
+        public async Task<IEnumerable<BigMapUpdate>> GetKeyUpdates(
+            int ptr,
+            string key,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            MichelineFormat micheline)
+        {
+            using var db = GetConnection();
+            var keyRow = await db.QueryFirstOrDefaultAsync(@"
+                SELECT  ""Id""
+                FROM    ""BigMapKeys""
+                WHERE   ""BigMapPtr"" = @ptr
+                AND     ""JsonKey"" = @key::jsonb
+                LIMIT   1",
+                new { ptr, key });
+
+            if (keyRow == null) return null;
+
+            var sql = new SqlBuilder(@"SELECT * FROM ""BigMapUpdates""")
+                .Filter("BigMapKeyId", (int)keyRow.Id)
+                .Take(sort, offset, limit, x => ("Id", "Id"));
+
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            return rows.Select(row => (BigMapUpdate)ReadBigMapUpdate(row, micheline));
+        }
+
+        public async Task<IEnumerable<BigMapUpdate>> GetKeyByHashUpdates(
+            int ptr,
+            string hash,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            MichelineFormat micheline)
+        {
+            using var db = GetConnection();
+            var keyRow = await db.QueryFirstOrDefaultAsync(@"
+                SELECT  ""Id""
+                FROM    ""BigMapKeys""
+                WHERE   ""BigMapPtr"" = @ptr
+                AND     ""KeyHash"" = @hash::character(54)
+                LIMIT   1",
+                new { ptr, hash });
+
+            if (keyRow == null) return null;
+
+            var sql = new SqlBuilder(@"SELECT * FROM ""BigMapUpdates""")
+                .Filter("BigMapKeyId", (int)keyRow.Id)
+                .Take(sort, offset, limit, x => ("Id", "Id"));
+
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            return rows.Select(row => (BigMapUpdate)ReadBigMapUpdate(row, micheline));
+        }
+        #endregion
 
         BigMap ReadBigMap(dynamic row, MichelineFormat format)
         {
@@ -591,11 +653,11 @@ namespace Tzkt.Api.Repositories
                 ActiveKeys = row.ActiveKeys,
                 Updates = row.Updates,
                 KeyType = (int)format < 2
-                    ? new JsonString(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
-                    : new JsonString(Micheline.ToJson(row.KeyType)),
+                    ? new RawJson(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
+                    : new RawJson(Micheline.ToJson(row.KeyType)),
                 ValueType = (int)format < 2
-                    ? new JsonString(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
-                    : new JsonString(Micheline.ToJson(row.ValueType))
+                    ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
+                    : new RawJson(Micheline.ToJson(row.ValueType))
             };
         }
 
@@ -603,6 +665,7 @@ namespace Tzkt.Api.Repositories
         {
             return new BigMapKey
             {
+                Id = row.Id,
                 Active = row.Active,
                 FirstLevel = row.FirstLevel,
                 LastLevel = row.LastLevel,
@@ -610,21 +673,48 @@ namespace Tzkt.Api.Repositories
                 Hash = row.KeyHash,
                 Key = format switch
                 {
-                    MichelineFormat.Json => new JsonString(row.JsonKey),
+                    MichelineFormat.Json => new RawJson(row.JsonKey),
                     MichelineFormat.JsonString => row.JsonKey,
-                    MichelineFormat.Raw => new JsonString(Micheline.ToJson(row.RawKey)),
+                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
                     MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
                     _ => null
                 },
                 Value = format switch
                 {
-                    MichelineFormat.Json => new JsonString(row.JsonValue),
+                    MichelineFormat.Json => new RawJson(row.JsonValue),
                     MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => new JsonString(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
                     MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
                     _ => null
                 }
             };
         }
+
+        BigMapUpdate ReadBigMapUpdate(dynamic row, MichelineFormat format)
+        {
+            return new BigMapUpdate
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = Times[row.Level],
+                Action = UpdateAction((int)row.Action),
+                Value = format switch
+                {
+                    MichelineFormat.Json => new RawJson(row.JsonValue),
+                    MichelineFormat.JsonString => row.JsonValue,
+                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
+                    _ => null
+                }
+            };
+        }
+
+        string UpdateAction(int action) => action switch
+        {
+            1 => BigMapActions.AddKey,
+            2 => BigMapActions.UpdateKey,
+            3 => BigMapActions.RemoveKey,
+            _ => "unknown"
+        };
     }
 }

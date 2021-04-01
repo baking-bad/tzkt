@@ -3242,9 +3242,9 @@ namespace Tzkt.Api.Repositories
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = format switch
                     {
-                        MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                        MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                         MichelineFormat.JsonString => row.JsonValue,
-                        MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                        MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                         MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     },
@@ -3321,9 +3321,9 @@ namespace Tzkt.Api.Repositories
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = format switch
                     {
-                        MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                        MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                         MichelineFormat.JsonString => row.JsonValue,
-                        MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                        MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                         MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     },
@@ -3400,9 +3400,9 @@ namespace Tzkt.Api.Repositories
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = format switch
                     {
-                        MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                        MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                         MichelineFormat.JsonString => row.JsonValue,
-                        MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                        MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                         MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     },
@@ -3759,9 +3759,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = format switch
                             {
-                                MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                                MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                                 MichelineFormat.JsonString => row.JsonValue,
-                                MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                                MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                                 MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             };
@@ -3979,11 +3979,11 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var code = row.ParameterSchema == null ? null : new MichelineArray
-                            {
-                                Micheline.FromBytes(row.ParameterSchema),
-                                Micheline.FromBytes(row.StorageSchema),
-                                Micheline.FromBytes(row.CodeSchema)
-                            };
+                        {
+                            Micheline.FromBytes(row.ParameterSchema),
+                            Micheline.FromBytes(row.StorageSchema),
+                            Micheline.FromBytes(row.CodeSchema)
+                        };
                         result[j++] = (int)format % 2 == 0 ? code : code.ToJson();
                     }
                     break;
@@ -3991,9 +3991,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = format switch
                         {
-                            MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                            MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                             MichelineFormat.JsonString => row.JsonValue,
-                            MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                            MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                             MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                             _ => throw new Exception("Invalid MichelineFormat value")
                         };
@@ -4089,18 +4089,18 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
                 },
                 Storage = format switch
                 {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                    MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                     MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
@@ -4152,18 +4152,18 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
                 },
                 Storage = format switch
                 {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                    MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                     MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
@@ -4215,18 +4215,18 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
                 },
                 Storage = format switch
                 {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                    MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                     MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
@@ -4274,9 +4274,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4392,9 +4392,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4683,9 +4683,9 @@ namespace Tzkt.Api.Repositories
                                 Entrypoint = row.Entrypoint,
                                 Value = format switch
                                 {
-                                    MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                                    MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                                     MichelineFormat.JsonString => row.JsonParameters,
-                                    MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                                    MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                                     MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                                     _ => throw new Exception("Invalid MichelineFormat value")
                                 }
@@ -4695,9 +4695,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = format switch
                             {
-                                MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                                MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                                 MichelineFormat.JsonString => row.JsonValue,
-                                MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                                MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                                 MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             };
@@ -4925,9 +4925,9 @@ namespace Tzkt.Api.Repositories
                             Entrypoint = row.Entrypoint,
                             Value = format switch
                             {
-                                MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                                MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                                 MichelineFormat.JsonString => row.JsonParameters,
-                                MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                                MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                                 MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             }
@@ -4937,9 +4937,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = format switch
                         {
-                            MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                            MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                             MichelineFormat.JsonString => row.JsonValue,
-                            MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                            MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                             MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                             _ => throw new Exception("Invalid MichelineFormat value")
                         };
