@@ -43,6 +43,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="contract">Filters bigmaps by smart contract address.</param>
         /// <param name="active">Filters bigmaps by status: `true` - active, `false` - removed.</param>
+        /// <param name="lastLevel">Filters bigmaps by the last update level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -53,6 +54,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
             AccountParameter contract,
             bool? active,
+            Int32Parameter lastLevel,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -65,25 +67,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await BigMaps.Get(contract, active, sort, offset, limit, micheline));
+                return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, micheline));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BigMaps.Get(contract, active, sort, offset, limit, select.Values[0], micheline));
+                    return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Values[0], micheline));
                 else
-                    return Ok(await BigMaps.Get(contract, active, sort, offset, limit, select.Values, micheline));
+                    return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Values, micheline));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BigMaps.Get(contract, active, sort, offset, limit, select.Fields[0], micheline));
+                    return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Fields[0], micheline));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await BigMaps.Get(contract, active, sort, offset, limit, select.Fields, micheline)
+                        Rows = await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Fields, micheline)
                     });
                 }
             }
@@ -132,6 +134,7 @@ namespace Tzkt.Api.Controllers
         /// so you can specify a path to a particular field to filter by, for example: `?key.token_id=...`.</param>
         /// <param name="value">Filters keys by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
         /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>
+        /// <param name="lastLevel">Filters bigmap keys by the last update level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts bigmap keys by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `updates`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -144,6 +147,7 @@ namespace Tzkt.Api.Controllers
             bool? active,
             JsonParameter key,
             JsonParameter value,
+            Int32Parameter lastLevel,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -156,25 +160,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, micheline));
+                return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, micheline));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Values[0], micheline));
+                    return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Values[0], micheline));
                 else
-                    return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Values, micheline));
+                    return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Values, micheline));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Fields[0], micheline));
+                    return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Fields[0], micheline));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Fields, micheline)
+                        Rows = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Fields, micheline)
                     });
                 }
             }
@@ -327,7 +331,7 @@ namespace Tzkt.Api.Controllers
         /// Get historical key
         /// </summary>
         /// <remarks>
-        /// Returns the specified bigmap key at the specified level.
+        /// Returns the specified bigmap key at the specific block.
         /// </remarks>
         /// <param name="id">Bigmap Id</param>
         /// <param name="level">Level of the block at which you want to get bigmap key</param>

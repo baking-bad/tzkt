@@ -70,6 +70,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BigMap>> Get(
             AccountParameter contract,
             bool? active,
+            Int32Parameter lastLevel,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -78,6 +79,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT * FROM ""BigMaps""")
                 .Filter("ContractId", contract)
                 .Filter("Active", active)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "firstLevel" => ("Id", "FirstLevel"),
@@ -97,6 +99,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[][]> Get(
             AccountParameter contract,
             bool? active,
+            Int32Parameter lastLevel,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -128,6 +131,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMaps""")
                 .Filter("ContractId", contract)
                 .Filter("Active", active)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "firstLevel" => ("Id", "FirstLevel"),
@@ -206,6 +210,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[]> Get(
             AccountParameter contract,
             bool? active,
+            Int32Parameter lastLevel,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -234,6 +239,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMaps""")
                 .Filter("ContractId", contract)
                 .Filter("Active", active)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "firstLevel" => ("Id", "FirstLevel"),
@@ -351,6 +357,7 @@ namespace Tzkt.Api.Repositories
             bool? active,
             JsonParameter key,
             JsonParameter value,
+            Int32Parameter lastLevel,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -361,6 +368,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Active", active)
                 .Filter("JsonKey", key)
                 .Filter("JsonValue", value)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "firstLevel" => ("Id", "FirstLevel"),
@@ -380,6 +388,7 @@ namespace Tzkt.Api.Repositories
             bool? active,
             JsonParameter key,
             JsonParameter value,
+            Int32Parameter lastLevel,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -413,6 +422,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Active", active)
                 .Filter("JsonKey", key)
                 .Filter("JsonValue", value)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "firstLevel" => ("Id", "FirstLevel"),
@@ -471,6 +481,7 @@ namespace Tzkt.Api.Repositories
             bool? active,
             JsonParameter key,
             JsonParameter value,
+            Int32Parameter lastLevel,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -501,6 +512,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Active", active)
                 .Filter("JsonKey", key)
                 .Filter("JsonValue", value)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "firstLevel" => ("Id", "FirstLevel"),
