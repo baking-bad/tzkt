@@ -17,9 +17,12 @@ namespace Tzkt.Api.Controllers
     public class ContractsController : ControllerBase
     {
         private readonly AccountRepository Accounts;
-        public ContractsController(AccountRepository accounts)
+        private readonly BigMapsRepository BigMaps;
+
+        public ContractsController(AccountRepository accounts, BigMapsRepository bigMaps)
         {
             Accounts = accounts;
+            BigMaps = bigMaps;
         }
 
         /// <summary>
@@ -364,6 +367,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/storage/raw/schema")]
         public Task<IMicheline> GetRawStorageSchema([Address] string address, [Min(0)] int level = 0)
         {
+            if (level == 0)
+                return Accounts.GetRawStorageSchema(address);
             return Accounts.GetRawStorageSchema(address, level);
         }
 
@@ -381,6 +386,63 @@ namespace Tzkt.Api.Controllers
         public Task<IEnumerable<StorageRecord>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetRawStorageHistory(address, lastId, limit);
+        }
+
+        /// <summary>
+        /// Get contract bigmaps
+        /// </summary>
+        /// <remarks>
+        /// Returns all active bigmaps allocated in contract's storage.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="sort">Sorts bigmap keys by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `updates`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps")]
+        public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
+            [Address] string address,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id", "firstLevel", "lastLevel", "updates"))
+                return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var acc = await Accounts.Accounts.GetAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(Enumerable.Empty<BigMap>());
+
+            return Ok(await BigMaps.Get(new AccountParameter { Eq = contract.Id }, true, null, sort, offset, limit, micheline));
+        }
+
+        /// <summary>
+        /// Get bigmap by name
+        /// </summary>
+        /// <remarks>
+        /// Returns contract bigmap with the specified name.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Bigmap name is the last part in bigmap's storage path.
+        /// If the path is `ledger` or `assets.ledger`, then the name is `ledger`.
+        /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `blabla.ledger`, you can specify the full path.</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps/{name}")]
+        public async Task<ActionResult<BigMap>> GetBigMapByName(
+            [Address] string address,
+            string name,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var acc = await Accounts.Accounts.GetAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(Enumerable.Empty<BigMap>());
+
+            return Ok(await BigMaps.Get(contract.Id, name, micheline));
         }
     }
 }

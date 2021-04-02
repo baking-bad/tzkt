@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.IO;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
@@ -17,7 +15,7 @@ namespace Tzkt.Api.Repositories
 {
     public class AccountRepository : DbConnection
     {
-        readonly AccountsCache Accounts;
+        public readonly AccountsCache Accounts;
         readonly StateCache State;
         readonly TimeCache Time;
         readonly OperationRepository Operations;
@@ -2296,18 +2294,21 @@ namespace Tzkt.Api.Repositories
             var rawStorage = await GetRawStorageValue(address);
             var storageTreeView = storage.Schema.ToTreeView(rawStorage);
 
-            return new ContractInterface{
+            return new ContractInterface
+            {
                 StorageSchema = storage.GetJsonSchema(),
                 Entrypoints = param.Entrypoints
                     .Where(x => param.IsEntrypointUseful(x.Key))
-                    .Select(x => new EntrypointInterface{
+                    .Select(x => new EntrypointInterface
+                    {
                         Name = x.Key,
                         ParameterSchema = x.Value.GetJsonSchema()
                     })
                     .ToList(),
                 BigMaps = storageTreeView.Nodes()
                     .Where(x => x.Schema is BigMapSchema)
-                    .Select(x => new BigMapInterface{
+                    .Select(x => new BigMapInterface
+                    {
                         Name = x.Name,
                         Path = x.Path,
                         KeySchema = (x.Schema as BigMapSchema).Key.GetJsonSchema(),

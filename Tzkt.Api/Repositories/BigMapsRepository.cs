@@ -67,6 +67,38 @@ namespace Tzkt.Api.Repositories
             return ReadBigMap(row, micheline);
         }
 
+        public async Task<BigMap> Get(int contractId, string path, MichelineFormat micheline)
+        {
+            var sql = @"
+                SELECT  *
+                FROM    ""BigMaps""
+                WHERE   ""ContractId"" = @id
+                AND     ""StoragePath"" LIKE @path";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { id = contractId, path = $"%{path}" });
+            if (!rows.Any()) return null;
+
+            var row = rows.FirstOrDefault(x => x.StoragePath == path);
+            return ReadBigMap(row ?? rows.FirstOrDefault(), micheline);
+        }
+
+        public async Task<int?> GetId(int contractId, string path, MichelineFormat micheline)
+        {
+            var sql = @"
+                SELECT  ""Ptr"", ""StoragePath""
+                FROM    ""BigMaps""
+                WHERE   ""ContractId"" = @id
+                AND     ""StoragePath"" LIKE @path";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { id = contractId, path = $"%{path}" });
+            if (!rows.Any()) return null;
+
+            var row = rows.FirstOrDefault(x => x.StoragePath == path);
+            return (row ?? rows.FirstOrDefault())?.Ptr;
+        }
+
         public async Task<IEnumerable<BigMap>> Get(
             AccountParameter contract,
             bool? active,
@@ -163,7 +195,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "path":
                         foreach (var row in rows)
-                            result[j++][i] = ((string)row.StoragePath).Replace(".", "..").Replace(',', '.');
+                            result[j++][i] = row.StoragePath;
                         break;
                     case "active":
                         foreach (var row in rows)
@@ -269,7 +301,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "path":
                     foreach (var row in rows)
-                        result[j++] = ((string)row.StoragePath).Replace(".", "..").Replace(',', '.');
+                        result[j++] = row.StoragePath;
                     break;
                 case "active":
                     foreach (var row in rows)
@@ -892,7 +924,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Ptr,
                 Contract = Accounts.GetAlias(row.ContractId),
-                Path = ((string)row.StoragePath).Replace(".", "..").Replace(',', '.'),
+                Path = row.StoragePath,
                 Active = row.Active,
                 FirstLevel = row.FirstLevel,
                 LastLevel = row.LastLevel,

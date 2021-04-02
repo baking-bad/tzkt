@@ -21,12 +21,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// JSON Schema of the Big_map key in humanified format (as returned by API)
         /// </summary>
-        public JsonString KeySchema { get; set; }
+        public RawJson KeySchema { get; set; }
 
         /// <summary>
         /// JSON Schema of the Big_map value in humanified format (as returned by API)
         /// </summary>
-        public JsonString ValueSchema { get; set; }
+        public RawJson ValueSchema { get; set; }
     }
 
     public class EntrypointInterface
@@ -39,7 +39,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// JSON Schema of the entrypoint parameter in humanified format (as returned by API)
         /// </summary>
-        public JsonString ParameterSchema { get; set; }
+        public RawJson ParameterSchema { get; set; }
     }
 
     public class ContractInterface
@@ -47,7 +47,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// JSON Schema of the contract storage in humanified format (as returned by API)
         /// </summary>
-        public JsonString StorageSchema { get; set; }
+        public RawJson StorageSchema { get; set; }
 
         /// <summary>
         /// List of terminal entrypoints
