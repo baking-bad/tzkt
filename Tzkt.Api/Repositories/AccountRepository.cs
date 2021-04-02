@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
@@ -2262,6 +2264,57 @@ namespace Tzkt.Api.Repositories
             };
 
             return code.ToMichelson();
+        }
+
+        public async Task<ContractInterface> GetContractInterface(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            ContractParameter param;
+            ContractStorage storage;
+
+            if (contract.Kind == 0)
+            {
+                param = Data.Models.Script.ManagerTz.Parameter;
+                storage = Data.Models.Script.ManagerTz.Storage;
+            }
+            else
+            {
+                using var db = GetConnection();
+                var script = await db.QueryFirstOrDefaultAsync($@"
+                    SELECT      ""StorageSchema"", ""ParameterSchema""
+                    FROM        ""Scripts""
+                    WHERE       ""ContractId"" = {contract.Id} AND ""Current"" = true
+                    LIMIT       1"
+                );
+                if (script == null) return null;
+                param = new ContractParameter(Micheline.FromBytes(script.ParameterSchema));
+                storage = new ContractStorage(Micheline.FromBytes(script.StorageSchema));
+            }
+
+            var rawStorage = await GetRawStorageValue(address);
+            var storageTreeView = storage.Schema.ToTreeView(rawStorage);
+
+            return new ContractInterface{
+                StorageSchema = storage.GetJsonSchema(),
+                Entrypoints = param.Entrypoints
+                    .Where(x => param.IsEntrypointUseful(x.Key))
+                    .Select(x => new EntrypointInterface{
+                        Name = x.Key,
+                        ParameterSchema = x.Value.GetJsonSchema()
+                    })
+                    .ToList(),
+                BigMaps = storageTreeView.Nodes()
+                    .Where(x => x.Schema is BigMapSchema)
+                    .Select(x => new BigMapInterface{
+                        Name = x.Name,
+                        Path = x.Path,
+                        KeySchema = (x.Schema as BigMapSchema).Key.GetJsonSchema(),
+                        ValueSchema = (x.Schema as BigMapSchema).Value.GetJsonSchema()
+                    })
+                    .ToList()
+            };
         }
 
         public async Task<IMicheline> BuildEntrypointParameters(string address, string name, object value)

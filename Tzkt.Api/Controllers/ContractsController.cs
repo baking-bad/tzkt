@@ -166,6 +166,20 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get JSON Schema [2020-12] interface for the contract
+        /// </summary>
+        /// <remarks>
+        /// Returns standard JSON Schema for contract storage, entrypoints, and Big_map entries.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <returns></returns>
+        [HttpGet("{address}/interface")]
+        public Task<ContractInterface> GetInterface([Address] string address)
+        {
+            return Accounts.GetContractInterface(address);
+        }
+
+        /// <summary>
         /// Get contract entrypoints
         /// </summary>
         /// <remarks>
@@ -350,8 +364,6 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/storage/raw/schema")]
         public Task<IMicheline> GetRawStorageSchema([Address] string address, [Min(0)] int level = 0)
         {
-            if (level == 0)
-                return Accounts.GetRawStorageSchema(address);
             return Accounts.GetRawStorageSchema(address, level);
         }
 
