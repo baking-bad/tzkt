@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
-    public class BigMapUpdate
+    public class BigMapKeyShort
     {
         /// <summary>
         /// Internal Id, can be used for pagination
@@ -10,19 +8,19 @@ namespace Tzkt.Api.Models
         public int Id { get; set; }
 
         /// <summary>
-        /// Level of the block where the bigmap key was updated
+        /// Bigmap key status: `true` - active, `false` - removed
         /// </summary>
-        public int Level { get; set; }
+        public bool Active { get; set; }
 
         /// <summary>
-        /// Timestamp of the block where the bigmap key was updated
+        /// Key hash
         /// </summary>
-        public DateTime Timestamp { get; set; }
+        public string Hash { get; set; }
 
         /// <summary>
-        /// Action with the key
+        /// Key in JSON or Micheline format, depending on the `micheline` query parameter.
         /// </summary>
-        public string Action { get; set; }
+        public object Key { get; set; }
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.

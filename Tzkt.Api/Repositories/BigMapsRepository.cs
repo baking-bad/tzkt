@@ -80,7 +80,6 @@ namespace Tzkt.Api.Repositories
                 .Filter("Active", active)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "ptr" => ("Ptr", "Ptr"),
                     "firstLevel" => ("Id", "FirstLevel"),
                     "lastLevel" => ("LastLevel", "LastLevel"),
                     "totalKeys" => ("TotalKeys", "TotalKeys"),
@@ -109,7 +108,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "ptr": columns.Add(@"""Ptr"""); break;
+                    case "id": columns.Add(@"""Ptr"""); break;
                     case "contract": columns.Add(@"""ContractId"""); break;
                     case "path": columns.Add(@"""StoragePath"""); break;
                     case "active": columns.Add(@"""Active"""); break;
@@ -131,7 +130,6 @@ namespace Tzkt.Api.Repositories
                 .Filter("Active", active)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "ptr" => ("Ptr", "Ptr"),
                     "firstLevel" => ("Id", "FirstLevel"),
                     "lastLevel" => ("LastLevel", "LastLevel"),
                     "totalKeys" => ("TotalKeys", "TotalKeys"),
@@ -151,7 +149,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
-                    case "ptr":
+                    case "id":
                         foreach (var row in rows)
                             result[j++][i] = row.Ptr;
                         break;
@@ -217,7 +215,7 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(1);
             switch (field)
             {
-                case "ptr": columns.Add(@"""Ptr"""); break;
+                case "id": columns.Add(@"""Ptr"""); break;
                 case "contract": columns.Add(@"""ContractId"""); break;
                 case "path": columns.Add(@"""StoragePath"""); break;
                 case "active": columns.Add(@"""Active"""); break;
@@ -238,7 +236,6 @@ namespace Tzkt.Api.Repositories
                 .Filter("Active", active)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "ptr" => ("Ptr", "Ptr"),
                     "firstLevel" => ("Id", "FirstLevel"),
                     "lastLevel" => ("LastLevel", "LastLevel"),
                     "totalKeys" => ("TotalKeys", "TotalKeys"),
@@ -256,7 +253,7 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
-                case "ptr":
+                case "id":
                     foreach (var row in rows)
                         result[j++] = row.Ptr;
                     break;
@@ -457,25 +454,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "key":
                         foreach (var row in rows)
-                            result[j++][i] = micheline switch
-                            {
-                                MichelineFormat.Json => new RawJson(row.JsonKey),
-                                MichelineFormat.JsonString => row.JsonKey,
-                                MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
-                                MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
-                                _ => null
-                            };
+                            result[j++][i] = FormatKey(row, micheline);
                         break;
                     case "value":
                         foreach (var row in rows)
-                            result[j++][i] = micheline switch
-                            {
-                                MichelineFormat.Json => new RawJson(row.JsonValue),
-                                MichelineFormat.JsonString => row.JsonValue,
-                                MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
-                                MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
-                                _ => null
-                            };
+                            result[j++][i] = FormatValue(row, micheline);
                         break;
                 }
             }
@@ -557,25 +540,277 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "key":
                     foreach (var row in rows)
-                        result[j++] = micheline switch
-                        {
-                            MichelineFormat.Json => new RawJson(row.JsonKey),
-                            MichelineFormat.JsonString => row.JsonKey,
-                            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
-                            MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
-                            _ => null
-                        };
+                        result[j++] = FormatKey(row, micheline);
                     break;
                 case "value":
                     foreach (var row in rows)
-                        result[j++] = micheline switch
-                        {
-                            MichelineFormat.Json => new RawJson(row.JsonValue),
-                            MichelineFormat.JsonString => row.JsonValue,
-                            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
-                            MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
-                            _ => null
-                        };
+                        result[j++] = FormatValue(row, micheline);
+                    break;
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region historical keys
+        async Task<BigMapKeyShort> GetHistoricalKey(
+            BigMapKey key,
+            int level,
+            MichelineFormat micheline)
+        {
+            if (key == null || level < key.FirstLevel)
+                return null;
+
+            if (level > key.LastLevel)
+                return new BigMapKeyShort
+                {
+                    Id = key.Id,
+                    Hash = key.Hash,
+                    Key = key.Key,
+                    Value = key.Value,
+                    Active = key.Active
+                };
+
+            var valCol = (int)micheline < 2 ? "JsonValue" : "RawValue";
+
+            var sql = $@"
+                SELECT   ""Action"", ""{valCol}""
+                FROM     ""BigMapUpdates""
+                WHERE    ""BigMapKeyId"" = {key.Id}
+                AND      ""Level"" <= {level}
+                ORDER BY ""Level"" DESC
+                LIMIT    1";
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync(sql);
+            if (row == null) return null;
+
+            return new BigMapKeyShort
+            {
+                Id = key.Id,
+                Hash = key.Hash,
+                Key = key.Key,
+                Value = FormatValue(row, micheline),
+                Active = row.Action != (int)Data.Models.BigMapAction.RemoveKey
+            };
+        }
+
+        public async Task<BigMapKeyShort> GetHistoricalKey(
+            int ptr,
+            int level,
+            string key,
+            MichelineFormat micheline)
+        {
+            return await GetHistoricalKey(await GetKey(ptr, key, micheline), level, micheline);
+        }
+
+        public async Task<BigMapKeyShort> GetHistoricalKeyByHash(
+            int ptr,
+            int level,
+            string hash,
+            MichelineFormat micheline)
+        {
+            return await GetHistoricalKey(await GetKeyByHash(ptr, hash, micheline), level, micheline);
+        }
+
+        public async Task<IEnumerable<BigMapKeyShort>> GetHistoricalKeys(
+            int ptr,
+            int level,
+            bool? active,
+            JsonParameter key,
+            JsonParameter value,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            MichelineFormat micheline)
+        {
+            var (keyCol, valCol) = (int)micheline < 2
+                ? ("JsonKey", "JsonValue")
+                : ("RawKey", "RawValue");
+
+            var subQuery = $@"
+                SELECT DISTINCT ON (""BigMapKeyId"")     
+                            k.""Id"", k.""KeyHash"", k.""{keyCol}"",
+                            (u.""Action"" != {(int)Data.Models.BigMapAction.RemoveKey}) as ""Active"", u.""{valCol}""
+                FROM        ""BigMapUpdates"" as u
+                INNER JOIN  ""BigMapKeys"" as k
+                        ON  k.""Id"" = u.""BigMapKeyId""
+                WHERE       u.""BigMapPtr"" = {ptr}
+                AND         u.""Level"" <= {level}
+                ORDER BY    ""BigMapKeyId"", ""Level"" DESC";
+
+            var sql = new SqlBuilder($"SELECT * from ({subQuery}) as updates")
+                .Filter("Active", active)
+                .Filter("JsonKey", key)
+                .Filter("JsonValue", value)
+                .Take(sort, offset, limit, x => ("Id", "Id"));
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            return rows.Select(row => (BigMapKeyShort)ReadBigMapKeyShort(row, micheline));
+        }
+
+        public async Task<object[][]> GetHistoricalKeys(
+            int ptr,
+            int level,
+            bool? active,
+            JsonParameter key,
+            JsonParameter value,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields,
+            MichelineFormat micheline)
+        {
+            var (keyCol, valCol) = (int)micheline < 2
+                ? ("JsonKey", "JsonValue")
+                : ("RawKey", "RawValue");
+
+            var columns = new HashSet<string>(fields.Length);
+            foreach (var field in fields)
+            {
+                switch (field)
+                {
+                    case "id": columns.Add(@"""Id"""); break;
+                    case "active": columns.Add(@"""Active"""); break;
+                    case "hash": columns.Add(@"""KeyHash"""); break;
+                    case "key": columns.Add($@"""{keyCol}"""); break;
+                    case "value": columns.Add($@"""{valCol}"""); break;
+                }
+            }
+
+            if (columns.Count == 0)
+                return Array.Empty<object[]>();
+
+            var subQuery = $@"
+                SELECT DISTINCT ON (""BigMapKeyId"")
+                            k.""Id"", k.""KeyHash"", k.""{keyCol}"",
+                            (u.""Action"" != {(int)Data.Models.BigMapAction.RemoveKey}) as ""Active"", u.""{valCol}""
+                FROM        ""BigMapUpdates"" as u
+                INNER JOIN  ""BigMapKeys"" as k
+                        ON  k.""Id"" = u.""BigMapKeyId""
+                WHERE       u.""BigMapPtr"" = {ptr}
+                AND         u.""Level"" <= {level}
+                ORDER BY    ""BigMapKeyId"", ""Level"" DESC";
+
+            var sql = new SqlBuilder($"SELECT {string.Join(',', columns)} from ({subQuery}) as updates")
+                .Filter("Active", active)
+                .Filter("JsonKey", key)
+                .Filter("JsonValue", value)
+                .Take(sort, offset, limit, x => ("Id", "Id"));
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Length];
+
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
+            {
+                switch (fields[i])
+                {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
+                    case "active":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Active;
+                        break;
+                    case "hash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.KeyHash;
+                        break;
+                    case "key":
+                        foreach (var row in rows)
+                            result[j++][i] = FormatKey(row, micheline);
+                        break;
+                    case "value":
+                        foreach (var row in rows)
+                            result[j++][i] = FormatValue(row, micheline);
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<object[]> GetHistoricalKeys(
+            int ptr,
+            int level,
+            bool? active,
+            JsonParameter key,
+            JsonParameter value,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field,
+            MichelineFormat micheline)
+        {
+            var (keyCol, valCol) = (int)micheline < 2
+                ? ("JsonKey", "JsonValue")
+                : ("RawKey", "RawValue");
+
+            var columns = new HashSet<string>(1);
+            switch (field)
+            {
+                case "id": columns.Add(@"""Id"""); break;
+                case "active": columns.Add(@"""Active"""); break;
+                case "hash": columns.Add(@"""KeyHash"""); break;
+                case "key": columns.Add($@"""{keyCol}"""); break;
+                case "value": columns.Add($@"""{valCol}"""); break;
+            }
+
+            if (columns.Count == 0)
+                return Array.Empty<object>();
+
+            var subQuery = $@"
+                SELECT DISTINCT ON (""BigMapKeyId"")
+                            k.""Id"", k.""KeyHash"", k.""{keyCol}"",
+                            (u.""Action"" != {(int)Data.Models.BigMapAction.RemoveKey}) as ""Active"", u.""{valCol}""
+                FROM        ""BigMapUpdates"" as u
+                INNER JOIN  ""BigMapKeys"" as k
+                        ON  k.""Id"" = u.""BigMapKeyId""
+                WHERE       u.""BigMapPtr"" = {ptr}
+                AND         u.""Level"" <= {level}
+                ORDER BY    ""BigMapKeyId"", ""Level"" DESC";
+
+            var sql = new SqlBuilder($"SELECT {string.Join(',', columns)} from ({subQuery}) as updates")
+                .Filter("Active", active)
+                .Filter("JsonKey", key)
+                .Filter("JsonValue", value)
+                .Take(sort, offset, limit, x => ("Id", "Id"));
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            //TODO: optimize memory allocation
+            var result = new object[rows.Count()];
+            var j = 0;
+
+            switch (field)
+            {
+                case "id":
+                    foreach (var row in rows)
+                        result[j++] = row.Id;
+                    break;
+                case "active":
+                    foreach (var row in rows)
+                        result[j++] = row.Active;
+                    break;
+                case "hash":
+                    foreach (var row in rows)
+                        result[j++] = row.KeyHash;
+                    break;
+                case "key":
+                    foreach (var row in rows)
+                        result[j++] = FormatKey(row, micheline);
+                    break;
+                case "value":
+                    foreach (var row in rows)
+                        result[j++] = FormatValue(row, micheline);
                     break;
             }
 
@@ -643,7 +878,7 @@ namespace Tzkt.Api.Repositories
         {
             return new BigMap
             {
-                Ptr = row.Ptr,
+                Id = row.Ptr,
                 Contract = Accounts.GetAlias(row.ContractId),
                 Path = ((string)row.StoragePath).Replace(".", "..").Replace(',', '.'),
                 Active = row.Active,
@@ -671,22 +906,20 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel,
                 Updates = row.Updates,
                 Hash = row.KeyHash,
-                Key = format switch
-                {
-                    MichelineFormat.Json => new RawJson(row.JsonKey),
-                    MichelineFormat.JsonString => row.JsonKey,
-                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
-                    MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
-                    _ => null
-                },
-                Value = format switch
-                {
-                    MichelineFormat.Json => new RawJson(row.JsonValue),
-                    MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
-                    MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
-                    _ => null
-                }
+                Key = FormatKey(row, format),
+                Value = FormatValue(row, format)
+            };
+        }
+
+        BigMapKeyShort ReadBigMapKeyShort(dynamic row, MichelineFormat format)
+        {
+            return new BigMapKeyShort
+            {
+                Id = row.Id,
+                Active = row.Active,
+                Hash = row.KeyHash,
+                Key = FormatKey(row, format),
+                Value = FormatValue(row, format)
             };
         }
 
@@ -698,16 +931,27 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = Times[row.Level],
                 Action = UpdateAction((int)row.Action),
-                Value = format switch
-                {
-                    MichelineFormat.Json => new RawJson(row.JsonValue),
-                    MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
-                    MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
-                    _ => null
-                }
+                Value = FormatValue(row, format)
             };
         }
+
+        object FormatKey(dynamic row, MichelineFormat format) => format switch
+        {
+            MichelineFormat.Json => new RawJson(row.JsonKey),
+            MichelineFormat.JsonString => row.JsonKey,
+            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
+            MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
+            _ => null
+        };
+
+        object FormatValue(dynamic row, MichelineFormat format) => format switch
+        {
+            MichelineFormat.Json => new RawJson(row.JsonValue),
+            MichelineFormat.JsonString => row.JsonValue,
+            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
+            MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
+            _ => null
+        };
 
         string UpdateAction(int action) => action switch
         {

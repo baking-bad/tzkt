@@ -3,9 +3,9 @@
     public class BigMap
     {
         /// <summary>
-        /// Bigmap pointer
+        /// Bigmap Id
         /// </summary>
-        public int Ptr { get; set; }
+        public int Id { get; set; }
 
         /// <summary>
         /// Smart contract in which's storage the bigmap is allocated

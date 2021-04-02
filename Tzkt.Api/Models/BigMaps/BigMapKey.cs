@@ -1,10 +1,10 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class BigMapKey
     {
-        [JsonIgnore]
+        /// <summary>
+        /// Internal Id, can be used for pagination
+        /// </summary>
         public int Id { get; set; }
 
         /// <summary>
@@ -41,6 +41,5 @@ namespace Tzkt.Api.Models
         /// Total number of actions with the bigmap key
         /// </summary>
         public int Updates { get; set; }
-
     }
 }

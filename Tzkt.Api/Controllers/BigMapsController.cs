@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Netezos.Encoding;
@@ -29,7 +30,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetCount()
+        public Task<int> GetBigMapsCount()
         {
             return BigMaps.GetCount();
         }
@@ -43,13 +44,13 @@ namespace Tzkt.Api.Controllers
         /// <param name="contract">Filters bigmaps by smart contract address.</param>
         /// <param name="active">Filters bigmaps by status: `true` - active, `false` - removed.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `ptr`, `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
+        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - raw micheline</param>
+        /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - Micheline</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BigMap>>> Get(
+        public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
             AccountParameter contract,
             bool? active,
             SelectParameter select,
@@ -59,7 +60,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "ptr", "firstLevel", "lastLevel", "totalKeys", "activeKeys", "updates"))
+            if (sort != null && !sort.Validate("id", "firstLevel", "lastLevel", "totalKeys", "activeKeys", "updates"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -89,34 +90,34 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get bigmap by ptr
+        /// Get bigmap by Id
         /// </summary>
         /// <remarks>
-        /// Returns a bigmap with the specified ptr.
+        /// Returns a bigmap with the specified Id.
         /// </remarks>
-        /// <param name="ptr">Bigmap pointer</param>
-        /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - raw micheline</param>
+        /// <param name="id">Bigmap Id</param>
+        /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - Micheline</param>
         /// <returns></returns>
-        [HttpGet("{ptr:int}")]
-        public Task<BigMap> GetByPtr(
-            [Min(0)] int ptr,
+        [HttpGet("{id:int}")]
+        public Task<BigMap> GetBigMapById(
+            [Min(0)] int id,
             MichelineFormat micheline = MichelineFormat.Json)
         {
-            return BigMaps.Get(ptr, micheline);
+            return BigMaps.Get(id, micheline);
         }
 
         /// <summary>
         /// Get bigmap type
         /// </summary>
         /// <remarks>
-        /// Returns a type of the bigmap with the specified ptr in Micheline format (with annotations).
+        /// Returns a type of the bigmap with the specified Id in Micheline format (with annotations).
         /// </remarks>
-        /// <param name="ptr">Bigmap pointer</param>
+        /// <param name="id">Bigmap Id</param>
         /// <returns></returns>
-        [HttpGet("{ptr:int}/type")]
-        public Task<MichelinePrim> GetTypeByPtr([Min(0)] int ptr)
+        [HttpGet("{id:int}/type")]
+        public Task<MichelinePrim> GetBigMapType([Min(0)] int id)
         {
-            return BigMaps.GetMicheType(ptr);
+            return BigMaps.GetMicheType(id);
         }
 
         /// <summary>
@@ -125,21 +126,21 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of bigmap keys.
         /// </remarks>
-        /// <param name="ptr">Bigmap pointer</param>
+        /// <param name="id">Bigmap Id</param>
         /// <param name="active">Filters keys by status: `true` - active, `false` - removed.</param>
         /// <param name="key">Filters keys by JSON key. Note, this query parameter supports the following format: `?key{.path?}{.mode?}=...`,
         /// so you can specify a path to a particular field to filter by, for example: `?key.token_id=...`.</param>
         /// <param name="value">Filters keys by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
         /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `updates`.</param>
+        /// <param name="sort">Sorts bigmap keys by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `updates`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - micheline, `3` - micheline string</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
-        [HttpGet("{ptr:int}/keys")]
+        [HttpGet("{id:int}/keys")]
         public async Task<ActionResult<IEnumerable<BigMapKey>>> GetKeys(
-            [Min(0)] int ptr,
+            [Min(0)] int id,
             bool? active,
             JsonParameter key,
             JsonParameter value,
@@ -155,25 +156,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await BigMaps.GetKeys(ptr, active, key, value, sort, offset, limit, micheline));
+                return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, micheline));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BigMaps.GetKeys(ptr, active, key, value, sort, offset, limit, select.Values[0], micheline));
+                    return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Values[0], micheline));
                 else
-                    return Ok(await BigMaps.GetKeys(ptr, active, key, value, sort, offset, limit, select.Values, micheline));
+                    return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Values, micheline));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BigMaps.GetKeys(ptr, active, key, value, sort, offset, limit, select.Fields[0], micheline));
+                    return Ok(await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Fields[0], micheline));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await BigMaps.GetKeys(ptr, active, key, value, sort, offset, limit, select.Fields, micheline)
+                        Rows = await BigMaps.GetKeys(id, active, key, value, sort, offset, limit, select.Fields, micheline)
                     });
                 }
             }
@@ -183,23 +184,26 @@ namespace Tzkt.Api.Controllers
         /// Get bigmap key
         /// </summary>
         /// <remarks>
-        /// Returns a bigmap key with the specified key value.
+        /// Returns the specified bigmap key.
         /// </remarks>
-        /// <param name="ptr">Bigmap pointer</param>
-        /// <param name="key">Plain key, for example, `.../keys/abcde`.
-        /// If the key is complex (an object or an array), you can specify it as is, for example, `.../keys/{"address":"tz123","token":123}`.</param>
-        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - micheline, `3` - micheline string</param>
+        /// <param name="id">Bigmap Id</param>
+        /// <param name="key">Either a key hash (`expr123...`) or a plain value (`abcde...`).
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","token":123}`.</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
-        [HttpGet("{ptr:int}/keys/{key}")]
+        [HttpGet("{id:int}/keys/{key}")]
         public async Task<ActionResult<BigMapKey>> GetKey(
-            [Min(0)] int ptr,
+            [Min(0)] int id,
             string key,
             MichelineFormat micheline = MichelineFormat.Json)
         {
             try
             {
+                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                    return Ok(await BigMaps.GetKeyByHash(id, key, micheline));
+
                 using var doc = JsonDocument.Parse(WrapKey(key));
-                return Ok(await BigMaps.GetKey(ptr, doc.RootElement.GetRawText(), micheline));
+                return Ok(await BigMaps.GetKey(id, doc.RootElement.GetRawText(), micheline));
             }
             catch (JsonException)
             {
@@ -212,22 +216,22 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get key history
+        /// Get bigmap key history
         /// </summary>
         /// <remarks>
         /// Returns updates history for the specified bigmap key.
         /// </remarks>
-        /// <param name="ptr">Bigmap pointer</param>
-        /// <param name="key">Plain key, for example, `.../keys/abcde/history`.
-        /// If the key is complex (an object or an array), you can specify it as is, for example, `.../keys/{"address":"tz123","token":123}/history`.</param>
+        /// <param name="id">Bigmap Id</param>
+        /// <param name="key">Either a key hash (`expr123...`) or a plain value (`abcde...`).
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","token":123}`.</param>
         /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - micheline, `3` - micheline string</param>
+        /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
-        [HttpGet("{ptr:int}/keys/{key}/history")]
+        [HttpGet("{id:int}/keys/{key}/history")]
         public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetKeyHistory(
-            [Min(0)] int ptr,
+            [Min(0)] int id,
             string key,
             SortParameter sort,
             OffsetParameter offset,
@@ -241,8 +245,11 @@ namespace Tzkt.Api.Controllers
 
             try
             {
+                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                    return Ok(await BigMaps.GetKeyByHashUpdates(id, key, sort, offset, limit, micheline));
+
                 using var doc = JsonDocument.Parse(WrapKey(key));
-                return Ok(await BigMaps.GetKeyUpdates(ptr, doc.RootElement.GetRawText(), sort, offset, limit, micheline));
+                return Ok(await BigMaps.GetKeyUpdates(id, doc.RootElement.GetRawText(), sort, offset, limit, micheline));
             }
             catch (JsonException)
             {
@@ -255,41 +262,32 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get bigmap key by hash
+        /// Get historical keys
         /// </summary>
         /// <remarks>
-        /// Returns a bigmap key with the specified key hash.
+        /// Returns a list of bigmap keys at the specific block.
         /// </remarks>
-        /// <param name="ptr">Bigmap pointer</param>
-        /// <param name="hash">Key hash</param>
-        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - micheline, `3` - micheline string</param>
-        /// <returns></returns>
-        [HttpGet("{ptr:int}/keys/{hash:regex(^expr[[0-9A-z]]{{50}}$)}")]
-        public Task<BigMapKey> GetKeyByHash(
-            [Min(0)] int ptr,
-            string hash,
-            MichelineFormat micheline = MichelineFormat.Json)
-        {
-            return BigMaps.GetKeyByHash(ptr, hash, micheline);
-        }
-
-        /// <summary>
-        /// Get key by hash history
-        /// </summary>
-        /// <remarks>
-        /// Returns updates history for the bigmap key with the specified key hash.
-        /// </remarks>
-        /// <param name="ptr">Bigmap pointer</param>
-        /// <param name="hash">Key hash</param>
-        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default).</param>
+        /// <param name="id">Bigmap Id</param>
+        /// <param name="level">Level of the block at which you want to get bigmap keys</param>
+        /// <param name="active">Filters keys by status: `true` - active, `false` - removed.</param>
+        /// <param name="key">Filters keys by JSON key. Note, this query parameter supports the following format: `?key{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?key.token_id=...`.</param>
+        /// <param name="value">Filters keys by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts bigmap keys by specified field. Supported fields: `id` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - micheline, `3` - micheline string</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
-        [HttpGet("{ptr:int}/keys/{hash:regex(^expr[[0-9A-z]]{{50}}$)}/history")]
-        public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetKeyByHashHistory(
-            [Min(0)] int ptr,
-            string hash,
+        [HttpGet("{id:int}/historical_keys/{level:int}")]
+        public async Task<ActionResult<IEnumerable<BigMapKeyShort>>> GetHistoricalKeys(
+            [Min(0)] int id,
+            [Min(0)] int level,
+            bool? active,
+            JsonParameter key,
+            JsonParameter value,
+            SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
@@ -300,7 +298,66 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
             #endregion
 
-            return Ok(await BigMaps.GetKeyByHashUpdates(ptr, hash, sort, offset, limit, micheline));
+            if (select == null)
+                return Ok(await BigMaps.GetHistoricalKeys(id, level, active, key, value, sort, offset, limit, micheline));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await BigMaps.GetHistoricalKeys(id, level, active, key, value, sort, offset, limit, select.Values[0], micheline));
+                else
+                    return Ok(await BigMaps.GetHistoricalKeys(id, level, active, key, value, sort, offset, limit, select.Values, micheline));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await BigMaps.GetHistoricalKeys(id, level, active, key, value, sort, offset, limit, select.Fields[0], micheline));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await BigMaps.GetHistoricalKeys(id, level, active, key, value, sort, offset, limit, select.Fields, micheline)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get historical key
+        /// </summary>
+        /// <remarks>
+        /// Returns the specified bigmap key at the specified level.
+        /// </remarks>
+        /// <param name="id">Bigmap Id</param>
+        /// <param name="level">Level of the block at which you want to get bigmap key</param>
+        /// <param name="key">Either a key hash (`expr123...`) or a plain value (`abcde...`).
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","token":123}`.</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{id:int}/historical_keys/{level:int}/{key}")]
+        public async Task<ActionResult<BigMapKeyShort>> GetKey(
+            [Min(0)] int id,
+            [Min(0)] int level,
+            string key,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            try
+            {
+                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                    return Ok(await BigMaps.GetHistoricalKeyByHash(id, level, key, micheline));
+
+                using var doc = JsonDocument.Parse(WrapKey(key));
+                return Ok(await BigMaps.GetHistoricalKey(id, level, doc.RootElement.GetRawText(), micheline));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest(nameof(key), "invalid json value");
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         string WrapKey(string key)
