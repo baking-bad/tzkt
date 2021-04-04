@@ -47,7 +47,7 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel,
                 LastTime = Time[row.LastLevel],
                 ShortHash = row.ShortHash,
-                Metadata = new RawJson(row.Metadata)
+                Metadata = row.Metadata == null ? null : new RawJson(row.Metadata)
             });
         }
 
@@ -117,7 +117,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "metadata":
                         foreach (var row in rows)
-                            result[j++][i] = new RawJson(row.Metadata);
+                            result[j++][i] = row.Metadata == null ? null : new RawJson(row.Metadata);
                         break;
                 }
             }
@@ -185,7 +185,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "metadata":
                     foreach (var row in rows)
-                        result[j++] = new RawJson(row.Metadata);
+                        result[j++] = row.Metadata == null ? null : new RawJson(row.Metadata);
                     break;
             }
 
