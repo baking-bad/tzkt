@@ -4401,9 +4401,9 @@ namespace Tzkt.Api.Repositories
                 },
                 Storage = !includeStorage ? null : format switch
                 {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
+                    MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
                     MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
+                    MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },

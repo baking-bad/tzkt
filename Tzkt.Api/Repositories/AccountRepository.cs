@@ -15,7 +15,7 @@ namespace Tzkt.Api.Repositories
 {
     public class AccountRepository : DbConnection
     {
-        public readonly AccountsCache Accounts;
+        readonly AccountsCache Accounts;
         readonly StateCache State;
         readonly TimeCache Time;
         readonly OperationRepository Operations;
@@ -28,6 +28,11 @@ namespace Tzkt.Api.Repositories
             Time = time;
             Operations = operations;
             Software = software;
+        }
+
+        public Task<RawAccount> GetRawAsync(string address)
+        {
+            return Accounts.GetAsync(address);
         }
 
         public async Task<Account> Get(string address, bool metadata)

@@ -76,14 +76,14 @@ namespace Tzkt.Api.Repositories
                 AND     ""StoragePath"" LIKE @path";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { id = contractId, path = $"%{path}" });
+            var rows = await db.QueryAsync(sql, new { id = contractId, path = $"%{path.Replace("_", "\\_")}" });
             if (!rows.Any()) return null;
 
             var row = rows.FirstOrDefault(x => x.StoragePath == path);
             return ReadBigMap(row ?? rows.FirstOrDefault(), micheline);
         }
 
-        public async Task<int?> GetId(int contractId, string path, MichelineFormat micheline)
+        public async Task<int?> GetPtr(int contractId, string path)
         {
             var sql = @"
                 SELECT  ""Ptr"", ""StoragePath""

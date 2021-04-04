@@ -228,7 +228,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Bigmap Id</param>
         /// <param name="key">Either a key hash (`expr123...`) or a plain value (`abcde...`).
         /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","token":123}`.</param>
-        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default).</param>
+        /// <param name="sort">Sorts bigmap updates by specified field. Supported fields: `id` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
