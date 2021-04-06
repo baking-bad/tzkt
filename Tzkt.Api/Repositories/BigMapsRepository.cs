@@ -154,6 +154,7 @@ namespace Tzkt.Api.Repositories
                     case "updates": columns.Add(@"""Updates"""); break;
                     case "keyType": columns.Add(@"""KeyType"""); break;
                     case "valueType": columns.Add(@"""ValueType"""); break;
+                    case "tags": columns.Add(@"""Tags"""); break;
                 }
             }
 
@@ -233,6 +234,10 @@ namespace Tzkt.Api.Repositories
                                 ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
                                 : new RawJson(Micheline.ToJson(row.ValueType));
                         break;
+                    case "tags":
+                        foreach (var row in rows)
+                            result[j++][i] = BigMap.GetTagsList((Data.Models.BigMapTag)row.Tags);
+                        break;
                 }
             }
 
@@ -263,6 +268,7 @@ namespace Tzkt.Api.Repositories
                 case "updates": columns.Add(@"""Updates"""); break;
                 case "keyType": columns.Add(@"""KeyType"""); break;
                 case "valueType": columns.Add(@"""ValueType"""); break;
+                case "tags": columns.Add(@"""Tags"""); break;
             }
 
             if (columns.Count == 0)
@@ -338,6 +344,10 @@ namespace Tzkt.Api.Repositories
                         result[j++] = (int)micheline < 2
                             ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
                             : new RawJson(Micheline.ToJson(row.ValueType));
+                    break;
+                case "tags":
+                    foreach (var row in rows)
+                        result[j++] = BigMap.GetTagsList((Data.Models.BigMapTag)row.Tags);
                     break;
             }
 
@@ -936,7 +946,8 @@ namespace Tzkt.Api.Repositories
                     : new RawJson(Micheline.ToJson(row.KeyType)),
                 ValueType = (int)format < 2
                     ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
-                    : new RawJson(Micheline.ToJson(row.ValueType))
+                    : new RawJson(Micheline.ToJson(row.ValueType)),
+                _Tags = (Data.Models.BigMapTag)row.Tags
             };
         }
 

@@ -1,4 +1,8 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using Tzkt.Data.Models;
+
+namespace Tzkt.Api.Models
 {
     public class BigMap
     {
@@ -56,5 +60,20 @@
         /// Bigmap value type as JSON schema or Micheline, depending on the `micheline` query parameter.
         /// </summary>
         public object ValueType { get; set; }
+
+        /// <summary>
+        /// List of tags (`token_metadata` - tzip-12, `metadata` - tzip-16, `null` - no tags)
+        /// </summary>
+        public List<string> Tags => GetTagsList(_Tags);
+
+        [JsonIgnore]
+        public BigMapTag _Tags { get; set; }
+
+        #region static
+        public static List<string> GetTagsList(BigMapTag tags) => tags == BigMapTag.None ? null : new(1)
+        {
+            tags == BigMapTag.TokenMetadata ? BigMapTags.TokenMetadata : BigMapTags.Metadata
+        };
+        #endregion
     }
 }

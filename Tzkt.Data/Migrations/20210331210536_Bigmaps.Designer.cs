@@ -630,6 +630,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<string>("StoragePath")
                         .HasColumnType("text");
 
+                    b.Property<int>("Tags")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TotalKeys")
                         .HasColumnType("integer");
 

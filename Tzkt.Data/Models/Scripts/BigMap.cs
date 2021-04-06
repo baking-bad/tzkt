@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
-using System.Collections.Generic;
 
 namespace Tzkt.Data.Models
 {
@@ -22,6 +23,8 @@ namespace Tzkt.Data.Models
         public int ActiveKeys { get; set; }
         public int Updates { get; set; }
 
+        public BigMapTag Tags { get; set; }
+
         #region schema
         BigMapSchema _Schema = null;
         public BigMapSchema Schema
@@ -41,6 +44,14 @@ namespace Tzkt.Data.Models
             }
         }
         #endregion
+    }
+
+    [Flags]
+    public enum BigMapTag
+    {
+        None                = 0b_0000,
+        TokenMetadata       = 0b_0001, // tzip-12
+        Metadata            = 0b_0010, // tzip-16
     }
 
     public static class BigMapModel

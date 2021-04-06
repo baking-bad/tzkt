@@ -160,7 +160,8 @@ namespace Tzkt.Data.Migrations
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     TotalKeys = table.Column<int>(type: "integer", nullable: false),
                     ActiveKeys = table.Column<int>(type: "integer", nullable: false),
-                    Updates = table.Column<int>(type: "integer", nullable: false)
+                    Updates = table.Column<int>(type: "integer", nullable: false),
+                    Tags = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
