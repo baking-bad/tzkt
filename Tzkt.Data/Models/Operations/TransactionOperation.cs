@@ -4,7 +4,7 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class TransactionOperation : InternalOperation
+    public class TransactionOperation : ContractOperation
     {
         public int? TargetId { get; set; }
         public int? ResetDeactivation { get; set; }
@@ -14,8 +14,6 @@ namespace Tzkt.Data.Models
         public string Entrypoint { get; set; }
         public byte[] RawParameters { get; set; }
         public string JsonParameters { get; set; }
-
-        public int? StorageId { get; set; }
 
         public short? InternalOperations { get; set; }
         public short? InternalDelegations { get; set; }

@@ -1302,6 +1302,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("Balance")
                         .HasColumnType("bigint");
 
+                    b.Property<int?>("BigMapUpdates")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("ContractId")
                         .HasColumnType("integer");
 
@@ -1937,6 +1940,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("BakerFee")
                         .HasColumnType("bigint");
+
+                    b.Property<int?>("BigMapUpdates")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Counter")
                         .HasColumnType("integer");

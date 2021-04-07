@@ -3187,10 +3187,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
-                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", o.""StorageId"",
-                            b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -3212,7 +3209,12 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format);
+            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                false,
+                format);
             #endregion
 
             return rows.Select(row =>
@@ -3271,10 +3273,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
-                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", o.""StorageId"",
-                            b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -3296,7 +3295,12 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format);
+            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                false,
+                format);
             #endregion
 
             return rows.Select(row =>
@@ -3355,10 +3359,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
-                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"", o.""StorageId"",
-                            b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -3380,7 +3381,12 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format);
+            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                false,
+                format);
             #endregion
 
             return rows.Select(row =>
@@ -3558,7 +3564,12 @@ namespace Tzkt.Api.Repositories
 
             #region include bigmaps
             var updates = includeBigmaps
-                ? await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format)
+                ? await BigMapsRepository.GetBigMapUpdates(db,
+                    rows.Where(x => x.BigMapUpdates != null)
+                        .Select(x => (int)x.Id)
+                        .ToList(),
+                    false,
+                    format)
                 : null;
             #endregion
 
@@ -3662,7 +3673,10 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                         break;
                     case "storage": columns.Add(@"o.""StorageId"""); break;
-                    case "bigmaps": columns.Add(@"o.""Id"""); break;
+                    case "bigmaps":
+                        columns.Add(@"o.""Id""");
+                        columns.Add(@"o.""BigMapUpdates""");
+                        break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
@@ -3806,8 +3820,12 @@ namespace Tzkt.Api.Repositories
                                 result[j++][i] = row.StorageId == null ? null : storages[row.StorageId];
                         break;
                     case "bigmaps":
-                        var ids = rows.Select(x => (int)x.Id).ToList();
-                        var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, false, format);
+                        var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                            rows.Where(x => x.BigMapUpdates != null)
+                                .Select(x => (int)x.Id)
+                                .ToList(),
+                            false,
+                            format);
                         if (updates != null)
                             foreach (var row in rows)
                                 result[j++][i] = updates.GetValueOrDefault((int)row.Id);
@@ -3902,7 +3920,10 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                     break;
                 case "storage": columns.Add(@"o.""StorageId"""); break;
-                case "bigmaps": columns.Add(@"o.""Id"""); break;
+                case "bigmaps":
+                    columns.Add(@"o.""Id""");
+                    columns.Add(@"o.""BigMapUpdates""");
+                    break;
                 case "quote": columns.Add(@"o.""Level"""); break;
             }
 
@@ -4043,8 +4064,12 @@ namespace Tzkt.Api.Repositories
                             result[j++] = row.StorageId == null ? null : storages[row.StorageId];
                     break;
                 case "bigmaps":
-                    var ids = rows.Select(x => (int)x.Id).ToList();
-                    var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, false, format);
+                    var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                        rows.Where(x => x.BigMapUpdates != null)
+                            .Select(x => (int)x.Id)
+                            .ToList(),
+                        false,
+                        format);
                     if (updates != null)
                         foreach (var row in rows)
                             result[j++] = updates.GetValueOrDefault((int)row.Id);
@@ -4123,7 +4148,12 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format);
+            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                true,
+                format);
             #endregion
 
             return rows.Select(row => new TransactionOperation
@@ -4191,7 +4221,12 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format);
+            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                true,
+                format);
             #endregion
 
             return rows.Select(row => new TransactionOperation
@@ -4259,7 +4294,12 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format);
+            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                true,
+                format);
             #endregion
 
             return rows.Select(row => new TransactionOperation
@@ -4437,7 +4477,12 @@ namespace Tzkt.Api.Repositories
 
             #region include bigmaps
             var updates = includeBigmaps
-                ? await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format)
+                ? await BigMapsRepository.GetBigMapUpdates(db,
+                    rows.Where(x => x.BigMapUpdates != null)
+                        .Select(x => (int)x.Id)
+                        .ToList(),
+                    true,
+                    format)
                 : null;
             #endregion
 
@@ -4605,7 +4650,10 @@ namespace Tzkt.Api.Repositories
                         });
                         break;
                     case "storage": columns.Add(@"o.""StorageId"""); break;
-                    case "bigmaps": columns.Add(@"o.""Id"""); break;
+                    case "bigmaps":
+                        columns.Add(@"o.""Id""");
+                        columns.Add(@"o.""BigMapUpdates""");
+                        break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
@@ -4762,8 +4810,12 @@ namespace Tzkt.Api.Repositories
                                 result[j++][i] = row.StorageId == null ? null : storages[row.StorageId];
                         break;
                     case "bigmaps":
-                        var ids = rows.Select(x => (int)x.Id).ToList();
-                        var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, true, format);
+                        var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                            rows.Where(x => x.BigMapUpdates != null)
+                                .Select(x => (int)x.Id)
+                                .ToList(),
+                            true,
+                            format);
                         if (updates != null)
                             foreach (var row in rows)
                                 result[j++][i] = updates.GetValueOrDefault((int)row.Id);
@@ -4848,7 +4900,10 @@ namespace Tzkt.Api.Repositories
                     });
                     break;
                 case "storage": columns.Add(@"o.""StorageId"""); break;
-                case "bigmaps": columns.Add(@"o.""Id"""); break;
+                case "bigmaps":
+                    columns.Add(@"o.""Id""");
+                    columns.Add(@"o.""BigMapUpdates""");
+                    break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
@@ -5002,8 +5057,12 @@ namespace Tzkt.Api.Repositories
                             result[j++] = row.StorageId == null ? null : storages[row.StorageId];
                     break;
                 case "bigmaps":
-                    var ids = rows.Select(x => (int)x.Id).ToList();
-                    var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, true, format);
+                    var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                        rows.Where(x => x.BigMapUpdates != null)
+                            .Select(x => (int)x.Id)
+                            .ToList(),
+                        true,
+                        format);
                     if (updates != null)
                         foreach (var row in rows)
                             result[j++] = updates.GetValueOrDefault((int)row.Id);

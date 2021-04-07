@@ -13,13 +13,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class BigMapCommit : ProtocolCommit
     {
-        readonly List<(BaseOperation op, Contract contract, BigMapDiff diff)> Diffs = new();
+        readonly List<(ContractOperation op, Contract contract, BigMapDiff diff)> Diffs = new();
         readonly Dictionary<int, int> TempPtrs = new(7);
         int TempPtr = 0;
 
         public BigMapCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual void Append(BaseOperation op, Contract contract, IEnumerable<BigMapDiff> diffs)
+        public virtual void Append(ContractOperation op, Contract contract, IEnumerable<BigMapDiff> diffs)
         {
             foreach (var diff in diffs)
             {
@@ -119,6 +119,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 TransactionId = (diff.op as TransactionOperation)?.Id,
                                 OriginationId = (diff.op as OriginationOperation)?.Id
                             });
+                            diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
+
                             var allocatedBigMap = new BigMap
                             {
                                 Id = Cache.AppState.NextBigMapId(),
@@ -223,6 +225,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 TransactionId = (diff.op as TransactionOperation)?.Id,
                                 OriginationId = (diff.op as OriginationOperation)?.Id
                             }));
+                            diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + keys.Count + 1;
 
                             var copiedBigMap = new BigMap
                             {
@@ -235,9 +238,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 Active = true,
                                 FirstLevel = diff.op.Level,
                                 LastLevel = diff.op.Level,
-                                ActiveKeys = keys.Count(),
-                                TotalKeys = keys.Count(),
-                                Updates = keys.Count() + 1,
+                                ActiveKeys = keys.Count,
+                                TotalKeys = keys.Count,
+                                Updates = keys.Count + 1,
                                 Tags = GetTags(bigMapNode)
                             };
 
@@ -295,6 +298,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                         TransactionId = (diff.op as TransactionOperation)?.Id,
                                         OriginationId = (diff.op as OriginationOperation)?.Id
                                     });
+                                    diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                     #endregion
                                 }
                                 else if (key.Active) // WTF: edo2net:76611 - key was removed twice
@@ -322,6 +326,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                         TransactionId = (diff.op as TransactionOperation)?.Id,
                                         OriginationId = (diff.op as OriginationOperation)?.Id
                                     });
+                                    diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                     #endregion
                                 }
                             }
@@ -364,6 +369,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     TransactionId = (diff.op as TransactionOperation)?.Id,
                                     OriginationId = (diff.op as OriginationOperation)?.Id
                                 });
+                                diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                 #endregion
                             }
                         }
@@ -408,6 +414,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 TransactionId = (diff.op as TransactionOperation)?.Id,
                                 OriginationId = (diff.op as OriginationOperation)?.Id
                             });
+                            diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
 
                             var removed = Cache.BigMaps.Get(remove.Ptr);
                             Db.TryAttach(removed);

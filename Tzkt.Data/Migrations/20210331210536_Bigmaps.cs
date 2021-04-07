@@ -24,6 +24,12 @@ namespace Tzkt.Data.Migrations
                 name: "Version",
                 table: "Software");
 
+            migrationBuilder.AddColumn<int>(
+                name: "BigMapUpdates",
+                table: "TransactionOps",
+                type: "integer",
+                nullable: true);
+
             migrationBuilder.AddColumn<short>(
                 name: "InternalDelegations",
                 table: "TransactionOps",
@@ -65,6 +71,12 @@ namespace Tzkt.Data.Migrations
                 name: "Metadata",
                 table: "Proposals",
                 type: "jsonb",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "BigMapUpdates",
+                table: "OriginationOps",
+                type: "integer",
                 nullable: true);
 
             migrationBuilder.AddColumn<int>(
@@ -298,6 +310,10 @@ namespace Tzkt.Data.Migrations
                 table: "Accounts");
 
             migrationBuilder.DropColumn(
+                name: "BigMapUpdates",
+                table: "TransactionOps");
+
+            migrationBuilder.DropColumn(
                 name: "InternalDelegations",
                 table: "TransactionOps");
 
@@ -324,6 +340,10 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "Metadata",
                 table: "Proposals");
+
+            migrationBuilder.DropColumn(
+                name: "BigMapUpdates",
+                table: "OriginationOps");
 
             migrationBuilder.DropColumn(
                 name: "FirstLevel",
