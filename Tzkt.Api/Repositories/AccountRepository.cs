@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -2805,6 +2806,28 @@ namespace Tzkt.Api.Repositories
                     Value = new RawJson(Micheline.ToJson(row.RawValue)),
                 };
             });
+        }
+
+        public static async Task<Dictionary<int, object>> GetStorages(IDbConnection db, List<int> ids, MichelineFormat format)
+        {
+            if (ids.Count == 0) return null;
+
+            var rows = await db.QueryAsync($@"
+                SELECT ""Id"", ""{((int)format < 2 ? "Json" : "Raw")}Value""
+                FROM ""Storages""
+                WHERE ""Id"" = ANY(@ids)",
+                new { ids });
+
+            return rows.Any()
+                ? rows.ToDictionary(x => (int)x.Id, x => format switch
+                {
+                    MichelineFormat.Json => new RawJson(x.JsonValue),
+                    MichelineFormat.JsonString => x.JsonValue,
+                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(x.RawValue)),
+                    MichelineFormat.RawString => Micheline.ToJson(x.RawValue),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                })
+                : null;
         }
         #endregion
 
