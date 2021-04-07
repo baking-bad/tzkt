@@ -17,7 +17,7 @@ namespace Tzkt.Api.Models
         public Alias Contract { get; set; }
 
         /// <summary>
-        /// Path in the JSON storage to the bigmap
+        /// Path to the bigmap in the contract storage 
         /// </summary>
         public string Path { get; set; }
 

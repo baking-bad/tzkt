@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -928,6 +929,73 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
+        #region diffs
+        public static async Task<Dictionary<int, List<OpBigMap>>> GetBigMapUpdates(IDbConnection db, List<int> ops, bool isTxs, MichelineFormat format)
+        {
+            if (ops.Count == 0) return null;
+
+            var opCol = isTxs ? "TransactionId" : "OriginationId";
+            var fCol = (int)format < 2 ? "Json" : "Raw";
+
+            var rows = await db.QueryAsync($@"
+                SELECT ""BigMapPtr"", ""Action"", ""BigMapKeyId"", ""{fCol}Value"", ""{opCol}"" as ""OpId""
+                FROM ""BigMapUpdates""
+                WHERE ""{opCol}"" = ANY(@ops)
+                ORDER BY ""Id""",
+                new { ops });
+
+            if (!rows.Any()) return null;
+
+            var ptrs = rows
+                .Select(x => (int)x.BigMapPtr)
+                .Distinct()
+                .ToList();
+
+            var bigmaps = (await db.QueryAsync($@"
+                SELECT ""Ptr"", ""StoragePath""
+                FROM ""BigMaps""
+                WHERE ""Ptr"" = ANY(@ptrs)",
+                new { ptrs }))
+                .ToDictionary(x => (int)x.Ptr);
+
+            var keyIds = rows
+                .Where(x => x.BigMapKeyId != null)
+                .Select(x => (int)x.BigMapKeyId)
+                .Distinct()
+                .ToList();
+
+            var keys = keyIds.Count == 0 ? null : (await db.QueryAsync($@"
+                SELECT ""Id"", ""KeyHash"", ""{fCol}Key""
+                FROM ""BigMapKeys""
+                WHERE ""Id"" = ANY(@keyIds)",
+                new { keyIds }))
+                .ToDictionary(x => (int)x.Id);
+
+            var res = new Dictionary<int, List<OpBigMap>>(rows.Count());
+            foreach (var row in rows)
+            {
+                if (!res.TryGetValue((int)row.OpId, out var list))
+                {
+                    list = new List<OpBigMap>();
+                    res.Add((int)row.OpId, list);
+                }
+                list.Add(new OpBigMap
+                {
+                    Id = row.BigMapPtr,
+                    Path = bigmaps[row.BigMapPtr].StoragePath,
+                    Action = BigMapAction(row.Action),
+                    Key = row.BigMapKeyId == null ? null : new OpBigMapKey
+                    {
+                        Hash = keys[row.BigMapKeyId].KeyHash,
+                        Key = FormatKey(keys[row.BigMapKeyId], format),
+                        Value = FormatValue(row, format),
+                    }
+                });
+            }
+            return res;
+        }
+        #endregion
+
         BigMap ReadBigMap(dynamic row, MichelineFormat format)
         {
             return new BigMap
@@ -985,12 +1053,12 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = Times[row.Level],
-                Action = UpdateAction((int)row.Action),
+                Action = BigMapAction((int)row.Action),
                 Value = FormatValue(row, format)
             };
         }
 
-        object FormatKey(dynamic row, MichelineFormat format) => format switch
+        static object FormatKey(dynamic row, MichelineFormat format) => format switch
         {
             MichelineFormat.Json => new RawJson(row.JsonKey),
             MichelineFormat.JsonString => row.JsonKey,
@@ -999,7 +1067,7 @@ namespace Tzkt.Api.Repositories
             _ => null
         };
 
-        object FormatValue(dynamic row, MichelineFormat format) => format switch
+        static object FormatValue(dynamic row, MichelineFormat format) => format switch
         {
             MichelineFormat.Json => new RawJson(row.JsonValue),
             MichelineFormat.JsonString => row.JsonValue,
@@ -1008,11 +1076,13 @@ namespace Tzkt.Api.Repositories
             _ => null
         };
 
-        string UpdateAction(int action) => action switch
+        static string BigMapAction(int action) => action switch
         {
+            0 => BigMapActions.Allocate,
             1 => BigMapActions.AddKey,
             2 => BigMapActions.UpdateKey,
             3 => BigMapActions.RemoveKey,
+            4 => BigMapActions.Remove,
             _ => "unknown"
         };
     }

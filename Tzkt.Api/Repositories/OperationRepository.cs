@@ -3204,6 +3204,10 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
 
+            #region include bigmaps
+            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format);
+            #endregion
+
             return rows.Select(row =>
             {
                 var contract = row.ContractId == null ? null
@@ -3248,6 +3252,7 @@ namespace Tzkt.Api.Repositories
                         MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     },
+                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3282,6 +3287,10 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
+
+            #region include bigmaps
+            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format);
+            #endregion
 
             return rows.Select(row =>
             {
@@ -3327,6 +3336,7 @@ namespace Tzkt.Api.Repositories
                         MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     },
+                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3361,6 +3371,10 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
+
+            #region include bigmaps
+            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format);
+            #endregion
 
             return rows.Select(row =>
             {
@@ -3406,6 +3420,7 @@ namespace Tzkt.Api.Repositories
                         MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     },
+                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3489,9 +3504,26 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            Symbols quote)
+            MichelineFormat format,
+            Symbols quote,
+            bool includeStorage = false,
+            bool includeBigmaps = false)
         {
-            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""OriginationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+            var query = includeStorage
+                   ? $@"
+                    SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
+                    FROM        ""OriginationOps"" AS o
+                    INNER JOIN  ""Blocks"" as b
+                            ON  b.""Level"" = o.""Level""
+                    LEFT  JOIN  ""Storages"" as s
+                            ON  s.""Id"" = o.""StorageId"""
+                   : @"
+                    SELECT      o.*, b.""Hash""
+                    FROM        ""OriginationOps"" AS o
+                    INNER JOIN  ""Blocks"" as b
+                            ON  b.""Level"" = o.""Level""";
+
+            var sql = new SqlBuilder(query)
                 .Filter(anyof, x => x switch
                 {
                     "initiator" => "InitiatorId",
@@ -3522,6 +3554,12 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            #region include bigmaps
+            var updates = includeBigmaps
+                ? await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), false, format)
+                : null;
+            #endregion
 
             return rows.Select(row =>
             {
@@ -3558,6 +3596,15 @@ namespace Tzkt.Api.Repositories
                         Address = contract.Address,
                         Kind = contract.KindString
                     },
+                    Storage = format switch
+                    {
+                        MichelineFormat.Json => row.JsonValue == null ? null : new RawJson(row.JsonValue),
+                        MichelineFormat.JsonString => row.JsonValue,
+                        MichelineFormat.Raw => row.RawValue == null ? null : new RawJson(Micheline.ToJson(row.RawValue)),
+                        MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    },
+                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     Quote = Quotes.Get(quote, row.Level)
@@ -3624,6 +3671,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add((int)format < 2 ? @"st.""JsonValue""" : @"st.""RawValue""");
                         joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""Id"" = o.""StorageId""");
                         break;
+                    case "bigmaps": columns.Add(@"o.""Id"""); break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
@@ -3766,6 +3814,13 @@ namespace Tzkt.Api.Repositories
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             };
                         break;
+                    case "bigmaps":
+                        var ids = rows.Select(x => (int)x.Id).ToList();
+                        var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, false, format);
+                        if (updates != null)
+                            foreach (var row in rows)
+                                result[j++][i] = updates.GetValueOrDefault((int)row.Id);
+                        break;
                     case "status":
                         foreach (var row in rows)
                             result[j++][i] = StatusToString(row.Status);
@@ -3859,6 +3914,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add((int)format < 2 ? @"st.""JsonValue""" : @"st.""RawValue""");
                     joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""Id"" = o.""StorageId""");
                     break;
+                case "bigmaps": columns.Add(@"o.""Id"""); break;
                 case "quote": columns.Add(@"o.""Level"""); break;
             }
 
@@ -3998,6 +4054,13 @@ namespace Tzkt.Api.Repositories
                             _ => throw new Exception("Invalid MichelineFormat value")
                         };
                     break;
+                case "bigmaps":
+                    var ids = rows.Select(x => (int)x.Id).ToList();
+                    var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, false, format);
+                    if (updates != null)
+                        foreach (var row in rows)
+                            result[j++] = updates.GetValueOrDefault((int)row.Id);
+                    break;
                 case "status":
                     foreach (var row in rows)
                         result[j++] = StatusToString(row.Status);
@@ -4064,6 +4127,10 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
 
+            #region include bigmaps
+            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format);
+            #endregion
+
             return rows.Select(row => new TransactionOperation
             {
                 Id = row.Id,
@@ -4104,6 +4171,7 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
+                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4126,6 +4194,10 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
+
+            #region include bigmaps
+            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format);
+            #endregion
 
             return rows.Select(row => new TransactionOperation
             {
@@ -4167,6 +4239,7 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
+                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4189,6 +4262,10 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
+
+            #region include bigmaps
+            var updates = await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format);
+            #endregion
 
             return rows.Select(row => new TransactionOperation
             {
@@ -4230,6 +4307,7 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
+                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4307,7 +4385,8 @@ namespace Tzkt.Api.Repositories
             int limit,
             MichelineFormat format,
             Symbols quote,
-            bool includeStorage = false)
+            bool includeStorage = false,
+            bool includeBigmaps = false)
         {
             #region backward compatibility
             // TODO: remove it asap
@@ -4367,6 +4446,12 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
+            #region include bigmaps
+            var updates = includeBigmaps
+                ? await BigMapsRepository.GetBigMapUpdates(db, rows.Select(x => (int)x.Id).ToList(), true, format)
+                : null;
+            #endregion
+
             var res = rows.Select(row => new TransactionOperation
             {
                 Id = row.Id,
@@ -4407,6 +4492,7 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
+                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4547,6 +4633,7 @@ namespace Tzkt.Api.Repositories
                         });
                         joins.Add(@"LEFT JOIN ""Storages"" as s ON s.""Id"" = o.""StorageId""");
                         break;
+                    case "bigmaps": columns.Add(@"o.""Id"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
@@ -4702,6 +4789,13 @@ namespace Tzkt.Api.Repositories
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             };
                         break;
+                    case "bigmaps":
+                        var ids = rows.Select(x => (int)x.Id).ToList();
+                        var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, true, format);
+                        if (updates != null)
+                            foreach (var row in rows)
+                                result[j++][i] = updates.GetValueOrDefault((int)row.Id);
+                        break;
                     case "status":
                         foreach (var row in rows)
                             result[j++][i] = StatusToString(row.Status);
@@ -4792,6 +4886,7 @@ namespace Tzkt.Api.Repositories
                     });
                     joins.Add(@"LEFT JOIN ""Storages"" as s ON s.""Id"" = o.""StorageId""");
                     break;
+                case "bigmaps": columns.Add(@"o.""Id"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
@@ -4943,6 +5038,13 @@ namespace Tzkt.Api.Repositories
                             MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
                             _ => throw new Exception("Invalid MichelineFormat value")
                         };
+                    break;
+                case "bigmaps":
+                    var ids = rows.Select(x => (int)x.Id).ToList();
+                    var updates = await BigMapsRepository.GetBigMapUpdates(db, ids, true, format);
+                    if (updates != null)
+                        foreach (var row in rows)
+                            result[j++] = updates.GetValueOrDefault((int)row.Id);
                     break;
                 case "status":
                     foreach (var row in rows)

@@ -20,12 +20,13 @@ namespace Tzkt.Api.Models
         public DateTime Timestamp { get; set; }
 
         /// <summary>
-        /// Action with the key
+        /// Action with the key (`add_key`, `update_key`, `remove_key`)
         /// </summary>
         public string Action { get; set; }
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.
+        /// If the action is `remove_key` it will contain be the last non-null value.
         /// </summary>
         public object Value { get; set; }
     }
