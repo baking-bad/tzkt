@@ -24,6 +24,7 @@
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.
+        /// Note, if the key is inactive (removed) it will contain the last non-null value.
         /// </summary>
         public object Value { get; set; }
 

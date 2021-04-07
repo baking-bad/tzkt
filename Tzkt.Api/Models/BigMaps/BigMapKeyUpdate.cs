@@ -2,7 +2,7 @@
 
 namespace Tzkt.Api.Models
 {
-    public class BigMapUpdate
+    public class BigMapKeyUpdate
     {
         /// <summary>
         /// Internal Id, can be used for pagination
@@ -26,7 +26,7 @@ namespace Tzkt.Api.Models
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.
-        /// If the action is `remove_key` it will contain be the last non-null value.
+        /// Note, if the action is `remove_key` it will contain the last non-null value.
         /// </summary>
         public object Value { get; set; }
     }

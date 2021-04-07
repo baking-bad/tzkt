@@ -594,7 +594,7 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get bigmap key history
+        /// Get bigmap key updates
         /// </summary>
         /// <remarks>
         /// Returns updates history for the specified bigmap key.
@@ -610,8 +610,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
-        [HttpGet("{address}/bigmaps/{name}/keys/{key}/history")]
-        public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetKeyHistory(
+        [HttpGet("{address}/bigmaps/{name}/keys/{key}/updates")]
+        public async Task<ActionResult<IEnumerable<BigMapKeyUpdate>>> GetKeyUpdates(
             [Address] string address,
             string name,
             string key,
@@ -622,11 +622,11 @@ namespace Tzkt.Api.Controllers
         {
             var acc = await Accounts.GetRawAsync(address);
             if (acc is not Services.Cache.RawContract contract)
-                return Ok(Enumerable.Empty<BigMapUpdate>());
+                return Ok(Enumerable.Empty<BigMapKeyUpdate>());
 
             var ptr = await BigMaps.GetPtr(contract.Id, name);
             if (ptr == null)
-                return Ok(Enumerable.Empty<BigMapUpdate>());
+                return Ok(Enumerable.Empty<BigMapKeyUpdate>());
 
             #region validate
             if (sort != null && !sort.Validate("id"))

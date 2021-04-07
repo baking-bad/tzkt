@@ -220,7 +220,7 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get bigmap key history
+        /// Get bigmap key updates
         /// </summary>
         /// <remarks>
         /// Returns updates history for the specified bigmap key.
@@ -233,8 +233,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
-        [HttpGet("{id:int}/keys/{key}/history")]
-        public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetKeyHistory(
+        [HttpGet("{id:int}/keys/{key}/updates")]
+        public async Task<ActionResult<IEnumerable<BigMapKeyUpdate>>> GetKeyUpdates(
             [Min(0)] int id,
             string key,
             SortParameter sort,

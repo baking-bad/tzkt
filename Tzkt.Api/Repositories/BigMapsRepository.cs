@@ -874,7 +874,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region bigmap key updates
-        public async Task<IEnumerable<BigMapUpdate>> GetKeyUpdates(
+        public async Task<IEnumerable<BigMapKeyUpdate>> GetKeyUpdates(
             int ptr,
             string key,
             SortParameter sort,
@@ -898,10 +898,10 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             var rows = await db.QueryAsync(sql.Query, sql.Params);
-            return rows.Select(row => (BigMapUpdate)ReadBigMapUpdate(row, micheline));
+            return rows.Select(row => (BigMapKeyUpdate)ReadBigMapUpdate(row, micheline));
         }
 
-        public async Task<IEnumerable<BigMapUpdate>> GetKeyByHashUpdates(
+        public async Task<IEnumerable<BigMapKeyUpdate>> GetKeyByHashUpdates(
             int ptr,
             string hash,
             SortParameter sort,
@@ -925,12 +925,12 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             var rows = await db.QueryAsync(sql.Query, sql.Params);
-            return rows.Select(row => (BigMapUpdate)ReadBigMapUpdate(row, micheline));
+            return rows.Select(row => (BigMapKeyUpdate)ReadBigMapUpdate(row, micheline));
         }
         #endregion
 
         #region diffs
-        public static async Task<Dictionary<int, List<OpBigMap>>> GetBigMapUpdates(IDbConnection db, List<int> ops, bool isTxs, MichelineFormat format)
+        public static async Task<Dictionary<int, List<BigMapDiff>>> GetBigMapUpdates(IDbConnection db, List<int> ops, bool isTxs, MichelineFormat format)
         {
             if (ops.Count == 0) return null;
 
@@ -971,20 +971,20 @@ namespace Tzkt.Api.Repositories
                 new { keyIds }))
                 .ToDictionary(x => (int)x.Id);
 
-            var res = new Dictionary<int, List<OpBigMap>>(rows.Count());
+            var res = new Dictionary<int, List<BigMapDiff>>(rows.Count());
             foreach (var row in rows)
             {
                 if (!res.TryGetValue((int)row.OpId, out var list))
                 {
-                    list = new List<OpBigMap>();
+                    list = new List<BigMapDiff>();
                     res.Add((int)row.OpId, list);
                 }
-                list.Add(new OpBigMap
+                list.Add(new BigMapDiff
                 {
-                    Id = row.BigMapPtr,
+                    Bigmap = row.BigMapPtr,
                     Path = bigmaps[row.BigMapPtr].StoragePath,
                     Action = BigMapAction(row.Action),
-                    Key = row.BigMapKeyId == null ? null : new OpBigMapKey
+                    Key = row.BigMapKeyId == null ? null : new BigMapDiffKey
                     {
                         Hash = keys[row.BigMapKeyId].KeyHash,
                         Key = FormatKey(keys[row.BigMapKeyId], format),
@@ -1046,9 +1046,9 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        BigMapUpdate ReadBigMapUpdate(dynamic row, MichelineFormat format)
+        BigMapKeyUpdate ReadBigMapUpdate(dynamic row, MichelineFormat format)
         {
-            return new BigMapUpdate
+            return new BigMapKeyUpdate
             {
                 Id = row.Id,
                 Level = row.Level,

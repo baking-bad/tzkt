@@ -1,11 +1,11 @@
 ﻿namespace Tzkt.Api.Models
 {
-    public class OpBigMap
+    public class BigMapDiff
     {
         /// <summary>
         /// Bigmap Id
         /// </summary>
-        public int Id { get; set; }
+        public int Bigmap { get; set; }
 
         /// <summary>
         /// Path to the bigmap in the contract storage
@@ -19,13 +19,12 @@
 
         /// <summary>
         /// Affected key.
-        /// If the action is `remove_key` the key will contain the last non-null value.
         /// If the action is `allocate` or `remove` the key will be `null`.
         /// </summary>
-        public OpBigMapKey Key { get; set; }
+        public BigMapDiffKey Key { get; set; }
     }
 
-    public class OpBigMapKey
+    public class BigMapDiffKey
     {
         /// <summary>
         /// Key hash
@@ -39,6 +38,7 @@
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.
+        /// Note, if the action is `remove_key` it will contain the last non-null value.
         /// </summary>
         public object Value { get; set; }
     }
