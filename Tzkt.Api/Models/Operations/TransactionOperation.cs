@@ -113,7 +113,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// List of bigmap updates (aka big_map_diffs) caused by the transaction.
         /// </summary>
-        public List<BigMapDiff> Bigmaps { get; set; }
+        public List<BigMapDiff> Diffs { get; set; }
 
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,

@@ -3208,8 +3208,8 @@ namespace Tzkt.Api.Repositories
                 format);
             #endregion
 
-            #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
                     .Select(x => (int)x.Id)
                     .ToList(),
@@ -3254,7 +3254,7 @@ namespace Tzkt.Api.Repositories
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3294,8 +3294,8 @@ namespace Tzkt.Api.Repositories
                 format);
             #endregion
 
-            #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
                     .Select(x => (int)x.Id)
                     .ToList(),
@@ -3340,7 +3340,7 @@ namespace Tzkt.Api.Repositories
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3380,8 +3380,8 @@ namespace Tzkt.Api.Repositories
                 format);
             #endregion
 
-            #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
                     .Select(x => (int)x.Id)
                     .ToList(),
@@ -3426,7 +3426,7 @@ namespace Tzkt.Api.Repositories
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3562,9 +3562,9 @@ namespace Tzkt.Api.Repositories
                 : null;
             #endregion
 
-            #region include bigmaps
-            var updates = includeBigmaps
-                ? await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = includeBigmaps
+                ? await BigMapsRepository.GetBigMapDiffs(db,
                     rows.Where(x => x.BigMapUpdates != null)
                         .Select(x => (int)x.Id)
                         .ToList(),
@@ -3609,7 +3609,7 @@ namespace Tzkt.Api.Repositories
                         Kind = contract.KindString
                     },
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     Quote = Quotes.Get(quote, row.Level)
@@ -3673,7 +3673,7 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                         break;
                     case "storage": columns.Add(@"o.""StorageId"""); break;
-                    case "bigmaps":
+                    case "diffs":
                         columns.Add(@"o.""Id""");
                         columns.Add(@"o.""BigMapUpdates""");
                         break;
@@ -3819,16 +3819,16 @@ namespace Tzkt.Api.Repositories
                             foreach (var row in rows)
                                 result[j++][i] = row.StorageId == null ? null : storages[row.StorageId];
                         break;
-                    case "bigmaps":
-                        var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                    case "diffs":
+                        var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                             rows.Where(x => x.BigMapUpdates != null)
                                 .Select(x => (int)x.Id)
                                 .ToList(),
                             false,
                             format);
-                        if (updates != null)
+                        if (diffs != null)
                             foreach (var row in rows)
-                                result[j++][i] = updates.GetValueOrDefault((int)row.Id);
+                                result[j++][i] = diffs.GetValueOrDefault((int)row.Id);
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -3920,7 +3920,7 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                     break;
                 case "storage": columns.Add(@"o.""StorageId"""); break;
-                case "bigmaps":
+                case "diffs":
                     columns.Add(@"o.""Id""");
                     columns.Add(@"o.""BigMapUpdates""");
                     break;
@@ -4063,16 +4063,16 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++] = row.StorageId == null ? null : storages[row.StorageId];
                     break;
-                case "bigmaps":
-                    var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                case "diffs":
+                    var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                         rows.Where(x => x.BigMapUpdates != null)
                             .Select(x => (int)x.Id)
                             .ToList(),
                         false,
                         format);
-                    if (updates != null)
+                    if (diffs != null)
                         foreach (var row in rows)
-                            result[j++] = updates.GetValueOrDefault((int)row.Id);
+                            result[j++] = diffs.GetValueOrDefault((int)row.Id);
                     break;
                 case "status":
                     foreach (var row in rows)
@@ -4147,8 +4147,8 @@ namespace Tzkt.Api.Repositories
                 format);
             #endregion
 
-            #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
                     .Select(x => (int)x.Id)
                     .ToList(),
@@ -4189,7 +4189,7 @@ namespace Tzkt.Api.Repositories
                     }
                 },
                 Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4220,8 +4220,8 @@ namespace Tzkt.Api.Repositories
                 format);
             #endregion
 
-            #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
                     .Select(x => (int)x.Id)
                     .ToList(),
@@ -4262,7 +4262,7 @@ namespace Tzkt.Api.Repositories
                     }
                 },
                 Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4293,8 +4293,8 @@ namespace Tzkt.Api.Repositories
                 format);
             #endregion
 
-            #region include bigmaps
-            var updates = await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
                     .Select(x => (int)x.Id)
                     .ToList(),
@@ -4335,7 +4335,7 @@ namespace Tzkt.Api.Repositories
                     }
                 },
                 Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4475,9 +4475,9 @@ namespace Tzkt.Api.Repositories
                 : null;
             #endregion
 
-            #region include bigmaps
-            var updates = includeBigmaps
-                ? await BigMapsRepository.GetBigMapUpdates(db,
+            #region include diffs
+            var diffs = includeBigmaps
+                ? await BigMapsRepository.GetBigMapDiffs(db,
                     rows.Where(x => x.BigMapUpdates != null)
                         .Select(x => (int)x.Id)
                         .ToList(),
@@ -4519,7 +4519,7 @@ namespace Tzkt.Api.Repositories
                     }
                 },
                 Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                Bigmaps = updates?.GetValueOrDefault((int)row.Id),
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4650,7 +4650,7 @@ namespace Tzkt.Api.Repositories
                         });
                         break;
                     case "storage": columns.Add(@"o.""StorageId"""); break;
-                    case "bigmaps":
+                    case "diffs":
                         columns.Add(@"o.""Id""");
                         columns.Add(@"o.""BigMapUpdates""");
                         break;
@@ -4809,16 +4809,16 @@ namespace Tzkt.Api.Repositories
                             foreach (var row in rows)
                                 result[j++][i] = row.StorageId == null ? null : storages[row.StorageId];
                         break;
-                    case "bigmaps":
-                        var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                    case "diffs":
+                        var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                             rows.Where(x => x.BigMapUpdates != null)
                                 .Select(x => (int)x.Id)
                                 .ToList(),
                             true,
                             format);
-                        if (updates != null)
+                        if (diffs != null)
                             foreach (var row in rows)
-                                result[j++][i] = updates.GetValueOrDefault((int)row.Id);
+                                result[j++][i] = diffs.GetValueOrDefault((int)row.Id);
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -4900,7 +4900,7 @@ namespace Tzkt.Api.Repositories
                     });
                     break;
                 case "storage": columns.Add(@"o.""StorageId"""); break;
-                case "bigmaps":
+                case "diffs":
                     columns.Add(@"o.""Id""");
                     columns.Add(@"o.""BigMapUpdates""");
                     break;
@@ -5056,16 +5056,16 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++] = row.StorageId == null ? null : storages[row.StorageId];
                     break;
-                case "bigmaps":
-                    var updates = await BigMapsRepository.GetBigMapUpdates(db,
+                case "diffs":
+                    var diffs = await BigMapsRepository.GetBigMapDiffs(db,
                         rows.Where(x => x.BigMapUpdates != null)
                             .Select(x => (int)x.Id)
                             .ToList(),
                         true,
                         format);
-                    if (updates != null)
+                    if (diffs != null)
                         foreach (var row in rows)
-                            result[j++] = updates.GetValueOrDefault((int)row.Id);
+                            result[j++] = diffs.GetValueOrDefault((int)row.Id);
                     break;
                 case "status":
                     foreach (var row in rows)

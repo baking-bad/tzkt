@@ -42,10 +42,12 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of bigmaps.
         /// </remarks>
         /// <param name="contract">Filters bigmaps by smart contract address.</param>
+        /// <param name="path">Filters bigmaps path in the contract storage.</param>
+        /// <param name="tags">Filters bigmaps tags (`token_metadata` - tzip-12, `metadata` - tzip-16).</param>
         /// <param name="active">Filters bigmaps by status: `true` - active, `false` - removed.</param>
         /// <param name="lastLevel">Filters bigmaps by the last update level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
+        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `ptr`, `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - Micheline</param>
@@ -53,6 +55,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
             AccountParameter contract,
+            StringParameter path,
+            BigMapTagsParameter tags,
             bool? active,
             Int32Parameter lastLevel,
             SelectParameter select,
@@ -62,33 +66,74 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "firstLevel", "lastLevel", "totalKeys", "activeKeys", "updates"))
+            if (sort != null && !sort.Validate("id", "ptr", "firstLevel", "lastLevel", "totalKeys", "activeKeys", "updates"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, micheline));
+                return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, micheline));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Values[0], micheline));
+                    return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Values[0], micheline));
                 else
-                    return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Values, micheline));
+                    return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Values, micheline));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Fields[0], micheline));
+                    return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Fields[0], micheline));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await BigMaps.Get(contract, active, lastLevel, sort, offset, limit, select.Fields, micheline)
+                        Rows = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Fields, micheline)
                     });
                 }
             }
+        }
+
+        /// <summary>
+        /// Get bigmap updates
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of all bigmap updates.
+        /// </remarks>
+        /// <param name="bigmap">Filters updates by bigmap ptr</param>
+        /// <param name="path">Filters updates by bigmap path</param>
+        /// <param name="contract">Filters updates by bigmap contract</param>
+        /// <param name="tags">Filters updates by bigmap tags</param>
+        /// <param name="action">Filters updates by action</param>
+        /// <param name="level">Filters updates by level</param>
+        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `ptr`, `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - Micheline</param>
+        /// <returns></returns>
+        [HttpGet("updates")]
+        public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetBigMapUpdates(
+            Int32Parameter bigmap,
+            StringParameter path,
+            AccountParameter contract,
+            BigMapTagsParameter tags,
+            BigMapActionParameter action,
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (path == null && contract == null && tags == null)
+                return Ok(await BigMaps.GetUpdates(bigmap, action, level, sort, offset, limit, micheline));
+
+            return Ok(await BigMaps.GetUpdates(bigmap, path, contract, action, tags, level, sort, offset, limit, micheline));
         }
 
         /// <summary>
@@ -285,7 +330,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{id:int}/historical_keys/{level:int}")]
-        public async Task<ActionResult<IEnumerable<BigMapKeyShort>>> GetHistoricalKeys(
+        public async Task<ActionResult<IEnumerable<BigMapKeyHistorical>>> GetHistoricalKeys(
             [Min(0)] int id,
             [Min(0)] int level,
             bool? active,
@@ -340,7 +385,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{id:int}/historical_keys/{level:int}/{key}")]
-        public async Task<ActionResult<BigMapKeyShort>> GetKey(
+        public async Task<ActionResult<BigMapKeyHistorical>> GetKey(
             [Min(0)] int id,
             [Min(0)] int level,
             string key,

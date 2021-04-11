@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api.Models
 {
-    public class BigMapKey
+    public class BigMapKeyHistorical
     {
         /// <summary>
         /// Internal Id, can be used for pagination
@@ -27,20 +27,5 @@
         /// Note, if the key is inactive (removed) it will contain the last non-null value.
         /// </summary>
         public object Value { get; set; }
-
-        /// <summary>
-        /// Level of the block where the bigmap key was seen first time
-        /// </summary>
-        public int FirstLevel { get; set; }
-
-        /// <summary>
-        /// Level of the block where the bigmap key was seen last time
-        /// </summary>
-        public int LastLevel { get; set; }
-
-        /// <summary>
-        /// Total number of actions with the bigmap key
-        /// </summary>
-        public int Updates { get; set; }
     }
 }

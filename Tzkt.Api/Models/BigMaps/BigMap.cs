@@ -7,9 +7,9 @@ namespace Tzkt.Api.Models
     public class BigMap
     {
         /// <summary>
-        /// Bigmap Id
+        /// Bigmap pointer
         /// </summary>
-        public int Id { get; set; }
+        public int Ptr { get; set; }
 
         /// <summary>
         /// Smart contract in which's storage the bigmap is allocated
@@ -22,7 +22,12 @@ namespace Tzkt.Api.Models
         public string Path { get; set; }
 
         /// <summary>
-        /// Bigmap status: `true` - active, `false` - removed
+        /// List of tags (`token_metadata` - tzip-12, `metadata` - tzip-16, `null` - no tags)
+        /// </summary>
+        public List<string> Tags => GetTagsList(_Tags);
+
+        /// <summary>
+        /// Bigmap status (`true` - active, `false` - removed)
         /// </summary>
         public bool Active { get; set; }
 
@@ -42,7 +47,7 @@ namespace Tzkt.Api.Models
         public int TotalKeys { get; set; }
 
         /// <summary>
-        /// Total number of active (current) keys
+        /// Total number of currently active keys
         /// </summary>
         public int ActiveKeys { get; set; }
 
@@ -60,11 +65,6 @@ namespace Tzkt.Api.Models
         /// Bigmap value type as JSON schema or Micheline, depending on the `micheline` query parameter.
         /// </summary>
         public object ValueType { get; set; }
-
-        /// <summary>
-        /// List of tags (`token_metadata` - tzip-12, `metadata` - tzip-16, `null` - no tags)
-        /// </summary>
-        public List<string> Tags => GetTagsList(_Tags);
 
         [JsonIgnore]
         public BigMapTag _Tags { get; set; }

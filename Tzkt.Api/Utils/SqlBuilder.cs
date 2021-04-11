@@ -129,6 +129,47 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, BigMapActionParameter action)
+        {
+            if (action == null) return this;
+
+            if (action.Eq != null)
+                AppendFilter($@"""{column}"" = {action.Eq}");
+
+            if (action.Ne != null)
+                AppendFilter($@"""{column}"" != {action.Ne}");
+
+            if (action.In != null)
+            {
+                AppendFilter($@"""{column}"" = ANY (@p{Counter})");
+                Params.Add($"p{Counter++}", action.In);
+            }
+
+            if (action.Ni != null && action.Ni.Count > 0)
+            {
+                AppendFilter($@"NOT (""{column}"" = ANY (@p{Counter}))");
+                Params.Add($"p{Counter++}", action.Ni);
+            }
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, BigMapTagsParameter tags)
+        {
+            if (tags == null) return this;
+
+            if (tags.Eq != null)
+                AppendFilter($@"""{column}"" = {tags.Eq}");
+
+            if (tags.Any != null)
+                AppendFilter($@"""{column}"" & {tags.Any} > 0");
+
+            if (tags.All != null)
+                AppendFilter($@"""{column}"" & {tags.All} = {tags.All}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, MigrationKindParameter kind)
         {
             if (kind == null) return this;

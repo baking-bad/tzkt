@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -497,6 +498,154 @@ namespace Tzkt.Api
                             return false;
                         }
                     }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetBigMapAction(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = (bindingContext.ValueProvider as CompositeValueProvider)?
+                .FirstOrDefault(x => x is QueryStringValueProvider)?
+                .GetValue(name) ?? ValueProviderResult.None;
+            
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    switch (valueObject.FirstValue)
+                    {
+                        case BigMapActions.Allocate:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.Allocate;
+                            break;
+                        case BigMapActions.AddKey:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.AddKey;
+                            break;
+                        case BigMapActions.UpdateKey:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.UpdateKey;
+                            break;
+                        case BigMapActions.RemoveKey:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.RemoveKey;
+                            break;
+                        case BigMapActions.Remove:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.Remove;
+                            break;
+                        default:
+                            bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap action.");
+                            return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetBigMapActionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = (bindingContext.ValueProvider as CompositeValueProvider)?
+                .FirstOrDefault(x => x is QueryStringValueProvider)?
+                .GetValue(name) ?? ValueProviderResult.None;
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        switch (rawValue)
+                        {
+                            case BigMapActions.Allocate:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.Allocate);
+                                break;
+                            case BigMapActions.AddKey:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.AddKey);
+                                break;
+                            case BigMapActions.UpdateKey:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.UpdateKey);
+                                break;
+                            case BigMapActions.RemoveKey:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.RemoveKey);
+                                break;
+                            case BigMapActions.Remove:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.Remove);
+                                break;
+                            default:
+                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid bigmap action.");
+                                return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetBigMapTags(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = (int)Data.Models.BigMapTag.None;
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        switch (rawValue)
+                        {
+                            case BigMapTags.Metadata:
+                                hasValue = true;
+                                result |= (int)Data.Models.BigMapTag.Metadata;
+                                break;
+                            case BigMapTags.TokenMetadata:
+                                hasValue = true;
+                                result |= (int)Data.Models.BigMapTag.TokenMetadata;
+                                break;
+                            default:
+                                bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap tags.");
+                                return false;
+                        }
+                    }
+
+                    
                 }
             }
 

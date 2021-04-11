@@ -395,6 +395,7 @@ namespace Tzkt.Api.Controllers
         /// Returns all active bigmaps allocated in the contract storage.
         /// </remarks>
         /// <param name="address">Contract address</param>
+        /// <param name="tags">Filters bigmaps tags (`token_metadata` - tzip-12, `metadata` - tzip-16).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object.
         /// If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
@@ -405,6 +406,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/bigmaps")]
         public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
             [Address] string address,
+            BigMapTagsParameter tags,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -423,25 +425,25 @@ namespace Tzkt.Api.Controllers
             var contract = new AccountParameter { Eq = rawContract.Id };
 
             if (select == null)
-                return Ok(await BigMaps.Get(contract, true, null, sort, offset, limit, micheline));
+                return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, micheline));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BigMaps.Get(contract, true, null, sort, offset, limit, select.Values[0], micheline));
+                    return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Values[0], micheline));
                 else
-                    return Ok(await BigMaps.Get(contract, true, null, sort, offset, limit, select.Values, micheline));
+                    return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Values, micheline));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BigMaps.Get(contract, true, null, sort, offset, limit, select.Fields[0], micheline));
+                    return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Fields[0], micheline));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await BigMaps.Get(contract, true, null, sort, offset, limit, select.Fields, micheline)
+                        Rows = await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Fields, micheline)
                     });
                 }
             }
@@ -674,7 +676,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}")]
-        public async Task<ActionResult<IEnumerable<BigMapKeyShort>>> GetHistoricalKeys(
+        public async Task<ActionResult<IEnumerable<BigMapKeyHistorical>>> GetHistoricalKeys(
             [Address] string address,
             string name,
             [Min(0)] int level,
@@ -689,11 +691,11 @@ namespace Tzkt.Api.Controllers
         {
             var acc = await Accounts.GetRawAsync(address);
             if (acc is not Services.Cache.RawContract contract)
-                return Ok(Enumerable.Empty<BigMapKeyShort>());
+                return Ok(Enumerable.Empty<BigMapKeyHistorical>());
 
             var ptr = await BigMaps.GetPtr(contract.Id, name);
             if (ptr == null)
-                return Ok(Enumerable.Empty<BigMapKeyShort>());
+                return Ok(Enumerable.Empty<BigMapKeyHistorical>());
 
             #region validate
             if (sort != null && !sort.Validate("id"))
@@ -741,7 +743,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}/{key}")]
-        public async Task<ActionResult<BigMapKeyShort>> GetKey(
+        public async Task<ActionResult<BigMapKeyHistorical>> GetKey(
             [Address] string address,
             string name,
             [Min(0)] int level,

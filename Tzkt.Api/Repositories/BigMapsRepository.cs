@@ -102,6 +102,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<BigMap>> Get(
             AccountParameter contract,
+            StringParameter path,
+            BigMapTagsParameter tags,
             bool? active,
             Int32Parameter lastLevel,
             SortParameter sort,
@@ -111,10 +113,13 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""BigMaps""")
                 .Filter("ContractId", contract)
+                .Filter("StoragePath", path)
+                .Filter("Tags", tags)
                 .Filter("Active", active)
                 .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
+                    "ptr" => ("Ptr", "Ptr"),
                     "firstLevel" => ("Id", "FirstLevel"),
                     "lastLevel" => ("LastLevel", "LastLevel"),
                     "totalKeys" => ("TotalKeys", "TotalKeys"),
@@ -131,6 +136,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> Get(
             AccountParameter contract,
+            StringParameter path,
+            BigMapTagsParameter tags,
             bool? active,
             Int32Parameter lastLevel,
             SortParameter sort,
@@ -144,7 +151,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Ptr"""); break;
+                    case "ptr": columns.Add(@"""Ptr"""); break;
                     case "contract": columns.Add(@"""ContractId"""); break;
                     case "path": columns.Add(@"""StoragePath"""); break;
                     case "active": columns.Add(@"""Active"""); break;
@@ -164,10 +171,13 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMaps""")
                 .Filter("ContractId", contract)
+                .Filter("StoragePath", path)
+                .Filter("Tags", tags)
                 .Filter("Active", active)
                 .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
+                    "ptr" => ("Ptr", "Ptr"),
                     "firstLevel" => ("Id", "FirstLevel"),
                     "lastLevel" => ("LastLevel", "LastLevel"),
                     "totalKeys" => ("TotalKeys", "TotalKeys"),
@@ -187,7 +197,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
-                    case "id":
+                    case "ptr":
                         foreach (var row in rows)
                             result[j++][i] = row.Ptr;
                         break;
@@ -247,6 +257,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> Get(
             AccountParameter contract,
+            StringParameter path,
+            BigMapTagsParameter tags,
             bool? active,
             Int32Parameter lastLevel,
             SortParameter sort,
@@ -258,7 +270,7 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(1);
             switch (field)
             {
-                case "id": columns.Add(@"""Ptr"""); break;
+                case "ptr": columns.Add(@"""Ptr"""); break;
                 case "contract": columns.Add(@"""ContractId"""); break;
                 case "path": columns.Add(@"""StoragePath"""); break;
                 case "active": columns.Add(@"""Active"""); break;
@@ -277,10 +289,13 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMaps""")
                 .Filter("ContractId", contract)
+                .Filter("StoragePath", path)
+                .Filter("Tags", tags)
                 .Filter("Active", active)
                 .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => x switch
                 {
+                    "ptr" => ("Ptr", "Ptr"),
                     "firstLevel" => ("Id", "FirstLevel"),
                     "lastLevel" => ("LastLevel", "LastLevel"),
                     "totalKeys" => ("TotalKeys", "TotalKeys"),
@@ -298,7 +313,7 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
-                case "id":
+                case "ptr":
                     foreach (var row in rows)
                         result[j++] = row.Ptr;
                     break;
@@ -608,7 +623,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region historical keys
-        async Task<BigMapKeyShort> GetHistoricalKey(
+        async Task<BigMapKeyHistorical> GetHistoricalKey(
             BigMapKey key,
             int level,
             MichelineFormat micheline)
@@ -617,7 +632,7 @@ namespace Tzkt.Api.Repositories
                 return null;
 
             if (level > key.LastLevel)
-                return new BigMapKeyShort
+                return new BigMapKeyHistorical
                 {
                     Id = key.Id,
                     Hash = key.Hash,
@@ -640,7 +655,7 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
-            return new BigMapKeyShort
+            return new BigMapKeyHistorical
             {
                 Id = key.Id,
                 Hash = key.Hash,
@@ -650,7 +665,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<BigMapKeyShort> GetHistoricalKey(
+        public async Task<BigMapKeyHistorical> GetHistoricalKey(
             int ptr,
             int level,
             string key,
@@ -659,7 +674,7 @@ namespace Tzkt.Api.Repositories
             return await GetHistoricalKey(await GetKey(ptr, key, micheline), level, micheline);
         }
 
-        public async Task<BigMapKeyShort> GetHistoricalKeyByHash(
+        public async Task<BigMapKeyHistorical> GetHistoricalKeyByHash(
             int ptr,
             int level,
             string hash,
@@ -668,7 +683,7 @@ namespace Tzkt.Api.Repositories
             return await GetHistoricalKey(await GetKeyByHash(ptr, hash, micheline), level, micheline);
         }
 
-        public async Task<IEnumerable<BigMapKeyShort>> GetHistoricalKeys(
+        public async Task<IEnumerable<BigMapKeyHistorical>> GetHistoricalKeys(
             int ptr,
             int level,
             bool? active,
@@ -703,7 +718,7 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            return rows.Select(row => (BigMapKeyShort)ReadBigMapKeyShort(row, micheline));
+            return rows.Select(row => (BigMapKeyHistorical)ReadBigMapKeyShort(row, micheline));
         }
 
         public async Task<object[][]> GetHistoricalKeys(
@@ -929,8 +944,165 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
+        #region bigmap updates
+        public async Task<IEnumerable<BigMapUpdate>> GetUpdates(
+            Int32Parameter ptr,
+            BigMapActionParameter action,
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            MichelineFormat micheline)
+        {
+            var fCol = (int)micheline < 2 ? "Json" : "Raw";
+
+            var sql = new SqlBuilder($@"SELECT ""Id"", ""BigMapPtr"", ""Action"", ""Level"", ""BigMapKeyId"", ""{fCol}Value"" FROM ""BigMapUpdates""")
+                .Filter("BigMapPtr", ptr)
+                .Filter("Action", action)
+                .Filter("Level", level)
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "level" => ("Id", "Level"),
+                    _ => ("Id", "Id")
+                });
+
+            using var db = GetConnection();
+            var updateRows = await db.QueryAsync(sql.Query, sql.Params);
+            if (!updateRows.Any())
+                return Enumerable.Empty<BigMapUpdate>();
+
+            #region fetch keys
+            var keyIds = updateRows
+                .Where(x => x.BigMapKeyId != null)
+                .Select(x => (int)x.BigMapKeyId)
+                .Distinct()
+                .ToList();
+
+            var keyRows = keyIds.Any()
+                ? (await db.QueryAsync($@"
+                    SELECT ""Id"", ""KeyHash"", ""{fCol}Key"" FROM ""BigMapKeys""
+                    WHERE ""Id"" = ANY(@keyIds)",
+                    new { keyIds })).ToDictionary(x => (int)x.Id)
+                : null;
+            #endregion
+
+            #region fetch bigmaps
+            var bigmapPtrs = updateRows
+                .Select(x => (int)x.BigMapPtr)
+                .Distinct()
+                .ToList();
+
+            var bigmapRows = (await db.QueryAsync($@"
+                SELECT ""Ptr"", ""ContractId"", ""StoragePath"", ""Tags"" FROM ""BigMaps""
+                WHERE ""Ptr"" = ANY(@bigmapPtrs)",
+                new { bigmapPtrs })).ToDictionary(x => (int)x.Ptr);
+            #endregion
+
+            return updateRows.Select(row =>
+            {
+                var bigmap = bigmapRows[(int)row.BigMapPtr];
+                var key = row.BigMapKeyId == null ? null : keyRows[(int)row.BigMapKeyId];
+
+                return new BigMapUpdate
+                {
+                    Id = row.Id,
+                    Action = BigMapAction((int)row.Action),
+                    Bigmap = row.BigMapPtr,
+                    Level = row.Level,
+                    Timestamp = Times[row.Level],
+                    Contract = Accounts.GetAlias(bigmap.ContractId),
+                    Path = bigmap.StoragePath,
+                    _Tags = (Data.Models.BigMapTag)bigmap.Tags,
+                    Content = key == null ? null : new BigMapKeyShort
+                    {
+                        Hash = key.KeyHash,
+                        Key = FormatKey(key, micheline),
+                        Value = FormatValue(row, micheline)
+                    }
+
+                };
+            });
+        }
+
+        public async Task<IEnumerable<BigMapUpdate>> GetUpdates(
+            Int32Parameter ptr,
+            StringParameter path,
+            AccountParameter contract,
+            BigMapActionParameter action,
+            BigMapTagsParameter tags,
+            Int32Parameter level,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            MichelineFormat micheline)
+        {
+            var fCol = (int)micheline < 2 ? "Json" : "Raw";
+
+            var sql = new SqlBuilder($@"
+                SELECT  uu.""Id"", uu.""BigMapPtr"", uu.""Action"", uu.""Level"", uu.""BigMapKeyId"", uu.""{fCol}Value"",
+                        bb.""ContractId"", bb.""StoragePath"", bb.""Tags""
+                FROM ""BigMapUpdates"" as uu
+                LEFT JOIN ""BigMaps"" as bb on bb.""Ptr"" = uu.""BigMapPtr""")
+                .Filter("BigMapPtr", ptr)
+                .Filter("StoragePath", path)
+                .Filter("Action", action)
+                .Filter("Tags", tags)
+                .Filter("ContractId", contract)
+                .Filter("Level", level)
+                .Take(sort, offset, limit, x => x switch
+                {
+                    "level" => ("Id", "Level"),
+                    _ => ("Id", "Id")
+                });
+
+            using var db = GetConnection();
+            var updateRows = await db.QueryAsync(sql.Query, sql.Params);
+            if (!updateRows.Any())
+                return Enumerable.Empty<BigMapUpdate>();
+
+            #region fetch keys
+            var keyIds = updateRows
+                .Where(x => x.BigMapKeyId != null)
+                .Select(x => (int)x.BigMapKeyId)
+                .Distinct()
+                .ToList();
+
+            var keyRows = keyIds.Any()
+                ? (await db.QueryAsync($@"
+                    SELECT ""Id"", ""KeyHash"", ""{fCol}Key"" FROM ""BigMapKeys""
+                    WHERE ""Id"" = ANY(@keyIds)",
+                    new { keyIds })).ToDictionary(x => (int)x.Id)
+                : null;
+            #endregion
+
+            return updateRows.Select(row =>
+            {
+                var key = row.BigMapKeyId == null ? null : keyRows[(int)row.BigMapKeyId];
+
+                return new BigMapUpdate
+                {
+                    Id = row.Id,
+                    Action = BigMapAction((int)row.Action),
+                    Bigmap = row.BigMapPtr,
+                    Level = row.Level,
+                    Timestamp = Times[row.Level],
+                    Contract = Accounts.GetAlias(row.ContractId),
+                    Path = row.StoragePath,
+                    _Tags = (Data.Models.BigMapTag)row.Tags,
+                    Content = key == null ? null : new BigMapKeyShort
+                    {
+                        Hash = key.KeyHash,
+                        Key = FormatKey(key, micheline),
+                        Value = FormatValue(row, micheline)
+                    }
+
+                };
+            });
+        }
+        #endregion
+
         #region diffs
-        public static async Task<Dictionary<int, List<BigMapDiff>>> GetBigMapUpdates(IDbConnection db, List<int> ops, bool isTxs, MichelineFormat format)
+        public static async Task<Dictionary<int, List<BigMapDiff>>> GetBigMapDiffs(IDbConnection db, List<int> ops, bool isTxs, MichelineFormat format)
         {
             if (ops.Count == 0) return null;
 
@@ -984,7 +1156,7 @@ namespace Tzkt.Api.Repositories
                     Bigmap = row.BigMapPtr,
                     Path = bigmaps[row.BigMapPtr].StoragePath,
                     Action = BigMapAction(row.Action),
-                    Key = row.BigMapKeyId == null ? null : new BigMapDiffKey
+                    Content = row.BigMapKeyId == null ? null : new BigMapKeyShort
                     {
                         Hash = keys[row.BigMapKeyId].KeyHash,
                         Key = FormatKey(keys[row.BigMapKeyId], format),
@@ -1000,7 +1172,7 @@ namespace Tzkt.Api.Repositories
         {
             return new BigMap
             {
-                Id = row.Ptr,
+                Ptr = row.Ptr,
                 Contract = Accounts.GetAlias(row.ContractId),
                 Path = row.StoragePath,
                 Active = row.Active,
@@ -1034,9 +1206,9 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        BigMapKeyShort ReadBigMapKeyShort(dynamic row, MichelineFormat format)
+        BigMapKeyHistorical ReadBigMapKeyShort(dynamic row, MichelineFormat format)
         {
-            return new BigMapKeyShort
+            return new BigMapKeyHistorical
             {
                 Id = row.Id,
                 Active = row.Active,
