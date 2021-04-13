@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -172,13 +173,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 FutureBakingRights = (await Proto.Rpc.GetBakingRightsAsync(block.Level, futureCycle)).EnumerateArray();
                 FutureEndorsingRights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, futureCycle)).EnumerateArray();
 
-                //foreach (var er in FutureEndorsingRights)
-                //    if (!await Cache.Accounts.ExistsAsync(er.RequiredString("delegate")))
-                //        throw new Exception($"Account {er.RequiredString("delegate")} doesn't exist");
+                foreach (var er in FutureEndorsingRights)
+                    if (!await Cache.Accounts.ExistsAsync(er.RequiredString("delegate")))
+                        throw new Exception($"Account {er.RequiredString("delegate")} doesn't exist");
 
-                //foreach (var br in FutureBakingRights)
-                //    if (!await Cache.Accounts.ExistsAsync(br.RequiredString("delegate")))
-                //        throw new Exception($"Account {br.RequiredString("delegate")} doesn't exist");
+                foreach (var br in FutureBakingRights)
+                    if (!await Cache.Accounts.ExistsAsync(br.RequiredString("delegate")))
+                        throw new Exception($"Account {br.RequiredString("delegate")} doesn't exist");
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
