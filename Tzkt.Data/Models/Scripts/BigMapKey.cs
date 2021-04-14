@@ -41,15 +41,15 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<BigMapKey>()
                 .HasIndex(x => new { x.BigMapPtr, x.KeyHash });
 
-            //modelBuilder.Entity<BigMapKey>()
-            //    .HasIndex(x => new { x.BigMapPtr, x.JsonKey })
-            //    .HasMethod("GIN")
-            //    .HasOperators("jsonb_path_ops");
+            modelBuilder.Entity<BigMapKey>()
+                .HasIndex(x => x.JsonKey)
+                .HasMethod("gin")
+                .HasOperators("jsonb_path_ops");
 
-            //modelBuilder.Entity<BigMapKey>()
-            //    .HasIndex(x => new { x.BigMapPtr, x.JsonValue })
-            //    .HasMethod("GIN")
-            //    .HasOperators("jsonb_path_ops");
+            modelBuilder.Entity<BigMapKey>()
+                .HasIndex(x => x.JsonValue)
+                .HasMethod("gin")
+                .HasOperators("jsonb_path_ops");
             #endregion
 
             #region keys

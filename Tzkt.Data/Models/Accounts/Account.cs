@@ -65,7 +65,7 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Account>()
                 .HasIndex(x => x.Metadata)
-                .HasMethod("GIN")
+                .HasMethod("gin")
                 .HasOperators("jsonb_path_ops");
             #endregion
 

@@ -28,10 +28,10 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetString($"{model}.un", ref hasValue, out var un))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringList($"{model}.in", ref hasValue, out var @in)) 
+            if (!bindingContext.TryGetStringListEscaped($"{model}.in", ref hasValue, out var @in)) 
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringList($"{model}.ni", ref hasValue, out var ni))
+            if (!bindingContext.TryGetStringListEscaped($"{model}.ni", ref hasValue, out var ni))
                 return Task.CompletedTask;
 
             if (!bindingContext.TryGetBool($"{model}.null", ref hasValue, out var isNull))

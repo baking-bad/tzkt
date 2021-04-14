@@ -48,6 +48,11 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.TargetId);
+
+            modelBuilder.Entity<TransactionOperation>()
+                .HasIndex(x => x.JsonParameters)
+                .HasMethod("gin")
+                .HasOperators("jsonb_path_ops");
             #endregion
 
             #region keys

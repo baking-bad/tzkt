@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Dapper;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api
 {
@@ -429,8 +429,9 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Eq)
                 {
-                    AppendFilter($@"""{column}""#>>'{{{path}}}' = @p{Counter}");
-                    Params.Add($"p{Counter++}", value);
+                    AppendFilter($@"""{column}"" @> {Param(JsonPath.Merge(path, value))}::jsonb");
+                    if (path.Any(x => x.Type == JsonPathType.Index))
+                        AppendFilter($@"""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb");
                 }
             }
 
@@ -438,8 +439,9 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Ne)
                 {
-                    AppendFilter($@"""{column}""#>>'{{{path}}}' != @p{Counter}");
-                    Params.Add($"p{Counter++}", value);
+                    AppendFilter(path.Any(x => x.Type == JsonPathType.Any)
+                        ? $@"NOT (""{column}"" @> {Param(JsonPath.Merge(path, value))}::jsonb)"
+                        : $@"NOT (""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb)");
                 }
             }
 
@@ -447,12 +449,12 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Gt)
                 {
-                    var col = $@"""{column}""#>>'{{{path}}}'";
-                    var len = $"greatest(length({col}), {value.Length})";
-                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
-                        ? $@"lpad({col}, {len}, '0') > lpad(@p{Counter}, {len}, '0')"
-                        : $@"{col} > @p{Counter}");
-                    Params.Add($"p{Counter++}", value);
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                        ? $@"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
+                        : $@"{fld} > {val}");
                 }
             }
 
@@ -460,12 +462,12 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Ge)
                 {
-                    var col = $@"""{column}""#>>'{{{path}}}'";
-                    var len = $"greatest(length({col}), {value.Length})";
-                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
-                        ? $@"lpad({col}, {len}, '0') >= lpad(@p{Counter}, {len}, '0')"
-                        : $@"{col} >= @p{Counter}");
-                    Params.Add($"p{Counter++}", value);
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                        ? $@"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
+                        : $@"{fld} >= {val}");
                 }
             }
 
@@ -473,12 +475,12 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Lt)
                 {
-                    var col = $@"""{column}""#>>'{{{path}}}'";
-                    var len = $"greatest(length({col}), {value.Length})";
-                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
-                        ? $@"lpad({col}, {len}, '0') < lpad(@p{Counter}, {len}, '0')"
-                        : $@"{col} < @p{Counter}");
-                    Params.Add($"p{Counter++}", value);
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                        ? $@"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
+                        : $@"{fld} < {val}");
                 }
             }
 
@@ -486,12 +488,12 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Le)
                 {
-                    var col = $@"""{column}""#>>'{{{path}}}'";
-                    var len = $"greatest(length({col}), {value.Length})";
-                    AppendFilter(Regex.IsMatch(value, "^[0-9]+$")
-                        ? $@"lpad({col}, {len}, '0') <= lpad(@p{Counter}, {len}, '0')"
-                        : $@"{col} <= @p{Counter}");
-                    Params.Add($"p{Counter++}", value);
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                        ? $@"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
+                        : $@"{fld} <= {val}");
                 }
             }
 
@@ -499,8 +501,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.As)
                 {
-                    AppendFilter($@"""{column}""#>>'{{{path}}}' LIKE @p{Counter}");
-                    Params.Add($"p{Counter++}", value);
+                    AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)}");
                 }
             }
 
@@ -508,26 +509,36 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Un)
                 {
-                    AppendFilter($@"NOT (""{column}""#>>'{{{path}}}' LIKE @p{Counter})");
-                    Params.Add($"p{Counter++}", value);
+                    AppendFilter($@"NOT (""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)})");
                 }
             }
 
             if (json.In != null)
             {
-                foreach (var (path, value) in json.In)
+                foreach (var (path, values) in json.In)
                 {
-                    AppendFilter($@"""{column}""#>>'{{{path}}}' = ANY (@p{Counter})");
-                    Params.Add($"p{Counter++}", value);
+                    var sqls = new List<string>(values.Length);
+                    foreach (var value in values)
+                    {
+                        var sql = $@"""{column}"" @> {Param(JsonPath.Merge(path, value))}::jsonb";
+                        if (path.Any(x => x.Type == JsonPathType.Index))
+                            sql += $@" AND ""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb";
+                        sqls.Add(sql);
+                    }
+                    AppendFilter(string.Join(" OR ", sqls));
                 }
             }
 
             if (json.Ni != null)
             {
-                foreach (var (path, value) in json.Ni)
+                foreach (var (path, values) in json.Ni)
                 {
-                    AppendFilter($@"NOT (""{column}""#>>'{{{path}}}' = ANY (@p{Counter}))");
-                    Params.Add($"p{Counter++}", value);
+                    foreach (var value in values)
+                    {
+                        AppendFilter(path.Any(x => x.Type == JsonPathType.Any)
+                            ? $@"NOT (""{column}"" @> {Param(JsonPath.Merge(path, value))}::jsonb)"
+                            : $@"NOT (""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb)");
+                    }
                 }
             }
 
@@ -544,7 +555,7 @@ namespace Tzkt.Api
                         if (value)
                             AppendFilter($@"""{column}"" IS NOT NULL");
 
-                        AppendFilter($@"""{column}""#>>'{{{path}}}' IS {(value ? "" : "NOT ")}NULL");
+                        AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} IS {(value ? "" : "NOT ")}NULL");
                     }
                 }
             }
@@ -1296,6 +1307,13 @@ namespace Tzkt.Api
             }
 
             Builder.AppendLine(filter);
+        }
+
+        string Param(object value)
+        {
+            var name = $"@p{Counter++}";
+            Params.Add(name, value);
+            return name;
         }
     }
 }

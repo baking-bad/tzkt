@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api
 {
@@ -9,21 +10,21 @@ namespace Tzkt.Api
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
-        /// Specify a string to get items where the specified field is equal to the specified value.
+        /// Specify a JSON value to get items where the specified field is equal to the specified value.
         /// 
-        /// Example: `?parameter={}` or `?parameter.to=tz1...`.
+        /// Example: `?parameter.from=tz1...` or `?parameter.signatures.[3].[0]=null` or `?parameter.sigs.[*]=null`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
-        public List<(string, string)> Eq { get; set; }
+        public List<(JsonPath[], string)> Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
-        /// Specify a string to get items where the specified field is not equal to the specified value.
+        /// Specify a JSON value to get items where the specified field is not equal to the specified value.
         /// 
-        /// Example: `?parameter.ne={}` or `?parameter.amount.ne=0`.
+        /// Example: `?parameter.ne=true` or `?parameter.amount.ne=0`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
-        public List<(string, string)> Ne { get; set; }
+        public List<(JsonPath[], string)> Ne { get; set; }
 
         /// <summary>
         /// **Greater than** filter mode. \
@@ -34,7 +35,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.gt=1234` or `?parameter.time.gt=2021-02-01`.
         /// </summary>
-        public List<(string, string)> Gt { get; set; }
+        public List<(JsonPath[], string)> Gt { get; set; }
 
         /// <summary>
         /// **Greater or equal** filter mode. \
@@ -45,7 +46,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.ge=1234` or `?parameter.time.ge=2021-02-01`.
         /// </summary>
-        public List<(string, string)> Ge { get; set; }
+        public List<(JsonPath[], string)> Ge { get; set; }
 
         /// <summary>
         /// **Less than** filter mode. \
@@ -56,7 +57,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.lt=1234` or `?parameter.time.lt=2021-02-01`.
         /// </summary>
-        public List<(string, string)> Lt { get; set; }
+        public List<(JsonPath[], string)> Lt { get; set; }
 
         /// <summary>
         /// **Less or equal** filter mode. \
@@ -67,7 +68,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.le=1234` or `?parameter.time.le=2021-02-01`.
         /// </summary>
-        public List<(string, string)> Le { get; set; }
+        public List<(JsonPath[], string)> Le { get; set; }
 
         /// <summary>
         /// **Same as** filter mode. \
@@ -77,7 +78,7 @@ namespace Tzkt.Api
         /// Example: `?parameter.as=*mid*` or `?parameter.as=*end`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
-        public List<(string, string)> As { get; set; }
+        public List<(JsonPath[], string)> As { get; set; }
 
         /// <summary>
         /// **Unlike** filter mode. \
@@ -87,35 +88,34 @@ namespace Tzkt.Api
         /// Example: `?parameter.un=*mid*` or `?parameter.un=*end`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
-        public List<(string, string)> Un { get; set; }
+        public List<(JsonPath[], string)> Un { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
-        /// Specify a comma-separated list of strings to get items where the specified field is equal to one of the specified values. \
-        /// Use `\,` as an escape symbol.
+        /// Specify a comma-separated list of strings or JSON array to get items where the specified field is equal to one of the specified values. \
         /// 
-        /// Example: `?parameter.in=bla,bal,abl` or `?parameter.from.in=tz1,tz2,tz3`.
+        /// Example: `?parameter.amount.in=1,2,3` or `?parameter.in=[{"from":"tz1","to":"tz2"},{"from":"tz2","to":"tz1"}]`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<(string, List<string>)> In { get; set; }
+        public List<(JsonPath[], string[])> In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
         /// Specify a comma-separated list of strings to get items where the specified field is not equal to all the specified values. \
         /// Use `\,` as an escape symbol.
         /// 
-        /// Example: `?parameter.ni=bla,bal,abl` or `?parameter.from.ni=tz1,tz2,tz3`.
+        /// Example: `?parameter.amount.ni=1,2,3` or `?parameter.ni=[{"from":"tz1","to":"tz2"},{"from":"tz2","to":"tz1"}]`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<(string, List<string>)> Ni { get; set; }
+        public List<(JsonPath[], string[])> Ni { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \
         /// Use this mode to get items where the specified field is null or not.
         /// 
-        /// Example: `?parameter.null` or `?parameter.null=false` or `?parameter.sigs.0.null=false`.
+        /// Example: `?parameter.null` or `?parameter.null=false` or `?parameter.sigs.[0].null=false`.
         /// </summary>
         [JsonSchemaType(typeof(bool))]
-        public List<(string, bool)> Null { get; set; }
+        public List<(JsonPath[], bool)> Null { get; set; }
     }
 }
