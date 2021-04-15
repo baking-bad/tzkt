@@ -41,9 +41,9 @@ namespace Tzkt.Api.Models
         /// Kind of the voting period:
         /// `proposal` - delegates can submit protocol amendment proposals using the proposal operation
         /// `exploration` -  bakers (delegates) may vote on the top-ranked proposal from the previous Proposal Period using the ballot operation
-        /// `testing` - if the proposal is approved in the Exploration Period, the Testing Period begins with a testnet
-        /// fork that runs in parallel to the main network for 48 hours to test a correct migration of the context
+        /// `testing` - If the proposal is approved in the Exploration Period, the testing (or 'cooldown') period begins and bakers start testing the new protocol
         /// `promotion` - delegates can cast one vote to promote or not the tested proposal using the ballot operation
+        /// `adoption` - after the proposal is actually accepted, the ecosystem has some time to prepare to the upgrade
         /// Learn more: https://tezos.gitlab.io/whitedoc/voting.html
         /// </summary>
         public string Kind { get; set; }
