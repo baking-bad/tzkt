@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -7,6 +8,26 @@ namespace Tzkt.Sync.Protocols.Proto9
     class Validator : Proto8.Validator
     {
         public Validator(ProtocolHandler protocol) : base(protocol) { }
+
+        protected override async Task ValidateBlockMetadata(JsonElement metadata)
+        {
+            Baker = metadata.RequiredString("baker");
+
+            if (!Cache.Accounts.DelegateExists(Baker))
+                throw new ValidationException($"non-existent block baker");
+
+            await ValidateBlockVoting(metadata);
+
+            foreach (var baker in metadata.RequiredArray("deactivated").EnumerateArray())
+                if (!Cache.Accounts.DelegateExists(baker.GetString()))
+                    throw new ValidationException($"non-existent deactivated baker {baker}");
+
+            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray().Where(x => x.RequiredString("origin")[0] == 'b'));
+            var rewardUpdates = Cycle < Protocol.NoRewardCycles || Block.RequiredArray("operations", 4)[0].Count() == 0 ? 2 : 3;
+
+            ValidateBlockRewards(balanceUpdates.Take(rewardUpdates));
+            ValidateCycleRewards(balanceUpdates.Skip(rewardUpdates));
+        }
 
         protected override async Task ValidateOperations(JsonElement operations)
         {
