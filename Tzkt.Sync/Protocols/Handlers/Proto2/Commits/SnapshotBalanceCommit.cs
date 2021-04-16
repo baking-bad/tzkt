@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +70,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     var values = string.Empty;
                     var cycle = rawBlock.GetProperty("metadata").GetProperty("level").RequiredInt32("cycle");
 
-                    foreach (var rewardUpdates in rawBlock.GetProperty("metadata").GetProperty("balance_updates").EnumerateArray()
+                    foreach (var rewardUpdates in GetBalanceUpdates(rawBlock)
                         .Where(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r' && GetFreezerCycle(x) != cycle)
                         .Select(x => (x.RequiredString("delegate"), x.RequiredInt64("change")))
                         .GroupBy(x => x.Item1))
@@ -101,5 +102,13 @@ namespace Tzkt.Sync.Protocols.Proto2
         }
 
         protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
+
+        protected virtual IEnumerable<JsonElement> GetBalanceUpdates(JsonElement rawBlock)
+        {
+            return rawBlock
+                .GetProperty("metadata")
+                .GetProperty("balance_updates")
+                .EnumerateArray();
+        }
     }
 }

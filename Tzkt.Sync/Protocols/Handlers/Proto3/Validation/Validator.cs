@@ -60,13 +60,13 @@ namespace Tzkt.Sync.Protocols.Proto3
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(metadata.RequiredArray("balance_updates")),
+                ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates),
+                    ParseBalanceUpdates(resultUpdates.EnumerateArray()),
                     source,
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
@@ -86,7 +86,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
                     content.RequiredString("source"),
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
