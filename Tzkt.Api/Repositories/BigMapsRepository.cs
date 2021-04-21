@@ -1053,7 +1053,7 @@ namespace Tzkt.Api.Repositories
                 {
                     "level" => ("Id", "Level"),
                     _ => ("Id", "Id")
-                });
+                }, "uu");
 
             using var db = GetConnection();
             var updateRows = await db.QueryAsync(sql.Query, sql.Params);
