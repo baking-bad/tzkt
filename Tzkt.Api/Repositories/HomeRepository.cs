@@ -77,7 +77,6 @@ namespace Tzkt.Api.Repositories
         public async Task UpdateStats()
         {
             //TODO Reconsider all operations only for applied
-            //TODO All amounts in microtez
             //TODO All queries to string
             //TODO All Now to UTCNow
             Tabs = await GetTabsData();
@@ -217,13 +216,13 @@ namespace Tzkt.Api.Repositories
             var prevCalls = (long) (await db.QueryFirstOrDefaultAsync(prevCallsQuery.Query, prevCallsQuery.Params)).count;
             var prevAccounts = (long) (await db.QueryFirstOrDefaultAsync(prevAccountsQuery.Query, prevAccountsQuery.Params)).count;
             
-            var currentVolume = (long) txsAndVolume.volume / 1_000_000;
+            var currentVolume = (long) txsAndVolume.volume;
             var currentTxsCount = (long) txsAndVolume.txs;
 
             return new HeaderData
             {
                 Volume = currentVolume,
-                VolumeDiff = CalculateDiff(currentVolume, (long) prevTxsAndVolume.volume / 1_000_000),
+                VolumeDiff = CalculateDiff(currentVolume, (long) prevTxsAndVolume.volume),
                 TxsCount = currentTxsCount,
                 TxsDiff = CalculateDiff(currentTxsCount, (long) prevTxsAndVolume.txs),
                 ContractCalls = calls,
@@ -276,21 +275,21 @@ namespace Tzkt.Api.Repositories
             var txsAndVolume = (await db.QueryFirstOrDefaultAsync(txsQuery.Query, txsQuery.Params));
             var prevTxsAndVolume = (await db.QueryFirstOrDefaultAsync(prevTxsQuery.Query, prevTxsQuery.Params));
             
-            var currentBurned = (long) (fees.burned / 1_000_000);
-            var currentPaid = (long) (fees.paid / 1_000_000);
-            var currentVolume = (long) (txsAndVolume.volume / 1_000_000);
+            var currentBurned = (long) (fees.burned);
+            var currentPaid = (long) (fees.paid);
+            var currentVolume = (long) (txsAndVolume.volume);
             var currentTxsCount = txsAndVolume.txs;
             
             return new TxsData
             {
                 BurnedForMonth = currentBurned,
-                BurnedDiff = CalculateDiff(currentBurned, (long) (prevFees.burned / 1_000_000)),
+                BurnedDiff = CalculateDiff(currentBurned, (long) (prevFees.burned)),
                 PaidFeesForMonth = currentPaid,
-                PaidDiff = CalculateDiff(currentPaid, (long) (prevFees.paid / 1_000_000)),
+                PaidDiff = CalculateDiff(currentPaid, (long) (prevFees.paid)),
                 TxsForMonth = currentTxsCount,
                 TxsDiff = CalculateDiff(currentTxsCount, prevTxsAndVolume.txs),
                 Volume = currentVolume,
-                VolumeDiff = CalculateDiff(currentVolume, (long) (prevTxsAndVolume.volume / 1_000_000)),
+                VolumeDiff = CalculateDiff(currentVolume, (long) (prevTxsAndVolume.volume)),
                 Chart = Stats?.TxsData?.Chart
             };
         }
@@ -300,13 +299,14 @@ namespace Tzkt.Api.Repositories
             //Get data for a year if there's no data
             if (Stats.TxsData.Chart == null)
             {
+                
                 var result = new List<ChartPoint>();
-                var initialDate = new DateTime(DateTime.Now.AddMonths(-11).Year, DateTime.Now.AddMonths(-11).Month, 1, 0,0,0,0);
+                var initialDate = new DateTime(DateTime.UtcNow.AddMonths(-11).Year, DateTime.UtcNow.AddMonths(-11).Month, 1, 0,0,0,0);
 
                 long totalNumber = await GetTxCountForPeriod(DateTime.MinValue, initialDate);
                 for (var i = 11; i >= 0; i--)
                 {
-                    var start = new DateTime(DateTime.Now.AddMonths(-i).Year, DateTime.Now.AddMonths(-i).Month, 1, 0,0,0,0);
+                    var start = new DateTime(DateTime.UtcNow.AddMonths(-i).Year, DateTime.UtcNow.AddMonths(-i).Month, 1, 0,0,0,0);
 
                     totalNumber += await GetTxCountForPeriod(start, start.AddMonths(1));
                     result.Add(new ChartPoint
@@ -320,9 +320,9 @@ namespace Tzkt.Api.Repositories
                 return;
             }
 
-            var currentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0,0,0,0);
+            var currentMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0,0,0,0);
             
-            if (Stats.TxsData.Chart[^1].Month.Month < DateTime.Now.Month)
+            if (Stats.TxsData.Chart[^1].Month.Month < DateTime.UtcNow.Month)
             {
 
                 Stats.TxsData.Chart[^1].Value = Stats.TxsData.Chart[^2].Value + await GetTxCountForPeriod(currentMonth.AddMonths(-1), currentMonth);
@@ -371,7 +371,7 @@ namespace Tzkt.Api.Repositories
             
             return new StakingData
             {
-                TotalStaking = cycleInfo.TotalStaking / 1_000_000,
+                TotalStaking = cycleInfo.TotalStaking,
                 StakingPercentage = (int) (cycleInfo.TotalStaking * 100 / statistics.TotalSupply),
                 //TODO ROI depends on rolls instead of staking.
                 AvgRoi = Math.Round((decimal) totalRewardsPerYear * 100 / cycleInfo.TotalStaking, 2),
@@ -424,9 +424,9 @@ namespace Tzkt.Api.Repositories
 
             var prevCalls = (long) (await db.QueryFirstOrDefaultAsync(previousTxsQuery.Query, previousTxsQuery.Params)).count;
             
-            var burned = (long) (await db.QueryFirstOrDefaultAsync(feesQuery.Query, feesQuery.Params)).burned / 1_000_000;
+            var burned = (long) (await db.QueryFirstOrDefaultAsync(feesQuery.Query, feesQuery.Params)).burned;
 
-            var prevBurned = (long) (await db.QueryFirstOrDefaultAsync(prevFeesQuery.Query, prevFeesQuery.Params)).burned / 1_000_000;
+            var prevBurned = (long) (await db.QueryFirstOrDefaultAsync(prevFeesQuery.Query, prevFeesQuery.Params)).burned;
 
             var transfers = (long) (await db.QueryFirstOrDefaultAsync(transfersQuery.Query, transfersQuery.Params)).count;
 
