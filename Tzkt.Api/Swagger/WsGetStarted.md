@@ -15,8 +15,8 @@ There are three message types that the server sends to the client:
 
 ````js
 {
-	type: 0,	// 0 - state message
-	state: 0	// subscription state
+	type: 0,    // 0 - state message
+	state: 0    // subscription state
 }
 ````
 
@@ -34,9 +34,9 @@ State can be used to fetch historical data from the REST API right after opening
 
 ````js
 {
-	type: 1,	// 1 - data message
-	state: 0,	// subscription state
-	data: {}	// data object (or array, depending on subscription)
+	type: 1,    // 1 - data message
+	state: 0,   // subscription state
+	data: {}    // data: object or array, depending on subscription
 }
 ````
 
@@ -50,8 +50,8 @@ TzKT Events operates with the same data models as the REST API to achieve full c
 
 ````js
 {			  
-	type: 2,	// 2 - reorg message
-	state: 0	// subscription state
+	type: 2,    // 2 - reorg message
+	state: 0    // subscription state
 }
 ````
 

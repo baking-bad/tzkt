@@ -6,7 +6,6 @@ TzKT is an open-source project, so you can easily clone and build it and use it 
 TzKT API is available for the following Tezos networks with the following base URLs:
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
-- Delphinet: `https://api.delphinet.tzkt.io/` ([view docs](https://api.delphinet.tzkt.io))	
 - Edo2net: `https://api.edo2net.tzkt.io/` ([view docs](https://api.edo2net.tzkt.io))
 - Florencenet: `https://api.florencenet.tzkt.io/` ([view docs](https://api.florencenet.tzkt.io))
 

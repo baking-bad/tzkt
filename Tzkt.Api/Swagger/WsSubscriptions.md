@@ -87,9 +87,8 @@ Sends operations of specified types or related to specified accounts, included i
 	             // such as 'transaction', 'delegation', etc.
 }
 ````
-
-> **Note:** Currently, you can subscribe to no more than 50 addresses per single connection. If you need more, let us know and consider opening more connections in the meantime,
-> or subscribe to all operations and filter them on the client side.
+																	 
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
 
 ### Data model
 
@@ -107,6 +106,88 @@ connection.on("operations", (msg) => { console.log(msg); });
 await connection.invoke("SubscribeToOperations", { types: 'transaction' });
 // subscribe to all delegations and originations related to the address 'tz1234...'
 await connection.invoke("SubscribeToOperations", { address: 'tz1234...', types: 'delegation,origination' });
+````
+
+---			
+
+## SubscribeToBigMaps 
+														  
+Sends bigmap updates
+		
+### Method 
+
+`SubscribeToBigMaps`
+
+### Channel 
+
+`bigmaps`
+
+### Parameters
+
+This method accepts the following parameters:
+
+````js
+{
+	ptr: 0,         // ptr of the bigmap you want to subscribe to
+	tags: [],       // array of bigmap tags ('metadata' or 'token_metadata')
+	contract: '',   // contract address
+	path: ''        // path to the bigmap in the contract strage
+}
+````
+
+You can set various combinations of these fields to configure what you want to subscribe to. For example:
+
+````js
+// subscribe to all bigmaps
+{
+}	 
+
+// subscribe to all bigmaps with specific tags
+{		
+	tags: ['metadata', 'token_metadata']
+}
+
+// subscribe  to all bigmaps of the specific contract
+{
+	contract: 'KT1...'
+}
+
+// subscribe to all bigmaps of the specific contract with specific tags
+{
+	contract: 'KT1...',
+	tags: ['metadata']
+}
+
+// subscribe to specific bigmap by ptr
+{
+	ptr: 123
+}
+	
+// subscribe to specific bigmap by path
+{
+	contract: 'KT1...',
+	path: 'ledger'
+}
+````
+
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
+
+### Data model
+
+Same as in [/bigmaps/updates](#operation/BigMaps_GetBigMapUpdates).
+
+### State
+
+State contains level (`int`) of the last processed block.
+
+### Example
+
+````js
+connection.on("bigmaps", (msg) => { console.log(msg); });
+// subscribe to all bigmaps of the 'KT123...' contract
+await connection.invoke("SubscribeToBigMaps", { contract: 'KT123...' });
+// subscribe to bigmap with ptr 123
+await connection.invoke("SubscribeToBigMaps", { ptr: 123 });
 ````
 
 ---

@@ -75,6 +75,8 @@ Install SignalR package via npm:
 
 ````sh
 > npm install @microsoft/signalr
+
+const signalR = require("@microsoft/signalr");
 ````
 
 or via CDN:
