@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Tzkt.Data.Models;
 
@@ -49,5 +50,16 @@ namespace Tzkt.Api.Models
 
         [JsonIgnore]
         public BigMapTag _Tags { get; set; }
+
+        public IEnumerable<BigMapTag> EnumerateTags()
+        {
+            if (_Tags != BigMapTag.None)
+            {
+                if (_Tags.HasFlag(BigMapTag.Metadata))
+                    yield return BigMapTag.Metadata;
+                if (_Tags.HasFlag(BigMapTag.TokenMetadata))
+                    yield return BigMapTag.TokenMetadata;
+            }
+        }
     }
 }
