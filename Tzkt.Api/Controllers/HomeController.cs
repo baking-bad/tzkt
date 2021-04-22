@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using Tzkt.Api.Models;
+using Tzkt.Api.Models.Home;
 using Tzkt.Api.Repositories;
 
 namespace Tzkt.Api.Controllers

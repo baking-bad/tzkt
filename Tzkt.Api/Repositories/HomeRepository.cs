@@ -6,6 +6,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using Org.BouncyCastle.Utilities;
 using Tzkt.Api.Models;
+using Tzkt.Api.Models.Home;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 using Delegate = Tzkt.Api.Models.Delegate;
@@ -508,150 +509,31 @@ namespace Tzkt.Api.Repositories
     }
     
     //TODO All models to directory
-    public class HomeData
-    {
-        public HeaderData HeaderData { get; set; }
-        public CycleData CycleData { get; set; }
-        public TxsData TxsData { get; set; }
-        public StakingData StakingData { get; set; }
-        public ContractsData ContractsData { get; set; }
-        public MarketData MarketData { get; set; }
-        public GovernanceData GovernanceData { get; set; }
-    }
 
-    public class HeaderData
-    {
-        public long Volume { get; set; }
-        public double VolumeDiff { get; set; }
-        public long TxsCount { get; set; }
-        public double TxsDiff { get; set; }
-        public long ContractCalls { get; set; }
-        public double CallsDiff { get; set; }
-        public long NewAccounts { get; set; }
-        public double NewAccountsDiff { get; set; }
-    }
+
+
     
 
-    public class TxsData
-    {
-        //TODO Collect 12 month amount of total txs with DateTime
-        public List<ChartPoint> Chart { get; set; }
-        public long TxsForMonth { get; set; }
-        public double TxsDiff { get; set; }
-        
-        public long Volume { get; set; }
-        public double VolumeDiff { get; set; }
-
-        public long PaidFeesForMonth { get; set; }
-        public double PaidDiff { get; set; }
-
-        public long BurnedForMonth { get; set; }
-        public double BurnedDiff { get; set; }
-    }
 
 
 
-    public class CycleData
-    {
-        public int CurrentCycle { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
-        public int Progress { get; set; }
-        public DateTime CycleEndDate { get; set; }
-    }
 
-    public class StakingData
-    {
-        //TODO Collect 12 month amount of total staking
-        public List<ChartPoint> Chart { get; set; }
 
-        public long TotalStaking { get; set; }
-        public int StakingPercentage { get; set; }
-        public decimal AvgRoi { get; set; }
-        public decimal Inflation { get; set; }
-        public int BakersCount { get; set; }
-    }
 
-    public class ContractsData
-    {
-        public List<ChartPoint> Chart { get; set; }
-        public long TotalContracts { get; set; }
-        public long NewCalls { get; set; }
-        public double CallsDiff { get; set; }
-        
-        public long Transfers { get; set; }
-        public double TransfersDiff { get; set; }
-        
-        public long Burned { get; set; }
-        public double BurnedDiff { get; set; }
-    }
 
-    public class MarketData
-    {
-        public long TotalSupply { get; set; }
-        public long CirculationSupply { get; set; }
-        public Quote Quote { get; set; }
-        public IEnumerable<Quote> PriceData { get; set; }
-    }
 
-    public class Tabs
-    {
-        //TODO Oncoming blocks
-        public object[][] Blocks { get; set; }
-        public object[][] Accounts { get; set; }
-        public object[][] Assets { get; set; }
-        public IEnumerable<Delegate> Bakers { get; set; }
-    }
 
-    public class BlockData
-    {
-        public int Level { get; set; }
-        
-        public string Hash { get; set; }
-        
-        public int Priority { get; set; }
-        public DateTime Timestamp { get; set; }
-        public int Validations { get; set; }
-        public long Reward { get; set; }
-        public long Fees { get; set; }
-        public Alias Baker { get; set; }
 
-    }
+
+
+
+
     
-    public class GovernanceData
-    {
-        public string Proposal { get; set; }
-        public string CurrentPeriod { get; set; }
-        public DateTime PeriodEnds { get; set; }
-        public DateTime ProtocolWillBeApplied { get; set; }
-        public string Hash { get; set; }
-        public double? Supermajority { get; set; }
-        public double? InFavor { get; set; }
-        
-        public double? Quorum { get; set; }
-        public double? Participation { get; set; }
-    }
 
-    public class AccountsData
-    {
-        public long TotalAccounts { get; set; }
-        public List<ChartPoint> Chart { get; set; }
-        public long FundedAccounts { get; set; }
-        public long ActiveAccounts { get; set; }
-        public long PublicAccounts { get; set; }
-     }
 
-    public class ChartPoint
-    {
-        public DateTime Month { get; set; }
-        public long Value { get; set; }
-    }
 
-    public enum TabTypes
-    {
-        Blocks,
-        Accounts,
-        Bakers,
-        Assets
-    }
+
+
+
+
 }
