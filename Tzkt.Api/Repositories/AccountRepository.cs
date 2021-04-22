@@ -2422,7 +2422,7 @@ namespace Tzkt.Api.Repositories
             }
 
             // path value should already be valid
-            var jsonPath = path == null ? string.Empty : $@"#>>'{{{string.Join(',', path)}}}'";
+            var jsonPath = path == null ? string.Empty : $@"#>'{{{string.Join(',', path)}}}'";
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
@@ -2452,7 +2452,7 @@ namespace Tzkt.Api.Repositories
             }
 
             // path value should already be valid
-            var jsonPath = path == null ? string.Empty : $@"#>>'{{{string.Join(',', path)}}}'";
+            var jsonPath = path == null ? string.Empty : $@"#>'{{{string.Join(',', path)}}}'";
             
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"

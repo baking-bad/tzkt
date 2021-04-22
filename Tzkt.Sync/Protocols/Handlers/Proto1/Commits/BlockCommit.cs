@@ -18,16 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             var events = BlockEvents.None;
 
             var metadata = rawBlock.Required("metadata");
-            var reward = metadata
-                    .RequiredArray("balance_updates")
-                    .EnumerateArray()
-                    .Take(3)
-                    .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r');
-            var deposit = metadata
-                    .RequiredArray("balance_updates")
-                    .EnumerateArray()
-                    .Take(3)
-                    .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
+            var reward = GetBlockReward(metadata);
+            var deposit = GetBlockDeposit(metadata);
 
             if (level % protocol.BlocksPerCycle == 1)
                 events |= BlockEvents.CycleBegin;
@@ -117,6 +109,24 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
 
             Db.Blocks.Remove(Block);
+        }
+
+        protected virtual JsonElement GetBlockReward(JsonElement metadata)
+        {
+            return metadata
+                .RequiredArray("balance_updates")
+                .EnumerateArray()
+                .Take(3)
+                .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r');
+        }
+
+        protected virtual JsonElement GetBlockDeposit(JsonElement metadata)
+        {
+            return metadata
+                .RequiredArray("balance_updates")
+                .EnumerateArray()
+                .Take(3)
+                .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
         }
     }
 }

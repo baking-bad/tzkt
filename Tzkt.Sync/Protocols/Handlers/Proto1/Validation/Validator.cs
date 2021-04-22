@@ -58,7 +58,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (!Cache.Accounts.DelegateExists(baker.GetString()))
                     throw new ValidationException($"non-existent deactivated baker {baker}");
 
-            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
+            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray());
             ValidateBlockRewards(balanceUpdates.Take(Cycle < Protocol.NoRewardCycles ? 2 : 3));
             ValidateCycleRewards(balanceUpdates.Skip(Cycle < Protocol.NoRewardCycles ? 2 : 3));
         }
@@ -71,15 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 throw new ValidationException("invalid voting period index");
 
             var period = await Cache.Periods.GetAsync(periodIndex);
-
-            var kind = metadata.RequiredString("voting_period_kind") switch
-            {
-                "proposal" => PeriodKind.Proposal,
-                "exploration" => PeriodKind.Exploration,
-                "testing" => PeriodKind.Testing,
-                "promotion" => PeriodKind.Promotion,
-                _ => throw new ValidationException("invalid voting period kind")
-            };
+            var kind = ParsePeriodKind(metadata.RequiredString("voting_period_kind"));
 
             if (Level <= period.LastLevel)
             {
@@ -174,11 +166,15 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (content.RequiredInt32("level") != Cache.AppState.GetLevel())
                 throw new ValidationException("invalid endorsed block level");
 
-            var metadata = content.Required("metadata");
+            ValidateEndorsementMetadata(content.Required("metadata"));
+        }
+
+        protected void ValidateEndorsementMetadata(JsonElement metadata)
+        {
             var delegat = metadata.RequiredString("delegate");
             var slots = metadata.RequiredArray("slots").Count();
 
-            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
+            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray());
 
             if (!Cache.Accounts.DelegateExists(delegat))
                 throw new ValidationException($"unknown endorsement delegate {delegat}");
@@ -254,7 +250,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (content.Required("bh1").RequiredInt32("level") != content.Required("bh2").RequiredInt32("level"))
                 throw new ValidationException("inconsistent double baking evidence");
 
-            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates"));
+            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray());
             if (balanceUpdates.Count > 0)
             {
                 var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change > 0);
@@ -300,7 +296,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 != content.Required("op2").Required("operations").RequiredInt32("level"))
                 throw new ValidationException("inconsistent double endorsing evidence");
 
-            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates"));
+            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray());
             if (balanceUpdates.Count > 0)
             {
                 var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change > 0);
@@ -366,7 +362,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates")),
+                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -394,13 +390,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             //        throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(metadata.RequiredArray("balance_updates")),
+                ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates),
+                    ParseBalanceUpdates(resultUpdates.EnumerateArray()),
                     source,
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
@@ -418,7 +414,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
                     content.RequiredString("source"),
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
@@ -437,7 +433,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var metadata = content.Required("metadata");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(metadata.RequiredArray("balance_updates")),
+                ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
 
@@ -445,7 +441,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
                     source,
                     content.RequiredString("destination"),
                     content.RequiredInt64("amount"),
@@ -474,7 +470,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
                     content.RequiredString("source"),
                     content.RequiredString("destination"),
                     content.RequiredInt64("amount"),
@@ -491,7 +487,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates")),
+                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -580,10 +576,19 @@ namespace Tzkt.Sync.Protocols.Proto1
             return Cycle < Protocol.NoRewardCycles ? 0 : (slots * (long)(Protocol.EndorsementReward0 / (LastBlock.Priority + 1.0)));
         }
 
-        protected virtual List<BalanceUpdate> ParseBalanceUpdates(JsonElement updates)
+        protected virtual PeriodKind ParsePeriodKind(string kind) => kind switch
+        {
+            "proposal" => PeriodKind.Proposal,
+            "exploration" => PeriodKind.Exploration,
+            "testing" => PeriodKind.Testing,
+            "promotion" => PeriodKind.Promotion,
+            _ => throw new ValidationException("invalid voting period kind")
+        };
+
+        protected virtual List<BalanceUpdate> ParseBalanceUpdates(IEnumerable<JsonElement> updates)
         {
             var res = new List<BalanceUpdate>(4);
-            foreach (var update in updates.EnumerateArray())
+            foreach (var update in updates)
             {
                 res.Add(update.RequiredString("kind") switch
                 {

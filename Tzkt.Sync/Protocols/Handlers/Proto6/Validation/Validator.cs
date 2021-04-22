@@ -31,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto6
                 if (!Cache.Accounts.DelegateExists(baker.GetString()))
                     throw new ValidationException($"non-existent deactivated baker {baker}");
 
-            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
+            var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray());
             var rewardUpdates = Cycle < Protocol.NoRewardCycles || Block.RequiredArray("operations", 4)[0].Count() == 0 ? 2 : 3;
 
             ValidateBlockRewards(balanceUpdates.Take(rewardUpdates));

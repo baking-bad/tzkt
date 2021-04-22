@@ -8,10 +8,10 @@ namespace Tzkt.Sync.Protocols.Proto4
         public Validator(ProtocolHandler protocol) : base(protocol) { }
 
         // new RPC format
-        protected override List<BalanceUpdate> ParseBalanceUpdates(JsonElement updates)
+        protected override List<BalanceUpdate> ParseBalanceUpdates(IEnumerable<JsonElement> updates)
         {
             var res = new List<BalanceUpdate>(4);
-            foreach (var update in updates.EnumerateArray())
+            foreach (var update in updates)
             {
                 res.Add(update.RequiredString("kind") switch
                 {

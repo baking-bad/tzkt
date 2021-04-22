@@ -20,15 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 throw new ValidationException("invalid voting period index");
 
             var period = await Cache.Periods.GetAsync(periodIndex);
-
-            var kind = metadata.RequiredString("voting_period_kind") switch
-            {
-                "proposal" => PeriodKind.Proposal,
-                "testing_vote" => PeriodKind.Exploration,
-                "testing" => PeriodKind.Testing,
-                "promotion_vote" => PeriodKind.Promotion,
-                _ => throw new ValidationException("invalid voting period kind")
-            };
+            var kind = ParsePeriodKind(metadata.RequiredString("voting_period_kind"));
 
             // WTF: [level:360448] - Exploration period started before the proposals period ended.
             if (Level < period.LastLevel)
@@ -42,6 +34,15 @@ namespace Tzkt.Sync.Protocols.Proto3
                     throw new ValidationException("inconsistent voting period");
             }
         }
+
+        protected override PeriodKind ParsePeriodKind(string kind) => kind switch
+        {
+            "proposal" => PeriodKind.Proposal,
+            "testing_vote" => PeriodKind.Exploration,
+            "testing" => PeriodKind.Testing,
+            "promotion_vote" => PeriodKind.Promotion,
+            _ => throw new ValidationException("invalid voting period kind")
+        };
 
         // fixed non-existent delegate & separate allocation fee
         protected override async Task ValidateOrigination(JsonElement content)
@@ -59,13 +60,13 @@ namespace Tzkt.Sync.Protocols.Proto3
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(metadata.RequiredArray("balance_updates")),
+                ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates),
+                    ParseBalanceUpdates(resultUpdates.EnumerateArray()),
                     source,
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
@@ -85,7 +86,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray()),
+                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
                     content.RequiredString("source"),
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),

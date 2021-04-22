@@ -849,6 +849,7 @@ namespace Tzkt.Api.Repositories
                 1 => "exploration",
                 2 => "testing",
                 3 => "promotion",
+                4 => "adoption",
                 _ => "unknown"
             };
         }
