@@ -377,6 +377,7 @@ namespace Tzkt.Api.Websocket.Processors
             try
             {
                 await Sema.WaitAsync();
+                if (!Subs.ContainsKey(connectionId) && !AddressSubs.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
                 
                 Subs.Remove(connectionId);

@@ -91,7 +91,7 @@ namespace Tzkt.Api.Websocket.Processors
                     Gt = State.ValidLevel,
                     Le = State.Current.Level
                 };
-                var limit = State.Current.Level - State.ValidLevel;
+                var limit = 1_000_000;
                 var format = MichelineFormat.Json;
 
                 var updates = await Repo.GetUpdates(null, null, level, null, null, limit, format);
@@ -282,6 +282,7 @@ namespace Tzkt.Api.Websocket.Processors
             try
             {
                 await Sema.WaitAsync();
+                if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
 
                 TryRemove(AllSubs, connectionId);
