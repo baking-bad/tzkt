@@ -7,6 +7,8 @@ namespace Tzkt.Api.Services.Cache
         public int KnownHead { get; set; }
 
         public DateTime LastSync { get; set; }
+        
+        public int Cycle { get; set; }
 
         public int Cycle { get; set; }
 

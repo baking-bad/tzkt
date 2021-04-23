@@ -77,19 +77,17 @@ namespace Tzkt.Api.Repositories
         }
         public async Task UpdateStats()
         {
+            //TODO 12 months charts
             //TODO Reconsider all operations only for applied
-            //TODO All queries to string
-            //TODO All Now to UTCNow
             Tabs = await GetTabsData();
-            var cycleInfo = await GetCycles();
             var statistics = await GetStatistics();
 //TODO Don't create new objects
             Stats = new HomeData
             {
                 HeaderData = await GetHeaderData(),
-                CycleData = GetCurrentCycleData(cycleInfo.Index),
+                CycleData = GetCurrentCycleData(),
                 TxsData = await GetTxsData(),
-                StakingData = GetStakingData(cycleInfo, statistics),
+                StakingData = await GetStakingData(statistics),
                 ContractsData = await GetContractsData(),
                 MarketData = await GetMarketData(statistics),
                 GovernanceData = await GetGovernanceData()
@@ -107,7 +105,7 @@ namespace Tzkt.Api.Repositories
         {
             Tabs.Blocks = await Blocks.Get(null, null, null, null, new SortParameter {Desc = "level"}, null, 10,
                 BlockFields, Symbols.None);
-            Stats.CycleData = GetCurrentCycleData(await GetCycleIndex());
+            Stats.CycleData = GetCurrentCycleData();
         }
 
         private async Task<Tabs> GetTabsData()
@@ -134,44 +132,13 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<Cycle> GetCycles()
-        {
-            //TODO Get rid of it with v1.5 State
-            var sql = new SqlBuilder($@"SELECT * FROM ""Cycles""")
-                .Filter("Index", State.Current.CyclesCount - Protocols.Current.PreservedCycles - 1);
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
-
-            return rows.Select(row => new Cycle
-            {
-                Index = row.Index,
-                //TODO From accounts
-                TotalBakers = row.TotalBakers,
-                //TODO From accounts
-
-                TotalStaking = row.TotalStaking,
-            }).FirstOrDefault();
-        }
-
-        public async Task<int> GetCycleIndex()
-        {
-            //TODO Get rid of it with v1.5 State
-            var sql = new SqlBuilder($@"SELECT ""Index"" FROM ""Cycles""")
-                .Filter("Index", State.Current.CyclesCount - Protocols.Current.PreservedCycles - 1);
-
-            using var db = GetConnection();
-            var row = await db.QueryFirstOrDefaultAsync(sql.Query, sql.Params);
-
-            return row.Index;
-        }
-
         public async Task<Statistics> GetStatistics()
         {
-            var sql = new SqlBuilder($@"SELECT * FROM ""Statistics"" WHERE ""Level"" = {State.Current.Level}");
-
+            
+            //TODO Reconsider using statistics
+            
             using var db = GetConnection();
-            var row = await db.QueryFirstOrDefaultAsync(sql.Query, sql.Params);
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Statistics"" WHERE ""Level"" = {State.Current.Level}");
 
             return new Statistics
             {
@@ -194,28 +161,19 @@ namespace Tzkt.Api.Repositories
 
         private async Task<HeaderData> GetHeaderData()
         {
-            var period = 1440 * 60 / Protocols.Current.TimeBetweenBlocks; //day
+            var period = 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //day
             var currentPeriod = State.Current.Level - period;
             var previousPeriod = currentPeriod - period;
             
-            var txsAndVolumeQuery = new SqlBuilder($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}");
-            var prevTxsAndVolumeQuery = new SqlBuilder($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}");
-
-            var callsQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" IS NOT NULL");
-            var prevCallsQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod} AND ""Entrypoint"" IS NOT NULL");
-            
-            var accountsQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {currentPeriod}");            
-            var prevAccountsQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {previousPeriod} AND ""FirstLevel"" < {currentPeriod}");            
-
             using var db = GetConnection();
 
-            var txsAndVolume = await db.QueryFirstOrDefaultAsync(txsAndVolumeQuery.Query, txsAndVolumeQuery.Params);
-            var calls = (long) (await db.QueryFirstOrDefaultAsync(callsQuery.Query, callsQuery.Params)).count;
-            var accounts = (long) (await db.QueryFirstOrDefaultAsync(accountsQuery.Query, accountsQuery.Params)).count;
+            var txsAndVolume = await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}");
+            var calls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" IS NOT NULL")).count;
+            var accounts = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {currentPeriod}")).count;
 
-            var prevTxsAndVolume = await db.QueryFirstOrDefaultAsync(prevTxsAndVolumeQuery.Query, prevTxsAndVolumeQuery.Params);
-            var prevCalls = (long) (await db.QueryFirstOrDefaultAsync(prevCallsQuery.Query, prevCallsQuery.Params)).count;
-            var prevAccounts = (long) (await db.QueryFirstOrDefaultAsync(prevAccountsQuery.Query, prevAccountsQuery.Params)).count;
+            var prevTxsAndVolume = await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}");
+            var prevCalls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod} AND ""Entrypoint"" IS NOT NULL")).count;
+            var prevAccounts = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {previousPeriod} AND ""FirstLevel"" < {currentPeriod}")).count;
             
             var currentVolume = (long) txsAndVolume.volume;
             var currentTxsCount = (long) txsAndVolume.txs;
@@ -238,62 +196,54 @@ namespace Tzkt.Api.Repositories
             var period = 43200; //month
             var currentPeriod = State.Current.Level - period;
             var previousPeriod = currentPeriod - period;
-            
-            var feesQuery = new SqlBuilder($@"
-                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned  FROM
-                (
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {currentPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""RevealOps"" WHERE ""Level"" >= {currentPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
-                ) AS current
-                ");
-            
-            var prevFeesQuery = new SqlBuilder($@"
-                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned  FROM
-                (
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""RevealOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
-                ) AS previous
-                ");
-//TODO to fees query
-            var txsQuery = new SqlBuilder($@"SELECT COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}");
-            var prevTxsQuery = new SqlBuilder($@"SELECT COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}");
-            
+           
             using var db = GetConnection();
             
-            var fees = (await db.QueryFirstOrDefaultAsync(feesQuery.Query, feesQuery.Params));
-            var prevFees = (await db.QueryFirstOrDefaultAsync(prevFeesQuery.Query, prevFeesQuery.Params));
+            var currentData = (await db.QueryFirstOrDefaultAsync($@"
+                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned, SUM(""txs"") AS txs, SUM(""volume"") AS volume  FROM
+                (
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""DelegationOps"" WHERE ""Level"" >= {currentPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""RevealOps"" WHERE ""Level"" >= {currentPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, 0 AS txs, 0 AS volume FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
+                ) AS current
+                "));
+            var prevData = (await db.QueryFirstOrDefaultAsync($@"
+                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned, SUM(""txs"") AS txs, SUM(""volume"") AS volume  FROM
+                (
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""DelegationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""RevealOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, 0 AS txs, 0 AS volume FROM ""OriginationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                ) AS previous
+                "));
             
-            var txsAndVolume = (await db.QueryFirstOrDefaultAsync(txsQuery.Query, txsQuery.Params));
-            var prevTxsAndVolume = (await db.QueryFirstOrDefaultAsync(prevTxsQuery.Query, prevTxsQuery.Params));
-            
-            var currentBurned = (long) (fees.burned);
-            var currentPaid = (long) (fees.paid);
-            var currentVolume = (long) (txsAndVolume.volume);
-            var currentTxsCount = txsAndVolume.txs;
+            var currentBurned = (long) currentData.burned;
+            var currentPaid = (long) (currentData.paid);
+            var currentVolume = (long) (currentData.volume);
+            var currentTxsCount = (long) (currentData.txs);
             
             return new TxsData
             {
                 BurnedForMonth = currentBurned,
-                BurnedDiff = CalculateDiff(currentBurned, (long) (prevFees.burned)),
+                BurnedDiff = CalculateDiff(currentBurned, (long) (prevData.burned)),
                 PaidFeesForMonth = currentPaid,
-                PaidDiff = CalculateDiff(currentPaid, (long) (prevFees.paid)),
+                PaidDiff = CalculateDiff(currentPaid, (long) (prevData.paid)),
                 TxsForMonth = currentTxsCount,
-                TxsDiff = CalculateDiff(currentTxsCount, prevTxsAndVolume.txs),
+                TxsDiff = CalculateDiff(currentTxsCount, (long) prevData.txs),
                 Volume = currentVolume,
-                VolumeDiff = CalculateDiff(currentVolume, (long) (prevTxsAndVolume.volume)),
+                VolumeDiff = CalculateDiff(currentVolume, (long) (prevData.volume)),
                 Chart = Stats?.TxsData?.Chart
             };
         }
+
+        #region Charts
 
         private async Task GetTxChart()
         {
@@ -342,43 +292,53 @@ namespace Tzkt.Api.Repositories
 
         private async Task<long> GetTxCountForPeriod(DateTime from, DateTime to)
         {
-            var txsQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" 
-                                                WHERE ""Level"" < {Time.FindLevel(to, SearchMode.ExactOrLower)}
-                                                AND ""Level"" >= {Time.FindLevel(from, SearchMode.ExactOrHigher)}");
             using var db = GetConnection();
 
-            return (await db.QueryFirstOrDefaultAsync(txsQuery.Query, txsQuery.Params)).count;
-        }
+            return (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" 
+                                                WHERE ""Level"" < {Time.FindLevel(to, SearchMode.ExactOrLower)}
+                                                AND ""Level"" >= {Time.FindLevel(from, SearchMode.ExactOrHigher)}")).count;
+        }    
 
-        private CycleData GetCurrentCycleData(int index)
+        #endregion
+
+
+
+        private CycleData GetCurrentCycleData()
         {
+            var cycle = State.Current.Cycle;
+            var firstLevel = cycle * Protocols.Current.BlocksPerCycle + 1;
+            var lastLevel = (cycle + 1) * Protocols.Current.BlocksPerCycle;
             return new CycleData
             {
-                CurrentCycle = index,
-                FirstLevel = index * Protocols.Current.BlocksPerCycle + 1,
-                LastLevel = (index + 1) * Protocols.Current.BlocksPerCycle,
-                CycleEndDate = Time[(index + 1) * Protocols.Current.BlocksPerCycle],
-                Progress = (State.Current.Level - index * Protocols.Current.BlocksPerCycle + 1) * 100 / Protocols.Current.BlocksPerCycle
+                CurrentCycle = cycle,
+                FirstLevel = firstLevel,
+                LastLevel = lastLevel,
+                CycleEndDate = Time[lastLevel],
+                Progress = (State.Current.Level - firstLevel) * 100 / Protocols.Current.BlocksPerCycle
             };
         }
 
-        private StakingData GetStakingData(Cycle cycleInfo, Statistics statistics)
+        private async Task<StakingData> GetStakingData(Statistics statistics)
         {
-            const int blocksPerYear = 60 * 24 * 365;
             var protocol = Protocols.Current;
+            using var db = GetConnection();
+
+            var totalStaking = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""StakingBalance"") AS sum FROM ""Accounts"" WHERE  ""Type"" = 1 AND ""Staked"" = TRUE")).sum;
+
+            var blocksPerYear = 60 * 24 * 365 * 60 / protocol.TimeBetweenBlocks;
             var maxBlockReward = protocol.EndorsersPerBlock * (protocol.BlockReward0 + protocol.EndorsementReward0); //microtez
-            var tokensPerRoll = protocol.TokensPerRoll;
             var totalRewardsPerYear = (long) maxBlockReward * blocksPerYear;
+
+            var totalRolls = (int) (await db.QueryFirstOrDefaultAsync($@"SELECT SUM((COALESCE(""StakingBalance"", 0) / {protocol.TokensPerRoll}) ::integer ) AS sum FROM ""Accounts""
+            WHERE  ""Type"" = 1 AND ""Staked"" = TRUE")).sum;
             
             return new StakingData
             {
-                TotalStaking = cycleInfo.TotalStaking,
-                StakingPercentage = (int) (cycleInfo.TotalStaking * 100 / statistics.TotalSupply),
-                //TODO ROI depends on rolls instead of staking.
-                AvgRoi = Math.Round((decimal) totalRewardsPerYear * 100 / cycleInfo.TotalStaking, 2),
-                Inflation = Math.Round((decimal) totalRewardsPerYear * 100 / statistics.TotalSupply, 2),
-                //TODO Get from accounts
-                BakersCount = cycleInfo.TotalBakers
+                TotalStaking = totalStaking,
+                StakingPercentage = (int) (totalStaking * 100 / statistics.TotalSupply),
+                AvgRoi = Math.Round((double) totalRewardsPerYear * 100 / (protocol.TokensPerRoll * totalRolls), 2),
+                Inflation = Math.Round((double) totalRewardsPerYear * 100 / statistics.TotalSupply, 2),
+                BakersCount = await Accounts.GetDelegatesCount(new BoolParameter{Eq = true})
             };
         }
 
@@ -387,57 +347,46 @@ namespace Tzkt.Api.Repositories
             //TODO Used storage KB with diff maybe someday
 
             var period = 43200; //month
-            
-            var day = State.Current.Level - 1440;
             var currentPeriod = State.Current.Level - period;
-
             var previousMonth = currentPeriod - period;
-            //TODO To fees query
-            var txsQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" IS NOT NULL");
-            var previousTxsQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod} AND ""Entrypoint"" IS NOT NULL");
-            var feesQuery = new SqlBuilder($@"
-                                    SELECT SUM(""burn"") AS burned  FROM
-                                    (
-
-                                        SELECT SUM(""StorageFee"") AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}
-                                        UNION ALL
-                                        SELECT SUM(""StorageFee"") AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
-                                    ) AS result
-                                    ");
-            var prevFeesQuery = new SqlBuilder($@"
-                                    SELECT SUM(""burn"") AS burned  FROM
-                                    (
-
-                                        SELECT SUM(""StorageFee"") AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}
-                                        UNION ALL
-                                        SELECT SUM(""StorageFee"") AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}
-                                    ) AS result
-                                    ");
-            //TODO add kind = asset
-            var transfersQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" = 'transfer'");
-            var prevTransfersQuery = new SqlBuilder($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE
-                                                         ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod} AND   ""Entrypoint"" = 'transfer'");
-
 
             using var db = GetConnection();
 
-            var newCalls = (long) (await db.QueryFirstOrDefaultAsync(txsQuery.Query, txsQuery.Params)).count;
+            var newCallsAndBurned = await db.QueryFirstOrDefaultAsync($@"
+                                    SELECT SUM(""burn"") AS burned, SUM(""count"") AS count  FROM
+                                    (
 
-            var prevCalls = (long) (await db.QueryFirstOrDefaultAsync(previousTxsQuery.Query, previousTxsQuery.Params)).count;
+                                        SELECT SUM(""StorageFee"") AS burn, COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND ""Entrypoint"" IS NOT NULL
+                                        UNION ALL
+                                        SELECT SUM(""StorageFee"") AS burn, 0 AS count FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
+                                    ) AS result
+                                    ");
+
+            var prevCallsAndBurned = await db.QueryFirstOrDefaultAsync($@"
+                                    SELECT SUM(""burn"") AS burned, SUM(""count"") AS count  FROM
+                                    (
+
+                                        SELECT SUM(""StorageFee"") AS burn, COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}   AND ""Entrypoint"" IS NOT NULL
+                                        UNION ALL
+                                        SELECT SUM(""StorageFee"") AS burn, 0 AS count FROM ""OriginationOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}
+                                    ) AS result
+                                    ");
+            ;
+            var transfers = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" = 'transfer'")).count;
+            var prevTransfers = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE
+                                                         ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod} AND   ""Entrypoint"" = 'transfer'")).count;
             
-            var burned = (long) (await db.QueryFirstOrDefaultAsync(feesQuery.Query, feesQuery.Params)).burned;
-
-            var prevBurned = (long) (await db.QueryFirstOrDefaultAsync(prevFeesQuery.Query, prevFeesQuery.Params)).burned;
-
-            var transfers = (long) (await db.QueryFirstOrDefaultAsync(transfersQuery.Query, transfersQuery.Params)).count;
-
-            var prevTransfers = (long) (await db.QueryFirstOrDefaultAsync(prevTransfersQuery.Query, prevTransfersQuery.Params)).count;
-
             var contractsCount = await Accounts.GetContractsCount(new ContractKindParameter
             {
                 In = new List<int> {1, 2},
             });
 
+                        
+            var burned = (long) newCallsAndBurned.burned;
+            var prevBurned = (long) prevCallsAndBurned.burned;
+            var newCalls = (long) newCallsAndBurned.count;
+            var prevCalls = (long) prevCallsAndBurned.count;
+            
             return new ContractsData
             {
                 TotalContracts = contractsCount,
@@ -507,12 +456,6 @@ namespace Tzkt.Api.Repositories
             return previous == 0 ? 0 : Math.Round(((((double) current - previous) / previous) * 100), 2);
         }
     }
-    
-    //TODO All models to directory
-
-
-
-    
 
 
 
@@ -528,7 +471,9 @@ namespace Tzkt.Api.Repositories
 
 
 
-    
+
+
+
 
 
 

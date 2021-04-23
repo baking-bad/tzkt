@@ -9,8 +9,8 @@ namespace Tzkt.Api.Models.Home
 
         public long TotalStaking { get; set; }
         public int StakingPercentage { get; set; }
-        public decimal AvgRoi { get; set; }
-        public decimal Inflation { get; set; }
+        public double AvgRoi { get; set; }
+        public double Inflation { get; set; }
         public int BakersCount { get; set; }
     }
 }
