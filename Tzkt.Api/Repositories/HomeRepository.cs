@@ -78,7 +78,6 @@ namespace Tzkt.Api.Repositories
         public async Task UpdateStats()
         {
             //TODO 12 months charts
-            //TODO Reconsider all operations only for applied
             Tabs = await GetTabsData();
             var statistics = await GetStatistics();
 //TODO Don't create new objects
@@ -110,7 +109,7 @@ namespace Tzkt.Api.Repositories
 
         private async Task<Tabs> GetTabsData()
         {
-            #region accounts
+            #region assets
 
             var assets = await Accounts.Get(null, new ContractKindParameter {Eq = 2}, null, null, null, null,
                 new SortParameter {Desc = "numTransactions"}, null, 100, AssetFields);
@@ -134,9 +133,6 @@ namespace Tzkt.Api.Repositories
 
         public async Task<Statistics> GetStatistics()
         {
-            
-            //TODO Reconsider using statistics
-            
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Statistics"" WHERE ""Level"" = {State.Current.Level}");
 
@@ -167,12 +163,12 @@ namespace Tzkt.Api.Repositories
             
             using var db = GetConnection();
 
-            var txsAndVolume = await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}");
-            var calls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" IS NOT NULL")).count;
+            var txsAndVolume = await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND ""Status"" = 1");
+            var calls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" IS NOT NULL AND ""Status"" = 1")).count;
             var accounts = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {currentPeriod}")).count;
 
-            var prevTxsAndVolume = await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}");
-            var prevCalls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod} AND ""Entrypoint"" IS NOT NULL")).count;
+            var prevTxsAndVolume = await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""Amount"") AS volume, COUNT(*) AS txs FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod} AND ""Status"" = 1");
+            var prevCalls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod} AND ""Entrypoint"" IS NOT NULL AND ""Status"" = 1")).count;
             var prevAccounts = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {previousPeriod} AND ""FirstLevel"" < {currentPeriod}")).count;
             
             var currentVolume = (long) txsAndVolume.volume;
@@ -200,34 +196,37 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             
             var currentData = (await db.QueryFirstOrDefaultAsync($@"
-                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned, SUM(""txs"") AS txs, SUM(""volume"") AS volume  FROM
+                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned FROM
                 (
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""DelegationOps"" WHERE ""Level"" >= {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {currentPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""RevealOps"" WHERE ""Level"" >= {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""RevealOps"" WHERE ""Level"" >= {currentPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, 0 AS txs, 0 AS volume FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
                 ) AS current
                 "));
             var prevData = (await db.QueryFirstOrDefaultAsync($@"
-                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned, SUM(""txs"") AS txs, SUM(""volume"") AS volume  FROM
+                SELECT SUM(""fees"") AS paid, SUM(""burn"") AS burned FROM
                 (
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""DelegationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn, 0 AS txs, 0 AS volume FROM ""RevealOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, 0 AS burn FROM ""RevealOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn, 0 AS txs, 0 AS volume FROM ""OriginationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
+                    SELECT SUM(""BakerFee"") AS fees, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0)) AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod}
                 ) AS previous
                 "));
+
+            var txAndVol = await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND ""Status"" = 1");
+            var prevTxAndVol = await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS txs, SUM(""Amount"") AS volume FROM ""TransactionOps"" WHERE ""Level"" >= {previousPeriod} AND ""Level"" < {currentPeriod} AND ""Status"" = 1");
             
             var currentBurned = (long) currentData.burned;
             var currentPaid = (long) (currentData.paid);
-            var currentVolume = (long) (currentData.volume);
-            var currentTxsCount = (long) (currentData.txs);
+            var currentVolume = (long) (txAndVol.volume);
+            var currentTxsCount = (long) (txAndVol.txs);
             
             return new TxsData
             {
@@ -236,9 +235,9 @@ namespace Tzkt.Api.Repositories
                 PaidFeesForMonth = currentPaid,
                 PaidDiff = CalculateDiff(currentPaid, (long) (prevData.paid)),
                 TxsForMonth = currentTxsCount,
-                TxsDiff = CalculateDiff(currentTxsCount, (long) prevData.txs),
+                TxsDiff = CalculateDiff(currentTxsCount, (long) prevTxAndVol.txs),
                 Volume = currentVolume,
-                VolumeDiff = CalculateDiff(currentVolume, (long) (prevData.volume)),
+                VolumeDiff = CalculateDiff(currentVolume, (long) (prevTxAndVol.volume)),
                 Chart = Stats?.TxsData?.Chart
             };
         }
@@ -296,7 +295,8 @@ namespace Tzkt.Api.Repositories
 
             return (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" 
                                                 WHERE ""Level"" < {Time.FindLevel(to, SearchMode.ExactOrLower)}
-                                                AND ""Level"" >= {Time.FindLevel(from, SearchMode.ExactOrHigher)}")).count;
+                                                AND ""Level"" >= {Time.FindLevel(from, SearchMode.ExactOrHigher)}
+                                                AND ""Status"" = 1")).count;
         }    
 
         #endregion
@@ -352,40 +352,37 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
 
-            var newCallsAndBurned = await db.QueryFirstOrDefaultAsync($@"
+            var burned = (long) (await db.QueryFirstOrDefaultAsync($@"
+                                    SELECT SUM(""burn"") AS burned FROM
+                                    (
+                                        SELECT SUM(""StorageFee"") AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod}
+                                        UNION ALL
+                                        SELECT SUM(""StorageFee"") AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
+                                    ) AS result
+                                    ")).burned;
+
+            var prevBurned = (long) (await db.QueryFirstOrDefaultAsync($@"
                                     SELECT SUM(""burn"") AS burned, SUM(""count"") AS count  FROM
                                     (
-
-                                        SELECT SUM(""StorageFee"") AS burn, COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND ""Entrypoint"" IS NOT NULL
+                                        SELECT SUM(""StorageFee"") AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}
                                         UNION ALL
-                                        SELECT SUM(""StorageFee"") AS burn, 0 AS count FROM ""OriginationOps"" WHERE ""Level"" >= {currentPeriod}
+                                        SELECT SUM(""StorageFee"") AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}
                                     ) AS result
-                                    ");
-
-            var prevCallsAndBurned = await db.QueryFirstOrDefaultAsync($@"
-                                    SELECT SUM(""burn"") AS burned, SUM(""count"") AS count  FROM
-                                    (
-
-                                        SELECT SUM(""StorageFee"") AS burn, COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}   AND ""Entrypoint"" IS NOT NULL
-                                        UNION ALL
-                                        SELECT SUM(""StorageFee"") AS burn, 0 AS count FROM ""OriginationOps"" WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod}
-                                    ) AS result
-                                    ");
-            ;
-            var transfers = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" = 'transfer'")).count;
+                                    ")).burned;
+            
+            var newCalls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" 
+                                                                           WHERE ""Level"" >= {currentPeriod} AND ""Entrypoint"" IS NOT NULL AND ""Status"" = 1")).count;
+            var prevCalls = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" 
+                                                                            WHERE ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod} AND ""Entrypoint"" IS NOT NULL AND ""Status"" = 1")).count;
+            
+            var transfers = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE ""Level"" >= {currentPeriod} AND   ""Entrypoint"" = 'transfer' AND ""Status"" = 1")).count;
             var prevTransfers = (long) (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" WHERE
-                                                         ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod} AND   ""Entrypoint"" = 'transfer'")).count;
+                                                         ""Level"" >= {previousMonth} AND ""Level"" < {currentPeriod} AND   ""Entrypoint"" = 'transfer' AND ""Status"" = 1")).count;
             
             var contractsCount = await Accounts.GetContractsCount(new ContractKindParameter
             {
                 In = new List<int> {1, 2},
             });
-
-                        
-            var burned = (long) newCallsAndBurned.burned;
-            var prevBurned = (long) prevCallsAndBurned.burned;
-            var newCalls = (long) newCallsAndBurned.count;
-            var prevCalls = (long) prevCallsAndBurned.count;
             
             return new ContractsData
             {
@@ -412,8 +409,7 @@ namespace Tzkt.Api.Repositories
 
         private async Task<GovernanceData> GetGovernanceData()
         {
-            var votingPeriodsCount = 5;
-            var levelsFromTheBeginning = -1;
+            const int votingPeriodsCount = 5;
 
             var currentEpoch = await Voting.GetEpoch(State.Current.VotingEpoch);
             var period = await Voting.GetPeriod(State.Current.VotingPeriod);
@@ -431,27 +427,26 @@ namespace Tzkt.Api.Repositories
                 ProtocolWillBeApplied = State.Current.Timestamp.AddMinutes(currentEpoch.FirstLevel + (Protocols.Current.BlocksPerVoting * votingPeriodsCount) - State.Current.Level),
             };
 
-            if (period.Kind == "promotion" || period.Kind == "exploration")
-            {
-                var yayNaySum = (period.YayRolls ?? 0) + (period.NayRolls ?? 0);
-                var totalVoted = yayNaySum + (period.PassRolls ?? 0);
+            if (period.Kind != "promotion" && period.Kind != "exploration") return result;
+            
+            var yayNaySum = (period.YayRolls ?? 0) + (period.NayRolls ?? 0);
+            var totalVoted = yayNaySum + (period.PassRolls ?? 0);
 
-                result.InFavor = yayNaySum > 0
-                    ? Math.Round((double) (period.YayRolls ?? 0) * 100 / yayNaySum, 2)
-                    : 0;
+            result.InFavor = yayNaySum > 0
+                ? Math.Round((double) (period.YayRolls ?? 0) * 100 / yayNaySum, 2)
+                : 0;
 
-                result.Participation = period.TotalRolls > 0
-                    ? Math.Round(((double) totalVoted * 100 / period.TotalRolls ?? 0), 2)
-                    : 0;
+            result.Participation = period.TotalRolls > 0
+                ? Math.Round(((double) totalVoted * 100 / period.TotalRolls ?? 0), 2)
+                : 0;
 
-                result.Quorum = Math.Round(period.BallotsQuorum ?? 0, 2);
-                result.Supermajority = Math.Round(period.Supermajority ?? 0, 2);
-            }
+            result.Quorum = Math.Round(period.BallotsQuorum ?? 0, 2);
+            result.Supermajority = Math.Round(period.Supermajority ?? 0, 2);
 
             return result;
         }
 
-        private double CalculateDiff(long current, long previous)
+        private static double CalculateDiff(long current, long previous)
         {
             return previous == 0 ? 0 : Math.Round(((((double) current - previous) / previous) * 100), 2);
         }
