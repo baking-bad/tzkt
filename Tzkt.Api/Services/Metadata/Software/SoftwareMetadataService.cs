@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -32,7 +32,7 @@ namespace Tzkt.Api.Services.Metadata
             Aliases = rows.ToDictionary(row => (int)row.Id, row => new SoftwareAlias
             {
                 Version = row.Version,
-                Date = DateTime.TryParse(row.CommitDate, out DateTime dt) ? dt : Time[row.FirstLevel]
+                Date = DateTimeOffset.TryParse(row.CommitDate, out DateTimeOffset dt) ? dt.DateTime : Time[row.FirstLevel]
             });
 
             Logger.LogDebug($"Loaded {Aliases.Count} software metadata");

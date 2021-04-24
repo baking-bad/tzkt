@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace Tzkt.Api.Models
@@ -39,5 +41,58 @@ namespace Tzkt.Api.Models
         /// Offchain metadata
         /// </summary>
         public RawJson Metadata { get; set; }
+
+        /// <summary>
+        /// **DEPRECATED**. Use `metadata` instead.
+        /// </summary>
+        public DateTime? CommitDate
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("commitDate", out var v) && v.TryGetDateTime(out var dt) ? dt : null;
+            }
+        }
+
+        /// <summary>
+        /// **DEPRECATED**. Use `metadata` instead.
+        /// </summary>
+        public string CommitHash
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("commitHash", out var v) ? v.GetString() : null;
+            }
+        }
+
+        /// <summary>
+        /// **DEPRECATED**. Use `metadata` instead.
+        /// </summary>
+        public string Version
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("version", out var v) ? v.GetString() : null;
+            }
+        }
+
+        /// <summary>
+        /// **DEPRECATED**. Use `metadata` instead.
+        /// </summary>
+        public List<string> Tags
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("tags", out var v) && v.ValueKind == JsonValueKind.Array
+                    ? v.EnumerateArray().Select(x => x.GetString()).ToList() : null;
+            }
+        }
     }
 }
