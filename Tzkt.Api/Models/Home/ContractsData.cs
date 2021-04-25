@@ -4,7 +4,7 @@ namespace Tzkt.Api.Models.Home
 {
     public class ContractsData
     {
-        public IEnumerable<ChartPoint> Chart { get; set; }
+        public List<ChartPoint> Chart { get; set; }
         public long TotalContracts { get; set; }
         public long NewCalls { get; set; }
         public double CallsDiff { get; set; }

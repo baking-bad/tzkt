@@ -7,6 +7,7 @@ namespace Tzkt.Api.Models.Home
         public TxsData TxsData { get; set; }
         public StakingData StakingData { get; set; }
         public ContractsData ContractsData { get; set; }
+        public AccountsData AccountsData { get; set; }
         public MarketData MarketData { get; set; }
         public GovernanceData GovernanceData { get; set; }
     }

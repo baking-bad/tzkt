@@ -4,7 +4,6 @@ namespace Tzkt.Api.Models.Home
 {
     public class TxsData
     {
-        //TODO Collect 12 month amount of total txs with DateTime
         public List<ChartPoint> Chart { get; set; }
         public long TxsForMonth { get; set; }
         public double TxsDiff { get; set; }
