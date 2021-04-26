@@ -26,6 +26,7 @@ namespace Tzkt.Api.Repositories
                 KnownLevel = appState.KnownHead,
                 LastSync = appState.LastSync,
                 Hash = appState.Hash,
+                Cycle = appState.Cycle,
                 Level = appState.Level,
                 Protocol = appState.Protocol,
                 Timestamp = appState.Timestamp,

@@ -8,6 +8,8 @@ namespace Tzkt.Api.Services.Cache
 
         public DateTime LastSync { get; set; }
 
+        public int Cycle { get; set; }
+
         public int Level { get; set; }
 
         public string Hash { get; set; }

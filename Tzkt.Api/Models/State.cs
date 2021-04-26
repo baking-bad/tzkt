@@ -8,6 +8,11 @@ namespace Tzkt.Api.Models
     public class State
     {
         /// <summary>
+        /// Current cycle
+        /// </summary>
+        public int Cycle { get; set; }
+
+        /// <summary>
         /// The height of the last block from the genesis block
         /// </summary>
         public int Level { get; set; }
