@@ -247,7 +247,7 @@ namespace Tzkt.Sync.Services
             param.Add(last.Krw);
             param.Add(last.Eth);
 
-            var p = 6;
+            var p = 7;
             var i = 0;
 
             foreach (var q in quotes)
