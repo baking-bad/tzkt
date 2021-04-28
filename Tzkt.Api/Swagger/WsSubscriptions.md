@@ -83,8 +83,10 @@ Sends operations of specified types or related to specified accounts, included i
 	address: '', // address you want to subscribe to,
 	             // or null if you want to subscribe for all operations
 
-	types: ''    // comma-separated list of operation types
-	             // such as 'transaction', 'delegation', etc.
+	types: ''    // comma-separated list of operation types, any of:
+	             // 'transaction', 'origination', 'delegation', 'reveal'
+				 // 'double_baking', 'double_endorsing', 'nonce_revelation', 'activation'
+				 // 'proposal', 'ballot', 'endorsement.
 }
 ````
 																	 
