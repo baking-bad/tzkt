@@ -94,7 +94,7 @@ namespace Tzkt.Api.Websocket.Processors
                 var limit = 1_000_000;
                 var format = MichelineFormat.Json;
 
-                var updates = await Repo.GetUpdates(null, null, level, null, null, limit, format);
+                var updates = await Repo.GetUpdates(null, null, null, level, null, null, limit, format);
                 var count = updates.Count();
 
                 Logger.LogDebug("{0} bigmap updates fetched", count);

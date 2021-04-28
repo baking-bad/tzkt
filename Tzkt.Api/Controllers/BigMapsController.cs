@@ -106,6 +106,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="contract">Filters updates by bigmap contract</param>
         /// <param name="tags">Filters updates by bigmap tags: `token_metadata` - tzip-12, `metadata` - tzip-16</param>
         /// <param name="action">Filters updates by action</param>
+        /// <param name="value">Filters updates by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>
         /// <param name="level">Filters updates by level</param>
         /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `ptr`, `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -119,6 +121,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter contract,
             BigMapTagsParameter tags,
             BigMapActionParameter action,
+            JsonParameter value,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -131,9 +134,9 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (path == null && contract == null && tags == null)
-                return Ok(await BigMaps.GetUpdates(bigmap, action, level, sort, offset, limit, micheline));
+                return Ok(await BigMaps.GetUpdates(bigmap, action, value, level, sort, offset, limit, micheline));
 
-            return Ok(await BigMaps.GetUpdates(bigmap, path, contract, action, tags, level, sort, offset, limit, micheline));
+            return Ok(await BigMaps.GetUpdates(bigmap, path, contract, action, value, tags, level, sort, offset, limit, micheline));
         }
 
         /// <summary>

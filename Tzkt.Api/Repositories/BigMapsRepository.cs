@@ -948,6 +948,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BigMapUpdate>> GetUpdates(
             Int32Parameter ptr,
             BigMapActionParameter action,
+            JsonParameter value,
             Int32Parameter level,
             SortParameter sort,
             OffsetParameter offset,
@@ -959,6 +960,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT ""Id"", ""BigMapPtr"", ""Action"", ""Level"", ""BigMapKeyId"", ""{fCol}Value"" FROM ""BigMapUpdates""")
                 .Filter("BigMapPtr", ptr)
                 .Filter("Action", action)
+                .Filter("JsonValue", value)
                 .Filter("Level", level)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -1029,6 +1031,7 @@ namespace Tzkt.Api.Repositories
             StringParameter path,
             AccountParameter contract,
             BigMapActionParameter action,
+            JsonParameter value,
             BigMapTagsParameter tags,
             Int32Parameter level,
             SortParameter sort,
@@ -1046,6 +1049,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BigMapPtr", ptr)
                 .Filter("StoragePath", path)
                 .Filter("Action", action)
+                .Filter("JsonValue", value)
                 .Filter("Tags", tags)
                 .Filter("ContractId", contract)
                 .Filter("Level", level)
