@@ -11,6 +11,7 @@ using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Repositories
 {
@@ -2410,7 +2411,7 @@ namespace Tzkt.Api.Repositories
                 });
         }
 
-        public async Task<string> GetStorageValue(string address, string[] path)
+        public async Task<string> GetStorageValue(string address, JsonPath[] path)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -2421,20 +2422,21 @@ namespace Tzkt.Api.Repositories
                 return path?.Length > 0 ? null : manager.Address;
             }
 
-            // path value should already be valid
-            var jsonPath = path == null ? string.Empty : $@"#>'{{{string.Join(',', path)}}}'";
+            var pathSelector = path == null ? string.Empty : " #> @path";
+            var pathParam = path == null ? null : new { path = JsonPath.Select(path) };
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
-                SELECT   ""JsonValue""{jsonPath} as ""JsonValue""
+                SELECT   ""JsonValue""{pathSelector} as ""JsonValue""
                 FROM     ""Storages""
                 WHERE    ""ContractId"" = {contract.Id} AND ""Current"" = true
-                LIMIT    1");
+                LIMIT    1",
+                pathParam);
 
             return row?.JsonValue;
         }
 
-        public async Task<string> GetStorageValue(string address, string[] path, int level)
+        public async Task<string> GetStorageValue(string address, JsonPath[] path, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -2451,17 +2453,18 @@ namespace Tzkt.Api.Repositories
                 return path?.Length > 0 ? null : manager.Address;
             }
 
-            // path value should already be valid
-            var jsonPath = path == null ? string.Empty : $@"#>'{{{string.Join(',', path)}}}'";
-            
+            var pathSelector = path == null ? string.Empty : " #> @path";
+            var pathParam = path == null ? null : new { path = JsonPath.Select(path) };
+
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
-                SELECT   ""JsonValue""{jsonPath} as ""JsonValue""
+                SELECT   ""JsonValue""{pathSelector} as ""JsonValue""
                 FROM     ""Storages""
                 WHERE    ""ContractId"" = {contract.Id}
                 AND      ""Level"" <= {level}
                 ORDER BY ""Level"" DESC, ""TransactionId"" DESC
-                LIMIT    1");
+                LIMIT    1",
+                pathParam);
 
             return row?.JsonValue;
         }

@@ -447,7 +447,7 @@ namespace Tzkt.Api
                             sql += $@" AND ""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb";
                         sqls.Add(sql);
                     }
-                    AppendFilter(string.Join(" OR ", sqls));
+                    AppendFilter($"({string.Join(" OR ", sqls)})");
                 }
             }
 

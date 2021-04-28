@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Controllers
 {
@@ -282,27 +283,22 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult> GetStorage([Address] string address, [Min(0)] int level = 0, string path = null)
         {
             #region safe path
-            string[] safePath = null;
+            JsonPath[] jsonPath = null;
             if (path != null)
             {
-                var arr = path.Replace("..", "*").Split(".", StringSplitOptions.RemoveEmptyEntries);
+                if (!JsonPath.TryParse(path, out jsonPath))
+                    return new BadRequest(nameof(path),
+                        $"Path contains invalid item: {jsonPath.First(x => x.Type == JsonPathType.None).Value}");
 
-                for (int i = 0; i < arr.Length; i++)
-                {
-                    arr[i] = arr[i].Replace("*", ".");
-
-                    if (!Regex.IsMatch(arr[i], "^[0-9A-z_.%@]+$"))
-                        return new BadRequest(nameof(path), $"Invalid path value '{arr[i]}'");
-                }
-
-                if (arr.Length > 0)
-                    safePath = arr;
+                if (jsonPath.Any(x => x.Type == JsonPathType.Any))
+                    return new BadRequest(nameof(path),
+                        "Path contains invalid item: [*]");
             }
             #endregion
 
             if (level == 0)
-                return this.Json(await Accounts.GetStorageValue(address, safePath));
-            return this.Json(await Accounts.GetStorageValue(address, safePath, level));
+                return this.Json(await Accounts.GetStorageValue(address, jsonPath));
+            return this.Json(await Accounts.GetStorageValue(address, jsonPath, level));
         }
 
         /// <summary>
