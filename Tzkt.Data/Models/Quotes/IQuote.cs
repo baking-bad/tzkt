@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Tzkt.Data.Models
 {
@@ -15,5 +13,6 @@ namespace Tzkt.Data.Models
         double Cny { get; set; }
         double Jpy { get; set; }
         double Krw { get; set; }
+        double Eth { get; set; }
     }
 }

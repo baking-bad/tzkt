@@ -70,6 +70,7 @@ namespace Tzkt.Sync.Protocols
 
             #region update state
             var state = Cache.AppState.Get();
+            state.Cycle = 0;
             state.Level = block.Level;
             state.Timestamp = block.Timestamp;
             state.Protocol = block.Protocol.Hash;
@@ -103,6 +104,7 @@ namespace Tzkt.Sync.Protocols
 
             #region update state
             var state = Cache.AppState.Get();
+            state.Cycle = -1;
             state.Level = prev.Level;
             state.Timestamp = prev.Timestamp;
             state.Protocol = prev.Protocol.Hash;

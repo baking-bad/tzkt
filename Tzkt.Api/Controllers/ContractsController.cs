@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Controllers
 {
@@ -17,9 +18,12 @@ namespace Tzkt.Api.Controllers
     public class ContractsController : ControllerBase
     {
         private readonly AccountRepository Accounts;
-        public ContractsController(AccountRepository accounts)
+        private readonly BigMapsRepository BigMaps;
+
+        public ContractsController(AccountRepository accounts, BigMapsRepository bigMaps)
         {
             Accounts = accounts;
+            BigMaps = bigMaps;
         }
 
         /// <summary>
@@ -166,6 +170,20 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get JSON Schema [2020-12] interface for the contract
+        /// </summary>
+        /// <remarks>
+        /// Returns standard JSON Schema for contract storage, entrypoints, and Big_map entries.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <returns></returns>
+        [HttpGet("{address}/interface")]
+        public Task<ContractInterface> GetInterface([Address] string address)
+        {
+            return Accounts.GetContractInterface(address);
+        }
+
+        /// <summary>
         /// Get contract entrypoints
         /// </summary>
         /// <remarks>
@@ -265,27 +283,22 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult> GetStorage([Address] string address, [Min(0)] int level = 0, string path = null)
         {
             #region safe path
-            string[] safePath = null;
+            JsonPath[] jsonPath = null;
             if (path != null)
             {
-                var arr = path.Replace("..", "*").Split(".", StringSplitOptions.RemoveEmptyEntries);
+                if (!JsonPath.TryParse(path, out jsonPath))
+                    return new BadRequest(nameof(path),
+                        $"Path contains invalid item: {jsonPath.First(x => x.Type == JsonPathType.None).Value}");
 
-                for (int i = 0; i < arr.Length; i++)
-                {
-                    arr[i] = arr[i].Replace("*", ".");
-
-                    if (!Regex.IsMatch(arr[i], "^[0-9A-z_.%@]+$"))
-                        return new BadRequest(nameof(path), $"Invalid path value '{arr[i]}'");
-                }
-
-                if (arr.Length > 0)
-                    safePath = arr;
+                if (jsonPath.Any(x => x.Type == JsonPathType.Any))
+                    return new BadRequest(nameof(path),
+                        "Path contains invalid item: [*]");
             }
             #endregion
 
             if (level == 0)
-                return this.Json(await Accounts.GetStorageValue(address, safePath));
-            return this.Json(await Accounts.GetStorageValue(address, safePath, level));
+                return this.Json(await Accounts.GetStorageValue(address, jsonPath));
+            return this.Json(await Accounts.GetStorageValue(address, jsonPath, level));
         }
 
         /// <summary>
@@ -316,7 +329,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/history")]
-        public Task<IEnumerable<StorageRecord<JsonString>>> GetStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public Task<IEnumerable<StorageRecord>> GetStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetStorageHistory(address, lastId, limit);
         }
@@ -366,9 +379,413 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/history")]
-        public Task<IEnumerable<StorageRecord<IMicheline>>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public Task<IEnumerable<StorageRecord>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetRawStorageHistory(address, lastId, limit);
+        }
+
+        /// <summary>
+        /// Get contract bigmaps
+        /// </summary>
+        /// <remarks>
+        /// Returns all active bigmaps allocated in the contract storage.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="tags">Filters bigmaps tags (`token_metadata` - tzip-12, `metadata` - tzip-16).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object.
+        /// If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps")]
+        public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
+            [Address] string address,
+            BigMapTagsParameter tags,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("id", "firstLevel", "lastLevel", "totalKeys", "activeKeys", "updates"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var acc = await Accounts.GetRawAsync(address);
+            if (acc is not Services.Cache.RawContract rawContract)
+                return Ok(Enumerable.Empty<BigMap>());
+
+            var contract = new AccountParameter { Eq = rawContract.Id };
+
+            if (select == null)
+                return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, micheline));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Values[0], micheline));
+                else
+                    return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Values, micheline));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Fields[0], micheline));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Fields, micheline)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get bigmap by name
+        /// </summary>
+        /// <remarks>
+        /// Returns contract bigmap with the specified name or storage path.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Bigmap name is the last piece of the bigmap storage path.
+        /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
+        /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps/{name}")]
+        public async Task<ActionResult<BigMap>> GetBigMapByName(
+            [Address] string address,
+            string name,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var acc = await Accounts.GetRawAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(null);
+
+            return Ok(await BigMaps.Get(contract.Id, name, micheline));
+        }
+
+        /// <summary>
+        /// Get bigmap keys
+        /// </summary>
+        /// <remarks>
+        /// Returns keys of a contract bigmap with the specified name.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Bigmap name is the last piece of the bigmap storage path.
+        /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
+        /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
+        /// <param name="active">Filters keys by status: `true` - active, `false` - removed.</param>
+        /// <param name="key">Filters keys by JSON key. Note, this query parameter supports the following format: `?key{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?key.token_id=...`.</param>
+        /// <param name="value">Filters keys by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>
+        /// <param name="lastLevel">Filters bigmap keys by the last update level.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts bigmap keys by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `updates`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps/{name}/keys")]
+        public async Task<ActionResult<IEnumerable<BigMapKey>>> GetBigMapByNameKeys(
+            [Address] string address,
+            string name,
+            bool? active,
+            JsonParameter key,
+            JsonParameter value,
+            Int32Parameter lastLevel,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var acc = await Accounts.GetRawAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(Enumerable.Empty<BigMapKey>());
+
+            var ptr = await BigMaps.GetPtr(contract.Id, name);
+            if (ptr == null)
+                return Ok(Enumerable.Empty<BigMapKey>());
+
+            #region validate
+            if (sort != null && !sort.Validate("id", "firstLevel", "lastLevel", "updates"))
+                return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await BigMaps.GetKeys((int)ptr, active, key, value, lastLevel, sort, offset, limit, micheline));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await BigMaps.GetKeys((int)ptr, active, key, value, lastLevel, sort, offset, limit, select.Values[0], micheline));
+                else
+                    return Ok(await BigMaps.GetKeys((int)ptr, active, key, value, lastLevel, sort, offset, limit, select.Values, micheline));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await BigMaps.GetKeys((int)ptr, active, key, value, lastLevel, sort, offset, limit, select.Fields[0], micheline));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await BigMaps.GetKeys((int)ptr, active, key, value, lastLevel, sort, offset, limit, select.Fields, micheline)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get bigmap key
+        /// </summary>
+        /// <remarks>
+        /// Returns the specified bigmap key.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Bigmap name is the last piece of the bigmap storage path.
+        /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
+        /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
+        /// <param name="key">Either a key hash (`expr123...`) or a plain value (`abcde...`).
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","token":123}`.</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps/{name}/keys/{key}")]
+        public async Task<ActionResult<BigMapKey>> GetKey(
+            [Address] string address,
+            string name,
+            string key,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var acc = await Accounts.GetRawAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(null);
+
+            var ptr = await BigMaps.GetPtr(contract.Id, name);
+            if (ptr == null)
+                return Ok(null);
+
+            try
+            {
+                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                    return Ok(await BigMaps.GetKeyByHash((int)ptr, key, micheline));
+
+                using var doc = JsonDocument.Parse(WrapKey(key));
+                return Ok(await BigMaps.GetKey((int)ptr, doc.RootElement.GetRawText(), micheline));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest(nameof(key), "invalid json value");
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get bigmap key updates
+        /// </summary>
+        /// <remarks>
+        /// Returns updates history for the specified bigmap key.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Bigmap name is the last piece of the bigmap storage path.
+        /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
+        /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
+        /// <param name="key">Either a key hash (`expr123...`) or a plain value (`abcde...`).
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","token":123}`.</param>
+        /// <param name="sort">Sorts bigmap updates by specified field. Supported fields: `id` (default).</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the key value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps/{name}/keys/{key}/updates")]
+        public async Task<ActionResult<IEnumerable<BigMapKeyUpdate>>> GetKeyUpdates(
+            [Address] string address,
+            string name,
+            string key,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var acc = await Accounts.GetRawAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(Enumerable.Empty<BigMapKeyUpdate>());
+
+            var ptr = await BigMaps.GetPtr(contract.Id, name);
+            if (ptr == null)
+                return Ok(Enumerable.Empty<BigMapKeyUpdate>());
+
+            #region validate
+            if (sort != null && !sort.Validate("id"))
+                return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
+            #endregion
+
+            try
+            {
+                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                    return Ok(await BigMaps.GetKeyByHashUpdates((int)ptr, key, sort, offset, limit, micheline));
+
+                using var doc = JsonDocument.Parse(WrapKey(key));
+                return Ok(await BigMaps.GetKeyUpdates((int)ptr, doc.RootElement.GetRawText(), sort, offset, limit, micheline));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest(nameof(key), "invalid json value");
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get historical keys
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of bigmap keys at the specific block.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Bigmap name is the last piece of the bigmap storage path.
+        /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
+        /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
+        /// <param name="level">Level of the block at which you want to get bigmap keys</param>
+        /// <param name="active">Filters keys by status: `true` - active, `false` - removed.</param>
+        /// <param name="key">Filters keys by JSON key. Note, this query parameter supports the following format: `?key{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?key.token_id=...`.</param>
+        /// <param name="value">Filters keys by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts bigmap keys by specified field. Supported fields: `id` (default).</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}")]
+        public async Task<ActionResult<IEnumerable<BigMapKeyHistorical>>> GetHistoricalKeys(
+            [Address] string address,
+            string name,
+            [Min(0)] int level,
+            bool? active,
+            JsonParameter key,
+            JsonParameter value,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var acc = await Accounts.GetRawAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(Enumerable.Empty<BigMapKeyHistorical>());
+
+            var ptr = await BigMaps.GetPtr(contract.Id, name);
+            if (ptr == null)
+                return Ok(Enumerable.Empty<BigMapKeyHistorical>());
+
+            #region validate
+            if (sort != null && !sort.Validate("id"))
+                return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await BigMaps.GetHistoricalKeys((int)ptr, level, active, key, value, sort, offset, limit, micheline));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await BigMaps.GetHistoricalKeys((int)ptr, level, active, key, value, sort, offset, limit, select.Values[0], micheline));
+                else
+                    return Ok(await BigMaps.GetHistoricalKeys((int)ptr, level, active, key, value, sort, offset, limit, select.Values, micheline));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await BigMaps.GetHistoricalKeys((int)ptr, level, active, key, value, sort, offset, limit, select.Fields[0], micheline));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await BigMaps.GetHistoricalKeys((int)ptr, level, active, key, value, sort, offset, limit, select.Fields, micheline)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get historical key
+        /// </summary>
+        /// <remarks>
+        /// Returns the specified bigmap key at the specific block.
+        /// </remarks>
+        /// <param name="address">Contract address</param>
+        /// <param name="name">Bigmap name is the last piece of the bigmap storage path.
+        /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
+        /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
+        /// <param name="level">Level of the block at which you want to get bigmap key</param>
+        /// <param name="key">Either a key hash (`expr123...`) or a plain value (`abcde...`).
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","token":123}`.</param>
+        /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
+        /// <returns></returns>
+        [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}/{key}")]
+        public async Task<ActionResult<BigMapKeyHistorical>> GetKey(
+            [Address] string address,
+            string name,
+            [Min(0)] int level,
+            string key,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var acc = await Accounts.GetRawAsync(address);
+            if (acc is not Services.Cache.RawContract contract)
+                return Ok(null);
+
+            var ptr = await BigMaps.GetPtr(contract.Id, name);
+            if (ptr == null)
+                return Ok(null);
+
+            try
+            {
+                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                    return Ok(await BigMaps.GetHistoricalKeyByHash((int)ptr, level, key, micheline));
+
+                using var doc = JsonDocument.Parse(WrapKey(key));
+                return Ok(await BigMaps.GetHistoricalKey((int)ptr, level, doc.RootElement.GetRawText(), micheline));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest(nameof(key), "invalid json value");
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        string WrapKey(string key)
+        {
+            switch (key[0])
+            {
+                case '{':
+                case '[':
+                case '"':
+                case 't' when key == "true":
+                case 'f' when key == "false":
+                case 'n' when key == "null":
+                    return key;
+                default:
+                    return $"\"{key}\"";
+            }
         }
     }
 }

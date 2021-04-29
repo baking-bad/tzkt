@@ -14,6 +14,8 @@ namespace Tzkt.Data.Models
         public int Upvotes { get; set; }
         public int Rolls { get; set; }
         public ProposalStatus Status { get; set; }
+
+        public string Metadata { get; set; }
     }
 
     public static class ProposalModel
@@ -38,6 +40,10 @@ namespace Tzkt.Data.Models
                 .Property(nameof(Proposal.Hash))
                 .IsFixedLength(true)
                 .HasMaxLength(51);
+
+            modelBuilder.Entity<Proposal>()
+                .Property(x => x.Metadata)
+                .HasColumnType("jsonb");
             #endregion
         }
     }

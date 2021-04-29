@@ -109,11 +109,11 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
 
                 var originations = ActiveOps.HasFlag(Operations.Originations)
-                    ? Repo.GetOriginations(null, null, null, null, null, null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetOriginations(null, null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
                 var transactions = ActiveOps.HasFlag(Operations.Transactions)
-                    ? Repo.GetTransactions(null, null, null, null, null, level, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true)
+                    ? Repo.GetTransactions(null, null, null, null, null, level, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.TransactionOperation>());
 
                 var reveals = ActiveOps.HasFlag(Operations.Reveals)
@@ -377,6 +377,7 @@ namespace Tzkt.Api.Websocket.Processors
             try
             {
                 await Sema.WaitAsync();
+                if (!Subs.ContainsKey(connectionId) && !AddressSubs.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
                 
                 Subs.Remove(connectionId);

@@ -35,6 +35,11 @@ namespace Tzkt.Api.Models
         /// XTZ/KRW price
         /// </summary>
         public double? Krw { get; set; }
+
+        /// <summary>
+        /// XTZ/ETH price
+        /// </summary>
+        public double? Eth { get; set; }
     }
 
     [Flags]
@@ -47,6 +52,7 @@ namespace Tzkt.Api.Models
         Usd = 4,
         Cny = 8,
         Jpy = 16,
-        Krw = 32
+        Krw = 32,
+        Eth = 64
     }
 }

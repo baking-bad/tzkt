@@ -3187,15 +3187,10 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"",
-                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"",
-                            b.""Hash"", st.""{((int)format < 2 ? "JsonValue" : "RawValue")}"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
-                LEFT  JOIN  ""Storages"" as st 
-                        ON  st.""Id"" = o.""StorageId""
                 LEFT  JOIN  ""Scripts"" as sc
                         ON  sc.""Id"" = o.""ScriptId""
                 WHERE       o.""OpHash"" = @hash::character(51)
@@ -3203,6 +3198,24 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
+
+            #region include storage
+            var storages = await AccountRepository.GetStorages(db,
+                rows.Where(x => x.StorageId != null)
+                    .Select(x => (int)x.StorageId)
+                    .Distinct()
+                    .ToList(),
+                format);
+            #endregion
+
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                false,
+                format);
+            #endregion
 
             return rows.Select(row =>
             {
@@ -3240,14 +3253,8 @@ namespace Tzkt.Api.Repositories
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
-                    Storage = format switch
-                    {
-                        MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                        MichelineFormat.JsonString => row.JsonValue,
-                        MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                        MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                        _ => throw new Exception("Invalid MichelineFormat value")
-                    },
+                    Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3266,15 +3273,10 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
-                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""Nonce"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"",
-                            b.""Hash"", st.""{((int)format < 2 ? "JsonValue" : "RawValue")}"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
-                LEFT  JOIN  ""Storages"" as st 
-                        ON  st.""Id"" = o.""StorageId""
                 LEFT  JOIN  ""Scripts"" as sc
                         ON  sc.""Id"" = o.""ScriptId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
@@ -3282,6 +3284,24 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
+
+            #region include storage
+            var storages = await AccountRepository.GetStorages(db,
+                rows.Where(x => x.StorageId != null)
+                    .Select(x => (int)x.StorageId)
+                    .Distinct()
+                    .ToList(),
+                format);
+            #endregion
+
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                false,
+                format);
+            #endregion
 
             return rows.Select(row =>
             {
@@ -3319,14 +3339,8 @@ namespace Tzkt.Api.Repositories
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
-                    Storage = format switch
-                    {
-                        MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                        MichelineFormat.JsonString => row.JsonValue,
-                        MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                        MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                        _ => throw new Exception("Invalid MichelineFormat value")
-                    },
+                    Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3345,15 +3359,10 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"",
-                            o.""BakerFee"", o.""StorageFee"", o.""AllocationFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""StorageUsed"",
-                            o.""Status"", o.""ContractId"", o.""DelegateId"", o.""Balance"", o.""ManagerId"", o.""Errors"",
-                            b.""Hash"", st.""{((int)format < 2 ? "JsonValue" : "RawValue")}"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
-                LEFT  JOIN  ""Storages"" as st 
-                        ON  st.""Id"" = o.""StorageId""
                 LEFT  JOIN  ""Scripts"" as sc
                         ON  sc.""Id"" = o.""ScriptId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
@@ -3361,6 +3370,24 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
+
+            #region include storage
+            var storages = await AccountRepository.GetStorages(db,
+                rows.Where(x => x.StorageId != null)
+                    .Select(x => (int)x.StorageId)
+                    .Distinct()
+                    .ToList(),
+                format);
+            #endregion
+
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                false,
+                format);
+            #endregion
 
             return rows.Select(row =>
             {
@@ -3398,14 +3425,8 @@ namespace Tzkt.Api.Repositories
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
-                    Storage = format switch
-                    {
-                        MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                        MichelineFormat.JsonString => row.JsonValue,
-                        MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                        MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                        _ => throw new Exception("Invalid MichelineFormat value")
-                    },
+                    Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -3489,9 +3510,16 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            Symbols quote)
+            MichelineFormat format,
+            Symbols quote,
+            bool includeStorage = false,
+            bool includeBigmaps = false)
         {
-            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""OriginationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+            var sql = new SqlBuilder(@"
+                SELECT      o.*, b.""Hash""
+                FROM        ""OriginationOps"" AS o
+                INNER JOIN  ""Blocks"" as b
+                        ON  b.""Level"" = o.""Level""")
                 .Filter(anyof, x => x switch
                 {
                     "initiator" => "InitiatorId",
@@ -3522,6 +3550,28 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            #region include storage
+            var storages = includeStorage
+                ? await AccountRepository.GetStorages(db,
+                    rows.Where(x => x.StorageId != null)
+                        .Select(x => (int)x.StorageId)
+                        .Distinct()
+                        .ToList(),
+                    format)
+                : null;
+            #endregion
+
+            #region include diffs
+            var diffs = includeBigmaps
+                ? await BigMapsRepository.GetBigMapDiffs(db,
+                    rows.Where(x => x.BigMapUpdates != null)
+                        .Select(x => (int)x.Id)
+                        .ToList(),
+                    false,
+                    format)
+                : null;
+            #endregion
 
             return rows.Select(row =>
             {
@@ -3558,6 +3608,8 @@ namespace Tzkt.Api.Repositories
                         Address = contract.Address,
                         Kind = contract.KindString
                     },
+                    Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     Quote = Quotes.Get(quote, row.Level)
@@ -3620,9 +3672,10 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"sc.""CodeSchema""");
                         joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                         break;
-                    case "storage":
-                        columns.Add((int)format < 2 ? @"st.""JsonValue""" : @"st.""RawValue""");
-                        joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""Id"" = o.""StorageId""");
+                    case "storage": columns.Add(@"o.""StorageId"""); break;
+                    case "diffs":
+                        columns.Add(@"o.""Id""");
+                        columns.Add(@"o.""BigMapUpdates""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                 }
@@ -3756,15 +3809,26 @@ namespace Tzkt.Api.Repositories
                         }
                         break;
                     case "storage":
-                        foreach (var row in rows)
-                            result[j++][i] = format switch
-                            {
-                                MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                                MichelineFormat.JsonString => row.JsonValue,
-                                MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                                MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                                _ => throw new Exception("Invalid MichelineFormat value")
-                            };
+                        var storages = await AccountRepository.GetStorages(db,
+                            rows.Where(x => x.StorageId != null)
+                                .Select(x => (int)x.StorageId)
+                                .Distinct()
+                                .ToList(),
+                            format);
+                        if (storages != null)
+                            foreach (var row in rows)
+                                result[j++][i] = row.StorageId == null ? null : storages[row.StorageId];
+                        break;
+                    case "diffs":
+                        var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                            rows.Where(x => x.BigMapUpdates != null)
+                                .Select(x => (int)x.Id)
+                                .ToList(),
+                            false,
+                            format);
+                        if (diffs != null)
+                            foreach (var row in rows)
+                                result[j++][i] = diffs.GetValueOrDefault((int)row.Id);
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -3855,9 +3919,10 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"sc.""CodeSchema""");
                     joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                     break;
-                case "storage":
-                    columns.Add((int)format < 2 ? @"st.""JsonValue""" : @"st.""RawValue""");
-                    joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""Id"" = o.""StorageId""");
+                case "storage": columns.Add(@"o.""StorageId"""); break;
+                case "diffs":
+                    columns.Add(@"o.""Id""");
+                    columns.Add(@"o.""BigMapUpdates""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
             }
@@ -3979,24 +4044,35 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var code = row.ParameterSchema == null ? null : new MichelineArray
-                            {
-                                Micheline.FromBytes(row.ParameterSchema),
-                                Micheline.FromBytes(row.StorageSchema),
-                                Micheline.FromBytes(row.CodeSchema)
-                            };
+                        {
+                            Micheline.FromBytes(row.ParameterSchema),
+                            Micheline.FromBytes(row.StorageSchema),
+                            Micheline.FromBytes(row.CodeSchema)
+                        };
                         result[j++] = (int)format % 2 == 0 ? code : code.ToJson();
                     }
                     break;
                 case "storage":
-                    foreach (var row in rows)
-                        result[j++] = format switch
-                        {
-                            MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                            MichelineFormat.JsonString => row.JsonValue,
-                            MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                            MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                            _ => throw new Exception("Invalid MichelineFormat value")
-                        };
+                    var storages = await AccountRepository.GetStorages(db,
+                        rows.Where(x => x.StorageId != null)
+                            .Select(x => (int)x.StorageId)
+                            .Distinct()
+                            .ToList(),
+                        format);
+                    if (storages != null)
+                        foreach (var row in rows)
+                            result[j++] = row.StorageId == null ? null : storages[row.StorageId];
+                    break;
+                case "diffs":
+                    var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                        rows.Where(x => x.BigMapUpdates != null)
+                            .Select(x => (int)x.Id)
+                            .ToList(),
+                        false,
+                        format);
+                    if (diffs != null)
+                        foreach (var row in rows)
+                            result[j++] = diffs.GetValueOrDefault((int)row.Id);
                     break;
                 case "status":
                     foreach (var row in rows)
@@ -4052,17 +4128,33 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
+                SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
-                LEFT  JOIN  ""Storages"" as s 
-                        ON  s.""Id"" = o.""StorageId""
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
+
+            #region include storage
+            var storages = await AccountRepository.GetStorages(db,
+                rows.Where(x => x.StorageId != null)
+                    .Select(x => (int)x.StorageId)
+                    .Distinct()
+                    .ToList(),
+                format);
+            #endregion
+
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                true,
+                format);
+            #endregion
 
             return rows.Select(row => new TransactionOperation
             {
@@ -4089,21 +4181,15 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
                 },
-                Storage = format switch
-                {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                    MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                    _ => throw new Exception("Invalid MichelineFormat value")
-                },
+                Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4115,17 +4201,33 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
+                SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
-                LEFT  JOIN  ""Storages"" as s 
-                        ON  s.""Id"" = o.""StorageId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
                 ORDER BY    o.""Id""";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter });
+
+            #region include storage
+            var storages = await AccountRepository.GetStorages(db,
+                rows.Where(x => x.StorageId != null)
+                    .Select(x => (int)x.StorageId)
+                    .Distinct()
+                    .ToList(),
+                format);
+            #endregion
+
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                true,
+                format);
+            #endregion
 
             return rows.Select(row => new TransactionOperation
             {
@@ -4152,21 +4254,15 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
                 },
-                Storage = format switch
-                {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                    MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                    _ => throw new Exception("Invalid MichelineFormat value")
-                },
+                Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4178,17 +4274,33 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
+                SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
-                LEFT  JOIN  ""Storages"" as s 
-                        ON  s.""Id"" = o.""StorageId""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
                 LIMIT       1";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
+
+            #region include storage
+            var storages = await AccountRepository.GetStorages(db,
+                rows.Where(x => x.StorageId != null)
+                    .Select(x => (int)x.StorageId)
+                    .Distinct()
+                    .ToList(),
+                format);
+            #endregion
+
+            #region include diffs
+            var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                true,
+                format);
+            #endregion
 
             return rows.Select(row => new TransactionOperation
             {
@@ -4215,21 +4327,15 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
                 },
-                Storage = format switch
-                {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                    MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                    _ => throw new Exception("Invalid MichelineFormat value")
-                },
+                Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4274,9 +4380,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4307,7 +4413,8 @@ namespace Tzkt.Api.Repositories
             int limit,
             MichelineFormat format,
             Symbols quote,
-            bool includeStorage = false)
+            bool includeStorage = false,
+            bool includeBigmaps = false)
         {
             #region backward compatibility
             // TODO: remove it asap
@@ -4322,21 +4429,11 @@ namespace Tzkt.Api.Repositories
             }
             #endregion
 
-            var query = includeStorage
-                ? $@"
-                    SELECT      o.*, b.""Hash"", s.""{((int)format < 2 ? "JsonValue" : "RawValue")}""
-                    FROM        ""TransactionOps"" AS o
-                    INNER JOIN  ""Blocks"" as b
-                            ON  b.""Level"" = o.""Level""
-                    LEFT  JOIN  ""Storages"" as s
-                            ON  s.""Id"" = o.""StorageId"""
-                : @"
-                    SELECT      o.*, b.""Hash""
-                    FROM        ""TransactionOps"" AS o
-                    INNER JOIN  ""Blocks"" as b
-                            ON  b.""Level"" = o.""Level""";
-
-            var sql = new SqlBuilder(query)
+            var sql = new SqlBuilder(@"
+                SELECT      o.*, b.""Hash""
+                FROM        ""TransactionOps"" AS o
+                INNER JOIN  ""Blocks"" as b
+                        ON  b.""Level"" = o.""Level""")
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
@@ -4367,6 +4464,28 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
+            #region include storage
+            var storages = includeStorage
+                ? await AccountRepository.GetStorages(db,
+                    rows.Where(x => x.StorageId != null)
+                        .Select(x => (int)x.StorageId)
+                        .Distinct()
+                        .ToList(),
+                    format)
+                : null;
+            #endregion
+
+            #region include diffs
+            var diffs = includeBigmaps
+                ? await BigMapsRepository.GetBigMapDiffs(db,
+                    rows.Where(x => x.BigMapUpdates != null)
+                        .Select(x => (int)x.Id)
+                        .ToList(),
+                    true,
+                    format)
+                : null;
+            #endregion
+
             var res = rows.Select(row => new TransactionOperation
             {
                 Id = row.Id,
@@ -4392,21 +4511,15 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
                 },
-                Storage = !includeStorage ? null : format switch
-                {
-                    MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                    MichelineFormat.JsonString => row.JsonValue,
-                    MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                    MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                    _ => throw new Exception("Invalid MichelineFormat value")
-                },
+                Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                Diffs = diffs?.GetValueOrDefault((int)row.Id),
                 Status = StatusToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
@@ -4536,16 +4649,10 @@ namespace Tzkt.Api.Repositories
                             _ => throw new Exception("Invalid MichelineFormat value")
                         });
                         break;
-                    case "storage":
-                        columns.Add(format switch
-                        {
-                            MichelineFormat.Json => $@"s.""JsonValue""",
-                            MichelineFormat.JsonString => $@"s.""JsonValue""",
-                            MichelineFormat.Raw => $@"s.""RawValue""",
-                            MichelineFormat.RawString => $@"s.""RawValue""",
-                            _ => throw new Exception("Invalid MichelineFormat value")
-                        });
-                        joins.Add(@"LEFT JOIN ""Storages"" as s ON s.""Id"" = o.""StorageId""");
+                    case "storage": columns.Add(@"o.""StorageId"""); break;
+                    case "diffs":
+                        columns.Add(@"o.""Id""");
+                        columns.Add(@"o.""BigMapUpdates""");
                         break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
@@ -4683,24 +4790,35 @@ namespace Tzkt.Api.Repositories
                                 Entrypoint = row.Entrypoint,
                                 Value = format switch
                                 {
-                                    MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                                    MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                                     MichelineFormat.JsonString => row.JsonParameters,
-                                    MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                                    MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                                     MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                                     _ => throw new Exception("Invalid MichelineFormat value")
                                 }
                             };
                         break;
                     case "storage":
-                        foreach (var row in rows)
-                            result[j++][i] = format switch
-                            {
-                                MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                                MichelineFormat.JsonString => row.JsonValue,
-                                MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                                MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                                _ => throw new Exception("Invalid MichelineFormat value")
-                            };
+                        var storages = await AccountRepository.GetStorages(db,
+                            rows.Where(x => x.StorageId != null)
+                                .Select(x => (int)x.StorageId)
+                                .Distinct()
+                                .ToList(),
+                            format);
+                        if (storages != null)
+                            foreach (var row in rows)
+                                result[j++][i] = row.StorageId == null ? null : storages[row.StorageId];
+                        break;
+                    case "diffs":
+                        var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                            rows.Where(x => x.BigMapUpdates != null)
+                                .Select(x => (int)x.Id)
+                                .ToList(),
+                            true,
+                            format);
+                        if (diffs != null)
+                            foreach (var row in rows)
+                                result[j++][i] = diffs.GetValueOrDefault((int)row.Id);
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -4781,16 +4899,10 @@ namespace Tzkt.Api.Repositories
                         _ => throw new Exception("Invalid MichelineFormat value")
                     });
                     break;
-                case "storage":
-                    columns.Add(format switch
-                    {
-                        MichelineFormat.Json => $@"s.""JsonValue""",
-                        MichelineFormat.JsonString => $@"s.""JsonValue""",
-                        MichelineFormat.Raw => $@"s.""RawValue""",
-                        MichelineFormat.RawString => $@"s.""RawValue""",
-                        _ => throw new Exception("Invalid MichelineFormat value")
-                    });
-                    joins.Add(@"LEFT JOIN ""Storages"" as s ON s.""Id"" = o.""StorageId""");
+                case "storage": columns.Add(@"o.""StorageId"""); break;
+                case "diffs":
+                    columns.Add(@"o.""Id""");
+                    columns.Add(@"o.""BigMapUpdates""");
                     break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
@@ -4925,24 +5037,35 @@ namespace Tzkt.Api.Repositories
                             Entrypoint = row.Entrypoint,
                             Value = format switch
                             {
-                                MichelineFormat.Json => row.JsonParameters == null ? null : new JsonString(row.JsonParameters),
+                                MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
                                 MichelineFormat.JsonString => row.JsonParameters,
-                                MichelineFormat.Raw => row.RawParameters == null ? null : new JsonString(Micheline.ToJson(row.RawParameters)),
+                                MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
                                 MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             }
                         };
                     break;
                 case "storage":
-                    foreach (var row in rows)
-                        result[j++] = format switch
-                        {
-                            MichelineFormat.Json => row.JsonValue == null ? null : new JsonString(row.JsonValue),
-                            MichelineFormat.JsonString => row.JsonValue,
-                            MichelineFormat.Raw => row.RawValue == null ? null : new JsonString(Micheline.ToJson(row.RawValue)),
-                            MichelineFormat.RawString => row.RawValue == null ? null : Micheline.ToJson(row.RawValue),
-                            _ => throw new Exception("Invalid MichelineFormat value")
-                        };
+                    var storages = await AccountRepository.GetStorages(db,
+                        rows.Where(x => x.StorageId != null)
+                            .Select(x => (int)x.StorageId)
+                            .Distinct()
+                            .ToList(),
+                        format);
+                    if (storages != null)
+                        foreach (var row in rows)
+                            result[j++] = row.StorageId == null ? null : storages[row.StorageId];
+                    break;
+                case "diffs":
+                    var diffs = await BigMapsRepository.GetBigMapDiffs(db,
+                        rows.Where(x => x.BigMapUpdates != null)
+                            .Select(x => (int)x.Id)
+                            .ToList(),
+                        true,
+                        format);
+                    if (diffs != null)
+                        foreach (var row in rows)
+                            result[j++] = diffs.GetValueOrDefault((int)row.Id);
                     break;
                 case "status":
                     foreach (var row in rows)

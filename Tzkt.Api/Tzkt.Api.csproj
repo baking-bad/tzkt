@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <AssemblyVersion>1.4</AssemblyVersion>
+    <AssemblyVersion>1.5</AssemblyVersion>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -37,8 +37,8 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.78" />
-    <PackageReference Include="Npgsql" Version="5.0.3" />
-    <PackageReference Include="NSwag.AspNetCore" Version="13.10.1" />
+    <PackageReference Include="Npgsql" Version="5.0.4" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.10.9" />
   </ItemGroup>
 
   <ItemGroup>

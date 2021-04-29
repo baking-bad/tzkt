@@ -15,7 +15,7 @@ namespace Tzkt.Api.Models
         /// A kind of JSON schema, describing how parameters will look like in a human-readable JSON format
         /// </summary>
         [JsonSchemaType(typeof(object))]
-        public JsonString JsonParameters { get; set; }
+        public RawJson JsonParameters { get; set; }
 
         /// <summary>
         /// Parameters schema in micheline format

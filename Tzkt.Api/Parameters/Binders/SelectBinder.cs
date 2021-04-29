@@ -13,13 +13,13 @@ namespace Tzkt.Api
             var model = bindingContext.ModelName;
             var hasValue = false;
 
-            if (!bindingContext.TryGetStringArray($"{model}", ref hasValue, out var value))
+            if (!bindingContext.TryGetStringList($"{model}", ref hasValue, out var value))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringArray($"{model}.fields", ref hasValue, out var rec))
+            if (!bindingContext.TryGetStringList($"{model}.fields", ref hasValue, out var rec))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringArray($"{model}.values", ref hasValue, out var tup))
+            if (!bindingContext.TryGetStringList($"{model}.values", ref hasValue, out var tup))
                 return Task.CompletedTask;
 
             if (!hasValue)

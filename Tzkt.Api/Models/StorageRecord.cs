@@ -1,9 +1,8 @@
 ﻿using System;
-using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
-    public class StorageRecord<T>
+    public class StorageRecord
     {
         /// <summary>
         /// Id of the record that can be used for pagination
@@ -23,16 +22,15 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Operation that caused the storage change
         /// </summary>
-        public SourceOperation<T> Operation { get; set; }
+        public SourceOperation Operation { get; set; }
 
         /// <summary>
         /// New storage value
         /// </summary>
-        [JsonSchemaType(typeof(object))]
-        public T Value { get; set; }
+        public object Value { get; set; }
     }
 
-    public class SourceOperation<T>
+    public class SourceOperation
     {
         /// <summary>
         /// Operation type
@@ -57,20 +55,6 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Transaction parameter, including called entrypoint and value passed to the entrypoint.
         /// </summary>
-        public SourceOperationParameter<T> Parameter { get; set; }
-    }
-
-    public class SourceOperationParameter<T>
-    {
-        /// <summary>
-        /// Called entrypoint
-        /// </summary>
-        public string Entrypoint { get; set; }
-
-        /// <summary>
-        /// Value passed to the entrypoint
-        /// </summary>
-        [JsonSchemaType(typeof(object))]
-        public T Value { get; set; }
+        public TxParameter Parameter { get; set; }
     }
 }

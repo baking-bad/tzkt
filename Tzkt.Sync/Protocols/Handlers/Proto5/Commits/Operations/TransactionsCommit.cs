@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -54,6 +56,18 @@ namespace Tzkt.Sync.Protocols.Proto5
                 transaction.Entrypoint = rawEp;
                 transaction.RawParameters = rawParam.ToBytes();
             }
+        }
+
+        protected override IMicheline NormalizeStorage(TransactionOperation transaction, IMicheline storage, Netezos.Contracts.ContractScript schema)
+        {
+            return storage;
+        }
+
+        protected override IEnumerable<BigMapDiff> ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
+        {
+            return result.TryGetProperty("big_map_diff", out var diffs)
+                ? diffs.RequiredArray().EnumerateArray().Select(BigMapDiff.Parse)
+                : null;
         }
     }
 }

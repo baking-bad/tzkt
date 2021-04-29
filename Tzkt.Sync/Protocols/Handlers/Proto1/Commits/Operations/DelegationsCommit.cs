@@ -187,7 +187,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Delegations;
+            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+            parentTx.InternalDelegations = (short?)((parentTx.InternalDelegations ?? 0) + 1);
 
             sender.DelegationsCount++;
             if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount++;

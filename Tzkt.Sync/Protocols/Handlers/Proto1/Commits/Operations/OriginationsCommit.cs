@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -12,6 +13,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class OriginationsCommit : ProtocolCommit
     {
+        public OriginationOperation Origination { get; private set; }
+        public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
+
         public OriginationsCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
@@ -77,7 +81,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = (result.OptionalInt32("paid_storage_size_diff") ?? 0) * block.Protocol.ByteCost,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
-            };            
+            };
             #endregion
 
             #region entities
@@ -145,11 +149,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Db.Contracts.Add(contract);
 
                 if (contract.Kind > ContractKind.DelegatorContract)
-                    await ProcessScript(origination, content);
+                {
+                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
+                    var storage = Micheline.FromJson(content.Required("script").Required("storage"));
+
+                    BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
+                    ProcessScript(origination, content, code, storage);
+                }
             }
             #endregion
 
             Db.OriginationOps.Add(origination);
+            Origination = origination;
         }
 
         public virtual async Task ApplyInternal(Block block, TransactionOperation parent, JsonElement content)
@@ -243,7 +254,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Originations;
+            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+            parentTx.InternalOriginations = (short?)((parentTx.InternalOriginations ?? 0) + 1);
 
             sender.OriginationsCount++;
             if (contractManager != null && contractManager != sender) contractManager.OriginationsCount++;
@@ -288,11 +300,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Db.Contracts.Add(contract);
 
                 if (contract.Kind > ContractKind.DelegatorContract)
-                    await ProcessScript(origination, content);
+                {
+                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
+                    var storage = Micheline.FromJson(content.Required("script").Required("storage"));
+
+                    BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
+                    ProcessScript(origination, content, code, storage);
+                }
             }
             #endregion
 
             Db.OriginationOps.Add(origination);
+            Origination = origination;
         }
 
         public virtual async Task Revert(Block block, OriginationOperation origination)
@@ -495,11 +514,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 : BlockEvents.None;
         }
 
-        protected async Task ProcessScript(OriginationOperation origination, JsonElement content)
+        protected void ProcessScript(OriginationOperation origination, JsonElement content, MichelineArray code, IMicheline storageValue)
         {
             var contract = origination.Contract;
-
-            var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
             var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
             var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
@@ -528,17 +545,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 contract.Kind = ContractKind.Asset;
             }
 
-            IMicheline storageValue;
-            if (HasLazyStorages(micheStorage))
+            if (BigMapDiffs != null)
             {
-                // get from RPC because we don't know the IDs of allocated big_maps and sapling_states
-                var rawContract = await Proto.Rpc.GetContractAsync(origination.Level, contract.Address);
-                storageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                var ind = 0;
+                var ptrs = BigMapDiffs.Where(x => x.Action <= BigMapDiffAction.Copy && x.Ptr >= 0).Select(x => x.Ptr).ToList();
+                var view = script.Schema.Storage.Schema.ToTreeView(storageValue);
+
+                foreach (var bigmap in view.Nodes().Where(x => x.Schema.Prim == PrimType.big_map))
+                    storageValue = storageValue.Replace(bigmap.Value, new MichelineInt(ptrs[^++ind]));
             }
-            else
-            {
-                storageValue = Micheline.FromJson(content.Required("script").Required("storage"));
-            }
+
             var storage = new Storage
             {
                 Level = origination.Level,
@@ -571,19 +587,39 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Storages.Remove(contract);
         }
 
-        protected bool HasLazyStorages(IMicheline micheline)
+        protected virtual IEnumerable<BigMapDiff> ParseBigMapDiffs(OriginationOperation origination, JsonElement result, MichelineArray code, IMicheline storage)
         {
-            if (micheline is MichelinePrim prim)
-            {
-                if (prim.Prim == PrimType.big_map || prim.Prim == PrimType.sapling_state)
-                    return true;
+            List<BigMapDiff> res = null;
 
-                if (prim.Args != null)
-                    foreach (var arg in prim.Args)
-                        if (HasLazyStorages(arg))
-                            return true;
+            var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage) as MichelinePrim;
+            var schema = new StorageSchema(micheStorage);
+            var tree = schema.Schema.ToTreeView(storage);
+            var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+
+            if (bigmap != null)
+            {
+                res = new List<BigMapDiff>
+                {
+                    new AllocDiff { Ptr = origination.Contract.Id }
+                };
+                if (bigmap.Value is MichelineArray items && items.Count > 0)
+                {
+                    foreach (var item in items)
+                    {
+                        var key = (item as MichelinePrim).Args[0];
+                        var value = (item as MichelinePrim).Args[1];
+                        res.Add(new UpdateDiff
+                        {
+                            Ptr = res[0].Ptr,
+                            Key = key,
+                            Value = value,
+                            KeyHash = (bigmap.Schema as BigMapSchema).GetKeyHash(key)
+                        });
+                    }
+                }
             }
-            return false;
+
+            return res;
         }
     }
 }

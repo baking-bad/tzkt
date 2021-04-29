@@ -53,11 +53,12 @@ namespace Tzkt.Api
             services.AddTransient<ProtocolRepository>();
             services.AddTransient<BakingRightsRepository>();
             services.AddTransient<CyclesRepository>();
-            services.AddTransient<RewardsRepository>(); 
+            services.AddTransient<RewardsRepository>();
             services.AddTransient<QuotesRepository>();
             services.AddTransient<CommitmentRepository>();
             services.AddTransient<StatisticsRepository>();
             services.AddTransient<SoftwareRepository>();
+            services.AddTransient<BigMapsRepository>();
 
             services.AddStateListener();
 
@@ -89,6 +90,9 @@ namespace Tzkt.Api
 
                 services.AddTransient<OperationsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, OperationsProcessor<DefaultHub>>();
+
+                services.AddTransient<BigMapsProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
 
                 services.AddSignalR(options =>
                 {

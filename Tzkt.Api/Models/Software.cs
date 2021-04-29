@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 
 namespace Tzkt.Api.Models
 {
@@ -36,23 +38,61 @@ namespace Tzkt.Api.Models
         public int BlocksCount { get; set; }
 
         /// <summary>
-        /// Offchain data: commit date
+        /// Offchain metadata
         /// </summary>
-        public DateTime? CommitDate { get; set; }
+        public RawJson Metadata { get; set; }
 
         /// <summary>
-        /// Offchain data: commit hash
+        /// **DEPRECATED**. Use `metadata` instead.
         /// </summary>
-        public string CommitHash { get; set; }
+        public DateTime? CommitDate
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("commitDate", out var v) && v.TryGetDateTime(out var dt) ? dt : null;
+            }
+        }
 
         /// <summary>
-        /// Offchain data: software version (commit tag)
+        /// **DEPRECATED**. Use `metadata` instead.
         /// </summary>
-        public string Version { get; set; }
+        public string CommitHash
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("commitHash", out var v) ? v.GetString() : null;
+            }
+        }
 
         /// <summary>
-        /// Offchain data: software tags, e.g. `docker`, `staging` etc.
+        /// **DEPRECATED**. Use `metadata` instead.
         /// </summary>
-        public List<string> Tags { get; set; }
+        public string Version
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("version", out var v) ? v.GetString() : null;
+            }
+        }
+
+        /// <summary>
+        /// **DEPRECATED**. Use `metadata` instead.
+        /// </summary>
+        public List<string> Tags
+        {
+            get
+            {
+                if (Metadata?.Json == null) return null;
+                using var doc = JsonDocument.Parse(Metadata.Json);
+                return doc.RootElement.TryGetProperty("tags", out var v) && v.ValueKind == JsonValueKind.Array
+                    ? v.EnumerateArray().Select(x => x.GetString()).ToList() : null;
+            }
+        }
     }
 }

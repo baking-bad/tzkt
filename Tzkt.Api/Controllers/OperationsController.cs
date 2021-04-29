@@ -1189,7 +1189,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, quote));
+                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {

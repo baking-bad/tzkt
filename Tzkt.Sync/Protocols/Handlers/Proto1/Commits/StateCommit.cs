@@ -20,6 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var state = appState;
             #endregion
 
+            state.Cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
             state.Level = block.Level;
             state.Timestamp = block.Timestamp;
             state.Protocol = block.Protocol.Hash;
@@ -82,14 +83,15 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region entities
             var state = appState;
             var prevBlock = await Cache.Blocks.PreviousAsync();
-            if (prevBlock != null) prevBlock.Protocol ??= await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
+            prevBlock.Protocol ??= await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
             #endregion
 
-            state.Level = prevBlock?.Level ?? -1;
-            state.Timestamp = prevBlock?.Timestamp ?? DateTime.MinValue;
-            state.Protocol = prevBlock?.Protocol.Hash ?? "";
-            state.NextProtocol = prevBlock == null ? "" : nextProtocol;
-            state.Hash = prevBlock?.Hash ?? "";
+            state.Cycle = (prevBlock.Level - 1) / Math.Max(prevBlock.Protocol.BlocksPerCycle, 1);
+            state.Level = prevBlock.Level;
+            state.Timestamp = prevBlock.Timestamp;
+            state.Protocol = prevBlock.Protocol.Hash;
+            state.NextProtocol = nextProtocol;
+            state.Hash = prevBlock.Hash;
 
             state.BlocksCount--;
             if (block.Events.HasFlag(BlockEvents.ProtocolBegin)) state.ProtocolsCount--;

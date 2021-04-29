@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Netezos.Contracts;
 using Netezos.Encoding;
 
 using Tzkt.Data.Models;
@@ -14,6 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     class TransactionsCommit : ProtocolCommit
     {
         public TransactionOperation Transaction { get; private set; }
+        public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
 
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -131,7 +134,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await ResetGracePeriod(transaction);
 
                 if (result.TryGetProperty("storage", out var storage))
+                {
+                    BigMapDiffs = ParseBigMapDiffs(transaction, result);
                     await ProcessStorage(transaction, storage);
+                }
             }
             #endregion
 
@@ -217,7 +223,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (parentTx.InternalOperations ?? InternalOperations.None) | InternalOperations.Transactions;
+            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+            parentTx.InternalTransactions = (short?)((parentTx.InternalTransactions ?? 0) + 1);
 
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;
@@ -257,7 +264,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await ResetGracePeriod(transaction);
 
                 if (result.TryGetProperty("storage", out var storage))
+                {
+                    BigMapDiffs = ParseBigMapDiffs(transaction, result);
                     await ProcessStorage(transaction, storage);
+                }
             }
             #endregion
 
@@ -521,6 +531,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var currentStorage = await Cache.Storages.GetAsync(contract);
 
             var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(storage), false);
+            newStorageMicheline = NormalizeStorage(transaction, newStorageMicheline, schema);
             var newStorageBytes = newStorageMicheline.ToBytes();
 
             if (newStorageBytes.IsEqual(currentStorage.RawValue))
@@ -568,6 +579,73 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 Db.Storages.Remove(storage);
             }
+        }
+
+        protected virtual IMicheline NormalizeStorage(TransactionOperation transaction, IMicheline storage, ContractScript schema)
+        {
+            var view = schema.Storage.Schema.ToTreeView(storage);
+            var bigmap = view.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+            if (bigmap != null)
+                storage = storage.Replace(bigmap.Value, new MichelineInt(transaction.Target.Id));
+            return storage;
+        }
+
+        protected virtual IEnumerable<BigMapDiff> ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
+        {
+            if (transaction.Level != 5993)
+                return null;
+            // It seems there were no big_map diffs at all in proto 1
+            // thus there was no an adequate way to track big_map updates,
+            // so the only way to handle this single big_map update is hardcoding
+            return new List<BigMapDiff>
+            {
+                new UpdateDiff
+                {
+                    Ptr = transaction.Target.Id,
+                    KeyHash = "exprteAx9hWkXvYSQ4nN9SqjJGVR1sTneHQS1QEcSdzckYdXZVvsqY",
+                    Key = new MichelineString("KT1R3uoZ6W1ZxEwzqtv75Ro7DhVY6UAcxuK2"),
+                    Value = new MichelinePrim
+                    {
+                        Prim = PrimType.Pair,
+                        Args = new List<IMicheline>
+                        {
+                            new MichelineString("Aliases Contract"),
+                            new MichelinePrim
+                            {
+                                Prim = PrimType.Pair,
+                                Args = new List<IMicheline>
+                                {
+                                    new MichelinePrim { Prim = PrimType.None },
+                                    new MichelinePrim
+                                    {
+                                        Prim = PrimType.Pair,
+                                        Args = new List<IMicheline>
+                                        {
+                                            new MichelineInt(0),
+                                            new MichelinePrim
+                                            {
+                                                Prim = PrimType.Pair,
+                                                Args = new List<IMicheline>
+                                                {
+                                                    new MichelinePrim
+                                                    {
+                                                        Prim = PrimType.Left,
+                                                        Args = new List<IMicheline>
+                                                        {
+                                                            new MichelinePrim { Prim = PrimType.Unit }
+                                                        }
+                                                    },
+                                                    new MichelineInt(1530741267)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                }
+            };
         }
     }
 }

@@ -68,6 +68,7 @@ namespace Tzkt.Api.Services.Sync
             }
             catch (Exception ex)
             {
+                // TODO: reanimate listener without breaking HubProcessors state
                 Logger.LogCritical($"State listener crashed: {ex.Message}");
             }
             finally

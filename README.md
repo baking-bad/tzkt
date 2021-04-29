@@ -8,10 +8,11 @@ The indexer fetches raw data from the Tezos node, then processes it and stores i
 
 ## Features:
 - **More detailed data.** TzKT not only collects blockchain data, but also processes and extends it with unique properties or even entities. For example, TzKT was the first indexer introduced synthetic operation types such as "migration" or "revelation penalty", which fill in the gaps in account history (because this data is missed in the blockchain), and the only indexer that correctly distinguishes smart contracts among all contracts.
-- **Data quality comes first!** You will never see an incorrect account balance, or total rolls, or missed operations, etc. TzKT was built by professionals who know Tezos from A to Z (or, in other words, from TZ to KT 😼).
-- **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly. In addition to basic data access TzKT API has a lot of cool features such as exporting account statements, calculating historical balances (at any block), injecting metadata and much more. See the [API documentation](https://api.tzkt.io), automatically generated using Swagger (Open API 3 specification).
+- **Micheline-to-JSON conversion** TzKT automatically converts raw Micheline JSON to human-readable JSON, so it's extremely handy to work with transaction parameters, contract storages, bigmaps keys, etc. 
+- **Data quality comes first!** You will never see an incorrect account balance, or total rolls, or missed operations, etc. TzKT was built by professionals who know Tezos from A to Z (or, in other words, from tz to KT 😼).
+- **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly. In addition to basic data access TzKT API has a lot of cool features such as deep filtering, sorting, data selection, exporting .csv statements, calculating historical data (at any block) such as balances or BigMap keys, injecting historical quotes and metadata, optimized caching and much more. See the complete [API documentation](https://api.tzkt.io).
 - **WebSocket API.** TzKT allows to subscribe to real-time blockchain data, such as new blocks or new operations, etc. via WebSocket. TzKT uses SignalR, which is very easy to use and for which there are many client libraries for different languages.
-- **Low resource consumption.** TzKT is fairly lightweight. The indexer consumes up to 128MB of RAM, and the API up to 256MB-1024MB, depending on the configured cache size.
+- **Low resource consumption.** TzKT is fairly lightweight. The indexer consumes up to 128MB of RAM, and the API up to 256MB-1024MB, depending on the network and configured cache size.
 - **No local node needed.** TzKT indexer works well even with remote RPC node. By default it uses [tezos.giganode.io](https://tezos.giganode.io/), the most performant public RPC node in Tezos, which is more than enough for most cases.
 - **Quick start.** Indexer bootstrap takes ~15 minutes by using snapshots publicly available for all supported networks. Of course, you can run full synchronization from scratch as well.
 - **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data. Also, the indexer performs self-diagnostics after each block, which guarantees the correct commiting.
@@ -37,7 +38,7 @@ make stop
 
 ## Installation (from source)
 
-This is the preferred way, because you have more control over each TzKT component (database, indexer, API). This guide is for Ubuntu 18.04, but if you are using a different OS, the installation process will probably differ only in the "Install packages" step.
+This is the preferred way, because you have more control over each TzKT component (database, indexer, API). This guide is for Ubuntu 20.04, but if you are using a different OS, the installation process will probably differ only in the "Install packages" step.
 
 ### Install packages
 
@@ -87,7 +88,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.4.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.5.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -258,16 +259,16 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 ## Install Tzkt Indexer and API for testnets
 
 In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Here are some presets for testnets:
- - Delphinet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_v1.4.backup
-   - RPC node: https://rpc.tzkt.io/delphinet/
-   - Chain id: NetXm8tYqnMWky1   
  - Edonet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/edo2_tzkt_v1.4.backup
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/edo2_tzkt_v1.5.backup
    - RPC node: https://rpc.tzkt.io/edo2net/
    - Chain id: NetXSp4gfdanies
+ - Florencenet:
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.backup
+   - RPC node: https://rpc.tzkt.io/florencenobanet/
+   - Chain id: NetXxkAx4woPLyu
 
-Anyway, let's do it, for reference, from scratch for the delphinet.
+Anyway, let's do it, for reference, from scratch for the `florencenet`.
 
 ### Prepare database
 
@@ -276,23 +277,23 @@ Anyway, let's do it, for reference, from scratch for the delphinet.
 ````
 sudo -u postgres psql
 
-postgres=# create database delphi_tzkt_db;
+postgres=# create database flor_tzkt_db;
 postgres=# create user tzkt with encrypted password 'qwerty';
-postgres=# grant all privileges on database delphi_tzkt_db to tzkt;
+postgres=# grant all privileges on database flor_tzkt_db to tzkt;
 postgres=# \q
 ````
 
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/delphi_tzkt_v1.4.backup" -O /tmp/delphi_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.backup" -O /tmp/flor_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
 
 ````c
-// delphinet restoring takes ~1 min
-sudo -u postgres pg_restore -c --if-exists -v -d delphi_tzkt_db -1 /tmp/delphi_tzkt_db.backup
+// florencenet restoring takes ~1 min
+sudo -u postgres pg_restore -c --if-exists -v -d flor_tzkt_db -1 /tmp/flor_tzkt_db.backup
 ````
 
 ### Clone, build, configure and run Tzkt Indexer
@@ -308,12 +309,12 @@ git clone https://github.com/baking-bad/tzkt.git
 
 ````
 cd ~/tzkt/Tzkt.Sync/
-dotnet publish -o ~/delphi-tzkt-sync
+dotnet publish -o ~/flor-tzkt-sync
 ````
 
 #### Configure indexer
 
-Edit configuration file `~/delphi-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
+Edit configuration file `~/flor-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
 
 Like this:
 
@@ -325,8 +326,8 @@ Like this:
   },
 
   "TezosNode": {
-    "ChainId": "NetXm8tYqnMWky1",
-    "Endpoint": "https://rpc.tzkt.io/delphinet/",
+    "ChainId": "NetXxkAx4woPLyu",
+    "Endpoint": "https://rpc.tzkt.io/florencenobanet/",
     "Timeout": 30
   },
   
@@ -336,7 +337,7 @@ Like this:
   },
 
   "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=delphi_tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "server=localhost;port=5432;database=flor_tzkt_db;username=tzkt;password=qwerty;"
   },
 
   "Logging": {
@@ -352,7 +353,7 @@ Like this:
 #### Run indexer
 
 ````c
-cd ~/delphi-tzkt-sync
+cd ~/flor-tzkt-sync
 dotnet Tzkt.Sync.dll
 
 // info: Microsoft.Hosting.Lifetime[0]
@@ -360,7 +361,7 @@ dotnet Tzkt.Sync.dll
 // info: Microsoft.Hosting.Lifetime[0]
 //       Hosting environment: Production
 // info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/delphi-tzkt-sync
+//       Content root path: /home/tzkt/flor-tzkt-sync
 // warn: Tzkt.Sync.Services.Observer[0]
 //       Observer is started
 // info: Tzkt.Sync.Services.Observer[0]
@@ -372,20 +373,20 @@ dotnet Tzkt.Sync.dll
 
 That's it. If you want to run the indexer as a daemon, take a look at this guide: https://docs.microsoft.com/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-3.1#create-the-service-file.
 
-### Build, configure and run Tzkt API for the delphinet indexer
+### Build, configure and run Tzkt API for the florencenet indexer
 
-Suppose you have already created database `delphi_tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
+Suppose you have already created database `flor_tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
 
 #### Build API
 
 ````
 cd ~/tzkt/Tzkt.Api/
-dotnet publish -o ~/delphi-tzkt-api
+dotnet publish -o ~/flor-tzkt-api
 ````
 
 #### Configure API
 
-Edit configuration file `~/delphi-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
+Edit configuration file `~/flor-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
 
 By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates.
 
@@ -413,7 +414,7 @@ Like this:
   },
 
   "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=delphi_tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "server=localhost;port=5432;database=flor_tzkt_db;username=tzkt;password=qwerty;"
   },
 
   "Kestrel": {
@@ -439,7 +440,7 @@ Like this:
 #### Run API
 
 ````c
-cd ~/delphi-tzkt-api
+cd ~/flor-tzkt-api
 dotnet Tzkt.Api.dll
 
 // info: Tzkt.Api.Services.Metadata.AccountMetadataService[0]
@@ -457,7 +458,7 @@ dotnet Tzkt.Api.dll
 // info: Microsoft.Hosting.Lifetime[0]
 //       Hosting environment: Production
 // info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/delphi-tzkt-api
+//       Content root path: /home/tzkt/flor-tzkt-api
 // ....
 ````
 

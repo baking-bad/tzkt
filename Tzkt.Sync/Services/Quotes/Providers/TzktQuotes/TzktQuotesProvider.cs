@@ -39,6 +39,7 @@ namespace Tzkt.Sync.Services
                     quote.Cny = last?.Cny ?? 0;
                     quote.Jpy = last?.Jpy ?? 0;
                     quote.Krw = last?.Krw ?? 0;
+                    quote.Eth = last?.Eth ?? 0;
                 }
             }
             else
@@ -54,6 +55,7 @@ namespace Tzkt.Sync.Services
                         quote.Cny = last?.Cny ?? 0;
                         quote.Jpy = last?.Jpy ?? 0;
                         quote.Krw = last?.Krw ?? 0;
+                        quote.Eth = last?.Eth ?? 0;
                     }
                     else
                     {
@@ -65,6 +67,7 @@ namespace Tzkt.Sync.Services
                         quote.Cny = res[i].Cny;
                         quote.Jpy = res[i].Jpy;
                         quote.Krw = res[i].Krw;
+                        quote.Eth = res[i].Eth;
                     }
                 }
             }
@@ -107,6 +110,9 @@ namespace Tzkt.Sync.Services
 
         [JsonPropertyName("krw")]
         public double Krw { get; set; }
+
+        [JsonPropertyName("eth")]
+        public double Eth { get; set; }
 
         int IQuote.Level => throw new NotImplementedException();
     }

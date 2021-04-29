@@ -4,13 +4,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class OriginationOperation : InternalOperation
+    public class OriginationOperation : ContractOperation
     {
         public int? ManagerId { get; set; }
         public int? DelegateId { get; set; }
         public int? ContractId { get; set; }
         public int? ScriptId { get; set; }
-        public int? StorageId { get; set; }
 
         public long Balance { get; set; }
 

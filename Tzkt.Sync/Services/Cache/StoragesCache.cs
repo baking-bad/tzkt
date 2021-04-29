@@ -11,9 +11,9 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class StoragesCache
     {
-        public const int MaxItems = 256; //TODO: set limits in app settings
+        public const int MaxItems = 1024; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, Storage> CachedByContractId = new Dictionary<int, Storage>(257);
+        static readonly Dictionary<int, Storage> CachedByContractId = new Dictionary<int, Storage>(1027);
 
         readonly TzktContext Db;
 
@@ -58,9 +58,12 @@ namespace Tzkt.Sync.Services.Cache
             if (CachedByContractId.Count >= MaxItems)
             {
                 var oldest = CachedByContractId.Values
-                    .Take(MaxItems / 4);
+                    .OrderBy(x => x.Level)
+                    .Take(MaxItems / 4)
+                    .Select(x => x.ContractId)
+                    .ToList();
 
-                foreach (var key in oldest.Select(x => x.ContractId).ToList())
+                foreach (var key in oldest)
                     CachedByContractId.Remove(key);
             }
         }

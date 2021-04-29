@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -503,6 +505,154 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetBigMapAction(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = (bindingContext.ValueProvider as CompositeValueProvider)?
+                .FirstOrDefault(x => x is QueryStringValueProvider)?
+                .GetValue(name) ?? ValueProviderResult.None;
+            
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    switch (valueObject.FirstValue)
+                    {
+                        case BigMapActions.Allocate:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.Allocate;
+                            break;
+                        case BigMapActions.AddKey:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.AddKey;
+                            break;
+                        case BigMapActions.UpdateKey:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.UpdateKey;
+                            break;
+                        case BigMapActions.RemoveKey:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.RemoveKey;
+                            break;
+                        case BigMapActions.Remove:
+                            hasValue = true;
+                            result = (int)Data.Models.BigMapAction.Remove;
+                            break;
+                        default:
+                            bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap action.");
+                            return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetBigMapActionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = (bindingContext.ValueProvider as CompositeValueProvider)?
+                .FirstOrDefault(x => x is QueryStringValueProvider)?
+                .GetValue(name) ?? ValueProviderResult.None;
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        switch (rawValue)
+                        {
+                            case BigMapActions.Allocate:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.Allocate);
+                                break;
+                            case BigMapActions.AddKey:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.AddKey);
+                                break;
+                            case BigMapActions.UpdateKey:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.UpdateKey);
+                                break;
+                            case BigMapActions.RemoveKey:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.RemoveKey);
+                                break;
+                            case BigMapActions.Remove:
+                                hasValue = true;
+                                result.Add((int)Data.Models.BigMapAction.Remove);
+                                break;
+                            default:
+                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid bigmap action.");
+                                return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetBigMapTags(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = (int)Data.Models.BigMapTag.None;
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        switch (rawValue)
+                        {
+                            case BigMapTags.Metadata:
+                                hasValue = true;
+                                result |= (int)Data.Models.BigMapTag.Metadata;
+                                break;
+                            case BigMapTags.TokenMetadata:
+                                hasValue = true;
+                                result |= (int)Data.Models.BigMapTag.TokenMetadata;
+                                break;
+                            default:
+                                bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap tags.");
+                                return false;
+                        }
+                    }
+
+                    
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetVoterStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
@@ -740,6 +890,18 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetBool(this ModelBindingContext bindingContext, string name, out bool? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                result = !(valueObject.FirstValue == "false" || valueObject.FirstValue == "0");
+            }
+            return true;
+        }
+
         public static bool TryGetBool(this ModelBindingContext bindingContext, string name, ref bool hasValue, out bool? result)
         {
             result = null;
@@ -753,6 +915,101 @@ namespace Tzkt.Api
             }
 
             return true;
+        }
+
+        public static bool TryGetString(this ModelBindingContext bindingContext, string name, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    result = valueObject.FirstValue;
+                    return true;
+                }
+            }
+            bindingContext.ModelState.TryAddModelError(name, "Invalid value.");
+            return false;
+        }
+
+        public static bool TryGetJson(this ModelBindingContext bindingContext, string name, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    try
+                    {
+                        var json = NormalizeJson(valueObject.FirstValue);
+                        using var doc = JsonDocument.Parse(json);
+                        result = json;
+                        return true;
+                    }
+                    catch (JsonException) { }
+                }
+            }
+            bindingContext.ModelState.TryAddModelError(name, "Invalid JSON value.");
+            return false;
+        }
+
+        public static bool TryGetJsonArray(this ModelBindingContext bindingContext, string name, out string[] result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    try
+                    {
+                        if (Regex.IsMatch(valueObject.FirstValue, @"^[\w,]+$"))
+                        {
+                            result = valueObject.FirstValue.Split(',').Select(x => NormalizeJson(x)).ToArray();
+                        }
+                        else
+                        {
+                            using var doc = JsonDocument.Parse(valueObject.FirstValue);
+                            if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                            {
+                                bindingContext.ModelState.TryAddModelError(name, "Invalid JSON array.");
+                                return false;
+                            }
+                            result = doc.RootElement.EnumerateArray().Select(x => NormalizeJson(x.GetRawText())).ToArray();
+                        }
+                        if (result.Length < 2)
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "JSON array must contain at least two items.");
+                            return false;
+                        }
+                        return true;
+                    }
+                    catch (JsonException) { }
+                }
+            }
+            bindingContext.ModelState.TryAddModelError(name, "Invalid JSON array.");
+            return false;
+        }
+
+        static string NormalizeJson(string value)
+        {
+            switch (value[0])
+            {
+                case '{':
+                case '[':
+                case '"':
+                case 't' when value == "true":
+                case 'f' when value == "false":
+                case 'n' when value == "null":
+                    return value;
+                default:
+                    return $"\"{value}\"";
+            }
         }
 
         public static bool TryGetString(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
@@ -773,7 +1030,33 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStringList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetStringList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string[] result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = rawValues;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetStringListEscaped(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -798,58 +1081,6 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                         result.Add(rawValue.Replace("ъуъ", ","));
-                }
-            }
-
-            return true;
-        }
-
-        public static bool TryGetStringListSimple(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
-        {
-            result = null;
-            var valueObject = bindingContext.ValueProvider.GetValue(name);
-
-            if (valueObject != ValueProviderResult.None)
-            {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
-                if (!string.IsNullOrEmpty(valueObject.FirstValue))
-                {
-                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-                    if (rawValues.Length == 0)
-                    {
-                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
-                        return false;
-                    }
-
-                    hasValue = true;
-                    result = new List<string>(rawValues);
-                }
-            }
-
-            return true;
-        }
-
-        public static bool TryGetStringArray(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string[] result)
-        {
-            result = null;
-            var valueObject = bindingContext.ValueProvider.GetValue(name);
-
-            if (valueObject != ValueProviderResult.None)
-            {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
-                if (!string.IsNullOrEmpty(valueObject.FirstValue))
-                {
-                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-                    if (rawValues.Length == 0)
-                    {
-                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
-                        return false;
-                    }
-
-                    hasValue = true;
-                    result = rawValues;
                 }
             }
 

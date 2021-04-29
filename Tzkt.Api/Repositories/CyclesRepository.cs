@@ -14,11 +14,13 @@ namespace Tzkt.Api.Repositories
     {
         readonly ProtocolsCache Protocols;
         readonly QuotesCache Quotes;
+        readonly TimeCache Times;
 
-        public CyclesRepository(ProtocolsCache protocols, QuotesCache quotes, IConfiguration config) : base(config)
+        public CyclesRepository(ProtocolsCache protocols, QuotesCache quotes, TimeCache times, IConfiguration config) : base(config)
         {
             Protocols = protocols;
             Quotes = quotes;
+            Times = times;
         }
 
         public async Task<int> GetCount()
@@ -43,6 +45,10 @@ namespace Tzkt.Api.Repositories
             return new Cycle
             {
                 Index = row.Index,
+                FirstLevel = row.FirstLevel,
+                StartTime = Times[row.FirstLevel],
+                LastLevel = row.LastLevel,
+                EndTime = Times[row.LastLevel],
                 RandomSeed = row.Seed,
                 SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
@@ -73,6 +79,10 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => new Cycle
             {
                 Index = row.Index,
+                FirstLevel = row.FirstLevel,
+                StartTime = Times[row.FirstLevel],
+                LastLevel = row.LastLevel,
+                EndTime = Times[row.LastLevel],
                 RandomSeed = row.Seed,
                 SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
@@ -99,6 +109,10 @@ namespace Tzkt.Api.Repositories
                 switch (field)
                 {
                     case "index": columns.Add(@"""Index"""); break;
+                    case "firstLevel": columns.Add(@"""FirstLevel"""); break;
+                    case "startTime": columns.Add(@"""FirstLevel"""); break;
+                    case "lastLevel": columns.Add(@"""LastLevel"""); break;
+                    case "endTime": columns.Add(@"""LastLevel"""); break;
                     case "randomSeed": columns.Add(@"""Seed"""); break;
                     case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                     case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
@@ -132,6 +146,22 @@ namespace Tzkt.Api.Repositories
                     case "index":
                         foreach (var row in rows)
                             result[j++][i] = row.Index;
+                        break;
+                    case "firstLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FirstLevel;
+                        break;
+                    case "startTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[row.FirstLevel];
+                        break;
+                    case "lastLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LastLevel;
+                        break;
+                    case "endTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[row.LastLevel];
                         break;
                     case "randomSeed":
                         foreach (var row in rows)
@@ -188,6 +218,10 @@ namespace Tzkt.Api.Repositories
             switch (field)
             {
                 case "index": columns.Add(@"""Index"""); break;
+                case "firstLevel": columns.Add(@"""FirstLevel"""); break;
+                case "startTime": columns.Add(@"""FirstLevel"""); break;
+                case "lastLevel": columns.Add(@"""LastLevel"""); break;
+                case "endTime": columns.Add(@"""LastLevel"""); break;
                 case "randomSeed": columns.Add(@"""Seed"""); break;
                 case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                 case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
@@ -218,6 +252,22 @@ namespace Tzkt.Api.Repositories
                 case "index":
                     foreach (var row in rows)
                         result[j++] = row.Index;
+                    break;
+                case "firstLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.FirstLevel;
+                    break;
+                case "startTime":
+                    foreach (var row in rows)
+                        result[j++] = Times[row.FirstLevel];
+                    break;
+                case "lastLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.LastLevel;
+                    break;
+                case "endTime":
+                    foreach (var row in rows)
+                        result[j++] = Times[row.LastLevel];
                     break;
                 case "randomSeed":
                     foreach (var row in rows)

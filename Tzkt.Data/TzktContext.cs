@@ -68,6 +68,12 @@ namespace Tzkt.Data
         public DbSet<Storage> Storages { get; set; }
         #endregion
 
+        #region bigmaps
+        public DbSet<BigMap> BigMaps { get; set; }
+        public DbSet<BigMapKey> BigMapKeys { get; set; }
+        public DbSet<BigMapUpdate> BigMapUpdates { get; set; }
+        #endregion
+
         public TzktContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -132,6 +138,12 @@ namespace Tzkt.Data
             #region scripts
             modelBuilder.BuildScriptModel();
             modelBuilder.BuildStorageModel();
+            #endregion
+
+            #region bigmaps
+            modelBuilder.BuildBigMapModel();
+            modelBuilder.BuildBigMapKeyModel();
+            modelBuilder.BuildBigMapUpdateModel();
             #endregion
         }
     }

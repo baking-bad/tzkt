@@ -89,6 +89,8 @@ namespace Tzkt.Sync.Protocols
             }
             #endregion
 
+            var bigMapCommit = new BigMapCommit(this);
+
             #region operations 3
             foreach (var operation in operations[3].EnumerateArray())
             {
@@ -105,11 +107,16 @@ namespace Tzkt.Sync.Protocols
                             await new DelegationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "origination":
-                            await new OriginationsCommit(this).Apply(blockCommit.Block, operation, content);
+                            var orig = new OriginationsCommit(this);
+                            await orig.Apply(blockCommit.Block, operation, content);
+                            if (orig.BigMapDiffs != null)
+                                bigMapCommit.Append(orig.Origination, orig.Origination.Contract, orig.BigMapDiffs);
                             break;
                         case "transaction":
                             var parent = new TransactionsCommit(this);
                             await parent.Apply(blockCommit.Block, operation, content);
+                            if (parent.BigMapDiffs != null)
+                                bigMapCommit.Append(parent.Transaction, parent.Transaction.Target as Contract, parent.BigMapDiffs);
 
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult))
                             {
@@ -118,7 +125,10 @@ namespace Tzkt.Sync.Protocols
                                     switch (internalContent.RequiredString("kind"))
                                     {
                                         case "transaction":
-                                            await new TransactionsCommit(this).ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
+                                            var internalTx = new TransactionsCommit(this);
+                                            await internalTx.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
+                                            if (internalTx.BigMapDiffs != null)
+                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
                                             break;
                                         default:
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
@@ -132,6 +142,8 @@ namespace Tzkt.Sync.Protocols
                 }
             }
             #endregion
+
+            await bigMapCommit.Apply();
 
             var brCommit = new BakingRightsCommit(this);
             await brCommit.Apply(blockCommit.Block);
@@ -222,6 +234,7 @@ namespace Tzkt.Sync.Protocols
             await new DelegatorCycleCommit(this).Revert(currBlock);
             await new CycleCommit(this).Revert(currBlock);
             await new BakingRightsCommit(this).Revert(currBlock);
+            await new BigMapCommit(this).Revert(currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
             {

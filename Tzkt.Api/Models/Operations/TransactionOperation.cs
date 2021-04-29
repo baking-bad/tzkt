@@ -111,6 +111,11 @@ namespace Tzkt.Api.Models
         public object Storage { get; set; }
 
         /// <summary>
+        /// List of bigmap updates (aka big_map_diffs) caused by the transaction.
+        /// </summary>
+        public List<BigMapDiff> Diffs { get; set; }
+
+        /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
         /// `failed` - an operation which failed with some particular error (not enough balance, gas limit, etc),
         /// `backtracked` - an operation which was successful but reverted due to one of the following operations in the same operation group was failed,

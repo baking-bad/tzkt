@@ -183,6 +183,40 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 Db.Storages.Add(newStorage);
                 Cache.Storages.Add(contract, newStorage);
+
+                var tree = script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
+                var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+                if (bigmap != null)
+                {
+                    var newTree = newScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(newStorage.RawValue));
+                    var newBigmap = newTree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+                    if (newBigmap.Value is not MichelineInt mi)
+                        throw new System.Exception("Expected micheline int");
+                    var newPtr = (int)mi.Value;
+
+                    if (newBigmap.Path != bigmap.Path)
+                        await Db.Database.ExecuteSqlRawAsync($@"
+                            UPDATE ""BigMaps"" SET ""StoragePath"" = '{newBigmap.Path}' WHERE ""Ptr"" = {contract.Id};
+                        ");
+
+                    await Db.Database.ExecuteSqlRawAsync($@"
+                        UPDATE ""BigMaps"" SET ""Ptr"" = {newPtr} WHERE ""Ptr"" = {contract.Id};
+                        UPDATE ""BigMapKeys"" SET ""BigMapPtr"" = {newPtr} WHERE ""BigMapPtr"" = {contract.Id};
+                        UPDATE ""BigMapUpdates"" SET ""BigMapPtr"" = {newPtr} WHERE ""BigMapPtr"" = {contract.Id};
+                    ");
+
+                    var storages = await Db.Storages.Where(x => x.ContractId == contract.Id).ToListAsync();
+                    foreach (var prevStorage in storages)
+                    {
+                        var prevValue = Micheline.FromBytes(prevStorage.RawValue);
+                        var prevTree = script.Schema.Storage.Schema.ToTreeView(prevValue);
+                        var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
+                        (prevBigmap.Value as MichelineInt).Value = newPtr;
+
+                        prevStorage.RawValue = prevValue.ToBytes();
+                        prevStorage.JsonValue = script.Schema.HumanizeStorage(prevValue);
+                    }
+                }
             }
             #endregion
         }
@@ -241,6 +275,41 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 var contract = change.Account as Contract;
                 Cache.Accounts.Add(contract);
+
+                var tree = change.NewScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.NewStorage.RawValue));
+                var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+                if (bigmap != null)
+                {
+                    var oldTree = change.OldScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.OldStorage.RawValue));
+                    var oldBigmap = oldTree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+
+                    if (bigmap.Value is not MichelineInt mi)
+                        throw new System.Exception("Expected micheline int");
+                    var newPtr = (int)mi.Value;
+
+                    if (oldBigmap.Path != bigmap.Path)
+                        await Db.Database.ExecuteSqlRawAsync($@"
+                            UPDATE ""BigMaps"" SET ""StoragePath"" = '{oldBigmap.Path}' WHERE ""Ptr"" = {newPtr};
+                        ");
+
+                    await Db.Database.ExecuteSqlRawAsync($@"
+                        UPDATE ""BigMaps"" SET ""Ptr"" = {contract.Id} WHERE ""Ptr"" = {newPtr};
+                        UPDATE ""BigMapKeys"" SET ""BigMapPtr"" = {contract.Id} WHERE ""BigMapPtr"" = {newPtr};
+                        UPDATE ""BigMapUpdates"" SET ""BigMapPtr"" = {contract.Id} WHERE ""BigMapPtr"" = {newPtr};
+                    ");
+
+                    var storages = await Db.Storages.Where(x => x.ContractId == contract.Id && x.Level < change.Level).ToListAsync();
+                    foreach (var prevStorage in storages)
+                    {
+                        var prevValue = Micheline.FromBytes(prevStorage.RawValue);
+                        var prevTree = change.OldScript.Schema.Storage.Schema.ToTreeView(prevValue);
+                        var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
+                        (prevBigmap.Value as MichelineInt).Value = contract.Id;
+
+                        prevStorage.RawValue = prevValue.ToBytes();
+                        prevStorage.JsonValue = change.OldScript.Schema.HumanizeStorage(prevValue);
+                    }
+                }
 
                 change.OldScript.Current = true;
                 Cache.Schemas.Add(contract, change.OldScript.Schema);

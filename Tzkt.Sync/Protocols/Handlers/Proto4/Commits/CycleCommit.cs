@@ -59,6 +59,8 @@ namespace Tzkt.Sync.Protocols.Proto4
                 FutureCycle = new Cycle
                 {
                     Index = futureCycle,
+                    FirstLevel = futureCycle * block.Protocol.BlocksPerCycle + 1,
+                    LastLevel = (futureCycle + 1) * block.Protocol.BlocksPerCycle,
                     SnapshotIndex = rawCycle.RequiredInt32("roll_snapshot"),
                     SnapshotLevel = snapshotLevel,
                     TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / snapshotProtocol.TokensPerRoll)),

@@ -31,7 +31,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Commitment>>> Get(
+        public async Task<ActionResult<IEnumerable<Software>>> Get(
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,

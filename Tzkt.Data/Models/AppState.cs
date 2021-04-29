@@ -10,6 +10,7 @@ namespace Tzkt.Data.Models
         public int KnownHead { get; set; }
         public DateTime LastSync { get; set; }
 
+        public int Cycle { get; set; }
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
         public string Protocol { get; set; }
@@ -22,6 +23,9 @@ namespace Tzkt.Data.Models
         public int AccountCounter { get; set; }
         public int OperationCounter { get; set; }
         public int ManagerCounter { get; set; }
+        public int BigMapCounter { get; set; }
+        public int BigMapKeyCounter { get; set; }
+        public int BigMapUpdateCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }
@@ -58,6 +62,7 @@ namespace Tzkt.Data.Models
         public double QuoteCny { get; set; }
         public double QuoteJpy { get; set; }
         public double QuoteKrw { get; set; }
+        public double QuoteEth { get; set; }
         #endregion
     }
 
@@ -69,6 +74,7 @@ namespace Tzkt.Data.Models
                 new AppState
                 {
                     Id = -1,
+                    Cycle = -1,
                     Level = -1,
                     Timestamp = DateTime.MinValue,
                     Protocol = "",
