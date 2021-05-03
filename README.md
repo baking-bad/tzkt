@@ -262,7 +262,7 @@ In general the steps are the same as for the mainnet, you just need to use diffe
  - Edonet:
    - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/edo2_tzkt_v1.5.backup
    - RPC node: https://rpc.tzkt.io/edo2net/
-   - Chain id: NetXSp4gfdanies
+   - Chain id: NetXSgo1ZT2DRUG
  - Florencenet:
    - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.backup
    - RPC node: https://rpc.tzkt.io/florencenobanet/
