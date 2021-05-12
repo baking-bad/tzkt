@@ -11,19 +11,22 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
+            var br = parameters["baking_reward_per_endorsement"] as JArray;
+            var er = parameters["endorsement_reward"] as JArray;
+
             protocol.RampUpCycles = parameters["security_deposit_ramp_up_cycles"]?.Value<int>() ?? 0;
             protocol.NoRewardCycles = parameters["no_reward_cycles"]?.Value<int>() ?? 0;
             protocol.BlockDeposit = parameters["block_security_deposit"]?.Value<long>() ?? 512_000_000;
-            protocol.BlockReward0 = parameters["baking_reward_per_endorsement"]?[0].Value<long>() ?? 1_250_000;
-            protocol.BlockReward1 = parameters["baking_reward_per_endorsement"]?[1].Value<long>() ?? 187_500;
+            protocol.BlockReward0 = br == null ? 1_250_000 : br.Count > 0 ? br[0].Value<long>() : 0;
+            protocol.BlockReward1 = br == null ? 187_500 : br.Count > 1 ? br[1].Value<long>() : 0;
             protocol.BlocksPerCommitment = parameters["blocks_per_commitment"]?.Value<int>() ?? 32;
             protocol.BlocksPerCycle = parameters["blocks_per_cycle"]?.Value<int>() ?? 4096;
             protocol.BlocksPerSnapshot = parameters["blocks_per_roll_snapshot"]?.Value<int>() ?? 256;
             protocol.BlocksPerVoting = parameters["blocks_per_voting_period"]?.Value<int>() ?? 32_768;
             protocol.ByteCost = parameters["cost_per_byte"]?.Value<int>() ?? 1000;
             protocol.EndorsementDeposit = parameters["endorsement_security_deposit"]?.Value<long>() ?? 64_000_000;
-            protocol.EndorsementReward0 = parameters["endorsement_reward"]?[0].Value<long>() ?? 1_250_000;
-            protocol.EndorsementReward1 = parameters["endorsement_reward"]?[1].Value<long>() ?? 833_333;
+            protocol.EndorsementReward0 = er == null ? 1_250_000 : er.Count > 0 ? er[0].Value<long>() : 0;
+            protocol.EndorsementReward1 = er == null ? 833_333 : er.Count > 1 ? er[1].Value<long>() : 0;
             protocol.EndorsersPerBlock = parameters["endorsers_per_block"]?.Value<int>() ?? 32;
             protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 10_400_000;
             protocol.HardOperationGasLimit = parameters["hard_gas_limit_per_operation"]?.Value<int>() ?? 1_040_000;
