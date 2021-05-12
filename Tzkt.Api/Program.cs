@@ -42,7 +42,7 @@ namespace Tzkt.Api
                 if (db.Database.GetAppliedMigrations().Any() &&
                     db.Database.GetAppliedMigrations().First() != db.Database.GetMigrations().First())
                 {
-                    attempt = 10;
+                    attempt = 30;
                     throw new Exception($"can't migrate database. Please, restore it from the snapshot with the latest version.");
                 }
 
@@ -60,7 +60,7 @@ namespace Tzkt.Api
             catch (Exception ex)
             {
                 logger.LogCritical($"Failed to initialize database: {ex.Message}");
-                if (attempt >= 10) throw;
+                if (attempt >= 30) throw;
                 Thread.Sleep(1000);
 
                 return host.Init(++attempt);
