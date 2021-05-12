@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -31,8 +32,28 @@ namespace Tzkt.Sync.Protocols.Proto2
                             x.RevelationId == null)
                         .ToListAsync();
 
+                    var penalizedBakers = missedBlocks
+                        .Select(x => x.BakerId)
+                        .ToHashSet();
+
+                    var bakerCycles = await Db.BakerCycles.AsNoTracking()
+                        .Where(x => x.Cycle == cycle - 1 && penalizedBakers.Contains(x.BakerId))
+                        .ToListAsync();
+
+                    var freezerRewards = bakerCycles.ToDictionary(k => k.BakerId, v =>
+                        v.OwnBlockRewards + v.ExtraBlockRewards + v.EndorsementRewards
+                        + v.DoubleBakingRewards + v.DoubleEndorsingRewards + v.RevelationRewards
+                        - v.DoubleBakingLostRewards - v.DoubleEndorsingLostRewards - v.RevelationLostRewards);
+
+                    var freezerFees = bakerCycles.ToDictionary(k => k.BakerId, v => 
+                        v.OwnBlockFees + v.ExtraBlockFees
+                        - v.DoubleBakingLostFees - v.DoubleEndorsingLostFees - v.RevelationLostFees);
+
                     foreach (var missedBlock in missedBlocks)
                     {
+                        var fr = freezerRewards[(int)missedBlock.BakerId];
+                        var ff = freezerFees[(int)missedBlock.BakerId];
+
                         Cache.Accounts.Add(missedBlock.Baker);
                         revelationPanlties.Add(new RevelationPenaltyOperation
                         {
@@ -42,9 +63,12 @@ namespace Tzkt.Sync.Protocols.Proto2
                             Level = block.Level,
                             Timestamp = block.Timestamp,
                             MissedLevel = missedBlock.Level,
-                            LostReward = missedBlock.Reward,
-                            LostFees = missedBlock.Fees
+                            LostReward = Math.Min(missedBlock.Reward, fr),
+                            LostFees = Math.Min(missedBlock.Fees, ff)
                         });
+
+                        freezerRewards[(int)missedBlock.BakerId] = Math.Max(fr - missedBlock.Reward, 0);
+                        freezerFees[(int)missedBlock.BakerId] = Math.Max(ff - missedBlock.Fees, 0);
                     }
                 }
             }
