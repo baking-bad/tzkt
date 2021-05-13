@@ -51,7 +51,7 @@ namespace Tzkt.Api.Services.Stats
         private readonly BlockRepository BlocksRepo;
         private readonly OperationRepository OperationsRepo;
         private readonly QuotesRepository QuotesRepo;
-        private readonly HomeConfig Config;
+        private readonly StatsConfig Config;
         private readonly VotingRepository VotingRepo;
 
         private readonly ProtocolsCache Protocols;
@@ -61,8 +61,8 @@ namespace Tzkt.Api.Services.Stats
         int LastUpdate;
 
         public StatsService(AccountMetadataService metadata, BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
-            VotingRepository voting, AccountRepository accounts, AccountsCache accountsCache, OperationRepository operations,
-            ProtocolsCache protocols, StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<StatsService> logger) : base(config)
+            VotingRepository voting, AccountRepository accounts, OperationRepository operations, ProtocolsCache protocols,
+            StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<StatsService> logger) : base(config)
         {
             logger.LogDebug("Initializing accounts cache...");
 
@@ -76,7 +76,7 @@ namespace Tzkt.Api.Services.Stats
             Protocols = protocols;
             State = state;
             QuotesRepo = quotes;
-            Config = config.GetHomeConfig();
+            Config = config.GetStatsConfig();
         }
 
         public async Task UpdateAsync()
@@ -85,22 +85,22 @@ namespace Tzkt.Api.Services.Stats
 
             if (LastUpdate < State.Current.Level - Config.UpdatePeriod)
             {
-                BlocksTab = await GetBlocks();
-                AccountsTab = await GetAccounts();
-                BakersTab = await GetBakers();
-                AssetsTab = await GetAssets();
+                BlocksTab = await GetBlocks(); // 60
+                AccountsTab = await GetAccounts(); // 270
+                BakersTab = await GetBakers(); // 40
+                AssetsTab = await GetAssets(); // 100
 
-                var statistics = await GetStatistics(db);
+                var statistics = await GetStatistics(db); // 15
                 Stats = new Models.Stats
                 {
-                    DailyData = await GetDailyData(db),
-                    CycleData = GetCycleData(),
-                    TxsData = await GetTxsData(db),
-                    StakingData = await GetStakingData(db, statistics.TotalSupply),
-                    ContractsData = await GetContractsData(db),
-                    MarketData = GetMarketData(statistics.TotalSupply, statistics.CirculatingSupply),
-                    GovernanceData = await GetGovernanceData(),
-                    AccountsData = await GetAccountsData(db),
+                    DailyData = await GetDailyData(db), // 260
+                    CycleData = GetCycleData(), // 1
+                    TxsData = await GetTxsData(db), // 2800
+                    StakingData = await GetStakingData(db, statistics.TotalSupply), // 50
+                    ContractsData = await GetContractsData(db), // 3000
+                    MarketData = GetMarketData(statistics.TotalSupply, statistics.CirculatingSupply), // 1
+                    GovernanceData = await GetGovernanceData(), // 40
+                    AccountsData = await GetAccountsData(db), // 320
                     AccountsChart = Stats?.AccountsChart,
                     ContractsChart = Stats?.ContractsChart,
                     MarketChart = Stats?.MarketChart,
@@ -108,11 +108,11 @@ namespace Tzkt.Api.Services.Stats
                     TxsChart = Stats?.TxsChart
                 };
 
-                await UpdateTxChart(db);
-                await UpdateCallsChart(db);
-                await UpdateStakingChart(db);
-                await UpdateAccountsChart(db);
-                await UpdateMarketChart();
+                await UpdateTxChart(db); // 2000
+                await UpdateCallsChart(db); // 2800
+                await UpdateStakingChart(db); // 30
+                await UpdateAccountsChart(db); // 700
+                await UpdateMarketChart(); // 10
 
                 LastUpdate = State.Current.Level;
             }
@@ -397,11 +397,11 @@ namespace Tzkt.Api.Services.Stats
 
             var result = new GovernanceData
             {
-                Proposal = proposal.Hash,
-                Protocol = proposal.Metadata?.Alias,
+                Proposal = proposal?.Hash,
+                Protocol = proposal?.Metadata?.Alias,
                 Period = period.Kind,
                 PeriodEndTime = period.EndTime,
-                EpochEndTime = State.Current.Timestamp.AddMinutes(epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5) - State.Current.Level),
+                EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
             };
 
             if (period.Kind != "promotion" && period.Kind != "exploration") return result;
@@ -427,21 +427,20 @@ namespace Tzkt.Api.Services.Stats
         #region charts
         private async Task UpdateCallsChart(IDbConnection db)
         {
-            var currentState = State.Current.Timestamp;
-            var currentMonth = new DateTime(currentState.Year, currentState.Month, 1, 0, 0, 0, 0);
+            var currentTime = State.Current.Timestamp;
+            var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
 
             if (Stats.ContractsChart == null)
             {
-
-                var result = new List<ChartPoint>();
+                var result = new List<ChartPoint>(12);
                 var totalNumber = await GetCallsCountForPeriod(db, DateTime.MinValue, currentMonth.AddMonths(-10));
-                
+
                 result.Add(new ChartPoint
                 {
                     Date = currentMonth.AddMonths(-11),
                     Value = totalNumber
                 });
-                
+
                 for (var i = 10; i >= 0; i--)
                 {
                     var start = currentMonth.AddMonths(-i);
@@ -455,38 +454,34 @@ namespace Tzkt.Api.Services.Stats
                 }
 
                 Stats.ContractsChart = result;
-                return;
             }
-
-            if (Stats.ContractsChart[^1].Date.Month < currentState.Month)
+            else if (Stats.ContractsChart[^1].Date < currentMonth)
             {
-
                 Stats.ContractsChart[^1].Value = Stats.ContractsChart[^2].Value + await GetCallsCountForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
                 Stats.ContractsChart.RemoveAt(0);
                 Stats.ContractsChart.Add(new ChartPoint
                 {
                     Value = Stats.ContractsChart[^1].Value + await GetCallsCountForPeriod(db, currentMonth, currentMonth.AddMonths(1)),
-                    Date = currentMonth.AddMonths(1)
+                    Date = currentMonth
                 });
-
-                return;
             }
-
-            Stats.ContractsChart[^1].Value = Stats.ContractsChart[^2].Value + await GetCallsCountForPeriod(db, currentMonth, currentMonth.AddMonths(1));
+            else
+            {
+                Stats.ContractsChart[^1].Value = Stats.ContractsChart[^2].Value + await GetCallsCountForPeriod(db, currentMonth, currentMonth.AddMonths(1));
+            }
         }
 
         private async Task UpdateStakingChart(IDbConnection db)
         {
-            var currentState = State.Current.Timestamp;
-            var currentMonth = new DateTime(currentState.Year, currentState.Month, 1, 0, 0, 0, 0);
+            var currentTime = State.Current.Timestamp;
+            var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
 
             if (Stats.StakingChart == null)
             {
-                var result = new List<ChartPoint>();
+                var result = new List<ChartPoint>(12);
                 for (var i = 11; i > 0; i--)
                 {
-                    var start = new DateTime(currentState.AddMonths(-i).Year, currentState.AddMonths(-i).Month, 1, 0, 0, 0, 0);
-
+                    var start = currentMonth.AddMonths(-i);
                     result.Add(new ChartPoint
                     {
                         Date = start,
@@ -501,93 +496,86 @@ namespace Tzkt.Api.Services.Stats
                 });
 
                 Stats.StakingChart = result;
-                return;
             }
-
-
-            if (Stats.StakingChart[^1].Date.Month < currentState.Month)
+            else if (Stats.StakingChart[^1].Date < currentMonth)
             {
-
                 Stats.StakingChart[^1].Value = await GetTotalStakingForPeriod(db, currentMonth);
                 Stats.StakingChart.RemoveAt(0);
                 Stats.StakingChart.Add(new ChartPoint
                 {
-                    Value = Stats.StakingData.TotalStaking,
-                    Date = currentMonth.AddMonths(1)
+                    Date = currentMonth,
+                    Value = Stats.StakingData.TotalStaking
                 });
-
-                return;
             }
-
-            Stats.StakingChart[^1].Value = Stats.StakingData.TotalStaking;
+            else
+            {
+                Stats.StakingChart[^1].Value = Stats.StakingData.TotalStaking;
+            }
         }
 
         private async Task UpdateAccountsChart(IDbConnection db)
         {
-            var currentState = State.Current.Timestamp;
-            var currentMonth = new DateTime(currentState.Year, currentState.Month, 1, 0, 0, 0, 0);
+            var currentTime = State.Current.Timestamp;
+            var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
 
             if (Stats.AccountsChart == null)
             {
-                var result = new List<ChartPoint>();
-                var initialDate = currentMonth.AddMonths(-11);
-
-                var totalNumber = await GetTotalAccountsForPeriod(db, initialDate);
-                for (var i = 11; i > 0; i--)
-                {
-                    var start = currentMonth.AddMonths(-i);
-
-                    result.Add(new ChartPoint
-                    {
-                        Date = start,
-                        Value = await GetTotalAccountsForPeriod(db, start.AddMonths(1))
-                    });
-                }
-
-                result.Add(new ChartPoint
-                {
-                    Date = currentMonth,
-                    Value = Stats.AccountsData.TotalAccounts
-                });
-
-                Stats.AccountsChart = result;
-                return;
-            }
-
-
-            if (Stats.AccountsChart[^1].Date.Month < currentState.Month)
-            {
-
-                Stats.AccountsChart[^1].Value = await GetTotalAccountsForPeriod(db, currentMonth);
-                Stats.AccountsChart.RemoveAt(0);
-                Stats.AccountsChart.Add(new ChartPoint
-                {
-                    Value = Stats.AccountsData.TotalAccounts,
-                    Date = currentMonth.AddMonths(1)
-                });
-
-                return;
-            }
-
-            Stats.AccountsChart[^1].Value = Stats.AccountsData.TotalAccounts;
-        }
-
-        private async Task UpdateTxChart(IDbConnection db)
-        {
-            var currentState = State.Current.Timestamp;
-            var currentMonth = new DateTime(currentState.Year, currentState.Month, 1, 0, 0, 0, 0);
-
-            //Get data for a year if there's no data
-            if (Stats.TxsChart == null)
-            {
-                var result = new List<ChartPoint>();
-
-                long totalNumber = State.Current.TransactionOpsCount;
+                var result = new List<ChartPoint>(12);
+                long totalNumber = State.Current.AccountsCount;
+                
                 result.Add(new ChartPoint
                 {
                     Date = currentMonth,
                     Value = totalNumber
                 });
+                
+                for (var i = 1; i < 12; i++)
+                {
+                    var start = currentMonth.AddMonths(-i);
+
+                    totalNumber -= await GetTotalAccountsForPeriod(db, start, start.AddMonths(1));
+                    result.Insert(0, new ChartPoint
+                    {
+                        Date = start,
+                        Value = totalNumber
+                    });
+                }
+
+                Stats.AccountsChart = result;
+            }
+            else if (Stats.AccountsChart[^1].Date < currentMonth)
+            {
+                Stats.AccountsChart[^1].Value = Stats.AccountsChart[^2].Value + await GetTotalAccountsForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
+                Stats.AccountsChart.RemoveAt(0);
+                Stats.AccountsChart.Add(new ChartPoint
+                {
+                    Date = currentMonth,
+                    Value = Stats.AccountsData.TotalAccounts
+                });
+            }
+            else
+            {
+                Stats.AccountsChart[^1].Value = Stats.AccountsData.TotalAccounts;
+            }
+        }
+
+        private async Task UpdateTxChart(IDbConnection db)
+        {
+            var currentTime = State.Current.Timestamp;
+            var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
+
+            //Get data for a year if there's no data
+            if (Stats.TxsChart == null)
+            {
+                var result = new List<ChartPoint>(12);
+                long totalNumber = State.Current.TransactionOpsCount;
+
+                result.Add(new ChartPoint
+                {
+                    Date = currentMonth,
+                    Value = totalNumber
+                });
+
                 for (var i = 1; i < 12; i++)
                 {
                     var start = currentMonth.AddMonths(-i);
@@ -601,22 +589,21 @@ namespace Tzkt.Api.Services.Stats
                 }
 
                 Stats.TxsChart = result;
-                return;
             }
-
-            if (Stats.TxsChart[^1].Date.Month < currentState.Month)
+            else if (Stats.TxsChart[^1].Date < currentMonth)
             {
                 Stats.TxsChart[^1].Value = Stats.TxsChart[^2].Value + await GetTxCountForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
                 Stats.TxsChart.RemoveAt(0);
                 Stats.TxsChart.Add(new ChartPoint
                 {
-                    Value = Stats.TxsChart[^1].Value + await GetTxCountForPeriod(db, currentMonth, currentMonth.AddMonths(1)),
-                    Date = currentMonth.AddMonths(1)
+                    Date = currentMonth,
+                    Value = State.Current.TransactionOpsCount
                 });
-                return;
             }
-
-            Stats.TxsChart[^1].Value = Stats.TxsChart[^2].Value + await GetTxCountForPeriod(db, currentMonth, currentMonth.AddMonths(1));
+            else
+            {
+                Stats.TxsChart[^1].Value = State.Current.TransactionOpsCount;
+            }
         }
 
         private async Task UpdateMarketChart()
@@ -625,32 +612,42 @@ namespace Tzkt.Api.Services.Stats
             Stats.MarketChart = quotes.Select(x => new ChartPoint<Quote> { Date = x.Timestamp, Value = x }).ToList();
         }
 
-        private async Task<long> GetTxCountForPeriod(IDbConnection db, DateTime from, DateTime to)
+        private Task<int> GetTxCountForPeriod(IDbConnection db, DateTime from, DateTime to)
         {
-            return (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" 
-                                                WHERE ""Level"" < {Times.FindLevel(to, SearchMode.ExactOrLower)}
-                                                AND ""Level"" >= {Times.FindLevel(from, SearchMode.ExactOrHigher)}
-                                                AND ""Status"" = 1")).count;
+            return db.ExecuteScalarAsync<int>($@"
+                SELECT COUNT(*)::integer FROM ""TransactionOps"" 
+                WHERE ""Level"" < {Times.FindLevel(to, SearchMode.ExactOrLower)}
+                AND ""Level"" >= {Times.FindLevel(from, SearchMode.ExactOrHigher)}
+                AND ""Status"" = 1
+            ");
         }
 
-        private async Task<long> GetCallsCountForPeriod(IDbConnection db, DateTime from, DateTime to)
+        private Task<int> GetCallsCountForPeriod(IDbConnection db, DateTime from, DateTime to)
         {
-            return (await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""TransactionOps"" 
-                                                WHERE ""Level"" < {Times.FindLevel(to, SearchMode.ExactOrLower)}
-                                                AND ""Level"" >= {Times.FindLevel(from, SearchMode.ExactOrHigher)}
-                                                AND ""Status"" = 1
-                                                AND ""Entrypoint"" IS NOT NULL")).count;
+            return db.ExecuteScalarAsync<int>($@"
+                SELECT COUNT(*)::integer FROM ""TransactionOps"" 
+                WHERE ""Level"" < {Times.FindLevel(to, SearchMode.ExactOrLower)}
+                AND ""Level"" >= {Times.FindLevel(from, SearchMode.ExactOrHigher)}
+                AND ""Status"" = 1
+                AND ""Entrypoint"" IS NOT NULL
+            ");
         }
 
-        private async Task<long> GetTotalStakingForPeriod(IDbConnection db, DateTime to)
+        private Task<int> GetTotalAccountsForPeriod(IDbConnection db, DateTime from, DateTime to)
         {
-            var cycle = Times.FindLevel(to, SearchMode.ExactOrHigher) / 4096 + 1;
-            return (long)(await db.QueryFirstOrDefaultAsync($@"SELECT SUM(""StakingBalance"") AS sum FROM ""BakerCycles"" WHERE ""Cycle"" = {cycle}")).sum;
+            return db.ExecuteScalarAsync<int>($@"
+                SELECT COUNT(*)::integer FROM ""Accounts""
+                WHERE ""FirstLevel"" < {Times.FindLevel(to, SearchMode.ExactOrLower)}
+                AND ""FirstLevel"" >= {Times.FindLevel(from, SearchMode.ExactOrHigher)}
+            ");
         }
 
-        private async Task<long> GetTotalAccountsForPeriod(IDbConnection db, DateTime to)
+        private Task<long> GetTotalStakingForPeriod(IDbConnection db, DateTime to)
         {
-            return (long)(await db.QueryFirstOrDefaultAsync($@"SELECT COUNT(*) AS count FROM ""Accounts"" WHERE ""FirstLevel"" <= {Times.FindLevel(to, SearchMode.ExactOrLower)}")).count;
+            return db.ExecuteScalarAsync<long>($@"
+                SELECT SUM(""StakingBalance"")::bigint FROM ""BakerCycles""
+                WHERE ""Cycle"" = {(Times.FindLevel(to, SearchMode.ExactOrHigher) - 1) / Protocols.Current.BlocksPerCycle}
+            ");
         }
         #endregion
 

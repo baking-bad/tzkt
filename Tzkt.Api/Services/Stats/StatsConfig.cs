@@ -2,17 +2,17 @@ using Microsoft.Extensions.Configuration;
 
 namespace Tzkt.Api.Services.Stats
 {
-    public class HomeConfig
+    public class StatsConfig
     {
         public bool Enabled { get; set; } = false;
         public int UpdatePeriod { get; set; } = 100;
     }
 
-    public static class HomeConfigExt
+    public static class StatsConfigExt
     {
-        public static HomeConfig GetHomeConfig(this IConfiguration config)
+        public static StatsConfig GetStatsConfig(this IConfiguration config)
         {
-            return config.GetSection("Home")?.Get<HomeConfig>() ?? new HomeConfig();
+            return config.GetSection("Stats")?.Get<StatsConfig>() ?? new StatsConfig();
         }
     }
 }

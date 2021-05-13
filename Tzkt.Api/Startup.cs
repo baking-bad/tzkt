@@ -60,7 +60,7 @@ namespace Tzkt.Api
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
 
-            if (Configuration.GetHomeConfig().Enabled)
+            if (Configuration.GetStatsConfig().Enabled)
             {
                 services.AddHomeCache();
             }
