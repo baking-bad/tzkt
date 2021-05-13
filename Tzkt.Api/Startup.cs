@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
+using Tzkt.Api.Services.Stats;
 using Tzkt.Api.Services.Sync;
 using Tzkt.Api.Swagger;
 using Tzkt.Api.Websocket;
@@ -59,9 +59,12 @@ namespace Tzkt.Api
             services.AddTransient<StatisticsRepository>();
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
-            services.AddTransient<HomeRepository>();
 
-
+            if (Configuration.GetHomeConfig().Enabled)
+            {
+                services.AddHomeCache();
+            }
+            
             services.AddStateListener();
 
             services.AddControllers()

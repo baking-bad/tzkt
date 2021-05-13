@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
-namespace Tzkt.Api.Models.Home
+namespace Tzkt.Api.Models
 {
-    public class HomeData
+    public class Stats
     {
         public DailyData DailyData { get; set; }
         
@@ -23,6 +23,6 @@ namespace Tzkt.Api.Models.Home
         public List<ChartPoint> TxsChart { get; set; }
 
         public MarketData MarketData { get; set; }
-        public List<ChartPoint<double>> MarketChart { get; set; }
+        public List<ChartPoint<Quote>> MarketChart { get; set; }
     }
 }

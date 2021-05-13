@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Stats;
 using Tzkt.Api.Websocket;
 
 namespace Tzkt.Api.Services.Sync
@@ -23,6 +24,7 @@ namespace Tzkt.Api.Services.Sync
         readonly ProtocolsCache Protocols;
         readonly QuotesCache Quotes;
         readonly TimeCache Times;
+        private readonly StatsService Stats;
         readonly IEnumerable<IHubProcessor> Processors;
         readonly ILogger Logger;
 
@@ -35,6 +37,7 @@ namespace Tzkt.Api.Services.Sync
             ProtocolsCache protocols,
             QuotesCache quotes,
             TimeCache times,
+            StatsService stats,
             IEnumerable<IHubProcessor> processors,
             IConfiguration config,
             ILogger<StateListener> logger)
@@ -46,6 +49,7 @@ namespace Tzkt.Api.Services.Sync
             Protocols = protocols;
             Quotes = quotes;
             Times = times;
+            Stats = stats;
             Processors = processors;
             Logger = logger;
         }
@@ -151,6 +155,10 @@ namespace Tzkt.Api.Services.Sync
                 #region send events
                 foreach (var processor in Processors)
                     _ = processor.OnStateChanged();
+                #endregion
+
+                #region update stats
+                await Stats.UpdateAsync();
                 #endregion
 
                 Logger.LogDebug("Notification processed");

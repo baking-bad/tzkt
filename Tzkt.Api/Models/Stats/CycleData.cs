@@ -1,6 +1,6 @@
 using System;
 
-namespace Tzkt.Api.Models.Home
+namespace Tzkt.Api.Models
 {
     public class CycleData
     {

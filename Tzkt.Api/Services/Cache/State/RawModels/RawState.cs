@@ -10,8 +10,6 @@ namespace Tzkt.Api.Services.Cache
         
         public int Cycle { get; set; }
 
-        public int Cycle { get; set; }
-
         public int Level { get; set; }
 
         public string Hash { get; set; }
