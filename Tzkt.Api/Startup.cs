@@ -12,6 +12,7 @@ using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
 using Tzkt.Api.Swagger;
+using Tzkt.Api.Utils;
 using Tzkt.Api.Websocket;
 using Tzkt.Api.Websocket.Hubs;
 using Tzkt.Api.Websocket.Processors;
@@ -76,6 +77,10 @@ namespace Tzkt.Api
                 {
                     options.InvalidModelStateResponseFactory = context => new BadRequest(context);
                 });
+            
+            services.AddAuthentication("TzktAuthScheme")
+                .AddScheme<TzktAuthenticationOptions, TzktAuthenticationHandler>("TzktAuthScheme", null);
+            services.AddAuthorization();
 
             services.AddOpenApiDocument();
 
@@ -128,6 +133,9 @@ namespace Tzkt.Api
             app.UseOpenApi();
 
             app.UseRouting();
+            
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
