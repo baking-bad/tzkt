@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Tzkt.Api.Services.Cache
+﻿namespace Tzkt.Api.Services.Cache
 {
     public class RawContract : RawAccount
     {
         public override string Type => AccountTypes.Contract;
 
         public int Kind { get; set; }
+        public int TypeHash { get; set; }
+        public int CodeHash { get; set; }
         public int? Tzips { get; set; }
 
         public int? CreatorId { get; set; }

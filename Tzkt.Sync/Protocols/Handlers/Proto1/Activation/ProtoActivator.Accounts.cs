@@ -97,6 +97,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Current = true
                 };
 
+                var typeSchema = script.ParameterSchema.Concat(script.StorageSchema);
+                var fullSchema = typeSchema.Concat(script.CodeSchema);
+                contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
+                contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
+
                 Db.Scripts.Add(script);
                 Cache.Schemas.Add(contract, script.Schema);
 

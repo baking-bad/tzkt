@@ -7,6 +7,8 @@ namespace Tzkt.Data.Models
     public class Contract : Account
     {
         public ContractKind Kind { get; set; }
+        public int TypeHash { get; set; }
+        public int CodeHash { get; set; }
         public Tzip? Tzips { get; set; }
 
         public bool? Spendable { get; set; }
@@ -57,6 +59,12 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.ManagerId);
+
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.TypeHash);
+
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.CodeHash);
             #endregion
         }
     }
