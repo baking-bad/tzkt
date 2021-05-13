@@ -1,14 +1,14 @@
 namespace Tzkt.Api.Models.Home
 {
-    public class HeaderData
+    public class DailyData
     {
         public long Volume { get; set; }
         public double VolumeDiff { get; set; }
-        public long TxsCount { get; set; }
+        public int Txs { get; set; }
         public double TxsDiff { get; set; }
-        public long ContractCalls { get; set; }
+        public int Calls { get; set; }
         public double CallsDiff { get; set; }
-        public long NewAccounts { get; set; }
-        public double NewAccountsDiff { get; set; }
+        public int Accounts { get; set; }
+        public double AccountsDiff { get; set; }
     }
 }

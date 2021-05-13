@@ -2,9 +2,11 @@ using System;
 
 namespace Tzkt.Api.Models.Home
 {
-    public class ChartPoint
+    public class ChartPoint : ChartPoint<long> { }
+
+    public class ChartPoint<T>
     {
-        public DateTime Month { get; set; }
-        public long Value { get; set; }
+        public DateTime Date { get; set; }
+        public T Value { get; set; }
     }
 }

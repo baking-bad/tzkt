@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
@@ -20,46 +19,46 @@ namespace Tzkt.Api.Controllers
             Home = home;
         }
 
-        public async Task<ActionResult<HomeData>> Get(Symbols quote = Symbols.None)
+        public async Task<HomeData> GetStats(Symbols quote = Symbols.None)
         {
             await Home.UpdateStats();
-            return Ok(HomeRepository.GetStatistic(quote));
+            return HomeRepository.Stats;
         }
 
         [HttpGet("blocks")]
-        public ActionResult<object> GetBlocks()
+        public object GetBlocks()
         {
-            return Ok(new SelectionResponse
+            return new SelectionResponse
             {
-                Cols = Home.BlockFields,
-                Rows = (object[][]) HomeRepository.GetTab(TabTypes.Blocks)
-            });
+                Cols = HomeRepository.BlockFields,
+                Rows = HomeRepository.BlocksTab
+            };
         }
 
         [HttpGet("accounts")]
-        public ActionResult<object> GetAccounts()
+        public object GetAccounts()
         {
-            return Ok(new SelectionResponse
+            return new SelectionResponse
             {
-                Cols = Home.AccountFields,
-                Rows = (object[][]) HomeRepository.GetTab(TabTypes.Accounts)
-            });
+                Cols = HomeRepository.AccountFields,
+                Rows = HomeRepository.AccountsTab
+            };
         }
 
         [HttpGet("bakers")]
-        public ActionResult<object> GetBakers()
+        public object GetBakers()
         {
-            return Ok(HomeRepository.GetTab(TabTypes.Bakers));
+            return HomeRepository.BakersTab;
         }
 
         [HttpGet("assets")]
-        public ActionResult<object> GetAssets()
+        public object GetAssets()
         {
-            return Ok(new SelectionResponse
+            return new SelectionResponse
             {
-                Cols = Home.AssetFields,
-                Rows = (object[][]) HomeRepository.GetTab(TabTypes.Assets)
-            });
+                Cols = HomeRepository.AssetFields,
+                Rows = HomeRepository.AssetsTab
+            };
         }
     }
 }

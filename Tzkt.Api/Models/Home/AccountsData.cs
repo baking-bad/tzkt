@@ -1,13 +1,11 @@
-using System.Collections.Generic;
-
 namespace Tzkt.Api.Models.Home
 {
     public class AccountsData
     {
-        public long TotalAccounts { get; set; }
-        public List<ChartPoint> Chart { get; set; }
-        public long FundedAccounts { get; set; }
-        public long ActiveAccounts { get; set; }
-        public long PublicAccounts { get; set; }
+        public int TotalAccounts { get; set; }
+
+        public int FundedAccounts { get; set; }
+        public int ActiveAccounts { get; set; }
+        public int PublicAccounts { get; set; }
     }
 }
