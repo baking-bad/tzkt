@@ -168,6 +168,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Current = true
                 };
 
+                var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema);
+                var fullSchema = typeSchema.Concat(newScript.CodeSchema);
+                contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
+                contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
+
                 migration.OldScript = script;
                 migration.OldStorage = storage;
                 migration.NewScript = newScript;
@@ -320,6 +325,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Db.Scripts.Remove(change.NewScript);
                 Db.Storages.Remove(change.NewStorage);
 
+                contract.TypeHash = change.OldScript.TypeHash;
+                contract.CodeHash = change.OldScript.CodeHash;
                 contract.MigrationsCount--;
             }
 

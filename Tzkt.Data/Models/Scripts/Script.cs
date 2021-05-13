@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
+using Netezos.Utils;
 
 namespace Tzkt.Data.Models
 {
@@ -16,6 +17,9 @@ namespace Tzkt.Data.Models
         public byte[] ParameterSchema { get; set; }
         public byte[] StorageSchema { get; set; }
         public byte[] CodeSchema { get; set; }
+
+        public int TypeHash { get; set; }
+        public int CodeHash { get; set; }
 
         #region schema
         [NotMapped]
@@ -43,6 +47,14 @@ namespace Tzkt.Data.Models
         };
 
         public static ContractScript ManagerTz { get; } = new ContractScript(Micheline.FromBytes(ManagerTzBytes));
+        #endregion
+
+        #region hash
+        public static int GetHash(byte[] bytes)
+        {
+            var hash = Blake2b.GetDigest(bytes, 32);
+            return (hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | (hash[3]);
+        }
         #endregion
     }
 

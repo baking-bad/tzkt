@@ -38,7 +38,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="delegate">Filters contracts by delegate. Allowed fields for `.eqx` mode: `manager`, `creator`.</param>
         /// <param name="lastActivity">Filters contracts by last activity level (where the contract was updated)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
+        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="includeStorage">Specifies whether to include contract storage value in response.</param>
@@ -98,25 +98,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, includeStorage));
+                return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, includeStorage));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values[0], includeStorage));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Values[0], includeStorage));
                 else
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Values, includeStorage));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Values, includeStorage));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields[0], includeStorage));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Fields[0], includeStorage));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                          Cols = select.Fields,
-                         Rows = await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, sort, offset, limit, select.Fields, includeStorage)
+                         Rows = await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Fields, includeStorage)
                     });
                 }
             }
@@ -148,6 +148,124 @@ namespace Tzkt.Api.Controllers
         public Task<Contract> GetByAddress([Address] string address)
         {
             return Accounts.GetContract(address);
+        }
+
+        /// <summary>
+        /// Get same contracts
+        /// </summary>
+        /// <remarks>
+        /// Returns contracts which have the same script as the specified one.
+        /// Note, contract scripts are compared by 32-bit hash, so in very rare cases there may be collisions.
+        /// </remarks>
+        /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="includeStorage">Specifies whether to include contract storage value in response.</param>
+        /// <returns></returns>
+        [HttpGet("{address}/same")]
+        public async Task<ActionResult<IEnumerable<Contract>>> GetSame(
+            [Address] string address,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            bool includeStorage = false)
+        {
+            #region validates
+            if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var rawAcc = await Accounts.GetRawAsync(address);
+            if (rawAcc is not Services.Cache.RawContract contract)
+                return Ok(Enumerable.Empty<Contract>());
+
+            var codeHash = new Int32Parameter { Eq = contract.CodeHash };
+
+            if (select == null)
+                return Ok(await Accounts.GetContracts(null, null, null, null, null, null, codeHash, sort, offset, limit, includeStorage));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Accounts.GetContracts(null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values[0], includeStorage));
+                else
+                    return Ok(await Accounts.GetContracts(null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values, includeStorage));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Accounts.GetContracts(null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields[0], includeStorage));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Accounts.GetContracts(null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields, includeStorage)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get similar contracts
+        /// </summary>
+        /// <remarks>
+        /// Returns contracts which have the same interface (parameter and storage types) as the specified one.
+        /// Note, contract parameter and storage types are compared by 32-bit hash, so in very rare cases there may be collisions.
+        /// </remarks>
+        /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="includeStorage">Specifies whether to include contract storage value in response.</param>
+        /// <returns></returns>
+        [HttpGet("{address}/similar")]
+        public async Task<ActionResult<IEnumerable<Contract>>> GetSimilar(
+            [Address] string address,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            bool includeStorage = false)
+        {
+            #region validates
+            if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var rawAcc = await Accounts.GetRawAsync(address);
+            if (rawAcc is not Services.Cache.RawContract contract)
+                return Ok(Enumerable.Empty<Contract>());
+
+            var typeHash = new Int32Parameter { Eq = contract.TypeHash };
+
+            if (select == null)
+                return Ok(await Accounts.GetContracts(null, null, null, null, null, typeHash, null, sort, offset, limit, includeStorage));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Accounts.GetContracts(null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values[0], includeStorage));
+                else
+                    return Ok(await Accounts.GetContracts(null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values, includeStorage));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Accounts.GetContracts(null, null, null, null, null, typeHash, null, sort, offset, limit, select.Fields[0], includeStorage));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Accounts.GetContracts(null, null, null, null, null, typeHash, null, sort, offset, limit, select.Fields, includeStorage)
+                    });
+                }
+            }
         }
 
         /// <summary>

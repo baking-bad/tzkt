@@ -1710,6 +1710,8 @@ namespace Tzkt.Api.Repositories
             AccountParameter manager,
             AccountParameter @delegate,
             Int32Parameter lastActivity,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1731,6 +1733,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
                 .Filter("LastLevel", lastActivity)
+                .Filter("TypeHash", typeHash)
+                .Filter("CodeHash", codeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -1817,6 +1821,8 @@ namespace Tzkt.Api.Repositories
             AccountParameter manager,
             AccountParameter @delegate,
             Int32Parameter lastActivity,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1868,6 +1874,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
                 .Filter("LastLevel", lastActivity)
+                .Filter("TypeHash", typeHash)
+                .Filter("CodeHash", codeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -2018,6 +2026,8 @@ namespace Tzkt.Api.Repositories
             AccountParameter manager,
             AccountParameter @delegate,
             Int32Parameter lastActivity,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -2066,6 +2076,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
                 .Filter("LastLevel", lastActivity)
+                .Filter("TypeHash", typeHash)
+                .Filter("CodeHash", codeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
