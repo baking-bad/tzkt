@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class OriginatedContract
     {
@@ -23,5 +17,17 @@ namespace Tzkt.Api.Models
         /// Public key hash of the contract
         /// </summary>
         public string Address { get; set; }
+
+        /// <summary>
+        /// 32-bit hash of the contract parameter and storage types.
+        /// This field can be used for searching similar contracts (which have the same interface).
+        /// </summary>
+        public int TypeHash { get; set; }
+
+        /// <summary>
+        /// 32-bit hash of the contract code.
+        /// This field can be used for searching same contracts (which have the same script).
+        /// </summary>
+        public int CodeHash { get; set; }
     }
 }

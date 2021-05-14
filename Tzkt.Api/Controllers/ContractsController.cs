@@ -37,6 +37,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="manager">Filters contracts by manager. Allowed fields for `.eqx` mode: `creator`, `delegate`.</param>
         /// <param name="delegate">Filters contracts by delegate. Allowed fields for `.eqx` mode: `manager`, `creator`.</param>
         /// <param name="lastActivity">Filters contracts by last activity level (where the contract was updated)</param>
+        /// <param name="typeHash">Filters contracts by 32-bit hash of contract parameter and storage types (helpful for searching similar contracts)</param>
+        /// <param name="codeHash">Filters contracts by 32-bit hash of contract code (helpful for searching same contracts)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -50,6 +52,8 @@ namespace Tzkt.Api.Controllers
             AccountParameter manager,
             AccountParameter @delegate,
             Int32Parameter lastActivity,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -98,25 +102,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, includeStorage));
+                return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, typeHash, codeHash, sort, offset, limit, includeStorage));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Values[0], includeStorage));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values[0], includeStorage));
                 else
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Values, includeStorage));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values, includeStorage));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Fields[0], includeStorage));
+                    return Ok(await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields[0], includeStorage));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                          Cols = select.Fields,
-                         Rows = await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, null, null, sort, offset, limit, select.Fields, includeStorage)
+                         Rows = await Accounts.GetContracts(kind, creator, manager, @delegate, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields, includeStorage)
                     });
                 }
             }
