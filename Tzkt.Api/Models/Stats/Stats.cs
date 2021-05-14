@@ -23,6 +23,6 @@ namespace Tzkt.Api.Models
         public List<ChartPoint> TxsChart { get; set; }
 
         public MarketData MarketData { get; set; }
-        public List<ChartPoint<Quote>> MarketChart { get; set; }
+        public List<ChartPoint<double>> MarketChart { get; set; }
     }
 }

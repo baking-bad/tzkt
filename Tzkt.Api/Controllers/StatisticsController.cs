@@ -226,7 +226,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("overall")]
         public Stats GetOverall(Symbols quote = Symbols.None)
         {
-            return StatsService.Stats;
+            return StatsService.GetCurrentStats(quote);
         }
         
         [OpenApiIgnore]

@@ -60,11 +60,9 @@ namespace Tzkt.Api
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
 
-            if (Configuration.GetStatsConfig().Enabled)
-            {
-                services.AddHomeCache();
-            }
-            
+
+            services.AddHomeCache();
+
             services.AddStateListener();
 
             services.AddControllers()
@@ -100,19 +98,19 @@ namespace Tzkt.Api
                 services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
 
                 services.AddSignalR(options =>
-                {
-                    options.EnableDetailedErrors = true;
-                    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-                })
-                .AddJsonProtocol(jsonOptions =>
-                {
-                    jsonOptions.PayloadSerializerOptions.MaxDepth = 1024;
-                    jsonOptions.PayloadSerializerOptions.IgnoreNullValues = true;
-                    jsonOptions.PayloadSerializerOptions.Converters.Add(new AccountConverter());
-                    jsonOptions.PayloadSerializerOptions.Converters.Add(new DateTimeConverter());
-                    jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationConverter());
-                    jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
-                });
+                    {
+                        options.EnableDetailedErrors = true;
+                        options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+                    })
+                    .AddJsonProtocol(jsonOptions =>
+                    {
+                        jsonOptions.PayloadSerializerOptions.MaxDepth = 1024;
+                        jsonOptions.PayloadSerializerOptions.IgnoreNullValues = true;
+                        jsonOptions.PayloadSerializerOptions.Converters.Add(new AccountConverter());
+                        jsonOptions.PayloadSerializerOptions.Converters.Add(new DateTimeConverter());
+                        jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationConverter());
+                        jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
+                    });
             }
             #endregion
         }

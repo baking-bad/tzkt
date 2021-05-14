@@ -24,9 +24,10 @@ namespace Tzkt.Api.Services.Sync
         readonly ProtocolsCache Protocols;
         readonly QuotesCache Quotes;
         readonly TimeCache Times;
-        private readonly StatsService Stats;
+        readonly StatsService Stats;
         readonly IEnumerable<IHubProcessor> Processors;
         readonly ILogger Logger;
+        readonly IConfiguration Configuration;
 
         Task Notifying = Task.CompletedTask;
         readonly List<(int Level, string Hash)> Changes = new List<(int, string)>(4);
@@ -43,6 +44,7 @@ namespace Tzkt.Api.Services.Sync
             ILogger<StateListener> logger)
         {
             ConnectionString = config.GetConnectionString("DefaultConnection");
+            Configuration = config;
 
             State = state;
             Accounts = accounts;
@@ -158,7 +160,12 @@ namespace Tzkt.Api.Services.Sync
                 #endregion
 
                 #region update stats
-                await Stats.UpdateAsync();
+
+                if (Configuration.GetStatsConfig().Enabled)
+                {
+                    await Stats.UpdateAsync();
+                }
+
                 #endregion
 
                 Logger.LogDebug("Notification processed");
