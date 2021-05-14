@@ -8,7 +8,7 @@ namespace Tzkt.Api.Swagger
 {
     public static class Swagger
     {
-        const string Version = "v1.5";
+        const string Version = "v1.5.1";
         const string Path = "/v1/swagger.json";
 
         public static void AddOpenApiDocument(this IServiceCollection services)
