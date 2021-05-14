@@ -88,7 +88,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.5.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.5.1.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -260,11 +260,11 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 
 In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Here are some presets for testnets:
  - Edonet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/edo2_tzkt_v1.5.backup
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/edo2_tzkt_v1.5.1.backup
    - RPC node: https://rpc.tzkt.io/edo2net/
    - Chain id: NetXSgo1ZT2DRUG
  - Florencenet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.backup
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.1.backup
    - RPC node: https://rpc.tzkt.io/florencenobanet/
    - Chain id: NetXxkAx4woPLyu
 
@@ -286,7 +286,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.backup" -O /tmp/flor_tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.1.backup" -O /tmp/flor_tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
