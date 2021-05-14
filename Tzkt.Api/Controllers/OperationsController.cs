@@ -37,7 +37,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{hash}")]
         public Task<IEnumerable<Operation>> GetByHash(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
@@ -57,7 +57,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{hash}/{counter}")]
         public Task<IEnumerable<Operation>> GetByHashCounter(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -79,7 +79,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{hash}/{counter}/{nonce}")]
         public Task<IEnumerable<Operation>> GetByHashCounterNonce(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -168,7 +168,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("endorsements/{hash}")]
-        public Task<IEnumerable<EndorsementOperation>> GetEndorsementByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<EndorsementOperation>> GetEndorsementByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetEndorsements(hash, quote);
         }
@@ -279,7 +279,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("ballots/{hash}")]
-        public Task<IEnumerable<BallotOperation>> GetBallotByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<BallotOperation>> GetBallotByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetBallots(hash, quote);
         }
@@ -392,7 +392,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("proposals/{hash}")]
-        public Task<IEnumerable<ProposalOperation>> GetProposalByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<ProposalOperation>> GetProposalByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetProposals(hash, quote);
         }
@@ -497,7 +497,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("activations/{hash}")]
-        public Task<IEnumerable<ActivationOperation>> GetActivationByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<ActivationOperation>> GetActivationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetActivations(hash, quote);
         }
@@ -627,7 +627,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_baking/{hash}")]
-        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakingByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetDoubleBakings(hash, quote);
         }
@@ -757,7 +757,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_endorsing/{hash}")]
-        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsingByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetDoubleEndorsings(hash, quote);
         }
@@ -887,7 +887,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations/{hash}")]
-        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelationByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetNonceRevelations(hash, quote);
         }
@@ -1047,7 +1047,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegations/{hash}")]
-        public Task<IEnumerable<DelegationOperation>> GetDelegationByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<DelegationOperation>> GetDelegationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetDelegations(hash, quote);
         }
@@ -1229,7 +1229,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("originations/{hash}")]
         public Task<IEnumerable<OriginationOperation>> GetOriginationByHash(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             MichelineFormat micheline,
             Symbols quote = Symbols.None)
         {
@@ -1392,7 +1392,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions/{hash}")]
         public Task<IEnumerable<TransactionOperation>> GetTransactionByHash(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
@@ -1412,7 +1412,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}")]
         public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -1434,7 +1434,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}/{nonce}")]
         public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounterNonce(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -1547,7 +1547,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("reveals/{hash}")]
-        public Task<IEnumerable<RevealOperation>> GetRevealByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<RevealOperation>> GetRevealByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetReveals(hash, quote);
         }

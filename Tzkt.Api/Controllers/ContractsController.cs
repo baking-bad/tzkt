@@ -149,7 +149,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Contract address (starting with KT)</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Contract> GetByAddress([Address] string address)
+        public Task<Contract> GetByAddress([Required][Address] string address)
         {
             return Accounts.GetContract(address);
         }
@@ -170,7 +170,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/same")]
         public async Task<ActionResult<IEnumerable<Contract>>> GetSame(
-            [Address] string address,
+            [Required][Address] string address,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -229,7 +229,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/similar")]
         public async Task<ActionResult<IEnumerable<Contract>>> GetSimilar(
-            [Address] string address,
+            [Required][Address] string address,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -282,7 +282,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="format">Code format (`0` - micheline, `1` - michelson, `2` - bytes (base64))</param>
         /// <returns></returns>
         [HttpGet("{address}/code")]
-        public async Task<object> GetCode([Address] string address, [Range(0, 2)] int format = 0)
+        public async Task<object> GetCode([Required][Address] string address, [Range(0, 2)] int format = 0)
         {
             if (format == 0)
                 return await Accounts.GetMichelineCode(address);
@@ -300,7 +300,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Contract address</param>
         /// <returns></returns>
         [HttpGet("{address}/interface")]
-        public Task<ContractInterface> GetInterface([Address] string address)
+        public Task<ContractInterface> GetInterface([Required][Address] string address)
         {
             return Accounts.GetContractInterface(address);
         }
@@ -321,7 +321,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="michelson">Include parameters schema in michelson format</param>
         /// <returns></returns>
         [HttpGet("{address}/entrypoints")]
-        public Task<IEnumerable<Entrypoint>> GetEntrypoints([Address] string address, bool all = false, bool json = true, bool micheline = false, bool michelson = false)
+        public Task<IEnumerable<Entrypoint>> GetEntrypoints([Required][Address] string address, bool all = false, bool json = true, bool micheline = false, bool michelson = false)
         {
             return Accounts.GetEntrypoints(address, all, json, micheline, michelson);
         }
@@ -339,7 +339,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="michelson">Include parameters schema in michelson format</param>
         /// <returns></returns>
         [HttpGet("{address}/entrypoints/{name}")]
-        public Task<Entrypoint> GetEntrypointByName([Address] string address, string name, bool json = true, bool micheline = false, bool michelson = false)
+        public Task<Entrypoint> GetEntrypointByName([Required][Address] string address, [Required] string name, bool json = true, bool micheline = false, bool michelson = false)
         {
             return Accounts.GetEntrypoint(address, name, json, micheline, michelson);
         }
@@ -355,7 +355,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="value">Json parameters</param>
         /// <returns></returns>
         [HttpGet("{address}/entrypoints/{name}/build")]
-        public async Task<ActionResult> BuildEntrypointParameters([Address] string address, string name, string value)
+        public async Task<ActionResult> BuildEntrypointParameters([Required][Address] string address, [Required] string name, string value)
         {
             try
             {
@@ -379,7 +379,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="value">Json parameters</param>
         /// <returns></returns>
         [HttpPost("{address}/entrypoints/{name}/build")]
-        public async Task<ActionResult> BuildEntrypointParameters([Address] string address, string name, [FromBody] object value)
+        public async Task<ActionResult> BuildEntrypointParameters([Required][Address] string address, [Required] string name, [FromBody] object value)
         {
             try
             {
@@ -402,7 +402,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="path">Path in the JSON value (point-separated list of field names, e.g. `path=settings.refund_time` to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage")]
-        public async Task<ActionResult> GetStorage([Address] string address, [Min(0)] int level = 0, string path = null)
+        public async Task<ActionResult> GetStorage([Required][Address] string address, [Min(0)] int level = 0, string path = null)
         {
             #region safe path
             JsonPath[] jsonPath = null;
@@ -433,7 +433,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage schema should be taken. If `0` or not specified, the current schema will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/schema")]
-        public async Task<ActionResult> GetStorageSchema([Address] string address, [Min(0)] int level = 0)
+        public async Task<ActionResult> GetStorageSchema([Required][Address] string address, [Min(0)] int level = 0)
         {
             if (level == 0)
                 return this.Json(await Accounts.GetStorageSchema(address));
@@ -451,7 +451,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/history")]
-        public Task<IEnumerable<StorageRecord>> GetStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public Task<IEnumerable<StorageRecord>> GetStorageHistory([Required][Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetStorageHistory(address, lastId, limit);
         }
@@ -466,7 +466,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage value should be taken. If `0` or not specified, the current value will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw")]
-        public Task<IMicheline> GetRawStorage([Address] string address, [Min(0)] int level = 0)
+        public Task<IMicheline> GetRawStorage([Required][Address] string address, [Min(0)] int level = 0)
         {
             if (level == 0)
                 return Accounts.GetRawStorageValue(address);
@@ -483,7 +483,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage schema should be taken. If `0` or not specified, the current schema will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/schema")]
-        public Task<IMicheline> GetRawStorageSchema([Address] string address, [Min(0)] int level = 0)
+        public Task<IMicheline> GetRawStorageSchema([Required][Address] string address, [Min(0)] int level = 0)
         {
             if (level == 0)
                 return Accounts.GetRawStorageSchema(address);
@@ -501,7 +501,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/history")]
-        public Task<IEnumerable<StorageRecord>> GetRawStorageHistory([Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public Task<IEnumerable<StorageRecord>> GetRawStorageHistory([Required][Address] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
             return Accounts.GetRawStorageHistory(address, lastId, limit);
         }
@@ -523,7 +523,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/bigmaps")]
         public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
-            [Address] string address,
+            [Required][Address] string address,
             BigMapTagsParameter tags,
             SelectParameter select,
             SortParameter sort,
@@ -581,8 +581,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}")]
         public async Task<ActionResult<BigMap>> GetBigMapByName(
-            [Address] string address,
-            string name,
+            [Required][Address] string address,
+            [Required] string name,
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);
@@ -616,8 +616,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/keys")]
         public async Task<ActionResult<IEnumerable<BigMapKey>>> GetBigMapByNameKeys(
-            [Address] string address,
-            string name,
+            [Required][Address] string address,
+            [Required] string name,
             bool? active,
             JsonParameter key,
             JsonParameter value,
@@ -682,9 +682,9 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/keys/{key}")]
         public async Task<ActionResult<BigMapKey>> GetKey(
-            [Address] string address,
-            string name,
-            string key,
+            [Required][Address] string address,
+            [Required] string name,
+            [Required] string key,
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);
@@ -732,9 +732,9 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/keys/{key}/updates")]
         public async Task<ActionResult<IEnumerable<BigMapKeyUpdate>>> GetKeyUpdates(
-            [Address] string address,
-            string name,
-            string key,
+            [Required][Address] string address,
+            [Required] string name,
+            [Required] string key,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
@@ -795,8 +795,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}")]
         public async Task<ActionResult<IEnumerable<BigMapKeyHistorical>>> GetHistoricalKeys(
-            [Address] string address,
-            string name,
+            [Required][Address] string address,
+            [Required] string name,
             [Min(0)] int level,
             bool? active,
             JsonParameter key,
@@ -862,10 +862,10 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}/{key}")]
         public async Task<ActionResult<BigMapKeyHistorical>> GetKey(
-            [Address] string address,
-            string name,
+            [Required][Address] string address,
+            [Required] string name,
             [Min(0)] int level,
-            string key,
+            [Required] string key,
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);

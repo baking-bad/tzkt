@@ -96,7 +96,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Protocol hash</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<Protocol> GetByHash([ProtocolHash] string hash)
+        public Task<Protocol> GetByHash([Required][ProtocolHash] string hash)
         {
             return Protocols.Get(hash);
         }

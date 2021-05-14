@@ -97,7 +97,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Proposal hash</param>
         /// <returns></returns>
         [HttpGet("proposals/{hash}")]
-        public Task<Proposal> GetProposalByHash([ProtocolHash] string hash)
+        public Task<Proposal> GetProposalByHash([Required][ProtocolHash] string hash)
         {
             return Voting.GetProposal(hash);
         }
@@ -217,7 +217,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Voter address</param>
         /// <returns></returns>
         [HttpGet("periods/{index:int}/voters/{address}")]
-        public Task<VoterSnapshot> GetPeriodVoter([Min(0)] int index, [Address] string address)
+        public Task<VoterSnapshot> GetPeriodVoter([Min(0)] int index, [Required][Address] string address)
         {
             return Voting.GetVoter(index, address);
         }
@@ -257,7 +257,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Voter address</param>
         /// <returns></returns>
         [HttpGet("periods/current/voters/{address}")]
-        public Task<VoterSnapshot> GetPeriodVoter([Address] string address)
+        public Task<VoterSnapshot> GetPeriodVoter([Required][Address] string address)
         {
             return Voting.GetVoter(State.Current.VotingPeriod, address);
         }
