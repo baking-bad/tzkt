@@ -65,7 +65,6 @@ namespace Tzkt.Api.Services.Stats
         private readonly AccountRepository AccountsRepo;
         private readonly BakingRightsRepository RightsRepo;
         private readonly BlockRepository BlocksRepo;
-        private readonly OperationRepository OperationsRepo;
         private readonly QuotesRepository QuotesRepo;
         private readonly StatsConfig Config;
         private readonly VotingRepository VotingRepo;
@@ -74,10 +73,10 @@ namespace Tzkt.Api.Services.Stats
         private readonly StateCache State;
         private readonly TimeCache Times;
         
-        int LastUpdate;
+        private static int LastUpdate;
 
         public StatsService(AccountMetadataService metadata, BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
-            VotingRepository voting, AccountRepository accounts, OperationRepository operations, ProtocolsCache protocols,
+            VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
             StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<StatsService> logger) : base(config)
         {
             logger.LogDebug("Initializing accounts cache...");
@@ -88,7 +87,6 @@ namespace Tzkt.Api.Services.Stats
             BlocksRepo = blocks;
             VotingRepo = voting;
             AccountsRepo = accounts;
-            OperationsRepo = operations;
             Protocols = protocols;
             State = state;
             QuotesRepo = quotes;
@@ -97,6 +95,49 @@ namespace Tzkt.Api.Services.Stats
         
         public static Models.Stats GetCurrentStats(Symbols quote)
         {
+            if (LastUpdate <= 0)
+                return null;
+            
+            var marketData = quote switch
+            {
+                Symbols.Btc => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Btc
+                }).ToList(),
+                Symbols.Cny => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Cny
+                }).ToList(),
+                Symbols.Eth => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Eth
+                }).ToList(),
+                Symbols.Eur => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Eur
+                }).ToList(),
+                Symbols.Usd => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Usd
+                }).ToList(),
+                Symbols.Jpy => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Jpy
+                }).ToList(),
+                Symbols.Krw => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Krw
+                }).ToList(),
+                Symbols.None => null,
+                _ => throw new ArgumentOutOfRangeException(quote.ToString())
+            };
             return new Models.Stats
             {
                 DailyData = DailyData,
@@ -111,15 +152,7 @@ namespace Tzkt.Api.Services.Stats
                 TxsData = TxsData,
                 TxsChart = TxsChart,
                 MarketData = MarketData,
-                //TODO Optimize
-                MarketChart = MarketChart.Select(x => new ChartPoint<double>
-                {
-                    Date = x.Timestamp,
-                    Value = quote switch
-                    {
-                        Symbols.Usd => x.Usd
-                    }
-                }).ToList()
+                MarketChart = marketData
             };
         }
 
@@ -236,19 +269,30 @@ namespace Tzkt.Api.Services.Stats
 
             var txs = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
-            var prevTxs = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
-
+            //TODO To Scalar Execution
             var calls = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
-            var prevCalls = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
-
             var accounts = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT COUNT(*)::integer AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {currPeriod}");
+
+            if (prevPeriod <= 0)
+            {
+                return new DailyData
+                {
+                    Volume = txs.volume,
+                    Txs = txs.count,
+                    Calls = calls.count,
+                    Accounts = accounts.count,
+                };
+            }
+            
+            var prevTxs = await db.QueryFirstOrDefaultAsync(
+                $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
+            var prevCalls = await db.QueryFirstOrDefaultAsync(
+                $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
             var prevAccounts = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT COUNT(*)::integer AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {prevPeriod} AND ""FirstLevel"" < {currPeriod}");
-
+            
             return new DailyData
             {
                 Volume = txs.volume,
@@ -282,7 +326,7 @@ namespace Tzkt.Api.Services.Stats
 
         private async Task<TxsData> GetTxsData(IDbConnection db)
         {
-            var period = 43_200; //month
+            const int period = 30 * 24 * 60 * 60; //month
             var currPeriod = State.Current.Level - period;
             var prevPeriod = currPeriod - period;
 
@@ -298,6 +342,21 @@ namespace Tzkt.Api.Services.Stats
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
+            
+            var txs = await db.QueryFirstOrDefaultAsync(
+                $@"SELECT COUNT(*)::integer AS count, SUM(""Amount"")::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
+
+            if (prevPeriod <= 0)
+            {
+                return new TxsData
+                {
+                    Burned = fees.burned,
+                    Fees = fees.paid,
+                    Txs = txs.count,
+                    Volume = txs.volume,
+                };
+            }
+            
             var prevFees = await db.QueryFirstOrDefaultAsync($@"
                 SELECT SUM(fee)::bigint AS paid, SUM(burn)::bigint AS burned FROM
                 (
@@ -309,12 +368,10 @@ namespace Tzkt.Api.Services.Stats
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
-
-            var txs = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count, SUM(""Amount"")::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
+            
             var prevTxs = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT COUNT(*)::integer AS count, SUM(""Amount"")::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
-
+            
             return new TxsData
             {
                 Burned = fees.burned,
@@ -351,17 +408,40 @@ namespace Tzkt.Api.Services.Stats
 
         private async Task<ContractsData> GetContractsData(IDbConnection db)
         {
-            var period = 43_200; //month
+            const int period = 30 * 24 * 60 * 60; //month
             var currPeriod = State.Current.Level - period;
             var prevPeriod = currPeriod - period;
 
-            var fees = await db.QueryFirstOrDefaultAsync($@"
-                SELECT SUM(burn)::bigint AS burned FROM
+            var fees = await db.ExecuteScalarAsync<long>($@"
+                SELECT SUM(burn)::bigint FROM
                 (
                     SELECT SUM(""StorageFee"")::bigint AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""StorageFee"")::bigint AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS result");
+
+            var calls = await db.ExecuteScalarAsync<int>(
+                $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
+
+            var transfers = await db.ExecuteScalarAsync<int>(
+                $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" = 'transfer' AND ""Level"" >= {currPeriod}");
+
+            var contractsCount = await AccountsRepo.GetContractsCount(new ContractKindParameter
+            {
+                In = new List<int> { 1, 2 },
+            });
+
+            if (prevPeriod <= 0)
+            {
+                return new ContractsData
+                {
+                    TotalContracts = contractsCount,
+                    Calls = calls,
+                    Burned = fees,
+                    Transfers = transfers,
+                };
+            }
+            
             var prevFees = await db.QueryFirstOrDefaultAsync($@"
                 SELECT SUM(burn)::bigint AS burned FROM
                 (
@@ -369,37 +449,28 @@ namespace Tzkt.Api.Services.Stats
                     UNION ALL
                     SELECT SUM(""StorageFee"")::bigint AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS result");
-
-            var calls = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
-            var prevCalls = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
-
-            var transfers = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" = 'transfer' AND ""Level"" >= {currPeriod}");
-            var prevTransfers = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" = 'transfer' AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
-
-            var contractsCount = await AccountsRepo.GetContractsCount(new ContractKindParameter
-            {
-                In = new List<int> { 1, 2 },
-            });
+            
+            var prevCalls = await db.ExecuteScalarAsync<int>(
+                $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
+            
+            var prevTransfers = await db.ExecuteScalarAsync<int>(
+                $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" = 'transfer' AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
 
             return new ContractsData
             {
                 TotalContracts = contractsCount,
-                Calls = calls.count,
-                CallsDiff = Diff(calls.count, prevCalls.count),
-                Burned = fees.burned,
-                BurnedDiff = Diff(fees.burned, prevFees.burned),
-                Transfers = transfers.count,
-                TransfersDiff = Diff(transfers.count, prevTransfers.count)
+                Calls = calls,
+                CallsDiff = Diff(calls, prevCalls),
+                Burned = fees,
+                BurnedDiff = Diff(fees, prevFees.burned),
+                Transfers = transfers,
+                TransfersDiff = Diff(transfers, prevTransfers)
             };
         }
 
         private async Task<AccountsData> GetAccountsData(IDbConnection db)
         {
-            var period = 43_200; //month
+            const int period = 30 * 24 * 60 * 60; //month
             var currPeriod = State.Current.Level - period;
 
             return new AccountsData
@@ -414,7 +485,7 @@ namespace Tzkt.Api.Services.Stats
 
         private MarketData GetMarketData(long totalSupply, long circulatingSupply)
         {
-            return new MarketData
+            return new()
             {
                 TotalSupply = totalSupply,
                 CirculatingSupply = circulatingSupply,
@@ -466,19 +537,20 @@ namespace Tzkt.Api.Services.Stats
         {
             var currentTime = State.Current.Timestamp;
             var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
-
+            var points = GetPointsNumber(currentMonth);
+            
             if (ContractsChart == null)
             {
-                var result = new List<ChartPoint>(12);
+                var result = new List<ChartPoint>(points);
                 var totalNumber = await GetCallsCountForPeriod(db, DateTime.MinValue, currentMonth.AddMonths(-10));
 
                 result.Add(new ChartPoint
                 {
-                    Date = currentMonth.AddMonths(-11),
+                    Date = currentMonth.AddMonths(-(points - 1)),
                     Value = totalNumber
                 });
 
-                for (var i = 10; i >= 0; i--)
+                for (var i = points - 2; i >= 0; i--)
                 {
                     var start = currentMonth.AddMonths(-i);
 
@@ -494,7 +566,7 @@ namespace Tzkt.Api.Services.Stats
             }
             else if (ContractsChart[^1].Date < currentMonth)
             {
-                ContractsChart[^1].Value = ContractsChart[^2].Value + await GetCallsCountForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
+                ContractsChart[^1].Value = (ContractsChart.Count < 2 ? 0 : ContractsChart[^2].Value) + await GetCallsCountForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
                 ContractsChart.RemoveAt(0);
                 ContractsChart.Add(new ChartPoint
                 {
@@ -504,7 +576,7 @@ namespace Tzkt.Api.Services.Stats
             }
             else
             {
-                ContractsChart[^1].Value = ContractsChart[^2].Value + await GetCallsCountForPeriod(db, currentMonth, currentMonth.AddMonths(1));
+                ContractsChart[^1].Value = (ContractsChart.Count < 2 ? 0 : ContractsChart[^2].Value) + await GetCallsCountForPeriod(db, currentMonth, currentMonth.AddMonths(1));
             }
         }
 
@@ -512,11 +584,12 @@ namespace Tzkt.Api.Services.Stats
         {
             var currentTime = State.Current.Timestamp;
             var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
-
+            var points = GetPointsNumber(currentMonth);
+            
             if (StakingChart == null)
             {
-                var result = new List<ChartPoint>(12);
-                for (var i = 11; i > 0; i--)
+                var result = new List<ChartPoint>(points);
+                for (var i = points - 1; i > 0; i--)
                 {
                     var start = currentMonth.AddMonths(-i);
                     result.Add(new ChartPoint
@@ -529,7 +602,7 @@ namespace Tzkt.Api.Services.Stats
                 result.Add(new ChartPoint
                 {
                     Date = currentMonth,
-                    Value = StakingData.TotalStaking
+                    Value = StakingData?.TotalStaking ?? 0
                 });
 
                 StakingChart = result;
@@ -541,12 +614,12 @@ namespace Tzkt.Api.Services.Stats
                 StakingChart.Add(new ChartPoint
                 {
                     Date = currentMonth,
-                    Value = StakingData.TotalStaking
+                    Value = StakingData?.TotalStaking ?? 0
                 });
             }
             else
             {
-                StakingChart[^1].Value = StakingData.TotalStaking;
+                StakingChart[^1].Value = StakingData?.TotalStaking ?? 0;
             }
         }
 
@@ -554,10 +627,11 @@ namespace Tzkt.Api.Services.Stats
         {
             var currentTime = State.Current.Timestamp;
             var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
+            var points = GetPointsNumber(currentMonth);
 
             if (AccountsChart == null)
             {
-                var result = new List<ChartPoint>(12);
+                var result = new List<ChartPoint>(points);
                 long totalNumber = State.Current.AccountsCount;
                 
                 result.Add(new ChartPoint
@@ -566,7 +640,7 @@ namespace Tzkt.Api.Services.Stats
                     Value = totalNumber
                 });
                 
-                for (var i = 1; i < 12; i++)
+                for (var i = 1; i < points; i++)
                 {
                     var start = currentMonth.AddMonths(-i);
 
@@ -582,7 +656,7 @@ namespace Tzkt.Api.Services.Stats
             }
             else if (AccountsChart[^1].Date < currentMonth)
             {
-                AccountsChart[^1].Value = AccountsChart[^2].Value + await GetTotalAccountsForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
+                AccountsChart[^1].Value = (AccountsChart.Count < 2 ? 0 : AccountsChart[^2].Value) + await GetTotalAccountsForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
                 AccountsChart.RemoveAt(0);
                 AccountsChart.Add(new ChartPoint
                 {
@@ -596,15 +670,23 @@ namespace Tzkt.Api.Services.Stats
             }
         }
 
+        private int GetPointsNumber(DateTime currentMonth)
+        {
+            var genesisDate = Times[0];
+            var monthsDiff = (currentMonth.Year - genesisDate.Year) * 12 + currentMonth.Month - genesisDate.Month + 1;
+            return monthsDiff > 12 ? 12 : monthsDiff ;
+        }
+
         private async Task UpdateTxChart(IDbConnection db)
         {
             var currentTime = State.Current.Timestamp;
             var currentMonth = new DateTime(currentTime.Year, currentTime.Month, 1, 0, 0, 0, 0, DateTimeKind.Unspecified);
+            var points = GetPointsNumber(currentMonth);
 
             //Get data for a year if there's no data
             if (TxsChart == null)
             {
-                var result = new List<ChartPoint>(12);
+                var result = new List<ChartPoint>(points);
                 long totalNumber = State.Current.TransactionOpsCount;
 
                 result.Add(new ChartPoint
@@ -613,7 +695,7 @@ namespace Tzkt.Api.Services.Stats
                     Value = totalNumber
                 });
 
-                for (var i = 1; i < 12; i++)
+                for (var i = 1; i < points; i++)
                 {
                     var start = currentMonth.AddMonths(-i);
 
@@ -629,7 +711,7 @@ namespace Tzkt.Api.Services.Stats
             }
             else if (TxsChart[^1].Date < currentMonth)
             {
-                TxsChart[^1].Value = TxsChart[^2].Value + await GetTxCountForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
+                TxsChart[^1].Value = (TxsChart.Count < 2 ? 0 : TxsChart[^2].Value) + await GetTxCountForPeriod(db, currentMonth.AddMonths(-1), currentMonth);
                 TxsChart.RemoveAt(0);
                 TxsChart.Add(new ChartPoint
                 {
