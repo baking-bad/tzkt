@@ -79,7 +79,7 @@ namespace Tzkt.Api.Services.Stats
             VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
             StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<StatsService> logger) : base(config)
         {
-            logger.LogDebug("Initializing accounts cache...");
+            logger.LogDebug("Initializing stats service...");
 
             Metadata = metadata;
             RightsRepo = rights;
@@ -208,8 +208,8 @@ namespace Tzkt.Api.Services.Stats
                 new SortParameter { Desc = "level" },
                 null, 5, BlockFields);
 
-            var blocks = await BlocksRepo.Get(null, null, null, null, new SortParameter { Desc = "level" }, null, 10, BlockFields,
-                Symbols.None);
+            var blocks = await BlocksRepo.Get(null, null, null, null, 
+                new SortParameter { Desc = "level" }, null, 10, BlockFields, Symbols.None);
 
             return upcoming.Concat(blocks).ToArray();
         }
@@ -228,8 +228,10 @@ namespace Tzkt.Api.Services.Stats
 
         private async Task<object[][]> GetAssets()
         {
-            return (await AccountsRepo.Get(new AccountTypeParameter { Eq = 2 }, new ContractKindParameter { Eq = 2 }, null, null, null, null,
-                new SortParameter { Desc = "numTransactions" }, null, 100, AssetFields))
+            return (await AccountsRepo.Get(
+                    new AccountTypeParameter { Eq = 2 }, new ContractKindParameter { Eq = 2 }, 
+                    null, null, null, null,
+                    new SortParameter { Desc = "numTransactions" }, null, 100, AssetFields))
                 .OrderBy(x => (string)x[0] == null)
                 .ThenByDescending(x => (int)x[6])
                 .Take(10)
@@ -270,10 +272,10 @@ namespace Tzkt.Api.Services.Stats
             var txs = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
             //TODO To Scalar Execution
-            var calls = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
-            var accounts = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {currPeriod}");
+            var calls = await db.ExecuteScalarAsync<int>(
+                $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
+            var accounts = await db.ExecuteScalarAsync<int>(
+                $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""FirstLevel"" >= {currPeriod}");
 
             if (prevPeriod <= 0)
             {
@@ -281,16 +283,16 @@ namespace Tzkt.Api.Services.Stats
                 {
                     Volume = txs.volume,
                     Txs = txs.count,
-                    Calls = calls.count,
-                    Accounts = accounts.count,
+                    Calls = calls,
+                    Accounts = accounts,
                 };
             }
             
             var prevTxs = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
-            var prevCalls = await db.QueryFirstOrDefaultAsync(
+            var prevCalls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
-            var prevAccounts = await db.QueryFirstOrDefaultAsync(
+            var prevAccounts = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer AS count FROM ""Accounts"" WHERE ""FirstLevel"" >= {prevPeriod} AND ""FirstLevel"" < {currPeriod}");
             
             return new DailyData
@@ -299,10 +301,10 @@ namespace Tzkt.Api.Services.Stats
                 VolumeDiff = Diff(txs.volume, prevTxs.volume),
                 Txs = txs.count,
                 TxsDiff = Diff(txs.count, prevTxs.count),
-                Calls = calls.count,
-                CallsDiff = Diff(calls.count, prevCalls.count),
-                Accounts = accounts.count,
-                AccountsDiff = Diff(accounts.count, prevAccounts.count)
+                Calls = calls,
+                CallsDiff = Diff(calls, prevCalls),
+                Accounts = accounts,
+                AccountsDiff = Diff(accounts, prevAccounts)
             };
         }
 
@@ -326,7 +328,7 @@ namespace Tzkt.Api.Services.Stats
 
         private async Task<TxsData> GetTxsData(IDbConnection db)
         {
-            const int period = 30 * 24 * 60 * 60; //month
+            var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
             var currPeriod = State.Current.Level - period;
             var prevPeriod = currPeriod - period;
 
@@ -408,7 +410,7 @@ namespace Tzkt.Api.Services.Stats
 
         private async Task<ContractsData> GetContractsData(IDbConnection db)
         {
-            const int period = 30 * 24 * 60 * 60; //month
+            var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
             var currPeriod = State.Current.Level - period;
             var prevPeriod = currPeriod - period;
 
@@ -442,7 +444,7 @@ namespace Tzkt.Api.Services.Stats
                 };
             }
             
-            var prevFees = await db.QueryFirstOrDefaultAsync($@"
+            var prevFees = await db.ExecuteScalarAsync<long>($@"
                 SELECT SUM(burn)::bigint AS burned FROM
                 (
                     SELECT SUM(""StorageFee"")::bigint AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
@@ -462,7 +464,7 @@ namespace Tzkt.Api.Services.Stats
                 Calls = calls,
                 CallsDiff = Diff(calls, prevCalls),
                 Burned = fees,
-                BurnedDiff = Diff(fees, prevFees.burned),
+                BurnedDiff = Diff(fees, prevFees),
                 Transfers = transfers,
                 TransfersDiff = Diff(transfers, prevTransfers)
             };
@@ -470,15 +472,15 @@ namespace Tzkt.Api.Services.Stats
 
         private async Task<AccountsData> GetAccountsData(IDbConnection db)
         {
-            const int period = 30 * 24 * 60 * 60; //month
+            var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
             var currPeriod = State.Current.Level - period;
 
             return new AccountsData
             {
                 TotalAccounts = State.Current.AccountsCount,
                 FundedAccounts = await AccountsRepo.GetCount(null, null, new Int64Parameter { Ge = 1_000_000 }, null),
-                ActiveAccounts = (int)(await db.QueryFirstOrDefaultAsync(
-                    $@"SELECT COUNT(*)::integer AS count FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}")).count,
+                ActiveAccounts = await db.ExecuteScalarAsync<int>(
+                    $@"SELECT COUNT(*)::integer AS count FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}"),
                 PublicAccounts = Metadata.Aliases.Count
             };
         }
@@ -502,7 +504,7 @@ namespace Tzkt.Api.Services.Stats
                 new SortParameter { Desc = "upvotes" },
                 null, 10);
             var proposal = proposals.FirstOrDefault();
-
+//TODO List of proposals for the proposal period
             var result = new GovernanceData
             {
                 Proposal = proposal?.Hash,
@@ -732,7 +734,6 @@ namespace Tzkt.Api.Services.Stats
             var levels = Enumerable.Range(0, 60)
                 .Select(offset =>  Times.FindLevel(start.AddHours(offset * 12), SearchMode.ExactOrHigher))
                 .ToList();
-            //TODO IN WHERE Level < QuotesLevel
             MarketChart = (await db.QueryAsync<Quote>($@"
                 SELECT * FROM ""Quotes"" WHERE ""Level"" IN ({string.Join(", ", levels)})
             ")).ToList();
