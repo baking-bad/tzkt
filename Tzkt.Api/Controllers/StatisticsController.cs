@@ -255,7 +255,11 @@ namespace Tzkt.Api.Controllers
         [HttpGet("overall/bakers")]
         public object GetBakers()
         {
-            return StatsService.BakersTab;
+            return new SelectionResponse
+            {
+                Cols = StatsService.BakerFields,
+                Rows = StatsService.BakersTab
+            };
         }
 
         [OpenApiIgnore]

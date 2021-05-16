@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Tzkt.Api.Models
 {
@@ -10,6 +11,15 @@ namespace Tzkt.Api.Models
         public string Period { get; set; }
         public DateTime PeriodEndTime { get; set; }
         public DateTime EpochEndTime { get; set; }
+
+        #region proposal
+        
+        public List<Proposal> Proposals { get; set; }
+        public int? TopRolls { get; set; }
+        public double? UpvotesQuorum { get; set; }
+
+        #endregion
+
         
         public double? Supermajority { get; set; }
         public double? YayVotes { get; set; }

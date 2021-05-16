@@ -271,7 +271,6 @@ namespace Tzkt.Api.Services.Stats
 
             var txs = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
-            //TODO To Scalar Execution
             var calls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
             var accounts = await db.ExecuteScalarAsync<int>(
@@ -499,12 +498,26 @@ namespace Tzkt.Api.Services.Stats
         {
             var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);
             var period = epoch.Periods.Last();
-            var proposals = await VotingRepo.GetProposals(
+            var proposals = (await VotingRepo.GetProposals(
                 new Int32Parameter { Eq = epoch.Index },
                 new SortParameter { Desc = "upvotes" },
-                null, 10);
+                null, 10)).ToList();
             var proposal = proposals.FirstOrDefault();
-//TODO List of proposals for the proposal period
+            //TODO Check that
+            if (period.Kind == "proposal")
+            {
+                return new GovernanceData
+                {
+                    Proposals = proposals.ToList(),
+                    UpvotesQuorum = period.UpvotesQuorum,
+                    TopRolls = period.TopRolls,
+                    Protocol = proposal?.Metadata?.Alias,
+                    Period = period.Kind,
+                    PeriodEndTime = period.EndTime,
+                    EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
+                };
+            }
+
             var result = new GovernanceData
             {
                 Proposal = proposal?.Hash,
