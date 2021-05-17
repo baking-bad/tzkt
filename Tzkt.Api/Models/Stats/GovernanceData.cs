@@ -14,8 +14,7 @@ namespace Tzkt.Api.Models
 
         #region proposal
         
-        public List<Proposal> Proposals { get; set; }
-        public int? TopRolls { get; set; }
+        public List<ProposalData> Proposals { get; set; }
         public double? UpvotesQuorum { get; set; }
 
         #endregion

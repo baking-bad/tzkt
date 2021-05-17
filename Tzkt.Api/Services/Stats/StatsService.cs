@@ -280,7 +280,7 @@ namespace Tzkt.Api.Services.Stats
             {
                 return new DailyData
                 {
-                    Volume = txs.volume,
+                    Volume = txs.volume ?? 0,
                     Txs = txs.count,
                     Calls = calls,
                     Accounts = accounts,
@@ -351,10 +351,10 @@ namespace Tzkt.Api.Services.Stats
             {
                 return new TxsData
                 {
-                    Burned = fees.burned,
-                    Fees = fees.paid,
+                    Burned = fees.burned ?? 0,
+                    Fees = fees.paid ?? 0,
                     Txs = txs.count,
-                    Volume = txs.volume,
+                    Volume = txs.volume ?? 0
                 };
             }
             
@@ -503,16 +503,20 @@ namespace Tzkt.Api.Services.Stats
                 new SortParameter { Desc = "upvotes" },
                 null, 10)).ToList();
             var proposal = proposals.FirstOrDefault();
-            //TODO Check that
+            
             if (period.Kind == "proposal")
             {
                 return new GovernanceData
                 {
-                    Proposals = proposals.ToList(),
-                    UpvotesQuorum = period.UpvotesQuorum,
-                    TopRolls = period.TopRolls,
-                    Protocol = proposal?.Metadata?.Alias,
                     Period = period.Kind,
+                    
+                    Proposals = proposals.Select(x => new ProposalData
+                    {
+                        Hash = x.Hash,
+                        Metadata = x.Metadata,
+                        Rolls = x.Rolls
+                    }).ToList(),
+                    UpvotesQuorum = period.UpvotesQuorum,
                     PeriodEndTime = period.EndTime,
                     EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
                 };
