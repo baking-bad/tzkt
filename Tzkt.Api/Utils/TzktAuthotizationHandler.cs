@@ -5,11 +5,15 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Netezos.Encoding;
+using Netezos.Keys;
+using Netezos.Utils;
 
 namespace Tzkt.Api.Utils
 {
@@ -24,6 +28,11 @@ namespace Tzkt.Api.Utils
         private const string UserHeader = "X-TZKT-USER";
         private const string NonceHeader = "X-TZKT-NONCE";
         private const string SignatureHeader = "X-TZKT-SIG";
+
+        private Dictionary<string, string> Users = new()
+        {
+            {"vadim", "edpktxafnWbAESCnir4T8E22nPTTg9SQmvCGSorwCKWA8zDVubKisk"}
+        };
 
         private static readonly List<string> Keys = new() {UserHeader, NonceHeader, SignatureHeader};
 
@@ -43,24 +52,33 @@ namespace Tzkt.Api.Utils
                 //Invalid Authorization header
                 return AuthenticateResult.NoResult();
             }
-            
-            /*if(!BasicSchemeName.Equals(headerValue.Scheme, StringComparison.OrdinalIgnoreCase))
-            {
-                //Not Basic authentication header
-                return AuthenticateResult.NoResult();
-            }*/
 
-            /*byte[] headerValueBytes = Convert.FromBase64String(headerValue.Scheme);
-            string userAndPassword = Encoding.UTF8.GetString(headerValueBytes);
-            string[] parts = userAndPassword.Split(':');
-            if(parts.Length != 2)
+            if(!Users.TryGetValue(userHeaderValue.Scheme, out var pubKeyString))
             {
-                return AuthenticateResult.Fail("Invalid Basic authentication header");
+                return AuthenticateResult.Fail("Invalid user");
             }
-            string password = parts[1];
-            if (password != "Qwer")
-                return AuthenticateResult.Fail("Invalid Basic authentication header");*/
-            // string user = "parts[0]";
+
+            if (DateTime.UtcNow.AddSeconds(-100) > DateTime.UnixEpoch.AddSeconds(long.Parse(nonceHeaderValue.Scheme)))
+            {
+                return AuthenticateResult.Fail("Too old nonce");
+            }
+
+            var ms = new MemoryStream();
+            await Request.Body.CopyToAsync(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            var body = await new StreamReader(ms).ReadToEndAsync();
+            var content = Encoding.UTF8.GetBytes(body);
+
+            ms.Seek(0, SeekOrigin.Begin);
+            Request.Body = ms;
+            
+            //etc, we use this for an audit trail
+            var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(JsonSerializer.Serialize(requestBody))));
+            
+            var pubKey = PubKey.FromBase58(pubKeyString);
+            pubKey.Verify($"{nonceHeaderValue.Scheme}{hash}", signHeaderValue.Scheme);
+
 
 
 
