@@ -63,24 +63,21 @@ namespace Tzkt.Api.Utils
                 return AuthenticateResult.Fail("Too old nonce");
             }
 
-            var ms = new MemoryStream();
+            await using var ms = new MemoryStream();
             await Request.Body.CopyToAsync(ms);
             ms.Seek(0, SeekOrigin.Begin);
 
             var body = await new StreamReader(ms).ReadToEndAsync();
-            var content = Encoding.UTF8.GetBytes(body);
-
+            /*var content = Encoding.UTF8.GetBytes(body);
             ms.Seek(0, SeekOrigin.Begin);
-            Request.Body = ms;
+            Request.Body = ms;*/
             
             //etc, we use this for an audit trail
-            var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(JsonSerializer.Serialize(requestBody))));
+            var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(body)));
             
             var pubKey = PubKey.FromBase58(pubKeyString);
-            pubKey.Verify($"{nonceHeaderValue.Scheme}{hash}", signHeaderValue.Scheme);
-
-
-
+            if(!pubKey.Verify($"{nonceHeaderValue.Scheme}{hash}", signHeaderValue.Scheme))
+                return AuthenticateResult.Fail("Invalid signature");
 
             var claims = new[] { new Claim(ClaimTypes.Name, userHeaderValue.Scheme) };
             var identity = new ClaimsIdentity(claims, Scheme.Name);

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
-
+using Dapper.Contrib.Extensions;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -17,6 +17,13 @@ namespace Tzkt.Api.Repositories
         public SoftwareRepository(TimeCache time, IConfiguration config) : base(config)
         {
             Time = time;
+        }
+
+        public async Task Update()
+        {
+            //TODO Update
+            using var db = GetConnection();
+            // db.Update()
         }
 
         public async Task<int> GetCount()
