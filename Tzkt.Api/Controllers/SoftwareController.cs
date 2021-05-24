@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -80,20 +81,6 @@ namespace Tzkt.Api.Controllers
         {
             return Software.GetCount();
         }
-        
-        [Authorize]
-        [HttpPost]
-        public async Task<ActionResult> Post()
-        {
-            try
-            {
-                Console.WriteLine("Posted Software");
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return new BadRequest("Software POST", ex.Message);
-            }
-        }
+
     }
 }

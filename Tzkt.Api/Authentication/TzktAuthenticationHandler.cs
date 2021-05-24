@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Netezos.Encoding;
@@ -27,8 +28,9 @@ namespace Tzkt.Api.Utils
     
         private const string UserHeader = "X-TZKT-USER";
         private const string NonceHeader = "X-TZKT-NONCE";
-        private const string SignatureHeader = "X-TZKT-SIG";
+        private const string SignatureHeader = "X-TZKT-SIGNATURE";
 
+        //TODO To config
         private Dictionary<string, string> Users = new()
         {
             {"vadim", "edpktxafnWbAESCnir4T8E22nPTTg9SQmvCGSorwCKWA8zDVubKisk"}
@@ -39,12 +41,6 @@ namespace Tzkt.Api.Utils
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            if (!Keys.All(x => Request.Headers.ContainsKey(x)))
-            {
-                //Authorization header not in request
-                return AuthenticateResult.NoResult();
-            }
-
             if(!AuthenticationHeaderValue.TryParse(Request.Headers[UserHeader], out AuthenticationHeaderValue userHeaderValue)
             || !AuthenticationHeaderValue.TryParse(Request.Headers[NonceHeader], out AuthenticationHeaderValue nonceHeaderValue)
             || !AuthenticationHeaderValue.TryParse(Request.Headers[SignatureHeader], out AuthenticationHeaderValue signHeaderValue))
@@ -55,24 +51,26 @@ namespace Tzkt.Api.Utils
 
             if(!Users.TryGetValue(userHeaderValue.Scheme, out var pubKeyString))
             {
-                return AuthenticateResult.Fail("Invalid user");
+                return AuthenticateResult.Fail("User doesn't exist");
             }
 
             if (DateTime.UtcNow.AddSeconds(-100) > DateTime.UnixEpoch.AddSeconds(long.Parse(nonceHeaderValue.Scheme)))
             {
-                return AuthenticateResult.Fail("Too old nonce");
+                return AuthenticateResult.Fail("Outdated nonce");
             }
-
-            await using var ms = new MemoryStream();
-            await Request.Body.CopyToAsync(ms);
-            ms.Seek(0, SeekOrigin.Begin);
-
-            var body = await new StreamReader(ms).ReadToEndAsync();
-            /*var content = Encoding.UTF8.GetBytes(body);
-            ms.Seek(0, SeekOrigin.Begin);
-            Request.Body = ms;*/
             
-            //etc, we use this for an audit trail
+            if (!Request.Body.CanSeek)
+            {
+                // We only do this if the stream isn't *already* seekable,
+                // as EnableBuffering will create a new stream instance
+                // each time it's called
+                Request.EnableBuffering();
+            }
+            Request.Body.Position = 0;
+            var reader = new StreamReader(Request.Body, Encoding.UTF8);
+            var body = await reader.ReadToEndAsync().ConfigureAwait(false);
+            Request.Body.Position = 0;
+
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(body)));
             
             var pubKey = PubKey.FromBase58(pubKeyString);

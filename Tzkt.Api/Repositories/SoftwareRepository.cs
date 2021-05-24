@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
-using Dapper.Contrib.Extensions;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -19,11 +18,12 @@ namespace Tzkt.Api.Repositories
             Time = time;
         }
 
-        public async Task Update()
+        public async Task Update(string hash, string metadata)
         {
-            //TODO Update
             using var db = GetConnection();
-            // db.Update()
+            var upd = $@"UPDATE ""Software"" SET ""Metadata"" = '{metadata}' WHERE ""ShortHash"" = '{hash}'";
+            //TODO metadata to parameters
+            var rows = await db.ExecuteAsync(upd);
         }
 
         public async Task<int> GetCount()

@@ -1,4 +1,5 @@
 using System;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -77,12 +78,21 @@ namespace Tzkt.Api
                 {
                     options.InvalidModelStateResponseFactory = context => new BadRequest(context);
                 });
-            
-            services.AddAuthentication("TzktAuthScheme")
-                .AddScheme<TzktAuthenticationOptions, TzktAuthenticationHandler>("TzktAuthScheme", null);
-            services.AddAuthorization();
 
             services.AddOpenApiDocument();
+
+            #region authentication
+            if (Configuration.GetAuthConfig().Enabled)
+            {
+                services.AddAuthentication("TzktAuthScheme")
+                    .AddScheme<TzktAuthenticationOptions, TzktAuthenticationHandler>("TzktAuthScheme", null);
+                services.AddAuthorization();
+            }
+            else
+            {
+                services.AddSingleton<IAuthorizationHandler, AllowAnonymous>();
+            }
+            #endregion
 
             #region websocket
             if (Configuration.GetWebsocketConfig().Enabled)
@@ -133,9 +143,12 @@ namespace Tzkt.Api
             app.UseOpenApi();
 
             app.UseRouting();
-            
-            app.UseAuthentication();
-            app.UseAuthorization();
+
+            /*if (Configuration.GetAuthConfig().Enabled)
+            {*/
+                app.UseAuthentication();
+                app.UseAuthorization();
+            // }
 
             app.UseEndpoints(endpoints =>
             {
