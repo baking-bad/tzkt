@@ -18,14 +18,6 @@ namespace Tzkt.Api.Repositories
             Time = time;
         }
 
-        public async Task Update(string hash, string metadata)
-        {
-            using var db = GetConnection();
-            var upd = $@"UPDATE ""Software"" SET ""Metadata"" = '{metadata}' WHERE ""ShortHash"" = '{hash}'";
-            //TODO metadata to parameters
-            var rows = await db.ExecuteAsync(upd);
-        }
-
         public async Task<int> GetCount()
         {
             using var db = GetConnection();

@@ -10,6 +10,7 @@ using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Netezos.Encoding;
@@ -24,17 +25,15 @@ namespace Tzkt.Api.Utils
 
     public class TzktAuthenticationHandler : AuthenticationHandler<TzktAuthenticationOptions>
     {
-        public TzktAuthenticationHandler(IOptionsMonitor<TzktAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock) {}
+        private readonly AuthConfig Config;
+        public TzktAuthenticationHandler(IConfiguration config, IOptionsMonitor< TzktAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
+        {
+            Config = config.GetAuthConfig();
+        }
     
         private const string UserHeader = "X-TZKT-USER";
         private const string NonceHeader = "X-TZKT-NONCE";
         private const string SignatureHeader = "X-TZKT-SIGNATURE";
-
-        //TODO To config
-        private Dictionary<string, string> Users = new()
-        {
-            {"vadim", "edpktxafnWbAESCnir4T8E22nPTTg9SQmvCGSorwCKWA8zDVubKisk"}
-        };
 
         private static readonly List<string> Keys = new() {UserHeader, NonceHeader, SignatureHeader};
 
@@ -49,11 +48,12 @@ namespace Tzkt.Api.Utils
                 return AuthenticateResult.NoResult();
             }
 
-            if(!Users.TryGetValue(userHeaderValue.Scheme, out var pubKeyString))
+            if(Config.Admins.All(x => x.Username != userHeaderValue.Scheme))
             {
                 return AuthenticateResult.Fail("User doesn't exist");
             }
 
+            //TODO Nonce should be used just one time
             if (DateTime.UtcNow.AddSeconds(-100) > DateTime.UnixEpoch.AddSeconds(long.Parse(nonceHeaderValue.Scheme)))
             {
                 return AuthenticateResult.Fail("Outdated nonce");
@@ -61,9 +61,6 @@ namespace Tzkt.Api.Utils
             
             if (!Request.Body.CanSeek)
             {
-                // We only do this if the stream isn't *already* seekable,
-                // as EnableBuffering will create a new stream instance
-                // each time it's called
                 Request.EnableBuffering();
             }
             Request.Body.Position = 0;
@@ -73,7 +70,8 @@ namespace Tzkt.Api.Utils
 
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(body)));
             
-            var pubKey = PubKey.FromBase58(pubKeyString);
+            var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == userHeaderValue.Scheme)?.PubKey);
+            var shortHash = Request.Path.Value;
             if(!pubKey.Verify($"{nonceHeaderValue.Scheme}{hash}", signHeaderValue.Scheme))
                 return AuthenticateResult.Fail("Invalid signature");
 

@@ -1,32 +1,34 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Repositories;
+using TzKT_Client;
 
 namespace Tzkt.Api.Controllers
 {
     [Authorize]
     [ApiController]
     [Route("v1/metadata")]
-    public class MetdataController : ControllerBase
+    public class MetadataController : ControllerBase
     {
-        private readonly SoftwareRepository Software;
+        private readonly MetadataRepository MetadataRepository;
 
-        public MetdataController(SoftwareRepository software)
+        public MetadataController(MetadataRepository metadataRepository)
         {
-            Software = software;
+            MetadataRepository = metadataRepository;
         }
                 
-        [HttpPost("update/{software}")]
-        public async Task<ActionResult> UpdateHash(string software, [FromBody] object value)
+        [HttpPost("software/update")]
+        public async Task<ActionResult> UpdateSoftwareMetadata([FromBody] List<Metadata<string>> value)
         {
             try
             {
+                
                 var json = JsonSerializer.Serialize(value);
-                await Software.Update(software, json);
-                Console.WriteLine("Posted Software");
+                await MetadataRepository.Update("Software", "ShortHash", value);
                 return Ok();
             }
             catch (Exception ex)
@@ -34,5 +36,6 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest(nameof(value), ex.Message);
             }
         }
+        
     }
 }
