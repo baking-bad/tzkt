@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,12 +21,10 @@ namespace Tzkt.Api.Controllers
         }
                 
         [HttpPost("software/update")]
-        public async Task<ActionResult> UpdateSoftwareMetadata([FromBody] List<Metadata<string>> value)
+        public async Task<ActionResult> UpdateSoftwareMetadata([FromBody] List<Met> value)
         {
             try
             {
-                
-                var json = JsonSerializer.Serialize(value);
                 await MetadataRepository.Update("Software", "ShortHash", value);
                 return Ok();
             }

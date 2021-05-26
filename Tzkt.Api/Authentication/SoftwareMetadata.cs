@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace TzKT_Client
@@ -15,14 +16,6 @@ namespace TzKT_Client
         public string CommitHash { get; set; }
     }
 
-    public class Metadata<T>
-    {
-        [JsonPropertyName("key")]
-        public string Key { get; set; }
-        
-        [JsonPropertyName("metadata")]
-        public T Met { get; set; }
-    }
 
     public class Met
     {
@@ -30,7 +23,9 @@ namespace TzKT_Client
         public string Key { get; set; }
         
         [JsonPropertyName("metadata")]
-        public string Mett { get; set; }
+        public JsonElement Metadata { get; set; }
+
+        public string MetJson => Metadata.GetRawText();
     }
     
 }

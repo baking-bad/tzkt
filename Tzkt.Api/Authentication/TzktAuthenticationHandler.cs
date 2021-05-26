@@ -42,7 +42,8 @@ namespace Tzkt.Api.Utils
         {
             if(!AuthenticationHeaderValue.TryParse(Request.Headers[UserHeader], out AuthenticationHeaderValue userHeaderValue)
             || !AuthenticationHeaderValue.TryParse(Request.Headers[NonceHeader], out AuthenticationHeaderValue nonceHeaderValue)
-            || !AuthenticationHeaderValue.TryParse(Request.Headers[SignatureHeader], out AuthenticationHeaderValue signHeaderValue))
+            || !AuthenticationHeaderValue.TryParse(Request.Headers[SignatureHeader], out AuthenticationHeaderValue signHeaderValue)
+            || !long.TryParse(nonceHeaderValue.Scheme, out var nonce))
             {
                 //Invalid Authorization header
                 return AuthenticateResult.NoResult();
@@ -54,7 +55,7 @@ namespace Tzkt.Api.Utils
             }
 
             //TODO Nonce should be used just one time
-            if (DateTime.UtcNow.AddSeconds(-100) > DateTime.UnixEpoch.AddSeconds(long.Parse(nonceHeaderValue.Scheme)))
+            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(nonce))
             {
                 return AuthenticateResult.Fail("Outdated nonce");
             }
@@ -72,7 +73,7 @@ namespace Tzkt.Api.Utils
             
             var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == userHeaderValue.Scheme)?.PubKey);
             var shortHash = Request.Path.Value;
-            if(!pubKey.Verify($"{nonceHeaderValue.Scheme}{hash}", signHeaderValue.Scheme))
+            if(!pubKey.Verify($"{nonce}{hash}", signHeaderValue.Scheme))
                 return AuthenticateResult.Fail("Invalid signature");
 
             var claims = new[] { new Claim(ClaimTypes.Name, userHeaderValue.Scheme) };

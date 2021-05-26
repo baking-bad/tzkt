@@ -10,6 +10,7 @@ using Tzkt.Api.Repositories;
 
 namespace Tzkt.Api.Controllers
 {
+    [AllowAnonymous]
     [ApiController]
     [Route("v1/software")]
     public class SoftwareController : ControllerBase
