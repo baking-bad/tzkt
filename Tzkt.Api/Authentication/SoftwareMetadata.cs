@@ -25,7 +25,7 @@ namespace TzKT_Client
         [JsonPropertyName("metadata")]
         public JsonElement Metadata { get; set; }
 
-        public string MetJson => Metadata.GetRawText();
+        // public string MetJson => Metadata.GetRawText();
     }
     
 }

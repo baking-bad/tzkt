@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using Tzkt.Api.Authentication;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
@@ -62,6 +62,8 @@ namespace Tzkt.Api
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
             services.AddTransient<MetadataRepository>();
+            
+            services.AddSingleton<AuthService>();
 
             services.AddStateListener();
 
@@ -81,19 +83,6 @@ namespace Tzkt.Api
                 });
 
             services.AddOpenApiDocument();
-
-            #region authentication
-            if (Configuration.GetAuthConfig().Enabled)
-            {
-                services.AddAuthentication("TzktAuthScheme")
-                    .AddScheme<TzktAuthenticationOptions, TzktAuthenticationHandler>("TzktAuthScheme", null);
-                services.AddAuthorization();
-            }
-            else
-            {
-                services.AddSingleton<IAuthorizationHandler, AllowAnonymous>();
-            }
-            #endregion
 
             #region websocket
             if (Configuration.GetWebsocketConfig().Enabled)
@@ -144,9 +133,6 @@ namespace Tzkt.Api
             app.UseOpenApi();
 
             app.UseRouting();
-
-            app.UseAuthentication();
-            app.UseAuthorization();
             
             app.UseEndpoints(endpoints =>
             {
