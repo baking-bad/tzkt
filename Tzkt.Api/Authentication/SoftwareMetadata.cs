@@ -2,7 +2,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace TzKT_Client
+namespace Tzkt.Api.Authentication
 {
     public class SoftwareMetadata
     {
@@ -23,7 +23,7 @@ namespace TzKT_Client
         public string Key { get; set; }
         
         [JsonPropertyName("metadata")]
-        public JsonElement Metadata { get; set; }
+        public RawJson Metadata { get; set; }
 
         // public string MetJson => Metadata.GetRawText();
     }

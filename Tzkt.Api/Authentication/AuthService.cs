@@ -1,22 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Netezos.Encoding;
 using Netezos.Keys;
 using Netezos.Utils;
-using Tzkt.Api.Models;
 using Tzkt.Api.Utils;
-using TzKT_Client;
 
 namespace Tzkt.Api.Authentication
 {
@@ -27,7 +17,7 @@ namespace Tzkt.Api.Authentication
         private const string NonceHeader = "X-TZKT-NONCE";
         private const string SignatureHeader = "X-TZKT-SIGNATURE";
 
-        private Dictionary<string, long> Nonces;
+        private readonly Dictionary<string, long> Nonces;
 
         public AuthService(IConfiguration config)
         {
@@ -35,40 +25,29 @@ namespace Tzkt.Api.Authentication
             Nonces = Config.Admins.ToDictionary(x => x.Username, x => long.MinValue);
         }
 
-        public bool Authorized(IHeaderDictionary headers, List<Met>  body, out string error)
+        public bool Authorized(AuthHeaders headers, List<Met>  body, out string error)
         {
             error = null;
             
-            //TODO Get Rid of that
-            if(!AuthenticationHeaderValue.TryParse(headers[UserHeader], out var userHeaderValue)
-               || !AuthenticationHeaderValue.TryParse(headers[NonceHeader], out var nonceHeaderValue)
-               || !AuthenticationHeaderValue.TryParse(headers[SignatureHeader], out var signHeaderValue)
-               || !long.TryParse(nonceHeaderValue.Scheme, out var nonce))
+            if(Config.Admins.All(x => x.Username != headers.User))
             {
-                error = $"{UserHeader}, {NonceHeader}, and {SignatureHeader} should be provided for the Authorization";
-                return false;
-            }
-
-            if(Config.Admins.All(x => x.Username != userHeaderValue.Scheme))
-            {
-                error = $"User {userHeaderValue.Scheme} doesn't exist";
+                error = $"User {headers.User} doesn't exist";
                 return false;
             }
 
             //TODO Nonce should be used just one time
-            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(nonce))
+            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(headers.Nonce))
             {
-                error = $"Nonce too old";
+                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddSeconds(headers.Nonce)}";
                 return false;
             }
             
-            if (Nonces[userHeaderValue.Scheme] >= nonce)
+            if (Nonces[headers.User] >= headers.Nonce)
             {
-                error = $"Nonce {nonce} already used";
+                error = $"Nonce {headers.Nonce} has already used";
                 return false;
             }
 
-            Nonces[userHeaderValue.Scheme] = nonce;
             
             /*if (!request.Body.CanSeek)
             {
@@ -86,12 +65,14 @@ namespace Tzkt.Api.Authentication
             var json = JsonSerializer.Serialize(body, jso);
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
             
-            var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == userHeaderValue.Scheme)?.PubKey);
-            if (!pubKey.Verify($"{nonce}{hash}", signHeaderValue.Scheme))
+            var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == headers.User)?.PubKey);
+            if (!pubKey.Verify($"{headers.Nonce}{hash}", headers.Signature))
             {
                 error = $"Invalid signature";
                 return false;
             }
+            
+            Nonces[headers.User] = headers.Nonce;
 
             return true;
         }

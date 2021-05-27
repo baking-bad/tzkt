@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Authentication;
 using Tzkt.Api.Repositories;
-using TzKT_Client;
 
 namespace Tzkt.Api.Controllers
 {
@@ -24,19 +21,28 @@ namespace Tzkt.Api.Controllers
         }
                 
         [HttpPost("software/update")]
-        public async Task<ActionResult> UpdateSoftwareMetadata([FromBody] List<Met> value)
+        public async Task<ActionResult> UpdateSoftwareMetadata([FromBody] List<Met> value, [FromHeader] AuthHeaders headers)
         {
             try
             {
-                if (!Auth.Authorized(Request.Headers, value, out var error))
+                if (!Auth.Authorized(headers, value, out var error))
                     return Unauthorized(error);
                 await MetadataRepository.Update("Software", "ShortHash", value);
+                //TODO Should we return the updated data?
                 return Ok();
             }
             catch (Exception ex)
             {
                 return new BadRequest(nameof(value), ex.Message);
             }
+        }
+
+        [HttpGet("software")]
+        public async Task<ActionResult> GetSoftwareMetadata( [FromHeader] AuthHeaders headers)
+        {
+            if (!Auth.Authorized(headers, null, out var error))
+                return Unauthorized(error);
+            return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash",0, 0));
         }
     }
 }
