@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
@@ -21,8 +22,9 @@ namespace Tzkt.Api.Repositories
 
             foreach (var metadata in metadatas)
             {
+                //TODO Return amount of affected rows?
                 var upd = $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key";
-                var rows = await db.ExecuteAsync(upd, new {metadata = metadata.Metadata, key = metadata.Key});
+                var rows = await db.ExecuteAsync(upd, new {metadata = metadata.Metadata.GetRawText(), key = metadata.Key});
             }
         }
 
@@ -35,7 +37,7 @@ namespace Tzkt.Api.Repositories
             return res.Select(row => new Met
             {
                 Key = row.ShortHash,
-                Metadata = new RawJson(row.Metadata)
+                Metadata = JsonDocument.Parse(row.Metadata)
             });
 
         }

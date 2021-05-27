@@ -23,7 +23,7 @@ namespace Tzkt.Api.Authentication
         public string Key { get; set; }
         
         [JsonPropertyName("metadata")]
-        public RawJson Metadata { get; set; }
+        public JsonElement Metadata { get; set; }
 
         // public string MetJson => Metadata.GetRawText();
     }

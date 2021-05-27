@@ -44,5 +44,22 @@ namespace Tzkt.Api.Controllers
                 return Unauthorized(error);
             return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash",0, 0));
         }
+
+        [HttpPost("protocols/update")]
+        public async Task<ActionResult> UpdateProtocolMetadata([FromBody] List<Met> value, [FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                if (!Auth.Authorized(headers, value, out var error))
+                    return Unauthorized(error);
+                await MetadataRepository.Update("Protocols", "Hash", value);
+                //TODO Should we return the updated data?
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return new BadRequest(nameof(value), ex.Message);
+            }
+        }
     }
 }
