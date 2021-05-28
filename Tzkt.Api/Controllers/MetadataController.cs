@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Authentication;
@@ -21,11 +24,15 @@ namespace Tzkt.Api.Controllers
         }
                 
         [HttpPost("software/update")]
-        public async Task<ActionResult> UpdateSoftwareMetadata([FromBody] List<Met> value, [FromHeader] AuthHeaders headers)
+        public async Task<ActionResult> UpdateSoftwareMetadata([FromHeader] AuthHeaders headers)
         {
             try
             {
-                if (!Auth.Authorized(headers, value, out var error))
+                using var reader = new StreamReader(Request.Body, Encoding.UTF8);
+                var jsonString = await reader.ReadToEndAsync();
+                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+
+                if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
                 await MetadataRepository.Update("Software", "ShortHash", value);
                 //TODO Should we return the updated data?
@@ -33,24 +40,28 @@ namespace Tzkt.Api.Controllers
             }
             catch (Exception ex)
             {
-                return new BadRequest(nameof(value), ex.Message);
+                return new BadRequest(nameof(headers), ex.Message);
             }
         }
 
         [HttpGet("software")]
         public async Task<ActionResult> GetSoftwareMetadata( [FromHeader] AuthHeaders headers)
         {
+            //TODO Value filter like storage contracts
             if (!Auth.Authorized(headers, null, out var error))
                 return Unauthorized(error);
             return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash",0, 0));
         }
 
         [HttpPost("protocols/update")]
-        public async Task<ActionResult> UpdateProtocolMetadata([FromBody] List<Met> value, [FromHeader] AuthHeaders headers)
+        public async Task<ActionResult> UpdateProtocolMetadata([FromHeader] AuthHeaders headers)
         {
             try
             {
-                if (!Auth.Authorized(headers, value, out var error))
+                using var reader = new StreamReader(Request.Body, Encoding.UTF8);
+                var jsonString = await reader.ReadToEndAsync();
+                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+                if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
                 await MetadataRepository.Update("Protocols", "Hash", value);
                 //TODO Should we return the updated data?
@@ -58,7 +69,7 @@ namespace Tzkt.Api.Controllers
             }
             catch (Exception ex)
             {
-                return new BadRequest(nameof(value), ex.Message);
+                return new BadRequest(nameof(headers), ex.Message);
             }
         }
     }

@@ -11,7 +11,7 @@ namespace Tzkt.Api.Authentication
  
         [FromHeader(Name="X-TZKT-NONCE")]
         [Required]
-        public long Nonce { get; set; }
+        public long? Nonce { get; set; }
  
         [FromHeader(Name="X-TZKT-SIGNATURE")]
         [Required]

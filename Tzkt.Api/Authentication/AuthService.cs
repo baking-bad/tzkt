@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
@@ -22,12 +23,14 @@ namespace Tzkt.Api.Authentication
         public AuthService(IConfiguration config)
         {
             Config = config.GetAuthConfig();
-            Nonces = Config.Admins.ToDictionary(x => x.Username, x => long.MinValue);
+            Nonces = Config.Admins.ToDictionary(x => x.Username, x => long.MinValue );
         }
-
-        public bool Authorized(AuthHeaders headers, List<Met>  body, out string error)
+        
+        //TODO Method overload for GET
+        public bool Authorized(AuthHeaders headers, string json, out string error)
         {
             error = null;
+            var nonce = (long) headers.Nonce;
             
             if(Config.Admins.All(x => x.Username != headers.User))
             {
@@ -35,34 +38,26 @@ namespace Tzkt.Api.Authentication
                 return false;
             }
 
-            //TODO Nonce should be used just one time
-            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(headers.Nonce))
+            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(nonce))
             {
-                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddSeconds(headers.Nonce)}";
+                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddSeconds(nonce)}";
                 return false;
             }
             
-            if (Nonces[headers.User] >= headers.Nonce)
+            if (Nonces[headers.User] >= nonce)
             {
-                error = $"Nonce {headers.Nonce} has already used";
+                error = $"Nonce {nonce} has already used";
                 return false;
             }
 
-            
-            /*if (!request.Body.CanSeek)
-            {
-                request.EnableBuffering();
-            }
-            request.Body.Position = 0;
-            var reader = new StreamReader(request.Body, Encoding.UTF8);
-            var body = reader.ReadToEnd();
-            request.Body.Position = 0;*/
             var jso = new JsonSerializerOptions
             {
-                Converters = { new DateTimeConverter()}
+                Converters = { new DateTimeConverter()},
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-            // jso.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            var json = JsonSerializer.Serialize(body, jso);
+            
+            //TODO Check unicode chars one more time
+            // var json = JsonSerializer.Serialize(body, jso);
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
             
             var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == headers.User)?.PubKey);
@@ -72,7 +67,7 @@ namespace Tzkt.Api.Authentication
                 return false;
             }
             
-            Nonces[headers.User] = headers.Nonce;
+            Nonces[headers.User] = nonce;
 
             return true;
         }
