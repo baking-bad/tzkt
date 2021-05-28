@@ -24,7 +24,7 @@ namespace Tzkt.Api.Repositories
             {
                 //TODO Return amount of affected rows?
                 var upd = $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key";
-                var rows = await db.ExecuteAsync(upd, new {metadata = metadata.Metadata.GetRawText(), key = metadata.Key});
+                var rows = await db.ExecuteAsync(upd, new {metadata = metadata.Metadata.Json, key = metadata.Key});
             }
         }
 
@@ -37,7 +37,7 @@ namespace Tzkt.Api.Repositories
             return res.Select(row => new Met
             {
                 Key = row.ShortHash,
-                Metadata = JsonDocument.Parse(row.Metadata)
+                Metadata = new RawJson(row.Metadata)
             });
 
         }

@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Authentication;
@@ -28,13 +31,12 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                using var reader = new StreamReader(Request.Body, Encoding.UTF8);
-                var jsonString = await reader.ReadToEndAsync();
-                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+                var jsonString = await Request.Body.GetStringAsync();
 
                 if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
-                await MetadataRepository.Update("Software", "ShortHash", value);
+                
+                await MetadataRepository.Update("Software", "ShortHash", JsonSerializer.Deserialize<List<Met>>(jsonString));
                 //TODO Should we return the updated data?
                 return Ok();
             }
@@ -45,10 +47,10 @@ namespace Tzkt.Api.Controllers
         }
 
         [HttpGet("software")]
-        public async Task<ActionResult> GetSoftwareMetadata( [FromHeader] AuthHeaders headers)
+        public async Task<ActionResult> GetSoftwareMetadata([FromHeader] AuthHeaders headers, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
         {
             //TODO Value filter like storage contracts
-            if (!Auth.Authorized(headers, null, out var error))
+            if (!Auth.Authorized(headers, out var error))
                 return Unauthorized(error);
             return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash",0, 0));
         }
@@ -58,13 +60,18 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                using var reader = new StreamReader(Request.Body, Encoding.UTF8);
-                var jsonString = await reader.ReadToEndAsync();
-                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+                var jsonString = await Request.Body.GetStringAsync();
+                
                 if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
+
+                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+
+                if (!value.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
+                    return BadRequest("Invalid protocol hash");
+                
                 await MetadataRepository.Update("Protocols", "Hash", value);
-                //TODO Should we return the updated data?
+                
                 return Ok();
             }
             catch (Exception ex)

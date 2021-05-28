@@ -71,5 +71,47 @@ namespace Tzkt.Api.Authentication
 
             return true;
         }
+        
+        public bool Authorized(AuthHeaders headers, out string error)
+        {
+            error = null;
+            var nonce = (long) headers.Nonce;
+            
+            if(Config.Admins.All(x => x.Username != headers.User))
+            {
+                error = $"User {headers.User} doesn't exist";
+                return false;
+            }
+
+            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(nonce))
+            {
+                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddSeconds(nonce)}";
+                return false;
+            }
+            
+            if (Nonces[headers.User] >= nonce)
+            {
+                error = $"Nonce {nonce} has already used";
+                return false;
+            }
+
+            var jso = new JsonSerializerOptions
+            {
+                Converters = { new DateTimeConverter()},
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+            
+            
+            var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == headers.User)?.PubKey);
+            if (!pubKey.Verify($"{headers.Nonce}", headers.Signature))
+            {
+                error = $"Invalid signature";
+                return false;
+            }
+            
+            Nonces[headers.User] = nonce;
+
+            return true;
+        }
     }
 }

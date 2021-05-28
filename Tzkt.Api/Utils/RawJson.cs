@@ -18,7 +18,8 @@ namespace Tzkt.Api
     {
         public override RawJson Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            throw new NotImplementedException();
+            using var jsonDoc = JsonDocument.ParseValue(ref reader);
+            return jsonDoc.RootElement.GetRawText();
         }
 
         public override void Write(Utf8JsonWriter writer, RawJson value, JsonSerializerOptions options)
