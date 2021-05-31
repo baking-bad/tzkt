@@ -8,7 +8,7 @@ The indexer fetches raw data from the Tezos node, then processes it and stores i
 
 ## Features:
 - **More detailed data.** TzKT not only collects blockchain data, but also processes and extends it with unique properties or even entities. For example, TzKT was the first indexer introduced synthetic operation types such as "migration" or "revelation penalty", which fill in the gaps in account history (because this data is missed in the blockchain), and the only indexer that correctly distinguishes smart contracts among all contracts.
-- **Micheline-to-JSON conversion** TzKT automatically converts raw Micheline JSON to human-readable JSON, so it's extremely handy to work with transaction parameters, contract storages, bigmaps keys, etc. 
+- **Micheline-to-JSON conversion** TzKT automatically converts raw Micheline JSON to human-readable JSON, so it's extremely handy to work with transaction parameters, contract storages, bigmaps keys, etc.
 - **Data quality comes first!** You will never see an incorrect account balance, or total rolls, or missed operations, etc. TzKT was built by professionals who know Tezos from A to Z (or, in other words, from tz to KT 😼).
 - **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly. In addition to basic data access TzKT API has a lot of cool features such as deep filtering, sorting, data selection, exporting .csv statements, calculating historical data (at any block) such as balances or BigMap keys, injecting historical quotes and metadata, optimized caching and much more. See the complete [API documentation](https://api.tzkt.io).
 - **WebSocket API.** TzKT allows to subscribe to real-time blockchain data, such as new blocks or new operations, etc. via WebSocket. TzKT uses SignalR, which is very easy to use and for which there are many client libraries for different languages.
@@ -132,12 +132,12 @@ Like this:
     "Endpoint": "https://mainnet-tezos.giganode.io/",
     "Timeout": 60
   },
-  
+
   "Quotes": {
     "Async": true,
     "Provider": {
       "Name": "TzktQuotes"
-    }    
+    }
   },
 
   "ConnectionStrings": {
@@ -200,8 +200,8 @@ Like this:
     "AccountsPath": "*",
     "ProposalsPath": "*",
     "ProtocolsPath": "*"
-  },  
-  
+  },
+
   "Websocket": {
     "Enabled": true,
     "MaxConnections": 100,
@@ -330,7 +330,7 @@ Like this:
     "Endpoint": "https://rpc.tzkt.io/florencenobanet/",
     "Timeout": 30
   },
-  
+
   "Quotes": {
     "Async": true,
     "Provider": null
@@ -401,12 +401,12 @@ Like this:
     "ProposalsPath": "*",
     "ProtocolsPath": "*"
   },
-    
+
   "Cache": {
     "LoadRate": 0.75,
     "MaxAccounts": 32000
   },
-       
+
   "Websocket": {
     "Enabled": true,
     "MaxConnections": 100,
@@ -467,8 +467,9 @@ That's it.
 ## Have a question?
 
 Feel free to contact us via:
-- Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L
+- Discord: https://discord.gg/aG8XKuwsQd
 - Telegram: https://t.me/baking_bad_chat
+- Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L
 - Twitter: https://twitter.com/TezosBakingBad
 - Email: hello@baking-bad.org
 

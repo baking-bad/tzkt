@@ -13,14 +13,15 @@ We also provide a staging environment for testing newest features and pre-updati
 
 - Mainnet staging: `https://staging.api.tzkt.io/` or `https://staging.api.mainnet.tzkt.io/` ([view docs](https://staging.api.tzkt.io))
 - Edo2net staging: `https://staging.api.edo2net.tzkt.io/` ([view docs](https://staging.api.edo2net.tzkt.io))
-	   
+
 Feel free to contact us if you have any questions or feature requests.
 Your feedback really helps us make TzKT better!
 
-- Email: hello@baking-bad.org
-- Twitter: https://twitter.com/TezosBakingBad
-- Telegram: [tg://resolve?domain=baking_bad_chat](tg://resolve?domain=baking_bad_chat)
+- Discord: https://discord.gg/aG8XKuwsQd
+- Telegram: https://t.me/baking_bad_chat
 - Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L
+- Twitter: https://twitter.com/TezosBakingBad
+- Email: hello@baking-bad.org
 
 And don't forget to star TzKT project [on GitHub](https://github.com/baking-bad/tzkt) ;)
 
