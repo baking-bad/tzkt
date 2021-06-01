@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Tzkt.Api.Models
 {
-    public class Stats
+    public class HomeStats
     {
         public DailyData DailyData { get; set; }
         
@@ -11,18 +11,18 @@ namespace Tzkt.Api.Models
         public GovernanceData GovernanceData { get; set; }
         
         public StakingData StakingData { get; set; }
-        public List<ChartPoint> StakingChart { get; set; }
+        public List<ChartPoint> TotalStakingChart { get; set; }
         
         public ContractsData ContractsData { get; set; }
-        public List<ChartPoint> ContractsChart { get; set; }
+        public List<ChartPoint> TotalCallsChart { get; set; }
         
         public AccountsData AccountsData { get; set; }
-        public List<ChartPoint> AccountsChart { get; set; }
+        public List<ChartPoint> TotalAccountsChart { get; set; }
         
         public TxsData TxsData { get; set; }
-        public List<ChartPoint> TxsChart { get; set; }
+        public List<ChartPoint> TotalTxsChart { get; set; }
 
         public MarketData MarketData { get; set; }
-        public List<ChartPoint<double>> MarketChart { get; set; }
+        public List<ChartPoint<double>> PriceChart { get; set; }
     }
 }

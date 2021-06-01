@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
+
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -95,7 +96,7 @@ namespace Tzkt.Api.Services
             _ = UpdateAsync();
         }
         
-        public static Stats GetCurrentStats(Symbols quote)
+        public static HomeStats GetCurrentStats(Symbols quote)
         {
             if (LastUpdate <= 0)
                 return null;
@@ -137,24 +138,23 @@ namespace Tzkt.Api.Services
                     Date = x.Timestamp,
                     Value = x.Krw
                 }).ToList(),
-                Symbols.None => null,
-                _ => throw new ArgumentOutOfRangeException(quote.ToString())
+                _ => new List<ChartPoint<double>>(0)
             };
-            return new Models.Stats
+            return new HomeStats
             {
                 DailyData = DailyData,
                 CycleData = CycleData,
                 GovernanceData = GovernanceData,
                 StakingData = StakingData,
-                StakingChart = StakingChart,
+                TotalStakingChart = StakingChart,
                 ContractsData = ContractsData,
-                ContractsChart = ContractsChart,
+                TotalCallsChart = ContractsChart,
                 AccountsData = AccountsData,
-                AccountsChart = AccountsChart,
+                TotalAccountsChart = AccountsChart,
                 TxsData = TxsData,
-                TxsChart = TxsChart,
+                TotalTxsChart = TxsChart,
                 MarketData = MarketData,
-                MarketChart = marketData
+                PriceChart = marketData
             };
         }
 
@@ -200,6 +200,10 @@ namespace Tzkt.Api.Services
                     BlocksTab = await GetBlocks();
                     CycleData = GetCycleData();
                 }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to update home stats: {0}", ex.Message);
             }
             finally
             {
@@ -323,19 +327,25 @@ namespace Tzkt.Api.Services
 
         private CycleData GetCycleData()
         {
-            var cycle = State.Current.Cycle;
-            var cycleSize = Protocols.Current.BlocksPerCycle;
+            var state = State.Current;
+            var proto = Protocols.Current;
+
+            var cycle = state.Cycle;
+            var level = state.Level;
+            var cycleSize = proto.BlocksPerCycle;
             var firstLevel = cycle * cycleSize + 1;
             var lastLevel = (cycle + 1) * cycleSize;
 
             return new CycleData
             {
                 Cycle = cycle,
+                Level = level,
+                Timestamp = state.Timestamp,
                 FirstLevel = firstLevel,
                 StartTime = Times[firstLevel],
                 LastLevel = lastLevel,
                 EndTime = Times[lastLevel],
-                Progress = Math.Round(100.0 * (State.Current.Level - firstLevel) / cycleSize, 2)
+                Progress = Math.Round(100.0 * (level - firstLevel) / cycleSize, 2)
             };
         }
 
@@ -525,7 +535,8 @@ namespace Tzkt.Api.Services
                     {
                         Hash = x.Hash,
                         Metadata = x.Metadata,
-                        Rolls = x.Rolls
+                        Rolls = x.Rolls,
+                        RollsPercentage = Math.Round(100.0 * x.Rolls / (int)period.TotalRolls, 2)
                     }).ToList(),
                     UpvotesQuorum = period.UpvotesQuorum,
                     PeriodEndTime = period.EndTime,
@@ -544,19 +555,19 @@ namespace Tzkt.Api.Services
 
             if (period.Kind == "exploration" || period.Kind == "promotion")
             {
-                var yayNaySum = (period.YayRolls ?? 0) + (period.NayRolls ?? 0);
-                var totalVoted = yayNaySum + (period.PassRolls ?? 0);
+                var yayNaySum = (int)period.YayRolls + (int)period.NayRolls;
+                var totalVoted = yayNaySum + (int)period.PassRolls;
 
                 result.YayVotes = yayNaySum > 0
-                    ? Math.Round(100.0 * (period.YayRolls ?? 0) / yayNaySum, 2)
+                    ? Math.Round(100.0 * (int)period.YayRolls / yayNaySum, 2)
                     : 0;
 
                 result.Participation = period.TotalRolls > 0
-                    ? Math.Round(100.0 * totalVoted / period.TotalRolls ?? 0, 2)
+                    ? Math.Round(100.0 * totalVoted / (int)period.TotalRolls, 2)
                     : 0;
 
-                result.Quorum = Math.Round(period.BallotsQuorum ?? 0, 2);
-                result.Supermajority = Math.Round(period.Supermajority ?? 0, 2);
+                result.Quorum = Math.Round((double)period.BallotsQuorum, 2);
+                result.Supermajority = Math.Round((double)period.Supermajority, 2);
             }
 
             return result;

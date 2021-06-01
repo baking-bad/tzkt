@@ -7,5 +7,6 @@ namespace Tzkt.Api.Models
         public string Hash { get; set; }
         public ProposalMetadata Metadata { get; set; }
         public int Rolls { get; set; }
+        public double RollsPercentage { get; set; }
     }
 }
