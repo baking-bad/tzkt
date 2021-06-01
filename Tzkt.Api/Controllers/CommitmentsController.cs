@@ -31,7 +31,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Blinded address (starting with btz)</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Commitment> Get([BlindedAddress] string address)
+        public Task<Commitment> Get([Required][BlindedAddress] string address)
         {
             return Commitments.Get(address);
         }

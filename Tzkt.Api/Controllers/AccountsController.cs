@@ -147,7 +147,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="metadata">Include or not account metadata</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Account> GetByAddress([Address] string address, bool metadata = false)
+        public Task<Account> GetByAddress([Required][Address] string address, bool metadata = false)
         {
             return Accounts.Get(address, metadata);
         }
@@ -165,7 +165,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/contracts")]
         public async Task<ActionResult<IEnumerable<RelatedContract>>> GetContracts(
-            [Address] string address,
+            [Required][Address] string address,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
@@ -194,7 +194,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/delegators")]
         public async Task<ActionResult<IEnumerable<Delegator>>> GetDelegators(
-            [Address] string address,
+            [Required][Address] string address,
             AccountTypeParameter type,
             Int64Parameter balance,
             Int32Parameter delegationLevel,
@@ -251,7 +251,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/operations")]
         public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
-            [Address] string address,
+            [Required][Address] string address,
             string type,
             AccountParameter initiator,
             AccountParameter sender,
@@ -410,7 +410,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <returns></returns>
         [HttpGet("{address}/metadata")]
-        public Task<AccountMetadata> GetMetadata([Address] string address)
+        public Task<AccountMetadata> GetMetadata([Required][Address] string address)
         {
             return Accounts.GetMetadata(address);
         }
@@ -431,7 +431,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/report")]
         public async Task<ActionResult> GetBalanceReport(
-            [Address] string address,
+            [Required][Address] string address,
             DateTimeOffset? from,
             DateTimeOffset? to,
             string currency,
@@ -525,7 +525,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/balance_history")]
         public async Task<ActionResult<IEnumerable<HistoricalBalance>>> GetBalanceHistory(
-            [Address] string address,
+            [Required][Address] string address,
             [Min(1)] int? step,
             SelectParameter select,
             SortParameter sort,
@@ -573,7 +573,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Block height at which you want to know account balance</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{level:int}")]
-        public Task<long> GetBalanceAtLevel([Address] string address, int level)
+        public Task<long> GetBalanceAtLevel([Required][Address] string address, [Min(0)] int level)
         {
             return History.Get(address, level);
         }
@@ -588,7 +588,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="datetime">Datetime at which you want to know account balance (e.g. `2020-01-01`, or `2019-12-30T23:42:59Z`)</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{datetime:DateTime}")]
-        public Task<long> GetBalanceAtDate([Address] string address, DateTimeOffset datetime)
+        public Task<long> GetBalanceAtDate([Required][Address] string address, DateTimeOffset datetime)
         {
             return History.Get(address, datetime.DateTime);
         }

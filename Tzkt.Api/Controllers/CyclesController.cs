@@ -99,7 +99,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{index:int}")]
-        public Task<Cycle> GetByIndex(int index, Symbols quote = Symbols.None)
+        public Task<Cycle> GetByIndex([Min(0)] int index, Symbols quote = Symbols.None)
         {
             return Cycles.Get(index, quote);
         }

@@ -684,6 +684,11 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql);
             if (!rows.Any()) return null;
 
+            var proposals = await GetProposals(
+                new Int32Parameter { Eq = index },
+                new SortParameter { Desc = "rolls" },
+                null, 10);
+
             return new VotingEpoch
             {
                 Index = rows.First().Epoch,
@@ -716,18 +721,40 @@ namespace Tzkt.Api.Repositories
                     NayRolls = row.NayRolls,
                     PassBallots = row.PassBallots,
                     PassRolls = row.PassRolls
-                })
+                }),
+                Proposals = proposals
             };
         }
 
         public async Task<IEnumerable<VotingEpoch>> GetEpochs(SortParameter sort, OffsetParameter offset, int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""VotingPeriods""")
-                .Take(sort, offset, limit * 5, x => ("Id", "Id"));
+            sort ??= new SortParameter { Asc = "id" };
+            var sql = new SqlBuilder(@"SELECT DISTINCT ON (""Epoch"") ""Epoch"" AS epoch FROM ""VotingPeriods""")
+                .Take(sort, offset, limit, x => ("Epoch", "Epoch"));
+
+            var query = $@"
+                SELECT periods.* FROM (
+                    {sql.Query}
+                ) as epochs
+                LEFT JOIN LATERAL (
+                    SELECT *
+                    FROM ""VotingPeriods""
+                    WHERE ""Epoch"" = epoch
+                ) as periods
+                ON true
+                ORDER BY ""Id""{(sort.Desc != null ? " DESC" : "")}";
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            var rows = await db.QueryAsync(query, sql.Params);
             if (!rows.Any()) return Enumerable.Empty<VotingEpoch>();
+
+            var epochs = rows.Select(x => (int)x.Epoch).ToHashSet();
+            var proposals = (await GetProposals(
+                new Int32Parameter { In = epochs.ToList() },
+                new SortParameter { Desc = "rolls" },
+                null, limit * 10))
+                .GroupBy(x => x.Epoch)
+                .ToDictionary(k => k.Key, v => v.ToList());
 
             return rows
                 .GroupBy(x => x.Epoch)
@@ -765,8 +792,9 @@ namespace Tzkt.Api.Repositories
                             NayBallots = row.NayBallots,
                             NayRolls = row.NayRolls,
                             PassBallots = row.PassBallots,
-                            PassRolls = row.PassRolls
-                        })
+                            PassRolls = row.PassRolls,
+                        }),
+                        Proposals = proposals.GetValueOrDefault((int)group.Key) ?? Enumerable.Empty<Proposal>()
                     };
                 });
         }
@@ -788,6 +816,11 @@ namespace Tzkt.Api.Repositories
 
             var epoch = rows.First().Epoch;
             rows = rows.Where(x => x.Epoch == epoch).OrderBy(x => x.Index);
+
+            var proposals = await GetProposals(
+                new Int32Parameter { Eq = epoch },
+                new SortParameter { Desc = "rolls" },
+                null, 10);
 
             return new VotingEpoch
             {
@@ -821,7 +854,8 @@ namespace Tzkt.Api.Repositories
                     NayRolls = row.NayRolls,
                     PassBallots = row.PassBallots,
                     PassRolls = row.PassRolls
-                })
+                }),
+                Proposals = proposals
             };
         }
 
