@@ -9,8 +9,8 @@ using Microsoft.Extensions.Hosting;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
-using Tzkt.Api.Services.Stats;
 using Tzkt.Api.Services.Sync;
+using Tzkt.Api.Services;
 using Tzkt.Api.Swagger;
 using Tzkt.Api.Websocket;
 using Tzkt.Api.Websocket.Hubs;
@@ -60,9 +60,7 @@ namespace Tzkt.Api
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
 
-
-            services.AddHomeCache();
-
+            services.AddHomeService();
             services.AddStateListener();
 
             services.AddControllers()

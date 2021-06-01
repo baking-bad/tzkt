@@ -8,7 +8,6 @@ using NSwag.Annotations;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Stats;
 
 namespace Tzkt.Api.Controllers
 {
@@ -220,57 +219,6 @@ namespace Tzkt.Api.Controllers
                     });
                 }
             }
-        }
-        
-        [OpenApiIgnore]
-        [HttpGet("overall")]
-        public Stats GetOverall(Symbols quote = Symbols.None)
-        {
-            return StatsService.GetCurrentStats(quote);
-        }
-        
-        [OpenApiIgnore]
-        [HttpGet("overall/blocks")]
-        public object GetBlocks()
-        {
-            return new SelectionResponse
-            {
-                Cols = StatsService.BlockFields,
-                Rows = StatsService.BlocksTab
-            };
-        }
-        
-        [OpenApiIgnore]
-        [HttpGet("overall/accounts")]
-        public object GetAccounts()
-        {
-            return new SelectionResponse
-            {
-                Cols = StatsService.AccountFields,
-                Rows = StatsService.AccountsTab
-            };
-        }
-        
-        [OpenApiIgnore]
-        [HttpGet("overall/bakers")]
-        public object GetBakers()
-        {
-            return new SelectionResponse
-            {
-                Cols = StatsService.BakerFields,
-                Rows = StatsService.BakersTab
-            };
-        }
-
-        [OpenApiIgnore]
-        [HttpGet("overall/assets")]
-        public object GetAssets()
-        {
-            return new SelectionResponse
-            {
-                Cols = StatsService.AssetFields,
-                Rows = StatsService.AssetsTab
-            };
         }
     }
 }

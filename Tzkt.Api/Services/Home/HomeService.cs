@@ -2,19 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using Dapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 
-namespace Tzkt.Api.Services.Stats
+namespace Tzkt.Api.Services
 {
-    public class StatsService : DbConnection
+    public class HomeService : DbConnection
     {
         #region static
         public static object[][] AccountsTab { get; set; }
@@ -43,7 +44,6 @@ namespace Tzkt.Api.Services.Stats
         #endregion
 
         #region stats
-
         private static DailyData DailyData;
         private static CycleData CycleData;
         private static GovernanceData GovernanceData;
@@ -57,7 +57,6 @@ namespace Tzkt.Api.Services.Stats
         private static List<ChartPoint> TxsChart;
         private static MarketData MarketData;
         private static List<Quote> MarketChart;
-
         #endregion
 
         private readonly AccountMetadataService Metadata;
@@ -66,21 +65,21 @@ namespace Tzkt.Api.Services.Stats
         private readonly BakingRightsRepository RightsRepo;
         private readonly BlockRepository BlocksRepo;
         private readonly QuotesRepository QuotesRepo;
-        private readonly StatsConfig Config;
         private readonly VotingRepository VotingRepo;
 
         private readonly ProtocolsCache Protocols;
         private readonly StateCache State;
         private readonly TimeCache Times;
-        
+
+        private readonly SemaphoreSlim Sema = new(1);
+        private readonly HomeConfig Config;
+        private readonly ILogger Logger;
         private static int LastUpdate;
 
-        public StatsService(AccountMetadataService metadata, BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
+        public HomeService(AccountMetadataService metadata, BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
             VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
-            StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<StatsService> logger) : base(config)
+            StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<HomeService> logger) : base(config)
         {
-            logger.LogDebug("Initializing stats service...");
-
             Metadata = metadata;
             RightsRepo = rights;
             Times = times;
@@ -90,10 +89,13 @@ namespace Tzkt.Api.Services.Stats
             Protocols = protocols;
             State = state;
             QuotesRepo = quotes;
-            Config = config.GetStatsConfig();
+            Config = config.GetHomeConfig();
+            Logger = logger;
+
+            _ = UpdateAsync();
         }
         
-        public static Models.Stats GetCurrentStats(Symbols quote)
+        public static Stats GetCurrentStats(Symbols quote)
         {
             if (LastUpdate <= 0)
                 return null;
@@ -158,38 +160,50 @@ namespace Tzkt.Api.Services.Stats
 
         public async Task UpdateAsync()
         {
-            using var db = GetConnection();
+            if (!Config.Enabled) return;
 
-            if (LastUpdate < State.Current.Level - Config.UpdatePeriod)
+            try
             {
-                BlocksTab = await GetBlocks(); // 60
-                AccountsTab = await GetAccounts(); // 270
-                BakersTab = await GetBakers(); // 40
-                AssetsTab = await GetAssets(); // 100
+                await Sema.WaitAsync();
+                Logger.LogDebug("Update home");
 
-                var statistics = await GetStatistics(db); // 15
-                
-                DailyData = await GetDailyData(db); // 260
-                CycleData = GetCycleData(); // 1
-                TxsData = await GetTxsData(db); // 2800
-                StakingData = await GetStakingData(db, statistics.TotalSupply); // 50
-                ContractsData = await GetContractsData(db); // 3000
-                MarketData = GetMarketData(statistics.TotalSupply, statistics.CirculatingSupply); // 1
-                GovernanceData = await GetGovernanceData(); // 40
-                AccountsData = await GetAccountsData(db); // 320
+                using var db = GetConnection();
 
-                await UpdateTxChart(db); // 2000
-                await UpdateCallsChart(db); // 2800
-                await UpdateStakingChart(db); // 30
-                await UpdateAccountsChart(db); // 700
-                await UpdateMarketChart(db); // 10
+                if (LastUpdate < State.Current.Level - Config.UpdatePeriod)
+                {
+                    BlocksTab = await GetBlocks(); // 60
+                    AccountsTab = await GetAccounts(); // 270
+                    BakersTab = await GetBakers(); // 40
+                    AssetsTab = await GetAssets(); // 100
 
-                LastUpdate = State.Current.Level;
+                    var statistics = await GetStatistics(db); // 15
+
+                    DailyData = await GetDailyData(db); // 260
+                    CycleData = GetCycleData(); // 1
+                    TxsData = await GetTxsData(db); // 2800
+                    StakingData = await GetStakingData(db, statistics.TotalSupply); // 50
+                    ContractsData = await GetContractsData(db); // 3000
+                    MarketData = GetMarketData(statistics.TotalSupply, statistics.CirculatingSupply); // 1
+                    GovernanceData = await GetGovernanceData(); // 40
+                    AccountsData = await GetAccountsData(db); // 320
+
+                    await UpdateTxChart(db); // 2000
+                    await UpdateCallsChart(db); // 2800
+                    await UpdateStakingChart(db); // 30
+                    await UpdateAccountsChart(db); // 700
+                    await UpdateMarketChart(db); // 10
+
+                    LastUpdate = State.Current.Level;
+                }
+                else
+                {
+                    BlocksTab = await GetBlocks();
+                    CycleData = GetCycleData();
+                }
             }
-            else
+            finally
             {
-                BlocksTab = await GetBlocks();
-                CycleData = GetCycleData();
+                Sema.Release();
             }
         }
 
@@ -232,7 +246,7 @@ namespace Tzkt.Api.Services.Stats
                     new AccountTypeParameter { Eq = 2 }, new ContractKindParameter { Eq = 2 }, 
                     null, null, null, null,
                     new SortParameter { Desc = "numTransactions" }, null, 100, AssetFields))
-                .OrderBy(x => (string)x[0] == null)
+                .OrderBy(x => x[0] == null)
                 .ThenByDescending(x => (int)x[6])
                 .Take(10)
                 .ToArray();
@@ -498,10 +512,7 @@ namespace Tzkt.Api.Services.Stats
         {
             var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);
             var period = epoch.Periods.Last();
-            var proposals = (await VotingRepo.GetProposals(
-                new Int32Parameter { Eq = epoch.Index },
-                new SortParameter { Desc = "upvotes" },
-                null, 10)).ToList();
+            var proposals = epoch.Proposals.OrderByDescending(x => x.Rolls);
             var proposal = proposals.FirstOrDefault();
             
             if (period.Kind == "proposal")
@@ -531,21 +542,22 @@ namespace Tzkt.Api.Services.Stats
                 EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
             };
 
-            if (period.Kind != "promotion" && period.Kind != "exploration") return result;
+            if (period.Kind == "exploration" || period.Kind == "promotion")
+            {
+                var yayNaySum = (period.YayRolls ?? 0) + (period.NayRolls ?? 0);
+                var totalVoted = yayNaySum + (period.PassRolls ?? 0);
 
-            var yayNaySum = (period.YayRolls ?? 0) + (period.NayRolls ?? 0);
-            var totalVoted = yayNaySum + (period.PassRolls ?? 0);
+                result.YayVotes = yayNaySum > 0
+                    ? Math.Round(100.0 * (period.YayRolls ?? 0) / yayNaySum, 2)
+                    : 0;
 
-            result.YayVotes = yayNaySum > 0
-                ? Math.Round(100.0 * (period.YayRolls ?? 0) / yayNaySum, 2)
-                : 0;
+                result.Participation = period.TotalRolls > 0
+                    ? Math.Round(100.0 * totalVoted / period.TotalRolls ?? 0, 2)
+                    : 0;
 
-            result.Participation = period.TotalRolls > 0
-                ? Math.Round(100.0 * totalVoted / period.TotalRolls ?? 0, 2)
-                : 0;
-
-            result.Quorum = Math.Round(period.BallotsQuorum ?? 0, 2);
-            result.Supermajority = Math.Round(period.Supermajority ?? 0, 2);
+                result.Quorum = Math.Round(period.BallotsQuorum ?? 0, 2);
+                result.Supermajority = Math.Round(period.Supermajority ?? 0, 2);
+            }
 
             return result;
         }
@@ -801,11 +813,11 @@ namespace Tzkt.Api.Services.Stats
         }
     }
     
-    public static class HomeCacheExt
+    public static class HomeServiceExt
     {
-        public static void AddHomeCache(this IServiceCollection services)
+        public static void AddHomeService(this IServiceCollection services)
         {
-            services.AddSingleton<StatsService>();
+            services.AddSingleton<HomeService>();
         }
     }
 }
