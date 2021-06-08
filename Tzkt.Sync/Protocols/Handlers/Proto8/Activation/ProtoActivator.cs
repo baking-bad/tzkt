@@ -23,12 +23,19 @@ namespace Tzkt.Sync.Protocols.Proto8
 
         protected override Task MigrateContext(AppState state)
         {
-            var period = Db.ChangeTracker
+            var prevPeriod = Db.ChangeTracker
+                .Entries()
+                .First(x => x.Entity is VotingPeriod p && p.Index == state.VotingPeriod - 1)
+                .Entity as VotingPeriod;
+
+            var newPeriod = Db.ChangeTracker
                 .Entries()
                 .First(x => x.Entity is VotingPeriod p && p.Index == state.VotingPeriod)
                 .Entity as VotingPeriod;
 
-            period.LastLevel = period.FirstLevel + 20_479;
+            prevPeriod.LastLevel -= 1;
+            newPeriod.FirstLevel -= 1;
+            newPeriod.LastLevel = newPeriod.FirstLevel + 20_479;
             return Task.CompletedTask;
         }
     }
