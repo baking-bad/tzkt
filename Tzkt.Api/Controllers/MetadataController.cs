@@ -23,8 +23,9 @@ namespace Tzkt.Api.Controllers
             MetadataRepository = metadataRepository;
             Auth = auth;
         }
-                
-        [HttpPost("software/update")]
+
+        #region Software
+        [HttpPost("software")]
         public async Task<ActionResult> UpdateSoftwareMetadata([FromHeader] AuthHeaders headers)
         {
             try
@@ -34,7 +35,7 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
                 
-                return Ok(await MetadataRepository.Update("Software", "ShortHash", JsonSerializer.Deserialize<List<Met>>(jsonString)));
+                return Ok(await MetadataRepository.Update("Software", "ShortHash", JsonSerializer.Deserialize<List<Meta>>(jsonString)));
             }
             catch (Exception ex)
             {
@@ -50,8 +51,10 @@ namespace Tzkt.Api.Controllers
             
             return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash", limit, offset));
         }
+        #endregion
 
-        [HttpPost("protocols/update")]
+        #region Protocols
+        [HttpPost("protocols")]
         public async Task<ActionResult> UpdateProtocolMetadata([FromHeader] AuthHeaders headers)
         {
             try
@@ -61,12 +64,12 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
 
-                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+                var metadata = JsonSerializer.Deserialize<List<Meta>>(jsonString);
 
-                if (!value.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
+                if (!metadata.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
                     return BadRequest("Invalid protocol hash");
                 
-                return Ok(await MetadataRepository.Update("Protocols", "Hash", value));
+                return Ok(await MetadataRepository.Update("Protocols", "Hash", metadata));
             }
             catch (Exception ex)
             {
@@ -77,13 +80,14 @@ namespace Tzkt.Api.Controllers
         [HttpGet("protocols")]
         public async Task<ActionResult> GetProtocolsMetadata([FromHeader] AuthHeaders headers, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
         {
-            //TODO Value filter like storage contracts
             if (!Auth.Authorized(headers, out var error))
                 return Unauthorized(error);
             return Ok(await MetadataRepository.GetMetadata("Protocols", "Hash", limit, offset));
         }
+        #endregion
 
-        [HttpPost("proposals/update")]
+        #region Proposals
+        [HttpPost("proposals")]
         public async Task<ActionResult> UpdateProposalMetadata([FromHeader] AuthHeaders headers)
         {
             try
@@ -93,12 +97,12 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
 
-                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+                var metadata = JsonSerializer.Deserialize<List<Meta>>(jsonString);
 
-                if (!value.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
+                if (!metadata.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
                     return BadRequest("Invalid proposal hash");
                 
-                return Ok(await MetadataRepository.Update("Proposals", "Hash", value));
+                return Ok(await MetadataRepository.Update("Proposals", "Hash", metadata));
             }
             catch (Exception ex)
             {
@@ -113,9 +117,11 @@ namespace Tzkt.Api.Controllers
                 return Unauthorized(error);
             return Ok(await MetadataRepository.GetMetadata("Proposals", "Hash", limit, offset));
         }
+        #endregion
 
-        [HttpPost("accounts/update")]
-        public async Task<ActionResult> UpdateAccountsMetadata([FromHeader] AuthHeaders headers)
+        #region Accounts
+        [HttpPost("accounts")]
+        public async Task<ActionResult> UpdateAccounts([FromHeader] AuthHeaders headers)
         {
             try
             {
@@ -124,12 +130,12 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
 
-                var value = JsonSerializer.Deserialize<List<Met>>(jsonString);
+                var metadata = JsonSerializer.Deserialize<List<Meta>>(jsonString);
 
-                if (!value.All(x => Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-z]{33}$")))
+                if (!metadata.All(x => Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-z]{33}$")))
                     return BadRequest("Invalid address");
                 
-                return Ok(await MetadataRepository.Update("Accounts", "Address", value));
+                return Ok(await MetadataRepository.Update("Accounts", "Address", metadata));
             }
             catch (Exception ex)
             {
@@ -142,9 +148,8 @@ namespace Tzkt.Api.Controllers
         {
             if (!Auth.Authorized(headers, out var error))
                 return Unauthorized(error);
-            return Ok(await MetadataRepository.GetFilteredMetadata(alias, limit, offset));
+            return Ok(await MetadataRepository.GetAccounts(alias, limit, offset));
         }
-        
-        
+        #endregion
     }
 }
