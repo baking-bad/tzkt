@@ -22,11 +22,10 @@ namespace Tzkt.Api.Repositories
 
             foreach (var metadata in metadatas)
             {
-                //TODO Return amount of affected rows?
-                var upd = $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key";
-                var rows = await db.ExecuteAsync(upd, new {metadata = metadata.Metadata.Json, key = metadata.Key});
+                var upd = $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key::character(36)";
+                await db.ExecuteAsync(upd, new {metadata = metadata.Metadata.Json, key = metadata.Key});
             }
-            
+
             var sql = $@"SELECT ""{key}"", ""Metadata"" FROM ""{table}"" WHERE ""{key}"" IN ('{string.Join("', '", metadatas.Select(x => x.Key))}')";
             return await db.QueryAsync(sql);
         }
@@ -35,15 +34,28 @@ namespace Tzkt.Api.Repositories
         {
             using var db = GetConnection();
 
-            var sql = new SqlBuilder($@"SELECT ""{key}"", ""Metadata"" FROM ""{table}"" WHERE ""Metadata"" IS NOT NULL")
+            var sql = new SqlBuilder($@"SELECT ""{key}"" AS ""Key"", ""Metadata"" FROM ""{table}"" WHERE ""Metadata"" IS NOT NULL")
                 .Take(offset, limit);
             var res = await db.QueryAsync(sql.Query, sql.Params);
             return res.Select(row => new Met
             {
-                Key = row.ShortHash,
+                Key = row.Key,
                 Metadata = new RawJson(row.Metadata)
             });
+        }
 
+        public async Task<IEnumerable<Met>> GetFilteredMetadata(string value, int limit, OffsetParameter offset)
+        {
+            using var db = GetConnection();
+            
+            var sql = new SqlBuilder($@"SELECT ""Address"" AS key, ""Metadata"" FROM ""Accounts"" WHERE ""Metadata"" ->> 'alias' ILIKE '%{value}%'")
+                .Take(offset, limit);
+            var res = await db.QueryAsync(sql.Query, sql.Params);
+            return res.Select(row => new Met
+            {
+                Key = row.key,
+                Metadata = new RawJson(row.Metadata)
+            });
         }
     }
 }

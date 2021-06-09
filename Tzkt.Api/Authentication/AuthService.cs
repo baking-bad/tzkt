@@ -14,9 +14,6 @@ namespace Tzkt.Api.Authentication
     public class AuthService
     {
         private readonly AuthConfig Config;
-        private const string UserHeader = "X-TZKT-USER";
-        private const string NonceHeader = "X-TZKT-NONCE";
-        private const string SignatureHeader = "X-TZKT-SIGNATURE";
 
         private readonly Dictionary<string, long> Nonces;
 
@@ -26,10 +23,15 @@ namespace Tzkt.Api.Authentication
             Nonces = Config.Admins.ToDictionary(x => x.Username, x => long.MinValue );
         }
         
-        //TODO Method overload for GET
         public bool Authorized(AuthHeaders headers, string json, out string error)
         {
             error = null;
+            
+            if (!Config.Enabled)
+            {
+                return true;
+            }
+            
             var nonce = (long) headers.Nonce;
             
             if(Config.Admins.All(x => x.Username != headers.User))
@@ -69,6 +71,12 @@ namespace Tzkt.Api.Authentication
         public bool Authorized(AuthHeaders headers, out string error)
         {
             error = null;
+            
+            if (!Config.Enabled)
+            {
+                return true;
+            }
+            
             var nonce = (long) headers.Nonce;
             
             if(Config.Admins.All(x => x.Username != headers.User))
