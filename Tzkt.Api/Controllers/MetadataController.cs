@@ -36,9 +36,8 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.Authorized(headers, jsonString, out var error))
                     return Unauthorized(error);
                 
-                await MetadataRepository.Update("Software", "ShortHash", JsonSerializer.Deserialize<List<Met>>(jsonString));
                 //TODO Should we return the updated data?
-                return Ok();
+                return Ok(await MetadataRepository.Update("Software", "ShortHash", JsonSerializer.Deserialize<List<Met>>(jsonString)));
             }
             catch (Exception ex)
             {
@@ -49,10 +48,14 @@ namespace Tzkt.Api.Controllers
         [HttpGet("software")]
         public async Task<ActionResult> GetSoftwareMetadata([FromHeader] AuthHeaders headers, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
         {
-            //TODO Value filter like storage contracts
+            //TODO Value filter like storage contracts (for accounts we need to have filtering for aliases)
+            /*SELECT "Id", "FirstLevel", "Metadata"->>'version' as "Version", "Metadata"->>'commitDate' as "CommitDate"
+            FROM "Software"
+            WHERE "Metadata"->>'version' LIKE '%Max%';*/
             if (!Auth.Authorized(headers, out var error))
                 return Unauthorized(error);
-            return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash",0, 0));
+            //TODO offset from the OffsetParameter?
+            return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash", limit, offset));
         }
 
         [HttpPost("protocols/update")]
@@ -70,14 +73,21 @@ namespace Tzkt.Api.Controllers
                 if (!value.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
                     return BadRequest("Invalid protocol hash");
                 
-                await MetadataRepository.Update("Protocols", "Hash", value);
-                
-                return Ok();
+                return Ok(await MetadataRepository.Update("Protocols", "Hash", value));
             }
             catch (Exception ex)
             {
                 return new BadRequest(nameof(headers), ex.Message);
             }
+        }
+
+        [HttpGet("protocols")]
+        public async Task<ActionResult> GetProtocolsMetadata([FromHeader] AuthHeaders headers, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
+        {
+            //TODO Value filter like storage contracts
+            if (!Auth.Authorized(headers, out var error))
+                return Unauthorized(error);
+            return Ok(await MetadataRepository.GetMetadata("Protocols", "Hash", limit, offset));
         }
     }
 }

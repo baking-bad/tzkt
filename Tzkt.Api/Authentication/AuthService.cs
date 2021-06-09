@@ -38,9 +38,9 @@ namespace Tzkt.Api.Authentication
                 return false;
             }
 
-            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(nonce))
+            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddMilliseconds(nonce))
             {
-                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddSeconds(nonce)}";
+                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddMilliseconds(nonce)}";
                 return false;
             }
             
@@ -50,12 +50,6 @@ namespace Tzkt.Api.Authentication
                 return false;
             }
 
-            var jso = new JsonSerializerOptions
-            {
-                Converters = { new DateTimeConverter()},
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
-            
             //TODO Check unicode chars one more time
             // var json = JsonSerializer.Serialize(body, jso);
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
@@ -83,9 +77,9 @@ namespace Tzkt.Api.Authentication
                 return false;
             }
 
-            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddSeconds(nonce))
+            if (DateTime.UtcNow.AddSeconds(-Config.NonceLifetime) > DateTime.UnixEpoch.AddMilliseconds(nonce))
             {
-                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddSeconds(nonce)}";
+                error = $"Nonce too old. Server time: {DateTime.UtcNow}. Request time: {DateTime.UnixEpoch.AddMilliseconds(nonce)}";
                 return false;
             }
             
@@ -95,13 +89,6 @@ namespace Tzkt.Api.Authentication
                 return false;
             }
 
-            var jso = new JsonSerializerOptions
-            {
-                Converters = { new DateTimeConverter()},
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
-            
-            
             var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == headers.User)?.PubKey);
             if (!pubKey.Verify($"{headers.Nonce}", headers.Signature))
             {
