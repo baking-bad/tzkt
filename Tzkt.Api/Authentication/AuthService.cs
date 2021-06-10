@@ -32,6 +32,24 @@ namespace Tzkt.Api.Authentication
                 return true;
             }
             
+            if (string.IsNullOrWhiteSpace(headers.User))
+            {
+                error = $"The X-TZKT-USER header is required";
+                return false;
+            }
+            
+            if (headers.Nonce == null)
+            {
+                error = $"The X-TZKT-NONCE header is required";
+                return false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(headers.Signature))
+            {
+                error = $"The X-TZKT-SIGNATURE header is required";
+                return false;
+            }
+                
             var nonce = (long) headers.Nonce;
             
             if(Config.Admins.All(x => x.Username != headers.User))
@@ -52,8 +70,6 @@ namespace Tzkt.Api.Authentication
                 return false;
             }
 
-            //TODO Check unicode chars one more time
-            // var json = JsonSerializer.Serialize(body, jso);
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
             
             var pubKey = PubKey.FromBase58(Config.Admins.FirstOrDefault(u => u.Username == headers.User)?.PubKey);
@@ -75,6 +91,24 @@ namespace Tzkt.Api.Authentication
             if (!Config.Enabled)
             {
                 return true;
+            }
+            
+            if (string.IsNullOrWhiteSpace(headers.User))
+            {
+                error = $"The X-TZKT-USER header is required";
+                return false;
+            }
+            
+            if (headers.Nonce == null)
+            {
+                error = $"The X-TZKT-NONCE header is required";
+                return false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(headers.Signature))
+            {
+                error = $"The X-TZKT-SIGNATURE header is required";
+                return false;
             }
             
             var nonce = (long) headers.Nonce;
