@@ -62,9 +62,9 @@ namespace Tzkt.Api
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
             services.AddTransient<MetadataRepository>();
-            
-            services.AddSingleton<AuthService>();
 
+            services.AddAuthService(Configuration);
+            
             services.AddStateListener();
 
             services.AddControllers()

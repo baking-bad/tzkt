@@ -11,13 +11,13 @@ using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Authentication
 {
-    public class AuthService
+    public class PubKeyAuthService : IAuthService
     {
         private readonly AuthConfig Config;
 
         private readonly Dictionary<string, long> Nonces;
 
-        public AuthService(IConfiguration config)
+        public PubKeyAuthService(IConfiguration config)
         {
             Config = config.GetAuthConfig();
             Nonces = Config.Admins.ToDictionary(x => x.Username, x => long.MinValue );
@@ -26,11 +26,7 @@ namespace Tzkt.Api.Authentication
         public bool Authorized(AuthHeaders headers, string json, out string error)
         {
             error = null;
-            
-            if (!Config.Enabled)
-            {
-                return true;
-            }
+
             
             if (string.IsNullOrWhiteSpace(headers.User))
             {
@@ -87,12 +83,7 @@ namespace Tzkt.Api.Authentication
         public bool Authorized(AuthHeaders headers, out string error)
         {
             error = null;
-            
-            if (!Config.Enabled)
-            {
-                return true;
-            }
-            
+
             if (string.IsNullOrWhiteSpace(headers.User))
             {
                 error = $"The X-TZKT-USER header is required";

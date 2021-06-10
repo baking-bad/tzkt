@@ -13,5 +13,8 @@ namespace Tzkt.Api.Authentication
  
         [FromHeader(Name="X-TZKT-SIGNATURE")]
         public string Signature { get; set; }
+ 
+        [FromHeader(Name="X-TZKT-PASSWORD")]
+        public string Password { get; set; }
     }
 }

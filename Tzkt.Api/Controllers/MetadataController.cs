@@ -16,9 +16,9 @@ namespace Tzkt.Api.Controllers
     public class MetadataController : ControllerBase
     {
         private readonly MetadataRepository MetadataRepository;
-        private readonly AuthService Auth;
+        private readonly IAuthService Auth;
 
-        public MetadataController(MetadataRepository metadataRepository, AuthService auth)
+        public MetadataController(MetadataRepository metadataRepository, IAuthService auth)
         {
             MetadataRepository = metadataRepository;
             Auth = auth;

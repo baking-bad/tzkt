@@ -5,7 +5,14 @@ namespace Tzkt.Api.Utils
 {
     public class AuthConfig
     {
-        public bool Enabled { get; set; } = true;
+        public enum Methods
+        {
+            Default,
+            PubKey,
+            Password
+        }
+
+        public Methods Method { get; set; } = Methods.Default;
         public int NonceLifetime { get; set; } = 100;
         public List<Admin> Admins { get; set; } = new();
     }
