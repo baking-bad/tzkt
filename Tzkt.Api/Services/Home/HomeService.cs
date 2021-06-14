@@ -191,10 +191,10 @@ namespace Tzkt.Api.Services
                     GovernanceData = await GetGovernanceData(); // 40
                     AccountsData = await GetAccountsData(db); // 320
 
-                    await UpdateTxChart(db); // 2000
-                    await UpdateCallsChart(db); // 2800
-                    await UpdateStakingChart(db); // 30
-                    await UpdateAccountsChart(db); // 700
+                    // await UpdateTxChart(db); // 2000
+                    // await UpdateCallsChart(db); // 2800
+                    // await UpdateStakingChart(db); // 30
+                    // await UpdateAccountsChart(db); // 700
                     await UpdateMarketChart(db); // 10
 
                     LastUpdate = State.Current.Level;
@@ -790,9 +790,10 @@ namespace Tzkt.Api.Services
 
         private async Task UpdateMarketChart(IDbConnection db)
         {
+            var period = -30;
             var end = Times[State.Current.QuoteLevel];
-            var start = new DateTime(end.AddMonths(-1).Year, end.AddMonths(-1).Month, end.AddMonths(-1).Day, (end.AddMonths(-1).Hour / 12) * 12, 0, 0, DateTimeKind.Unspecified) ;
-            var levels = Enumerable.Range(0, 60)
+            var start = new DateTime(end.AddDays(period).Year, end.AddDays(period).Month, end.AddDays(period).Day, (end.AddDays(period).Hour / 12) * 12, 0, 0, DateTimeKind.Unspecified) ;
+            var levels = Enumerable.Range(1, 60)
                 .Select(offset =>  Times.FindLevel(start.AddHours(offset * 12), SearchMode.ExactOrHigher))
                 .ToList();
             MarketChart = (await db.QueryAsync<Quote>($@"
