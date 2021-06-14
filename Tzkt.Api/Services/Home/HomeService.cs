@@ -101,7 +101,7 @@ namespace Tzkt.Api.Services
             if (LastUpdate <= 0)
                 return null;
             
-            var marketData = quote switch
+            var priceChart = quote switch
             {
                 Symbols.Btc => MarketChart?.Select(x => new ChartPoint<double>
                 {
@@ -138,7 +138,11 @@ namespace Tzkt.Api.Services
                     Date = x.Timestamp,
                     Value = x.Krw
                 }).ToList(),
-                _ => new List<ChartPoint<double>>(0)
+                _ => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Usd
+                }).ToList()
             };
             return new HomeStats
             {
@@ -154,7 +158,7 @@ namespace Tzkt.Api.Services
                 TxsData = TxsData,
                 TotalTxsChart = TxsChart,
                 MarketData = MarketData,
-                PriceChart = marketData
+                PriceChart = priceChart
             };
         }
 
@@ -183,7 +187,7 @@ namespace Tzkt.Api.Services
                     TxsData = await GetTxsData(db); // 2800
                     StakingData = await GetStakingData(db, statistics.TotalSupply); // 50
                     ContractsData = await GetContractsData(db); // 3000
-                    MarketData = GetMarketData(statistics.TotalSupply, statistics.CirculatingSupply); // 1
+                    MarketData = await GetMarketData(statistics.TotalSupply, statistics.CirculatingSupply); // 1
                     GovernanceData = await GetGovernanceData(); // 40
                     AccountsData = await GetAccountsData(db); // 320
 
@@ -508,16 +512,21 @@ namespace Tzkt.Api.Services
             };
         }
 
-        private MarketData GetMarketData(long totalSupply, long circulatingSupply)
+        private async Task<MarketData> GetMarketData(long totalSupply, long circulatingSupply)
         {
+            var timestamp = new DateTimeParameter
+            {
+                Eq = State.Current.Timestamp.AddDays(-30)
+            };
             return new()
             {
                 TotalSupply = totalSupply,
                 CirculatingSupply = circulatingSupply,
-                Quote = QuotesRepo.GetLast()
+                Quote = QuotesRepo.GetLast(),
+                PrevQuote = (await QuotesRepo.Get(null, timestamp, null, null, 1)).FirstOrDefault()
             };
         }
-
+        
         private async Task<GovernanceData> GetGovernanceData()
         {
             var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);
@@ -564,6 +573,18 @@ namespace Tzkt.Api.Services
 
                 result.Participation = period.TotalRolls > 0
                     ? Math.Round(100.0 * totalVoted / (int)period.TotalRolls, 2)
+                    : 0;
+
+                result.YayParticipation = period.TotalRolls > 0
+                    ? Math.Round(100.0 * (int)period.YayRolls / (int)period.TotalRolls, 2)
+                    : 0;
+
+                result.NayParticipation = period.TotalRolls > 0
+                    ? Math.Round(100.0 * (int)period.NayRolls / (int)period.TotalRolls, 2)
+                    : 0;
+
+                result.PassParticipation = period.TotalRolls > 0
+                    ? Math.Round(100.0 * (int)period.PassRolls / (int)period.TotalRolls, 2)
                     : 0;
 
                 result.Quorum = Math.Round((double)period.BallotsQuorum, 2);

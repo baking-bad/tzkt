@@ -20,5 +20,9 @@ namespace Tzkt.Api.Models
 
         public double? Supermajority { get; set; }
         public double? YayVotes { get; set; }
+        
+        public double? YayParticipation { get; set; }
+        public double? NayParticipation { get; set; }
+        public double? PassParticipation { get; set; }
     }
 }
