@@ -514,16 +514,17 @@ namespace Tzkt.Api.Services
 
         private async Task<MarketData> GetMarketData(long totalSupply, long circulatingSupply)
         {
-            var timestamp = new DateTimeParameter
+            var level = new Int32Parameter
             {
-                Eq = State.Current.Timestamp.AddDays(-30)
+                Eq = Times.FindLevel(State.Current.Timestamp.AddDays(-30), SearchMode.ExactOrHigher)
             };
+            
             return new()
             {
                 TotalSupply = totalSupply,
                 CirculatingSupply = circulatingSupply,
                 Quote = QuotesRepo.GetLast(),
-                PrevQuote = (await QuotesRepo.Get(null, timestamp, null, null, 1)).FirstOrDefault()
+                PrevQuote = (await QuotesRepo.Get(level, null, null, null, 1)).FirstOrDefault()
             };
         }
         
@@ -531,7 +532,7 @@ namespace Tzkt.Api.Services
         {
             var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);
             var period = epoch.Periods.Last();
-            var proposals = epoch.Proposals.OrderByDescending(x => x.Rolls);
+            var proposals = epoch.Proposals.OrderByDescending(x => x.Rolls).ToList();
             var proposal = proposals.FirstOrDefault();
             
             if (period.Kind == "proposal")
@@ -539,7 +540,7 @@ namespace Tzkt.Api.Services
                 return new GovernanceData
                 {
                     Period = period.Kind,
-                    
+                    Protocol = proposals.Any() ? null : State.Current.Protocol,
                     Proposals = proposals.Select(x => new ProposalData
                     {
                         Hash = x.Hash,

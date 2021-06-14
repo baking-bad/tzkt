@@ -4,7 +4,7 @@ namespace Tzkt.Api.Services
 {
     public class HomeConfig
     {
-        public bool Enabled { get; set; } = true;
+        public bool Enabled { get; set; } = false;
         public int UpdatePeriod { get; set; } = 10;
     }
 
