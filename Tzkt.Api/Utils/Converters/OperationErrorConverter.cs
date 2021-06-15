@@ -16,6 +16,12 @@ namespace Tzkt.Api
             var sideReader = reader;
 
             sideReader.Read();
+            while (!sideReader.ValueTextEquals("type"))
+            {
+                sideReader.Skip();
+                sideReader.Read();
+            }
+
             sideReader.Read();
             var type = sideReader.GetString();
 
