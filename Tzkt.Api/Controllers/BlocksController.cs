@@ -121,7 +121,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{hash}")]
         public Task<Block> GetByHash(
-            [BlockHash] string hash,
+            [Required][BlockHash] string hash,
             bool operations = false,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)

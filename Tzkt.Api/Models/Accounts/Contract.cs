@@ -117,7 +117,19 @@ namespace Tzkt.Api.Models
         /// Contract storage value. Omitted by default. Use `?includeStorage=true` to include it in response.
         /// </summary>
         public object Storage { get; set; }
-        
+
+        /// <summary>
+        /// 32-bit hash of the contract parameter and storage types.
+        /// This field can be used for searching similar contracts (which have the same interface).
+        /// </summary>
+        public int TypeHash { get; set; }
+
+        /// <summary>
+        /// 32-bit hash of the contract code.
+        /// This field can be used for searching same contracts (which have the same script).
+        /// </summary>
+        public int CodeHash { get; set; }
+
         /// <summary>
         /// List of contracts, related to the contract
         /// </summary>

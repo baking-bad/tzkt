@@ -30,7 +30,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Baker address</param>
         /// <returns></returns>
         [HttpGet("bakers/{address}/count")]
-        public Task<int> GetBakerRewardsCount([Address] string address)
+        public Task<int> GetBakerRewardsCount([Required][Address] string address)
         {
             return Rewards.GetBakerRewardsCount(address);
         }
@@ -51,7 +51,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("bakers/{address}")]
         public async Task<ActionResult<IEnumerable<BakerRewards>>> GetBakerRewards(
-            [Address] string address,
+            [Required][Address] string address,
             Int32Parameter cycle,
             SelectParameter select,
             SortParameter sort,
@@ -100,7 +100,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("bakers/{address}/{cycle:int}")]
-        public Task<BakerRewards> GetBakerRewardsByCycle([Address] string address, int cycle, Symbols quote = Symbols.None)
+        public Task<BakerRewards> GetBakerRewardsByCycle([Required][Address] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
         {
             return Rewards.GetBakerRewards(address, cycle, quote);
         }
@@ -114,7 +114,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Delegator address</param>
         /// <returns></returns>
         [HttpGet("delegators/{address}/count")]
-        public Task<int> GetDelegatorRewardsCount([Address] string address)
+        public Task<int> GetDelegatorRewardsCount([Required][Address] string address)
         {
             return Rewards.GetDelegatorRewardsCount(address);
         }
@@ -135,7 +135,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("delegators/{address}")]
         public async Task<ActionResult<IEnumerable<DelegatorRewards>>> GetDelegatorRewards(
-            [Address] string address,
+            [Required][Address] string address,
             Int32Parameter cycle,
             SelectParameter select,
             SortParameter sort,
@@ -184,7 +184,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegators/{address}/{cycle:int}")]
-        public Task<DelegatorRewards> GetDelegatorRewardsByCycle([Address] string address, int cycle, Symbols quote = Symbols.None)
+        public Task<DelegatorRewards> GetDelegatorRewardsByCycle([Required][Address] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
         {
             return Rewards.GetDelegatorRewards(address, cycle, quote);
         }
@@ -201,7 +201,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of delegators to return</param>
         /// <returns></returns>
         [HttpGet("split/{address}/{cycle:int}")]
-        public Task<RewardSplit> GetRewardSplit([Address] string address, int cycle, int offset = 0, [Range(0, 10000)] int limit = 100)
+        public Task<RewardSplit> GetRewardSplit([Required][Address] string address, [Min(0)] int cycle, int offset = 0, [Range(0, 10000)] int limit = 100)
         {
             return Rewards.GetRewardSplit(address, cycle, offset, limit);
         }
@@ -217,7 +217,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="delegator">Delegator address</param>
         /// <returns></returns>
         [HttpGet("split/{baker}/{cycle:int}/{delegator}")]
-        public Task<SplitDelegator> GetRewardSplitDelegator([Address] string baker, int cycle, [Address] string delegator)
+        public Task<SplitDelegator> GetRewardSplitDelegator([Required][Address] string baker, [Min(0)] int cycle, [Required][Address] string delegator)
         {
             return Rewards.GetRewardSplitDelegator(baker, cycle, delegator);
         }

@@ -37,7 +37,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{hash}")]
         public Task<IEnumerable<Operation>> GetByHash(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
@@ -57,7 +57,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{hash}/{counter}")]
         public Task<IEnumerable<Operation>> GetByHashCounter(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -79,7 +79,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{hash}/{counter}/{nonce}")]
         public Task<IEnumerable<Operation>> GetByHashCounterNonce(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -168,7 +168,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("endorsements/{hash}")]
-        public Task<IEnumerable<EndorsementOperation>> GetEndorsementByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<EndorsementOperation>> GetEndorsementByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetEndorsements(hash, quote);
         }
@@ -279,7 +279,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("ballots/{hash}")]
-        public Task<IEnumerable<BallotOperation>> GetBallotByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<BallotOperation>> GetBallotByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetBallots(hash, quote);
         }
@@ -392,7 +392,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("proposals/{hash}")]
-        public Task<IEnumerable<ProposalOperation>> GetProposalByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<ProposalOperation>> GetProposalByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetProposals(hash, quote);
         }
@@ -497,7 +497,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("activations/{hash}")]
-        public Task<IEnumerable<ActivationOperation>> GetActivationByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<ActivationOperation>> GetActivationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetActivations(hash, quote);
         }
@@ -627,7 +627,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_baking/{hash}")]
-        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakingByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetDoubleBakings(hash, quote);
         }
@@ -757,7 +757,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_endorsing/{hash}")]
-        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsingByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetDoubleEndorsings(hash, quote);
         }
@@ -887,7 +887,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations/{hash}")]
-        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelationByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetNonceRevelations(hash, quote);
         }
@@ -1047,7 +1047,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegations/{hash}")]
-        public Task<IEnumerable<DelegationOperation>> GetDelegationByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<DelegationOperation>> GetDelegationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetDelegations(hash, quote);
         }
@@ -1086,6 +1086,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractDelegate`.</param>
         /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractManager`.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="typeHash">Filters origination operations by 32-bit hash of originated contract parameter and storage types (helpful for searching originations of similar contracts)</param>
+        /// <param name="codeHash">Filters origination operations by 32-bit hash of originated contract code (helpful for searching originations of same contracts)</param>
         /// <param name="level">Filters origination operations by level.</param>
         /// <param name="timestamp">Filters origination operations by timestamp.</param>
         /// <param name="status">Filters origination operations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
@@ -1104,6 +1106,8 @@ namespace Tzkt.Api.Controllers
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -1189,25 +1193,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }
@@ -1225,7 +1229,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("originations/{hash}")]
         public Task<IEnumerable<OriginationOperation>> GetOriginationByHash(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             MichelineFormat micheline,
             Symbols quote = Symbols.None)
         {
@@ -1388,7 +1392,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions/{hash}")]
         public Task<IEnumerable<TransactionOperation>> GetTransactionByHash(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
@@ -1408,7 +1412,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}")]
         public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -1430,7 +1434,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}/{nonce}")]
         public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounterNonce(
-            [OpHash] string hash,
+            [Required][OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -1543,7 +1547,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("reveals/{hash}")]
-        public Task<IEnumerable<RevealOperation>> GetRevealByHash([OpHash] string hash, Symbols quote = Symbols.None)
+        public Task<IEnumerable<RevealOperation>> GetRevealByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
             return Operations.GetReveals(hash, quote);
         }

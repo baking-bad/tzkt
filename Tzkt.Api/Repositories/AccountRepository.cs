@@ -188,7 +188,7 @@ namespace Tzkt.Api.Repositories
                         DelegationLevel = contractDelegate == null ? null
                             : contract.DelegationLevel,
                         DelegationTime = contractDelegate == null ? null
-                            : (DateTime?)Time[(int)contract.DelegationLevel],
+                            : Time[(int)contract.DelegationLevel],
                         FirstActivity = contract.FirstLevel,
                         FirstActivityTime = Time[contract.FirstLevel],
                         LastActivity = contract.LastLevel,
@@ -199,6 +199,8 @@ namespace Tzkt.Api.Repositories
                         NumReveals = contract.RevealsCount,
                         NumMigrations = contract.MigrationsCount,
                         NumTransactions = contract.TransactionsCount,
+                        TypeHash = contract.TypeHash,
+                        CodeHash = contract.CodeHash,
                         Metadata = metadata ? accMetadata : null
                     };
                     #endregion
@@ -324,7 +326,9 @@ namespace Tzkt.Api.Repositories
                 NumOriginations = contract.OriginationsCount,
                 NumReveals = contract.RevealsCount,
                 NumMigrations = contract.MigrationsCount,
-                NumTransactions = contract.TransactionsCount
+                NumTransactions = contract.TransactionsCount,
+                TypeHash = contract.TypeHash,
+                CodeHash = contract.CodeHash,
             };
         }
 
@@ -523,7 +527,9 @@ namespace Tzkt.Api.Repositories
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
                             NumMigrations = row.MigrationsCount,
-                            NumTransactions = row.TransactionsCount
+                            NumTransactions = row.TransactionsCount,
+                            TypeHash = row.TypeHash,
+                            CodeHash = row.CodeHash,
                         });
                         #endregion
                         break;
@@ -1810,6 +1816,8 @@ namespace Tzkt.Api.Repositories
                     NumReveals = row.RevealsCount,
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
+                    TypeHash = row.TypeHash,
+                    CodeHash = row.CodeHash,
                     Storage = row.JsonValue == null ? null : new RawJson((string)row.JsonValue)
                 };
             });
@@ -1857,6 +1865,8 @@ namespace Tzkt.Api.Repositories
                     case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                     case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
                     case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
+                    case "typeHash": columns.Add(@"acc.""TypeHash"""); break;
+                    case "codeHash": columns.Add(@"acc.""CodeHash"""); break;
                     case "storage" when includeStorage:
                         columns.Add(@"st.""JsonValue""");
                         joins.Add(@"INNER JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
@@ -2009,6 +2019,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Time[row.LastLevel];
                         break;
+                    case "typeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TypeHash;
+                        break;
+                    case "codeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.CodeHash;
+                        break;
                     case "storage":
                         foreach (var row in rows)
                             result[j++][i] = row.JsonValue == null ? null : new RawJson((string)row.JsonValue);
@@ -2060,6 +2078,8 @@ namespace Tzkt.Api.Repositories
                 case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                 case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
                 case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
+                case "typeHash": columns.Add(@"acc.""TypeHash"""); break;
+                case "codeHash": columns.Add(@"acc.""CodeHash"""); break;
                 case "storage" when includeStorage:
                     columns.Add(@"st.""JsonValue""");
                     joins.Add(@"INNER JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
@@ -2207,6 +2227,14 @@ namespace Tzkt.Api.Repositories
                 case "lastActivityTime":
                     foreach (var row in rows)
                         result[j++] = Time[row.LastLevel];
+                    break;
+                case "typeHash":
+                    foreach (var row in rows)
+                        result[j++] = row.TypeHash;
+                    break;
+                case "codeHash":
+                    foreach (var row in rows)
+                        result[j++] = row.CodeHash;
                     break;
                 case "storage":
                     foreach (var row in rows)
@@ -3036,7 +3064,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
@@ -3103,7 +3131,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
@@ -3142,7 +3170,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)

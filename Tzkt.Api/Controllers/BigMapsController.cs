@@ -246,7 +246,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{id:int}/keys/{key}")]
         public async Task<ActionResult<BigMapKey>> GetKey(
             [Min(0)] int id,
-            string key,
+            [Required] string key,
             MichelineFormat micheline = MichelineFormat.Json)
         {
             try
@@ -284,7 +284,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{id:int}/keys/{key}/updates")]
         public async Task<ActionResult<IEnumerable<BigMapKeyUpdate>>> GetKeyUpdates(
             [Min(0)] int id,
-            string key,
+            [Required] string key,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
@@ -391,7 +391,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<BigMapKeyHistorical>> GetKey(
             [Min(0)] int id,
             [Min(0)] int level,
-            string key,
+            [Required] string key,
             MichelineFormat micheline = MichelineFormat.Json)
         {
             try

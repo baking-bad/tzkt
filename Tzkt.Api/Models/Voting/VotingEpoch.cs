@@ -45,5 +45,10 @@ namespace Tzkt.Api.Models
         /// Voting periods in the epoch
         /// </summary>
         public IEnumerable<VotingPeriod> Periods { get; set; }
+
+        /// <summary>
+        /// Proposals pushed during the voting epoch (null, if there were no proposals).
+        /// </summary>
+        public IEnumerable<Proposal> Proposals { get; set; }
     }
 }

@@ -3261,7 +3261,9 @@ namespace Tzkt.Api.Repositories
                         {
                             Alias = contractMetadata?.Alias,
                             Address = contract.Address,
-                            Kind = contract.KindString
+                            Kind = contract.KindString,
+                            TypeHash = contract.TypeHash,
+                            CodeHash = contract.CodeHash
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -3347,7 +3349,9 @@ namespace Tzkt.Api.Repositories
                         {
                             Alias = contractMetadata?.Alias,
                             Address = contract.Address,
-                            Kind = contract.KindString
+                            Kind = contract.KindString,
+                            TypeHash = contract.TypeHash,
+                            CodeHash = contract.CodeHash
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -3433,7 +3437,9 @@ namespace Tzkt.Api.Repositories
                         {
                             Alias = contractMetadata?.Alias,
                             Address = contract.Address,
-                            Kind = contract.KindString
+                            Kind = contract.KindString,
+                            TypeHash = contract.TypeHash,
+                            CodeHash = contract.CodeHash
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -3488,7 +3494,9 @@ namespace Tzkt.Api.Repositories
                         {
                             Alias = contractMetadata?.Alias,
                             Address = contract.Address,
-                            Kind = contract.KindString
+                            Kind = contract.KindString,
+                            TypeHash = contract.TypeHash,
+                            CodeHash = contract.CodeHash
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -3504,6 +3512,8 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -3515,11 +3525,12 @@ namespace Tzkt.Api.Repositories
             bool includeStorage = false,
             bool includeBigmaps = false)
         {
-            var sql = new SqlBuilder(@"
+            var sql = new SqlBuilder($@"
                 SELECT      o.*, b.""Hash""
                 FROM        ""OriginationOps"" AS o
                 INNER JOIN  ""Blocks"" as b
-                        ON  b.""Level"" = o.""Level""")
+                        ON  b.""Level"" = o.""Level""
+                {(typeHash != null || codeHash != null ? @"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""" : "")}")
                 .Filter(anyof, x => x switch
                 {
                     "initiator" => "InitiatorId",
@@ -3533,6 +3544,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
+                .FilterA(@"c.""TypeHash""", typeHash)
+                .FilterA(@"c.""CodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
@@ -3606,7 +3619,9 @@ namespace Tzkt.Api.Repositories
                     {
                         Alias = contractMetadata?.Alias,
                         Address = contract.Address,
-                        Kind = contract.KindString
+                        Kind = contract.KindString,
+                        TypeHash = contract.TypeHash,
+                        CodeHash = contract.CodeHash
                     },
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
                     Diffs = diffs?.GetValueOrDefault((int)row.Id),
@@ -3624,6 +3639,8 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -3684,6 +3701,9 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return Array.Empty<object[]>();
 
+            if (typeHash != null || codeHash != null)
+                joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
+
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x switch
                 {
@@ -3698,6 +3718,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
+                .FilterA(@"c.""TypeHash""", typeHash)
+                .FilterA(@"c.""CodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
@@ -3844,7 +3866,9 @@ namespace Tzkt.Api.Repositories
                             {
                                 Alias = contractMetadata?.Alias,
                                 Address = contract.Address,
-                                Kind = contract.KindString
+                                Kind = contract.KindString,
+                                TypeHash = contract.TypeHash,
+                                CodeHash = contract.CodeHash
                             };
                         }
                         break;
@@ -3873,6 +3897,8 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter typeHash,
+            Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -3930,6 +3956,9 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return Array.Empty<object>();
 
+            if (typeHash != null || codeHash != null)
+                joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
+
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x switch
                 {
@@ -3944,6 +3973,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
+                .FilterA(@"c.""TypeHash""", typeHash)
+                .FilterA(@"c.""CodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
@@ -4088,7 +4119,9 @@ namespace Tzkt.Api.Repositories
                         {
                             Alias = contractMetadata?.Alias,
                             Address = contract.Address,
-                            Kind = contract.KindString
+                            Kind = contract.KindString,
+                            TypeHash = contract.TypeHash,
+                            CodeHash = contract.CodeHash
                         };
                     }
                     break;

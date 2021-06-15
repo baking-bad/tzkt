@@ -43,7 +43,7 @@ namespace Tzkt.Api.Services.Metadata
             var sql = @"
                     SELECT  ""Id"", ""Address""
                     FROM    ""Accounts""
-                    WHERE   ""Address"" = ANY (@addresses)";
+                    WHERE   ""Address"" = ANY (@addresses::character(36)[])";
 
             using var db = GetConnection();
             var links = db.Query<(int Id, string Address)>(sql, new { addresses = accounts.Select(x => x.Address).ToArray() });
@@ -117,7 +117,7 @@ namespace Tzkt.Api.Services.Metadata
                         @"
                             SELECT  ""Id"", ""Address""
                             FROM    ""Accounts""
-                            WHERE   ""Address"" = ANY (@addresses)
+                            WHERE   ""Address"" = ANY (@addresses::character(36)[])
                         ",
                         new { addresses = changed.Select(x => x.Address).ToArray() });
 
