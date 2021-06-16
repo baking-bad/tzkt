@@ -57,7 +57,7 @@ namespace Tzkt.Api.Services.Cache
             get
             {
                 if (level >= Times.Count)
-                    return Times[^1].AddSeconds((level - Times.Count - 1) * Protocols.Current.TimeBetweenBlocks);
+                    return Times[^1].AddSeconds((level - Times.Count + 1) * Protocols.Current.TimeBetweenBlocks);
                 
                 return Times[level];
             }
