@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Tzkt.Api.Authentication;
+using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Repositories;
 
 namespace Tzkt.Api.Controllers

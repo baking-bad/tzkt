@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 
-namespace Tzkt.Api.Utils
+namespace Tzkt.Api.Services.Auth
 {
     public class AuthConfig
     {
@@ -17,7 +17,7 @@ namespace Tzkt.Api.Utils
         public List<Admin> Admins { get; set; } = new();
     }
 
-    public static class CacheConfigExt
+    public static class AuthConfigExt
     {
         public static AuthConfig GetAuthConfig(this IConfiguration config)
         {

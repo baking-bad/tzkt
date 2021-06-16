@@ -9,15 +9,15 @@ using Netezos.Keys;
 using Netezos.Utils;
 using Tzkt.Api.Utils;
 
-namespace Tzkt.Api.Authentication
+namespace Tzkt.Api.Services.Auth
 {
-    public class PubKeyAuthService : IAuthService
+    public class PubKeyAuth : IAuthService
     {
         private readonly AuthConfig Config;
 
         private readonly Dictionary<string, long> Nonces;
 
-        public PubKeyAuthService(IConfiguration config)
+        public PubKeyAuth(IConfiguration config)
         {
             Config = config.GetAuthConfig();
             Nonces = Config.Admins.ToDictionary(x => x.Username, x => long.MinValue );

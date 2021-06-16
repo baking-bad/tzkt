@@ -4,9 +4,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace Tzkt.Api.Authentication
+namespace Tzkt.Api.Services.Auth
 {
-    public static class RequestBodyExt
+    public static class RequestBodyExtension
     {
         public static async Task<string> GetStringAsync(this Stream body)
         {

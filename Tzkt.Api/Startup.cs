@@ -1,5 +1,4 @@
 using System;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -7,13 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Tzkt.Api.Authentication;
+
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
 using Tzkt.Api.Swagger;
-using Tzkt.Api.Utils;
 using Tzkt.Api.Websocket;
 using Tzkt.Api.Websocket.Hubs;
 using Tzkt.Api.Websocket.Processors;
@@ -64,7 +63,7 @@ namespace Tzkt.Api
             services.AddTransient<MetadataRepository>();
 
             services.AddAuthService(Configuration);
-            
+
             services.AddStateListener();
 
             services.AddControllers()
@@ -133,7 +132,7 @@ namespace Tzkt.Api
             app.UseOpenApi();
 
             app.UseRouting();
-            
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

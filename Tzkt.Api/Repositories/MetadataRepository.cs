@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Configuration;
-using Tzkt.Api.Authentication;
+using Tzkt.Api.Services.Auth;
 
 namespace Tzkt.Api.Repositories
 {

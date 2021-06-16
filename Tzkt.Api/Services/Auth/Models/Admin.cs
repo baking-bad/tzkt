@@ -1,4 +1,4 @@
-namespace Tzkt.Api.Utils
+namespace Tzkt.Api.Services.Auth
 {
     public class Admin
     {

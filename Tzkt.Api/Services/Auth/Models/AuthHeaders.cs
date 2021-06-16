@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Tzkt.Api.Authentication
+namespace Tzkt.Api.Services.Auth
 {
     public class AuthHeaders
     {

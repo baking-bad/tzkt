@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 
 namespace Tzkt.Api.Controllers
 {
-    [AllowAnonymous]
     [ApiController]
     [Route("v1/software")]
     public class SoftwareController : ControllerBase
@@ -82,6 +79,5 @@ namespace Tzkt.Api.Controllers
         {
             return Software.GetCount();
         }
-
     }
 }

@@ -9,13 +9,13 @@ using Netezos.Keys;
 using Netezos.Utils;
 using Tzkt.Api.Utils;
 
-namespace Tzkt.Api.Authentication
+namespace Tzkt.Api.Services.Auth
 {
-    public class PasswordAuthService : IAuthService
+    public class PasswordAuth : IAuthService
     {
         private readonly AuthConfig Config;
 
-        public PasswordAuthService(IConfiguration config)
+        public PasswordAuth(IConfiguration config)
         {
             Config = config.GetAuthConfig();
         }

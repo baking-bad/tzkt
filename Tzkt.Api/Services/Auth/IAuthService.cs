@@ -1,10 +1,8 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Tzkt.Api.Utils;
-using static Tzkt.Api.Utils.AuthConfig.Methods;
 
-namespace Tzkt.Api.Authentication
+namespace Tzkt.Api.Services.Auth
 {
     public interface IAuthService
     {
@@ -17,17 +15,16 @@ namespace Tzkt.Api.Authentication
     {
         public static void AddAuthService(this IServiceCollection services, IConfiguration config)
         {
-            
             switch (config.GetAuthConfig().Method)
             {
-                case Default:
-                    services.AddSingleton<IAuthService, DefaultAuthService>();
+                case AuthConfig.Methods.Default:
+                    services.AddSingleton<IAuthService, DefaultAuth>();
                     break;
-                case PubKey:
-                    services.AddSingleton<IAuthService, PubKeyAuthService>();
+                case AuthConfig.Methods.PubKey:
+                    services.AddSingleton<IAuthService, PubKeyAuth>();
                     break;
-                case Password:
-                    services.AddSingleton<IAuthService, PasswordAuthService>();
+                case AuthConfig.Methods.Password:
+                    services.AddSingleton<IAuthService, PasswordAuth>();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

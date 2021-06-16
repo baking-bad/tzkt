@@ -1,6 +1,6 @@
-﻿namespace Tzkt.Api.Authentication
+﻿namespace Tzkt.Api.Services.Auth
 {
-    public class DefaultAuthService : IAuthService
+    public class DefaultAuth : IAuthService
     {
         public bool Authorized(AuthHeaders headers, string json, out string error)
         {
