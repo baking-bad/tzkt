@@ -514,9 +514,11 @@ namespace Tzkt.Api.Services
 
         private async Task<MarketData> GetMarketData(long totalSupply, long circulatingSupply)
         {
+            var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
+            
             var level = new Int32Parameter
             {
-                Eq = Times.FindLevel(State.Current.Timestamp.AddDays(-30), SearchMode.ExactOrHigher)
+                Eq = Math.Max(0, State.Current.Level - period)
             };
             
             return new()
