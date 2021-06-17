@@ -5,8 +5,8 @@ namespace Tzkt.Api.Services.Auth
 {
     public interface IAuthService
     {
-        public bool TryAuthorize(AuthHeaders headers, out string error);
-        public bool TryAuthorize(AuthHeaders headers, string json, out string error);
+        public bool TryAuthenticate(AuthHeaders headers, out string error);
+        public bool TryAuthenticate(AuthHeaders headers, string json, out string error);
     }
     
     public static class AuthServiceExt

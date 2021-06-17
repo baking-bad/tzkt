@@ -12,22 +12,22 @@ namespace Tzkt.Api.Repositories
         public MetadataRepository(IConfiguration config) : base(config) {}
 
         #region get
-        public Task<IEnumerable<MetadataRecord>> GetAccountMetadata(int offset, int limit)
+        public Task<IEnumerable<ObjectMetadata>> GetAccountMetadata(int offset, int limit)
             => Get("Accounts", "Address", offset, limit);
 
-        public Task<IEnumerable<MetadataRecord>> GetProposalMetadata(int offset, int limit)
+        public Task<IEnumerable<ObjectMetadata>> GetProposalMetadata(int offset, int limit)
             => Get("Proposals", "Hash", offset, limit);
 
-        public Task<IEnumerable<MetadataRecord>> GetProtocolMetadata(int offset, int limit)
+        public Task<IEnumerable<ObjectMetadata>> GetProtocolMetadata(int offset, int limit)
             => Get("Protocols", "Hash", offset, limit);
 
-        public Task<IEnumerable<MetadataRecord>> GetSoftwareMetadata(int offset, int limit)
-            => Get("Softwares", "ShortHash", offset, limit);
+        public Task<IEnumerable<ObjectMetadata>> GetSoftwareMetadata(int offset, int limit)
+            => Get("Software", "ShortHash", offset, limit);
 
-        async Task<IEnumerable<MetadataRecord>> Get(string table, string key, int offset, int limit)
+        async Task<IEnumerable<ObjectMetadata>> Get(string table, string key, int offset, int limit)
         {
             using var db = GetConnection();
-            var res = await db.QueryAsync($@"
+            var rows = await db.QueryAsync($@"
                 SELECT ""{key}"" AS key, ""Metadata"" as metadata
                 FROM ""{table}""
                 WHERE ""Metadata"" @> '{{}}'
@@ -35,7 +35,7 @@ namespace Tzkt.Api.Repositories
                 OFFSET {offset}
                 LIMIT {limit}");
 
-            return res.Select(row => new MetadataRecord
+            return rows.Select(row => new ObjectMetadata
             {
                 Key = row.key,
                 Metadata = row.metadata
@@ -44,27 +44,27 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region update
-        public Task<List<MetadataRecord>> UpdateAccountMetadata(List<MetadataRecord> metadata)
+        public Task<List<ObjectMetadata>> UpdateAccountMetadata(List<ObjectMetadata> metadata)
             => Update("Accounts", "Address", "character(36)", metadata);
 
-        public Task<List<MetadataRecord>> UpdatProposalMetadata(List<MetadataRecord> metadata)
+        public Task<List<ObjectMetadata>> UpdatProposalMetadata(List<ObjectMetadata> metadata)
             => Update("Proposals", "Hash", "character(51)", metadata);
 
-        public Task<List<MetadataRecord>> UpdatProtocolMetadata(List<MetadataRecord> metadata)
+        public Task<List<ObjectMetadata>> UpdatProtocolMetadata(List<ObjectMetadata> metadata)
             => Update("Protocols", "Hash", "character(51)", metadata);
 
-        public Task<List<MetadataRecord>> UpdateSoftwareMetadata(List<MetadataRecord> metadata)
+        public Task<List<ObjectMetadata>> UpdateSoftwareMetadata(List<ObjectMetadata> metadata)
             => Update("Software", "ShortHash", "character(8)", metadata);
 
-        async Task<List<MetadataRecord>> Update(string table, string key, string keyType, List<MetadataRecord> metadata)
+        async Task<List<ObjectMetadata>> Update(string table, string key, string keyType, List<ObjectMetadata> metadata)
         {
-            var res = new List<MetadataRecord>(metadata.Count);
+            var res = new List<ObjectMetadata>(metadata.Count);
             using var db = GetConnection();
             foreach (var meta in metadata)
             {
                 var rows = await db.ExecuteAsync(
                     $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key::{keyType}",
-                    new { metadata = meta.Metadata.Json, key = meta.Key });
+                    new { key = meta.Key, metadata = meta.Metadata.Json });
 
                 if (rows == 1)
                     res.Add(meta);

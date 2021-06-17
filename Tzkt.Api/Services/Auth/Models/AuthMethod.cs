@@ -2,7 +2,7 @@
 {
     public enum AuthMethod
     {
-        Default,
+        None,
         Password,
         PubKey
     }

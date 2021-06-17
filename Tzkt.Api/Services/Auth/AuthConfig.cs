@@ -5,7 +5,7 @@ namespace Tzkt.Api.Services.Auth
 {
     public class AuthConfig
     {
-        public AuthMethod Method { get; set; } = AuthMethod.Default;
+        public AuthMethod Method { get; set; } = AuthMethod.None;
         public int NonceLifetime { get; set; } = 100;
         public Dictionary<string, string> Credentials { get; set; } = new();
     }

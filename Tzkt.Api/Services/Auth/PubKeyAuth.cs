@@ -19,7 +19,7 @@ namespace Tzkt.Api.Services.Auth
             Nonces = Config.Credentials.ToDictionary(x => x.Key, x => long.MinValue );
         }
 
-        public bool TryAuthorize(AuthHeaders headers, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, out string error)
         {
             error = null;
 
@@ -73,7 +73,7 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthorize(AuthHeaders headers, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, string json, out string error)
         {
             error = null;
 

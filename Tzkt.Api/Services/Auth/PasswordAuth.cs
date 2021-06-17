@@ -11,7 +11,7 @@ namespace Tzkt.Api.Services.Auth
             Config = config.GetAuthConfig();
         }
 
-        public bool TryAuthorize(AuthHeaders headers, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, out string error)
         {
             error = null;
 
@@ -42,9 +42,9 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthorize(AuthHeaders headers, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, string json, out string error)
         {
-            return TryAuthorize(headers, out error);
+            return TryAuthenticate(headers, out error);
         }
     }
 }

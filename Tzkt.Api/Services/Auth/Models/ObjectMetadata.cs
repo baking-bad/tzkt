@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Tzkt.Api.Services.Auth
 {
-    public class MetadataRecord
+    public class ObjectMetadata
     {
         [JsonPropertyName("key")]
         public string Key { get; set; }
