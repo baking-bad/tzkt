@@ -1,10 +1,8 @@
-using System;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Tzkt.Api.Services.Auth
 {
-    public class Meta
+    public class MetadataRecord
     {
         [JsonPropertyName("key")]
         public string Key { get; set; }
@@ -12,5 +10,4 @@ namespace Tzkt.Api.Services.Auth
         [JsonPropertyName("metadata")]
         public RawJson Metadata { get; set; }
     }
-    
 }

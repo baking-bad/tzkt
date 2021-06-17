@@ -1,59 +1,50 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using Netezos.Encoding;
-using Netezos.Keys;
-using Netezos.Utils;
-using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Services.Auth
 {
     public class PasswordAuth : IAuthService
     {
-        private readonly AuthConfig Config;
+        readonly AuthConfig Config;
 
         public PasswordAuth(IConfiguration config)
         {
             Config = config.GetAuthConfig();
         }
-        
-        public bool Authorized(AuthHeaders headers, string json, out string error)
-        {
-            return Authorized(headers, out error);
-        }
-        
-        public bool Authorized(AuthHeaders headers, out string error)
+
+        public bool TryAuthorize(AuthHeaders headers, out string error)
         {
             error = null;
-            
-            if (string.IsNullOrWhiteSpace(headers.User))
+
+            if (string.IsNullOrEmpty(headers?.User))
             {
                 error = $"The X-TZKT-USER header is required";
                 return false;
             }
-            
-            if (string.IsNullOrWhiteSpace(headers.Password))
+
+            if (string.IsNullOrEmpty(headers.Password))
             {
                 error = $"The X-TZKT-PASSWORD header is required";
                 return false;
             }
-                
-            if(Config.Admins.All(x => x.Username != headers.User))
+
+            if (!Config.Credentials.TryGetValue(headers.User, out var password))
             {
                 error = $"User {headers.User} doesn't exist";
                 return false;
             }
-            
-            if (Config.Admins.FirstOrDefault(u => u.Username == headers.User)?.Password != headers.Password)
+
+            if (headers.Password != password)
             {
                 error = $"Invalid password";
                 return false;
             }
-            
+
             return true;
+        }
+
+        public bool TryAuthorize(AuthHeaders headers, string json, out string error)
+        {
+            return TryAuthorize(headers, out error);
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Tzkt.Api
 {
-    [JsonConverter(typeof(JsonStringConverter))]
+    [JsonConverter(typeof(RawJsonConverter))]
     public class RawJson
     {
         public string Json { get; }
@@ -14,7 +14,7 @@ namespace Tzkt.Api
         public static explicit operator string (RawJson value) => value.Json;
     }
 
-    class JsonStringConverter : JsonConverter<RawJson>
+    class RawJsonConverter : JsonConverter<RawJson>
     {
         public override RawJson Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {

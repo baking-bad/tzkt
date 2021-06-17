@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
 using Microsoft.Extensions.Configuration;
+using Dapper;
 using Tzkt.Api.Services.Auth;
 
 namespace Tzkt.Api.Repositories
@@ -10,54 +10,67 @@ namespace Tzkt.Api.Repositories
     public class MetadataRepository : DbConnection
     {
         public MetadataRepository(IConfiguration config) : base(config) {}
-        
-        
-        public async Task<IEnumerable<Meta>> Update(string table, string key, List<Meta> metadata)
+
+        #region get
+        public Task<IEnumerable<MetadataRecord>> GetAccountMetadata(int offset, int limit)
+            => Get("Accounts", "Address", offset, limit);
+
+        public Task<IEnumerable<MetadataRecord>> GetProposalMetadata(int offset, int limit)
+            => Get("Proposals", "Hash", offset, limit);
+
+        public Task<IEnumerable<MetadataRecord>> GetProtocolMetadata(int offset, int limit)
+            => Get("Protocols", "Hash", offset, limit);
+
+        public Task<IEnumerable<MetadataRecord>> GetSoftwareMetadata(int offset, int limit)
+            => Get("Softwares", "ShortHash", offset, limit);
+
+        async Task<IEnumerable<MetadataRecord>> Get(string table, string key, int offset, int limit)
         {
             using var db = GetConnection();
+            var res = await db.QueryAsync($@"
+                SELECT ""{key}"" AS key, ""Metadata"" as metadata
+                FROM ""{table}""
+                WHERE ""Metadata"" @> '{{}}'
+                ORDER BY ""Id""
+                OFFSET {offset}
+                LIMIT {limit}");
 
+            return res.Select(row => new MetadataRecord
+            {
+                Key = row.key,
+                Metadata = row.metadata
+            });
+        }
+        #endregion
+
+        #region update
+        public Task<List<MetadataRecord>> UpdateAccountMetadata(List<MetadataRecord> metadata)
+            => Update("Accounts", "Address", "character(36)", metadata);
+
+        public Task<List<MetadataRecord>> UpdatProposalMetadata(List<MetadataRecord> metadata)
+            => Update("Proposals", "Hash", "character(51)", metadata);
+
+        public Task<List<MetadataRecord>> UpdatProtocolMetadata(List<MetadataRecord> metadata)
+            => Update("Protocols", "Hash", "character(51)", metadata);
+
+        public Task<List<MetadataRecord>> UpdateSoftwareMetadata(List<MetadataRecord> metadata)
+            => Update("Software", "ShortHash", "character(8)", metadata);
+
+        async Task<List<MetadataRecord>> Update(string table, string key, string keyType, List<MetadataRecord> metadata)
+        {
+            var res = new List<MetadataRecord>(metadata.Count);
+            using var db = GetConnection();
             foreach (var meta in metadata)
             {
-                var upd = $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key::character(36)";
-                await db.ExecuteAsync(upd, new {metadata = meta.Metadata.Json, key = meta.Key});
+                var rows = await db.ExecuteAsync(
+                    $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key::{keyType}",
+                    new { metadata = meta.Metadata.Json, key = meta.Key });
+
+                if (rows == 1)
+                    res.Add(meta);
             }
-
-            var sql = $@"SELECT ""{key}"" AS key, ""Metadata"" FROM ""{table}"" WHERE ""{key}"" IN ('{string.Join("', '", metadata.Select(x => x.Key))}')";
-            var res = await db.QueryAsync(sql);
-            
-            return res.Select(row => new Meta
-            {
-                Key = row.key,
-                Metadata = new RawJson(row.Metadata)
-            });
+            return res;
         }
-
-        public async Task<IEnumerable<Meta>> GetMetadata(string table, string key, int limit, OffsetParameter offset)
-        {
-            using var db = GetConnection();
-
-            var sql = new SqlBuilder($@"SELECT ""{key}"" AS key, ""Metadata"" FROM ""{table}"" WHERE ""Metadata"" IS NOT NULL")
-                .Take(offset, limit);
-            var res = await db.QueryAsync(sql.Query, sql.Params);
-            return res.Select(row => new Meta
-            {
-                Key = row.key,
-                Metadata = new RawJson(row.Metadata)
-            });
-        }
-
-        public async Task<IEnumerable<Meta>> GetAccounts(string value, int limit, OffsetParameter offset)
-        {
-            using var db = GetConnection();
-            
-            var sql = new SqlBuilder($@"SELECT ""Address"" AS key, ""Metadata"" FROM ""Accounts"" WHERE ""Metadata"" ->> 'alias' ILIKE '%{value}%'")
-                .Take(offset, limit);
-            var res = await db.QueryAsync(sql.Query, sql.Params);
-            return res.Select(row => new Meta
-            {
-                Key = row.key,
-                Metadata = new RawJson(row.Metadata)
-            });
-        }
+        #endregion
     }
 }

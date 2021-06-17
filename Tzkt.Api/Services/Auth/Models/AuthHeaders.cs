@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Tzkt.Api.Services.Auth
@@ -10,11 +9,11 @@ namespace Tzkt.Api.Services.Auth
  
         [FromHeader(Name="X-TZKT-NONCE")]
         public long? Nonce { get; set; }
- 
+
+        [FromHeader(Name = "X-TZKT-PASSWORD")]
+        public string Password { get; set; }
+
         [FromHeader(Name="X-TZKT-SIGNATURE")]
         public string Signature { get; set; }
- 
-        [FromHeader(Name="X-TZKT-PASSWORD")]
-        public string Password { get; set; }
     }
 }

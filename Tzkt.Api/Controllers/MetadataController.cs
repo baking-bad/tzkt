@@ -15,140 +15,156 @@ namespace Tzkt.Api.Controllers
     [Route("v1/metadata")]
     public class MetadataController : ControllerBase
     {
-        private readonly MetadataRepository MetadataRepository;
-        private readonly IAuthService Auth;
+        readonly MetadataRepository Metadata;
+        readonly IAuthService Auth;
 
-        public MetadataController(MetadataRepository metadataRepository, IAuthService auth)
+        public MetadataController(MetadataRepository metadata, IAuthService auth)
         {
-            MetadataRepository = metadataRepository;
+            Metadata = metadata;
             Auth = auth;
         }
 
-        #region Software
-        [HttpPost("software")]
-        public async Task<ActionResult> UpdateSoftwareMetadata([FromHeader] AuthHeaders headers)
-        {
-            try
-            {
-                var jsonString = await Request.Body.GetStringAsync();
-
-                if (!Auth.Authorized(headers, jsonString, out var error))
-                    return Unauthorized(error);
-                
-                return Ok(await MetadataRepository.Update("Software", "ShortHash", JsonSerializer.Deserialize<List<Meta>>(jsonString)));
-            }
-            catch (Exception ex)
-            {
-                return new BadRequest(nameof(headers), ex.Message);
-            }
-        }
-
-        [HttpGet("software")]
-        public async Task<ActionResult> GetSoftwareMetadata([FromHeader] AuthHeaders headers, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
-        {
-            if (!Auth.Authorized(headers, out var error))
-                return Unauthorized(error);
-            
-            return Ok(await MetadataRepository.GetMetadata("Software", "ShortHash", limit, offset));
-        }
-        #endregion
-
-        #region Protocols
-        [HttpPost("protocols")]
-        public async Task<ActionResult> UpdateProtocolMetadata([FromHeader] AuthHeaders headers)
-        {
-            try
-            {
-                var jsonString = await Request.Body.GetStringAsync();
-                
-                if (!Auth.Authorized(headers, jsonString, out var error))
-                    return Unauthorized(error);
-
-                var metadata = JsonSerializer.Deserialize<List<Meta>>(jsonString);
-
-                if (!metadata.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
-                    return BadRequest("Invalid protocol hash");
-                
-                return Ok(await MetadataRepository.Update("Protocols", "Hash", metadata));
-            }
-            catch (Exception ex)
-            {
-                return new BadRequest(nameof(headers), ex.Message);
-            }
-        }
-
-        [HttpGet("protocols")]
-        public async Task<ActionResult> GetProtocolsMetadata([FromHeader] AuthHeaders headers, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
-        {
-            if (!Auth.Authorized(headers, out var error))
-                return Unauthorized(error);
-            return Ok(await MetadataRepository.GetMetadata("Protocols", "Hash", limit, offset));
-        }
-        #endregion
-
-        #region Proposals
-        [HttpPost("proposals")]
-        public async Task<ActionResult> UpdateProposalMetadata([FromHeader] AuthHeaders headers)
-        {
-            try
-            {
-                var jsonString = await Request.Body.GetStringAsync();
-                
-                if (!Auth.Authorized(headers, jsonString, out var error))
-                    return Unauthorized(error);
-
-                var metadata = JsonSerializer.Deserialize<List<Meta>>(jsonString);
-
-                if (!metadata.All(x => Regex.IsMatch(x.Key, "^P[0-9A-z]{50}$")))
-                    return BadRequest("Invalid proposal hash");
-                
-                return Ok(await MetadataRepository.Update("Proposals", "Hash", metadata));
-            }
-            catch (Exception ex)
-            {
-                return new BadRequest(nameof(headers), ex.Message);
-            }
-        }
-
-        [HttpGet("proposals")]
-        public async Task<ActionResult> GetProposalsMetadata([FromHeader] AuthHeaders headers, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
-        {
-            if (!Auth.Authorized(headers, out var error))
-                return Unauthorized(error);
-            return Ok(await MetadataRepository.GetMetadata("Proposals", "Hash", limit, offset));
-        }
-        #endregion
-
-        #region Accounts
-        [HttpPost("accounts")]
-        public async Task<ActionResult> UpdateAccounts([FromHeader] AuthHeaders headers)
-        {
-            try
-            {
-                var jsonString = await Request.Body.GetStringAsync();
-                
-                if (!Auth.Authorized(headers, jsonString, out var error))
-                    return Unauthorized(error);
-
-                var metadata = JsonSerializer.Deserialize<List<Meta>>(jsonString);
-
-                if (!metadata.All(x => Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-z]{33}$")))
-                    return BadRequest("Invalid address");
-                
-                return Ok(await MetadataRepository.Update("Accounts", "Address", metadata));
-            }
-            catch (Exception ex)
-            {
-                return new BadRequest(nameof(headers), ex.Message);
-            }
-        }
-
+        #region accounts
         [HttpGet("accounts")]
-        public async Task<ActionResult> GetAccountsMetadata([FromHeader] AuthHeaders headers, string alias, OffsetParameter offset, [Range(0, 10000)] int limit = 100)
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> GetAccountMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100)
         {
-            if (!Auth.Authorized(headers, out var error))
+            if (!Auth.TryAuthorize(headers, out var error))
                 return Unauthorized(error);
-            return Ok(await MetadataRepository.GetAccounts(alias, limit, offset));
+
+            return Ok(await Metadata.GetAccountMetadata(offset, limit));
+        }
+
+        [HttpPost("accounts")]
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> UpdateAccountMetadata([FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+
+                if (!Auth.TryAuthorize(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataRecord>>(body);
+                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$")))
+                    return BadRequest("Invalid account address");
+
+                return Ok(await Metadata.UpdateAccountMetadata(metadata));
+            }
+            catch (JsonException ex)
+            {
+                return new BadRequest("body", ex.Message);
+            }
+        }
+        #endregion
+
+        #region proposals
+        [HttpGet("proposals")]
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> GetProposalMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100)
+        {
+            if (!Auth.TryAuthorize(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetProposalMetadata(offset, limit));
+        }
+
+        [HttpPost("proposals")]
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> UpdateProposalMetadata([FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+
+                if (!Auth.TryAuthorize(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataRecord>>(body);
+                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
+                    return BadRequest("Invalid proposal hash");
+
+                return Ok(await Metadata.UpdatProposalMetadata(metadata));
+            }
+            catch (JsonException ex)
+            {
+                return new BadRequest("body", ex.Message);
+            }
+        }
+        #endregion
+
+        #region protocols
+        [HttpGet("protocols")]
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> GetProtocolMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100)
+        {
+            if (!Auth.TryAuthorize(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetProtocolMetadata(offset, limit));
+        }
+
+        [HttpPost("protocols")]
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> UpdateProtocolMetadata([FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+
+                if (!Auth.TryAuthorize(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataRecord>>(body);
+                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
+                    return BadRequest("Invalid protocol hash");
+
+                return Ok(await Metadata.UpdatProtocolMetadata(metadata));
+            }
+            catch (JsonException ex)
+            {
+                return new BadRequest("body", ex.Message);
+            }
+        }
+        #endregion
+
+        #region software
+        [HttpGet("software")]
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> GetSoftwareMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100)
+        {
+            if (!Auth.TryAuthorize(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetSoftwareMetadata(offset, limit));
+        }
+
+        [HttpPost("software")]
+        public async Task<ActionResult<IEnumerable<MetadataRecord>>> UpdateSoftwareMetadata([FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+
+                if (!Auth.TryAuthorize(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataRecord>>(body);
+                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^[0-9a-f]{8}$")))
+                    return BadRequest("Invalid software short hash");
+
+                return Ok(await Metadata.UpdateSoftwareMetadata(metadata));
+            }
+            catch (JsonException ex)
+            {
+                return new BadRequest("body", ex.Message);
+            }
         }
         #endregion
     }

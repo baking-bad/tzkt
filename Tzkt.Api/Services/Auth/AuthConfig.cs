@@ -5,23 +5,16 @@ namespace Tzkt.Api.Services.Auth
 {
     public class AuthConfig
     {
-        public enum Methods
-        {
-            Default,
-            PubKey,
-            Password
-        }
-
-        public Methods Method { get; set; } = Methods.Default;
+        public AuthMethod Method { get; set; } = AuthMethod.Default;
         public int NonceLifetime { get; set; } = 100;
-        public List<Admin> Admins { get; set; } = new();
+        public Dictionary<string, string> Credentials { get; set; } = new();
     }
 
     public static class AuthConfigExt
     {
         public static AuthConfig GetAuthConfig(this IConfiguration config)
         {
-            return config.GetSection("Authentication")?.Get<AuthConfig>() ?? new AuthConfig();
+            return config.GetSection("Authentication")?.Get<AuthConfig>();
         }
     }
 }
