@@ -12,6 +12,18 @@ namespace Tzkt.Api.Repositories
         public MetadataRepository(IConfiguration config) : base(config) {}
 
         #region get
+        public Task<RawJson> GetAccountMetadata(string key)
+            => Get("Accounts", "Address", "character(36)", key);
+
+        public Task<RawJson> GetProposalMetadata(string key)
+            => Get("Proposals", "Hash", "character(51)", key);
+
+        public Task<RawJson> GetProtocolMetadata(string key)
+            => Get("Protocols", "Hash", "character(51)", key);
+
+        public Task<RawJson> GetSoftwareMetadata(string key)
+            => Get("Software", "ShortHash", "character(8)", key);
+
         public Task<IEnumerable<ObjectMetadata>> GetAccountMetadata(int offset, int limit)
             => Get("Accounts", "Address", offset, limit);
 
@@ -23,6 +35,19 @@ namespace Tzkt.Api.Repositories
 
         public Task<IEnumerable<ObjectMetadata>> GetSoftwareMetadata(int offset, int limit)
             => Get("Software", "ShortHash", offset, limit);
+
+        async Task<RawJson> Get(string table, string key, string keyType, string keyValue)
+        {
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT ""Metadata""
+                FROM ""{table}""
+                WHERE ""{key}"" = @keyValue::{keyType}
+                LIMIT 1",
+                new { keyValue });
+
+            return row?.Metadata;
+        }
 
         async Task<IEnumerable<ObjectMetadata>> Get(string table, string key, int offset, int limit)
         {
@@ -62,9 +87,23 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             foreach (var meta in metadata)
             {
-                var rows = await db.ExecuteAsync(
-                    $@"UPDATE ""{table}"" SET ""Metadata"" = @metadata::jsonb WHERE ""{key}"" = @key::{keyType}",
-                    new { key = meta.Key, metadata = meta.Metadata.Json });
+                int rows;
+                if (meta.Metadata != null)
+                {
+                    rows = await db.ExecuteAsync($@"
+                        UPDATE ""{table}""
+                        SET ""Metadata"" = @metadata::jsonb
+                        WHERE ""{key}"" = @key::{keyType}",
+                        new { key = meta.Key, metadata = meta.Metadata.Json });
+                }
+                else
+                {
+                    rows = await db.ExecuteAsync($@"
+                        UPDATE ""{table}""
+                        SET ""Metadata"" = NULL
+                        WHERE ""{key}"" = @key::{keyType}",
+                        new { key = meta.Key });
+                }
 
                 if (rows == 1)
                     res.Add(meta);
