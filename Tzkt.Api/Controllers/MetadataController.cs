@@ -39,6 +39,17 @@ namespace Tzkt.Api.Controllers
             return Ok(await Metadata.GetAccountMetadata(offset, limit));
         }
 
+        [HttpGet("accounts/{address}")]
+        public async Task<ActionResult<RawJson>> GetAccountMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Address] string address)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetAccountMetadata(address));
+        }
+
         [HttpPost("accounts")]
         public async Task<ActionResult<IEnumerable<ObjectMetadata>>> UpdateAccountMetadata([FromHeader] AuthHeaders headers)
         {
@@ -73,6 +84,17 @@ namespace Tzkt.Api.Controllers
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetProposalMetadata(offset, limit));
+        }
+
+        [HttpGet("proposals/{hash}")]
+        public async Task<ActionResult<RawJson>> GetProposalMetadata(
+            [FromHeader] AuthHeaders headers,
+            [ProtocolHash] string hash)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetProposalMetadata(hash));
         }
 
         [HttpPost("proposals")]
@@ -111,6 +133,17 @@ namespace Tzkt.Api.Controllers
             return Ok(await Metadata.GetProtocolMetadata(offset, limit));
         }
 
+        [HttpGet("protocols/{hash}")]
+        public async Task<ActionResult<RawJson>> GetProtocolMetadata(
+            [FromHeader] AuthHeaders headers,
+            [ProtocolHash] string hash)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetProtocolMetadata(hash));
+        }
+
         [HttpPost("protocols")]
         public async Task<ActionResult<IEnumerable<ObjectMetadata>>> UpdateProtocolMetadata([FromHeader] AuthHeaders headers)
         {
@@ -145,6 +178,17 @@ namespace Tzkt.Api.Controllers
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetSoftwareMetadata(offset, limit));
+        }
+
+        [HttpGet("software/{shortHash}")]
+        public async Task<ActionResult<RawJson>> GetSoftwareMetadata(
+            [FromHeader] AuthHeaders headers,
+            string shortHash)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetSoftwareMetadata(shortHash));
         }
 
         [HttpPost("software")]
