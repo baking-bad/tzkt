@@ -34,8 +34,6 @@ namespace Tzkt.Api
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddAccountMetadata();
-            services.AddProposalMetadata();
-            services.AddProtocolMetadata();
             services.AddSoftwareMetadata();
 
             services.AddAccountsCache();

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Tzkt.Api.Services.Metadata;
+﻿using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -53,9 +49,10 @@ namespace Tzkt.Api.Models
         public string Status { get; set; }
 
         /// <summary>
-        /// Information about the proposal
+        /// Offchain metadata
         /// </summary>
-        public ProposalMetadata Metadata { get; set; }
+        [JsonSchemaType(typeof(ProposalMetadata), IsNullable = true)]
+        public RawJson Metadata { get; set; }
 
         /// <summary>
         /// **DEPRECATED**. Use `firstPeriod` instead.

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Tzkt.Api.Services.Metadata;
+﻿using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -34,8 +30,9 @@ namespace Tzkt.Api.Models
         public ProtocolConstants Constants { get; set; }
 
         /// <summary>
-        /// Metadata of the protocol
+        /// Offchain metadata
         /// </summary>
-        public ProtocolMetadata Metadata { get; set; }
+        [JsonSchemaType(typeof(ProtocolMetadata), IsNullable = true)]
+        public RawJson Metadata { get; set; }
     }
 }

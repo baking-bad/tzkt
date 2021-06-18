@@ -236,14 +236,14 @@ namespace Tzkt.Api.Repositories
                     case "keyType":
                         foreach (var row in rows)
                             result[j++][i] = (int)micheline < 2
-                                ? new RawJson(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
-                                : new RawJson(Micheline.ToJson(row.KeyType));
+                                ? (RawJson)Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize()
+                                : (RawJson)Micheline.ToJson(row.KeyType);
                         break;
                     case "valueType":
                         foreach (var row in rows)
                             result[j++][i] = (int)micheline < 2
-                                ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
-                                : new RawJson(Micheline.ToJson(row.ValueType));
+                                ? (RawJson)Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize()
+                                : (RawJson)Micheline.ToJson(row.ValueType);
                         break;
                     case "tags":
                         foreach (var row in rows)
@@ -352,14 +352,14 @@ namespace Tzkt.Api.Repositories
                 case "keyType":
                     foreach (var row in rows)
                         result[j++] = (int)micheline < 2
-                            ? new RawJson(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
-                            : new RawJson(Micheline.ToJson(row.KeyType));
+                            ? (RawJson)Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize()
+                            : (RawJson)Micheline.ToJson(row.KeyType);
                     break;
                 case "valueType":
                     foreach (var row in rows)
                         result[j++] = (int)micheline < 2
-                            ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
-                            : new RawJson(Micheline.ToJson(row.ValueType));
+                            ? (RawJson)Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize()
+                            : (RawJson)Micheline.ToJson(row.ValueType);
                     break;
                 case "tags":
                     foreach (var row in rows)
@@ -1186,11 +1186,11 @@ namespace Tzkt.Api.Repositories
                 ActiveKeys = row.ActiveKeys,
                 Updates = row.Updates,
                 KeyType = (int)format < 2
-                    ? new RawJson(Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize())
-                    : new RawJson(Micheline.ToJson(row.KeyType)),
+                    ? (RawJson)Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize()
+                    : (RawJson)Micheline.ToJson(row.KeyType),
                 ValueType = (int)format < 2
-                    ? new RawJson(Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize())
-                    : new RawJson(Micheline.ToJson(row.ValueType)),
+                    ? (RawJson)Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize()
+                    : (RawJson)Micheline.ToJson(row.ValueType),
                 _Tags = (Data.Models.BigMapTag)row.Tags
             };
         }
@@ -1236,18 +1236,18 @@ namespace Tzkt.Api.Repositories
 
         static object FormatKey(dynamic row, MichelineFormat format) => format switch
         {
-            MichelineFormat.Json => new RawJson(row.JsonKey),
+            MichelineFormat.Json => (RawJson)row.JsonKey,
             MichelineFormat.JsonString => row.JsonKey,
-            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawKey)),
+            MichelineFormat.Raw => (RawJson)Micheline.ToJson(row.RawKey),
             MichelineFormat.RawString => Micheline.ToJson(row.RawKey),
             _ => null
         };
 
         static object FormatValue(dynamic row, MichelineFormat format) => format switch
         {
-            MichelineFormat.Json => new RawJson(row.JsonValue),
+            MichelineFormat.Json => (RawJson)row.JsonValue,
             MichelineFormat.JsonString => row.JsonValue,
-            MichelineFormat.Raw => new RawJson(Micheline.ToJson(row.RawValue)),
+            MichelineFormat.Raw => (RawJson)Micheline.ToJson(row.RawValue),
             MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
             _ => null
         };

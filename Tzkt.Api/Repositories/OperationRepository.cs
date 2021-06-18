@@ -8,20 +8,17 @@ using Dapper;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Repositories
 {
     public class OperationRepository : DbConnection
     {
         readonly AccountsCache Accounts;
-        readonly ProposalMetadataService Proposals;
         readonly QuotesCache Quotes;
 
-        public OperationRepository(AccountsCache accounts, ProposalMetadataService proposals, QuotesCache quotes, IConfiguration config) : base(config)
+        public OperationRepository(AccountsCache accounts, QuotesCache quotes, IConfiguration config) : base(config)
         {
             Accounts = accounts;
-            Proposals = proposals;
             Quotes = quotes;
         }
 
@@ -440,7 +437,7 @@ namespace Tzkt.Api.Repositories
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
-                            proposal.""Hash"" as proposal,
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""BallotOps"" as o
                 INNER JOIN  ""Blocks"" as b 
@@ -472,8 +469,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Proposal = new ProposalAlias
                 {
-                    Hash = row.proposal,
-                    Alias = Proposals[row.proposal]?.Alias
+                    Hash = row.ProposalHash,
+                    Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Rolls = row.Rolls,
@@ -486,7 +483,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
-                            proposal.""Hash"" as proposal,
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""BallotOps"" as o
                 INNER JOIN  ""Proposals"" as proposal
@@ -516,8 +513,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Proposal = new ProposalAlias
                 {
-                    Hash = row.proposal,
-                    Alias = Proposals[row.proposal]?.Alias
+                    Hash = row.ProposalHash,
+                    Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Rolls = row.Rolls,
@@ -541,7 +538,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
-                            proposal.""Hash"" as proposal,
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""BallotOps"" as o
                 INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
@@ -576,8 +573,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Proposal = new ProposalAlias
                 {
-                    Hash = row.proposal,
-                    Alias = Proposals[row.proposal]?.Alias
+                    Hash = row.ProposalHash,
+                    Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Rolls = row.Rolls,
@@ -614,7 +611,8 @@ namespace Tzkt.Api.Repositories
                     case "rolls": columns.Add(@"o.""Rolls"""); break;
                     case "vote": columns.Add(@"o.""Vote"""); break;
                     case "proposal":
-                        columns.Add(@"proposal.""Hash"" as proposal");
+                        columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
+                        columns.Add(@"proposal.""Metadata""->> 'alias' as ""ProposalAlias""");
                         joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                         break;
                     case "period": 
@@ -697,8 +695,8 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = new ProposalAlias
                             {
-                                Hash = row.proposal,
-                                Alias = Proposals[row.proposal]?.Alias
+                                Hash = row.ProposalHash,
+                                Alias = row.ProposalAlias
                             };
                         break;
                     case "delegate":
@@ -749,7 +747,8 @@ namespace Tzkt.Api.Repositories
                 case "rolls": columns.Add(@"o.""Rolls"""); break;
                 case "vote": columns.Add(@"o.""Vote"""); break;
                 case "proposal":
-                    columns.Add(@"proposal.""Hash"" as proposal");
+                    columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
+                    columns.Add(@"proposal.""Metadata""->> 'alias' as ""ProposalAlias""");
                     joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                     break;
                 case "period":
@@ -829,8 +828,8 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = new ProposalAlias
                         {
-                            Hash = row.proposal,
-                            Alias = Proposals[row.proposal]?.Alias
+                            Hash = row.ProposalHash,
+                            Alias = row.ProposalAlias
                         };
                     break;
                 case "delegate":
@@ -873,7 +872,7 @@ namespace Tzkt.Api.Repositories
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
-                            proposal.""Hash"" as proposal,
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b 
@@ -907,8 +906,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Proposal = new ProposalAlias
                 {
-                    Hash = row.proposal,
-                    Alias = Proposals[row.proposal]?.Alias
+                    Hash = row.ProposalHash,
+                    Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Quote = Quotes.Get(quote, row.Level)
@@ -919,7 +918,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
-                            proposal.""Hash"" as proposal,
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Proposals"" as proposal
@@ -951,8 +950,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Proposal = new ProposalAlias
                 {
-                    Hash = row.proposal,
-                    Alias = Proposals[row.proposal]?.Alias
+                    Hash = row.ProposalHash,
+                    Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Quote = Quotes.Get(quote, block.Level)
@@ -975,7 +974,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
-                            proposal.""Hash"" as proposal,
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
@@ -1013,8 +1012,8 @@ namespace Tzkt.Api.Repositories
                 },
                 Proposal = new ProposalAlias
                 {
-                    Hash = row.proposal,
-                    Alias = Proposals[row.proposal]?.Alias
+                    Hash = row.ProposalHash,
+                    Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
                 Quote = Quotes.Get(quote, row.Level)
@@ -1050,7 +1049,8 @@ namespace Tzkt.Api.Repositories
                     case "rolls": columns.Add(@"o.""Rolls"""); break;
                     case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                     case "proposal":
-                        columns.Add(@"proposal.""Hash"" as proposal");
+                        columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
+                        columns.Add(@"proposal.""Metadata"" ->> 'alias' as ""ProposalAlias""");
                         joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                         break;
                     case "period":
@@ -1142,8 +1142,8 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = new ProposalAlias
                             {
-                                Hash = row.proposal,
-                                Alias = Proposals[row.proposal]?.Alias
+                                Hash = row.ProposalHash,
+                                Alias = row.ProposalAlias
                             };
                         break;
                     case "delegate":
@@ -1187,7 +1187,8 @@ namespace Tzkt.Api.Repositories
                 case "rolls": columns.Add(@"o.""Rolls"""); break;
                 case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                 case "proposal":
-                    columns.Add(@"proposal.""Hash"" as proposal");
+                    columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
+                    columns.Add(@"proposal.""Metadata"" ->> 'alias' as ""ProposalAlias""");
                     joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                     break;
                 case "period":
@@ -1276,8 +1277,8 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = new ProposalAlias
                         {
-                            Hash = row.proposal,
-                            Alias = Proposals[row.proposal]?.Alias
+                            Hash = row.ProposalHash,
+                            Alias = row.ProposalAlias
                         };
                     break;
                 case "delegate":
@@ -4214,9 +4215,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
+                        MichelineFormat.Json => (RawJson)row.JsonParameters,
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : (RawJson)Micheline.ToJson(row.RawParameters),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4287,9 +4288,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
+                        MichelineFormat.Json => (RawJson)row.JsonParameters,
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : (RawJson)Micheline.ToJson(row.RawParameters),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4360,9 +4361,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
+                        MichelineFormat.Json => (RawJson)row.JsonParameters,
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : (RawJson)Micheline.ToJson(row.RawParameters),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4413,9 +4414,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
+                        MichelineFormat.Json => (RawJson)row.JsonParameters,
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : (RawJson)Micheline.ToJson(row.RawParameters),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4544,9 +4545,9 @@ namespace Tzkt.Api.Repositories
                     Entrypoint = row.Entrypoint,
                     Value = format switch
                     {
-                        MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
+                        MichelineFormat.Json => (RawJson)row.JsonParameters,
                         MichelineFormat.JsonString => row.JsonParameters,
-                        MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
+                        MichelineFormat.Raw => row.RawParameters == null ? null : (RawJson)Micheline.ToJson(row.RawParameters),
                         MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                         _ => throw new Exception("Invalid MichelineFormat value")
                     }
@@ -4823,9 +4824,9 @@ namespace Tzkt.Api.Repositories
                                 Entrypoint = row.Entrypoint,
                                 Value = format switch
                                 {
-                                    MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
+                                    MichelineFormat.Json => (RawJson)row.JsonParameters,
                                     MichelineFormat.JsonString => row.JsonParameters,
-                                    MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
+                                    MichelineFormat.Raw => row.RawParameters == null ? null : (RawJson)Micheline.ToJson(row.RawParameters),
                                     MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                                     _ => throw new Exception("Invalid MichelineFormat value")
                                 }
@@ -5070,9 +5071,9 @@ namespace Tzkt.Api.Repositories
                             Entrypoint = row.Entrypoint,
                             Value = format switch
                             {
-                                MichelineFormat.Json => row.JsonParameters == null ? null : new RawJson(row.JsonParameters),
+                                MichelineFormat.Json => (RawJson)row.JsonParameters,
                                 MichelineFormat.JsonString => row.JsonParameters,
-                                MichelineFormat.Raw => row.RawParameters == null ? null : new RawJson(Micheline.ToJson(row.RawParameters)),
+                                MichelineFormat.Raw => row.RawParameters == null ? null : (RawJson)Micheline.ToJson(row.RawParameters),
                                 MichelineFormat.RawString => row.RawParameters == null ? null : Micheline.ToJson(row.RawParameters),
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             }
