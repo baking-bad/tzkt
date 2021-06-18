@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
@@ -59,6 +60,9 @@ namespace Tzkt.Api
             services.AddTransient<StatisticsRepository>();
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
+            services.AddTransient<MetadataRepository>();
+
+            services.AddAuthService(Configuration);
 
             services.AddStateListener();
 
