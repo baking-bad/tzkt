@@ -8,18 +8,18 @@ namespace Tzkt.Api
     public class RawJson
     {
         public string Json { get; }
-        public RawJson(string json) => Json = json;
+        RawJson(string json) => Json = json;
 
-        public static implicit operator RawJson (string value) => new RawJson(value);
-        public static explicit operator string (RawJson value) => value.Json;
+        public static implicit operator RawJson (string value) => new(value);
+        public static explicit operator string (RawJson value) => value?.Json;
     }
 
     class RawJsonConverter : JsonConverter<RawJson>
     {
         public override RawJson Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            using var jsonDoc = JsonDocument.ParseValue(ref reader);
-            return jsonDoc.RootElement.GetRawText();
+            using var doc = JsonDocument.ParseValue(ref reader);
+            return doc.RootElement.GetRawText();
         }
 
         public override void Write(Utf8JsonWriter writer, RawJson value, JsonSerializerOptions options)

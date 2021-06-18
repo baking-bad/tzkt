@@ -946,15 +946,16 @@ namespace Tzkt.Api.Repositories
                 {
                     case "baker": columns.Add(@"dc.""BakerId"""); break;
                     case "balance": columns.Add(@"dc.""Balance"""); break;
-                    case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
-                    case "doubleBakingLostDeposits": columns.Add(@"""DoubleBakingLostDeposits"""); break;
-                    case "doubleBakingLostRewards": columns.Add(@"""DoubleBakingLostRewards"""); break;
-                    case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); break;
-                    case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
-                    case "doubleEndorsingLostDeposits": columns.Add(@"""DoubleEndorsingLostDeposits"""); break;
-                    case "doubleEndorsingLostRewards": columns.Add(@"""DoubleEndorsingLostRewards"""); break;
-                    case "doubleEndorsingLostFees": columns.Add(@"""DoubleEndorsingLostFees"""); break;
                     case "cycle": columns.Add(@"dc.""Cycle"""); break;
+                    case "quote": columns.Add(@"dc.""Cycle"""); break;
+                    case "doubleBakingRewards": columns.Add(@"bc.""DoubleBakingRewards"""); join = true; break;
+                    case "doubleBakingLostDeposits": columns.Add(@"bc.""DoubleBakingLostDeposits"""); join = true; break;
+                    case "doubleBakingLostRewards": columns.Add(@"bc.""DoubleBakingLostRewards"""); join = true; break;
+                    case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); join = true; break;
+                    case "doubleEndorsingRewards": columns.Add(@"bc.bc.""DoubleEndorsingRewards"""); join = true; break;
+                    case "doubleEndorsingLostDeposits": columns.Add(@"bc.""DoubleEndorsingLostDeposits"""); join = true; break;
+                    case "doubleEndorsingLostRewards": columns.Add(@"bc.""DoubleEndorsingLostRewards"""); join = true; break;
+                    case "doubleEndorsingLostFees": columns.Add(@"bc.""DoubleEndorsingLostFees"""); join = true; break;
                     case "endorsementRewards": columns.Add(@"bc.""EndorsementRewards"""); join = true; break;
                     case "endorsements": columns.Add(@"bc.""Endorsements"""); join = true; break;
                     case "expectedBlocks": columns.Add(@"bc.""ExpectedBlocks"""); join = true; break;
@@ -989,7 +990,6 @@ namespace Tzkt.Api.Repositories
                     case "uncoveredOwnBlockFees": columns.Add(@"bc.""UncoveredOwnBlockFees"""); join = true; break;
                     case "uncoveredOwnBlockRewards": columns.Add(@"bc.""UncoveredOwnBlockRewards"""); join = true; break;
                     case "uncoveredOwnBlocks": columns.Add(@"bc.""UncoveredOwnBlocks"""); join = true; break;
-                    case "quote": columns.Add(@"""Cycle"""); break;
                 }
             }
 
@@ -1226,15 +1226,16 @@ namespace Tzkt.Api.Repositories
             {
                 case "baker": columns.Add(@"dc.""BakerId"""); break;
                 case "balance": columns.Add(@"dc.""Balance"""); break;
-                case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
-                case "doubleBakingLostDeposits": columns.Add(@"""DoubleBakingLostDeposits"""); break;
-                case "doubleBakingLostRewards": columns.Add(@"""DoubleBakingLostRewards"""); break;
-                case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); break;
-                case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
-                case "doubleEndorsingLostDeposits": columns.Add(@"""DoubleEndorsingLostDeposits"""); break;
-                case "doubleEndorsingLostRewards": columns.Add(@"""DoubleEndorsingLostRewards"""); break;
-                case "doubleEndorsingLostFees": columns.Add(@"""DoubleEndorsingLostFees"""); break;
                 case "cycle": columns.Add(@"dc.""Cycle"""); break;
+                case "quote": columns.Add(@"dc.""Cycle"""); break;
+                case "doubleBakingRewards": columns.Add(@"bc.""DoubleBakingRewards"""); join = true; break;
+                case "doubleBakingLostDeposits": columns.Add(@"bc.""DoubleBakingLostDeposits"""); join = true; break;
+                case "doubleBakingLostRewards": columns.Add(@"bc.""DoubleBakingLostRewards"""); join = true; break;
+                case "doubleBakingLostFees": columns.Add(@"bc.""DoubleBakingLostFees"""); join = true; break;
+                case "doubleEndorsingRewards": columns.Add(@"bc.""DoubleEndorsingRewards"""); join = true; break;
+                case "doubleEndorsingLostDeposits": columns.Add(@"bc.""DoubleEndorsingLostDeposits"""); join = true; break;
+                case "doubleEndorsingLostRewards": columns.Add(@"bc.""DoubleEndorsingLostRewards"""); join = true; break;
+                case "doubleEndorsingLostFees": columns.Add(@"bc.""DoubleEndorsingLostFees"""); join = true; break;
                 case "endorsementRewards": columns.Add(@"bc.""EndorsementRewards"""); join = true; break;
                 case "endorsements": columns.Add(@"bc.""Endorsements"""); join = true; break;
                 case "expectedBlocks": columns.Add(@"bc.""ExpectedBlocks"""); join = true; break;
@@ -1269,7 +1270,6 @@ namespace Tzkt.Api.Repositories
                 case "uncoveredOwnBlockFees": columns.Add(@"bc.""UncoveredOwnBlockFees"""); join = true; break;
                 case "uncoveredOwnBlockRewards": columns.Add(@"bc.""UncoveredOwnBlockRewards"""); join = true; break;
                 case "uncoveredOwnBlocks": columns.Add(@"bc.""UncoveredOwnBlocks"""); join = true; break;
-                case "quote": columns.Add(@"""Cycle"""); break;
             }
 
             if (columns.Count == 0)

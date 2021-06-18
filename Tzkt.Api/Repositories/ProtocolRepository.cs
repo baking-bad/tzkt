@@ -1,23 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
-
 using Tzkt.Api.Models;
-using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Repositories
 {
     public class ProtocolRepository : DbConnection
     {
-        readonly ProtocolMetadataService ProtocolMetadata;
-
-        public ProtocolRepository(ProtocolMetadataService protocolMetadata, IConfiguration config) : base(config) 
-        {
-            ProtocolMetadata = protocolMetadata;
-        }
+        public ProtocolRepository(IConfiguration config) : base(config) { }
 
         public async Task<int> GetCount()
         {
@@ -78,7 +70,7 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
-                Metadata = ProtocolMetadata[row.Hash]
+                Metadata = row.Metadata
             };
         }
 
@@ -130,7 +122,7 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
-                Metadata = ProtocolMetadata[row.Hash]
+                Metadata = row.Metadata
             };
         }
 
@@ -182,7 +174,7 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
-                Metadata = ProtocolMetadata[row.Hash]
+                Metadata = row.Metadata
             };
         }
 
@@ -236,7 +228,7 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0
                 },
-                Metadata = ProtocolMetadata[row.Hash]
+                Metadata = row.Metadata
             });
         }
     }

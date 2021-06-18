@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 
 using Tzkt.Api.Models;
-using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
@@ -16,14 +15,12 @@ namespace Tzkt.Api.Repositories
         readonly StateCache State;
         readonly TimeCache Time;
         readonly AccountsCache Accounts;
-        readonly ProposalMetadataService ProposalMetadata;
 
-        public VotingRepository(StateCache state, TimeCache time, AccountsCache accounts, ProposalMetadataService proposalMetadata, IConfiguration config) : base(config)
+        public VotingRepository(StateCache state, TimeCache time, AccountsCache accounts, IConfiguration config) : base(config)
         {
             State = state;
             Time = time;
             Accounts = accounts;
-            ProposalMetadata = proposalMetadata;
         }
 
         #region proposals
@@ -59,7 +56,7 @@ namespace Tzkt.Api.Repositories
                 Upvotes = row.Upvotes,
                 Rolls = row.Rolls,
                 Status = ProposalStatusToString(row.Status),
-                Metadata = ProposalMetadata[hash]
+                Metadata = row.Metadata
             };
         }
 
@@ -91,7 +88,7 @@ namespace Tzkt.Api.Repositories
                 Upvotes = row.Upvotes,
                 Rolls = row.Rolls,
                 Status = ProposalStatusToString(row.Status),
-                Metadata = ProposalMetadata[row.Hash]
+                Metadata = row.Metadata
             });
         }
 
@@ -116,7 +113,7 @@ namespace Tzkt.Api.Repositories
                     case "upvotes": columns.Add(@"""Upvotes"""); break;
                     case "rolls": columns.Add(@"""Rolls"""); break;
                     case "status": columns.Add(@"""Status"""); break;
-                    case "metadata": columns.Add(@"""Hash"""); break;
+                    case "metadata": columns.Add(@"""Metadata"""); break;
                 }
             }
 
@@ -177,7 +174,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "metadata":
                         foreach (var row in rows)
-                            result[j++][i] = ProposalMetadata[row.Hash];
+                            result[j++][i] = (RawJson)row.Metadata;
                         break;
                 }
             }
@@ -204,7 +201,7 @@ namespace Tzkt.Api.Repositories
                 case "upvotes": columns.Add(@"""Upvotes"""); break;
                 case "rolls": columns.Add(@"""Rolls"""); break;
                 case "status": columns.Add(@"""Status"""); break;
-                case "metadata": columns.Add(@"""Hash"""); break;
+                case "metadata": columns.Add(@"""Metadata"""); break;
             }
 
             if (columns.Count == 0)
@@ -258,7 +255,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "metadata":
                     foreach (var row in rows)
-                        result[j++] = ProposalMetadata[row.Hash];
+                        result[j++] = (RawJson)row.Metadata;
                     break;
             }
 

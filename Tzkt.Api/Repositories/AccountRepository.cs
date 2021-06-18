@@ -1818,7 +1818,7 @@ namespace Tzkt.Api.Repositories
                     NumTransactions = row.TransactionsCount,
                     TypeHash = row.TypeHash,
                     CodeHash = row.CodeHash,
-                    Storage = row.JsonValue == null ? null : new RawJson((string)row.JsonValue)
+                    Storage = row.Kind == 0 ? $"\"{manager.Address}\"" : (RawJson)row.JsonValue
                 };
             });
         }
@@ -1868,8 +1868,10 @@ namespace Tzkt.Api.Repositories
                     case "typeHash": columns.Add(@"acc.""TypeHash"""); break;
                     case "codeHash": columns.Add(@"acc.""CodeHash"""); break;
                     case "storage" when includeStorage:
+                        columns.Add(@"acc.""Kind""");
+                        columns.Add(@"acc.""ManagerId""");
                         columns.Add(@"st.""JsonValue""");
-                        joins.Add(@"INNER JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
+                        joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
                         break;
                 }
             }
@@ -2029,7 +2031,17 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "storage":
                         foreach (var row in rows)
-                            result[j++][i] = row.JsonValue == null ? null : new RawJson((string)row.JsonValue);
+                        {
+                            if (row.Kind == 0)
+                            {
+                                var _manager = (RawUser)Accounts.Get((int)row.ManagerId);
+                                result[j++][i] = _manager.Address;
+                            }
+                            else
+                            {
+                                result[j++][i] = (RawJson)row.JsonValue;
+                            }
+                        }
                         break;
                 }
             }
@@ -2081,8 +2093,10 @@ namespace Tzkt.Api.Repositories
                 case "typeHash": columns.Add(@"acc.""TypeHash"""); break;
                 case "codeHash": columns.Add(@"acc.""CodeHash"""); break;
                 case "storage" when includeStorage:
+                    columns.Add(@"acc.""Kind""");
+                    columns.Add(@"acc.""ManagerId""");
                     columns.Add(@"st.""JsonValue""");
-                    joins.Add(@"INNER JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
+                    joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
                     break;
             }
 
@@ -2238,7 +2252,17 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "storage":
                     foreach (var row in rows)
-                        result[j++] = row.JsonValue == null ? null : new RawJson((string)row.JsonValue);
+                    {
+                        if (row.Kind == 0)
+                        {
+                            var _manager = (RawUser)Accounts.Get((int)row.ManagerId);
+                            result[j++] = _manager.Address;
+                        }
+                        else
+                        {
+                            result[j++] = (RawJson)row.JsonValue;
+                        }
+                    }
                     break;
             }
 
@@ -2459,7 +2483,7 @@ namespace Tzkt.Api.Repositories
             if (contract.Kind == 0)
             {
                 var manager = await Accounts.GetAsync((int)contract.ManagerId);
-                return path?.Length > 0 ? null : manager.Address;
+                return path?.Length > 0 ? null : $"\"{manager.Address}\"";
             }
 
             var pathSelector = path == null ? string.Empty : " #> @path";
@@ -2490,7 +2514,7 @@ namespace Tzkt.Api.Repositories
             if (contract.Kind == 0)
             {
                 var manager = await Accounts.GetAsync((int)contract.ManagerId);
-                return path?.Length > 0 ? null : manager.Address;
+                return path?.Length > 0 ? null : $"\"{manager.Address}\"";
             }
 
             var pathSelector = path == null ? string.Empty : " #> @path";
@@ -2718,9 +2742,7 @@ namespace Tzkt.Api.Repositories
                         Parameter = row.TransactionEntrypoint == null ? null : new TxParameter
                         {
                             Entrypoint = row.TransactionEntrypoint,
-                            Value = row.TransactionJsonParameters != null
-                                ? new RawJson(row.TransactionJsonParameters)
-                                : null
+                            Value = (RawJson)row.TransactionJsonParameters
                         }
                     };
                 }
@@ -2752,7 +2774,7 @@ namespace Tzkt.Api.Repositories
                     Timestamp = timestamp,
                     Operation = source,
                     Level = row.Level,
-                    Value = new RawJson(row.JsonValue),
+                    Value = (RawJson)row.JsonValue,
                 };
             });
         }
@@ -2813,7 +2835,7 @@ namespace Tzkt.Api.Repositories
                         {
                             Entrypoint = row.TransactionEntrypoint,
                             Value = row.TransactionRawParameters != null
-                                ? new RawJson(Micheline.ToJson(row.TransactionRawParameters))
+                                ? (RawJson)Micheline.ToJson(row.TransactionRawParameters)
                                 : null
                         }
                     };
@@ -2846,7 +2868,7 @@ namespace Tzkt.Api.Repositories
                     Timestamp = timestamp,
                     Operation = source,
                     Level = row.Level,
-                    Value = new RawJson(Micheline.ToJson(row.RawValue)),
+                    Value = (RawJson)Micheline.ToJson(row.RawValue),
                 };
             });
         }
@@ -2864,9 +2886,9 @@ namespace Tzkt.Api.Repositories
             return rows.Any()
                 ? rows.ToDictionary(x => (int)x.Id, x => format switch
                 {
-                    MichelineFormat.Json => new RawJson(x.JsonValue),
+                    MichelineFormat.Json => (RawJson)x.JsonValue,
                     MichelineFormat.JsonString => x.JsonValue,
-                    MichelineFormat.Raw => new RawJson(Micheline.ToJson(x.RawValue)),
+                    MichelineFormat.Raw => (RawJson)Micheline.ToJson(x.RawValue),
                     MichelineFormat.RawString => Micheline.ToJson(x.RawValue),
                     _ => throw new Exception("Invalid MichelineFormat value")
                 })
