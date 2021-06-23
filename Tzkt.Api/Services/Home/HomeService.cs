@@ -19,25 +19,25 @@ namespace Tzkt.Api.Services
     public class HomeService : DbConnection
     {
         #region static
-        public static object[][] AccountsTab { get; set; }
+        public static object[][] AccountsTab { get; private set; }
         public static readonly string[] AccountFields = new[]
         {
             "alias", "address", "type", "delegate", "firstActivityTime", "balance", "numTransactions", "lastActivityTime"
         };
 
-        public static object[][] BakersTab { get; set; }
+        public static object[][] BakersTab { get; private set; }
         public static readonly string[] BakerFields = new[]
         {
             "alias", "address", "firstActivityTime", "balance", "stakingBalance", "numDelegators", "lastActivityTime"
         };
 
-        public static object[][] AssetsTab { get; set; }
+        public static object[][] AssetsTab { get; private set; }
         public static readonly string[] AssetFields = new[]
         {
             "alias", "address", "tzips", "creator", "firstActivityTime", "balance", "numTransactions", "lastActivityTime"
         };
 
-        public static object[][] BlocksTab { get; set; }
+        public static object[][] BlocksTab { get; private set; }
         public static readonly string[] BlockFields = new[]
         {
             "timestamp", "level", "baker", "priority", "validations", "reward", "fees", "hash"
@@ -49,12 +49,8 @@ namespace Tzkt.Api.Services
         private static CycleData CycleData;
         private static GovernanceData GovernanceData;
         private static StakingData StakingData;
-        private static List<ChartPoint> StakingChart;
-        private static List<ChartPoint> ContractsChart;
         private static AccountsData AccountsData;
-        private static List<ChartPoint> AccountsChart;
         private static TxsData TxsData;
-        private static List<ChartPoint> TxsChart;
         private static MarketData MarketData;
         private static List<Quote> MarketChart;
         #endregion
@@ -149,12 +145,8 @@ namespace Tzkt.Api.Services
                 CycleData = CycleData,
                 GovernanceData = GovernanceData,
                 StakingData = StakingData,
-                TotalStakingChart = StakingChart,
-                TotalCallsChart = ContractsChart,
                 AccountsData = AccountsData,
-                TotalAccountsChart = AccountsChart,
                 TxsData = TxsData,
-                TotalTxsChart = TxsChart,
                 MarketData = MarketData,
                 PriceChart = priceChart
             };
@@ -184,7 +176,11 @@ namespace Tzkt.Api.Services
                     CycleData = GetCycleData(); // 1
                     TxsData = await GetTxsData(db); // 2800
                     StakingData = await GetStakingData(db, statistics.TotalSupply); // 50
-                    MarketData = await GetMarketData(statistics.TotalSupply, statistics.CirculatingSupply); // 1
+                    MarketData = new MarketData
+                    {
+                        TotalSupply = statistics.TotalSupply,
+                        CirculatingSupply = statistics.CirculatingSupply
+                    };
                     GovernanceData = await GetGovernanceData(); // 40
                     AccountsData = await GetAccountsData(db); // 320
                     
@@ -255,7 +251,7 @@ namespace Tzkt.Api.Services
         #endregion
 
         #region cards
-        public async Task<Statistics> GetStatistics(IDbConnection db)
+        private async Task<Statistics> GetStatistics(IDbConnection db)
         {
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Statistics"" WHERE ""Level"" = {State.Current.Level}");
 
@@ -455,22 +451,6 @@ namespace Tzkt.Api.Services
                 })
             };
         }
-
-        private async Task<MarketData> GetMarketData(long totalSupply, long circulatingSupply)
-        {
-            var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
-            
-            var level = new Int32Parameter
-            {
-                Eq = Math.Max(0, State.Current.Level - period)
-            };
-            
-            return new()
-            {
-                TotalSupply = totalSupply,
-                CirculatingSupply = circulatingSupply,
-            };
-        }
         
         private async Task<GovernanceData> GetGovernanceData()
         {
@@ -490,7 +470,7 @@ namespace Tzkt.Api.Services
                         Hash = x.Hash,
                         Metadata = x.Metadata,
                         Rolls = x.Rolls,
-                        RollsPercentage = Math.Round(100.0 * x.Rolls / (int)period.TotalRolls, 2)
+                        RollsPercentage = Math.Round(100.0 * x.Rolls / (int)period.TotalRolls!, 2)
                     }).ToList(),
                     UpvotesQuorum = period.UpvotesQuorum,
                     PeriodEndTime = period.EndTime,
@@ -507,10 +487,10 @@ namespace Tzkt.Api.Services
                 EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
             };
 
-            if (period.Kind == "exploration" || period.Kind == "promotion")
+            if (period.Kind is "exploration" or "promotion")
             {
-                var yayNaySum = (int)period.YayRolls + (int)period.NayRolls;
-                var totalVoted = yayNaySum + (int)period.PassRolls;
+                var yayNaySum = (int)period.YayRolls! + (int)period.NayRolls!;
+                var totalVoted = yayNaySum + (int)period.PassRolls!;
 
                 result.YayVotes = yayNaySum > 0
                     ? Math.Round(100.0 * (int)period.YayRolls / yayNaySum, 2)
@@ -520,8 +500,8 @@ namespace Tzkt.Api.Services
                     ? Math.Round(100.0 * totalVoted / (int)period.TotalRolls, 2)
                     : 0;
 
-                result.Quorum = Math.Round((double)period.BallotsQuorum, 2);
-                result.Supermajority = Math.Round((double)period.Supermajority, 2);
+                result.Quorum = Math.Round((double)period.BallotsQuorum!, 2);
+                result.Supermajority = Math.Round((double)period.Supermajority!, 2);
             }
 
             return result;
