@@ -7,5 +7,6 @@ namespace Tzkt.Api.Models
         public int FundedAccounts { get; set; }
         public int ActiveAccounts { get; set; }
         public int PublicAccounts { get; set; }
+        public int TotalContracts { get; set; }
     }
 }

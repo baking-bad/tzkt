@@ -13,7 +13,6 @@ namespace Tzkt.Api.Models
         public StakingData StakingData { get; set; }
         public List<ChartPoint> TotalStakingChart { get; set; }
         
-        public ContractsData ContractsData { get; set; }
         public List<ChartPoint> TotalCallsChart { get; set; }
         
         public AccountsData AccountsData { get; set; }

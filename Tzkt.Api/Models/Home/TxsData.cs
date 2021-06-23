@@ -13,5 +13,8 @@ namespace Tzkt.Api.Models
 
         public long Burned { get; set; }
         public double BurnedDiff { get; set; }
+        
+        public int Calls { get; set; }
+        public double CallsDiff { get; set; }
     }
 }
