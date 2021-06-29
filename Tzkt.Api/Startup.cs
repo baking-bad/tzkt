@@ -13,6 +13,7 @@ using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Sync;
+using Tzkt.Api.Services;
 using Tzkt.Api.Swagger;
 using Tzkt.Api.Websocket;
 using Tzkt.Api.Websocket.Hubs;
@@ -63,6 +64,7 @@ namespace Tzkt.Api
 
             services.AddAuthService(Configuration);
 
+            services.AddHomeService();
             services.AddStateListener();
 
             services.AddControllers()
