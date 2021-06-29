@@ -45,32 +45,33 @@ namespace Tzkt.Api.Services
         #endregion
 
         #region stats
-        private static DailyData DailyData;
-        private static CycleData CycleData;
-        private static GovernanceData GovernanceData;
-        private static StakingData StakingData;
-        private static AccountsData AccountsData;
-        private static TxsData TxsData;
-        private static MarketData MarketData;
-        private static List<Quote> MarketChart;
+
+        static DailyData DailyData;
+        static CycleData CycleData;
+        static GovernanceData GovernanceData;
+        static StakingData StakingData;
+        static AccountsData AccountsData;
+        static TxsData TxsData;
+        static MarketData MarketData;
+        static List<Quote> MarketChart;
         #endregion
 
-        private readonly AccountMetadataService Metadata;
+        readonly AccountMetadataService Metadata;
 
-        private readonly AccountRepository AccountsRepo;
-        private readonly BakingRightsRepository RightsRepo;
-        private readonly BlockRepository BlocksRepo;
-        private readonly QuotesRepository QuotesRepo;
-        private readonly VotingRepository VotingRepo;
+        readonly AccountRepository AccountsRepo;
+        readonly BakingRightsRepository RightsRepo;
+        readonly BlockRepository BlocksRepo;
+        readonly QuotesRepository QuotesRepo;
+        readonly VotingRepository VotingRepo;
 
-        private readonly ProtocolsCache Protocols;
-        private readonly StateCache State;
-        private readonly TimeCache Times;
+        readonly ProtocolsCache Protocols;
+        readonly StateCache State;
+        readonly TimeCache Times;
 
-        private readonly SemaphoreSlim Sema = new(1);
-        private readonly HomeConfig Config;
-        private readonly ILogger Logger;
-        private static int LastUpdate;
+        readonly SemaphoreSlim Sema = new(1);
+        readonly HomeConfig Config;
+        readonly ILogger Logger;
+        static int LastUpdate;
 
         public HomeService(AccountMetadataService metadata, BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
             VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
@@ -162,10 +163,14 @@ namespace Tzkt.Api.Services
                 Logger.LogDebug("Update home");
 
                 using var db = GetConnection();
+                
+                BlocksTab = await GetBlocks(); // 60
+                CycleData = GetCycleData(); // 1
+                GovernanceData = await GetGovernanceData(); // 40
+                await UpdateMarketChart(db); // 10
 
                 if (LastUpdate < State.Current.Level - Config.UpdatePeriod)
                 {
-                    BlocksTab = await GetBlocks(); // 60
                     AccountsTab = await GetAccounts(); // 270
                     BakersTab = await GetBakers(); // 40
                     AssetsTab = await GetAssets(); // 100
@@ -173,7 +178,6 @@ namespace Tzkt.Api.Services
                     var statistics = await GetStatistics(db); // 15
 
                     DailyData = await GetDailyData(db); // 260
-                    CycleData = GetCycleData(); // 1
                     TxsData = await GetTxsData(db); // 2800
                     StakingData = await GetStakingData(db, statistics.TotalSupply); // 50
                     MarketData = new MarketData
@@ -181,17 +185,9 @@ namespace Tzkt.Api.Services
                         TotalSupply = statistics.TotalSupply,
                         CirculatingSupply = statistics.CirculatingSupply
                     };
-                    GovernanceData = await GetGovernanceData(); // 40
                     AccountsData = await GetAccountsData(db); // 320
                     
-                    await UpdateMarketChart(db); // 10
-
                     LastUpdate = State.Current.Level;
-                }
-                else
-                {
-                    BlocksTab = await GetBlocks();
-                    CycleData = GetCycleData();
                 }
             }
             catch (Exception ex)
@@ -205,7 +201,7 @@ namespace Tzkt.Api.Services
         }
 
         #region tabs
-        private async Task<object[][]> GetBlocks()
+        async Task<object[][]> GetBlocks()
         {
             var level = State.Current.Level;
 
@@ -225,19 +221,19 @@ namespace Tzkt.Api.Services
             return upcoming.Concat(blocks).ToArray();
         }
 
-        private async Task<object[][]> GetAccounts()
+        async Task<object[][]> GetAccounts()
         {
             return await AccountsRepo.Get(null, null, null, null, null, null,
                 new SortParameter { Desc = "balance" }, null, 10, AccountFields);
         }
 
-        private async Task<object[][]> GetBakers()
+        async Task<object[][]> GetBakers()
         {
             return await AccountsRepo.GetDelegates(new BoolParameter { Eq = true }, null,
                 new SortParameter { Desc = "stakingBalance" }, null, 10, BakerFields);
         }
 
-        private async Task<object[][]> GetAssets()
+        async Task<object[][]> GetAssets()
         {
             return (await AccountsRepo.Get(
                     new AccountTypeParameter { Eq = 2 }, new ContractKindParameter { Eq = 2 }, 
@@ -251,7 +247,7 @@ namespace Tzkt.Api.Services
         #endregion
 
         #region cards
-        private async Task<Statistics> GetStatistics(IDbConnection db)
+        async Task<Statistics> GetStatistics(IDbConnection db)
         {
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Statistics"" WHERE ""Level"" = {State.Current.Level}");
 
@@ -273,7 +269,7 @@ namespace Tzkt.Api.Services
             };
         }
 
-        private async Task<DailyData> GetDailyData(IDbConnection db)
+        async Task<DailyData> GetDailyData(IDbConnection db)
         {
             var period = 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //day
             var currPeriod = State.Current.Level - period;
@@ -318,7 +314,7 @@ namespace Tzkt.Api.Services
             };
         }
 
-        private CycleData GetCycleData()
+        CycleData GetCycleData()
         {
             var state = State.Current;
             var proto = Protocols.Current;
@@ -342,7 +338,7 @@ namespace Tzkt.Api.Services
             };
         }
 
-        private async Task<TxsData> GetTxsData(IDbConnection db)
+        async Task<TxsData> GetTxsData(IDbConnection db)
         {
             var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
             var currPeriod = State.Current.Level - period;
@@ -412,7 +408,7 @@ namespace Tzkt.Api.Services
             };
         }
 
-        private async Task<StakingData> GetStakingData(IDbConnection db, long totalSupply)
+        async Task<StakingData> GetStakingData(IDbConnection db, long totalSupply)
         {
             var protocol = Protocols.Current;
 
@@ -433,7 +429,7 @@ namespace Tzkt.Api.Services
             };
         }
 
-        private async Task<AccountsData> GetAccountsData(IDbConnection db)
+        async Task<AccountsData> GetAccountsData(IDbConnection db)
         {
             var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
             var currPeriod = State.Current.Level - period;
@@ -452,7 +448,7 @@ namespace Tzkt.Api.Services
             };
         }
         
-        private async Task<GovernanceData> GetGovernanceData()
+        async Task<GovernanceData> GetGovernanceData()
         {
             var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);
             var period = epoch.Periods.Last();
@@ -480,8 +476,8 @@ namespace Tzkt.Api.Services
 
             var result = new GovernanceData
             {
-                Proposal = proposal?.Hash,
-                Protocol = proposal?.Metadata?.Alias,
+                Proposal = proposal.Hash,
+                Protocol = proposal.Metadata?.Alias,
                 Period = period.Kind,
                 PeriodEndTime = period.EndTime,
                 EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
@@ -508,7 +504,7 @@ namespace Tzkt.Api.Services
         }
         #endregion
 
-        private async Task UpdateMarketChart(IDbConnection db)
+        async Task UpdateMarketChart(IDbConnection db)
         {
             var period = -29;
             var end = Times[State.Current.QuoteLevel];
@@ -523,7 +519,7 @@ namespace Tzkt.Api.Services
         }
 
 
-        private static double Diff(long current, long previous)
+        static double Diff(long current, long previous)
         {
             return previous == 0 ? 0 : Math.Round(100.0 * (current - previous) / previous, 2);
         }
