@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Dapper;
 
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Metadata;
@@ -33,14 +35,14 @@ namespace Tzkt.Api
             services.AddDbContext<TzktContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddAccountMetadata();
-            services.AddSoftwareMetadata();
-
             services.AddAccountsCache();
             services.AddProtocolsCache();
             services.AddQuotesCache();
+            services.AddSoftwareCache();
             services.AddStateCache();
             services.AddTimeCache();
+
+            services.AddTransient<SearchService>();
 
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();
@@ -111,6 +113,12 @@ namespace Tzkt.Api
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
                 });
             }
+            #endregion
+
+            #region dapper
+            SqlMapper.AddTypeHandler(new AccountMetadataTypeHandler());
+            SqlMapper.AddTypeHandler(new JsonElementTypeHandler());
+            SqlMapper.AddTypeHandler(new RawJsonTypeHandler());
             #endregion
         }
 

@@ -17,13 +17,17 @@ namespace Tzkt.Api.Repositories
 {
     public class AccountRepository : DbConnection
     {
+        #region static
+        const string AliasQuery = @"""Metadata""#>>'{alias}' as ""Alias""";
+        #endregion
+
         readonly AccountsCache Accounts;
         readonly StateCache State;
         readonly TimeCache Time;
         readonly OperationRepository Operations;
-        readonly SoftwareMetadataService Software;
+        readonly SoftwareCache Software;
 
-        public AccountRepository(AccountsCache accounts, StateCache state, TimeCache time, OperationRepository operations, SoftwareMetadataService software, IConfiguration config) : base(config)
+        public AccountRepository(AccountsCache accounts, StateCache state, TimeCache time, OperationRepository operations, SoftwareCache software, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             State = state;
@@ -40,17 +44,12 @@ namespace Tzkt.Api.Repositories
         public async Task<Account> Get(string address, bool metadata)
         {
             var rawAccount = await Accounts.GetAsync(address);
-
             if (rawAccount == null)
-                return address[0] == 't'
-                    ? new EmptyAccount
-                    {
-                        Address = address,
-                        Counter = State.Current.ManagerCounter,
-                    }
-                    : null;
-
-            var accMetadata = Accounts.GetMetadata(rawAccount.Id);
+                return address[0] != 't' ? null : new EmptyAccount
+                {
+                    Address = address,
+                    Counter = State.Current.ManagerCounter,
+                };
 
             switch (rawAccount)
             {
@@ -58,7 +57,7 @@ namespace Tzkt.Api.Repositories
                     #region build delegate
                     return new Models.Delegate
                     {
-                        Alias = accMetadata?.Alias,
+                        Alias = delegat.Alias,
                         Active = delegat.Staked,
                         Address = delegat.Address,
                         PublicKey = delegat.PublicKey,
@@ -70,8 +69,8 @@ namespace Tzkt.Api.Repositories
                         Counter = delegat.Counter,
                         ActivationLevel = delegat.ActivationLevel,
                         ActivationTime = Time[delegat.ActivationLevel],
-                        DeactivationLevel = delegat.Staked ? null : (int?)delegat.DeactivationLevel,
-                        DeactivationTime = delegat.Staked ? null : (DateTime?)Time[delegat.DeactivationLevel],
+                        DeactivationLevel = delegat.Staked ? null : delegat.DeactivationLevel,
+                        DeactivationTime = delegat.Staked ? null : Time[delegat.DeactivationLevel],
                         StakingBalance = delegat.StakingBalance,
                         FirstActivity = delegat.FirstLevel,
                         FirstActivityTime = Time[delegat.FirstLevel],
@@ -93,7 +92,7 @@ namespace Tzkt.Api.Repositories
                         NumReveals = delegat.RevealsCount,
                         NumMigrations = delegat.MigrationsCount,
                         NumTransactions = delegat.TransactionsCount,
-                        Metadata = metadata ? accMetadata : null,
+                        Metadata = metadata ? delegat.Metadata : null,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
                     };
                     #endregion
@@ -102,12 +101,9 @@ namespace Tzkt.Api.Repositories
                     var userDelegate = user.DelegateId == null ? null
                         : await Accounts.GetAsync((int)user.DelegateId);
 
-                    var userDelegateMetadata = userDelegate == null ? null
-                        : Accounts.GetMetadata(userDelegate.Id);
-
                     return new User
                     {
-                        Alias = accMetadata?.Alias,
+                        Alias = user.Alias,
                         Address = user.Address,
                         Balance = user.Balance,
                         Counter = user.Balance > 0 ? user.Counter : State.Current.ManagerCounter,
@@ -117,17 +113,14 @@ namespace Tzkt.Api.Repositories
                         LastActivityTime = Time[user.LastLevel],
                         PublicKey = user.PublicKey,
                         Revealed = user.Revealed,
-                        Delegate = userDelegate == null ? null
-                            : new DelegateInfo
-                            {
-                                Alias = userDelegateMetadata?.Alias,
-                                Address = userDelegate.Address,
-                                Active = userDelegate.Staked
-                            },
-                        DelegationLevel = userDelegate == null ? null
-                            : user.DelegationLevel,
-                        DelegationTime = userDelegate == null ? null
-                            : (DateTime?)Time[(int)user.DelegationLevel],
+                        Delegate = userDelegate == null ? null : new DelegateInfo
+                        {
+                            Alias = userDelegate.Alias,
+                            Address = userDelegate.Address,
+                            Active = userDelegate.Staked
+                        },
+                        DelegationLevel = userDelegate == null ? null : user.DelegationLevel,
+                        DelegationTime = userDelegate == null ? null : Time[(int)user.DelegationLevel],
                         NumActivations = user.Activated == true ? 1 : 0,
                         NumContracts = user.ContractsCount,
                         NumDelegations = user.DelegationsCount,
@@ -135,7 +128,7 @@ namespace Tzkt.Api.Repositories
                         NumReveals = user.RevealsCount,
                         NumMigrations = user.MigrationsCount,
                         NumTransactions = user.TransactionsCount,
-                        Metadata = metadata ? accMetadata : null
+                        Metadata = metadata ? user.Metadata : null
                     };
                     #endregion
                 case RawContract contract:
@@ -143,52 +136,38 @@ namespace Tzkt.Api.Repositories
                     var creator = contract.CreatorId == null ? null
                         : await Accounts.GetAsync((int)contract.CreatorId);
 
-                    var creatorMetadata = creator == null ? null
-                        : Accounts.GetMetadata(creator.Id);
-
                     var manager = contract.ManagerId == null ? null
                         : (RawUser)await Accounts.GetAsync((int)contract.ManagerId);
-
-                    var managerMetadata = manager == null ? null
-                        : Accounts.GetMetadata(manager.Id);
 
                     var contractDelegate = contract.DelegateId == null ? null
                         : await Accounts.GetAsync((int)contract.DelegateId);
 
-                    var contractDelegateMetadata = contractDelegate == null ? null
-                        : Accounts.GetMetadata(contractDelegate.Id);
-
                     return new Contract
                     {
-                        Alias = accMetadata?.Alias,
+                        Alias = contract.Alias,
                         Address = contract.Address,
                         Kind = KindToString(contract.Kind),
                         Tzips = GetTzips(contract.Tzips),
                         Balance = contract.Balance,
-                        Creator = creator == null ? null
-                            : new CreatorInfo
-                            {
-                                Alias = creatorMetadata?.Alias,
-                                Address = creator.Address
-                            },
-                        Manager = manager == null ? null
-                            : new ManagerInfo
-                            {
-                                Alias = managerMetadata?.Alias,
-                                Address = manager.Address,
-                                PublicKey = manager.PublicKey,
-                            },
-                        Delegate = contractDelegate == null ? null
-                            : new DelegateInfo
-                            {
-                                Alias = contractDelegateMetadata?.Alias,
-                                Address = contractDelegate.Address,
-                                Active = contractDelegate.Staked
-                            },
-                        DelegationLevel = contractDelegate == null ? null
-                            : contract.DelegationLevel,
-                        DelegationTime = contractDelegate == null ? null
-                            : Time[(int)contract.DelegationLevel],
+                        Creator = creator == null ? null : new CreatorInfo
+                        {
+                            Alias = creator.Alias,
+                            Address = creator.Address
+                        },
+                        Manager = manager == null ? null : new ManagerInfo
+                        {
+                            Alias = manager.Alias,
+                            Address = manager.Address,
+                            PublicKey = manager.PublicKey,
+                        },
+                        Delegate = contractDelegate == null ? null : new DelegateInfo
+                        {
+                            Alias = contractDelegate.Alias,
+                            Address = contractDelegate.Address,
+                            Active = contractDelegate.Staked
+                        },
+                        DelegationLevel = contractDelegate == null ? null : contract.DelegationLevel,
+                        DelegationTime = contractDelegate == null ? null : Time[(int)contract.DelegationLevel],
                         FirstActivity = contract.FirstLevel,
                         FirstActivityTime = Time[contract.FirstLevel],
                         LastActivity = contract.LastLevel,
@@ -201,7 +180,7 @@ namespace Tzkt.Api.Repositories
                         NumTransactions = contract.TransactionsCount,
                         TypeHash = contract.TypeHash,
                         CodeHash = contract.CodeHash,
-                        Metadata = metadata ? accMetadata : null
+                        Metadata = metadata ? contract.Metadata : null
                     };
                     #endregion
                 default:
@@ -212,15 +191,12 @@ namespace Tzkt.Api.Repositories
         public async Task<Models.Delegate> GetDelegate(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
-
             if (rawAccount is not RawDelegate delegat)
                 return null;
 
-            var metadata = Accounts.GetMetadata(delegat.Id);
-
             return new Models.Delegate
             {
-                Alias = metadata?.Alias,
+                Alias = delegat.Alias,
                 Active = delegat.Staked,
                 Address = delegat.Address,
                 PublicKey = delegat.PublicKey,
@@ -232,8 +208,8 @@ namespace Tzkt.Api.Repositories
                 Counter = delegat.Counter,
                 ActivationLevel = delegat.ActivationLevel,
                 ActivationTime = Time[delegat.ActivationLevel],
-                DeactivationLevel = delegat.Staked ? null : (int?)delegat.DeactivationLevel,
-                DeactivationTime = delegat.Staked ? null : (DateTime?)Time[delegat.DeactivationLevel],
+                DeactivationLevel = delegat.Staked ? null : delegat.DeactivationLevel,
+                DeactivationTime = delegat.Staked ? null : Time[delegat.DeactivationLevel],
                 StakingBalance = delegat.StakingBalance,
                 FirstActivity = delegat.FirstLevel,
                 FirstActivityTime = Time[delegat.FirstLevel],
@@ -262,61 +238,44 @@ namespace Tzkt.Api.Repositories
         public async Task<Contract> GetContract(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
-
             if (rawAccount is not RawContract contract)
                 return null;
 
-            var metadata = Accounts.GetMetadata(contract.Id);
-
             var creator = contract.CreatorId == null ? null
-                        : await Accounts.GetAsync((int)contract.CreatorId);
-
-            var creatorMetadata = creator == null ? null
-                : Accounts.GetMetadata(creator.Id);
+                : await Accounts.GetAsync((int)contract.CreatorId);
 
             var manager = contract.ManagerId == null ? null
                 : (RawUser)await Accounts.GetAsync((int)contract.ManagerId);
 
-            var managerMetadata = manager == null ? null
-                : Accounts.GetMetadata(manager.Id);
-
-            var contractDelegate = contract.DelegateId == null ? null
+            var delegat = contract.DelegateId == null ? null
                 : await Accounts.GetAsync((int)contract.DelegateId);
-
-            var contractDelegateMetadata = contractDelegate == null ? null
-                : Accounts.GetMetadata(contractDelegate.Id);
 
             return new Contract
             {
-                Alias = metadata?.Alias,
+                Alias = contract.Alias,
                 Address = contract.Address,
                 Kind = KindToString(contract.Kind),
                 Tzips = GetTzips(contract.Tzips),
                 Balance = contract.Balance,
-                Creator = creator == null ? null
-                    : new CreatorInfo
-                    {
-                        Alias = creatorMetadata?.Alias,
-                        Address = creator.Address
-                    },
-                Manager = manager == null ? null
-                    : new ManagerInfo
-                    {
-                        Alias = managerMetadata?.Alias,
-                        Address = manager.Address,
-                        PublicKey = manager.PublicKey,
-                    },
-                Delegate = contractDelegate == null ? null
-                    : new DelegateInfo
-                    {
-                        Alias = contractDelegateMetadata?.Alias,
-                        Address = contractDelegate.Address,
-                        Active = contractDelegate.Staked
-                    },
-                DelegationLevel = contractDelegate == null ? null
-                    : contract.DelegationLevel,
-                DelegationTime = contractDelegate == null ? null
-                    : (DateTime?)Time[(int)contract.DelegationLevel],
+                Creator = creator == null ? null : new CreatorInfo
+                {
+                    Alias = creator.Alias,
+                    Address = creator.Address
+                },
+                Manager = manager == null ? null : new ManagerInfo
+                {
+                    Alias = manager.Alias,
+                    Address = manager.Address,
+                    PublicKey = manager.PublicKey,
+                },
+                Delegate = delegat == null ? null : new DelegateInfo
+                {
+                    Alias = delegat.Alias,
+                    Address = delegat.Address,
+                    Active = delegat.Staked
+                },
+                DelegationLevel = delegat == null ? null : contract.DelegationLevel,
+                DelegationTime = delegat == null ? null : Time[(int)contract.DelegationLevel],
                 FirstActivity = contract.FirstLevel,
                 FirstActivityTime = Time[contract.FirstLevel],
                 LastActivity = contract.LastLevel,
@@ -356,7 +315,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
+            var sql = new SqlBuilder($@"SELECT *, {AliasQuery} FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -379,8 +338,6 @@ namespace Tzkt.Api.Repositories
             var accounts = new List<Account>(rows.Count());
             foreach (var row in rows)
             {
-                var metadata = Accounts.GetMetadata((int)row.Id);
-
                 switch ((int)row.Type)
                 {
                     case 0:
@@ -388,12 +345,9 @@ namespace Tzkt.Api.Repositories
                         var userDelegate = row.DelegateId == null ? null
                             : await Accounts.GetAsync((int)row.DelegateId);
 
-                        var userDelegateMetadata = userDelegate == null ? null
-                            : Accounts.GetMetadata(userDelegate.Id);
-
                         accounts.Add(new User
                         {
-                            Alias = metadata?.Alias,
+                            Alias = row.Alias,
                             Address = row.Address,
                             Balance = row.Balance,
                             Counter = row.Balance > 0 ? row.Counter : State.Current.ManagerCounter,
@@ -403,17 +357,14 @@ namespace Tzkt.Api.Repositories
                             LastActivityTime = Time[row.LastLevel],
                             PublicKey = row.PublicKey,
                             Revealed = row.Revealed,
-                            Delegate = userDelegate == null ? null
-                            : new DelegateInfo
+                            Delegate = userDelegate == null ? null : new DelegateInfo
                             {
-                                Alias = userDelegateMetadata?.Alias,
+                                Alias = userDelegate.Alias,
                                 Address = userDelegate.Address,
                                 Active = userDelegate.Staked
                             },
-                            DelegationLevel = userDelegate == null ? null
-                                : row.DelegationLevel,
-                            DelegationTime = userDelegate == null ? null
-                                : (DateTime?)Time[row.DelegationLevel],
+                            DelegationLevel = userDelegate == null ? null : row.DelegationLevel,
+                            DelegationTime = userDelegate == null ? null : (DateTime?)Time[row.DelegationLevel],
                             NumActivations = row.Activated == true ? 1 : 0,
                             NumContracts = row.ContractsCount,
                             NumDelegations = row.DelegationsCount,
@@ -428,7 +379,7 @@ namespace Tzkt.Api.Repositories
                         #region build delegate
                         accounts.Add(new Models.Delegate
                         {
-                            Alias = metadata?.Alias,
+                            Alias = row.Alias,
                             Active = row.Staked,
                             Address = row.Address,
                             PublicKey = row.PublicKey,
@@ -472,52 +423,38 @@ namespace Tzkt.Api.Repositories
                         var creator = row.CreatorId == null ? null
                             : await Accounts.GetAsync((int)row.CreatorId);
 
-                        var creatorMetadata = creator == null ? null
-                            : Accounts.GetMetadata(creator.Id);
-
                         var manager = row.ManagerId == null ? null
                             : (RawUser)await Accounts.GetAsync((int)row.ManagerId);
-
-                        var managerMetadata = manager == null ? null
-                            : Accounts.GetMetadata(manager.Id);
 
                         var contractDelegate = row.DelegateId == null ? null
                             : await Accounts.GetAsync((int)row.DelegateId);
 
-                        var contractDelegateMetadata = contractDelegate == null ? null
-                            : Accounts.GetMetadata(contractDelegate.Id);
-
                         accounts.Add(new Contract
                         {
-                            Alias = metadata?.Alias,
+                            Alias = row.Alias,
                             Address = row.Address,
                             Kind = KindToString(row.Kind),
                             Tzips = GetTzips(row.Tzips),
                             Balance = row.Balance,
-                            Creator = creator == null ? null
-                            : new CreatorInfo
+                            Creator = creator == null ? null : new CreatorInfo
                             {
-                                Alias = creatorMetadata?.Alias,
+                                Alias = creator.Alias,
                                 Address = creator.Address
                             },
-                            Manager = manager == null ? null
-                            : new ManagerInfo
+                            Manager = manager == null ? null : new ManagerInfo
                             {
-                                Alias = managerMetadata?.Alias,
+                                Alias = manager.Alias,
                                 Address = manager.Address,
                                 PublicKey = manager.PublicKey,
                             },
-                            Delegate = contractDelegate == null ? null
-                            : new DelegateInfo
+                            Delegate = contractDelegate == null ? null : new DelegateInfo
                             {
-                                Alias = contractDelegateMetadata?.Alias,
+                                Alias = contractDelegate.Alias,
                                 Address = contractDelegate.Address,
                                 Active = contractDelegate.Staked
                             },
-                            DelegationLevel = contractDelegate == null ? null
-                                : row.DelegationLevel,
-                            DelegationTime = contractDelegate == null ? null
-                                : (DateTime?)Time[row.DelegationLevel],
+                            DelegationLevel = contractDelegate == null ? null : row.DelegationLevel,
+                            DelegationTime = contractDelegate == null ? null : (DateTime?)Time[row.DelegationLevel],
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
@@ -556,7 +493,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "alias": columns.Add(@"""Id"""); break;
+                    case "alias": columns.Add(AliasQuery); break;
                     case "type": columns.Add(@"""Type"""); break;
                     case "active": columns.Add(@"""Staked"""); break;
                     case "address": columns.Add(@"""Address"""); break;
@@ -638,10 +575,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "alias":
                         foreach (var row in rows)
-                        {
-                            var metadata = Accounts.GetMetadata((int)row.Id);
-                            result[j++][i] = metadata?.Alias;
-                        }
+                            result[j++][i] = row.Alias;
                         break;
                     case "type":
                         foreach (var row in rows)
@@ -791,10 +725,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                         {
                             var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
-                            var delegatMetadata = delegat == null ? null : Accounts.GetMetadata(delegat.Id);
                             result[j++][i] = delegat == null ? null : new DelegateInfo
                             {
-                                Alias = delegatMetadata?.Alias,
+                                Alias = delegat.Alias,
                                 Address = delegat.Address,
                                 Active = delegat.Staked
                             };
@@ -820,10 +753,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                         {
                             var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                            var creatorMetadata = creator == null ? null : Accounts.GetMetadata(creator.Id);
                             result[j++][i] = creator == null ? null : new CreatorInfo
                             {
-                                Alias = creatorMetadata?.Alias,
+                                Alias = creator.Alias,
                                 Address = creator.Address
                             };
                         }
@@ -832,10 +764,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                         {
                             var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                            var managerMetadata = manager == null ? null : Accounts.GetMetadata(manager.Id);
                             result[j++][i] = manager == null ? null : new ManagerInfo
                             {
-                                Alias = managerMetadata?.Alias,
+                                Alias = manager.Alias,
                                 Address = manager.Address,
                                 PublicKey = manager.PublicKey,
                             };
@@ -862,7 +793,7 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(3);
             switch (field)
             {
-                case "alias": columns.Add(@"""Id"""); break;
+                case "alias": columns.Add(AliasQuery); break;
                 case "type": columns.Add(@"""Type"""); break;
                 case "active": columns.Add(@"""Staked"""); break;
                 case "address": columns.Add(@"""Address"""); break;
@@ -940,10 +871,7 @@ namespace Tzkt.Api.Repositories
             {
                 case "alias":
                     foreach (var row in rows)
-                    {
-                        var metadata = Accounts.GetMetadata((int)row.Id);
-                        result[j++] = metadata?.Alias;
-                    }
+                        result[j++] = row.Alias;
                     break;
                 case "type":
                     foreach (var row in rows)
@@ -1093,10 +1021,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
-                        var delegatMetadata = delegat == null ? null : Accounts.GetMetadata(delegat.Id);
                         result[j++] = delegat == null ? null : new DelegateInfo
                         {
-                            Alias = delegatMetadata?.Alias,
+                            Alias = delegat.Alias,
                             Address = delegat.Address,
                             Active = delegat.Staked
                         };
@@ -1122,10 +1049,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                        var creatorMetadata = creator == null ? null : Accounts.GetMetadata(creator.Id);
                         result[j++] = creator == null ? null : new CreatorInfo
                         {
-                            Alias = creatorMetadata?.Alias,
+                            Alias = creator.Alias,
                             Address = creator.Address
                         };
                     }
@@ -1134,10 +1060,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                        var managerMetadata = manager == null ? null : Accounts.GetMetadata(manager.Id);
                         result[j++] = manager == null ? null : new ManagerInfo
                         {
-                            Alias = managerMetadata?.Alias,
+                            Alias = manager.Alias,
                             Address = manager.Address,
                             PublicKey = manager.PublicKey,
                         };
@@ -1167,7 +1092,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var sql = new SqlBuilder(@"SELECT * FROM ""Accounts""")
+            var sql = new SqlBuilder($@"SELECT *, {AliasQuery} FROM ""Accounts""")
                 .Filter("Type", 1)
                 .Filter("Staked", active)
                 .Filter("LastLevel", lastActivity)
@@ -1186,10 +1111,9 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row =>
             {
-                var metadata = Accounts.GetMetadata((int)row.Id);
                 return new Models.Delegate
                 {
-                    Alias = metadata?.Alias,
+                    Alias = row.Alias,
                     Active = row.Staked,
                     Address = row.Address,
                     PublicKey = row.PublicKey,
@@ -1242,7 +1166,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "alias": columns.Add(@"""Id"""); break;
+                    case "alias": columns.Add(AliasQuery); break;
                     case "type": columns.Add(@"""Type"""); break;
                     case "active": columns.Add(@"""Staked"""); break;
                     case "address": columns.Add(@"""Address"""); break;
@@ -1312,10 +1236,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "alias":
                         foreach (var row in rows)
-                        {
-                            var metadata = Accounts.GetMetadata((int)row.Id);
-                            result[j++][i] = metadata?.Alias;
-                        }
+                            result[j++][i] = row.Alias;
                         break;
                     case "type":
                         foreach (var row in rows)
@@ -1478,7 +1399,7 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(3);
             switch (field)
             {
-                case "alias": columns.Add(@"""Id"""); break;
+                case "alias": columns.Add(AliasQuery); break;
                 case "type": columns.Add(@"""Type"""); break;
                 case "active": columns.Add(@"""Staked"""); break;
                 case "address": columns.Add(@"""Address"""); break;
@@ -1544,10 +1465,7 @@ namespace Tzkt.Api.Repositories
             {
                 case "alias":
                     foreach (var row in rows)
-                    {
-                        var metadata = Accounts.GetMetadata((int)row.Id);
-                        result[j++] = metadata?.Alias;
-                    }
+                        result[j++] = row.Alias;
                     break;
                 case "type":
                     foreach (var row in rows)
@@ -1724,13 +1642,13 @@ namespace Tzkt.Api.Repositories
             bool includeStorage)
         {
             var query = includeStorage
-                ? @"
-                    SELECT      acc.*, st.""JsonValue""
+                ? $@"
+                    SELECT      acc.*, {AliasQuery}, st.""JsonValue""
                     FROM        ""Accounts"" AS acc
                     LEFT JOIN   ""Storages"" AS st
                            ON   st.""ContractId"" = acc.""Id"" AND st.""Current"" = true
                 "
-                : @"SELECT * FROM ""Accounts""";
+                : $@"SELECT *, {AliasQuery} FROM ""Accounts""";
 
             var sql = new SqlBuilder(query)
                 .Filter("Type", 2)
@@ -1755,57 +1673,41 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row =>
             {
-                var metadata = Accounts.GetMetadata((int)row.Id);
-
                 var creator = row.CreatorId == null ? null
-                            : Accounts.Get((int)row.CreatorId);
-
-                var creatorMetadata = creator == null ? null
-                    : Accounts.GetMetadata(creator.Id);
+                    : Accounts.Get((int)row.CreatorId);
 
                 var manager = row.ManagerId == null ? null
                     : (RawUser)Accounts.Get((int)row.ManagerId);
 
-                var managerMetadata = manager == null ? null
-                    : Accounts.GetMetadata(manager.Id);
-
                 var contractDelegate = row.DelegateId == null ? null
                     : Accounts.Get((int)row.DelegateId);
 
-                var contractDelegateMetadata = contractDelegate == null ? null
-                    : Accounts.GetMetadata(contractDelegate.Id);
-
                 return new Contract
                 {
-                    Alias = metadata?.Alias,
+                    Alias = row.Alias,
                     Address = row.Address,
                     Kind = KindToString(row.Kind),
                     Tzips = GetTzips(row.Tzips),
                     Balance = row.Balance,
-                    Creator = creator == null ? null
-                        : new CreatorInfo
-                        {
-                            Alias = creatorMetadata?.Alias,
-                            Address = creator.Address
-                        },
-                    Manager = manager == null ? null
-                        : new ManagerInfo
-                        {
-                            Alias = managerMetadata?.Alias,
-                            Address = manager.Address,
-                            PublicKey = manager.PublicKey,
-                        },
-                    Delegate = contractDelegate == null ? null
-                        : new DelegateInfo
-                        {
-                            Alias = contractDelegateMetadata?.Alias,
-                            Address = contractDelegate.Address,
-                            Active = contractDelegate.Staked
-                        },
-                    DelegationLevel = contractDelegate == null ? null
-                        : row.DelegationLevel,
-                    DelegationTime = contractDelegate == null ? null
-                        : (DateTime?)Time[row.DelegationLevel],
+                    Creator = creator == null ? null : new CreatorInfo
+                    {
+                        Alias = creator.Alias,
+                        Address = creator.Address
+                    },
+                    Manager = manager == null ? null : new ManagerInfo
+                    {
+                        Alias = manager.Alias,
+                        Address = manager.Address,
+                        PublicKey = manager.PublicKey,
+                    },
+                    Delegate = contractDelegate == null ? null : new DelegateInfo
+                    {
+                        Alias = contractDelegate.Alias,
+                        Address = contractDelegate.Address,
+                        Active = contractDelegate.Staked
+                    },
+                    DelegationLevel = contractDelegate == null ? null : row.DelegationLevel,
+                    DelegationTime = contractDelegate == null ? null : (DateTime?)Time[row.DelegationLevel],
                     FirstActivity = row.FirstLevel,
                     FirstActivityTime = Time[row.FirstLevel],
                     LastActivity = row.LastLevel,
@@ -1844,10 +1746,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
+                    case "alias": columns.Add(AliasQuery); break;
                     case "type": columns.Add(@"acc.""Type"""); break;
                     case "kind": columns.Add(@"acc.""Kind"""); break;
                     case "tzips": columns.Add(@"acc.""Tzips"""); break;
-                    case "alias": columns.Add(@"acc.""Id"""); break;
                     case "address": columns.Add(@"acc.""Address"""); break;
                     case "balance": columns.Add(@"acc.""Balance"""); break;
                     case "creator": columns.Add(@"acc.""CreatorId"""); break;
@@ -1908,6 +1810,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
+                    case "alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Alias;
+                        break;
                     case "type":
                         foreach (var row in rows)
                             result[j++][i] = AccountTypes.Contract;
@@ -1919,13 +1825,6 @@ namespace Tzkt.Api.Repositories
                     case "tzips":
                         foreach (var row in rows)
                             result[j++][i] = GetTzips(row.Tzips);
-                        break;
-                    case "alias":
-                        foreach (var row in rows)
-                        {
-                            var metadata = Accounts.GetMetadata((int)row.Id);
-                            result[j++][i] = metadata?.Alias;
-                        }
                         break;
                     case "address":
                         foreach (var row in rows)
@@ -1939,10 +1838,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                         {
                             var _creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                            var creatorMetadata = _creator == null ? null : Accounts.GetMetadata(_creator.Id);
                             result[j++][i] = _creator == null ? null : new CreatorInfo
                             {
-                                Alias = creatorMetadata?.Alias,
+                                Alias = _creator.Alias,
                                 Address = _creator.Address
                             };
                         }
@@ -1951,10 +1849,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                         {
                             var _manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                            var managerMetadata = _manager == null ? null : Accounts.GetMetadata(_manager.Id);
                             result[j++][i] = _manager == null ? null : new ManagerInfo
                             {
-                                Alias = managerMetadata?.Alias,
+                                Alias = _manager.Alias,
                                 Address = _manager.Address,
                                 PublicKey = _manager.PublicKey,
                             };
@@ -1964,10 +1861,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                         {
                             var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
-                            var delegatMetadata = delegat == null ? null : Accounts.GetMetadata(delegat.Id);
                             result[j++][i] = delegat == null ? null : new DelegateInfo
                             {
-                                Alias = delegatMetadata?.Alias,
+                                Alias = delegat.Alias,
                                 Address = delegat.Address,
                                 Active = delegat.Staked
                             };
@@ -2049,7 +1945,6 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-
         public async Task<object[]> GetContracts(
             ContractKindParameter kind,
             AccountParameter creator,
@@ -2069,10 +1964,10 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "alias": columns.Add(AliasQuery); break;
                 case "type": columns.Add(@"acc.""Type"""); break;
                 case "kind": columns.Add(@"acc.""Kind"""); break;
                 case "tzips": columns.Add(@"acc.""Tzips"""); break;
-                case "alias": columns.Add(@"acc.""Id"""); break;
                 case "address": columns.Add(@"acc.""Address"""); break;
                 case "balance": columns.Add(@"acc.""Balance"""); break;
                 case "creator": columns.Add(@"acc.""CreatorId"""); break;
@@ -2129,6 +2024,10 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "alias":
+                    foreach (var row in rows)
+                        result[j++] = row.Alias;
+                    break;
                 case "type":
                     foreach (var row in rows)
                         result[j++] = AccountTypes.Contract;
@@ -2140,13 +2039,6 @@ namespace Tzkt.Api.Repositories
                 case "tzips":
                     foreach (var row in rows)
                         result[j++] = GetTzips(row.Tzips);
-                    break;
-                case "alias":
-                    foreach (var row in rows)
-                    {
-                        var metadata = Accounts.GetMetadata((int)row.Id);
-                        result[j++] = metadata?.Alias;
-                    }
                     break;
                 case "address":
                     foreach (var row in rows)
@@ -2160,10 +2052,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var _creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                        var creatorMetadata = _creator == null ? null : Accounts.GetMetadata(_creator.Id);
                         result[j++] = _creator == null ? null : new CreatorInfo
                         {
-                            Alias = creatorMetadata?.Alias,
+                            Alias = _creator.Alias,
                             Address = _creator.Address
                         };
                     }
@@ -2172,10 +2063,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var _manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                        var managerMetadata = _manager == null ? null : Accounts.GetMetadata(_manager.Id);
                         result[j++] = _manager == null ? null : new ManagerInfo
                         {
-                            Alias = managerMetadata?.Alias,
+                            Alias = _manager.Alias,
                             Address = _manager.Address,
                             PublicKey = _manager.PublicKey,
                         };
@@ -2185,10 +2075,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
-                        var delegatMetadata = delegat == null ? null : Accounts.GetMetadata(delegat.Id);
                         result[j++] = delegat == null ? null : new DelegateInfo
                         {
-                            Alias = delegatMetadata?.Alias,
+                            Alias = delegat.Alias,
                             Address = delegat.Address,
                             Active = delegat.Staked
                         };
@@ -2906,7 +2795,9 @@ namespace Tzkt.Api.Repositories
             if (account == null || account.ContractsCount == 0)
                 return Enumerable.Empty<RelatedContract>();
 
-            var sql = new SqlBuilder(@"SELECT ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId"", ""FirstLevel"" FROM ""Accounts""")
+            var sql = new SqlBuilder($@"
+                SELECT  ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId"", ""FirstLevel"", {AliasQuery}
+                FROM ""Accounts""")
                 .Filter($@"(""CreatorId"" = {account.Id} OR ""ManagerId"" = {account.Id})")
                 .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x switch
                 {
@@ -2920,27 +2811,21 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row =>
             {
-                var metadata = Accounts.GetMetadata((int)row.Id);
-
                 var delegat = row.DelegateId == null ? null
                     : Accounts.Get((int)row.DelegateId);
-
-                var delegatMetadata = delegat == null ? null
-                    : Accounts.GetMetadata(delegat.Id);
 
                 return new RelatedContract
                 {
                     Kind = KindToString(row.Kind),
-                    Alias = metadata?.Alias,
+                    Alias = row.Alias,
                     Address = row.Address,
                     Balance = row.Balance,
-                    Delegate = row.DelegateId == null ? null
-                         : new DelegateInfo
-                         {
-                             Alias = delegatMetadata?.Alias,
-                             Address = delegat.Address,
-                             Active = delegat.Staked
-                         },
+                    Delegate = row.DelegateId == null ? null : new DelegateInfo
+                    {
+                        Alias = delegat.Alias,
+                        Address = delegat.Address,
+                        Active = delegat.Staked
+                    },
                     CreationLevel = row.FirstLevel,
                     CreationTime = Time[row.FirstLevel]
                 };
@@ -2952,8 +2837,8 @@ namespace Tzkt.Api.Repositories
             if (await Accounts.GetAsync(address) is not RawDelegate delegat || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
-            var sql = @"
-                SELECT      ""Id"", ""Address"", ""Type"", ""Balance"", ""DelegationLevel""
+            var sql = $@"
+                SELECT      ""Id"", ""Address"", ""Type"", ""Balance"", ""DelegationLevel"", {AliasQuery}
                 FROM        ""Accounts""
                 WHERE       ""DelegateId"" = @delegateId
                 ORDER BY    ""DelegationLevel"" DESC
@@ -2965,12 +2850,10 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row =>
             {
-                var metadata = Accounts.GetMetadata((int)row.Id);
-
                 return new Delegator
                 {
                     Type = TypeToString(row.Type),
-                    Alias = metadata?.Alias,
+                    Alias = row.Alias,
                     Address = row.Address,
                     Balance = row.Balance,
                     DelegationLevel = row.DelegationLevel,
@@ -2991,7 +2874,9 @@ namespace Tzkt.Api.Repositories
             if (await Accounts.GetAsync(address) is not RawDelegate delegat || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
-            var sql = new SqlBuilder(@"SELECT ""Id"", ""Address"", ""Type"", ""Balance"", ""DelegationLevel"" FROM ""Accounts""")
+            var sql = new SqlBuilder($@"
+                SELECT ""Id"", ""Address"", ""Type"", ""Balance"", ""DelegationLevel"", {AliasQuery}
+                FROM ""Accounts""")
                 .Filter("DelegateId", delegat.Id)
                 .Filter("Type", type)
                 .Filter("Balance", balance)
@@ -3003,12 +2888,10 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row =>
             {
-                var metadata = Accounts.GetMetadata((int)row.Id);
-
                 return new Delegator
                 {
                     Type = TypeToString(row.Type),
-                    Alias = metadata?.Alias,
+                    Alias = row.Alias,
                     Address = row.Address,
                     Balance = row.Balance,
                     DelegationLevel = row.DelegationLevel,
@@ -3231,7 +3114,7 @@ namespace Tzkt.Api.Repositories
         public async Task<AccountMetadata> GetMetadata(string address)
         {
             var account = await Accounts.GetAsync(address);
-            return account == null ? null : Accounts.GetMetadata(account.Id);
+            return account?.Metadata;
         }
 
         string TypeToString(int type) => type switch

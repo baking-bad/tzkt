@@ -1,30 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace Tzkt.Api.Services.Metadata
+namespace Tzkt.Api.Models
 {
     public class AccountMetadata
     {
-        [JsonPropertyName("address")]
-        public string Address { get; set; }
-
         [JsonPropertyName("kind")]
         public string Kind { get; set; }
-
-        [JsonPropertyName("owner")]
-        public string Owner { get; set; }
 
         [JsonPropertyName("alias")]
         public string Alias { get; set; }
 
         [JsonPropertyName("description")]
         public string Description { get; set; }
-
-        [JsonPropertyName("logo")]
-        public string Logo { get; set; }
 
         [JsonPropertyName("site")]
         public string Site { get; set; }
@@ -50,11 +37,11 @@ namespace Tzkt.Api.Services.Metadata
         [JsonPropertyName("slack")]
         public string Slack { get; set; }
 
-        [JsonPropertyName("riot")]
-        public string Riot { get; set; }
-
         [JsonPropertyName("github")]
         public string Github { get; set; }
+
+        [JsonPropertyName("gitlab")]
+        public string Gitlab { get; set; }
 
         [JsonPropertyName("instagram")]
         public string Instagram { get; set; }
@@ -62,6 +49,7 @@ namespace Tzkt.Api.Services.Metadata
         [JsonPropertyName("facebook")]
         public string Facebook { get; set; }
 
-        public override string ToString() => Alias ?? Address;
+        [JsonPropertyName("medium")]
+        public string Medium { get; set; }
     }
 }

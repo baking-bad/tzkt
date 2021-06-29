@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Tzkt.Data.Models;
+﻿using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Services.Cache
 {
@@ -29,5 +25,15 @@ namespace Tzkt.Api.Services.Cache
         public int? DelegateId { get; set; }
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
+
+        public AccountMetadata Metadata { get; set; }
+
+        public string Alias => Metadata?.Alias;
+
+        public Alias Info => new()
+        {
+            Name = Metadata?.Alias,
+            Address = Address
+        };
     }
 }

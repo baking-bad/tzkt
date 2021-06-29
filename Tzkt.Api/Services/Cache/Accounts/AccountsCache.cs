@@ -7,30 +7,30 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
-
 using Tzkt.Api.Models;
-using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Services.Cache
 {
     public class AccountsCache : DbConnection
     {
+        #region static
+        const string SelectQuery = @"SELECT * FROM ""Accounts""";
+        #endregion
+        
         readonly object Crit = new();
         readonly Dictionary<int, RawAccount> AccountsById;
         readonly Dictionary<string, RawAccount> AccountsByAddress;
         int LastUpdate;
 
         readonly StateCache State;
-        readonly AccountMetadataService Metadata;
         readonly CacheConfig Config;
         readonly ILogger Logger;
 
-        public AccountsCache(StateCache state, AccountMetadataService metadata, IConfiguration config, ILogger<AccountsCache> logger) : base(config)
+        public AccountsCache(StateCache state, IConfiguration config, ILogger<AccountsCache> logger) : base(config)
         {
             logger.LogDebug("Initializing accounts cache...");
 
             State = state;
-            Metadata = metadata;
             Config = config.GetCacheConfig();
             Logger = logger;
 
@@ -43,8 +43,7 @@ namespace Tzkt.Api.Services.Cache
                 : (int)(limit * 1.1);
 
             using var db = GetConnection();
-            using var reader = db.ExecuteReader(
-                @"SELECT * FROM ""Accounts"" ORDER BY ""LastLevel"" DESC LIMIT @limit", new { limit });
+            using var reader = db.ExecuteReader($@"{SelectQuery} ORDER BY ""LastLevel"" DESC LIMIT @limit", new { limit });
 
             AccountsById = new Dictionary<int, RawAccount>(capacity);
             AccountsByAddress = new Dictionary<string, RawAccount>(capacity);
@@ -64,7 +63,6 @@ namespace Tzkt.Api.Services.Cache
             }
 
             LastUpdate = State.Current.Level;
-
             logger.LogInformation("Loaded {1} of {2} accounts", AccountsByAddress.Count, State.Current.AccountsCount);
         }
 
@@ -72,7 +70,7 @@ namespace Tzkt.Api.Services.Cache
         {
             Logger.LogDebug("Updating accounts cache...");
 
-            var fromLevel = Math.Min(LastUpdate, State.ValidLevel);
+            var from = Math.Min(LastUpdate, State.ValidLevel);
 
             #region check reorg
             if (State.Reorganized)
@@ -81,7 +79,7 @@ namespace Tzkt.Api.Services.Cache
                 lock (Crit)
                 {
                     corrupted = AccountsByAddress.Values
-                        .Where(x => x.LastLevel > fromLevel)
+                        .Where(x => x.LastLevel > from)
                         .ToList();
 
                     foreach (var account in corrupted)
@@ -95,8 +93,7 @@ namespace Tzkt.Api.Services.Cache
             #endregion
 
             using var db = GetConnection();
-            using var reader = await db.ExecuteReaderAsync(
-                @"SELECT * FROM ""Accounts"" WHERE ""LastLevel"" > @fromLevel", new { fromLevel });
+            using var reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
 
             var parsers = new Func<IDataReader, RawAccount>[3]
             {
@@ -114,25 +111,21 @@ namespace Tzkt.Api.Services.Cache
             }
 
             LastUpdate = State.Current.Level;
-            Logger.LogDebug("Updated {1} accounts since block {2}", cnt, fromLevel);
+            Logger.LogDebug("Updated {1} accounts since block {2}", cnt, from);
         }
 
         #region metadata
-        public AccountMetadata GetMetadata(int id) => Metadata[id];
-
-        public Alias GetAlias(int id) => new Alias
+        public Alias GetAlias(int id)
         {
             // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-            Address = Get(id).Address,
-            Name = Metadata[id]?.Alias
-        };
+            return Get(id).Info;
+        }
 
-        public async Task<Alias> GetAliasAsync(int id) => new Alias
+        public async Task<Alias> GetAliasAsync(int id)
         {
             // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-            Address = (await GetAsync(id)).Address,
-            Name = Metadata[id]?.Alias
-        };
+            return (await GetAsync(id)).Info;
+        }
         #endregion
 
         public RawAccount Get(int id)
@@ -142,7 +135,6 @@ namespace Tzkt.Api.Services.Cache
                 account = LoadRawAccount(id);
                 if (account != null) Add(account);
             }
-
             return account;
         }
 
@@ -153,7 +145,6 @@ namespace Tzkt.Api.Services.Cache
                 account = await LoadRawAccountAsync(id);
                 if (account != null) Add(account);
             }
-
             return account;
         }
 
@@ -164,7 +155,6 @@ namespace Tzkt.Api.Services.Cache
                 account = LoadRawAccount(address);
                 if (account != null) Add(account);
             }
-
             return account;
         }
 
@@ -175,31 +165,30 @@ namespace Tzkt.Api.Services.Cache
                 account = await LoadRawAccountAsync(address);
                 if (account != null) Add(account);
             }
-
             return account;
         }
 
         RawAccount LoadRawAccount(int id)
         {
-            var sql = @"SELECT * FROM ""Accounts"" WHERE ""Id"" = @id LIMIT 1";
+            var sql = $@"{SelectQuery} WHERE ""Id"" = @id LIMIT 1";
             return LoadRawAccount(sql, new { id });
         }
 
         Task<RawAccount> LoadRawAccountAsync(int id)
         {
-            var sql = @"SELECT * FROM ""Accounts"" WHERE ""Id"" = @id LIMIT 1";
+            var sql = $@"{SelectQuery} WHERE ""Id"" = @id LIMIT 1";
             return LoadRawAccountAsync(sql, new { id });
         }
 
         RawAccount LoadRawAccount(string address)
         {
-            var sql = @"SELECT * FROM ""Accounts"" WHERE ""Address"" = @address::character(36) LIMIT 1";
+            var sql = $@"{SelectQuery} WHERE ""Address"" = @address::character(36) LIMIT 1";
             return LoadRawAccount(sql, new { address });
         }
 
         Task<RawAccount> LoadRawAccountAsync(string address)
         {
-            var sql = @"SELECT * FROM ""Accounts"" WHERE ""Address"" = @address::character(36) LIMIT 1";
+            var sql = $@"{SelectQuery} WHERE ""Address"" = @address::character(36) LIMIT 1";
             return LoadRawAccountAsync(sql, new { address });
         }
 
@@ -209,13 +198,12 @@ namespace Tzkt.Api.Services.Cache
             using var reader = db.ExecuteReader(sql, param);
 
             if (!reader.Read()) return null;
-
             return reader.GetInt32(2) switch
             {
                 0 => reader.GetRowParser<RawUser>()(reader),
                 1 => reader.GetRowParser<RawDelegate>()(reader),
                 2 => reader.GetRowParser<RawContract>()(reader),
-                _ => throw new Exception($"Invalid raw account type")
+                _ => throw new Exception($"Invalid account type")
             };
         }
 
@@ -225,13 +213,12 @@ namespace Tzkt.Api.Services.Cache
             using var reader = await db.ExecuteReaderAsync(sql, param);
 
             if (!reader.Read()) return null;
-
             return reader.GetInt32(2) switch
             {
                 0 => reader.GetRowParser<RawUser>()(reader),
                 1 => reader.GetRowParser<RawDelegate>()(reader),
                 2 => reader.GetRowParser<RawContract>()(reader),
-                _ => throw new Exception($"Invalid raw account type")
+                _ => throw new Exception($"Invalid account type")
             };
         }
 
