@@ -17,9 +17,9 @@ namespace Tzkt.Api.Repositories
         readonly OperationRepository Operations;
         readonly QuotesCache Quotes;
         readonly StateCache State;
-        readonly SoftwareMetadataService Software;
+        readonly SoftwareCache Software;
 
-        public BlockRepository(AccountsCache accounts, OperationRepository operations, QuotesCache quotes, StateCache state, SoftwareMetadataService software, IConfiguration config) : base(config)
+        public BlockRepository(AccountsCache accounts, OperationRepository operations, QuotesCache quotes, StateCache state, SoftwareCache software, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Operations = operations;

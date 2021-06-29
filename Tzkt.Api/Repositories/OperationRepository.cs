@@ -3223,9 +3223,6 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var contractMetadata = contract == null ? null
-                    : Accounts.GetMetadata(contract.Id);
-
                 var code = row.ParameterSchema == null ? null : new MichelineArray
                 {
                     Micheline.FromBytes(row.ParameterSchema),
@@ -3260,7 +3257,7 @@ namespace Tzkt.Api.Repositories
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
                         {
-                            Alias = contractMetadata?.Alias,
+                            Alias = contract.Alias,
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
@@ -3311,9 +3308,6 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var contractMetadata = contract == null ? null
-                    : Accounts.GetMetadata(contract.Id);
-
                 var code = row.ParameterSchema == null ? null : new MichelineArray
                 {
                     Micheline.FromBytes(row.ParameterSchema),
@@ -3348,7 +3342,7 @@ namespace Tzkt.Api.Repositories
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
                         {
-                            Alias = contractMetadata?.Alias,
+                            Alias = contract.Alias,
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
@@ -3399,9 +3393,6 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var contractMetadata = contract == null ? null
-                    : Accounts.GetMetadata(contract.Id);
-
                 var code = row.ParameterSchema == null ? null : new MichelineArray
                 {
                     Micheline.FromBytes(row.ParameterSchema),
@@ -3436,7 +3427,7 @@ namespace Tzkt.Api.Repositories
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
                         {
-                            Alias = contractMetadata?.Alias,
+                            Alias = contract.Alias,
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
@@ -3466,9 +3457,6 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var contractMetadata = contract == null ? null
-                    : Accounts.GetMetadata(contract.Id);
-
                 return new OriginationOperation
                 {
                     Id = row.Id,
@@ -3493,7 +3481,7 @@ namespace Tzkt.Api.Repositories
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
                         {
-                            Alias = contractMetadata?.Alias,
+                            Alias = contract.Alias,
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
@@ -3592,9 +3580,6 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var contractMetadata = contract == null ? null
-                    : Accounts.GetMetadata(contract.Id);
-
                 return new OriginationOperation
                 {
                     Id = row.Id,
@@ -3618,7 +3603,7 @@ namespace Tzkt.Api.Repositories
                     Status = StatusToString(row.Status),
                     OriginatedContract = contract == null ? null : new OriginatedContract
                     {
-                        Alias = contractMetadata?.Alias,
+                        Alias = contract.Alias,
                         Address = contract.Address,
                         Kind = contract.KindString,
                         TypeHash = contract.TypeHash,
@@ -3861,11 +3846,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                         {
                             var contract = row.ContractId == null ? null : (RawContract)Accounts.Get((int)row.ContractId);
-                            var contractMetadata = contract == null ? null : Accounts.GetMetadata(contract.Id);
-
                             result[j++][i] = contract == null ? null : new OriginatedContract
                             {
-                                Alias = contractMetadata?.Alias,
+                                Alias = contract.Alias,
                                 Address = contract.Address,
                                 Kind = contract.KindString,
                                 TypeHash = contract.TypeHash,
@@ -4114,11 +4097,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                     {
                         var contract = row.ContractId == null ? null : (RawContract)Accounts.Get((int)row.ContractId);
-                        var contractMetadata = contract == null ? null : Accounts.GetMetadata(contract.Id);
-
                         result[j++] = contract == null ? null : new OriginatedContract
                         {
-                            Alias = contractMetadata?.Alias,
+                            Alias = contract.Alias,
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,

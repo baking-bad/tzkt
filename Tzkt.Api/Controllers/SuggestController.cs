@@ -3,7 +3,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-using Tzkt.Api.Services.Metadata;
+using Tzkt.Api.Models;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api.Controllers
 {
@@ -11,91 +12,57 @@ namespace Tzkt.Api.Controllers
     [Route("v1/suggest")]
     public class SuggestController : ControllerBase
     {
-        private readonly AccountMetadataService AccountMetadata;
+        readonly SearchService Search;
 
-        public SuggestController(AccountMetadataService accounts)
+        public SuggestController(SearchService search)
         {
-            AccountMetadata = accounts;
+            Search = search;
         }
 
         [OpenApiIgnore]
         [HttpGet("accounts")]
-        public IEnumerable<AccountMetadataAlias> GetAccounts()
+        public IEnumerable<Alias> GetAccounts()
         {
-            return AccountMetadata.Aliases;
+            return Search.Aliases;
         }
 
-        /// <summary>
-        /// Suggest accounts
-        /// </summary>
-        /// <remarks>
-        /// Suggests known accounts by part of alias. This endpoint is useful for autocomplete.
-        /// </remarks>
-        /// <param name="search">Part of the account alias to search by</param>
-        /// <returns></returns>
+        [OpenApiIgnore]
         [HttpGet("accounts/{search}")]
-        public IEnumerable<AccountMetadataAlias> GetAccounts([Required] string search)
+        public IEnumerable<Alias> GetAccounts([Required] string search)
         {
-            search = search.ToLower();
-            var res = new List<(AccountMetadataAlias, int)>();
-
-            foreach (var item in AccountMetadata.Aliases)
-            {
-                var alias = item.Alias.ToLower();
-
-                if (alias == search)
-                    res.Add((item, 0));
-                else if (alias.StartsWith(search))
-                    res.Add((item, 1));
-                else if (alias.Contains(search))
-                    res.Add((item, 2));
-            }
-
-            return res.OrderBy(x => x.Item2).ThenBy(x => x.Item1.Alias).Select(x => x.Item1).Take(10);
+            return Search.Find(search);
         }
 
-        //[OpenApiIgnore]
-        //[HttpGet("proposals")]
-        //public IEnumerable<Services.Metadata.ProposalAlias> GetProposals()
-        //{
-        //    return ProposalMetadata.Aliases;
-        //}
+        [OpenApiIgnore]
+        [HttpGet("proposals")]
+        public IEnumerable<object> GetProposals()
+        {
+            // obsolete
+            return Enumerable.Empty<object>();
+        }
 
-        ///// <summary>
-        ///// Suggest proposals
-        ///// </summary>
-        ///// <remarks>
-        ///// Suggests known proposals by part of alias. This endpoint is useful for autocomplete.
-        ///// </remarks>
-        ///// <param name="search">Part of the proposal alias to search by</param>
-        ///// <returns></returns>
-        //[HttpGet("proposals/{search}")]
-        //public IEnumerable<Services.Metadata.ProposalAlias> GetProposals([Required] string search)
-        //{
-        //    search = search.ToLower();
-        //    return ProposalMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
-        //}
+        [OpenApiIgnore]
+        [HttpGet("proposals/{search}")]
+        public IEnumerable<object> GetProposals([Required] string search)
+        {
+            // obsolete
+            return Enumerable.Empty<object>();
+        }
 
-        //[OpenApiIgnore]
-        //[HttpGet("protocols")]
-        //public IEnumerable<ProtocolMetadataAlias> GetProtocols()
-        //{
-        //    return ProtocolMetadata.Aliases;
-        //}
+        [OpenApiIgnore]
+        [HttpGet("protocols")]
+        public IEnumerable<object> GetProtocols()
+        {
+            // obsolete
+            return Enumerable.Empty<object>();
+        }
 
-        ///// <summary>
-        ///// Suggest protocols
-        ///// </summary>
-        ///// <remarks>
-        ///// Suggests known protocols by part of alias. This endpoint is useful for autocomplete.
-        ///// </remarks>
-        ///// <param name="search">Part of the protocol alias to search by</param>
-        ///// <returns></returns>
-        //[HttpGet("protocols/{search}")]
-        //public IEnumerable<ProtocolMetadataAlias> GetProtocols([Required] string search)
-        //{
-        //    search = search.ToLower();
-        //    return ProtocolMetadata.Aliases.Where(x => x.Alias.ToLower().Contains(search)).Take(10);
-        //}
+        [OpenApiIgnore]
+        [HttpGet("protocols/{search}")]
+        public IEnumerable<object> GetProtocols([Required] string search)
+        {
+            // obsolete
+            return Enumerable.Empty<object>();
+        }
     }
 }
