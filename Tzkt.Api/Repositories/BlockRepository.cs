@@ -7,7 +7,6 @@ using Dapper;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Repositories
 {

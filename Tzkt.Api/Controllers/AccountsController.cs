@@ -5,12 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Controllers
 {
