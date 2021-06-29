@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Models
 {

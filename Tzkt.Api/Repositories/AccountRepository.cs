@@ -10,7 +10,6 @@ using Netezos.Encoding;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Repositories

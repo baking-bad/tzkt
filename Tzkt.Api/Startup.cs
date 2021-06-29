@@ -12,7 +12,6 @@ using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Metadata;
 using Tzkt.Api.Services.Sync;
 using Tzkt.Api.Swagger;
 using Tzkt.Api.Websocket;

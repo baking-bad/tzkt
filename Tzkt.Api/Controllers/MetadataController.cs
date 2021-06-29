@@ -7,8 +7,12 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
+
+using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Controllers
 {
@@ -17,11 +21,17 @@ namespace Tzkt.Api.Controllers
     [Route("v1/metadata")]
     public class MetadataController : ControllerBase
     {
+        readonly AccountsCache Accounts;
+        readonly SoftwareCache Software;
+        readonly SearchService Search;
         readonly MetadataRepository Metadata;
         readonly IAuthService Auth;
 
-        public MetadataController(MetadataRepository metadata, IAuthService auth)
+        public MetadataController(AccountsCache accounts, SoftwareCache software, SearchService search, MetadataRepository metadata, IAuthService auth)
         {
+            Accounts = accounts;
+            Software = software;
+            Search = search;
             Metadata = metadata;
             Auth = auth;
         }
@@ -35,7 +45,7 @@ namespace Tzkt.Api.Controllers
         {
             if (!Auth.TryAuthenticate(headers, out var error))
                 return Unauthorized(error);
-
+            
             return Ok(await Metadata.GetAccountMetadata(offset, limit));
         }
 
@@ -64,7 +74,31 @@ namespace Tzkt.Api.Controllers
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$")))
                     return BadRequest("Invalid account address");
 
-                return Ok(await Metadata.UpdateAccountMetadata(metadata));
+                var res = await Metadata.UpdateAccountMetadata(metadata);
+                #region update cached metadata
+                foreach (var item in res)
+                {
+                    var acc = Accounts.Get(item.Key);
+                    var prevAlias = acc.Alias;
+                    
+                    acc.Metadata = item.Metadata == null ? null :
+                        JsonSerializer.Deserialize<AccountMetadata>(item.Metadata.Json);
+                    
+                    if (prevAlias != acc.Alias)
+                    {
+                        lock (Search.Aliases)
+                        {
+                            if (prevAlias == null)
+                                Search.Aliases.Add(acc.Info);
+                            else if (acc.Alias == null)
+                                Search.Aliases.RemoveAll(x => x.Address == acc.Address);
+                            else
+                                Search.Aliases.First(x => x.Address == acc.Address).Name = acc.Alias;
+                        }
+                    }
+                }
+                #endregion
+                return Ok(res);
             }
             catch (JsonException ex)
             {
@@ -204,7 +238,9 @@ namespace Tzkt.Api.Controllers
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^[0-9a-f]{8}$")))
                     return BadRequest("Invalid software short hash");
 
-                return Ok(await Metadata.UpdateSoftwareMetadata(metadata));
+                var res = await Metadata.UpdateSoftwareMetadata(metadata);
+                if (res.Count > 0) Software.Initialize();
+                return Ok(res);
             }
             catch (JsonException ex)
             {
