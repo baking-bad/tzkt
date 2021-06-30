@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,17 +62,34 @@ namespace Tzkt.Api.Services.Sync
 
                 using var db = new NpgsqlConnection(ConnectionString);
                 db.Notification += OnStateChanged;
-                await db.OpenAsync(cancellationToken);
-                await db.ExecuteAsync("LISTEN state_changed;");
 
                 while (!cancellationToken.IsCancellationRequested)
-                    await db.WaitAsync(cancellationToken);
+                {
+                    try
+                    {
+                        if (db.State != ConnectionState.Open)
+                        {
+                            await db.OpenAsync(cancellationToken);
+                            await db.ExecuteAsync("LISTEN state_changed;");
+                            Logger.LogInformation("State listener connected");
+                        }
+                        await db.WaitAsync(cancellationToken);
+                    }
+                    catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested) { break; }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { break; }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError("State listener disconnected: {0}", ex.Message);
+                        await Task.Delay(1000, cancellationToken);
+                    }
+                }
 
                 db.Notification -= OnStateChanged;
             }
+            catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested) { }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex)
             {
-                // TODO: reanimate listener without breaking HubProcessors state
                 Logger.LogCritical($"State listener crashed: {ex.Message}");
             }
             finally
