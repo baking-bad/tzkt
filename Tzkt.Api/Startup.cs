@@ -13,7 +13,6 @@ using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Services.Sync;
-using Tzkt.Api.Services;
 using Tzkt.Api.Swagger;
 using Tzkt.Api.Websocket;
 using Tzkt.Api.Websocket.Hubs;
@@ -35,14 +34,13 @@ namespace Tzkt.Api
             services.AddDbContext<TzktContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddAccountsCache();
-            services.AddProtocolsCache();
-            services.AddQuotesCache();
-            services.AddSoftwareCache();
-            services.AddStateCache();
-            services.AddTimeCache();
-
-            services.AddTransient<SearchService>();
+            services.AddSingleton<AccountsCache>();
+            services.AddSingleton<AliasesCache>();
+            services.AddSingleton<ProtocolsCache>();
+            services.AddSingleton<QuotesCache>();
+            services.AddSingleton<SoftwareCache>();
+            services.AddSingleton<StateCache>();
+            services.AddSingleton<TimeCache>();
 
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();

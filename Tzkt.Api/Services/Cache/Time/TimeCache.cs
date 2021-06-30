@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 
@@ -108,13 +107,5 @@ namespace Tzkt.Api.Services.Cache
         Exact,
         ExactOrLower,
         ExactOrHigher
-    }
-
-    public static class TimeCacheExt
-    {
-        public static void AddTimeCache(this IServiceCollection services)
-        {
-            services.AddSingleton<TimeCache>();
-        }
     }
 }

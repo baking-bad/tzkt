@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using Tzkt.Api.Models;
-using Tzkt.Api.Services;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -12,25 +12,25 @@ namespace Tzkt.Api.Controllers
     [Route("v1/suggest")]
     public class SuggestController : ControllerBase
     {
-        readonly SearchService Search;
+        readonly AliasesCache Aliases;
 
-        public SuggestController(SearchService search)
+        public SuggestController(AliasesCache aliases)
         {
-            Search = search;
+            Aliases = aliases;
         }
 
         [OpenApiIgnore]
         [HttpGet("accounts")]
         public IEnumerable<Alias> GetAccounts()
         {
-            return Search.Aliases;
+            return Aliases.Aliases;
         }
 
         [OpenApiIgnore]
         [HttpGet("accounts/{search}")]
         public IEnumerable<Alias> GetAccounts([Required] string search)
         {
-            return Search.Find(search);
+            return Aliases.Search(search);
         }
 
         [OpenApiIgnore]

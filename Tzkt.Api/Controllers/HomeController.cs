@@ -11,7 +11,7 @@ namespace Tzkt.Api.Controllers
     public class HomeController : ControllerBase
     {
         [HttpGet]
-        public HomeStats Get(Symbols quote = Symbols.None)
+        public HomeStats Get(Symbols quote = Symbols.Usd)
         {
             return HomeService.GetCurrentStats(quote);
         }

@@ -1929,7 +1929,7 @@ namespace Tzkt.Api.Repositories
                         {
                             if (row.Kind == 0)
                             {
-                                var _manager = (RawUser)Accounts.Get((int)row.ManagerId);
+                                var _manager = Accounts.Get((int)row.ManagerId);
                                 result[j++][i] = _manager.Address;
                             }
                             else
@@ -2143,7 +2143,7 @@ namespace Tzkt.Api.Repositories
                     {
                         if (row.Kind == 0)
                         {
-                            var _manager = (RawUser)Accounts.Get((int)row.ManagerId);
+                            var _manager = Accounts.Get((int)row.ManagerId);
                             result[j++] = _manager.Address;
                         }
                         else

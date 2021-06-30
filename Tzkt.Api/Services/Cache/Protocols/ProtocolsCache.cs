@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 using Tzkt.Data.Models;
@@ -46,14 +45,6 @@ namespace Tzkt.Api.Services.Cache
         {
             using var db = GetConnection();
             Protocols = db.Query<Protocol>(@"SELECT * FROM ""Protocols"" ORDER BY ""Code""").ToList();
-        }
-    }
-
-    public static class ProtocolsCacheExt
-    {
-        public static void AddProtocolsCache(this IServiceCollection services)
-        {
-            services.AddSingleton<ProtocolsCache>();
         }
     }
 }
