@@ -20,6 +20,7 @@ namespace Tzkt.Sync
             services.AddScoped<Proto7Handler>();
             services.AddScoped<Proto8Handler>();
             services.AddScoped<Proto9Handler>();
+            services.AddScoped<Proto10Handler>();
         }
 
         public static ProtocolHandler GetProtocolHandler(this IServiceProvider services, int level, string protocol)
@@ -46,6 +47,8 @@ namespace Tzkt.Sync
                         return services.GetRequiredService<Proto8Handler>();
                     case "PsFLorenaUUuikDWvMDr6fGBRG8kt3e3D3fHoXK1j1BFRxeSH4i":
                         return services.GetRequiredService<Proto9Handler>();
+                    case "PtGRANADsDU8R9daYKAgWnQYAJ64omN1o3KMGVCykShA97vQbvV":
+                        return services.GetRequiredService<Proto10Handler>();
                     default:
                         throw new NotImplementedException($"Protocol '{protocol}' is not supported");
                 }
