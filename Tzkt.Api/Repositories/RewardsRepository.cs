@@ -951,8 +951,8 @@ namespace Tzkt.Api.Repositories
                     case "doubleBakingRewards": columns.Add(@"bc.""DoubleBakingRewards"""); join = true; break;
                     case "doubleBakingLostDeposits": columns.Add(@"bc.""DoubleBakingLostDeposits"""); join = true; break;
                     case "doubleBakingLostRewards": columns.Add(@"bc.""DoubleBakingLostRewards"""); join = true; break;
-                    case "doubleBakingLostFees": columns.Add(@"""DoubleBakingLostFees"""); join = true; break;
-                    case "doubleEndorsingRewards": columns.Add(@"bc.bc.""DoubleEndorsingRewards"""); join = true; break;
+                    case "doubleBakingLostFees": columns.Add(@"bc.""DoubleBakingLostFees"""); join = true; break;
+                    case "doubleEndorsingRewards": columns.Add(@"bc.""DoubleEndorsingRewards"""); join = true; break;
                     case "doubleEndorsingLostDeposits": columns.Add(@"bc.""DoubleEndorsingLostDeposits"""); join = true; break;
                     case "doubleEndorsingLostRewards": columns.Add(@"bc.""DoubleEndorsingLostRewards"""); join = true; break;
                     case "doubleEndorsingLostFees": columns.Add(@"bc.""DoubleEndorsingLostFees"""); join = true; break;

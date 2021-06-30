@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 
@@ -48,14 +47,6 @@ namespace Tzkt.Api.Services.Cache
         {
             using var db = GetConnection();
             return await db.QueryFirstAsync<RawState>(StateSql);
-        }
-    }
-
-    public static class StateCacheExt
-    {
-        public static void AddStateCache(this IServiceCollection services)
-        {
-            services.AddSingleton<StateCache>();
         }
     }
 }

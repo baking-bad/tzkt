@@ -4,7 +4,6 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 using Tzkt.Api.Models;
@@ -125,6 +124,20 @@ namespace Tzkt.Api.Services.Cache
         {
             // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
             return (await GetAsync(id)).Info;
+        }
+
+        public async Task ReloadMetadata(List<string> addresses)
+        {
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(
+                @"SELECT ""Id"", ""Metadata"" FROM ""Accounts"" WHERE ""Address"" = ANY(@addresses::character(36)[])",
+                new { addresses });
+
+            foreach (var row in rows)
+            {
+                var user = await GetAsync((int)row.Id);
+                user.Metadata = AccountMetadata.Parse((string)row.Metadata);
+            }
         }
         #endregion
 
@@ -263,14 +276,6 @@ namespace Tzkt.Api.Services.Cache
                 AccountsByAddress[account.Address] = account;
             }
             Logger.LogDebug("Account {1} cached", account.Address);
-        }
-    }
-
-    public static class AccountsCacheExt
-    {
-        public static void AddAccountsCache(this IServiceCollection services)
-        {
-            services.AddSingleton<AccountsCache>();
         }
     }
 }

@@ -8,11 +8,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
+using Dynamic.Json;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Metadata;
 
 namespace Tzkt.Api.Services
 {
@@ -56,8 +56,6 @@ namespace Tzkt.Api.Services
         static List<Quote> MarketChart;
         #endregion
 
-        readonly AccountMetadataService Metadata;
-
         readonly AccountRepository AccountsRepo;
         readonly BakingRightsRepository RightsRepo;
         readonly BlockRepository BlocksRepo;
@@ -73,11 +71,10 @@ namespace Tzkt.Api.Services
         readonly ILogger Logger;
         static int LastUpdate;
 
-        public HomeService(AccountMetadataService metadata, BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
+        public HomeService(BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
             VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
             StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<HomeService> logger) : base(config)
         {
-            Metadata = metadata;
             RightsRepo = rights;
             Times = times;
             BlocksRepo = blocks;
@@ -439,8 +436,9 @@ namespace Tzkt.Api.Services
                 TotalAccounts = State.Current.AccountsCount,
                 FundedAccounts = await AccountsRepo.GetCount(null, null, new Int64Parameter { Ge = 1_000_000 }, null),
                 ActiveAccounts = await db.ExecuteScalarAsync<int>(
-                    $@"SELECT COUNT(*)::integer AS count FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}"),
-                PublicAccounts = Metadata.Aliases.Count,
+                    $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}"),
+                PublicAccounts = await db.ExecuteScalarAsync<int>(
+                    $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""Metadata"" @> '{{}}'"),
                 TotalContracts = await AccountsRepo.GetContractsCount(new ContractKindParameter
                 {
                     In = new List<int> { 1, 2 },
@@ -454,6 +452,7 @@ namespace Tzkt.Api.Services
             var period = epoch.Periods.Last();
             var proposals = epoch.Proposals.OrderByDescending(x => x.Rolls).ToList();
             var proposal = proposals.FirstOrDefault();
+            var proposalMeta = proposal?.Metadata == null ? null : DJson.Parse(proposal.Metadata.Json);
             
             if (period.Kind == "proposal")
             {
@@ -477,7 +476,7 @@ namespace Tzkt.Api.Services
             var result = new GovernanceData
             {
                 Proposal = proposal.Hash,
-                Protocol = proposal.Metadata?.Alias,
+                Protocol = proposalMeta?.alias,
                 Period = period.Kind,
                 PeriodEndTime = period.EndTime,
                 EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],

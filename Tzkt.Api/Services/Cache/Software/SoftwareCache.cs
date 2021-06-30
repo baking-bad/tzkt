@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dapper;
 using Tzkt.Api.Models;
@@ -11,37 +11,34 @@ namespace Tzkt.Api.Services.Cache
 {
     public class SoftwareCache : DbConnection
     {
+        #region static
+        const string SelectQuery = @"
+        SELECT  ""Id"", ""FirstLevel"",
+                ""Metadata""->>'version' as ""Version"",
+                ""Metadata""->>'commitDate' as ""CommitDate""
+        FROM    ""Software""";
+        #endregion
+
         public SoftwareAlias this[int id]
         {
             get
             {
                 lock (this)
                 {
-                    if (!Aliases.TryGetValue(id, out var alias))
+                    if (!Software.TryGetValue(id, out var software))
                     {
                         using var db = GetConnection();
-                        var row = db.QueryFirst($@"
-                            SELECT  ""Id"", ""FirstLevel"",
-                                    ""Metadata""->>'version' as ""Version"",
-                                    ""Metadata""->>'commitDate' as ""CommitDate""
-                            FROM ""Software""
-                            WHERE ""Id"" = {id}");
-
-                        alias = new SoftwareAlias
-                        {
-                            Version = row.Version,
-                            Date = DateTime.TryParse(row.CommitDate, out DateTime dt) ? dt : Time[row.FirstLevel]
-                        };
-
-                        Aliases.Add(id, alias);
+                        var row = db.QueryFirst($@"{SelectQuery} WHERE ""Id"" = {id}");
+                        software = Parse(row);
+                        Software.Add(id, software);
                     }
 
-                    return alias;
+                    return software;
                 }
             }
         }
 
-        Dictionary<int, SoftwareAlias> Aliases;
+        readonly Dictionary<int, SoftwareAlias> Software;
         readonly TimeCache Time;
         readonly ILogger Logger;
 
@@ -51,35 +48,31 @@ namespace Tzkt.Api.Services.Cache
             Time = time;
 
             Logger.LogDebug("Initializing software cache...");
-            Initialize();
-            Logger.LogDebug("Loaded {0} software", Aliases.Count);
+
+            using var db = GetConnection();
+            var rows = db.Query(SelectQuery);
+
+            Software = rows.ToDictionary(row => (int)row.Id, row => (SoftwareAlias)Parse(row));
+
+            Logger.LogDebug("Loaded {0} software", Software.Count);
         }
 
-        public void Initialize()
+        public async Task Reload(List<string> hashes)
         {
+            using var db = GetConnection();
+            var rows = await db.QueryAsync($@"{SelectQuery} WHERE ""ShortHash"" = ANY(@hashes::character(8)[])", new { hashes });
+
             lock (this)
             {
-                using var db = GetConnection();
-                var rows = db.Query(@"
-                SELECT  ""Id"", ""FirstLevel"",
-                        ""Metadata""->>'version' as ""Version"",
-                        ""Metadata""->>'commitDate' as ""CommitDate""
-                FROM ""Software""");
-
-                Aliases = rows.ToDictionary(row => (int)row.Id, row => new SoftwareAlias
-                {
-                    Version = row.Version,
-                    Date = DateTimeOffset.TryParse(row.CommitDate, out DateTimeOffset dt) ? dt.DateTime : Time[row.FirstLevel]
-                });
+                foreach (var row in rows)
+                    Software[(int)row.Id] = Parse(row);
             }
         }
-    }
 
-    public static class SoftwareCacheExt
-    {
-        public static void AddSoftwareCache(this IServiceCollection services)
+        SoftwareAlias Parse(dynamic row) => new()
         {
-            services.AddSingleton<SoftwareCache>();
-        }
+            Version = row.Version,
+            Date = DateTimeOffset.TryParse(row.CommitDate, out DateTimeOffset dt) ? dt.DateTime : Time[row.FirstLevel]
+        };
     }
 }
