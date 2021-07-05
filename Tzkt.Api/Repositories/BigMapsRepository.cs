@@ -15,11 +15,13 @@ namespace Tzkt.Api.Repositories
     public class BigMapsRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly BigMapsCache BigMaps;
         readonly TimeCache Times;
 
-        public BigMapsRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
+        public BigMapsRepository(AccountsCache accounts, BigMapsCache bigMaps, TimeCache times, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            BigMaps = bigMaps;
             Times = times;
         }
 
@@ -74,6 +76,7 @@ namespace Tzkt.Api.Repositories
                 SELECT  *
                 FROM    ""BigMaps""
                 WHERE   ""ContractId"" = @id
+                AND 	""Active"" = true
                 AND     ""StoragePath"" LIKE @path";
 
             using var db = GetConnection();
@@ -84,20 +87,9 @@ namespace Tzkt.Api.Repositories
             return ReadBigMap(row ?? rows.FirstOrDefault(), micheline);
         }
 
-        public async Task<int?> GetPtr(int contractId, string path)
+        public Task<int?> GetPtr(int contractId, string path)
         {
-            var sql = @"
-                SELECT  ""Ptr"", ""StoragePath""
-                FROM    ""BigMaps""
-                WHERE   ""ContractId"" = @id
-                AND     ""StoragePath"" LIKE @path";
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql, new { id = contractId, path = $"%{path}" });
-            if (!rows.Any()) return null;
-
-            var row = rows.FirstOrDefault(x => x.StoragePath == path);
-            return (row ?? rows.FirstOrDefault())?.Ptr;
+            return BigMaps.GetPtrAsync(contractId, path);
         }
 
         public async Task<IEnumerable<BigMap>> Get(

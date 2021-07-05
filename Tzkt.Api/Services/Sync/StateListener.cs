@@ -20,6 +20,7 @@ namespace Tzkt.Api.Services.Sync
         readonly string ConnectionString;
 
         readonly StateCache State;
+        readonly BigMapsCache BigMaps;
         readonly AccountsCache Accounts;
         readonly ProtocolsCache Protocols;
         readonly QuotesCache Quotes;
@@ -33,6 +34,7 @@ namespace Tzkt.Api.Services.Sync
 
         public StateListener(
             StateCache state,
+            BigMapsCache bigMaps,
             AccountsCache accounts,
             ProtocolsCache protocols,
             QuotesCache quotes,
@@ -45,6 +47,7 @@ namespace Tzkt.Api.Services.Sync
             ConnectionString = config.GetConnectionString("DefaultConnection");
 
             State = state;
+            BigMaps = bigMaps;
             Accounts = accounts;
             Protocols = protocols;
             Quotes = quotes;
@@ -164,6 +167,7 @@ namespace Tzkt.Api.Services.Sync
 
                 #region update cache
                 await Accounts.UpdateAsync();
+                await BigMaps.UpdateAsync();
                 await Protocols.UpdateAsync();
                 await Quotes.UpdateAsync();
                 await Times.UpdateAsync();

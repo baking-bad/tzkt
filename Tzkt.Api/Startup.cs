@@ -35,6 +35,7 @@ namespace Tzkt.Api
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddSingleton<AccountsCache>();
+            services.AddSingleton<BigMapsCache>();
             services.AddSingleton<AliasesCache>();
             services.AddSingleton<ProtocolsCache>();
             services.AddSingleton<QuotesCache>();
