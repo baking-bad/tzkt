@@ -70,6 +70,22 @@ namespace Tzkt.Api.Repositories
             var account = await Accounts.GetAsync(address);
             if (account == null) return Enumerable.Empty<HistoricalBalance>();
 
+            #region dumb users
+            if (limit == 1 && offset == 0 && sort.Desc != null)
+            {
+                return new[]
+                {
+                    new HistoricalBalance
+                    {
+                        Level = account.LastLevel,
+                        Timestamp = Time[account.LastLevel],
+                        Balance = account.Balance,
+                        Quote = Quotes.Get(quote, account.LastLevel)
+                    }
+                };
+            }
+            #endregion
+
             var union = SelectUnion(account);
             if (union.Length == 0) return Enumerable.Empty<HistoricalBalance>();
 
