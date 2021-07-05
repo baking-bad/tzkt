@@ -94,6 +94,11 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Account>()
                 .Property(x => x.Metadata)
                 .HasColumnType("jsonb");
+
+            // TODO: don't load metadata to the indexer at all
+            modelBuilder.Entity<Account>()
+                .Property(x => x.Metadata)
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
             #endregion
 
             #region relations

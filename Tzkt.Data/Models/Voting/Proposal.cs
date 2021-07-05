@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
@@ -44,6 +45,10 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Proposal>()
                 .Property(x => x.Metadata)
                 .HasColumnType("jsonb");
+
+            modelBuilder.Entity<Proposal>()
+                .Property(x => x.Metadata)
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
             #endregion
         }
     }
