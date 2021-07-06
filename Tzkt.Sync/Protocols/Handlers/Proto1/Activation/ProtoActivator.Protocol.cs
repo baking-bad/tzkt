@@ -16,7 +16,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Code = 1,
                 Hash = rawBlock.Required("metadata").RequiredString("next_protocol"),
                 FirstLevel = 2,
-                LastLevel = -1
+                LastLevel = -1,
+                FirstCycle = 0,
+                FirstCycleLevel = 1
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
@@ -68,20 +70,21 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task UpgradeProtocol(AppState state)
         {
+            var prev = await Cache.Protocols.GetAsync(state.Protocol);
+            Db.TryAttach(prev);
+            prev.LastLevel = state.Level;
+
             var protocol = new Protocol
             {
                 Code = await Db.Protocols.CountAsync() - 1,
                 Hash = state.NextProtocol,
                 FirstLevel = state.Level + 1,
                 LastLevel = -1,
-                
+                FirstCycle = state.Cycle + 1,
+                FirstCycleLevel = prev.GetCycleStart(state.Cycle + 1)
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
-
-            var prev = await Cache.Protocols.GetAsync(state.Protocol);
-            Db.TryAttach(prev);
-            prev.LastLevel = state.Level;
 
             UpgradeParameters(protocol, prev);
         }

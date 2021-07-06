@@ -7,18 +7,21 @@ using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
+using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
     class Diagnostics : IDiagnostics
     {
         protected readonly TzktContext Db;
+        protected readonly CacheService Cache;
         protected readonly IRpc Rpc;
 
-        public Diagnostics(TzktContext db, IRpc rpc)
+        public Diagnostics(ProtocolHandler handler)
         {
-            Db = db;
-            Rpc = rpc;
+            Db = handler.Db;
+            Cache = handler.Cache;
+            Rpc = handler.Rpc;
         }
 
         public virtual Task Run(JsonElement block)
@@ -64,8 +67,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (ops != -1 && ops != entries.Count(x => x.Entity is BaseOperation && x.State == EntityState.Added))
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
-            var state = entries.FirstOrDefault(x => x.Entity is AppState).Entity as AppState;
-            var proto = entries.FirstOrDefault(x => x.Entity is Protocol p && p.Hash == state.NextProtocol).Entity as Protocol; // TODO: add current cycle to the appstate an use it instead
+            var state = Cache.AppState.Get();
+            var proto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             var accounts = entries.Where(x =>
                 x.Entity is Account &&
@@ -100,7 +103,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (remote.RequiredBool("deactivated") != !delegat.Staked)
                 throw new Exception($"Diagnostics failed: wrong delegate state {delegat.Address}");
 
-            if (remote.RequiredInt32("grace_period") != (delegat.DeactivationLevel - 2) / proto.BlocksPerCycle)
+            var deactivationCycle = (delegat.DeactivationLevel - 1) >= proto.FirstLevel
+                ? proto.GetCycle(delegat.DeactivationLevel - 1)
+                : (await Cache.Blocks.GetAsync(delegat.DeactivationLevel - 1)).Cycle;
+            if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
 
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)

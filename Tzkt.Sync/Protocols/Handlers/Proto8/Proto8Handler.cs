@@ -25,7 +25,7 @@ namespace Tzkt.Sync.Protocols
             : base(node, db, cache, quotes, services, config, logger)
         {
             Rpc = new Rpc(node);
-            Diagnostics = new Diagnostics(db, Rpc);
+            Diagnostics = new Diagnostics(this);
             Validator = new Validator(this);
         }
 

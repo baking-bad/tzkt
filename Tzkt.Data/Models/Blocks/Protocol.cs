@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
@@ -10,6 +11,8 @@ namespace Tzkt.Data.Models
         public string Hash { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
+        public int FirstCycle { get; set; }
+        public int FirstCycleLevel { get; set; }
 
         public int RampUpCycles { get; set; }
         public int NoRewardCycles { get; set; }
@@ -22,7 +25,7 @@ namespace Tzkt.Data.Models
         public int BlocksPerVoting { get; set; }
 
         public int TimeBetweenBlocks { get; set; }
-       
+
         public int EndorsersPerBlock { get; set; }
         public int HardOperationGasLimit { get; set; }
         public int HardOperationStorageLimit { get; set; }
@@ -46,7 +49,61 @@ namespace Tzkt.Data.Models
         public int BallotQuorumMin { get; set; }
         public int BallotQuorumMax { get; set; }
 
+        /// <summary>
+        /// Liquidity baking subsidy is 1/16th of total rewards for a block of priority 0 with all endorsements
+        /// </summary>
+        public int LBSubsidy { get; set; }
+        /// <summary>
+        /// Level after protocol activation when liquidity baking shuts off
+        /// </summary>
+        public int LBSunsetLevel { get; set; }
+        /// <summary>
+        /// 1/2 window size of 2000 blocks with precision of 1000 for integer computation
+        /// </summary>
+        public int LBEscapeThreshold { get; set; }
+
         public string Metadata { get; set; }
+
+        #region helpers
+        public int GetCycleStart(int cycle)
+        {
+            if (cycle < FirstCycle)
+                throw new Exception("Cycle doesn't match the protocol");
+
+            return FirstCycleLevel + (cycle - FirstCycle) * BlocksPerCycle;
+        }
+        public int GetCycleEnd(int cycle)
+        {
+            if (cycle < FirstCycle)
+                throw new Exception("Cycle doesn't match the protocol");
+
+            return GetCycleStart(cycle) + BlocksPerCycle - 1;
+        }
+        public int GetCycle(int level)
+        {
+            if (level < FirstLevel)
+                throw new Exception("Level doesn't match the protocol");
+
+            if (level < FirstCycleLevel)
+                return FirstCycle - 1;
+
+            return FirstCycle + (level - FirstCycleLevel) / BlocksPerCycle;
+        }
+        public bool IsCycleStart(int level)
+        {
+            if (level < FirstLevel)
+                throw new Exception("Level doesn't match the protocol");
+
+            return (level - FirstCycleLevel) % BlocksPerCycle == 0;
+        }
+        public bool IsCycleEnd(int level)
+        {
+            if (level < FirstLevel)
+                throw new Exception("Level doesn't match the protocol");
+
+            return (level + 1 - FirstCycleLevel) % BlocksPerCycle == 0;
+        }
+        #endregion
     }
 
     public static class ProtocolModel

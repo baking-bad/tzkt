@@ -62,6 +62,25 @@ namespace Tzkt.Sync.Services.Cache
             return protocol;
         }
 
+        public async Task<Protocol> FindByCycleAsync(int cycle)
+        {
+            var protocol = CachedByCode.Values
+                .OrderByDescending(x => x.Code)
+                .FirstOrDefault(x => x.FirstCycle <= cycle);
+
+            if (protocol == null)
+            {
+                protocol = await Db.Protocols
+                    .OrderByDescending(x => x.Code)
+                    .FirstOrDefaultAsync(x => x.FirstCycle <= cycle)
+                        ?? throw new Exception($"Protocol for cycle {cycle} doesn't exist");
+
+                Add(protocol);
+            }
+
+            return protocol;
+        }
+
         public void Remove(Protocol protocol)
         {
             CachedByCode.Remove(protocol.Code);

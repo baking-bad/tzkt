@@ -36,7 +36,9 @@ namespace Tzkt.Sync.Protocols
                 Hash = rawBlock.RequiredString("protocol"),
                 Code = -1,
                 FirstLevel = 0,
-                LastLevel = 0
+                LastLevel = 0,
+                FirstCycle = 0,
+                FirstCycleLevel = 1
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
@@ -47,6 +49,7 @@ namespace Tzkt.Sync.Protocols
             {
                 Id = Cache.AppState.NextOperationId(),
                 Hash = rawBlock.RequiredString("hash"),
+                Cycle = -1,
                 Level = rawBlock.Required("header").RequiredInt32("level"),
                 Protocol = protocol,
                 Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),

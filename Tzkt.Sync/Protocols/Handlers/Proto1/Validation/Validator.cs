@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual void ValidateBlockHeader(JsonElement header)
         {
             Level = header.RequiredInt32("level");
-            Cycle = (Level - 1) /  Protocol.BlocksPerCycle;
+            Cycle = Protocol.GetCycle(Level);
 
             if (Level != Cache.AppState.GetNextLevel())
                 throw new ValidationException($"invalid block level", true);
@@ -116,7 +116,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (balanceUpdates.Any())
             {
-                if (Level % Protocol.BlocksPerCycle != 0)
+                if (!Protocol.IsCycleEnd(Level))
                     throw new ValidationException("unexpected cycle rewards");
 
                 foreach (var update in balanceUpdates)
@@ -278,7 +278,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     lostFeesUpdate != null && lostFeesUpdate.Account != offender)
                     throw new ValidationException("invalid double baking offender updates");
 
-                var accusedCycle = (content.Required("bh1").RequiredInt32("level") - 1) / Protocol.BlocksPerCycle;
+                var accusedLevel = content.Required("bh1").RequiredInt32("level");
+                var accusedCycle = Cache.Blocks.Get(accusedLevel).Cycle;
                 if (lostDepositsUpdate != null && lostDepositsUpdate.Cycle != accusedCycle ||
                     lostRewardsUpdate != null && lostRewardsUpdate.Cycle != accusedCycle ||
                     lostFeesUpdate != null && lostFeesUpdate.Cycle != accusedCycle)
@@ -324,7 +325,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     lostFeesUpdate != null && lostFeesUpdate.Account != offender)
                     throw new ValidationException("invalid double endorsing offender updates");
 
-                var accusedCycle = (content.Required("op1").Required("operations").RequiredInt32("level") - 1) / Protocol.BlocksPerCycle;
+                var accusedLevel = content.Required("op1").Required("operations").RequiredInt32("level");
+                var accusedCycle = Cache.Blocks.Get(accusedLevel).Cycle;
                 if (lostDepositsUpdate != null && lostDepositsUpdate.Cycle != accusedCycle ||
                     lostRewardsUpdate != null && lostRewardsUpdate.Cycle != accusedCycle ||
                     lostFeesUpdate != null && lostFeesUpdate.Cycle != accusedCycle)

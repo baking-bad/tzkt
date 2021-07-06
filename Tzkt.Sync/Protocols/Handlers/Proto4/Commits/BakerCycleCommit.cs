@@ -20,16 +20,14 @@ namespace Tzkt.Sync.Protocols.Proto4
             Dictionary<int, Proto1.CycleCommit.DelegateSnapshot> snapshots,
             List<BakingRight> currentRights)
         {
-            var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-
             #region current rights
             var prevBlock = await Cache.Blocks.CurrentAsync();
             var prevBakingRights = prevBlock.Level == 1 ? new List<BakingRight>(0)
-                : await Cache.BakingRights.GetAsync((prevBlock.Level - 1) / block.Protocol.BlocksPerCycle, prevBlock.Level);
+                : await Cache.BakingRights.GetAsync(prevBlock.Cycle, prevBlock.Level);
 
             foreach (var rights in currentRights.GroupBy(x => x.BakerId))
             {
-                var bakerCycle = await Cache.BakerCycles.GetAsync(cycle, rights.Key);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, rights.Key);
                 Db.TryAttach(bakerCycle);
 
                 var bakingRights = rights
@@ -46,12 +44,12 @@ namespace Tzkt.Sync.Protocols.Proto4
                     if (br.Priority == 0)
                     {
                         bakerCycle.FutureBlocks--;
-                        bakerCycle.FutureBlockDeposits -= GetBlockDeposit(block.Protocol, cycle);
+                        bakerCycle.FutureBlockDeposits -= GetBlockDeposit(block.Protocol, block.Cycle);
                     }
 
                     if (br.Status == BakingRightStatus.Realized)
                     {
-                        bakerCycle.BlockDeposits += GetBlockDeposit(block.Protocol, cycle);
+                        bakerCycle.BlockDeposits += GetBlockDeposit(block.Protocol, block.Cycle);
 
                         if (br.Priority == 0)
                             bakerCycle.OwnBlocks++;
@@ -81,12 +79,12 @@ namespace Tzkt.Sync.Protocols.Proto4
                 if (endorsingRight != null)
                 {
                     bakerCycle.FutureEndorsements -= (int)endorsingRight.Slots;
-                    bakerCycle.FutureEndorsementDeposits -= GetEndorsementDeposit(block.Protocol, cycle, (int)endorsingRight.Slots);
+                    bakerCycle.FutureEndorsementDeposits -= GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
                     {
                         bakerCycle.Endorsements += (int)endorsingRight.Slots;
-                        bakerCycle.EndorsementDeposits += GetEndorsementDeposit(block.Protocol, cycle, (int)endorsingRight.Slots);
+                        bakerCycle.EndorsementDeposits += GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Uncovered)
                     {
@@ -106,9 +104,9 @@ namespace Tzkt.Sync.Protocols.Proto4
                 #region endorsing rewards
                 if (endorsingRight != null)
                 {
-                    bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots);
+                    bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
 
-                    var successReward = GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, prevBlock.Priority);
+                    var successReward = GetEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots, prevBlock.Priority);
 
                     var prevRights = prevBakingRights
                         .Where(x => x.Type == BakingRightType.Baking && x.BakerId == rights.Key)
@@ -116,7 +114,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                         .ToList();
 
                     var maxReward = prevRights.FirstOrDefault()?.Status > BakingRightStatus.Realized
-                        ? GetEndorsementReward(block.Protocol, cycle, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
+                        ? GetEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots, (int)prevRights[0].Priority)
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
@@ -130,7 +128,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
                     if (maxReward != successReward)
                     {
-                        var prevBakerCycle = await Cache.BakerCycles.GetAsync((prevBlock.Level - 1) / block.Protocol.BlocksPerCycle, rights.Key);
+                        var prevBakerCycle = await Cache.BakerCycles.GetAsync(prevBlock.Cycle, rights.Key);
                         Db.TryAttach(prevBakerCycle);
 
                         if (prevRights[0].Status == BakingRightStatus.Missed)
@@ -155,12 +153,12 @@ namespace Tzkt.Sync.Protocols.Proto4
                 if (bakingRights.Count > 0)
                 {
                     if (bakingRights[0].Priority == 0)
-                        bakerCycle.FutureBlockRewards -= GetFutureBlockReward(block.Protocol, cycle);
+                        bakerCycle.FutureBlockRewards -= GetFutureBlockReward(block.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(block.Protocol, cycle, (int)bakingRights[0].Priority, block.Validations);
+                    var successReward = GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[0].Priority, block.Validations);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, cycle, (int)bakingRights[^1].Priority, block.Validations)
+                        ? GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[^1].Priority, block.Validations)
                         : 0;
 
                     //var maxReward = endorsingRight?.Status > BakingRightStatus.Realized
@@ -239,14 +237,15 @@ namespace Tzkt.Sync.Protocols.Proto4
             {
                 foreach (var op in block.DoubleBakings)
                 {
-                    var offenderCycle = await Cache.BakerCycles.GetAsync((op.AccusedLevel - 1) / block.Protocol.BlocksPerCycle, op.Offender.Id);
+                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
+                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
                     offenderCycle.DoubleBakingLostDeposits += op.OffenderLostDeposit;
                     offenderCycle.DoubleBakingLostRewards += op.OffenderLostReward;
                     offenderCycle.DoubleBakingLostFees += op.OffenderLostFee;
 
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(cycle, op.Accuser.Id);
+                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
 
                     accuserCycle.DoubleBakingRewards += op.AccuserReward;
@@ -257,14 +256,15 @@ namespace Tzkt.Sync.Protocols.Proto4
             {
                 foreach (var op in block.DoubleEndorsings)
                 {
-                    var offenderCycle = await Cache.BakerCycles.GetAsync((op.AccusedLevel - 1) / block.Protocol.BlocksPerCycle, op.Offender.Id);
+                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
+                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
                     offenderCycle.DoubleEndorsingLostDeposits += op.OffenderLostDeposit;
                     offenderCycle.DoubleEndorsingLostRewards += op.OffenderLostReward;
                     offenderCycle.DoubleEndorsingLostFees += op.OffenderLostFee;
 
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(cycle, op.Accuser.Id);
+                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
 
                     accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
@@ -275,7 +275,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             {
                 foreach (var op in block.Revelations)
                 {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(cycle, op.Baker.Id);
+                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
                     Db.TryAttach(bakerCycle);
 
                     bakerCycle.RevelationRewards += block.Protocol.RevelationReward;
@@ -286,7 +286,8 @@ namespace Tzkt.Sync.Protocols.Proto4
             {
                 foreach (var op in block.RevelationPenalties)
                 {
-                    var penaltyCycle = await Cache.BakerCycles.GetAsync((op.MissedLevel - 1) / block.Protocol.BlocksPerCycle, op.Baker.Id);
+                    var penaltyBlock = await Cache.Blocks.GetAsync(op.MissedLevel);
+                    var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.Baker.Id);
                     Db.TryAttach(penaltyCycle);
 
                     penaltyCycle.RevelationLostRewards += op.LostReward;
@@ -359,9 +360,8 @@ namespace Tzkt.Sync.Protocols.Proto4
 
                 #region shifted future endorsing rights
                 // TODO: cache shifted rights
-                var shiftedLevel = futureCycle.Index * block.Protocol.BlocksPerCycle + 1;
                 var shiftedRights = await Db.BakingRights.AsNoTracking()
-                    .Where(x => x.Level == shiftedLevel && x.Type == BakingRightType.Endorsing)
+                    .Where(x => x.Level == futureCycle.FirstLevel && x.Type == BakingRightType.Endorsing)
                     .ToListAsync();
 
                 foreach (var er in shiftedRights)
@@ -378,7 +378,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                             .Select(x => x.RequiredString())
                             .Where(x => x != baker.Address);
 
-                        if (snapshotedBaker.RequiredInt32("grace_period") != (futureCycle.SnapshotLevel - 1) / block.Protocol.BlocksPerCycle - 1)
+                        if (snapshotedBaker.RequiredInt32("grace_period") != block.Cycle - 3)
                             throw new Exception("Deactivated baker got baking rights");
 
                         var rolls = (int)(snapshotedBaker.RequiredInt64("staking_balance") / snapshotProtocol.TokensPerRoll);

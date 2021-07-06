@@ -8,6 +8,7 @@ namespace Tzkt.Data.Models
     public class Block
     {
         public int Id { get; set; }
+        public int Cycle { get; set; }
         public int Level { get; set; }
         public string Hash { get; set; }
         public DateTime Timestamp { get; set; }

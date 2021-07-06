@@ -49,7 +49,6 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
-            var cycleSize = Protocols.Current.BlocksPerCycle;
             return new BakerRewards
             {
                 DoubleBakingRewards = row.DoubleBakingRewards,
@@ -101,7 +100,7 @@ namespace Tzkt.Api.Repositories
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
                 UncoveredOwnBlocks = row.UncoveredOwnBlocks,
-                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
+                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             };
         }
 
@@ -124,7 +123,6 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var cycleSize = Protocols.Current.BlocksPerCycle;
             return rows.Select(row => new BakerRewards
             {
                 DoubleBakingRewards = row.DoubleBakingRewards,
@@ -176,7 +174,7 @@ namespace Tzkt.Api.Repositories
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
                 UncoveredOwnBlocks = row.UncoveredOwnBlocks,
-                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
+                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             });
         }
 
@@ -466,9 +464,8 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = row.UncoveredOwnBlocks;
                         break;
                     case "quote":
-                        var cycleSize = Protocols.Current.BlocksPerCycle;
                         foreach (var row in rows)
-                            result[j++][i] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
+                            result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
                 }
             }
@@ -757,9 +754,8 @@ namespace Tzkt.Api.Repositories
                         result[j++] = row.UncoveredOwnBlocks;
                     break;
                 case "quote":
-                    var cycleSize = Protocols.Current.BlocksPerCycle;
                     foreach (var row in rows)
-                        result[j++] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
+                        result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
             }
 
@@ -796,7 +792,6 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
-            var cycleSize = Protocols.Current.BlocksPerCycle;
             return new DelegatorRewards
             {
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -844,7 +839,7 @@ namespace Tzkt.Api.Repositories
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
                 UncoveredOwnBlocks = row.UncoveredOwnBlocks,
-                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
+                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             };
         }
 
@@ -873,7 +868,6 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var cycleSize = Protocols.Current.BlocksPerCycle;
             return rows.Select(row => new DelegatorRewards
             {
                 Baker = Accounts.GetAlias(row.BakerId),
@@ -921,7 +915,7 @@ namespace Tzkt.Api.Repositories
                 UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
                 UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
                 UncoveredOwnBlocks = row.UncoveredOwnBlocks,
-                Quote = Quotes.Get(quote, (row.Cycle + 1) * cycleSize)
+                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             });
         }
 
@@ -1197,9 +1191,8 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = row.UncoveredOwnBlocks;
                         break;
                     case "quote":
-                        var cycleSize = Protocols.Current.BlocksPerCycle;
                         foreach (var row in rows)
-                            result[j++][i] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
+                            result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
                 }
             }
@@ -1474,9 +1467,8 @@ namespace Tzkt.Api.Repositories
                         result[j++] = row.UncoveredOwnBlocks;
                     break;
                 case "quote":
-                    var cycleSize = Protocols.Current.BlocksPerCycle;
                     foreach (var row in rows)
-                        result[j++] = Quotes.Get(quote, (row.Cycle + 1) * cycleSize);
+                        result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
             }
 

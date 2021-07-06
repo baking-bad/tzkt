@@ -279,8 +279,8 @@ namespace Tzkt.Api.Repositories
             if (!(rawAccount is RawDelegate) || fromLevel == -1 || toLevel == -1)
                 return Enumerable.Empty<BakingInterval>();
 
-            var fromCycle = (fromLevel - 1) / proto.BlocksPerCycle;
-            var toCycle = (toLevel - 1) / proto.BlocksPerCycle;
+            var fromCycle = Protocols.FindByLevel(fromLevel).GetCycle(fromLevel);
+            var toCycle = Protocols.FindByLevel(toLevel).GetCycle(toLevel);
 
             var sql = $@"
                 SELECT ""Level"", ""Slots"", ""Status"" FROM ""BakingRights""
