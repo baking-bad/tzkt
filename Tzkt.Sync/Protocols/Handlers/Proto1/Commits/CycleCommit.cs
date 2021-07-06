@@ -18,12 +18,17 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var currentCycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-                var futureCycle = currentCycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
                 var rawCycle = await Proto.Rpc.GetCycleAsync(block.Level, futureCycle);
 
-                var snapshotLevel = Math.Max(1, (currentCycle - 2) * block.Protocol.BlocksPerCycle + (rawCycle.RequiredInt32("roll_snapshot") + 1) * block.Protocol.BlocksPerSnapshot);
+                var snapshotIndex = rawCycle.RequiredInt32("roll_snapshot");
+                var snapshotLevel = 1;
+                if (block.Cycle >= 2)
+                {
+                    var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
+                    snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
+                }
                 var snapshotBalances = await Db.SnapshotBalances.AsNoTracking().Where(x => x.Level == snapshotLevel).ToListAsync();
 
                 Snapshots = new Dictionary<int, DelegateSnapshot>(512);
@@ -56,9 +61,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 FutureCycle = new Cycle
                 {
                     Index = futureCycle,
-                    FirstLevel = futureCycle * block.Protocol.BlocksPerCycle + 1,
-                    LastLevel = (futureCycle + 1) * block.Protocol.BlocksPerCycle,
-                    SnapshotIndex = rawCycle.RequiredInt32("roll_snapshot"),
+                    FirstLevel = block.Protocol.GetCycleStart(futureCycle),
+                    LastLevel = block.Protocol.GetCycleEnd(futureCycle),
+                    SnapshotIndex = snapshotIndex,
                     SnapshotLevel = snapshotLevel,
                     TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / block.Protocol.TokensPerRoll)),
                     TotalStaking = Snapshots.Values.Sum(x => x.StakingBalance),
@@ -77,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-                var futureCycle = (block.Level - 1) / block.Protocol.BlocksPerCycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""Cycles""

@@ -19,13 +19,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task Apply(Block block)
         {
-            var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-
             #region current rights
-            CurrentRights = await Cache.BakingRights.GetAsync(cycle, block.Level);
+            CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
             var sql = string.Empty;
 
-            // TODO: better use protocol of the block where the endorsing rights were generated
             if (block.Priority == 0 && block.Validations == block.Protocol.EndorsersPerBlock)
             {
                 CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Priority > 0);
@@ -63,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (delegat == null) continue; // WTF: [level:28680] - Baking rights were given to non-baker account
 
                         sqlInsert += $@"
-                            ({cycle}, {block.Level}, {delegat.Id}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {bakingRight.RequiredInt32("priority")}, null),";
+                            ({block.Cycle}, {block.Level}, {delegat.Id}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {bakingRight.RequiredInt32("priority")}, null),";
                     }
 
                     await Db.Database.ExecuteSqlRawAsync(sqlInsert[..^1]);
@@ -122,11 +119,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var baker = Cache.Accounts.GetDelegate(cr.BakerId);
                     var available = baker.Balance - baker.FrozenDeposits - baker.FrozenRewards - baker.FrozenFees;
                     var required = cr.Type == BakingRightType.Baking
-                        ? (cycle < block.Protocol.RampUpCycles
-                            ? (block.Protocol.BlockDeposit * cycle / block.Protocol.RampUpCycles)
+                        ? (block.Cycle < block.Protocol.RampUpCycles
+                            ? (block.Protocol.BlockDeposit * block.Cycle / block.Protocol.RampUpCycles)
                             : block.Protocol.BlockDeposit)
-                        : (cycle < block.Protocol.RampUpCycles 
-                            ? (cr.Slots * block.Protocol.EndorsementDeposit * cycle / block.Protocol.RampUpCycles)
+                        : (block.Cycle < block.Protocol.RampUpCycles 
+                            ? (cr.Slots * block.Protocol.EndorsementDeposit * block.Cycle / block.Protocol.RampUpCycles)
                             : (cr.Slots * block.Protocol.EndorsementDeposit));
 
                     if (available < required)
@@ -168,7 +165,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = cycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
                 FutureBakingRights = (await Proto.Rpc.GetBakingRightsAsync(block.Level, futureCycle)).EnumerateArray();
                 FutureEndorsingRights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, futureCycle)).EnumerateArray();
@@ -190,7 +187,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var acc = await Cache.Accounts.GetAsync(er.RequiredString("delegate"));
                     
                     writer.StartRow();
-                    writer.Write(er.RequiredInt32("level") / block.Protocol.BlocksPerCycle, NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                    writer.Write(block.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
                     writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                             // level + 1 (shifted)
                     writer.Write(acc.Id, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
@@ -222,10 +219,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task Revert(Block block)
         {
             block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-
             #region current rights
-            CurrentRights = await Cache.BakingRights.GetAsync(cycle, block.Level);
+            CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
 
             foreach (var cr in CurrentRights)
                 cr.Status = BakingRightStatus.Future;
@@ -241,8 +236,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE FROM ""BakingRights""
-                    WHERE   ""Cycle"" = {cycle + block.Protocol.PreservedCycles} AND ""Type"" = 0
-                    OR      ""Level"" > {(cycle + block.Protocol.PreservedCycles) * block.Protocol.BlocksPerCycle + 1}");
+                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.PreservedCycles} AND ""Type"" = 0
+                    OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.PreservedCycles)}");
             }
             #endregion
         }

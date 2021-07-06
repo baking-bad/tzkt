@@ -101,8 +101,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     statistics.TotalVested += vestedReceived.Sum(x => x.Amount);
             }
 
-            if (block.Level % block.Protocol.BlocksPerCycle == 0)
-                statistics.Cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
+            if (block.Events.HasFlag(BlockEvents.CycleEnd))
+                statistics.Cycle = block.Cycle;
 
             if (block.Timestamp.AddSeconds(block.Protocol.TimeBetweenBlocks).Ticks / (10_000_000L * 3600 * 24) != block.Timestamp.Ticks / (10_000_000L * 3600 * 24))
                 statistics.Date = block.Timestamp.Date;

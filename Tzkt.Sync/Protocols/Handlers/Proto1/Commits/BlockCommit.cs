@@ -21,9 +21,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             var reward = GetBlockReward(metadata);
             var deposit = GetBlockDeposit(metadata);
 
-            if (level % protocol.BlocksPerCycle == 1)
+            if (protocol.IsCycleStart(level))
                 events |= BlockEvents.CycleBegin;
-            else if (level % protocol.BlocksPerCycle == 0)
+            else if (protocol.IsCycleEnd(level))
                 events |= BlockEvents.CycleEnd;
 
             if (protocol.FirstLevel == level)
@@ -41,6 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Id = Cache.AppState.NextOperationId(),
                 Hash = rawBlock.RequiredString("hash"),
+                Cycle = protocol.GetCycle(level),
                 Level = level,
                 Protocol = protocol,
                 Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),

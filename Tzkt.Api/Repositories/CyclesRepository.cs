@@ -41,7 +41,6 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync(sql, new { index });
             if (row == null) return null;
 
-            var cycleSize = Protocols.Current.BlocksPerCycle;
             return new Cycle
             {
                 Index = row.Index,
@@ -57,7 +56,7 @@ namespace Tzkt.Api.Repositories
                 TotalDelegators = row.TotalDelegators,
                 TotalRolls = row.TotalRolls,
                 TotalStaking = row.TotalStaking,
-                Quote = Quotes.Get(quote, (row.Index + 1) * cycleSize)
+                Quote = Quotes.Get(quote, row.LastLevel)
             };
         }
 
@@ -75,7 +74,6 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var cycleSize = Protocols.Current.BlocksPerCycle;
             return rows.Select(row => new Cycle
             {
                 Index = row.Index,
@@ -91,7 +89,7 @@ namespace Tzkt.Api.Repositories
                 TotalDelegators = row.TotalDelegators,
                 TotalRolls = row.TotalRolls,
                 TotalStaking = row.TotalStaking,
-                Quote = Quotes.Get(quote, (row.Index + 1) * cycleSize)
+                Quote = Quotes.Get(quote, row.LastLevel)
             });
         }
 
@@ -121,7 +119,7 @@ namespace Tzkt.Api.Repositories
                     case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                     case "totalRolls": columns.Add(@"""TotalRolls"""); break;
                     case "totalStaking": columns.Add(@"""TotalStaking"""); break;
-                    case "quote": columns.Add(@"""Index"""); break;
+                    case "quote": columns.Add(@"""LastLevel"""); break;
                 }
             }
 
@@ -196,9 +194,8 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = row.TotalStaking;
                         break;
                     case "quote":
-                        var cycleSize = Protocols.Current.BlocksPerCycle;
                         foreach (var row in rows)
-                            result[j++][i] = Quotes.Get(quote, (row.Index + 1) * cycleSize);
+                            result[j++][i] = Quotes.Get(quote, row.LastLevel);
                         break;
                 }
             }
@@ -230,7 +227,7 @@ namespace Tzkt.Api.Repositories
                 case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                 case "totalRolls": columns.Add(@"""TotalRolls"""); break;
                 case "totalStaking": columns.Add(@"""TotalStaking"""); break;
-                case "quote": columns.Add(@"""Index"""); break;
+                case "quote": columns.Add(@"""LastLevel"""); break;
             }
 
             if (columns.Count == 0)
@@ -302,9 +299,8 @@ namespace Tzkt.Api.Repositories
                         result[j++] = row.TotalStaking;
                     break;
                 case "quote":
-                    var cycleSize = Protocols.Current.BlocksPerCycle;
                     foreach (var row in rows)
-                        result[j++] = Quotes.Get(quote, (row.Index + 1) * cycleSize);
+                        result[j++] = Quotes.Get(quote, row.LastLevel);
                     break;
             }
 

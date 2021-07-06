@@ -23,15 +23,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     AND     ""DelegateId"" IS NOT NULL");
 
                 #region weird delegators
-                var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-                if (cycle > 0)
+                if (block.Cycle > 0)
                 {
                     //one-way change...
                     await Db.Database.ExecuteSqlRawAsync($@"
                         DELETE FROM ""DelegatorCycles"" as dc
                         USING ""Accounts"" as acc
                         WHERE acc.""Id"" = dc.""BakerId""
-                        AND dc.""Cycle"" = {cycle - 1}
+                        AND dc.""Cycle"" = {block.Cycle - 1}
                         AND acc.""Type"" != {(int)AccountType.Delegate}");
                 }
                 #endregion
@@ -43,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-                var futureCycle = (block.Level - 1) / block.Protocol.BlocksPerCycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""DelegatorCycles""

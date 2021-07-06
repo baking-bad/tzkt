@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Text.Json;
-using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
     class Diagnostics : Proto1.Diagnostics
     {
-        public Diagnostics(TzktContext db, IRpc rpc) : base(db, rpc) { }
+        public Diagnostics(ProtocolHandler handler) : base(handler) { }
 
         protected override void TestDelegatorsCount(JsonElement remote, Data.Models.Delegate local)
         {

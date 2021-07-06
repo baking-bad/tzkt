@@ -41,6 +41,9 @@ namespace Tzkt.Api.Services.Cache
             return Task.CompletedTask;
         }
 
+        public Protocol FindByCycle(int cycle) => Protocols.Last(x => x.FirstCycle <= cycle);
+        public Protocol FindByLevel(int level) => Protocols.Last(x => x.FirstLevel <= level);
+
         void InitCache()
         {
             using var db = GetConnection();

@@ -13,13 +13,10 @@ namespace Tzkt.Sync.Protocols.Proto3
 
         public override async Task Apply(Block block)
         {
-            var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-
             #region current rights
-            CurrentRights = await Cache.BakingRights.GetAsync(cycle, block.Level);
+            CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
             var sql = string.Empty;
 
-            // TODO: better use protocol of the block where the endorsing rights were generated
             if (block.Priority == 0 && block.Validations == block.Protocol.EndorsersPerBlock)
             {
                 CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Priority > 0);
@@ -53,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     foreach (var br in bakingRights.EnumerateArray().SkipWhile(x => x.RequiredInt32("priority") <= maxExistedPriority))
                         sqlInsert += $@"
-                            ({cycle}, {block.Level}, {Cache.Accounts.GetDelegate(br.RequiredString("delegate")).Id}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {br.RequiredInt32("priority")}, null),";
+                            ({block.Cycle}, {block.Level}, {Cache.Accounts.GetDelegate(br.RequiredString("delegate")).Id}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {br.RequiredInt32("priority")}, null),";
 
                     await Db.Database.ExecuteSqlRawAsync(sqlInsert[..^1]);
 
@@ -94,11 +91,11 @@ namespace Tzkt.Sync.Protocols.Proto3
                     var baker = Cache.Accounts.GetDelegate(cr.BakerId);
                     var available = baker.Balance - baker.FrozenDeposits - baker.FrozenRewards - baker.FrozenFees;
                     var required = cr.Type == BakingRightType.Baking
-                        ? (cycle < block.Protocol.RampUpCycles
-                            ? (block.Protocol.BlockDeposit * cycle / block.Protocol.RampUpCycles)
+                        ? (block.Cycle < block.Protocol.RampUpCycles
+                            ? (block.Protocol.BlockDeposit * block.Cycle / block.Protocol.RampUpCycles)
                             : block.Protocol.BlockDeposit)
-                        : (cycle < block.Protocol.RampUpCycles
-                            ? (cr.Slots * block.Protocol.EndorsementDeposit * cycle / block.Protocol.RampUpCycles)
+                        : (block.Cycle < block.Protocol.RampUpCycles
+                            ? (cr.Slots * block.Protocol.EndorsementDeposit * block.Cycle / block.Protocol.RampUpCycles)
                             : (cr.Slots * block.Protocol.EndorsementDeposit));
 
                     if (available < required)
@@ -140,7 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = cycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
                 FutureBakingRights = (await Proto.Rpc.GetBakingRightsAsync(block.Level, futureCycle)).EnumerateArray();
                 FutureEndorsingRights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, futureCycle)).EnumerateArray();
@@ -151,8 +148,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 foreach (var er in FutureEndorsingRights)
                 {
                     writer.StartRow();
-                    writer.Write(er.RequiredInt32("level") / block.Protocol.BlocksPerCycle, NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
-                    writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                             // level + 1 (shifted)
+                    writer.Write(block.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                    writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                          // level + 1 (shifted)
                     writer.Write(Cache.Accounts.GetDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);

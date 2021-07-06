@@ -34,8 +34,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var er in rawEndorsingRights.EnumerateArray())
                 {
                     writer.StartRow();
-                    writer.Write(er.RequiredInt32("level") / protocol.BlocksPerCycle, NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
-                    writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                       // level + 1 (shifted)
+                    writer.Write(protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                    writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                    // level + 1 (shifted)
                     writer.Write(delegates[er.RequiredString("delegate")], NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);

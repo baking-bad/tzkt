@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 var outdatedLevel = block.Level - (block.Protocol.PreservedCycles + 3) * block.Protocol.BlocksPerCycle;
                 if (outdatedLevel > 0)
                 {
-                    delete += outdatedLevel == block.Protocol.BlocksPerSnapshot
+                    delete += block.Cycle <= block.Protocol.FirstCycle + block.Protocol.PreservedCycles + 4
                         ? $@"DELETE FROM ""SnapshotBalances"" WHERE ""Level"" <= {outdatedLevel};"
                         : $@"DELETE FROM ""SnapshotBalances"" WHERE ""Level"" = {outdatedLevel};";
                 }

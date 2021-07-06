@@ -63,27 +63,24 @@ namespace Tzkt.Sync.Protocols.Proto6
         protected override async Task MigrateContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            var protocol = await Cache.Protocols.GetAsync(block.ProtoCode);
-            var cycle = (block.Level - 1) / protocol.BlocksPerCycle;
 
             await Db.Database.ExecuteSqlRawAsync($@"
                 UPDATE  ""BakerCycles""
                 SET     ""FutureBlockRewards"" = ""FutureBlocks"" * 40000000 :: bigint,
                         ""FutureEndorsementRewards"" = ""FutureEndorsements"" * 1250000 :: bigint
-                WHERE ""Cycle"" > {cycle};");
+                WHERE ""Cycle"" > {block.Cycle};");
         }
 
         protected override async Task RevertContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
             var protocol = await Cache.Protocols.GetAsync(block.ProtoCode);
-            var cycle = (block.Level - 1) / protocol.BlocksPerCycle;
 
             await Db.Database.ExecuteSqlRawAsync($@"
                 UPDATE  ""BakerCycles""
                 SET     ""FutureBlockRewards"" = ""FutureBlocks"" * 16000000 :: bigint,
                         ""FutureEndorsementRewards"" = ""FutureEndorsements"" * 2000000 :: bigint
-                WHERE ""Cycle"" > {cycle};");
+                WHERE ""Cycle"" > {block.Cycle};");
         }
     }
 }

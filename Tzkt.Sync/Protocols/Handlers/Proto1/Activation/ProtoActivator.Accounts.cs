@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     FirstLevel = 1,
                     LastLevel = 1,
                     ActivationLevel = 1,
-                    DeactivationLevel = GracePeriod.Init(1, protocol.BlocksPerCycle, protocol.PreservedCycles),
+                    DeactivationLevel = GracePeriod.Init(2, protocol),
                     Staked = true,
                     Revealed = true,
                     Type = AccountType.Delegate

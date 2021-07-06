@@ -1,9 +1,7 @@
-﻿using Tzkt.Data;
-
-namespace Tzkt.Sync.Protocols.Proto8
+﻿namespace Tzkt.Sync.Protocols.Proto8
 {
     class Diagnostics : Proto5.Diagnostics
     {
-        public Diagnostics(TzktContext db, IRpc rpc) : base(db, rpc) { }
+        public Diagnostics(ProtocolHandler handler) : base(handler) { }
     }
 }

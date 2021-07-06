@@ -20,14 +20,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             var totalDelegators = delegates.Sum(x => x.DelegatorsCount);
             var totalBakers = delegates.Count();
 
-            for (int cycle = 0; cycle <= protocol.PreservedCycles; cycle++)
+            for (int index = 0; index <= protocol.PreservedCycles; index++)
             {
-                var rawCycle = await Proto.Rpc.GetCycleAsync(1, cycle);
+                var rawCycle = await Proto.Rpc.GetCycleAsync(1, index);
                 Db.Cycles.Add(new Cycle
                 {
-                    Index = cycle,
-                    FirstLevel = cycle * protocol.BlocksPerCycle + 1,
-                    LastLevel = (cycle + 1) * protocol.BlocksPerCycle,
+                    Index = index,
+                    FirstLevel = protocol.GetCycleStart(index),
+                    LastLevel = protocol.GetCycleEnd(index),
                     SnapshotIndex = 0,
                     SnapshotLevel = 1,
                     TotalRolls = totalRolls,

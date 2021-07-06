@@ -19,16 +19,15 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
-
                 if (HasPanltiesUpdates(block, rawBlock))
                 {
                     revelationPanlties = new List<RevelationPenaltyOperation>();
 
                     var missedBlocks = await Db.Blocks
                         .Include(x => x.Baker)
-                        .Where(x => x.Level % block.Protocol.BlocksPerCommitment == 0 &&
-                            (x.Level - 1) / block.Protocol.BlocksPerCycle == cycle - 1 &&
+                        .Include(x => x.Protocol)
+                        .Where(x => x.Level % x.Protocol.BlocksPerCommitment == 0 &&
+                            x.Cycle == block.Cycle - 1 &&
                             x.RevelationId == null)
                         .ToListAsync();
 
@@ -37,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                         .ToHashSet();
 
                     var bakerCycles = await Db.BakerCycles.AsNoTracking()
-                        .Where(x => x.Cycle == cycle - 1 && penalizedBakers.Contains(x.BakerId))
+                        .Where(x => x.Cycle == block.Cycle - 1 && penalizedBakers.Contains(x.BakerId))
                         .ToListAsync();
 
                     var freezerRewards = bakerCycles.ToDictionary(k => k.BakerId, v =>
@@ -147,13 +146,12 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         protected virtual bool HasPanltiesUpdates(Block block, JsonElement rawBlock)
         {
-            var cycle = (block.Level - 1) / block.Protocol.BlocksPerCycle;
             return rawBlock
                 .Required("metadata")
                 .RequiredArray("balance_updates")
                 .EnumerateArray()
-                .Skip(cycle < block.Protocol.NoRewardCycles ? 2 : 3)
-                .Any(x => x.RequiredString("kind")[0] == 'f' && GetFreezerCycle(x) != cycle - block.Protocol.PreservedCycles);
+                .Skip(block.Cycle < block.Protocol.NoRewardCycles ? 2 : 3)
+                .Any(x => x.RequiredString("kind")[0] == 'f' && GetFreezerCycle(x) != block.Cycle - block.Protocol.PreservedCycles);
         }
     }
 }
