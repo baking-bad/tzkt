@@ -11,6 +11,11 @@ namespace Tzkt.Api.Models
         public override string Type => AccountTypes.Contract;
 
         /// <summary>
+        /// Public key hash of the contract
+        /// </summary>
+        public override string Address { get; set; }
+
+        /// <summary>
         /// Kind of the contract (`delegator_contract` or `smart_contract`),
         /// where `delegator_contract` - manager.tz smart contract for delegation purpose only
         /// </summary>
@@ -25,11 +30,6 @@ namespace Tzkt.Api.Models
         /// Name of the project behind the contract or contract description
         /// </summary>
         public string Alias { get; set; }
-        
-        /// <summary>
-        /// Public key hash of the contract
-        /// </summary>
-        public string Address { get; set; }
         
         /// <summary>
         /// Contract balance (micro tez)

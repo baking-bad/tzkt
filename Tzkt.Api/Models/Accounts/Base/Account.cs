@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Threading.Tasks;
-using NJsonSchema.Converters;
 using Newtonsoft.Json;
+using NJsonSchema.Converters;
 
 namespace Tzkt.Api.Models
 {
@@ -20,6 +17,8 @@ namespace Tzkt.Api.Models
         /// `contract` - smart contract programmable account , `empty` - account hasn't appeared in the blockchain yet)
         /// </summary>
         public abstract string Type { get; }
+        
+        public abstract string Address { get; set; }
     }
 
     public class AccountJsonInheritanceConverter : JsonInheritanceConverter
