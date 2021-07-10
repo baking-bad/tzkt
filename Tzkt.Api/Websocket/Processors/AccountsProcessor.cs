@@ -24,17 +24,9 @@ namespace Tzkt.Api.Websocket.Processors
         const string AccountsChannel = "accounts";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly Dictionary<string, ContractSub> AccountSubs = new();
+        static readonly Dictionary<string, HashSet<string>> AccountSubs = new();
 
         static readonly Dictionary<string, int> Limits = new();
-
-        //TODO To HashSet of string
-        class ContractSub
-        {
-            public HashSet<string> All { get; set; }
-
-            public bool Empty => All == null;
-        }
         #endregion
 
         readonly StateCache State;
@@ -118,8 +110,8 @@ namespace Tzkt.Api.Websocket.Processors
                 {
                     if (AccountSubs.TryGetValue(update.Address, out var accountSubs))
                     {
-                        if (accountSubs.All != null)
-                            Add(accountSubs.All, update);
+                        if (accountSubs != null)
+                            Add(accountSubs, update);
                     }
                 }
                 #endregion
@@ -183,11 +175,11 @@ namespace Tzkt.Api.Websocket.Processors
                 {
                     if (!AccountSubs.TryGetValue(parameter.Address, out var accountSub))
                     {
-                        accountSub = new();
+                        accountSub = new(4);
                         AccountSubs.Add(parameter.Address, accountSub);
                     }
-                    accountSub.All ??= new(4);
-                    TryAdd(accountSub.All, connectionId);
+                    
+                    TryAdd(accountSub, connectionId);
                 }
                 else
                 {
@@ -232,18 +224,12 @@ namespace Tzkt.Api.Websocket.Processors
                 if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
 
-                foreach (var accountSub in AccountSubs.Values)
+                foreach (var (key, value) in AccountSubs)
                 {
-                    if (accountSub.All != null)
-                    {
-                        TryRemove(accountSub.All, connectionId);
-                        if (accountSub.All.Count == 0)
-                            accountSub.All = null;
-                    }
+                    TryRemove(value, connectionId);
+                    if (value.Count == 0)
+                        AccountSubs.Remove(key);
                 }
-
-                foreach (var account in AccountSubs.Where(x => x.Value.Empty).Select(x => x.Key).ToList())
-                    AccountSubs.Remove(account);
 
                 if (Limits[connectionId] != 0)
                     Logger.LogCritical("Failed to unsibscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
