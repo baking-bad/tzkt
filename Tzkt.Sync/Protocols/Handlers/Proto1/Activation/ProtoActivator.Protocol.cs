@@ -81,7 +81,35 @@ namespace Tzkt.Sync.Protocols.Proto1
                 FirstLevel = state.Level + 1,
                 LastLevel = -1,
                 FirstCycle = state.Cycle + 1,
-                FirstCycleLevel = prev.GetCycleStart(state.Cycle + 1)
+                FirstCycleLevel = prev.GetCycleStart(state.Cycle + 1),
+                RampUpCycles = prev.RampUpCycles,
+                NoRewardCycles = prev.NoRewardCycles,
+                BlockDeposit = prev.BlockDeposit,
+                BlockReward0 = prev.BlockReward0,
+                BlockReward1 = prev.BlockReward1,
+                BlocksPerCommitment = prev.BlocksPerCommitment,
+                BlocksPerCycle = prev.BlocksPerCycle,
+                BlocksPerSnapshot = prev.BlocksPerSnapshot,
+                BlocksPerVoting = prev.BlocksPerVoting,
+                ByteCost = prev.ByteCost,
+                EndorsementDeposit = prev.EndorsementDeposit,
+                EndorsementReward0 = prev.EndorsementReward0,
+                EndorsementReward1 = prev.EndorsementReward1,
+                EndorsersPerBlock = prev.EndorsersPerBlock,
+                HardBlockGasLimit = prev.HardBlockGasLimit,
+                HardOperationGasLimit = prev.HardOperationGasLimit,
+                HardOperationStorageLimit = prev.HardOperationStorageLimit,
+                OriginationSize = prev.OriginationSize,
+                PreservedCycles = prev.PreservedCycles,
+                RevelationReward = prev.RevelationReward,
+                TimeBetweenBlocks = prev.TimeBetweenBlocks,
+                TokensPerRoll = prev.TokensPerRoll,
+                BallotQuorumMin = prev.BallotQuorumMin,
+                BallotQuorumMax = prev.BallotQuorumMax,
+                ProposalQuorum = prev.ProposalQuorum,
+                LBSubsidy = prev.LBSubsidy,
+                LBSunsetLevel = prev.LBSunsetLevel,
+                LBEscapeThreshold = prev.LBEscapeThreshold
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
@@ -101,33 +129,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Protocols.Reset();
         }
 
-        protected virtual void UpgradeParameters(Protocol protocol, Protocol prev)
-        {
-            protocol.RampUpCycles = prev.RampUpCycles;
-            protocol.NoRewardCycles = prev.NoRewardCycles;
-            protocol.BlockDeposit = prev.BlockDeposit;
-            protocol.BlockReward0 = prev.BlockReward0;
-            protocol.BlockReward1 = prev.BlockReward1;
-            protocol.BlocksPerCommitment = prev.BlocksPerCommitment;
-            protocol.BlocksPerCycle = prev.BlocksPerCycle;
-            protocol.BlocksPerSnapshot = prev.BlocksPerSnapshot;
-            protocol.BlocksPerVoting = prev.BlocksPerVoting;
-            protocol.ByteCost = prev.ByteCost;
-            protocol.EndorsementDeposit = prev.EndorsementDeposit;
-            protocol.EndorsementReward0 = prev.EndorsementReward0;
-            protocol.EndorsementReward1 = prev.EndorsementReward1;
-            protocol.EndorsersPerBlock = prev.EndorsersPerBlock;
-            protocol.HardBlockGasLimit = prev.HardBlockGasLimit;
-            protocol.HardOperationGasLimit = prev.HardOperationGasLimit;
-            protocol.HardOperationStorageLimit = prev.HardOperationStorageLimit;
-            protocol.OriginationSize = prev.OriginationSize;
-            protocol.PreservedCycles = prev.PreservedCycles;
-            protocol.RevelationReward = prev.RevelationReward;
-            protocol.TimeBetweenBlocks = prev.TimeBetweenBlocks;
-            protocol.TokensPerRoll = prev.TokensPerRoll;
-            protocol.BallotQuorumMin = prev.BallotQuorumMin;
-            protocol.BallotQuorumMax = prev.BallotQuorumMax;
-            protocol.ProposalQuorum = prev.ProposalQuorum;
-        }
+        protected virtual void UpgradeParameters(Protocol protocol, Protocol prev) { }
     }
 }

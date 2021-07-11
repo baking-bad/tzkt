@@ -19,7 +19,6 @@ namespace Tzkt.Sync.Protocols.Proto4
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            base.UpgradeParameters(protocol, prev);
             protocol.HardBlockGasLimit = 8_000_000;
             protocol.HardOperationGasLimit = 800_000;
             protocol.TokensPerRoll = 8_000_000_000;

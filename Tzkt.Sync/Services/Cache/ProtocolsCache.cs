@@ -81,6 +81,25 @@ namespace Tzkt.Sync.Services.Cache
             return protocol;
         }
 
+        public async Task<Protocol> FindByLevelAsync(int level)
+        {
+            var protocol = CachedByCode.Values
+                .OrderByDescending(x => x.Code)
+                .FirstOrDefault(x => x.FirstLevel <= level);
+
+            if (protocol == null)
+            {
+                protocol = await Db.Protocols
+                    .OrderByDescending(x => x.Code)
+                    .FirstOrDefaultAsync(x => x.FirstLevel <= level)
+                        ?? throw new Exception($"Protocol for level {level} doesn't exist");
+
+                Add(protocol);
+            }
+
+            return protocol;
+        }
+
         public void Remove(Protocol protocol)
         {
             CachedByCode.Remove(protocol.Code);

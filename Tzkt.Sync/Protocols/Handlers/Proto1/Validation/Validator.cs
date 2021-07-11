@@ -149,7 +149,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             case "activate_account": await ValidateActivation(content); break;
                             case "double_baking_evidence": ValidateDoubleBaking(content); break;
                             case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
-                            case "seed_nonce_revelation": ValidateSeedNonceRevelation(content); break;
+                            case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
                             case "delegation": await ValidateDelegation(content); break;
                             case "origination": await ValidateOrigination(content); break;
                             case "transaction": await ValidateTransaction(content); break;
@@ -334,9 +334,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected virtual void ValidateSeedNonceRevelation(JsonElement content)
+        protected virtual async Task ValidateSeedNonceRevelation(JsonElement content)
         {
-            if (content.RequiredInt32("level") % Protocol.BlocksPerCommitment != 0)
+            var level = content.RequiredInt32("level");
+            var proto = await Cache.Protocols.FindByLevelAsync(level);
+
+            if (level % proto.BlocksPerCommitment != 0)
                 throw new ValidationException("invalid seed nonce revelation level");
 
             var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates", 1)[0];

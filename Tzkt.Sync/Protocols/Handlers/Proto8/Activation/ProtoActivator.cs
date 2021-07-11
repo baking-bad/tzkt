@@ -17,7 +17,6 @@ namespace Tzkt.Sync.Protocols.Proto8
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            base.UpgradeParameters(protocol, prev);
             protocol.BlocksPerVoting = 20_480;
         }
 

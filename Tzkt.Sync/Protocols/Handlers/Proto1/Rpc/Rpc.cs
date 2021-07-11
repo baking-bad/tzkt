@@ -17,14 +17,17 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual Task<JsonElement> GetCycleAsync(int level, int cycle)
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/cycle/{cycle}");
 
-        public virtual Task<JsonElement> GetBakingRightsAsync(int level, int cycle)
-            => Node.GetAsync($"chains/main/blocks/{level}/helpers/baking_rights?cycle={cycle}&max_priority=8&all=true");
+        public virtual Task<JsonElement> GetBakingRightsAsync(int block, int cycle)
+            => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?cycle={cycle}&max_priority=8&all=true");
 
-        public virtual Task<JsonElement> GetEndorsingRightsAsync(int level, int cycle)
-            => Node.GetAsync($"chains/main/blocks/{level}/helpers/endorsing_rights?cycle={cycle}");
+        public virtual Task<JsonElement> GetEndorsingRightsAsync(int block, int cycle)
+            => Node.GetAsync($"chains/main/blocks/{block}/helpers/endorsing_rights?cycle={cycle}");
 
-        public virtual Task<JsonElement> GetLevelBakingRightsAsync(int level, int maxPriority)
-            => Node.GetAsync($"chains/main/blocks/{level}/helpers/baking_rights?level={level}&max_priority={maxPriority + 1}&all=true");
+        public virtual Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxPriority)
+            => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?level={level}&max_priority={maxPriority + 1}&all=true");
+
+        public virtual Task<JsonElement> GetLevelEndorsingRightsAsync(int block, int level)
+            => Node.GetAsync($"chains/main/blocks/{block}/helpers/endorsing_rights?level={level}");
 
         public virtual Task<JsonElement> GetContractAsync(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/contracts/{address}");

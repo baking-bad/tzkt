@@ -22,7 +22,6 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            base.UpgradeParameters(protocol, prev);
             protocol.BallotQuorumMin = 2000;
             protocol.BallotQuorumMax = 7000;
             protocol.ProposalQuorum = 500;
