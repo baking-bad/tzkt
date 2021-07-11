@@ -68,10 +68,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 if (block.Events.HasFlag(BlockEvents.CycleEnd))
                 {
                     var values = string.Empty;
-                    var cycle = rawBlock.GetProperty("metadata").GetProperty("level").RequiredInt32("cycle");
-
                     foreach (var rewardUpdates in GetBalanceUpdates(rawBlock)
-                        .Where(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r' && GetFreezerCycle(x) != cycle)
+                        .Where(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r' && GetFreezerCycle(x) != block.Cycle)
                         .Select(x => (x.RequiredString("delegate"), x.RequiredInt64("change")))
                         .GroupBy(x => x.Item1))
                         values += $@"

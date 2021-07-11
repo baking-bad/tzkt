@@ -47,7 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto9
                             case "activate_account": await ValidateActivation(content); break;
                             case "double_baking_evidence": ValidateDoubleBaking(content); break;
                             case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
-                            case "seed_nonce_revelation": ValidateSeedNonceRevelation(content); break;
+                            case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
                             case "delegation": await ValidateDelegation(content); break;
                             case "origination": await ValidateOrigination(content); break;
                             case "transaction": await ValidateTransaction(content); break;

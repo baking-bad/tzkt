@@ -16,7 +16,6 @@ namespace Tzkt.Sync.Protocols.Proto7
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            base.UpgradeParameters(protocol, prev);
             protocol.ByteCost = 250;
         }
 

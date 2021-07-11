@@ -43,7 +43,6 @@ namespace Tzkt.Sync.Protocols.Proto6
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            base.UpgradeParameters(protocol, prev);
             protocol.BlockReward0 = 1_250_000;
             protocol.BlockReward1 = 187_500;
             protocol.EndorsementReward0 = 1_250_000;

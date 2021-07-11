@@ -48,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (maxExistedPriority < block.Priority)
                 {
-                    var bakingRights = await Proto.Rpc.GetLevelBakingRightsAsync(block.Level, block.Priority);
+                    var bakingRights = await Proto.Rpc.GetLevelBakingRightsAsync(block.Level, block.Level, block.Priority);
                     //bakingRights = bakingRights.OrderBy(x => x.Priority);
 
                     var sqlInsert = @"
