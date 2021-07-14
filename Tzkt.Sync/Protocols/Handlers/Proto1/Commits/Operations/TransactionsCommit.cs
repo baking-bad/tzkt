@@ -543,6 +543,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var newStorage = new Storage
             {
+                Id = Cache.AppState.NextStorageId(),
                 Level = transaction.Level,
                 ContractId = contract.Id,
                 TransactionId = transaction.Id,
@@ -568,10 +569,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (storage.TransactionId == transaction.Id)
             {
                 var prevStorage = await Db.Storages
-                    .Where(x => x.ContractId == contract.Id && (x.TransactionId == null || x.TransactionId < transaction.Id))
-                    .OrderByDescending(x => x.Level)
-                    .ThenByDescending(x => x.TransactionId)
-                    .ThenByDescending(x => x.Id)
+                    .Where(x => x.ContractId == contract.Id && x.Id < storage.Id)
+                    .OrderByDescending(x => x.Id)
                     .FirstAsync();
 
                 prevStorage.Current = true;

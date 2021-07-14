@@ -105,17 +105,17 @@ namespace Tzkt.Sync.Protocols.Proto5
                 .Where(x => x.Kind > ContractKind.DelegatorContract)
                 .ToListAsync();
 
-            var scripts = await Db.Scripts
+            var scripts = (await Db.Scripts
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync())
+                .ToDictionary(x => x.ContractId);
 
             foreach (var contract in smartContracts)
             {
                 Cache.Accounts.Add(contract);
 
-                var script = scripts.First(x => x.ContractId == contract.Id);
+                var script = scripts[contract.Id];
                 var storage = await Cache.Storages.GetAsync(contract);
-
                 var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
 
                 var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
@@ -150,6 +150,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 };
                 var newScript = new Script
                 {
+                    Id = Cache.AppState.NextScriptId(),
+                    Level = migration.Level,
                     ContractId = contract.Id,
                     MigrationId = migration.Id,
                     ParameterSchema = micheParameter,
@@ -159,6 +161,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 };
                 var newStorage = new Storage
                 {
+                    Id = Cache.AppState.NextStorageId(),
                     Level = migration.Level,
                     ContractId = contract.Id,
                     MigrationId = migration.Id,
@@ -172,10 +175,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
                 contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
 
-                migration.OldScript = script;
-                migration.OldStorage = storage;
-                migration.NewScript = newScript;
-                migration.NewStorage = newStorage;
+                migration.Script = newScript;
+                migration.Storage = newStorage;
 
                 contract.MigrationsCount++;
                 state.MigrationOpsCount++;
@@ -268,23 +269,31 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region scripts
             var codeChanges = await Db.MigrationOps
                 .Include(x => x.Account)
-                .Include(x => x.OldScript)
-                .Include(x => x.OldStorage)
-                .Include(x => x.NewScript)
-                .Include(x => x.NewStorage)
+                .Include(x => x.Script)
+                .Include(x => x.Storage)
                 .Where(x => x.Kind == MigrationKind.CodeChange)
                 .ToListAsync();
+
+            var oldScripts = (await Db.Scripts.Where(x => !x.Current)
+                .ToListAsync())
+                .ToDictionary(x => x.ContractId);
 
             foreach (var change in codeChanges)
             {
                 var contract = change.Account as Contract;
                 Cache.Accounts.Add(contract);
 
-                var tree = change.NewScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.NewStorage.RawValue));
+                var oldScript = oldScripts[contract.Id];
+                var oldStorage = await Db.Storages
+                    .Where(x => x.ContractId == contract.Id && x.Id < change.StorageId)
+                    .OrderByDescending(x => x.Id)
+                    .FirstAsync();
+
+                var tree = change.Script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.Storage.RawValue));
                 var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
                 if (bigmap != null)
                 {
-                    var oldTree = change.OldScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.OldStorage.RawValue));
+                    var oldTree = oldScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(oldStorage.RawValue));
                     var oldBigmap = oldTree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
 
                     if (bigmap.Value is not MichelineInt mi)
@@ -306,26 +315,26 @@ namespace Tzkt.Sync.Protocols.Proto5
                     foreach (var prevStorage in storages)
                     {
                         var prevValue = Micheline.FromBytes(prevStorage.RawValue);
-                        var prevTree = change.OldScript.Schema.Storage.Schema.ToTreeView(prevValue);
+                        var prevTree = oldScript.Schema.Storage.Schema.ToTreeView(prevValue);
                         var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
                         (prevBigmap.Value as MichelineInt).Value = contract.Id;
 
                         prevStorage.RawValue = prevValue.ToBytes();
-                        prevStorage.JsonValue = change.OldScript.Schema.HumanizeStorage(prevValue);
+                        prevStorage.JsonValue = oldScript.Schema.HumanizeStorage(prevValue);
                     }
                 }
 
-                change.OldScript.Current = true;
-                Cache.Schemas.Add(contract, change.OldScript.Schema);
+                oldScript.Current = true;
+                Cache.Schemas.Add(contract, oldScript.Schema);
 
-                change.OldStorage.Current = true;
-                Cache.Storages.Add(contract, change.OldStorage);
+                oldStorage.Current = true;
+                Cache.Storages.Add(contract, oldStorage);
 
-                Db.Scripts.Remove(change.NewScript);
-                Db.Storages.Remove(change.NewStorage);
+                Db.Scripts.Remove(change.Script);
+                Db.Storages.Remove(change.Storage);
 
-                contract.TypeHash = change.OldScript.TypeHash;
-                contract.CodeHash = change.OldScript.CodeHash;
+                contract.TypeHash = oldScript.TypeHash;
+                contract.CodeHash = oldScript.CodeHash;
                 contract.MigrationsCount--;
             }
 

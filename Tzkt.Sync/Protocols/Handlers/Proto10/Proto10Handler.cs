@@ -45,6 +45,15 @@ namespace Tzkt.Sync.Protocols
             await new RevelationPenaltyCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
 
+            #region implicit operations
+            foreach (var op in block
+                .Required("metadata")
+                .RequiredArray("implicit_operations_results")
+                .EnumerateArray()
+                .Where(x => x.RequiredString("kind") == "transaction"))
+                await new SubsidyCommit(this).Apply(blockCommit.Block, op);
+            #endregion
+
             var operations = block.RequiredArray("operations", 4);
 
             #region operations 0
@@ -252,6 +261,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.RevelationPenalty))
                 await Db.Entry(currBlock).Collection(x => x.RevelationPenalties).LoadAsync();
 
+            if (currBlock.Operations.HasFlag(Operations.Migrations))
+                await Db.Entry(currBlock).Collection(x => x.Migrations).LoadAsync();
+
             if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
             {
                 await Db.Entry(currBlock).Collection(x => x.CreatedAccounts).LoadAsync();
@@ -319,6 +331,8 @@ namespace Tzkt.Sync.Protocols
                         throw new NotImplementedException($"'{operation.GetType()}' is not implemented");
                 }
             }
+
+            await new SubsidyCommit(this).Revert(currBlock);
 
             await new DeactivationCommit(this).Revert(currBlock);
             await new RevelationPenaltyCommit(this).Revert(currBlock);

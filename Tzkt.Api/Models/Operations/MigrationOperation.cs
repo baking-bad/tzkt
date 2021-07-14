@@ -36,10 +36,13 @@ namespace Tzkt.Api.Models
 
         /// <summary>
         /// Kind of the migration 
-        /// `bootstrap` - Balance updates, included in the first block after genesis
+        /// `bootstrap` - balance updates, included in the first block after genesis
         /// `activate_delegate` - registering a new baker (delegator) during protocol migration
         /// `airdrop` - airdrop of 1 micro tez during Babylon protocol upgrade
         /// `proposal_invoice` - invoice for creation a proposal for protocol upgrade
+        /// `code_change` - changing contract scripts during Babylon protocol upgrade
+        /// `origination` - implicit (hardcoded in the protocol) origination of liquidity baking contracts
+        /// `subsidy` - liquidity baking subsidy
         /// </summary>
         public string Kind { get; set; }
 
@@ -52,6 +55,16 @@ namespace Tzkt.Api.Models
         /// The amount for which the operation updated the balance (micro tez)
         /// </summary>
         public long BalanceChange { get; set; }
+
+        /// <summary>
+        /// Contract storage after the migration converted to human-readable JSON. Note: you can configure storage format by setting `micheline` query parameter.
+        /// </summary>
+        public object Storage { get; set; }
+
+        /// <summary>
+        /// List of bigmap updates caused by the migration.
+        /// </summary>
+        public List<BigMapDiff> Diffs { get; set; }
 
         #region injecting
         /// <summary>

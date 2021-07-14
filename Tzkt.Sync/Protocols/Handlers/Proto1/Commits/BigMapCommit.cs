@@ -135,7 +135,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 ActiveKeys = 0,
                                 TotalKeys = 0,
                                 Updates = 1,
-                                Tags = GetTags(bigMapNode)
+                                Tags = BigMaps.GetTags(bigMapNode)
                             };
                             Db.BigMaps.Add(allocatedBigMap);
                             Cache.BigMaps.Cache(allocatedBigMap);
@@ -241,7 +241,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 ActiveKeys = keys.Count,
                                 TotalKeys = keys.Count,
                                 Updates = keys.Count + 1,
-                                Tags = GetTags(bigMapNode)
+                                Tags = BigMaps.GetTags(bigMapNode)
                             };
 
                             Db.BigMaps.Add(copiedBigMap);
@@ -439,44 +439,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .FirstOrDefault(x => x.diff.Action == BigMapDiffAction.Copy && x.diff.Ptr == copy.SourcePtr).diff is CopyDiff prevCopy
                     ? GetOrigin(prevCopy)
                     : copy.SourcePtr;
-        }
-
-        BigMapTag GetTags(TreeView bigmap)
-        {
-            var tags = BigMapTag.None;
-            if (bigmap.Name == "token_metadata")
-            {
-                var schema = bigmap.Schema as BigMapSchema;
-                if (IsTopLevel(bigmap) &&
-                    schema.Key is NatSchema &&
-                    schema.Value is PairSchema pair &&
-                        pair.Left is NatSchema nat && nat.Field == "token_id" &&
-                        pair.Right is MapSchema map && map.Field == "token_info" &&
-                            map.Key is StringSchema &&
-                            map.Value is BytesSchema)
-                    tags |= BigMapTag.TokenMetadata;
-            }
-            else if (bigmap.Name == "metadata")
-            {
-                var schema = bigmap.Schema as BigMapSchema;
-                if (IsTopLevel(bigmap) &&
-                    schema.Key is StringSchema &&
-                    schema.Value is BytesSchema)
-                    tags |= BigMapTag.Metadata;
-            }
-            return tags;
-        }
-
-        bool IsTopLevel(TreeView node)
-        {
-            var parent = node.Parent;
-            while (parent != null)
-            {
-                if (parent.Schema is not PairSchema)
-                    return false;
-                parent = parent.Parent;
-            }
-            return true;
         }
 
         public virtual async Task Revert(Block block)

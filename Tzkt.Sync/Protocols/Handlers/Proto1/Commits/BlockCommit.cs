@@ -49,7 +49,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Baker = Cache.Accounts.GetDelegate(rawBlock.Required("metadata").RequiredString("baker")),
                 Events = events,
                 Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0,
-                Deposit = deposit.ValueKind != JsonValueKind.Undefined ? deposit.RequiredInt64("change") : 0
+                Deposit = deposit.ValueKind != JsonValueKind.Undefined ? deposit.RequiredInt64("change") : 0,
+                LBEscapeVote = GetLBEscapeVote(rawBlock),
+                LBEscapeEma = GetLBEscapeEma(rawBlock)
             };
 
             #region entities
@@ -129,5 +131,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Take(3)
                 .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
         }
+
+        protected virtual bool GetLBEscapeVote(JsonElement block) => false;
+
+        protected virtual int GetLBEscapeEma(JsonElement block) => 0;
     }
 }

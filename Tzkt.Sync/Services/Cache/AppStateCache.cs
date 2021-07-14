@@ -77,6 +77,18 @@ namespace Tzkt.Sync.Services.Cache
             return ++AppState.BigMapUpdateCounter;
         }
 
+        public int NextStorageId()
+        {
+            Db.TryAttach(AppState);
+            return ++AppState.StorageCounter;
+        }
+
+        public int NextScriptId()
+        {
+            Db.TryAttach(AppState);
+            return ++AppState.ScriptCounter;
+        }
+
         public int GetManagerCounter()
         {
             return AppState.ManagerCounter;

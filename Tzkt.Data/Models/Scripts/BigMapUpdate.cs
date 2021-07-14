@@ -11,6 +11,7 @@ namespace Tzkt.Data.Models
         public int Level { get; set; }
         public int? OriginationId { get; set; }
         public int? TransactionId { get; set; }
+        public int? MigrationId { get; set; }
 
         public int? BigMapKeyId { get; set; }
         public byte[] RawValue { get; set; }
@@ -52,6 +53,10 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<BigMapUpdate>()
                 .HasIndex(x => x.TransactionId)
                 .HasFilter($@"""{nameof(BigMapUpdate.TransactionId)}"" is not null");
+
+            modelBuilder.Entity<BigMapUpdate>()
+                .HasIndex(x => x.MigrationId)
+                .HasFilter($@"""{nameof(BigMapUpdate.MigrationId)}"" is not null");
             #endregion
 
             #region keys

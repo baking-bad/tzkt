@@ -28,6 +28,9 @@ namespace Tzkt.Data.Models
         public int? RevelationId { get; set; }
         public int? ResetDeactivation { get; set; }
 
+        public bool LBEscapeVote { get; set; }
+        public int LBEscapeEma { get; set; }
+
         #region relations
         [ForeignKey(nameof(ProtoCode))]
         public Protocol Protocol { get; set; }

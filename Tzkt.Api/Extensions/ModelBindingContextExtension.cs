@@ -783,6 +783,14 @@ namespace Tzkt.Api
                             hasValue = true;
                             result = 4;
                             break;
+                        case MigrationKinds.Origination:
+                            hasValue = true;
+                            result = 5;
+                            break;
+                        case MigrationKinds.Subsidy:
+                            hasValue = true;
+                            result = 6;
+                            break;
                         default:
                             bindingContext.ModelState.TryAddModelError(name, "Invalid migration kind.");
                             return false;
@@ -837,6 +845,14 @@ namespace Tzkt.Api
                             case MigrationKinds.CodeChange:
                                 hasValue = true;
                                 result.Add(4);
+                                break;
+                            case MigrationKinds.Origination:
+                                hasValue = true;
+                                result.Add(5);
+                                break;
+                            case MigrationKinds.Subsidy:
+                                hasValue = true;
+                                result.Add(6);
                                 break;
                             default:
                                 bindingContext.ModelState.TryAddModelError(name, "List contains invalid migration kind.");

@@ -171,9 +171,7 @@ namespace Tzkt.Sync.Services
                 if (AppState.Level == header.Level) break;
 
                 //if (AppState.Level >= 0)
-                //{
                 //    throw new ValidationException("Test", true);
-                //}
 
                 Logger.LogDebug($"Applying block...");
 

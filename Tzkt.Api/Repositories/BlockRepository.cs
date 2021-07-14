@@ -35,7 +35,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(int level, bool operations, MichelineFormat format, Symbols quote)
         {
             var sql = @"
-                SELECT  ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
+                SELECT  *
                 FROM    ""Blocks""
                 WHERE   ""Level"" = @level
                 LIMIT   1";
@@ -58,6 +58,8 @@ namespace Tzkt.Api.Repositories
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
+                LBEscapeVote = row.LBEscapeVote,
+                LBEscapeEma = row.LBEscapeEma,
                 Quote = Quotes.Get(quote, level)
             };
 
@@ -70,7 +72,7 @@ namespace Tzkt.Api.Repositories
         public async Task<Block> Get(string hash, bool operations, MichelineFormat format, Symbols quote)
         {
             var sql = @"
-                SELECT  ""Level"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId""
+                SELECT  *
                 FROM    ""Blocks""
                 WHERE   ""Hash"" = @hash::character(51)
                 LIMIT   1";
@@ -93,6 +95,8 @@ namespace Tzkt.Api.Repositories
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
+                LBEscapeVote = row.LBEscapeVote,
+                LBEscapeEma = row.LBEscapeEma,
                 Quote = Quotes.Get(quote, row.Level)
             };
 
@@ -112,7 +116,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var sql = new SqlBuilder(@"SELECT ""Level"", ""Hash"", ""Timestamp"", ""ProtoCode"", ""Priority"", ""Validations"", ""Operations"", ""Deposit"", ""Reward"", ""Fees"", ""BakerId"", ""RevelationId"", ""SoftwareId"" FROM ""Blocks""")
+            var sql = new SqlBuilder(@"SELECT * FROM ""Blocks""")
                 .Filter("BakerId", baker)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -144,6 +148,8 @@ namespace Tzkt.Api.Repositories
                 NonceRevealed = row.RevelationId != null,
                 Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
+                LBEscapeVote = row.LBEscapeVote,
+                LBEscapeEma = row.LBEscapeEma,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -177,6 +183,8 @@ namespace Tzkt.Api.Repositories
                     case "baker": columns.Add(@"""BakerId"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
+                    case "lbEscapeVote": columns.Add(@"""LBEscapeVote"""); break; 
+                    case "lbEscapeEma": columns.Add(@"""LBEscapeEma"""); break; 
                 }
             }
 
@@ -257,6 +265,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                         break;
+                    case "lbEscapeVote":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LBEscapeVote;
+                        break;
+                    case "lbEscapeEma":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LBEscapeEma;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -294,6 +310,8 @@ namespace Tzkt.Api.Repositories
                 case "baker": columns.Add(@"""BakerId"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
                 case "quote": columns.Add(@"""Level"""); break;
+                case "lbEscapeVote": columns.Add(@"""LBEscapeVote"""); break;
+                case "lbEscapeEma": columns.Add(@"""LBEscapeEma"""); break;
             }
 
             if (columns.Count == 0)
@@ -370,6 +388,14 @@ namespace Tzkt.Api.Repositories
                 case "software":
                     foreach (var row in rows)
                         result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                    break;
+                case "lbEscapeVote":
+                    foreach (var row in rows)
+                        result[j++] = row.LBEscapeVote;
+                    break;
+                case "lbEscapeEma":
+                    foreach (var row in rows)
+                        result[j++] = row.LBEscapeEma;
                     break;
                 case "quote":
                     foreach (var row in rows)
