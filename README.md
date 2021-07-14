@@ -266,7 +266,11 @@ In general the steps are the same as for the mainnet, you just need to use diffe
  - Florencenet:
    - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.1.backup
    - RPC node: https://rpc.tzkt.io/florencenobanet/
-   - Chain id: NetXxkAx4woPLyu
+   - Chain id: NetXxkAx4woPLyu     
+ - Granadanet:
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/granadanet.backup
+   - RPC node: https://rpc.tzkt.io/granadanet/
+   - Chain id: NetXz969SFaFn8k
 
 Anyway, let's do it, for reference, from scratch for the `florencenet`.
 
