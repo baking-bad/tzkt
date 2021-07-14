@@ -320,8 +320,8 @@ namespace Tzkt.Api.Services
             var cycle = state.Cycle;
             var level = state.Level;
             var cycleSize = proto.BlocksPerCycle;
-            var firstLevel = cycle * cycleSize + 1;
-            var lastLevel = (cycle + 1) * cycleSize;
+            var firstLevel = proto.GetCycleStart(cycle);
+            var lastLevel = proto.GetCycleEnd(cycle);
 
             return new CycleData
             {
