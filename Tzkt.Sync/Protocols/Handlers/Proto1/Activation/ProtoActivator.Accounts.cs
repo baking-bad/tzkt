@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -14,12 +15,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             var rawAccounts = await Proto.Rpc.GetAllContractsAsync(1);
             var accounts = new List<Account>(65);
 
+            #region allocate null-address
+            var nullAddress = await Cache.Accounts.GetAsync(NullAddress.Address);
+            if (nullAddress.Id != NullAddress.Id)
+                throw new Exception("Failed to allocate null-address");
+            #endregion
+
             #region bootstrap delegates
             foreach (var data in rawAccounts
                 .EnumerateArray()
                 .Where(x => x[0].RequiredString() == x[1].OptionalString("delegate")))
             {
-                var baker = new Delegate
+                var baker = new Data.Models.Delegate
                 {
                     Id = Cache.AppState.NextAccountId(),
                     Address = data[0].RequiredString(),
