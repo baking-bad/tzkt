@@ -21,6 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TotalActivated = prev.TotalActivated,
                 TotalBootstrapped = prev.TotalBootstrapped,
                 TotalBurned = prev.TotalBurned,
+                TotalBanished = prev.TotalBanished,
                 TotalCommitments = prev.TotalCommitments,
                 TotalCreated = prev.TotalCreated,
                 TotalVested = prev.TotalVested,
@@ -54,8 +55,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Transactions != null)
             {
                 var transactions = block.Transactions.Where(x => x.Status == OperationStatus.Applied);
+                
                 if (transactions.Any())
                     statistics.TotalBurned += transactions.Sum(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+
+                foreach (var tx in transactions.Where(x => x.Target?.Id == NullAddress.Id))
+                    statistics.TotalBanished += tx.Amount;
             }
 
             if (block.RevelationPenalties != null)

@@ -257,12 +257,13 @@ namespace Tzkt.Api.Services
                 TotalCommitments = row.TotalCommitments,
                 TotalCreated = row.TotalCreated,
                 TotalBurned = row.TotalBurned,
+                TotalBanished = row.TotalBanished,
                 TotalActivated = row.TotalActivated,
                 TotalVested = row.TotalVested,
                 TotalFrozen = row.TotalFrozen,
-                TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned,
+                TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
-                                  - row.TotalBurned - row.TotalVested - row.TotalFrozen,
+                                  - row.TotalBurned - row.TotalBanished - row.TotalVested - row.TotalFrozen,
             };
         }
 

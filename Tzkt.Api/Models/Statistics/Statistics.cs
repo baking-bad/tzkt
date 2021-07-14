@@ -60,6 +60,11 @@ namespace Tzkt.Api.Models
         public long TotalBurned { get; set; }
 
         /// <summary>
+        /// Total amount of tokens sent to the null-address, which is equivalent to burning
+        /// </summary>
+        public long TotalBanished { get; set; }
+
+        /// <summary>
         /// Total amount of tokens locked on vested contracts
         /// </summary>
         public long TotalVested { get; set; }
