@@ -16,7 +16,7 @@ namespace Tzkt.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.5")
+                .HasAnnotation("ProductVersion", "5.0.6")
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             modelBuilder.Entity("Tzkt.Data.Models.Account", b =>
@@ -263,6 +263,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("RevelationPenaltyOpsCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ScriptCounter")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageCounter")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp without time zone");
 
@@ -322,6 +328,8 @@ namespace Tzkt.Data.Migrations
                             QuoteUsd = 0.0,
                             RevealOpsCount = 0,
                             RevelationPenaltyOpsCount = 0,
+                            ScriptCounter = 0,
+                            StorageCounter = 0,
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             TransactionOpsCount = 0,
                             VotingEpoch = -1,
@@ -740,6 +748,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("MigrationId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("OriginationId")
                         .HasColumnType("integer");
 
@@ -761,6 +772,9 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Level");
 
+                    b.HasIndex("MigrationId")
+                        .HasFilter("\"MigrationId\" is not null");
+
                     b.HasIndex("OriginationId")
                         .HasFilter("\"OriginationId\" is not null");
 
@@ -780,6 +794,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("BakerId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
                     b.Property<long>("Deposit")
                         .HasColumnType("bigint");
 
@@ -794,6 +811,12 @@ namespace Tzkt.Data.Migrations
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
                         .IsFixedLength(true);
+
+                    b.Property<int>("LBEscapeEma")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("LBEscapeVote")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
@@ -1215,22 +1238,19 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("BalanceChange")
                         .HasColumnType("bigint");
 
+                    b.Property<int?>("BigMapUpdates")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("NewScriptId")
+                    b.Property<int?>("ScriptId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("NewStorageId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("OldScriptId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("OldStorageId")
+                    b.Property<int?>("StorageId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
@@ -1242,13 +1262,9 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Level");
 
-                    b.HasIndex("NewScriptId");
+                    b.HasIndex("ScriptId");
 
-                    b.HasIndex("NewStorageId");
-
-                    b.HasIndex("OldScriptId");
-
-                    b.HasIndex("OldStorageId");
+                    b.HasIndex("StorageId");
 
                     b.ToTable("MigrationOps");
                 });
@@ -1547,6 +1563,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("EndorsersPerBlock")
                         .HasColumnType("integer");
 
+                    b.Property<int>("FirstCycle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FirstCycleLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int>("FirstLevel")
                         .HasColumnType("integer");
 
@@ -1564,6 +1586,15 @@ namespace Tzkt.Data.Migrations
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
                         .IsFixedLength(true);
+
+                    b.Property<int>("LBEscapeThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LBSubsidy")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LBSunsetLevel")
+                        .HasColumnType("integer");
 
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
@@ -1758,6 +1789,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<bool>("Current")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("MigrationId")
                         .HasColumnType("integer");
 
@@ -1857,6 +1891,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<long>("TotalActivated")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalBanished")
                         .HasColumnType("bigint");
 
                     b.Property<long>("TotalBootstrapped")
@@ -2518,33 +2555,21 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.Script", "NewScript")
+                    b.HasOne("Tzkt.Data.Models.Script", "Script")
                         .WithMany()
-                        .HasForeignKey("NewScriptId");
+                        .HasForeignKey("ScriptId");
 
-                    b.HasOne("Tzkt.Data.Models.Storage", "NewStorage")
+                    b.HasOne("Tzkt.Data.Models.Storage", "Storage")
                         .WithMany()
-                        .HasForeignKey("NewStorageId");
-
-                    b.HasOne("Tzkt.Data.Models.Script", "OldScript")
-                        .WithMany()
-                        .HasForeignKey("OldScriptId");
-
-                    b.HasOne("Tzkt.Data.Models.Storage", "OldStorage")
-                        .WithMany()
-                        .HasForeignKey("OldStorageId");
+                        .HasForeignKey("StorageId");
 
                     b.Navigation("Account");
 
                     b.Navigation("Block");
 
-                    b.Navigation("NewScript");
+                    b.Navigation("Script");
 
-                    b.Navigation("NewStorage");
-
-                    b.Navigation("OldScript");
-
-                    b.Navigation("OldStorage");
+                    b.Navigation("Storage");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
