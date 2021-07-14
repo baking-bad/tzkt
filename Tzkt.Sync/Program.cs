@@ -57,17 +57,26 @@ namespace Tzkt.Sync
             {
                 logger.LogInformation("Initialize database");
 
-                if (db.Database.GetAppliedMigrations().Any() &&
-                    db.Database.GetAppliedMigrations().First() != db.Database.GetMigrations().First())
+                var migrations = db.Database.GetMigrations().ToList();
+                var appliedMigrations = db.Database.GetAppliedMigrations().ToList();
+                for (int i = 0; i < Math.Min(migrations.Count, appliedMigrations.Count); i++)
                 {
-                    attempt = 10;
-                    throw new Exception($"can't migrate database. Please, restore it from the snapshot with the latest version.");
+                    if (migrations[i] != appliedMigrations[i])
+                    {
+                        attempt = 10;
+                        throw new Exception($"indexer and DB schema have incompatible versions. Drop the DB and restore it from the appropriate snapshot.");
+                    }
                 }
 
-                var pending = db.Database.GetPendingMigrations();
-                if (pending.Any())
+                if (appliedMigrations.Count > migrations.Count)
                 {
-                    logger.LogWarning($"{pending.Count()} database migrations were found. Applying migrations...");
+                    attempt = 10;
+                    throw new Exception($"indexer version seems older than version of the DB schema. Update the indexer to the newer version.");
+                }
+
+                if (appliedMigrations.Count < migrations.Count)
+                {
+                    logger.LogWarning($"{migrations.Count - appliedMigrations.Count} migrations can be applied. Migrating database...");
                     db.Database.Migrate();
                 }
 

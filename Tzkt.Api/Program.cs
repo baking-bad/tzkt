@@ -39,16 +39,25 @@ namespace Tzkt.Api
             {
                 logger.LogInformation("Initialize database");
 
-                if (db.Database.GetAppliedMigrations().Any() &&
-                    db.Database.GetAppliedMigrations().First() != db.Database.GetMigrations().First())
+                var migrations = db.Database.GetMigrations().ToList();
+                var appliedMigrations = db.Database.GetAppliedMigrations().ToList();
+                for (int i = 0; i < Math.Min(migrations.Count, appliedMigrations.Count); i++)
                 {
-                    attempt = 30;
-                    throw new Exception($"can't migrate database. Please, restore it from the snapshot with the latest version.");
+                    if (migrations[i] != appliedMigrations[i])
+                    {
+                        attempt = 30;
+                        throw new Exception($"API and DB schema have incompatible versions. Drop the DB and restore it from the appropriate snapshot.");
+                    }
                 }
 
-                var pending = db.Database.GetPendingMigrations();
-                if (pending.Any())
-                    throw new Exception($"{pending.Count()} database migrations are pending.");
+                if (appliedMigrations.Count > migrations.Count)
+                {
+                    attempt = 30;
+                    throw new Exception($"API version seems older than version of the DB schema. Update the API to the newer version.");
+                }
+
+                if (appliedMigrations.Count < migrations.Count)
+                    throw new Exception($"{migrations.Count - appliedMigrations.Count} database migrations are pending.");
 
                 var state = db.AppState.Single();
                 if (state.Level < 1)
