@@ -469,6 +469,7 @@ namespace Tzkt.Api.Services
                     }).ToList(),
                     UpvotesQuorum = period.UpvotesQuorum,
                     PeriodEndTime = period.EndTime,
+                    EpochStartTime = Times[epoch.FirstLevel],
                     EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
                 };
             }
@@ -479,6 +480,7 @@ namespace Tzkt.Api.Services
                 Protocol = proposalMeta?.alias,
                 Period = period.Kind,
                 PeriodEndTime = period.EndTime,
+                EpochStartTime = Times[epoch.FirstLevel],
                 EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
             };
 
@@ -495,7 +497,7 @@ namespace Tzkt.Api.Services
                     ? Math.Round(100.0 * totalVoted / (int)period.TotalRolls, 2)
                     : 0;
 
-                result.Quorum = Math.Round((double)period.BallotsQuorum!, 2);
+                result.BallotsQuorum = Math.Round((double)period.BallotsQuorum!, 2);
                 result.Supermajority = Math.Round((double)period.Supermajority!, 2);
             }
 
