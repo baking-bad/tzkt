@@ -9,6 +9,7 @@ namespace Tzkt.Data.Models
     public class Script
     {
         public int Id { get; set; }
+        public int Level { get; set; }
         public int ContractId { get; set; }
         public int? OriginationId { get; set; }
         public int? MigrationId { get; set; }

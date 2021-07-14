@@ -1098,11 +1098,19 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region diffs
-        public static async Task<Dictionary<int, List<BigMapDiff>>> GetBigMapDiffs(IDbConnection db, List<int> ops, bool isTxs, MichelineFormat format)
+        public static Task<Dictionary<int, List<BigMapDiff>>> GetTransactionDiffs(IDbConnection db, List<int> ops, MichelineFormat format)
+            => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.TransactionId), format);
+
+        public static Task<Dictionary<int, List<BigMapDiff>>> GetOriginationDiffs(IDbConnection db, List<int> ops, MichelineFormat format)
+            => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.OriginationId), format);
+
+        public static Task<Dictionary<int, List<BigMapDiff>>> GetMigrationDiffs(IDbConnection db, List<int> ops, MichelineFormat format)
+            => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.MigrationId), format);
+
+        static async Task<Dictionary<int, List<BigMapDiff>>> GetBigMapDiffs(IDbConnection db, List<int> ops, string opCol, MichelineFormat format)
         {
             if (ops.Count == 0) return null;
 
-            var opCol = isTxs ? "TransactionId" : "OriginationId";
             var fCol = (int)format < 2 ? "Json" : "Raw";
 
             var rows = await db.QueryAsync($@"

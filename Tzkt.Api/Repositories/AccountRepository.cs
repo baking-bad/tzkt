@@ -2414,7 +2414,7 @@ namespace Tzkt.Api.Repositories
                 FROM     ""Storages""
                 WHERE    ""ContractId"" = {contract.Id}
                 AND      ""Level"" <= {level}
-                ORDER BY ""Level"" DESC, ""TransactionId"" DESC
+                ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT    1",
                 pathParam);
 
@@ -2509,15 +2509,11 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
-                SELECT      ss.""StorageSchema"", COALESCE(o_op.""Level"", m_op.""Level"") as ""ScriptLevel""
-                FROM        ""Scripts"" as ss
-                LEFT JOIN   ""MigrationOps"" as m_op
-                       ON   m_op.""Id"" = ss.""MigrationId""
-                LEFT JOIN   ""OriginationOps"" as o_op
-                       ON   o_op.""Id"" = ss.""OriginationId""
-                WHERE       ss.""ContractId"" = {contract.Id}
-                AND         COALESCE(o_op.""Level"", m_op.""Level"") <= {level}
-                ORDER BY    ""ScriptLevel"" DESC
+                SELECT      ""StorageSchema""
+                FROM        ""Scripts""
+                WHERE       ""ContractId"" = {contract.Id}
+                AND         ""Level"" <= {level}
+                ORDER BY    ""Level"" DESC
                 LIMIT       1");
 
             if (row == null) return null;
@@ -2560,15 +2556,11 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
-                SELECT      ss.""StorageSchema"", COALESCE(o_op.""Level"", m_op.""Level"") as ""ScriptLevel""
-                FROM        ""Scripts"" as ss
-                LEFT JOIN   ""MigrationOps"" as m_op
-                       ON   m_op.""Id"" = ss.""MigrationId""
-                LEFT JOIN   ""OriginationOps"" as o_op
-                       ON   o_op.""Id"" = ss.""OriginationId""
-                WHERE       ss.""ContractId"" = {contract.Id}
-                AND         COALESCE(o_op.""Level"", m_op.""Level"") <= {level}
-                ORDER BY    ""ScriptLevel"" DESC
+                SELECT      ""StorageSchema""
+                FROM        ""Scripts""
+                WHERE       ""ContractId"" = {contract.Id}
+                AND         ""Level"" <= {level}
+                ORDER BY    ""Level"" DESC
                 LIMIT       1");
 
             if (row == null) return null;
@@ -2582,7 +2574,8 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync($@"
-                SELECT      ss.""Level"",
+                SELECT      ss.""Id"",
+                            ss.""Level"",
                             ss.""JsonValue"",
                             ss.""MigrationId"",
                             ss.""TransactionId"",
@@ -2606,20 +2599,18 @@ namespace Tzkt.Api.Repositories
                 LEFT JOIN   ""OriginationOps"" as o_op
                        ON   o_op.""Id"" = ss.""OriginationId""
                 WHERE       ss.""ContractId"" = {contract.Id}
-                {(lastId > 0 ? $@"AND COALESCE(ss.""TransactionId"", ss.""OriginationId"", ss.""MigrationId"") < {lastId}" : "")}
-                ORDER BY    ss.""Level"" DESC, ss.""TransactionId"" DESC
+                {(lastId > 0 ? $@"AND ss.""Id"" < {lastId}" : "")}
+                ORDER BY    ss.""Id"" DESC
                 LIMIT       {limit}");
             if (!rows.Any()) return Enumerable.Empty<StorageRecord>();
 
             return rows.Select(row =>
             {
-                int id;
                 DateTime timestamp;
                 SourceOperation source;
 
                 if (row.TransactionId != null)
                 {
-                    id = row.TransactionId;
                     timestamp = row.TransactionTimestamp;
                     source = new SourceOperation
                     {
@@ -2636,7 +2627,6 @@ namespace Tzkt.Api.Repositories
                 }
                 else if (row.OriginationId != null)
                 {
-                    id = row.OriginationId;
                     timestamp = row.OriginationTimestamp;
                     source = new SourceOperation
                     {
@@ -2648,7 +2638,6 @@ namespace Tzkt.Api.Repositories
                 }
                 else
                 {
-                    id = row.MigrationId;
                     timestamp = row.MigrationTimestamp;
                     source = new SourceOperation
                     {
@@ -2658,7 +2647,7 @@ namespace Tzkt.Api.Repositories
 
                 return new StorageRecord
                 {
-                    Id = id,
+                    Id = row.Id,
                     Timestamp = timestamp,
                     Operation = source,
                     Level = row.Level,
@@ -2674,7 +2663,8 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var rows = await db.QueryAsync($@"
-                SELECT      ss.""Level"",
+                SELECT      ss.""Id"",
+                            ss.""Level"",
                             ss.""RawValue"",
                             ss.""MigrationId"",
                             ss.""TransactionId"",
@@ -2698,20 +2688,18 @@ namespace Tzkt.Api.Repositories
                 LEFT JOIN   ""OriginationOps"" as o_op
                        ON   o_op.""Id"" = ss.""OriginationId""
                 WHERE       ss.""ContractId"" = {contract.Id}
-                {(lastId > 0 ? $@"AND COALESCE(ss.""TransactionId"", ss.""OriginationId"", ss.""MigrationId"") < {lastId}" : "")}
-                ORDER BY    ss.""Level"" DESC, ss.""TransactionId"" DESC
+                {(lastId > 0 ? $@"AND ss.""Id"" < {lastId}" : "")}
+                ORDER BY    ss.""Id"" DESC
                 LIMIT       {limit}");
             if (!rows.Any()) return Enumerable.Empty<StorageRecord>();
 
             return rows.Select(row =>
             {
-                int id;
                 DateTime timestamp;
                 SourceOperation source;
 
                 if (row.TransactionId != null)
                 {
-                    id = row.TransactionId;
                     timestamp = row.TransactionTimestamp;
                     source = new SourceOperation
                     {
@@ -2730,7 +2718,6 @@ namespace Tzkt.Api.Repositories
                 }
                 else if (row.OriginationId != null)
                 {
-                    id = row.OriginationId;
                     timestamp = row.OriginationTimestamp;
                     source = new SourceOperation
                     {
@@ -2742,7 +2729,6 @@ namespace Tzkt.Api.Repositories
                 }
                 else
                 {
-                    id = row.MigrationId;
                     timestamp = row.MigrationTimestamp;
                     source = new SourceOperation
                     {
@@ -2752,7 +2738,7 @@ namespace Tzkt.Api.Repositories
 
                 return new StorageRecord
                 {
-                    Id = id,
+                    Id = row.Id,
                     Timestamp = timestamp,
                     Operation = source,
                     Level = row.Level,
@@ -2980,7 +2966,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_delegat, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetMigrations(_delegat, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
@@ -3047,7 +3033,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_user, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetMigrations(_user, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
@@ -3086,7 +3072,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_contract, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetMigrations(_contract, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(

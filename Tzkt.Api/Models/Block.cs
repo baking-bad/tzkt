@@ -69,6 +69,16 @@ namespace Tzkt.Api.Models
         /// </summary>
         public SoftwareAlias Software { get; set; }
 
+        /// <summary>
+        /// Flag indicating that the baker has voted for disabling liquidity baking
+        /// </summary>
+        public bool LBEscapeVote { get; set; }
+
+        /// <summary>
+        /// Liquidity baking escape EMA value with precision of 1000 for integer computation
+        /// </summary>
+        public int LBEscapeEma { get; set; }
+
         #region operations
         /// <summary>
         /// List of endorsement (is operation, which specifies the head of the chain as seen by the endorser of a given slot)

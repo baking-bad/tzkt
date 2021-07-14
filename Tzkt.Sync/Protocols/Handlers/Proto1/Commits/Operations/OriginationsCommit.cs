@@ -522,6 +522,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
             var script = new Script
             {
+                Id = Cache.AppState.NextScriptId(),
+                Level = origination.Level,
                 ContractId = contract.Id,
                 OriginationId = origination.Id,
                 ParameterSchema = micheParameter.ToBytes(),
@@ -562,6 +564,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var storage = new Storage
             {
+                Id = Cache.AppState.NextStorageId(),
                 Level = origination.Level,
                 ContractId = contract.Id,
                 OriginationId = origination.Id,

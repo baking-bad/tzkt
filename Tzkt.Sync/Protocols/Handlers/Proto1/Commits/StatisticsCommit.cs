@@ -81,6 +81,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 statistics.TotalFrozen += rewards;
             }
 
+            if (block.Migrations != null && block.Migrations.Any(x => x.Kind == MigrationKind.Subsidy))
+            {
+                var subsidy = block.Migrations.Where(x => x.Kind == MigrationKind.Subsidy).Sum(x => x.BalanceChange);
+                statistics.TotalCreated += subsidy;
+            }
+
             statistics.TotalCreated += block.Reward;
             statistics.TotalFrozen += block.Deposit;
             statistics.TotalFrozen += block.Reward;

@@ -14,10 +14,9 @@ namespace Tzkt.Data.Models
         public MigrationKind Kind { get; set; }
         public long BalanceChange { get; set; }
 
-        public int? OldScriptId { get; set; }
-        public int? OldStorageId { get; set; }
-        public int? NewScriptId { get; set; }
-        public int? NewStorageId { get; set; }
+        public int? ScriptId { get; set; }
+        public int? StorageId { get; set; }
+        public int? BigMapUpdates { get; set; }
 
         #region relations
         [ForeignKey(nameof(Level))]
@@ -26,17 +25,11 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(AccountId))]
         public Account Account { get; set; }
 
-        [ForeignKey(nameof(OldScriptId))]
-        public Script OldScript { get; set; }
+        [ForeignKey(nameof(ScriptId))]
+        public Script Script { get; set; }
 
-        [ForeignKey(nameof(OldStorageId))]
-        public Storage OldStorage { get; set; }
-
-        [ForeignKey(nameof(NewScriptId))]
-        public Script NewScript { get; set; }
-
-        [ForeignKey(nameof(NewStorageId))]
-        public Storage NewStorage { get; set; }
+        [ForeignKey(nameof(StorageId))]
+        public Storage Storage { get; set; }
         #endregion
     }
 
@@ -46,7 +39,9 @@ namespace Tzkt.Data.Models
         ActivateDelegate,
         AirDrop,
         ProposalInvoice,
-        CodeChange
+        CodeChange,
+        Origination,
+        Subsidy
     }
 
     public static class MigrationOperationModel

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Contracts;
+using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using Tzkt.Data.Models;
@@ -12,6 +14,12 @@ namespace Tzkt.Sync.Protocols.Proto10
 {
     class ProtoActivator : Proto9.ProtoActivator
     {
+        public const string NullAddress = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU";
+        public const string CpmmContract = "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5";
+        public const string LiquidityToken = "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo";
+        public const string FallbackToken = "KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN";
+        public const string Tzbtc = "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn";
+
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
         protected override void SetParameters(Protocol protocol, JToken parameters)
@@ -106,6 +114,13 @@ namespace Tzkt.Sync.Protocols.Proto10
             Cache.BakingRights.Reset();
             Cache.BakerCycles.Reset();
             Cache.Periods.Reset();
+
+            var block = await Cache.Blocks.CurrentAsync();
+            await OriginateContract(block, CpmmContract);
+            await OriginateContract(block, LiquidityToken);
+
+            if (!await Cache.Accounts.ExistsAsync(Tzbtc))
+                await OriginateContract(block, FallbackToken);
         }
 
         protected override async Task RevertContext(AppState state)
@@ -136,6 +151,11 @@ namespace Tzkt.Sync.Protocols.Proto10
             Cache.BakingRights.Reset();
             Cache.BakerCycles.Reset();
             Cache.Periods.Reset();
+
+            await RemoveContract(CpmmContract);
+            await RemoveContract(LiquidityToken);
+            if (await Cache.Accounts.ExistsAsync(FallbackToken))
+                await RemoveContract(FallbackToken);
         }
 
         async Task<List<Cycle>> MigrateCycles(AppState state, Protocol nextProto)
@@ -393,6 +413,220 @@ namespace Tzkt.Sync.Protocols.Proto10
                 Db.TryAttach(delegat);
                 delegat.DeactivationLevel = nextProto.GetCycleStart(prevProto.GetCycle(delegat.DeactivationLevel));
             }
+        }
+
+        async Task OriginateContract(Block block, string address)
+        {
+            var rawContract = await Proto.Rpc.GetContractAsync(block.Level, address);
+
+            #region contract
+            var contract = new Contract
+            {
+                Id = Cache.AppState.NextAccountId(),
+                FirstBlock = block,
+                Address = address,
+                Balance = rawContract.RequiredInt64("balance"),
+                Creator = await Cache.Accounts.GetAsync(NullAddress),
+                Type = AccountType.Contract,
+                Kind = ContractKind.SmartContract,
+                MigrationsCount = 1,
+            };
+
+            Db.TryAttach(contract.Creator);
+            contract.Creator.ContractsCount++;
+
+            Db.Accounts.Add(contract);
+            #endregion
+
+            #region script
+            var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+            var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
+            var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
+            var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
+            var script = new Script
+            {
+                Id = Cache.AppState.NextScriptId(),
+                Level = block.Level,
+                ContractId = contract.Id,
+                ParameterSchema = micheParameter.ToBytes(),
+                StorageSchema = micheStorage.ToBytes(),
+                CodeSchema = micheCode.ToBytes(),
+                Current = true
+            };
+
+            var typeSchema = script.ParameterSchema.Concat(script.StorageSchema);
+            var fullSchema = typeSchema.Concat(script.CodeSchema);
+            contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
+            contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
+
+            contract.Tzips = Tzip.None;
+            if (script.Schema.IsFA1())
+            {
+                if (script.Schema.IsFA12())
+                    contract.Tzips |= Tzip.FA12;
+
+                contract.Tzips |= Tzip.FA1;
+                contract.Kind = ContractKind.Asset;
+            }
+            if (script.Schema.IsFA2())
+            {
+                contract.Tzips |= Tzip.FA2;
+                contract.Kind = ContractKind.Asset;
+            }
+
+            Db.Scripts.Add(script);
+            #endregion
+
+            #region storage
+            var storageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+            var storage = new Storage
+            {
+                Id = Cache.AppState.NextStorageId(),
+                Level = block.Level,
+                ContractId = contract.Id,
+                RawValue = script.Schema.OptimizeStorage(storageValue, false).ToBytes(),
+                JsonValue = script.Schema.HumanizeStorage(storageValue),
+                Current = true
+            };
+
+            Db.Storages.Add(storage);
+            #endregion
+
+            #region migration
+            var migration = new MigrationOperation
+            {
+                Id = Cache.AppState.NextOperationId(),
+                Block = block,
+                Level = block.Level,
+                Timestamp = block.Timestamp,
+                Kind = MigrationKind.Origination,
+                Account = contract,
+                BalanceChange = contract.Balance,
+                Script = script,
+                Storage = storage, 
+            };
+
+            script.MigrationId = migration.Id;
+            storage.MigrationId = migration.Id;
+
+            block.Events |= BlockEvents.SmartContracts;
+            block.Operations |= Operations.Migrations;
+
+            var state = Cache.AppState.Get();
+            state.MigrationOpsCount++;
+
+            var statistics = await Cache.Statistics.GetAsync(state.Level);
+            statistics.TotalCreated += contract.Balance;
+
+            Db.MigrationOps.Add(migration);
+            #endregion
+
+            #region bigmaps
+            var storageScript = new ContractStorage(micheStorage);
+            var storageTree = storageScript.Schema.ToTreeView(storageValue);
+            var bigmaps = storageTree.Nodes()
+                .Where(x => x.Schema is BigMapSchema)
+                .Select(x => (x, x.Schema as BigMapSchema, (int)(x.Value as MichelineInt).Value));
+
+            foreach (var (bigmap, schema, ptr) in bigmaps)
+            {
+                block.Events |= BlockEvents.Bigmaps;
+
+                migration.BigMapUpdates = (migration.BigMapUpdates ?? 0) + 1;
+                Db.BigMapUpdates.Add(new BigMapUpdate
+                {
+                    Id = Cache.AppState.NextBigMapUpdateId(),
+                    Action = BigMapAction.Allocate,
+                    BigMapPtr = ptr,
+                    Level = block.Level,
+                    MigrationId = migration.Id
+                });
+
+                var allocated = new BigMap
+                {
+                    Id = Cache.AppState.NextBigMapId(),
+                    Ptr = ptr,
+                    ContractId = contract.Id,
+                    StoragePath = bigmap.Path,
+                    KeyType = schema.Key.ToMicheline().ToBytes(),
+                    ValueType = schema.Value.ToMicheline().ToBytes(),
+                    Active = true,
+                    FirstLevel = block.Level,
+                    LastLevel = block.Level,
+                    ActiveKeys = 0,
+                    TotalKeys = 0,
+                    Updates = 1,
+                    Tags = BigMaps.GetTags(bigmap)
+                };
+                Db.BigMaps.Add(allocated);
+
+                if (address == LiquidityToken && allocated.StoragePath == "tokens")
+                {
+                    var rawKey = new MichelineString(NullAddress);
+                    var rawValue = new MichelineInt(100);
+
+                    allocated.ActiveKeys++;
+                    allocated.TotalKeys++;
+                    allocated.Updates++;
+                    var key = new BigMapKey
+                    {
+                        Id = Cache.AppState.NextBigMapKeyId(),
+                        Active = true,
+                        BigMapPtr = ptr,
+                        FirstLevel = block.Level,
+                        LastLevel = block.Level,
+                        JsonKey = schema.Key.Humanize(rawKey),
+                        JsonValue = schema.Value.Humanize(rawValue),
+                        RawKey = schema.Key.Optimize(rawKey).ToBytes(),
+                        RawValue = schema.Value.Optimize(rawValue).ToBytes(),
+                        KeyHash = schema.GetKeyHash(rawKey),
+                        Updates = 1
+                    };
+                    Db.BigMapKeys.Add(key);
+
+                    migration.BigMapUpdates++;
+                    Db.BigMapUpdates.Add(new BigMapUpdate
+                    {
+                        Id = Cache.AppState.NextBigMapUpdateId(),
+                        Action = BigMapAction.AddKey,
+                        BigMapKeyId = key.Id,
+                        BigMapPtr = key.BigMapPtr,
+                        JsonValue = key.JsonValue,
+                        RawValue = key.RawValue,
+                        Level = key.LastLevel,
+                        MigrationId = migration.Id
+                    });
+                }
+            }
+            #endregion
+        }
+
+        async Task RemoveContract(string address)
+        {
+            var contract = await Cache.Accounts.GetAsync(address) as Contract;
+            var bigmaps = await Db.BigMaps.Where(x => x.ContractId == contract.Id).ToListAsync();
+
+            var state = Cache.AppState.Get();
+            state.MigrationOpsCount--;
+
+            var creator = await Cache.Accounts.GetAsync(contract.CreatorId);
+            Db.TryAttach(creator);
+            creator.ContractsCount--;
+
+            await Db.Database.ExecuteSqlRawAsync(@"
+                DELETE FROM ""MigrationOps"" WHERE ""AccountId"" = {1};
+                DELETE FROM ""Storages"" WHERE ""ContractId"" = {1};
+                DELETE FROM ""Scripts"" WHERE ""ContractId"" = {1};
+                DELETE FROM ""BigMapUpdates"" WHERE ""BigMapPtr"" = ANY({0});
+                DELETE FROM ""BigMapKeys"" WHERE ""BigMapPtr"" = ANY({0});
+                DELETE FROM ""BigMaps"" WHERE ""Ptr"" = ANY({0});",
+                bigmaps.Select(x => x.Ptr).ToList(), contract.Id);
+
+            Cache.Storages.Remove(contract);
+            Cache.Schemas.Remove(contract);
+            Cache.BigMapKeys.Reset();
+            foreach (var bigmap in bigmaps)
+                Cache.BigMaps.Remove(bigmap);
         }
 
         protected override long GetFutureBlockReward(Protocol protocol, int cycle)

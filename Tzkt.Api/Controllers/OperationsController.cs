@@ -1590,6 +1590,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
@@ -1602,6 +1603,7 @@ namespace Tzkt.Api.Controllers
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
             #region validate
@@ -1622,25 +1624,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, quote));
+                return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }

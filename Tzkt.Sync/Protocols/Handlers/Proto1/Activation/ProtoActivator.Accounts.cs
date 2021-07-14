@@ -90,6 +90,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
                 var script = new Script
                 {
+                    Id = Cache.AppState.NextScriptId(),
+                    Level = 1,
                     ContractId = contract.Id,
                     ParameterSchema = micheParameter.ToBytes(),
                     StorageSchema = micheStorage.ToBytes(),
@@ -108,6 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var storageValue = Micheline.FromJson(data[1].Required("storage"));
                 var storage = new Storage
                 {
+                    Id = Cache.AppState.NextStorageId(),
                     Level = 1,
                     ContractId = contract.Id,
                     RawValue = script.Schema.OptimizeStorage(storageValue, false).ToBytes(),
@@ -159,8 +162,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     script.MigrationId = migration.Id;
                     storage.MigrationId = migration.Id;
 
-                    migration.NewScript = script;
-                    migration.NewStorage = storage;
+                    migration.Script = script;
+                    migration.Storage = storage;
                 }
 
                 Db.MigrationOps.Add(migration);

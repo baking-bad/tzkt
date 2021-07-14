@@ -121,7 +121,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.RevealOperation>());
 
                 var migrations = ActiveOps.HasFlag(Operations.Migrations)
-                    ? Repo.GetMigrations(null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetMigrations(null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
 
                 var penalties = ActiveOps.HasFlag(Operations.RevelationPenalty)

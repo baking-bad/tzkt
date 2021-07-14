@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Tzkt.Api
+﻿namespace Tzkt.Api
 {
     static class MigrationKinds
     {
@@ -16,5 +11,9 @@ namespace Tzkt.Api
         public const string ProposalInvoice = "proposal_invoice";
 
         public const string CodeChange = "code_change";
+
+        public const string Origination = "origination";
+
+        public const string Subsidy = "subsidy";
     }
 }
