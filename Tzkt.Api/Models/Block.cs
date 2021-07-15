@@ -8,6 +8,11 @@ namespace Tzkt.Api.Models
     public class Block
     {
         /// <summary>
+        /// Index of the cycle
+        /// </summary>
+        public int Cycle { get; set; }
+
+        /// <summary>
         /// The height of the block from the genesis block
         /// </summary>
         public int Level { get; set; }
