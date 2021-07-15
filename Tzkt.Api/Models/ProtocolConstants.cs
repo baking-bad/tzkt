@@ -122,5 +122,18 @@ namespace Tzkt.Api.Models
         /// The maximum value of quorum percentage on the exploration and promotion periods
         /// </summary>
         public double BallotQuorumMax { get; set; }
+
+        /// <summary>
+        /// Liquidity baking subsidy is 1/16th of total rewards for a block of priority 0 with all endorsements
+        /// </summary>
+        public int LBSubsidy { get; set; }
+        /// <summary>
+        /// Level after protocol activation when liquidity baking shuts off
+        /// </summary>
+        public int LBSunsetLevel { get; set; }
+        /// <summary>
+        /// 1/2 window size of 2000 blocks with precision of 1000 for integer computation
+        /// </summary>
+        public int LBEscapeThreshold { get; set; }
     }
 }

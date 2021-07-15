@@ -39,6 +39,8 @@ namespace Tzkt.Api.Repositories
                 Code = row.Code,
                 Hash = row.Hash,
                 FirstLevel = row.FirstLevel,
+                FirstCycle = row.FirstCycle,
+                FirstCycleLevel = row.FirstCycleLevel,
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
@@ -68,7 +70,10 @@ namespace Tzkt.Api.Repositories
                     TokensPerRoll = row.TokensPerRoll,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
-                    BallotQuorumMax = row.BallotQuorumMax / 100.0
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0,
+                    LBSubsidy = row.LBSubsidy,
+                    LBSunsetLevel = row.LBSunsetLevel,
+                    LBEscapeThreshold = row.LBEscapeThreshold
                 },
                 Metadata = row.Metadata
             };
@@ -91,6 +96,8 @@ namespace Tzkt.Api.Repositories
                 Code = code,
                 Hash = row.Hash,
                 FirstLevel = row.FirstLevel,
+                FirstCycle = row.FirstCycle,
+                FirstCycleLevel = row.FirstCycleLevel,
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
@@ -120,7 +127,10 @@ namespace Tzkt.Api.Repositories
                     TokensPerRoll = row.TokensPerRoll,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
-                    BallotQuorumMax = row.BallotQuorumMax / 100.0
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0,
+                    LBSubsidy = row.LBSubsidy,
+                    LBSunsetLevel = row.LBSunsetLevel,
+                    LBEscapeThreshold = row.LBEscapeThreshold
                 },
                 Metadata = row.Metadata
             };
@@ -143,6 +153,8 @@ namespace Tzkt.Api.Repositories
                 Code = row.Code,
                 Hash = hash,
                 FirstLevel = row.FirstLevel,
+                FirstCycle = row.FirstCycle,
+                FirstCycleLevel = row.FirstCycleLevel,
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
@@ -172,7 +184,10 @@ namespace Tzkt.Api.Repositories
                     TokensPerRoll = row.TokensPerRoll,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
-                    BallotQuorumMax = row.BallotQuorumMax / 100.0
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0,
+                    LBSubsidy = row.LBSubsidy,
+                    LBSunsetLevel = row.LBSunsetLevel,
+                    LBEscapeThreshold = row.LBEscapeThreshold
                 },
                 Metadata = row.Metadata
             };
@@ -197,6 +212,8 @@ namespace Tzkt.Api.Repositories
                 Code = row.Code,
                 Hash = row.Hash,
                 FirstLevel = row.FirstLevel,
+                FirstCycle = row.FirstCycle,
+                FirstCycleLevel = row.FirstCycleLevel,
                 LastLevel = row.LastLevel == -1 ? null : row.LastLevel,
                 Constants = new ProtocolConstants
                 {
@@ -226,7 +243,10 @@ namespace Tzkt.Api.Repositories
                     TokensPerRoll = row.TokensPerRoll,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
-                    BallotQuorumMax = row.BallotQuorumMax / 100.0
+                    BallotQuorumMax = row.BallotQuorumMax / 100.0,
+                    LBSubsidy = row.LBSubsidy,
+                    LBSunsetLevel = row.LBSunsetLevel,
+                    LBEscapeThreshold = row.LBEscapeThreshold
                 },
                 Metadata = row.Metadata
             });

@@ -20,6 +20,16 @@ namespace Tzkt.Api.Models
         public int  FirstLevel { get; set; }
 
         /// <summary>
+        /// Index of the first cycle started with the protocol
+        /// </summary>
+        public int FirstCycle { get; set; }
+
+        /// <summary>
+        /// Level of the first block of the first cycle started with the protocol
+        /// </summary>
+        public int FirstCycleLevel { get; set; }
+
+        /// <summary>
         /// Block height where the protocol ends. `null` if the protocol is active
         /// </summary>
         public int? LastLevel { get; set; }
