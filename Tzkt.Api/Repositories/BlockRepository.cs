@@ -46,6 +46,7 @@ namespace Tzkt.Api.Repositories
 
             var block = new Block
             {
+                Cycle = row.Cycle,
                 Level = level,
                 Hash = row.Hash,
                 Timestamp = row.Timestamp,
@@ -83,6 +84,7 @@ namespace Tzkt.Api.Repositories
 
             var block = new Block
             {
+                Cycle = row.Cycle,
                 Level = row.Level,
                 Hash = hash,
                 Timestamp = row.Timestamp,
@@ -136,6 +138,7 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new Block
             {
+                Cycle = row.Cycle,
                 Level = row.Level,
                 Hash = row.Hash,
                 Timestamp = row.Timestamp,
@@ -170,6 +173,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
+                    case "cycle": columns.Add(@"""Cycle"""); break;
                     case "level": columns.Add(@"""Level"""); break;
                     case "hash": columns.Add(@"""Hash"""); break;
                     case "timestamp": columns.Add(@"""Timestamp"""); break;
@@ -217,6 +221,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
+                    case "cycle":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Cycle;
+                        break;
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
@@ -297,6 +305,7 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(1);
             switch (field)
             {
+                case "cycle": columns.Add(@"""Cycle"""); break;
                 case "level": columns.Add(@"""Level"""); break;
                 case "hash": columns.Add(@"""Hash"""); break;
                 case "timestamp": columns.Add(@"""Timestamp"""); break;
@@ -341,6 +350,10 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "cycle":
+                    foreach (var row in rows)
+                        result[j++] = row.Cycle;
+                    break;
                 case "level":
                     foreach (var row in rows)
                         result[j++] = row.Level;
