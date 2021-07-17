@@ -12,12 +12,6 @@
         public int? CreatorId { get; set; }
         public int? ManagerId { get; set; }
 
-        public string KindString => Kind switch
-        {
-            0 => ContractKinds.Delegator,
-            1 => ContractKinds.SmartContract,
-            2 => ContractKinds.Asset,
-            _ => "unknown"
-        };
+        public string KindString => ContractKinds.ToString(Kind);
     }
 }

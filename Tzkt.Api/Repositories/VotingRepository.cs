@@ -55,7 +55,7 @@ namespace Tzkt.Api.Repositories
                 Epoch = row.Epoch,
                 Upvotes = row.Upvotes,
                 Rolls = row.Rolls,
-                Status = ProposalStatusToString(row.Status),
+                Status = ProposalStatuses.ToString(row.Status),
                 Metadata = row.Metadata
             };
         }
@@ -87,7 +87,7 @@ namespace Tzkt.Api.Repositories
                 Epoch = row.Epoch,
                 Upvotes = row.Upvotes,
                 Rolls = row.Rolls,
-                Status = ProposalStatusToString(row.Status),
+                Status = ProposalStatuses.ToString(row.Status),
                 Metadata = row.Metadata
             });
         }
@@ -170,7 +170,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "status":
                         foreach (var row in rows)
-                            result[j++][i] = ProposalStatusToString(row.Status);
+                            result[j++][i] = ProposalStatuses.ToString(row.Status);
                         break;
                     case "metadata":
                         foreach (var row in rows)
@@ -251,7 +251,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "status":
                     foreach (var row in rows)
-                        result[j++] = ProposalStatusToString(row.Status);
+                        result[j++] = ProposalStatuses.ToString(row.Status);
                     break;
                 case "metadata":
                     foreach (var row in rows)
@@ -284,8 +284,8 @@ namespace Tzkt.Api.Repositories
                 StartTime = Time[row.FirstLevel],
                 LastLevel = row.LastLevel,
                 EndTime = Time[row.LastLevel],
-                Kind = KindToString(row.Kind),
-                Status = PeriodStatusToString(row.Status),
+                Kind = PeriodKinds.ToString(row.Kind),
+                Status = PeriodStatuses.ToString(row.Status),
                 TotalBakers = row.TotalBakers,
                 TotalRolls = row.TotalRolls,
                 UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -319,8 +319,8 @@ namespace Tzkt.Api.Repositories
                 StartTime = Time[row.FirstLevel],
                 LastLevel = row.LastLevel,
                 EndTime = Time[row.LastLevel],
-                Kind = KindToString(row.Kind),
-                Status = PeriodStatusToString(row.Status),
+                Kind = PeriodKinds.ToString(row.Kind),
+                Status = PeriodStatuses.ToString(row.Status),
                 TotalBakers = row.TotalBakers,
                 TotalRolls = row.TotalRolls,
                 UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -414,11 +414,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "kind":
                         foreach (var row in rows)
-                            result[j++][i] = KindToString(row.Kind);
+                            result[j++][i] = PeriodKinds.ToString(row.Kind);
                         break;
                     case "status":
                         foreach (var row in rows)
-                            result[j++][i] = PeriodStatusToString(row.Status);
+                            result[j++][i] = PeriodStatuses.ToString(row.Status);
                         break;
                     case "totalBakers":
                         foreach (var row in rows)
@@ -553,11 +553,11 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "kind":
                     foreach (var row in rows)
-                        result[j++] = KindToString(row.Kind);
+                        result[j++] = PeriodKinds.ToString(row.Kind);
                     break;
                 case "status":
                     foreach (var row in rows)
-                        result[j++] = PeriodStatusToString(row.Status);
+                        result[j++] = PeriodStatuses.ToString(row.Status);
                     break;
                 case "totalBakers":
                     foreach (var row in rows)
@@ -640,7 +640,7 @@ namespace Tzkt.Api.Repositories
             {
                 Delegate = Accounts.GetAlias(row.BakerId),
                 Rolls = row.Rolls,
-                Status = VoterStatusToString(row.Status)
+                Status = VoterStatuses.ToString(row.Status)
             };
         }
 
@@ -663,7 +663,7 @@ namespace Tzkt.Api.Repositories
             {
                 Delegate = Accounts.GetAlias(row.BakerId),
                 Rolls = row.Rolls,
-                Status = VoterStatusToString(row.Status)
+                Status = VoterStatuses.ToString(row.Status)
             });
         }
         #endregion
@@ -702,8 +702,8 @@ namespace Tzkt.Api.Repositories
                     StartTime = Time[row.FirstLevel],
                     LastLevel = row.LastLevel,
                     EndTime = Time[row.LastLevel],
-                    Kind = KindToString(row.Kind),
-                    Status = PeriodStatusToString(row.Status),
+                    Kind = PeriodKinds.ToString(row.Kind),
+                    Status = PeriodStatuses.ToString(row.Status),
                     TotalBakers = row.TotalBakers,
                     TotalRolls = row.TotalRolls,
                     UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -774,8 +774,8 @@ namespace Tzkt.Api.Repositories
                             StartTime = Time[row.FirstLevel],
                             LastLevel = row.LastLevel,
                             EndTime = Time[row.LastLevel],
-                            Kind = KindToString(row.Kind),
-                            Status = PeriodStatusToString(row.Status),
+                            Kind = PeriodKinds.ToString(row.Kind),
+                            Status = PeriodStatuses.ToString(row.Status),
                             TotalBakers = row.TotalBakers,
                             TotalRolls = row.TotalRolls,
                             UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -835,8 +835,8 @@ namespace Tzkt.Api.Repositories
                     StartTime = Time[row.FirstLevel],
                     LastLevel = row.LastLevel,
                     EndTime = Time[row.LastLevel],
-                    Kind = KindToString(row.Kind),
-                    Status = PeriodStatusToString(row.Status),
+                    Kind = PeriodKinds.ToString(row.Kind),
+                    Status = PeriodStatuses.ToString(row.Status),
                     TotalBakers = row.TotalBakers,
                     TotalRolls = row.TotalRolls,
                     UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -859,68 +859,17 @@ namespace Tzkt.Api.Repositories
         string GetEpochStatus(IEnumerable<dynamic> periods)
         {
             if (periods.First().Status == (int)Data.Models.PeriodStatus.NoProposals)
-                return "no_proposals";
+                return EpochStatuses.NoProposals;
 
             if (periods.Last().Status == (int)Data.Models.PeriodStatus.Active)
-                return "voting";
+                return EpochStatuses.Voting;
 
             if (periods.Last().Status == (int)Data.Models.PeriodStatus.Success &&
                 periods.Last().Epoch != State.Current.VotingEpoch)
-                return "completed";
+                return EpochStatuses.Completed;
 
-            return "failed";
+            return EpochStatuses.Failed;
         }
         #endregion
-
-        string KindToString(int kind)
-        {
-            return kind switch
-            {
-                0 => "proposal",
-                1 => "exploration",
-                2 => "testing",
-                3 => "promotion",
-                4 => "adoption",
-                _ => "unknown"
-            };
-        }
-
-        string ProposalStatusToString(int status)
-        {
-            return status switch
-            {
-                0 => "active",
-                1 => "accepted",
-                2 => "rejected",
-                3 => "skipped",
-                _ => "unknown"
-            };
-        }
-
-        string PeriodStatusToString(int status)
-        {
-            return status switch
-            {
-                0 => "active",
-                1 => "no_proposals",
-                2 => "no_quorum",
-                3 => "no_supermajority",
-                4 => "success",
-                _ => "unknown"
-            };
-        }
-
-        string VoterStatusToString(int status)
-        {
-            return status switch
-            {
-                0 => VoterStatuses.None,
-                1 => VoterStatuses.Upvoted,
-                2 => VoterStatuses.VotedYay,
-                3 => VoterStatuses.VotedNay,
-                4 => VoterStatuses.VotedPass,
-                _ => "unknown"
-            };
-        }
     }
 }

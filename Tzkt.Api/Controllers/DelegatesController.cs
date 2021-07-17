@@ -95,7 +95,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Delegate address (starting with tz)</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Models.Delegate> GetByAddress([Required][Address] string address)
+        public Task<Models.Delegate> GetByAddress([Required][TzAddress] string address)
         {
             return Accounts.GetDelegate(address);
         }

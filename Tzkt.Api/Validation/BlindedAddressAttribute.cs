@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 
 namespace System.ComponentModel.DataAnnotations
 {
@@ -10,7 +6,7 @@ namespace System.ComponentModel.DataAnnotations
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^btz[0-9A-z]{34}$")
+            return value != null && !Regex.IsMatch((string)value, "^btz[0-9A-Za-z]{34}$")
                 ? new ValidationResult("Invalid blinded address.")
                 : ValidationResult.Success;
         }

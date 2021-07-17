@@ -74,14 +74,14 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new BakingRight
             {
-                Type = TypeToString(row.Type),
+                Type = BakingRightTypes.ToString(row.Type),
                 Cycle = row.Cycle,
                 Level = row.Level,
                 Timestamp = Time[row.Level],
                 Baker = Accounts.GetAlias(row.BakerId),
                 Priority = row.Priority,
                 Slots = row.Slots,
-                Status = StatusToString(row.Status)
+                Status = BakingRightStatuses.ToString(row.Status)
             });
         }
 
@@ -140,7 +140,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = TypeToString(row.Type);
+                            result[j++][i] = BakingRightTypes.ToString(row.Type);
                         break;
                     case "cycle":
                         foreach (var row in rows)
@@ -168,7 +168,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "status":
                         foreach (var row in rows)
-                            result[j++][i] = StatusToString(row.Status);
+                            result[j++][i] = BakingRightStatuses.ToString(row.Status);
                         break;
                 }
             }
@@ -226,7 +226,7 @@ namespace Tzkt.Api.Repositories
             {
                 case "type":
                     foreach (var row in rows)
-                        result[j++] = TypeToString(row.Type);
+                        result[j++] = BakingRightTypes.ToString(row.Type);
                     break;
                 case "cycle":
                     foreach (var row in rows)
@@ -254,7 +254,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "status":
                     foreach (var row in rows)
-                        result[j++] = StatusToString(row.Status);
+                        result[j++] = BakingRightStatuses.ToString(row.Status);
                     break;
             }
 
@@ -327,21 +327,5 @@ namespace Tzkt.Api.Repositories
 
             return intervals;
         }
-
-        string TypeToString(int type) => type switch
-        {
-            0 => "baking",
-            1 => "endorsing",
-            _ => "unknown"
-        };
-
-        string StatusToString(int status) => status switch
-        {
-            0 => "future",
-            1 => "realized",
-            2 => "uncovered",
-            3 => "missed",
-            _ => "unknown"
-        };
     }
 }

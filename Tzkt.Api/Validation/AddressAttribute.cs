@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 
 namespace System.ComponentModel.DataAnnotations
 {
@@ -10,7 +6,7 @@ namespace System.ComponentModel.DataAnnotations
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^[0-9A-z]{36}$")
+            return value != null && !Regex.IsMatch((string)value, "^[0-9A-Za-z]{36}$")
                 ? new ValidationResult("Invalid account address.")
                 : ValidationResult.Success;
         }

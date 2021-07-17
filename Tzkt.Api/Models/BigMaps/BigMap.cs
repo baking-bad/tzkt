@@ -24,7 +24,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// List of tags (`token_metadata` - tzip-12, `metadata` - tzip-16, `null` - no tags)
         /// </summary>
-        public List<string> Tags => GetTagsList(_Tags);
+        public List<string> Tags => BigMapTags.ToList(_Tags);
 
         /// <summary>
         /// Bigmap status (`true` - active, `false` - removed)
@@ -68,12 +68,5 @@ namespace Tzkt.Api.Models
 
         [JsonIgnore]
         public BigMapTag _Tags { get; set; }
-
-        #region static
-        public static List<string> GetTagsList(BigMapTag tags) => tags == BigMapTag.None ? null : new(1)
-        {
-            tags == BigMapTag.TokenMetadata ? BigMapTags.TokenMetadata : BigMapTags.Metadata
-        };
-        #endregion
     }
 }

@@ -455,7 +455,7 @@ namespace Tzkt.Api.Services
             var proposal = proposals.FirstOrDefault();
             var proposalMeta = proposal?.Metadata == null ? null : DJson.Parse(proposal.Metadata.Json);
             
-            if (period.Kind == "proposal")
+            if (period.Kind == PeriodKinds.Proposal)
             {
                 return new GovernanceData
                 {
@@ -485,7 +485,7 @@ namespace Tzkt.Api.Services
                 EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
             };
 
-            if (period.Kind is "exploration" or "promotion")
+            if (period.Kind is PeriodKinds.Exploration or PeriodKinds.Promotion)
             {
                 var yayNaySum = (int)period.YayRolls! + (int)period.NayRolls!;
                 var totalVoted = yayNaySum + (int)period.PassRolls!;
