@@ -239,7 +239,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "tags":
                         foreach (var row in rows)
-                            result[j++][i] = BigMap.GetTagsList((Data.Models.BigMapTag)row.Tags);
+                            result[j++][i] = BigMapTags.ToList((Data.Models.BigMapTag)row.Tags);
                         break;
                 }
             }
@@ -355,7 +355,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "tags":
                     foreach (var row in rows)
-                        result[j++] = BigMap.GetTagsList((Data.Models.BigMapTag)row.Tags);
+                        result[j++] = BigMapTags.ToList((Data.Models.BigMapTag)row.Tags);
                     break;
             }
 
@@ -1000,7 +1000,7 @@ namespace Tzkt.Api.Repositories
                 return new BigMapUpdate
                 {
                     Id = row.Id,
-                    Action = BigMapAction((int)row.Action),
+                    Action = BigMapActions.ToString(row.Action),
                     Bigmap = row.BigMapPtr,
                     Level = row.Level,
                     Timestamp = Times[row.Level],
@@ -1078,7 +1078,7 @@ namespace Tzkt.Api.Repositories
                 return new BigMapUpdate
                 {
                     Id = row.Id,
-                    Action = BigMapAction((int)row.Action),
+                    Action = BigMapActions.ToString(row.Action),
                     Bigmap = row.BigMapPtr,
                     Level = row.Level,
                     Timestamp = Times[row.Level],
@@ -1159,7 +1159,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Bigmap = row.BigMapPtr,
                     Path = bigmaps[row.BigMapPtr].StoragePath,
-                    Action = BigMapAction(row.Action),
+                    Action = BigMapActions.ToString(row.Action),
                     Content = row.BigMapKeyId == null ? null : new BigMapKeyShort
                     {
                         Hash = keys[row.BigMapKeyId].KeyHash,
@@ -1229,7 +1229,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = Times[row.Level],
-                Action = BigMapAction((int)row.Action),
+                Action = BigMapActions.ToString(row.Action),
                 Value = FormatValue(row, format)
             };
         }
@@ -1250,16 +1250,6 @@ namespace Tzkt.Api.Repositories
             MichelineFormat.Raw => (RawJson)Micheline.ToJson(row.RawValue),
             MichelineFormat.RawString => Micheline.ToJson(row.RawValue),
             _ => null
-        };
-
-        static string BigMapAction(int action) => action switch
-        {
-            0 => BigMapActions.Allocate,
-            1 => BigMapActions.AddKey,
-            2 => BigMapActions.UpdateKey,
-            3 => BigMapActions.RemoveKey,
-            4 => BigMapActions.Remove,
-            _ => "unknown"
         };
     }
 }

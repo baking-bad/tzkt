@@ -113,7 +113,7 @@ namespace Tzkt.Api.Controllers
         [OpenApiIgnore]
         [HttpGet("schedule")]
         public async Task<ActionResult<IEnumerable<BakingRight>>> GetSchedule(
-            [Required][Address] string baker,
+            [Required][TzAddress] string baker,
             [Required] DateTimeOffset from,
             [Required] DateTimeOffset to,
             [Min(0)] int maxPriority = 0)

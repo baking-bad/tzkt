@@ -2,12 +2,12 @@
 
 namespace System.ComponentModel.DataAnnotations
 {
-    public sealed class OpHashAttribute : ValidationAttribute
+    public sealed class KTAddressAttribute : ValidationAttribute
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^o[0-9A-Za-z]{50}$")
-                ? new ValidationResult("Invalid operation hash.")
+            return value != null && !Regex.IsMatch((string)value, "^KT1[0-9A-Za-z]{33}$")
+                ? new ValidationResult("Invalid KT1-address.")
                 : ValidationResult.Success;
         }
     }

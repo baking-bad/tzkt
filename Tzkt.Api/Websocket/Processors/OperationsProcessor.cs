@@ -406,34 +406,10 @@ namespace Tzkt.Api.Websocket.Processors
         {
             if (string.IsNullOrEmpty(query))
                 return Operations.Transactions;
-            
-            var res = Operations.None;
-            foreach (var type in query.Split(','))
-            {
-                res |= type switch
-                {
-                    OpTypes.Endorsement => Operations.Endorsements,
-                    
-                    OpTypes.Ballot => Operations.Ballots,
-                    OpTypes.Proposal => Operations.Proposals,
-                    
-                    OpTypes.Activation => Operations.Activations,
-                    OpTypes.DoubleBaking => Operations.DoubleBakings,
-                    OpTypes.DoubleEndorsing => Operations.DoubleEndorsings,
-                    OpTypes.NonceRevelation => Operations.Revelations,
 
-                    OpTypes.Delegation => Operations.Delegations,
-                    OpTypes.Origination => Operations.Originations,
-                    OpTypes.Transaction => Operations.Transactions,
-                    OpTypes.Reveal => Operations.Reveals,
+            if (!OpTypes.TryParse(query.Split(','), out var res))
+                throw new HubException($"Invalid operation type");
 
-                    OpTypes.Migration => Operations.Migrations,
-                    OpTypes.RevelationPenalty => Operations.RevelationPenalty,
-                    OpTypes.Baking => Operations.Baking,
-
-                    _ => throw new HubException($"Operation type `{type}` is not allowed")
-                };
-            }
             return res;
         }
 

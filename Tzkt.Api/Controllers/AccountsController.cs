@@ -192,7 +192,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/delegators")]
         public async Task<ActionResult<IEnumerable<Delegator>>> GetDelegators(
-            [Required][Address] string address,
+            [Required][TzAddress] string address,
             AccountTypeParameter type,
             Int64Parameter balance,
             Int32Parameter delegationLevel,

@@ -199,7 +199,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^[0-9A-z]{36}$"))
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^[0-9A-Za-z]{36}$"))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid account address.");
                         return false;
@@ -236,7 +236,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^[0-9A-z]{36}$"))
+                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36}$"))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid account address.");
                             return false;
@@ -260,7 +260,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^P[0-9A-z]{50}$"))
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^P[0-9A-Za-z]{50}$"))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid protocol hash.");
                         return false;
@@ -297,7 +297,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^P[0-9A-z]{50}$"))
+                        if (!Regex.IsMatch(rawValue, "^P[0-9A-Za-z]{50}$"))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid protocol hash.");
                             return false;
@@ -321,26 +321,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (valueObject.FirstValue == AccountTypes.User)
-                    {
-                        hasValue = true;
-                        result = 0;
-                    }
-                    else if (valueObject.FirstValue == AccountTypes.Delegate)
-                    {
-                        hasValue = true;
-                        result = 1;
-                    }
-                    else if (valueObject.FirstValue == AccountTypes.Contract)
-                    {
-                        hasValue = true;
-                        result = 2;
-                    }
-                    else
+                    if (!AccountTypes.TryParse(valueObject.FirstValue, out var type))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid account type.");
                         return false;
                     }
+                    hasValue = true;
+                    result = type;
                 }
             }
 
@@ -357,21 +344,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (valueObject.FirstValue == "baking")
-                    {
-                        hasValue = true;
-                        result = 0;
-                    }
-                    else if (valueObject.FirstValue == "endorsing")
-                    {
-                        hasValue = true;
-                        result = 1;
-                    }
-                    else
+                    if (!BakingRightTypes.TryParse(valueObject.FirstValue, out var type))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid baking right type.");
                         return false;
                     }
+                    hasValue = true;
+                    result = type;
                 }
             }
 
@@ -388,31 +367,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (valueObject.FirstValue == "future")
-                    {
-                        hasValue = true;
-                        result = 0;
-                    }
-                    else if (valueObject.FirstValue == "realized")
-                    {
-                        hasValue = true;
-                        result = 1;
-                    }
-                    else if (valueObject.FirstValue == "uncovered")
-                    {
-                        hasValue = true;
-                        result = 2;
-                    }
-                    else if (valueObject.FirstValue == "missed")
-                    {
-                        hasValue = true;
-                        result = 3;
-                    }
-                    else
+                    if (!BakingRightStatuses.TryParse(valueObject.FirstValue, out var status))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid baking right status.");
                         return false;
                     }
+                    hasValue = true;
+                    result = status;
                 }
             }
 
@@ -429,26 +390,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (valueObject.FirstValue == ContractKinds.Delegator)
-                    {
-                        hasValue = true;
-                        result = 0;
-                    }
-                    else if (valueObject.FirstValue == ContractKinds.SmartContract)
-                    {
-                        hasValue = true;
-                        result = 1;
-                    }
-                    else if (valueObject.FirstValue == ContractKinds.Asset)
-                    {
-                        hasValue = true;
-                        result = 2;
-                    }
-                    else
+                    if (!ContractKinds.TryParse(valueObject.FirstValue, out var kind))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid contract kind.");
                         return false;
                     }
+                    hasValue = true;
+                    result = kind;
                 }
             }
 
@@ -478,26 +426,13 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (rawValue == ContractKinds.Asset)
-                        {
-                            hasValue = true;
-                            result.Add(2);
-                        }
-                        else if (rawValue == ContractKinds.SmartContract)
-                        {
-                            hasValue = true;
-                            result.Add(1);
-                        }
-                        else if (rawValue == ContractKinds.Delegator)
-                        {
-                            hasValue = true;
-                            result.Add(0);
-                        }
-                        else
+                        if (!ContractKinds.TryParse(rawValue, out var kind))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid contract kind.");
                             return false;
                         }
+                        hasValue = true;
+                        result.Add(kind);
                     }
                 }
             }
@@ -517,32 +452,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    switch (valueObject.FirstValue)
+                    if (!BigMapActions.TryParse(valueObject.FirstValue, out var action))
                     {
-                        case BigMapActions.Allocate:
-                            hasValue = true;
-                            result = (int)Data.Models.BigMapAction.Allocate;
-                            break;
-                        case BigMapActions.AddKey:
-                            hasValue = true;
-                            result = (int)Data.Models.BigMapAction.AddKey;
-                            break;
-                        case BigMapActions.UpdateKey:
-                            hasValue = true;
-                            result = (int)Data.Models.BigMapAction.UpdateKey;
-                            break;
-                        case BigMapActions.RemoveKey:
-                            hasValue = true;
-                            result = (int)Data.Models.BigMapAction.RemoveKey;
-                            break;
-                        case BigMapActions.Remove:
-                            hasValue = true;
-                            result = (int)Data.Models.BigMapAction.Remove;
-                            break;
-                        default:
-                            bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap action.");
-                            return false;
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap action.");
+                        return false;
                     }
+                    hasValue = true;
+                    result = action;
                 }
             }
 
@@ -574,32 +490,13 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        switch (rawValue)
+                        if (!BigMapActions.TryParse(rawValue, out var action))
                         {
-                            case BigMapActions.Allocate:
-                                hasValue = true;
-                                result.Add((int)Data.Models.BigMapAction.Allocate);
-                                break;
-                            case BigMapActions.AddKey:
-                                hasValue = true;
-                                result.Add((int)Data.Models.BigMapAction.AddKey);
-                                break;
-                            case BigMapActions.UpdateKey:
-                                hasValue = true;
-                                result.Add((int)Data.Models.BigMapAction.UpdateKey);
-                                break;
-                            case BigMapActions.RemoveKey:
-                                hasValue = true;
-                                result.Add((int)Data.Models.BigMapAction.RemoveKey);
-                                break;
-                            case BigMapActions.Remove:
-                                hasValue = true;
-                                result.Add((int)Data.Models.BigMapAction.Remove);
-                                break;
-                            default:
-                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid bigmap action.");
-                                return false;
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid bigmap action.");
+                            return false;
                         }
+                        hasValue = true;
+                        result.Add(action);
                     }
                 }
             }
@@ -630,20 +527,14 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        switch (rawValue)
+
+                        if (!BigMapTags.TryParse(valueObject.FirstValue, out var tag))
                         {
-                            case BigMapTags.Metadata:
-                                hasValue = true;
-                                result |= (int)Data.Models.BigMapTag.Metadata;
-                                break;
-                            case BigMapTags.TokenMetadata:
-                                hasValue = true;
-                                result |= (int)Data.Models.BigMapTag.TokenMetadata;
-                                break;
-                            default:
-                                bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap tags.");
-                                return false;
+                            bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap tags.");
+                            return false;
                         }
+                        hasValue = true;
+                        result |= tag;
                     }
 
                     
@@ -663,32 +554,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    switch (valueObject.FirstValue)
+                    if (!VoterStatuses.TryParse(valueObject.FirstValue, out var status))
                     {
-                        case VoterStatuses.None:
-                            hasValue = true;
-                            result = (int)Data.Models.VoterStatus.None;
-                            break;
-                        case VoterStatuses.Upvoted:
-                            hasValue = true;
-                            result = (int)Data.Models.VoterStatus.Upvoted;
-                            break;
-                        case VoterStatuses.VotedYay:
-                            hasValue = true;
-                            result = (int)Data.Models.VoterStatus.VotedYay;
-                            break;
-                        case VoterStatuses.VotedNay:
-                            hasValue = true;
-                            result = (int)Data.Models.VoterStatus.VotedNay;
-                            break;
-                        case VoterStatuses.VotedPass:
-                            hasValue = true;
-                            result = (int)Data.Models.VoterStatus.VotedPass;
-                            break;
-                        default:
-                            bindingContext.ModelState.TryAddModelError(name, "Invalid voter status.");
-                            return false;
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid voter status.");
+                        return false;
                     }
+                    hasValue = true;
+                    result = status;
                 }
             }
 
@@ -718,32 +590,13 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        switch (rawValue)
+                        if (!VoterStatuses.TryParse(rawValue, out var status))
                         {
-                            case VoterStatuses.None:
-                                hasValue = true;
-                                result.Add((int)Data.Models.VoterStatus.None);
-                                break;
-                            case VoterStatuses.Upvoted:
-                                hasValue = true;
-                                result.Add((int)Data.Models.VoterStatus.Upvoted);
-                                break;
-                            case VoterStatuses.VotedYay:
-                                hasValue = true;
-                                result.Add((int)Data.Models.VoterStatus.VotedYay);
-                                break;
-                            case VoterStatuses.VotedNay:
-                                hasValue = true;
-                                result.Add((int)Data.Models.VoterStatus.VotedNay);
-                                break;
-                            case VoterStatuses.VotedPass:
-                                hasValue = true;
-                                result.Add((int)Data.Models.VoterStatus.VotedPass);
-                                break;
-                            default:
-                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid voter status.");
-                                return false;
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid voter status.");
+                            return false;
                         }
+                        hasValue = true;
+                        result.Add(status);
                     }
                 }
             }
@@ -761,40 +614,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    switch (valueObject.FirstValue)
+                    if (!MigrationKinds.TryParse(valueObject.FirstValue, out var kind))
                     {
-                        case MigrationKinds.Bootstrap:
-                            hasValue = true;
-                            result = 0;
-                            break;
-                        case MigrationKinds.ActivateDelegate:
-                            hasValue = true;
-                            result = 1;
-                            break;
-                        case MigrationKinds.Airdrop:
-                            hasValue = true;
-                            result = 2;
-                            break;
-                        case MigrationKinds.ProposalInvoice:
-                            hasValue = true;
-                            result = 3;
-                            break;
-                        case MigrationKinds.CodeChange:
-                            hasValue = true;
-                            result = 4;
-                            break;
-                        case MigrationKinds.Origination:
-                            hasValue = true;
-                            result = 5;
-                            break;
-                        case MigrationKinds.Subsidy:
-                            hasValue = true;
-                            result = 6;
-                            break;
-                        default:
-                            bindingContext.ModelState.TryAddModelError(name, "Invalid migration kind.");
-                            return false;
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid migration kind.");
+                        return false;
                     }
+                    hasValue = true;
+                    result = kind;
                 }
             }
 
@@ -824,40 +650,13 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        switch (rawValue)
+                        if (!MigrationKinds.TryParse(rawValue, out var kind))
                         {
-                            case MigrationKinds.Bootstrap:
-                                hasValue = true;
-                                result.Add(0);
-                                break;
-                            case MigrationKinds.ActivateDelegate:
-                                hasValue = true;
-                                result.Add(1);
-                                break;
-                            case MigrationKinds.Airdrop:
-                                hasValue = true;
-                                result.Add(2);
-                                break;
-                            case MigrationKinds.ProposalInvoice:
-                                hasValue = true;
-                                result.Add(3);
-                                break;
-                            case MigrationKinds.CodeChange:
-                                hasValue = true;
-                                result.Add(4);
-                                break;
-                            case MigrationKinds.Origination:
-                                hasValue = true;
-                                result.Add(5);
-                                break;
-                            case MigrationKinds.Subsidy:
-                                hasValue = true;
-                                result.Add(6);
-                                break;
-                            default:
-                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid migration kind.");
-                                return false;
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid migration kind.");
+                            return false;
                         }
+                        hasValue = true;
+                        result.Add(kind);
                     }
                 }
             }
@@ -875,31 +674,13 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (valueObject.FirstValue == "applied")
-                    {
-                        hasValue = true;
-                        result = 1;
-                    }
-                    else if (valueObject.FirstValue == "failed")
-                    {
-                        hasValue = true;
-                        result = 4;
-                    }
-                    else if (valueObject.FirstValue == "backtracked")
-                    {
-                        hasValue = true;
-                        result = 2;
-                    }
-                    else if (valueObject.FirstValue == "skipped")
-                    {
-                        hasValue = true;
-                        result = 3;
-                    }
-                    else
+                    if (!OpStatuses.TryParse(valueObject.FirstValue, out var status))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid operation status.");
                         return false;
                     }
+                    hasValue = true;
+                    result = status;
                 }
             }
 

@@ -979,6 +979,9 @@ namespace Tzkt.Api.Repositories
             "activate delegate",    // 12
             "airdrop",              // 13
             "proposal invoice",     // 14
+            "code change",          // 15
+            "implicit origination", // 16
+            "subsidy",              // 17
         };
     }
 }
