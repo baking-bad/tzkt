@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
+using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Websocket
 {
@@ -11,6 +11,25 @@ namespace Tzkt.Api.Websocket
         public string Path { get; set; }
         public string Contract { get; set; }
         public List<string> Tags { get; set; }
+
+        List<BigMapTag> _TagsList = null;
+        public List<BigMapTag> TagsList
+        {
+            get
+            {
+                if (_TagsList == null && Tags != null)
+                {
+                    _TagsList = new(Tags.Count);
+                    foreach (var tag in Tags)
+                    {
+                        if (!BigMapTags.TryParse(tag, out var res))
+                            throw new HubException("Invalid bigmap tag");
+                        _TagsList.Add((BigMapTag)res);
+                    }
+                }
+                return _TagsList;
+            }
+        }
 
         public void EnsureValid()
         {
@@ -23,7 +42,7 @@ namespace Tzkt.Api.Websocket
             if (Path != null && Path.Length > 256)
                 throw new HubException("Too long path");
 
-            if (Tags != null && Tags.All(x => BigMapTags.IsValid(x)))
+            if (TagsList?.Count == 0)
                 throw new HubException("Invalid tags");
         }
     }

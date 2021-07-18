@@ -56,7 +56,7 @@ namespace Tzkt.Api.Websocket.Processors
         
         public async Task OnStateChanged()
         {
-            var sendings = new List<Task>(Limits.Count);
+            var sendings = new List<Task>();
             try
             {
                 await Sema.WaitAsync();
@@ -223,11 +223,11 @@ namespace Tzkt.Api.Websocket.Processors
                         contractSub.Paths ??= new(4);
                         TryAdd(contractSub.Paths, parameter.Path, connectionId);
                     }
-                    else if (parameter.Tags != null)
+                    else if (parameter.TagsList != null)
                     {
                         contractSub.Tags ??= new(4);
-                        foreach (var tag in parameter.Tags)
-                            TryAdd(contractSub.Tags, tag == BigMapTags.Metadata ? BigMapTag.Metadata : BigMapTag.TokenMetadata, connectionId);
+                        foreach (var tag in parameter.TagsList)
+                            TryAdd(contractSub.Tags, tag, connectionId);
                     }
                     else
                     {
@@ -235,10 +235,10 @@ namespace Tzkt.Api.Websocket.Processors
                         TryAdd(contractSub.All, connectionId);
                     }
                 }
-                else if (parameter.Tags?.Count > 0)
+                else if (parameter.TagsList != null)
                 {
-                    foreach (var tag in parameter.Tags)
-                        TryAdd(TagSubs, tag == BigMapTags.Metadata ? BigMapTag.Metadata : BigMapTag.TokenMetadata, connectionId);
+                    foreach (var tag in parameter.TagsList)
+                        TryAdd(TagSubs, tag, connectionId);
                 }
                 else
                 {
@@ -277,11 +277,11 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task Unsubscribe(string connectionId)
+        public void Unsubscribe(string connectionId)
         {
             try
             {
-                await Sema.WaitAsync();
+                Sema.Wait();
                 if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
 
@@ -337,20 +337,15 @@ namespace Tzkt.Api.Websocket.Processors
                 set = new(4);
                 subs.Add(key, set);
             }
-            if (!set.Contains(connectionId))
-            {
-                set.Add(connectionId);
+
+            if (set.Add(connectionId))
                 Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-            }
         }
 
         private static void TryAdd(HashSet<string> set, string connectionId)
         {
-            if (!set.Contains(connectionId))
-            {
-                set.Add(connectionId);
+            if (set.Add(connectionId))
                 Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-            }
         }
 
         private static void TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId)
@@ -373,15 +368,10 @@ namespace Tzkt.Api.Websocket.Processors
 
         private static IEnumerable<Models.BigMapUpdate> Distinct(List<Models.BigMapUpdate> items)
         {
-            var hashset = new HashSet<int>(items.Count);
+            var set = new HashSet<int>(items.Count);
             foreach (var item in items)
-            {
-                if (!hashset.Contains(item.Id))
-                {
-                    hashset.Add(item.Id);
+                if (set.Add(item.Id))
                     yield return item;
-                }
-            }
         }
     }
 }

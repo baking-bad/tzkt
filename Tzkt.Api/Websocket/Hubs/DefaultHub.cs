@@ -39,7 +39,8 @@ namespace Tzkt.Api.Websocket.Hubs
 
         public Task SubscribeToOperations(OperationsParameter parameters)
         {
-            return Operations.Subscribe(Clients.Caller, Context.ConnectionId, parameters.Address, parameters.Types);
+            parameters.EnsureValid();
+            return Operations.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
         public Task SubscribeToBigMaps(BigMapsParameter parameters)
@@ -48,11 +49,11 @@ namespace Tzkt.Api.Websocket.Hubs
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override Task OnDisconnectedAsync(Exception exception)
         {
-            await Operations.Unsubscribe(Context.ConnectionId);
-            await BigMaps.Unsubscribe(Context.ConnectionId);
-            await base.OnDisconnectedAsync(exception);
+            Operations.Unsubscribe(Context.ConnectionId);
+            BigMaps.Unsubscribe(Context.ConnectionId);
+            return base.OnDisconnectedAsync(exception);
         }
     }
 }
