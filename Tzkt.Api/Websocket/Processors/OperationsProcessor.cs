@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
@@ -20,11 +19,18 @@ namespace Tzkt.Api.Websocket.Processors
         #region static
         const string OperationsGroup = "operations";
         const string OperationsChannel = "operations";
-        static readonly SemaphoreSlim Sema = new SemaphoreSlim(1, 1);
+        static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly Dictionary<string, Operations> Subs = new();
-        static readonly Dictionary<string, Dictionary<string, Operations>> AddressSubs = new();
-        static Operations ActiveOps = Operations.None;
+        static readonly Dictionary<Operations, Sub> TypesSubs = new();
+        static readonly Dictionary<string, int> Limits = new();
+
+        class Sub
+        {
+            public HashSet<string> All { get; set; }
+            public Dictionary<string, HashSet<string>> Addresses { get; set; }
+
+            public bool Empty => All == null && Addresses == null;
+        }
         #endregion
 
         readonly StateCache State;
@@ -44,7 +50,7 @@ namespace Tzkt.Api.Websocket.Processors
 
         public async Task OnStateChanged()
         {
-            var sendings = new List<Task>(AddressSubs.Count + Subs.Count);
+            var sendings = new List<Task>();
             try
             {
                 await Sema.WaitAsync();
@@ -76,59 +82,59 @@ namespace Tzkt.Api.Websocket.Processors
                 var limit = 1_000_000; // crutch
                 var symbols = Symbols.None;
 
-                var endorsements = ActiveOps.HasFlag(Operations.Endorsements)
+                var endorsements = TypesSubs.TryGetValue(Operations.Endorsements, out var endorsementsSub)
                     ? Repo.GetEndorsements(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsementOperation>());
 
-                var proposals = ActiveOps.HasFlag(Operations.Proposals)
+                var proposals = TypesSubs.TryGetValue(Operations.Proposals, out var proposalsSub)
                     ? Repo.GetProposals(null, level, null, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ProposalOperation>());
 
-                var ballots = ActiveOps.HasFlag(Operations.Ballots)
+                var ballots = TypesSubs.TryGetValue(Operations.Ballots, out var ballotsSub)
                     ? Repo.GetBallots(null, level, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BallotOperation>());
 
-                var activations = ActiveOps.HasFlag(Operations.Activations)
+                var activations = TypesSubs.TryGetValue(Operations.Activations, out var activationsSub)
                     ? Repo.GetActivations(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ActivationOperation>());
 
-                var doubleBaking = ActiveOps.HasFlag(Operations.DoubleBakings)
+                var doubleBaking = TypesSubs.TryGetValue(Operations.DoubleBakings, out var doubleBakingSub)
                     ? Repo.GetDoubleBakings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleBakingOperation>());
 
-                var doubleEndorsing = ActiveOps.HasFlag(Operations.DoubleEndorsings)
+                var doubleEndorsing = TypesSubs.TryGetValue(Operations.DoubleEndorsings, out var doubleEndorsingSub)
                     ? Repo.GetDoubleEndorsings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleEndorsingOperation>());
 
-                var revelations = ActiveOps.HasFlag(Operations.Revelations)
+                var revelations = TypesSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
                     ? Repo.GetNonceRevelations(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.NonceRevelationOperation>());
 
-                var delegations = ActiveOps.HasFlag(Operations.Delegations)
+                var delegations = TypesSubs.TryGetValue(Operations.Delegations, out var delegationsSub)
                     ? Repo.GetDelegations(null, null, null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
 
-                var originations = ActiveOps.HasFlag(Operations.Originations)
+                var originations = TypesSubs.TryGetValue(Operations.Originations, out var originationsSub)
                     ? Repo.GetOriginations(null, null, null, null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
-                var transactions = ActiveOps.HasFlag(Operations.Transactions)
+                var transactions = TypesSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
                     ? Repo.GetTransactions(null, null, null, null, null, level, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.TransactionOperation>());
 
-                var reveals = ActiveOps.HasFlag(Operations.Reveals)
+                var reveals = TypesSubs.TryGetValue(Operations.Reveals, out var revealsSub)
                     ? Repo.GetReveals(null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevealOperation>());
 
-                var migrations = ActiveOps.HasFlag(Operations.Migrations)
+                var migrations = TypesSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
 
-                var penalties = ActiveOps.HasFlag(Operations.RevelationPenalty)
+                var penalties = TypesSubs.TryGetValue(Operations.RevelationPenalty, out var penaltiesSub)
                     ? Repo.GetRevelationPenalties(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevelationPenaltyOperation>());
 
-                var baking = ActiveOps.HasFlag(Operations.Baking)
+                var baking = TypesSubs.TryGetValue(Operations.Baking, out var bakingSub)
                     ? Repo.GetBakings(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
@@ -151,123 +157,230 @@ namespace Tzkt.Api.Websocket.Processors
 
                 #region prepare to send
                 var toSend = new Dictionary<string, List<Operation>>();
-                foreach (var (connectionId, types) in Subs)
+                
+                void Add(HashSet<string> subs, Operation operation)
                 {
-                    var ops = new List<Operation>();
-
-                    if (types.HasFlag(Operations.Endorsements))
-                        ops.AddRange(endorsements.Result);
-
-                    if (types.HasFlag(Operations.Ballots))
-                        ops.AddRange(ballots.Result);
-
-                    if (types.HasFlag(Operations.Proposals))
-                        ops.AddRange(proposals.Result);
-
-                    if (types.HasFlag(Operations.Activations))
-                        ops.AddRange(activations.Result);
-
-                    if (types.HasFlag(Operations.DoubleBakings))
-                        ops.AddRange(doubleBaking.Result);
-
-                    if (types.HasFlag(Operations.DoubleEndorsings))
-                        ops.AddRange(doubleEndorsing.Result);
-
-                    if (types.HasFlag(Operations.Revelations))
-                        ops.AddRange(revelations.Result);
-
-                    if (types.HasFlag(Operations.Delegations))
-                        ops.AddRange(delegations.Result);
-
-                    if (types.HasFlag(Operations.Originations))
-                        ops.AddRange(originations.Result);
-
-                    if (types.HasFlag(Operations.Transactions))
-                        ops.AddRange(transactions.Result);
-
-                    if (types.HasFlag(Operations.Reveals))
-                        ops.AddRange(reveals.Result);
-
-                    if (types.HasFlag(Operations.Migrations))
-                        ops.AddRange(migrations.Result);
-
-                    if (types.HasFlag(Operations.RevelationPenalty))
-                        ops.AddRange(penalties.Result);
-
-                    if (types.HasFlag(Operations.Baking))
-                        ops.AddRange(baking.Result);
-
-                    toSend[connectionId] = ops;
-                }
-                foreach (var (connectionId, subs) in AddressSubs)
-                {
-                    if (!toSend.ContainsKey(connectionId))
-                        toSend[connectionId] = new List<Operation>();
-                    
-                    var included = Subs.ContainsKey(connectionId)
-                        ? Subs[connectionId]
-                        : Operations.None;
-
-                    foreach (var (address, types) in subs)
+                    foreach (var clientId in subs)
                     {
-                        var ops = toSend[connectionId];
-                        var rest = types ^ (types & included);
-
-                        if (rest.HasFlag(Operations.Endorsements))
-                            ops.AddRange(endorsements.Result.Where(x =>
-                                x.Delegate.Address == address));
-
-                        if (rest.HasFlag(Operations.Ballots))
-                            ops.AddRange(ballots.Result.Where(x =>
-                                x.Delegate.Address == address));
-
-                        if (rest.HasFlag(Operations.Proposals))
-                            ops.AddRange(proposals.Result.Where(x =>
-                                x.Delegate.Address == address));
-
-                        if (rest.HasFlag(Operations.Activations))
-                            ops.AddRange(activations.Result.Where(x => 
-                                x.Account.Address == address));
-
-                        if (rest.HasFlag(Operations.DoubleBakings))
-                            ops.AddRange(doubleBaking.Result.Where(x =>
-                                x.Accuser.Address == address ||
-                                x.Offender.Address == address));
-
-                        if (rest.HasFlag(Operations.DoubleEndorsings))
-                            ops.AddRange(doubleEndorsing.Result.Where(x =>
-                                x.Accuser.Address == address ||
-                                x.Offender.Address == address));
-
-                        if (rest.HasFlag(Operations.Revelations))
-                            ops.AddRange(revelations.Result.Where(x =>
-                                x.Sender.Address == address ||
-                                x.Baker.Address == address));
-
-                        if (rest.HasFlag(Operations.Delegations))
-                            ops.AddRange(delegations.Result.Where(x =>
-                                x.Initiator?.Address == address ||
-                                x.Sender.Address == address ||
-                                x.NewDelegate?.Address == address ||
-                                x.PrevDelegate?.Address == address));
-
-                        if (rest.HasFlag(Operations.Originations))
-                            ops.AddRange(originations.Result.Where(x =>
-                                x.Initiator?.Address == address ||
-                                x.Sender.Address == address ||
-                                x.ContractManager?.Address == address ||
-                                x.ContractDelegate?.Address == address));
-
-                        if (rest.HasFlag(Operations.Transactions))
-                            ops.AddRange(transactions.Result.Where(x =>
-                                x.Initiator?.Address == address ||
-                                x.Sender.Address == address ||
-                                x.Target?.Address == address));
-
-                        if (rest.HasFlag(Operations.Reveals))
-                            ops.AddRange(reveals.Result.Where(x =>
-                                x.Sender.Address == address));
+                        if (!toSend.TryGetValue(clientId, out var list))
+                        {
+                            list = new();
+                            toSend.Add(clientId, list);
+                        }
+                        list.Add(operation);
                     }
+                }
+
+                void AddRange(HashSet<string> subs, IEnumerable<Operation> operations)
+                {
+                    foreach (var clientId in subs)
+                    {
+                        if (!toSend.TryGetValue(clientId, out var list))
+                        {
+                            list = new();
+                            toSend.Add(clientId, list);
+                        }
+                        list.AddRange(operations);
+                    }
+                }
+
+                if (endorsements.Result.Any())
+                {
+                    if (endorsementsSub.All != null)
+                        AddRange(endorsementsSub.All, endorsements.Result);
+
+                    if (endorsementsSub.Addresses != null)
+                        foreach (var op in endorsements.Result)
+                            if (endorsementsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs, op);
+                }
+
+                if (ballots.Result.Any())
+                {
+                    if (ballotsSub.All != null)
+                        AddRange(ballotsSub.All, ballots.Result);
+
+                    if (ballotsSub.Addresses != null)
+                        foreach (var op in ballots.Result)
+                            if (ballotsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs, op);
+                }
+
+                if (proposals.Result.Any())
+                {
+                    if (proposalsSub.All != null)
+                        AddRange(proposalsSub.All, proposals.Result);
+
+                    if (proposalsSub.Addresses != null)
+                        foreach (var op in proposals.Result)
+                            if (proposalsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs, op);
+                }
+
+                if (activations.Result.Any())
+                {
+                    if (activationsSub.All != null)
+                        AddRange(activationsSub.All, activations.Result);
+
+                    if (activationsSub.Addresses != null)
+                        foreach (var op in activations.Result)
+                            if (activationsSub.Addresses.TryGetValue(op.Account.Address, out var accountSubs))
+                                Add(accountSubs, op);
+                }
+
+                if (doubleBaking.Result.Any())
+                {
+                    if (doubleBakingSub.All != null)
+                        AddRange(doubleBakingSub.All, doubleBaking.Result);
+
+                    if (doubleBakingSub.Addresses != null)
+                        foreach (var op in doubleBaking.Result)
+                        {
+                            if (doubleBakingSub.Addresses.TryGetValue(op.Accuser.Address, out var accuserSubs))
+                                Add(accuserSubs, op);
+
+                            if (doubleBakingSub.Addresses.TryGetValue(op.Offender.Address, out var offenderSubs))
+                                Add(offenderSubs, op);
+                        }
+                }
+
+                if (doubleEndorsing.Result.Any())
+                {
+                    if (doubleEndorsingSub.All != null)
+                        AddRange(doubleEndorsingSub.All, doubleEndorsing.Result);
+
+                    if (doubleEndorsingSub.Addresses != null)
+                        foreach (var op in doubleEndorsing.Result)
+                        {
+                            if (doubleEndorsingSub.Addresses.TryGetValue(op.Accuser.Address, out var accuserSubs))
+                                Add(accuserSubs, op);
+
+                            if (doubleEndorsingSub.Addresses.TryGetValue(op.Offender.Address, out var offenderSubs))
+                                Add(offenderSubs, op);
+                        }
+                }
+
+                if (revelations.Result.Any())
+                {
+                    if (revelationsSub.All != null)
+                        AddRange(revelationsSub.All, revelations.Result);
+
+                    if (revelationsSub.Addresses != null)
+                        foreach (var op in revelations.Result)
+                        {
+                            if (revelationsSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs, op);
+
+                            if (revelationsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+                        }
+                }
+
+                if (delegations.Result.Any())
+                {
+                    if (delegationsSub.All != null)
+                        AddRange(delegationsSub.All, delegations.Result);
+
+                    if (delegationsSub.Addresses != null)
+                        foreach (var op in delegations.Result)
+                        {
+                            if (op.Initiator != null && delegationsSub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
+                                Add(initiatorSubs, op);
+
+                            if (delegationsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (op.PrevDelegate != null && delegationsSub.Addresses.TryGetValue(op.PrevDelegate.Address, out var prevSubs))
+                                Add(prevSubs, op);
+
+                            if (op.NewDelegate != null && delegationsSub.Addresses.TryGetValue(op.NewDelegate.Address, out var newSubs))
+                                Add(newSubs, op);
+                        }
+                }
+
+                if (originations.Result.Any())
+                {
+                    if (originationsSub.All != null)
+                        AddRange(originationsSub.All, originations.Result);
+
+                    if (originationsSub.Addresses != null)
+                        foreach (var op in originations.Result)
+                        {
+                            if (op.Initiator != null && originationsSub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
+                                Add(initiatorSubs, op);
+
+                            if (originationsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (op.ContractManager != null && originationsSub.Addresses.TryGetValue(op.ContractManager.Address, out var managerSubs))
+                                Add(managerSubs, op);
+
+                            if (op.ContractDelegate != null && originationsSub.Addresses.TryGetValue(op.ContractDelegate.Address, out var delegateSubs))
+                                Add(delegateSubs, op);
+                        }
+                }
+
+                if (transactions.Result.Any())
+                {
+                    if (transactionsSub.All != null)
+                        AddRange(transactionsSub.All, transactions.Result);
+
+                    if (transactionsSub.Addresses != null)
+                        foreach (var op in transactions.Result)
+                        {
+                            if (op.Initiator != null && transactionsSub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
+                                Add(initiatorSubs, op);
+
+                            if (transactionsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (op.Target != null && transactionsSub.Addresses.TryGetValue(op.Target.Address, out var targetSubs))
+                                Add(targetSubs, op);
+                        }
+                }
+
+                if (reveals.Result.Any())
+                {
+                    if (revealsSub.All != null)
+                        AddRange(revealsSub.All, reveals.Result);
+
+                    if (revealsSub.Addresses != null)
+                        foreach (var op in reveals.Result)
+                            if (revealsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+                }
+
+                if (migrations.Result.Any())
+                {
+                    if (migrationsSub.All != null)
+                        AddRange(migrationsSub.All, migrations.Result);
+
+                    if (migrationsSub.Addresses != null)
+                        foreach (var op in migrations.Result)
+                            if (migrationsSub.Addresses.TryGetValue(op.Account.Address, out var accountSubs))
+                                Add(accountSubs, op);
+                }
+
+                if (penalties.Result.Any())
+                {
+                    if (penaltiesSub.All != null)
+                        AddRange(penaltiesSub.All, penalties.Result);
+
+                    if (penaltiesSub.Addresses != null)
+                        foreach (var op in penalties.Result)
+                            if (penaltiesSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs, op);
+                }
+
+                if (baking.Result.Any())
+                {
+                    if (bakingSub.All != null)
+                        AddRange(bakingSub.All, baking.Result);
+
+                    if (bakingSub.Addresses != null)
+                        foreach (var op in baking.Result)
+                            if (bakingSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs, op);
                 }
                 #endregion
 
@@ -307,38 +420,49 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task Subscribe(IClientProxy client, string connectionId, string address, string types)
+        public async Task Subscribe(IClientProxy client, string connectionId, OperationsParameter parameter)
         {
-            // TODO: validate base58 checksum
-            if (address != null && !Regex.IsMatch(address, "^(tz1|tz2|tz3|KT1)[0-9A-z]{33}$"))
-                throw new HubException("Invalid address");
-
-            var ops = ParseOpTypes(types);
             Task sending = Task.CompletedTask;
             try
             {
                 await Sema.WaitAsync();
                 Logger.LogDebug("New subscription...");
 
+                #region check limits
+                if (Limits.TryGetValue(connectionId, out var cnt) && cnt >= Config.MaxOperationSubscriptions)
+                    throw new HubException($"Subscriptions limit exceeded");
+
+                if (cnt > 0) // reuse already allocated string
+                    connectionId = Limits.Keys.First(x => x == connectionId);
+                #endregion
+
                 #region add to subs
-                if (address == null)
+                foreach (var type in parameter.TypesList)
                 {
-                    Subs[connectionId] = ops;
-                }
-                else
-                {
-                    if (!AddressSubs.TryGetValue(connectionId, out var subs))
+                    if (!TypesSubs.TryGetValue(type, out var typeSub))
                     {
-                        subs = new Dictionary<string, Operations>();
-                        AddressSubs.Add(connectionId, subs);
+                        typeSub = new();
+                        TypesSubs.Add(type, typeSub);
                     }
+                    if (parameter.Address == null)
+                    {
+                        typeSub.All ??= new();
+                        if (typeSub.All.Add(connectionId))
+                            Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+                    }   
+                    else
+                    {
+                        typeSub.Addresses ??= new(4);
+                        if (!typeSub.Addresses.TryGetValue(parameter.Address, out var addressSub))
+                        {
+                            addressSub = new(4);
+                            typeSub.Addresses.Add(parameter.Address, addressSub);
+                        }
 
-                    if (!subs.ContainsKey(address) && subs.Count >= Config.MaxAccountSubscriptions)
-                        throw new HubException($"Subscriptions limit exceeded");
-
-                    subs[address] = ops;
+                        if (addressSub.Add(connectionId))
+                            Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+                    }
                 }
-                ActiveOps |= ops;
                 #endregion
 
                 #region add to group
@@ -372,23 +496,47 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task Unsubscribe(string connectionId)
+        public void Unsubscribe(string connectionId)
         {
             try
             {
-                await Sema.WaitAsync();
-                if (!Subs.ContainsKey(connectionId) && !AddressSubs.ContainsKey(connectionId)) return;
+                Sema.Wait();
+                if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
-                
-                Subs.Remove(connectionId);
-                AddressSubs.Remove(connectionId);
 
-                ActiveOps = Operations.None;
-                foreach (var ops in Subs.Values)
-                    ActiveOps |= ops;
-                foreach (var sub in AddressSubs.Values)
-                    foreach (var ops in sub.Values)
-                        ActiveOps |= ops;
+                foreach (var (type, typeSub) in TypesSubs)
+                {
+                    if (typeSub.All != null)
+                    {
+                        if (typeSub.All.Remove(connectionId))
+                            Limits[connectionId]--;
+
+                        if (typeSub.All.Count == 0)
+                            typeSub.All = null;
+                    }
+
+                    if (typeSub.Addresses != null)
+                    {
+                        foreach (var (address, addressSubs) in typeSub.Addresses)
+                        {
+                            if (addressSubs.Remove(connectionId))
+                                Limits[connectionId]--;
+
+                            if (addressSubs.Count == 0)
+                                typeSub.Addresses.Remove(address);
+                        }
+
+                        if (typeSub.Addresses.Count == 0)
+                            typeSub.Addresses = null;
+                    }
+
+                    if (typeSub.Empty)
+                        TypesSubs.Remove(type);
+                }
+
+                if (Limits[connectionId] != 0)
+                    Logger.LogCritical("Failed to unsibscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
+                Limits.Remove(connectionId);
 
                 Logger.LogDebug("Client {0} unsubscribed", connectionId);
             }
@@ -401,29 +549,13 @@ namespace Tzkt.Api.Websocket.Processors
                 Sema.Release();
             }
         }
-        
-        private static Operations ParseOpTypes(string query)
-        {
-            if (string.IsNullOrEmpty(query))
-                return Operations.Transactions;
-
-            if (!OpTypes.TryParse(query.Split(','), out var res))
-                throw new HubException($"Invalid operation type");
-
-            return res;
-        }
 
         private static IEnumerable<Operation> Distinct(List<Operation> ops)
         {
-            var hashset = new HashSet<int>(ops.Count);
+            var set = new HashSet<int>(ops.Count);
             foreach (var op in ops)
-            {
-                if (!hashset.Contains(op.Id))
-                {
-                    hashset.Add(op.Id);
+                if (set.Add(op.Id))
                     yield return op;
-                }
-            }
         }
     }
 }

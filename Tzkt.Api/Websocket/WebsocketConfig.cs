@@ -6,7 +6,7 @@ namespace Tzkt.Api.Websocket
     {
         public bool Enabled { get; set; } = true;
         public int MaxConnections { get; set; } = 1000;
-        public int MaxAccountSubscriptions { get; set; } = 50;
+        public int MaxOperationSubscriptions { get; set; } = 50;
         public int MaxBigMapSubscriptions { get; set; } = 50;
     }
 

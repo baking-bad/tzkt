@@ -24,29 +24,26 @@ namespace Tzkt.Api
         public const string RevelationPenalty = "revelation_penalty";
         public const string Baking = "baking";
 
-        public static bool TryParse(IEnumerable<string> types, out Operations res)
+        public static bool TryParse(string type, out Operations res)
         {
             res = Operations.None;
-            foreach (var type in types)
+            switch (type)
             {
-                switch (type)
-                {
-                    case Endorsement: res |= Operations.Endorsements; break;
-                    case Ballot: res |= Operations.Ballots; break;
-                    case Proposal: res |= Operations.Proposals; break;
-                    case Activation: res |= Operations.Activations; break;
-                    case DoubleBaking: res |= Operations.DoubleBakings; break;
-                    case DoubleEndorsing: res |= Operations.DoubleEndorsings; break;
-                    case NonceRevelation: res |= Operations.Revelations; break;
-                    case Delegation: res |= Operations.Delegations; break;
-                    case Origination: res |= Operations.Originations; break;
-                    case Transaction: res |= Operations.Transactions; break;
-                    case Reveal: res |= Operations.Reveals; break;
-                    case Migration: res |= Operations.Migrations; break;
-                    case RevelationPenalty: res |= Operations.RevelationPenalty; break;
-                    case Baking: res |= Operations.Baking; break;
-                    default: return false;
-                }
+                case Endorsement: res = Operations.Endorsements; break;
+                case Ballot: res = Operations.Ballots; break;
+                case Proposal: res = Operations.Proposals; break;
+                case Activation: res = Operations.Activations; break;
+                case DoubleBaking: res = Operations.DoubleBakings; break;
+                case DoubleEndorsing: res = Operations.DoubleEndorsings; break;
+                case NonceRevelation: res = Operations.Revelations; break;
+                case Delegation: res = Operations.Delegations; break;
+                case Origination: res = Operations.Originations; break;
+                case Transaction: res = Operations.Transactions; break;
+                case Reveal: res = Operations.Reveals; break;
+                case Migration: res = Operations.Migrations; break;
+                case RevelationPenalty: res = Operations.RevelationPenalty; break;
+                case Baking: res = Operations.Baking; break;
+                default: return false;
             }
             return true;
         }
