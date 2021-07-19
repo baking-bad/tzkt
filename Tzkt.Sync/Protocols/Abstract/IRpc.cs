@@ -15,10 +15,6 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetContractAsync(int level, string address);
         Task<JsonElement> GetDelegateAsync(int level, string address);
         #endregion
-
-        #region bootstrap
-        Task<JsonElement> GetAllContractsAsync(int level);
-        #endregion
         
         #region diagnostics
         Task<JsonElement> GetGlobalCounterAsync(int level);

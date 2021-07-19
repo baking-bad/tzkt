@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 var (protocol, parameters) = BootstrapProtocol(rawBlock);
 
-                var accounts = await BootstrapAccounts(protocol);
+                var accounts = await BootstrapAccounts(protocol, parameters);
                 var (bakingRights, endorsingRights) = await BootstrapBakingRights(protocol, accounts);
                 await BootstrapCycles(protocol, accounts);
                 BootstrapDelegatorCycles(protocol, accounts);
@@ -22,6 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 BootstrapSnapshotBalances(accounts);
                 BootstrapVoting(protocol, accounts);
                 await BootstrapCommitments(parameters);
+                await ActivateContext(state);
             }
             else // upgrade
             {
@@ -34,6 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (state.Level == 1) // clear
             {
+                await DeactivateContext(state);
                 await ClearCommitments();
                 await ClearVoting();
                 await ClearSnapshotBalances();
@@ -51,6 +53,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
+        protected virtual Task ActivateContext(AppState state) => Task.CompletedTask;
+        protected virtual Task DeactivateContext(AppState state) => Task.CompletedTask;
         protected virtual Task MigrateContext(AppState state) => Task.CompletedTask;
         protected virtual Task RevertContext(AppState state) => Task.CompletedTask;
     }

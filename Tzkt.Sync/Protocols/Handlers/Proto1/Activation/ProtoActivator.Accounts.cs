@@ -3,37 +3,51 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Contracts;
 using Netezos.Encoding;
+using Netezos.Keys;
+using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        async Task<List<Account>> BootstrapAccounts(Protocol protocol)
+        async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
         {
-            var rawAccounts = await Proto.Rpc.GetAllContractsAsync(1);
-            var accounts = new List<Account>(65);
+            var bootstrapAccounts = parameters["bootstrap_accounts"]?
+                .Select(x => (x[0].Value<string>(), x[1].Value<long>()))
+                .ToList() ?? new(0);
+
+            var bootstrapContracts = parameters["bootstrap_contracts"]?
+                .Select(x =>
+                (
+                    x["amount"].Value<long>(),
+                    x["delegate"]?.Value<string>() ?? null,
+                    x["script"]["code"].ToString(),
+                    x["script"]["storage"].ToString())
+                )
+                .ToList() ?? new(0);
+
+            var accounts = new List<Account>(bootstrapAccounts.Count + bootstrapContracts.Count);
 
             #region allocate null-address
-            var nullAddress = await Cache.Accounts.GetAsync(NullAddress.Address);
+            var nullAddress = (User)await Cache.Accounts.GetAsync(NullAddress.Address);
             if (nullAddress.Id != NullAddress.Id)
                 throw new Exception("Failed to allocate null-address");
             #endregion
 
             #region bootstrap delegates
-            foreach (var data in rawAccounts
-                .EnumerateArray()
-                .Where(x => x[0].RequiredString() == x[1].OptionalString("delegate")))
+            foreach (var (pubKey, balance) in bootstrapAccounts.Where(x => x.Item1[0] != 't'))
             {
                 var baker = new Data.Models.Delegate
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = data[0].RequiredString(),
-                    Balance = data[1].RequiredInt64("balance"),
-                    StakingBalance = data[1].RequiredInt64("balance"),
-                    Counter = data[1].RequiredInt32("counter"),
-                    PublicKey = data[1].RequiredString("manager"),
+                    Address = PubKey.FromBase58(pubKey).Address,
+                    Balance = balance,
+                    StakingBalance = balance,
+                    Counter = 0,
+                    PublicKey = pubKey,
                     FirstLevel = 1,
                     LastLevel = 1,
                     ActivationLevel = 1,
@@ -48,16 +62,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap users
-            foreach (var data in rawAccounts
-                .EnumerateArray()
-                .Where(x => x[0].RequiredString()[0] == 't' && x[1].OptionalString("delegate") == null))
+            foreach (var (pkh, balance) in bootstrapAccounts.Where(x => x.Item1[0] == 't'))
             {
                 var user = new User
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = data[0].RequiredString(),
-                    Balance = data[1].RequiredInt64("balance"),
-                    Counter = data[1].RequiredInt32("counter"),
+                    Address = pkh,
+                    Balance = balance,
+                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Type = AccountType.User
@@ -68,30 +80,43 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap contracts
-            foreach (var data in rawAccounts.EnumerateArray().Where(x => x[0].RequiredString()[0] == 'K'))
+            var index = 0;
+            foreach (var (balance, delegatePkh, codeStr, storageStr) in bootstrapContracts)
             {
-                var delegat = Cache.Accounts.GetDelegate(data[1].OptionalString("delegate"));
-                var manager = (User)await Cache.Accounts.GetAsync(data[1].RequiredString("manager"));
+                #region contract
+                var delegat = Cache.Accounts.GetDelegate(delegatePkh);
+                var manager = nullAddress;
 
                 var contract = new Contract
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = data[0].RequiredString(),
-                    Balance = data[1].RequiredInt64("balance"),
-                    Counter = data[1].RequiredInt32("counter"),
+                    Address = OriginationNonce.GetContractAddress(index++),
+                    Balance = balance,
+                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Spendable = false,
-                    DelegationLevel = 1,
+                    DelegationLevel = delegat == null ? null : 1,
                     Delegate = delegat,
                     Manager = manager,
-                    Staked = !string.IsNullOrEmpty(data[1].OptionalString("delegate")),
+                    Staked = delegat != null,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                 };
 
+                manager.ContractsCount++;
+                if (delegat != null)
+                {
+                    delegat.DelegatorsCount++;
+                    delegat.StakingBalance += contract.Balance;
+                }
+
+                Cache.Accounts.Add(contract);
+                accounts.Add(contract);
+                #endregion
+
                 #region script
-                var code = Micheline.FromJson(data[1].Required("code")) as MichelineArray;
+                var code = Micheline.FromJson(codeStr) as MichelineArray;
                 var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
                 var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
                 var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
@@ -111,10 +136,27 @@ namespace Tzkt.Sync.Protocols.Proto1
                 contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
                 contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
 
+                contract.Tzips = Tzip.None;
+                if (script.Schema.IsFA1())
+                {
+                    if (script.Schema.IsFA12())
+                        contract.Tzips |= Tzip.FA12;
+
+                    contract.Tzips |= Tzip.FA1;
+                    contract.Kind = ContractKind.Asset;
+                }
+                if (script.Schema.IsFA2())
+                {
+                    contract.Tzips |= Tzip.FA2;
+                    contract.Kind = ContractKind.Asset;
+                }
+
                 Db.Scripts.Add(script);
                 Cache.Schemas.Add(contract, script.Schema);
+                #endregion
 
-                var storageValue = Micheline.FromJson(data[1].Required("storage"));
+                #region storage
+                var storageValue = Micheline.FromJson(storageStr);
                 var storage = new Storage
                 {
                     Id = Cache.AppState.NextStorageId(),
@@ -129,12 +171,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Cache.Storages.Add(contract, storage);
                 #endregion
 
-                manager.ContractsCount++;
-                delegat.DelegatorsCount++;
-                delegat.StakingBalance += contract.Balance;
-
-                Cache.Accounts.Add(contract);
-                accounts.Add(contract);
             }
             #endregion
 
@@ -191,7 +227,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         }
 
         async Task ClearAccounts()
-        {
+        { 
             await Db.Database.ExecuteSqlRawAsync(@"
                 DELETE FROM ""Accounts"";
                 DELETE FROM ""MigrationOps"";

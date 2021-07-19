@@ -14,7 +14,6 @@ namespace Tzkt.Sync.Protocols.Proto10
 {
     class ProtoActivator : Proto9.ProtoActivator
     {
-        public const string NullAddress = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU";
         public const string CpmmContract = "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5";
         public const string LiquidityToken = "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo";
         public const string FallbackToken = "KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN";
@@ -86,6 +85,25 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.LBEscapeThreshold = 1_000_000;
         }
 
+        protected override async Task ActivateContext(AppState state)
+        {
+            var block = await Cache.Blocks.CurrentAsync();
+            await OriginateContract(block, CpmmContract);
+            await OriginateContract(block, LiquidityToken);
+            if (!await Cache.Accounts.ExistsAsync(Tzbtc))
+                await OriginateContract(block, FallbackToken);
+        }
+
+        protected override async Task DeactivateContext(AppState state)
+        {
+            await Db.Database.ExecuteSqlRawAsync(@"
+                DELETE FROM ""BigMapUpdates"";
+                DELETE FROM ""BigMapKeys"";
+                DELETE FROM ""BigMaps"";");
+            Cache.BigMapKeys.Reset();
+            Cache.BigMaps.Reset();
+        }
+
         protected override async Task MigrateContext(AppState state)
         {
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
@@ -118,7 +136,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             var block = await Cache.Blocks.CurrentAsync();
             await OriginateContract(block, CpmmContract);
             await OriginateContract(block, LiquidityToken);
-
             if (!await Cache.Accounts.ExistsAsync(Tzbtc))
                 await OriginateContract(block, FallbackToken);
         }
@@ -426,7 +443,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 FirstBlock = block,
                 Address = address,
                 Balance = rawContract.RequiredInt64("balance"),
-                Creator = await Cache.Accounts.GetAsync(NullAddress),
+                Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
                 Type = AccountType.Contract,
                 Kind = ContractKind.SmartContract,
                 MigrationsCount = 1,
@@ -562,7 +579,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
                 if (address == LiquidityToken && allocated.StoragePath == "tokens")
                 {
-                    var rawKey = new MichelineString(NullAddress);
+                    var rawKey = new MichelineString(NullAddress.Address);
                     var rawValue = new MichelineInt(100);
 
                     allocated.ActiveKeys++;
@@ -604,7 +621,9 @@ namespace Tzkt.Sync.Protocols.Proto10
         async Task RemoveContract(string address)
         {
             var contract = await Cache.Accounts.GetAsync(address) as Contract;
-            var bigmaps = await Db.BigMaps.Where(x => x.ContractId == contract.Id).ToListAsync();
+            var bigmaps = await Db.BigMaps.AsNoTracking()
+                .Where(x => x.ContractId == contract.Id)
+                .ToListAsync();
 
             var state = Cache.AppState.Get();
             state.MigrationOpsCount--;

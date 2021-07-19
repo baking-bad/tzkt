@@ -36,11 +36,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates/{address}");
         #endregion
 
-        #region bootstrap
-        public virtual Task<JsonElement> GetAllContractsAsync(int level)
-            => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/contracts/index?depth=1");
-        #endregion
-
         #region diagnostics
         public virtual Task<JsonElement> GetGlobalCounterAsync(int level)
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/contracts/global_counter");
