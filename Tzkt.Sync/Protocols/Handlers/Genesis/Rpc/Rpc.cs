@@ -37,11 +37,6 @@ namespace Tzkt.Sync.Protocols.Genesis
             => throw new InvalidOperationException();
         #endregion
 
-        #region bootstrap
-        public Task<JsonElement> GetAllContractsAsync(int level)
-            => throw new InvalidOperationException();
-        #endregion
-
         #region diagnostics
         public Task<JsonElement> GetGlobalCounterAsync(int level)
             => throw new InvalidOperationException();
