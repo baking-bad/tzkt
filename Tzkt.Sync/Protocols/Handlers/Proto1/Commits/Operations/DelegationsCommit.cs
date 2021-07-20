@@ -19,6 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+            var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var newDelegate = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             var result = content.Required("metadata").Required("operation_result");
 
@@ -35,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 Sender = sender,
                 Delegate = newDelegate,
-                PrevDelegate = sender.Delegate,
+                PrevDelegate = prevDelegate,
                 Amount = sender.Balance - content.RequiredInt64("fee"),
                 Status = result.RequiredString("status") switch
                 {
@@ -55,9 +56,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region entities
             //var block = delegation.Block;
             var blockBaker = block.Baker;
-            //var sender = delegation.Sender;
-            var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            //var newDelegate = delegation.Delegate;
 
             //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
@@ -143,6 +141,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ?? throw new ValidationException("Delegation source address doesn't exist");
 
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+            var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var newDelegate = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             var result = content.Required("result");
 
@@ -158,7 +157,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Nonce = content.RequiredInt32("nonce"),
                 Sender = sender,
                 Delegate = newDelegate,
-                PrevDelegate = sender.Delegate,
+                PrevDelegate = prevDelegate,
                 Amount = sender.Balance,
                 Status = result.RequiredString("status") switch
                 {
@@ -178,7 +177,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region entities
             var parentTx = parent;
             var parentSender = parentTx.Sender;
-            var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(sender);
             Db.TryAttach(parentSender);
