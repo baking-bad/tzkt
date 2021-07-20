@@ -4,7 +4,6 @@ namespace Tzkt.Sync.Services
 {
     public class TezosNodeConfig
     {
-        public string ChainId { get; set; }
         public string Endpoint { get; set; }
         public int Timeout { get; set; }
     }

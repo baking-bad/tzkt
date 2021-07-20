@@ -67,6 +67,8 @@ namespace Tzkt.Sync.Protocols
 
             #region update state
             var state = Cache.AppState.Get();
+            state.ChainId = rawBlock.RequiredString("chain_id");
+            state.Chain = Chains.GetName(state.ChainId);
             state.Cycle = -1;
             state.Level = block.Level;
             state.Timestamp = block.Timestamp;
@@ -93,6 +95,8 @@ namespace Tzkt.Sync.Protocols
 
             #region update state
             var state = Cache.AppState.Get();
+            state.ChainId = null;
+            state.Chain = null;
             state.Cycle = -1;
             state.Level = -1;
             state.Timestamp = DateTime.MinValue;
