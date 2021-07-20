@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +8,6 @@ namespace Tzkt.Sync.Services
 {
     public sealed class TezosNode : IDisposable
     {
-        readonly string ChainId;
         readonly TzktClient Rpc;
 
         Header Header;
@@ -20,7 +17,6 @@ namespace Tzkt.Sync.Services
         public TezosNode(IConfiguration config)
         {
             var nodeConf = config.GetTezosNodeConfig();
-            ChainId = nodeConf.ChainId;
             Rpc = new TzktClient(nodeConf.Endpoint, nodeConf.Timeout);
         }
 
@@ -36,9 +32,6 @@ namespace Tzkt.Sync.Services
             {
                 var header = await Rpc.GetObjectAsync<Header>("chains/main/blocks/head/header");
 
-                if (header.ChainId != ChainId)
-                    throw new Exception("Invalid chain");
-
                 if (header.Protocol != Header?.Protocol)
                     Constants = await Rpc.GetObjectAsync<Constants>("chains/main/blocks/head/context/constants");
 
@@ -52,14 +45,9 @@ namespace Tzkt.Sync.Services
             return Header;
         }
 
-        public async Task<Header> GetHeaderAsync(int level)
+        public Task<Header> GetHeaderAsync(int level)
         {
-            var header = await Rpc.GetObjectAsync<Header>($"chains/main/blocks/{level}/header");
-
-            if (header.ChainId != ChainId)
-                throw new Exception("Invalid chain");
-
-            return header;
+            return Rpc.GetObjectAsync<Header>($"chains/main/blocks/{level}/header");
         }
 
         public async Task<bool> HasUpdatesAsync(int level)

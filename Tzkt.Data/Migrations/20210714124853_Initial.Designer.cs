@@ -172,6 +172,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("BlocksCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Chain")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ChainId")
+                        .HasColumnType("text");
+
                     b.Property<int>("CommitmentsCount")
                         .HasColumnType("integer");
 

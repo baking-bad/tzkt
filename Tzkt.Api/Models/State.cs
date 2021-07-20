@@ -1,12 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
     public class State
     {
+        /// <summary>
+        /// Alias name of the chain (or "private" if it's not on the list of known chains)
+        /// </summary>
+        public string Chain { get; set; }
+
+        /// <summary>
+        /// Unique identificator of the chain
+        /// </summary>
+        public string ChainId { get; set; }
+
         /// <summary>
         /// Current cycle
         /// </summary>

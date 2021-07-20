@@ -22,6 +22,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task ValidateBlock(JsonElement block)
         {
+            if (block.RequiredString("chain_id") != Cache.AppState.GetChainId())
+                throw new ValidationException("invalid chain");
+
             var protocol = block.RequiredString("protocol");
             Protocol = await Cache.Protocols.GetAsync(protocol);
 

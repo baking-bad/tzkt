@@ -27,6 +27,11 @@ namespace Tzkt.Sync.Services.Cache
             return AppState;
         }
 
+        public string GetChainId()
+        {
+            return AppState.ChainId;
+        }
+
         public int GetLevel()
         {
             return AppState.Level;

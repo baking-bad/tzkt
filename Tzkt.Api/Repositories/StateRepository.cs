@@ -23,6 +23,8 @@ namespace Tzkt.Api.Repositories
             var appState = State.Current;
             return new State
             {
+                Chain = appState.Chain,
+                ChainId = appState.ChainId,
                 KnownLevel = appState.KnownHead,
                 LastSync = appState.LastSync,
                 Hash = appState.Hash,

@@ -15,6 +15,9 @@ namespace Tzkt.Sync.Protocols.Initiator
 
         public Task ValidateBlock(JsonElement block)
         {
+            if (block.RequiredString("chain_id") != Cache.AppState.GetChainId())
+                throw new ValidationException("invalid chain");
+
             if (block.Required("header").RequiredInt32("level") != Cache.AppState.GetNextLevel())
                 throw new ValidationException("invalid block level", true);
 

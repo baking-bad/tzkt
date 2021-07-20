@@ -3,23 +3,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
-    //TODO: add chain id
     public class AppState
     {
         public int Id { get; set; }
+        public string Chain { get; set; }
+        public string ChainId { get; set; }
         public int KnownHead { get; set; }
         public DateTime LastSync { get; set; }
 
+        #region head
         public int Cycle { get; set; }
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
         public string Protocol { get; set; }
         public string NextProtocol { get; set; }
         public string Hash { get; set; }
-
         public int VotingEpoch { get; set; }
         public int VotingPeriod { get; set; }
+        #endregion
 
+        #region counters
         public int AccountCounter { get; set; }
         public int OperationCounter { get; set; }
         public int ManagerCounter { get; set; }
@@ -28,6 +31,7 @@ namespace Tzkt.Data.Models
         public int BigMapUpdateCounter { get; set; }
         public int StorageCounter { get; set; }
         public int ScriptCounter { get; set; }
+        #endregion
 
         #region entities count
         public int CommitmentsCount { get; set; }
