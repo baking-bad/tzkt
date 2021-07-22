@@ -776,7 +776,7 @@ namespace Tzkt.Api.Repositories
             return new Entrypoint
             {
                 Name = name,
-                JsonParameters = json ? ep.Humanize() : null,
+                JsonParameters = json ? (RawJson)ep.Humanize() : null,
                 MichelineParameters = mich,
                 MichelsonParameters = michelson ? (mich ?? ep.ToMicheline()).ToMichelson() : null,
                 Unused = !param.IsEntrypointUseful(name)
@@ -809,7 +809,7 @@ namespace Tzkt.Api.Repositories
                     return new Entrypoint
                     {
                         Name = x.Key,
-                        JsonParameters = json ? x.Value.Humanize() : null,
+                        JsonParameters = json ? (RawJson)x.Value.Humanize() : null,
                         MichelineParameters = mich,
                         MichelsonParameters = michelson ? (mich ?? x.Value.ToMicheline()).ToMichelson() : null,
                         Unused = all && !param.IsEntrypointUseful(x.Key)
