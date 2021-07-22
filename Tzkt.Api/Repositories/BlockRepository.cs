@@ -488,6 +488,14 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetReveals(block, quote)
                 : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+            var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
+                ? Operations.GetMigrations(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
+                : Task.FromResult(Enumerable.Empty<MigrationOperation>());
+
+            var penalties = operations.HasFlag(Data.Models.Operations.RevelationPenalty)
+                ? Operations.GetRevelationPenalties(null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
+
             await Task.WhenAll(
                 endorsements,
                 proposals,
@@ -499,7 +507,9 @@ namespace Tzkt.Api.Repositories
                 delegations,
                 originations,
                 transactions,
-                reveals);
+                reveals,
+                migrations,
+                penalties);
 
             block.Endorsements = endorsements.Result;
             block.Proposals = proposals.Result;
@@ -512,6 +522,8 @@ namespace Tzkt.Api.Repositories
             block.Originations = originations.Result;
             block.Transactions = transactions.Result;
             block.Reveals = reveals.Result;
+            block.Migrations = migrations.Result;
+            block.RevelationPenalties = penalties.Result;
         }
     }
 }

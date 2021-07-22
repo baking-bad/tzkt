@@ -130,16 +130,6 @@ namespace Tzkt.Api.Models
         public int CodeHash { get; set; }
 
         /// <summary>
-        /// List of contracts, related to the contract
-        /// </summary>
-        public IEnumerable<RelatedContract> Contracts { get; set; }
-
-        /// <summary>
-        /// List of all operations (synthetic type included), related to the contract
-        /// </summary>
-        public IEnumerable<Operation> Operations { get; set; }
-
-        /// <summary>
         /// Metadata of the contract (alias, logo, website, contacts, etc)
         /// </summary>
         public AccountMetadata Metadata { get; set; }
