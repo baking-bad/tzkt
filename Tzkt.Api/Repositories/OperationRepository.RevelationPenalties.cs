@@ -21,6 +21,34 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
+        public async Task<RevelationPenaltyOperation> GetRevelationPenalty(int id, Symbols quote)
+        {
+            var sql = $@"
+                SELECT      o.*, b.""Hash""
+                FROM        ""RevelationPenaltyOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""Id"" = @id
+                LIMIT       1";
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync(sql, new { id });
+            if (row == null) return null;
+
+            return new RevelationPenaltyOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Block = row.Hash,
+                Timestamp = row.Timestamp,
+                Baker = Accounts.GetAlias(row.BakerId),
+                MissedLevel = row.MissedLevel,
+                LostReward = row.LostReward,
+                LostFees = row.LostFees,
+                Quote = Quotes.Get(quote, row.Level)
+            };
+        }
+
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(
             AccountParameter baker,
             Int32Parameter level,

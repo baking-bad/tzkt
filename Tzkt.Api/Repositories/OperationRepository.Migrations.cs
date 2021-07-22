@@ -21,6 +21,53 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
+        public async Task<MigrationOperation> GetMigration(int id, MichelineFormat format, Symbols quote)
+        {
+            var sql = $@"
+                SELECT      o.*, b.""Hash""
+                FROM        ""MigrationOps"" as o
+                INNER JOIN  ""Blocks"" as b 
+                        ON  b.""Level"" = o.""Level""
+                WHERE       o.""Id"" = @id
+                LIMIT       1";
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql, new { id });
+
+            // TODO: optimize for QueryFirstOrDefaultAsync
+
+            #region include storage
+            var storages = await AccountRepository.GetStorages(db,
+                rows.Where(x => x.StorageId != null)
+                    .Select(x => (int)x.StorageId)
+                    .Distinct()
+                    .ToList(),
+                format);
+            #endregion
+
+            #region include diffs
+            var diffs = await BigMapsRepository.GetMigrationDiffs(db,
+                rows.Where(x => x.BigMapUpdates != null)
+                    .Select(x => (int)x.Id)
+                    .ToList(),
+                format);
+            #endregion
+
+            return rows.Select(row => new MigrationOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Block = row.Hash,
+                Timestamp = row.Timestamp,
+                Account = Accounts.GetAlias(row.AccountId),
+                Kind = MigrationKinds.ToString(row.Kind),
+                BalanceChange = row.BalanceChange,
+                Storage = row.StorageId == null ? null : storages?[row.StorageId],
+                Diffs = row.BigMapUpdates == null ? null : diffs?[row.Id],
+                Quote = Quotes.Get(quote, row.Level)
+            }).FirstOrDefault();
+        }
+
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(
             AccountParameter account,
             MigrationKindParameter kind,
