@@ -1649,6 +1649,25 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get migration by id
+        /// </summary>
+        /// <remarks>
+        /// Returns migration operation with specified id.
+        /// </remarks>
+        /// <param name="id">Operation id</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("migrations/{id:int}")]
+        public Task<MigrationOperation> GetMigrationById(
+            [Required][Min(0)] int id,
+            MichelineFormat micheline = MichelineFormat.Json, 
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetMigration(id, micheline, quote);
+        }
+
+        /// <summary>
         /// Get migrations count
         /// </summary>
         /// <remarks>
@@ -1739,6 +1758,23 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get revelation penalty by id
+        /// </summary>
+        /// <remarks>
+        /// Returns revelation penalty operation with specified id.
+        /// </remarks>
+        /// <param name="id">Operation id</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("revelation_penalties/{id:int}")]
+        public Task<RevelationPenaltyOperation> GetRevelationPenaltyById(
+            [Required][Min(0)] int id,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetRevelationPenalty(id, quote);
+        }
+
+        /// <summary>
         /// Get revelation penalties count
         /// </summary>
         /// <remarks>
@@ -1826,6 +1862,23 @@ namespace Tzkt.Api.Controllers
                     });
                 }
             }
+        }
+
+        /// <summary>
+        /// Get baking by id
+        /// </summary>
+        /// <remarks>
+        /// Returns baking operation with specified id.
+        /// </remarks>
+        /// <param name="id">Operation id</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("baking/{id:int}")]
+        public Task<BakingOperation> GetBakingById(
+            [Required][Min(0)] int id,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetBaking(id, quote);
         }
 
         /// <summary>

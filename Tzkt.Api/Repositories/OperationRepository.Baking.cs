@@ -22,6 +22,33 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
+        public async Task<BakingOperation> GetBaking(int id, Symbols quote)
+        {
+            var sql = $@"
+                SELECT      ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Deposit"", ""Reward"", ""Fees""
+                FROM        ""Blocks""
+                WHERE       ""Id"" = @id
+                LIMIT       1";
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync(sql, new { id });
+            if (row == null) return null;
+
+            return new BakingOperation
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = row.Timestamp,
+                Baker = Accounts.GetAlias(row.BakerId),
+                Block = row.Hash,
+                Priority = row.Priority,
+                Deposit = row.Deposit,
+                Reward = row.Reward,
+                Fees = row.Fees,
+                Quote = Quotes.Get(quote, row.Level)
+            };
+        }
+
         public async Task<IEnumerable<BakingOperation>> GetBakings(
             AccountParameter baker,
             Int32Parameter level,
