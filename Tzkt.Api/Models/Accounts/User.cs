@@ -111,16 +111,6 @@ namespace Tzkt.Api.Models
         public DateTime? LastActivityTime { get; set; }
 
         /// <summary>
-        /// List of contracts, related (originated or managed) to the account
-        /// </summary>
-        public IEnumerable<RelatedContract> Contracts { get; set; }
-
-        /// <summary>
-        /// List of all operations (synthetic type included), related to the account
-        /// </summary>
-        public IEnumerable<Operation> Operations { get; set; }
-
-        /// <summary>
         /// Metadata of the account (alias, logo, website, contacts, etc)
         /// </summary>
         public AccountMetadata Metadata { get; set; }

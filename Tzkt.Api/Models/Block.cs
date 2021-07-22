@@ -146,6 +146,16 @@ namespace Tzkt.Api.Models
         /// List of reveal (is used to reveal the public key associated with an account) operations, included in the block
         /// </summary>
         public IEnumerable<RevealOperation> Reveals { get; set; }
+
+        /// <summary>
+        /// List of migration operations, implicitly applied at the end of the block
+        /// </summary>
+        public IEnumerable<MigrationOperation> Migrations { get; set; }
+
+        /// <summary>
+        /// List of revelation penalty operations, implicitly applied at the end of the block
+        /// </summary>
+        public IEnumerable<RevelationPenaltyOperation> RevelationPenalties { get; set; }
         #endregion
 
         #region injecting

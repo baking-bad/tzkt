@@ -191,21 +191,6 @@ namespace Tzkt.Api.Models
         public DateTime LastActivityTime { get; set; }
 
         /// <summary>
-        /// List of contracts, related (originated or managed) to the delegate (baker) 
-        /// </summary>
-        public IEnumerable<RelatedContract> Contracts { get; set; }
-
-        /// <summary>
-        /// List of current delegators of the delegate (baker)
-        /// </summary>
-        public IEnumerable<Delegator> Delegators { get; set; }
-
-        /// <summary>
-        /// List of all operations (synthetic type included), related to the delegate
-        /// </summary>
-        public IEnumerable<Operation> Operations { get; set; }
-
-        /// <summary>
         /// Metadata of the delegate (alias, logo, website, contacts, etc)
         /// </summary>
         public AccountMetadata Metadata { get; set; }
