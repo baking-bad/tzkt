@@ -86,6 +86,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter creator,
             AccountParameter manager,
             AccountParameter @delegate,
+            Int64Parameter balance,
             Int32Parameter lastActivity,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
@@ -109,6 +110,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
+                .Filter("Balance", balance)
                 .Filter("LastLevel", lastActivity)
                 .Filter("TypeHash", typeHash)
                 .Filter("CodeHash", codeHash)
@@ -183,6 +185,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter creator,
             AccountParameter manager,
             AccountParameter @delegate,
+            Int64Parameter balance,
             Int32Parameter lastActivity,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
@@ -240,6 +243,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
+                .Filter("Balance", balance)
                 .Filter("LastLevel", lastActivity)
                 .Filter("TypeHash", typeHash)
                 .Filter("CodeHash", codeHash)
@@ -403,6 +407,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter creator,
             AccountParameter manager,
             AccountParameter @delegate,
+            Int64Parameter balance,
             Int32Parameter lastActivity,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
@@ -457,6 +462,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
+                .Filter("Balance", balance)
                 .Filter("LastLevel", lastActivity)
                 .Filter("TypeHash", typeHash)
                 .Filter("CodeHash", codeHash)
