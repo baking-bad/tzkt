@@ -17,5 +17,4 @@ namespace Tzkt.Api.Websocket
             return config.GetSection("Websocket")?.Get<WebsocketConfig>() ?? new WebsocketConfig();
         }
     }
-
 }

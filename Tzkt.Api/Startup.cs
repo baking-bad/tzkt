@@ -115,6 +115,15 @@ namespace Tzkt.Api
             }
             #endregion
 
+            #region health checks
+            var healthChecks = Configuration.GetHealthChecksConfig();
+            if (healthChecks.Enabled)
+            {
+                services.AddHealthChecks()
+                    .AddCheck<DumbHealthCheck>(nameof(DumbHealthCheck));
+            }
+            #endregion
+
             #region dapper
             SqlMapper.AddTypeHandler(new AccountMetadataTypeHandler());
             SqlMapper.AddTypeHandler(new JsonElementTypeHandler());
@@ -142,10 +151,21 @@ namespace Tzkt.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+
+                #region web socket
                 if (Configuration.GetWebsocketConfig().Enabled)
                 {
                     endpoints.MapHub<DefaultHub>("/v1/events");
                 }
+                #endregion
+
+                #region health checks
+                var healthChecks = Configuration.GetHealthChecksConfig();
+                if (healthChecks.Enabled)
+                {
+                    endpoints.MapHealthChecks(healthChecks.Endpoint);
+                }
+                #endregion
             });
         }
     }

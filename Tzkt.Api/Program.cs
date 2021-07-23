@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,6 +24,20 @@ namespace Tzkt.Api
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                })
+                .ConfigureAppConfiguration((host, appConfig) =>
+                {
+                    appConfig.Sources.Clear();
+                    appConfig.AddJsonFile("appsettings.json", true);
+                    appConfig.AddJsonFile($"appsettings.{host.HostingEnvironment.EnvironmentName}.json", true);
+                    appConfig.AddEnvironmentVariables("TZKT_");
+                    appConfig.AddEnvironmentVariables("TZKT_API_");
+                    appConfig.AddCommandLine(args);
+                })
+                .ConfigureLogging(logConfig =>
+                {
+                    logConfig.ClearProviders();
+                    logConfig.AddConsole();
                 });
     }
 
