@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -22,13 +22,19 @@ namespace Tzkt.Sync
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((hostContext, config) =>
+                .ConfigureAppConfiguration((host, appConfig) =>
                 {
-                    config.AddEnvironmentVariables("TZKT_");
+                    appConfig.Sources.Clear();
+                    appConfig.AddJsonFile("appsettings.json", true);
+                    appConfig.AddJsonFile($"appsettings.{host.HostingEnvironment.EnvironmentName}.json", true);
+                    appConfig.AddEnvironmentVariables("TZKT_");
+                    appConfig.AddEnvironmentVariables("TZKT_SYNC_");
+                    appConfig.AddCommandLine(args);
                 })
-                .ConfigureHostConfiguration(configHost =>
+                .ConfigureLogging(logConfig =>
                 {
-                    configHost.AddEnvironmentVariables(prefix: "TZKT_");
+                    logConfig.ClearProviders();
+                    logConfig.AddConsole();
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
@@ -38,10 +44,24 @@ namespace Tzkt.Sync
                     services.AddCaches();
                     services.AddTezosNode();
                     services.AddTezosProtocols();
-
                     services.AddQuotes(hostContext.Configuration);
-
                     services.AddHostedService<Observer>();
+
+                    #region healh checks
+                    var healthChecks = hostContext.Configuration.GetHealthChecksConfig();
+                    if (healthChecks.Enabled)
+                    {
+                        services.AddHealthChecks()
+                            .AddCheck<DumbHealthCheck>(nameof(DumbHealthCheck));
+
+                        services.AddSingleton<IHealthCheckPublisher, HealthCheckPublisher>();
+                        services.Configure<HealthCheckPublisherOptions>(config =>
+                        {
+                            config.Delay = TimeSpan.FromSeconds(healthChecks.Delay);
+                            config.Period = TimeSpan.FromSeconds(healthChecks.Period);
+                        });
+                    }
+                    #endregion
                 });
     }
 
