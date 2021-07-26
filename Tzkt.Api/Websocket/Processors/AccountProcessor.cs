@@ -12,11 +12,11 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Websocket.Processors
 {
-    public class AccountsProcessor<T> : IHubProcessor where T : Hub
+    public class AccountProcessor<T> : IHubProcessor where T : Hub
     {
         #region static
-        const string AccountsGroup = "accounts";
-        const string AccountsChannel = "accounts";
+        const string AccountsGroup = "account";
+        const string AccountsChannel = "account";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
         static readonly Dictionary<string, HashSet<string>> AccountSubs = new();
@@ -30,7 +30,7 @@ namespace Tzkt.Api.Websocket.Processors
         readonly WebsocketConfig Config;
         readonly ILogger Logger;
 
-        public AccountsProcessor(StateCache state, AccountRepository accounts, IHubContext<T> hubContext, IConfiguration config, ILogger<AccountsProcessor<T>> logger)
+        public AccountProcessor(StateCache state, AccountRepository accounts, IHubContext<T> hubContext, IConfiguration config, ILogger<AccountProcessor<T>> logger)
         {
             State = state;
             Repo = accounts;
@@ -149,7 +149,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task Subscribe(IClientProxy client, string connectionId, AccountsParameter parameter)
+        public async Task Subscribe(IClientProxy client, string connectionId, AccountParameter parameter)
         {
             Task sending = Task.CompletedTask;
             try

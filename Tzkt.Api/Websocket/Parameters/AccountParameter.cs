@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Tzkt.Api.Websocket
 {
-    public class AccountsParameter
+    public class AccountParameter
     {
         public string Address { get; set; }
 
