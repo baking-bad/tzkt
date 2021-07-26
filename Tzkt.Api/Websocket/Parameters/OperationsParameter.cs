@@ -9,6 +9,7 @@ namespace Tzkt.Api.Websocket
     {
         public string Address { get; set; }
         public string Types { get; set; }
+        public List<string> Entrypoints { get; set; }
 
         List<Operations> _TypesList = null;
         public List<Operations> TypesList
@@ -44,6 +45,9 @@ namespace Tzkt.Api.Websocket
 
             if (TypesList.Count == 0)
                 throw new HubException("Invalid operation types");
+
+            if (Entrypoints?.Count != 0 && !(TypesList.Count == 1 && TypesList[0] == Operations.Transactions))
+                throw new HubException("`Entrypoint` field can be used with `transactions` type only");
         }
     }
 }
