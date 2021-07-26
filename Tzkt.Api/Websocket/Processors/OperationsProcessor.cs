@@ -185,16 +185,16 @@ namespace Tzkt.Api.Websocket.Processors
                     }
                 }
 
-                void AddTransaction(Sub sub, Models.TransactionOperation op)
+                void AddTransaction(Sub sub, Models.TransactionOperation tx)
                 {
-                    if (op.Initiator != null && sub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
-                        Add(initiatorSubs, op);
+                    if (tx.Initiator != null && sub.Addresses.TryGetValue(tx.Initiator.Address, out var initiatorSubs))
+                        Add(initiatorSubs, tx);
 
-                    if (sub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                        Add(senderSubs, op);
+                    if (sub.Addresses.TryGetValue(tx.Sender.Address, out var senderSubs))
+                        Add(senderSubs, tx);
 
-                    if (op.Target != null && sub.Addresses.TryGetValue(op.Target.Address, out var targetSubs))
-                        Add(targetSubs, op);
+                    if (tx.Target != null && sub.Addresses.TryGetValue(tx.Target.Address, out var targetSubs))
+                        Add(targetSubs, tx);
                 }
 
                 if (endorsements.Result.Any())
@@ -338,11 +338,12 @@ namespace Tzkt.Api.Websocket.Processors
                     if (transactionsSub.All != null)
                         AddRange(transactionsSub.All, transactions.Result);
 
-                    if (transactionsSub.Addresses != null || EntrypointsSubs.Count > 0)
+                    if (transactionsSub.Addresses != null)
                         foreach (var op in transactions.Result)
-                        {
                             AddTransaction(transactionsSub, op);
 
+                    if (EntrypointsSubs.Count != 0)
+                        foreach (var op in transactions.Result)
                             if (EntrypointsSubs.TryGetValue(op.Parameter?.Entrypoint, out var entrypointSubs))
                             {
                                 if (entrypointSubs.All != null)
@@ -350,7 +351,6 @@ namespace Tzkt.Api.Websocket.Processors
 
                                 AddTransaction(entrypointSubs, op);
                             }
-                        }
                 }
 
                 if (reveals.Result.Any())
