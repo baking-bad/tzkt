@@ -46,8 +46,8 @@ namespace Tzkt.Api.Websocket
             if (TypesList.Count == 0)
                 throw new HubException("Invalid operation types");
 
-            if (Entrypoints?.Count != 0 && !(TypesList.Count == 1 && TypesList[0] == Operations.Transactions))
-                throw new HubException("`Entrypoint` field can be used with `transactions` type only");
+            if (Entrypoints?.Count > 0 && !(TypesList.Count == 1 && TypesList[0] == Operations.Transactions))
+                throw new HubException("`Entrypoints` field can be used with `transactions` type only");
         }
     }
 }
