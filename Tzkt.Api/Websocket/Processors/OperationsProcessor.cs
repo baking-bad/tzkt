@@ -22,6 +22,7 @@ namespace Tzkt.Api.Websocket.Processors
         static readonly SemaphoreSlim Sema = new(1, 1);
 
         static readonly Dictionary<Operations, Sub> TypesSubs = new();
+        static readonly Dictionary<string, Sub> EntrypointsSubs = new();
         static readonly Dictionary<string, int> Limits = new();
 
         class Sub
@@ -184,6 +185,18 @@ namespace Tzkt.Api.Websocket.Processors
                     }
                 }
 
+                void AddTransaction(Sub sub, Models.TransactionOperation op)
+                {
+                    if (op.Initiator != null && sub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
+                        Add(initiatorSubs, op);
+
+                    if (sub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                        Add(senderSubs, op);
+
+                    if (op.Target != null && sub.Addresses.TryGetValue(op.Target.Address, out var targetSubs))
+                        Add(targetSubs, op);
+                }
+
                 if (endorsements.Result.Any())
                 {
                     if (endorsementsSub.All != null)
@@ -325,17 +338,18 @@ namespace Tzkt.Api.Websocket.Processors
                     if (transactionsSub.All != null)
                         AddRange(transactionsSub.All, transactions.Result);
 
-                    if (transactionsSub.Addresses != null)
+                    if (transactionsSub.Addresses != null || EntrypointsSubs.Count > 0)
                         foreach (var op in transactions.Result)
                         {
-                            if (op.Initiator != null && transactionsSub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
-                                Add(initiatorSubs, op);
+                            AddTransaction(transactionsSub, op);
 
-                            if (transactionsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (EntrypointsSubs.TryGetValue(op.Parameter?.Entrypoint, out var entrypointSubs))
+                            {
+                                if (entrypointSubs.All != null)
+                                    Add(entrypointSubs.All, op);
 
-                            if (op.Target != null && transactionsSub.Addresses.TryGetValue(op.Target.Address, out var targetSubs))
-                                Add(targetSubs, op);
+                                AddTransaction(entrypointSubs, op);
+                            }
                         }
                 }
 
@@ -439,28 +453,14 @@ namespace Tzkt.Api.Websocket.Processors
                 #region add to subs
                 foreach (var type in parameter.TypesList)
                 {
-                    if (!TypesSubs.TryGetValue(type, out var typeSub))
-                    {
-                        typeSub = new();
-                        TypesSubs.Add(type, typeSub);
+                    if (parameter.Entrypoints?.Count != 0) {
+                        // parameter.TypesList == ["transactions"] — verified by `parameter.EnsureValid()`
+                        foreach (var entrypoint in parameter.Entrypoints)
+                            TryAdd(EntrypointsSubs, entrypoint, parameter.Address, connectionId);
                     }
-                    if (parameter.Address == null)
-                    {
-                        typeSub.All ??= new();
-                        if (typeSub.All.Add(connectionId))
-                            Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-                    }   
                     else
                     {
-                        typeSub.Addresses ??= new(4);
-                        if (!typeSub.Addresses.TryGetValue(parameter.Address, out var addressSub))
-                        {
-                            addressSub = new(4);
-                            typeSub.Addresses.Add(parameter.Address, addressSub);
-                        }
-
-                        if (addressSub.Add(connectionId))
-                            Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+                        TryAdd(TypesSubs, type, parameter.Address, connectionId);
                     }
                 }
                 #endregion
@@ -504,35 +504,8 @@ namespace Tzkt.Api.Websocket.Processors
                 if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
 
-                foreach (var (type, typeSub) in TypesSubs)
-                {
-                    if (typeSub.All != null)
-                    {
-                        if (typeSub.All.Remove(connectionId))
-                            Limits[connectionId]--;
-
-                        if (typeSub.All.Count == 0)
-                            typeSub.All = null;
-                    }
-
-                    if (typeSub.Addresses != null)
-                    {
-                        foreach (var (address, addressSubs) in typeSub.Addresses)
-                        {
-                            if (addressSubs.Remove(connectionId))
-                                Limits[connectionId]--;
-
-                            if (addressSubs.Count == 0)
-                                typeSub.Addresses.Remove(address);
-                        }
-
-                        if (typeSub.Addresses.Count == 0)
-                            typeSub.Addresses = null;
-                    }
-
-                    if (typeSub.Empty)
-                        TypesSubs.Remove(type);
-                }
+                TryRemove(TypesSubs, connectionId);
+                TryRemove(EntrypointsSubs, connectionId);
 
                 if (Limits[connectionId] != 0)
                     Logger.LogCritical("Failed to unsibscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
@@ -547,6 +520,66 @@ namespace Tzkt.Api.Websocket.Processors
             finally
             {
                 Sema.Release();
+            }
+        }
+
+        private static void TryAdd<TSubKey>(Dictionary<TSubKey, Sub> subs, TSubKey key, string address, string connectionId)
+        {
+            if (!subs.TryGetValue(key, out var sub))
+            {
+                sub = new();
+                subs.Add(key, sub);
+            }
+            if (address == null)
+            {
+                sub.All ??= new();
+                if (sub.All.Add(connectionId))
+                    Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+            }
+            else
+            {
+                sub.Addresses ??= new(4);
+                if (!sub.Addresses.TryGetValue(address, out var addressSub))
+                {
+                    addressSub = new(4);
+                    sub.Addresses.Add(address, addressSub);
+                }
+
+                if (addressSub.Add(connectionId))
+                    Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+            }
+        }
+
+        private static void TryRemove<TSubKey>(Dictionary<TSubKey, Sub> subs, string connectionId)
+        {
+            foreach (var (key, sub) in subs)
+            {
+                if (sub.All != null)
+                {
+                    if (sub.All.Remove(connectionId))
+                        Limits[connectionId]--;
+
+                    if (sub.All.Count == 0)
+                        sub.All = null;
+                }
+
+                if (sub.Addresses != null)
+                {
+                    foreach (var (address, addressSubs) in sub.Addresses)
+                    {
+                        if (addressSubs.Remove(connectionId))
+                            Limits[connectionId]--;
+
+                        if (addressSubs.Count == 0)
+                            sub.Addresses.Remove(address);
+                    }
+
+                    if (sub.Addresses.Count == 0)
+                        sub.Addresses = null;
+                }
+
+                if (sub.Empty)
+                    subs.Remove(key);
             }
         }
 
