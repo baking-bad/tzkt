@@ -13,8 +13,8 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxProtocols = 16; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, Protocol> CachedByCode = new Dictionary<int, Protocol>(17);
-        static readonly Dictionary<string, Protocol> CachedByHash = new Dictionary<string, Protocol>(17);
+        static readonly Dictionary<int, Protocol> CachedByCode = new(17);
+        static readonly Dictionary<string, Protocol> CachedByHash = new(17);
 
         readonly TzktContext Db;
 

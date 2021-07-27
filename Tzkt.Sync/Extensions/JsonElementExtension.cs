@@ -75,8 +75,8 @@ namespace Tzkt.Sync
             if (!el.TryGetProperty(name, out var prop))
                 return null;
 
-            return prop.ValueKind == JsonValueKind.True ? true : prop.ValueKind == JsonValueKind.False ? false
-                : throw new SerializationException($"Invalid bool {name}");
+            return prop.ValueKind == JsonValueKind.True || (prop.ValueKind == JsonValueKind.False ? false
+                : throw new SerializationException($"Invalid bool {name}"));
         }
 
         public static int? OptionalInt32(this JsonElement el, string name)

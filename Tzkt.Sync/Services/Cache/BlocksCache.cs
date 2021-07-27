@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxBlocks = 3 * 4096; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, Block> CachedBlocks = new Dictionary<int, Block>(13331);
+        static readonly Dictionary<int, Block> CachedBlocks = new(13331);
 
         readonly CacheService Cache;
         readonly TzktContext Db;

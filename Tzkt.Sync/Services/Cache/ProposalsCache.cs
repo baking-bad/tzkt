@@ -13,8 +13,8 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxProposals = 32; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, Proposal> CachedById = new Dictionary<int, Proposal>(37);
-        static readonly Dictionary<string, Proposal> CachedByHash = new Dictionary<string, Proposal>(37);
+        static readonly Dictionary<int, Proposal> CachedById = new(37);
+        static readonly Dictionary<string, Proposal> CachedByHash = new(37);
 
         readonly TzktContext Db;
 

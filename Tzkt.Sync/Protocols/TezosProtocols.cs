@@ -27,31 +27,20 @@ namespace Tzkt.Sync
         {
             if (level > 1)
             {
-                switch (protocol)
+                return protocol switch
                 {
-                    case "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY":
-                        return services.GetRequiredService<Proto1Handler>();
-                    case "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt":
-                        return services.GetRequiredService<Proto2Handler>();
-                    case "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP":
-                        return services.GetRequiredService<Proto3Handler>();
-                    case "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd":
-                        return services.GetRequiredService<Proto4Handler>();
-                    case "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS":
-                        return services.GetRequiredService<Proto5Handler>();
-                    case "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb":
-                        return services.GetRequiredService<Proto6Handler>();
-                    case "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo":
-                        return services.GetRequiredService<Proto7Handler>();
-                    case "PtEdo2ZkT9oKpimTah6x2embF25oss54njMuPzkJTEi5RqfdZFA":
-                        return services.GetRequiredService<Proto8Handler>();
-                    case "PsFLorenaUUuikDWvMDr6fGBRG8kt3e3D3fHoXK1j1BFRxeSH4i":
-                        return services.GetRequiredService<Proto9Handler>();
-                    case "PtGRANADsDU8R9daYKAgWnQYAJ64omN1o3KMGVCykShA97vQbvV":
-                        return services.GetRequiredService<Proto10Handler>();
-                    default:
-                        throw new NotImplementedException($"Protocol '{protocol}' is not supported");
-                }
+                    "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY" => services.GetRequiredService<Proto1Handler>(),
+                    "PsYLVpVvgbLhAhoqAkMFUo6gudkJ9weNXhUYCiLDzcUpFpkk8Wt" => services.GetRequiredService<Proto2Handler>(),
+                    "PsddFKi32cMJ2qPjf43Qv5GDWLDPZb3T3bF6fLKiF5HtvHNU7aP" => services.GetRequiredService<Proto3Handler>(),
+                    "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd" => services.GetRequiredService<Proto4Handler>(),
+                    "PsBabyM1eUXZseaJdmXFApDSBqj8YBfwELoxZHHW77EMcAbbwAS" => services.GetRequiredService<Proto5Handler>(),
+                    "PsCARTHAGazKbHtnKfLzQg3kms52kSRpgnDY982a9oYsSXRLQEb" => services.GetRequiredService<Proto6Handler>(),
+                    "PsDELPH1Kxsxt8f9eWbxQeRxkjfbxoqM52jvs5Y5fBxWWh4ifpo" => services.GetRequiredService<Proto7Handler>(),
+                    "PtEdo2ZkT9oKpimTah6x2embF25oss54njMuPzkJTEi5RqfdZFA" => services.GetRequiredService<Proto8Handler>(),
+                    "PsFLorenaUUuikDWvMDr6fGBRG8kt3e3D3fHoXK1j1BFRxeSH4i" => services.GetRequiredService<Proto9Handler>(),
+                    "PtGRANADsDU8R9daYKAgWnQYAJ64omN1o3KMGVCykShA97vQbvV" => services.GetRequiredService<Proto10Handler>(),
+                    _ => throw new NotImplementedException($"Protocol '{protocol}' is not supported"),
+                };
             }
             else if (level == 1)
             {

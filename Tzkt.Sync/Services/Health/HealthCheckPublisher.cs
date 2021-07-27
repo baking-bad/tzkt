@@ -12,8 +12,7 @@ namespace Tzkt.Sync.Services
 
         public HealthCheckPublisher(IConfiguration config)
         {
-            FilePath = config.GetHealthChecksConfig().FilePath
-                ?? Path.GetTempFileName();
+            FilePath = config.GetHealthChecksConfig().FilePath ?? "sync.health";
         }
 
         public Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
