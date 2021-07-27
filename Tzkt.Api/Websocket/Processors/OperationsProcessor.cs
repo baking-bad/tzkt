@@ -119,7 +119,7 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetOriginations(null, null, null, null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
-                var transactions = TypesSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
+                var transactions = TypesSubs.TryGetValue(Operations.Transactions, out var transactionsSub) || EntrypointsSubs.Count > 0
                     ? Repo.GetTransactions(null, null, null, null, null, level, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.TransactionOperation>());
 
@@ -185,15 +185,15 @@ namespace Tzkt.Api.Websocket.Processors
                     }
                 }
 
-                void AddTransaction(Sub sub, Models.TransactionOperation tx)
+                void AddTransaction(Dictionary<string, HashSet<string>> subs, Models.TransactionOperation tx)
                 {
-                    if (tx.Initiator != null && sub.Addresses.TryGetValue(tx.Initiator.Address, out var initiatorSubs))
+                    if (tx.Initiator != null && subs.TryGetValue(tx.Initiator.Address, out var initiatorSubs))
                         Add(initiatorSubs, tx);
 
-                    if (sub.Addresses.TryGetValue(tx.Sender.Address, out var senderSubs))
+                    if (subs.TryGetValue(tx.Sender.Address, out var senderSubs))
                         Add(senderSubs, tx);
 
-                    if (tx.Target != null && sub.Addresses.TryGetValue(tx.Target.Address, out var targetSubs))
+                    if (tx.Target != null && subs.TryGetValue(tx.Target.Address, out var targetSubs))
                         Add(targetSubs, tx);
                 }
 
@@ -335,22 +335,30 @@ namespace Tzkt.Api.Websocket.Processors
 
                 if (transactions.Result.Any())
                 {
-                    if (transactionsSub.All != null)
-                        AddRange(transactionsSub.All, transactions.Result);
+                    if (transactionsSub != null)
+                    {
+                        if (transactionsSub.All != null)
+                            AddRange(transactionsSub.All, transactions.Result);
 
-                    if (transactionsSub.Addresses != null)
-                        foreach (var op in transactions.Result)
-                            AddTransaction(transactionsSub, op);
+                        if (transactionsSub.Addresses != null)
+                            foreach (var op in transactions.Result)
+                                AddTransaction(transactionsSub.Addresses, op);
+                    }
 
-                    if (EntrypointsSubs.Count != 0)
-                        foreach (var op in transactions.Result)
-                            if (EntrypointsSubs.TryGetValue(op.Parameter?.Entrypoint, out var entrypointSubs))
+                    if (EntrypointsSubs != null)
+                    {
+                        foreach (var op in transactions.Result.Where(x => x.Parameter != null))
+                        {
+                            if (EntrypointsSubs.TryGetValue(op.Parameter.Entrypoint, out var entrypointSub))
                             {
-                                if (entrypointSubs.All != null)
-                                    Add(entrypointSubs.All, op);
+                                if (entrypointSub.All != null)
+                                    Add(entrypointSub.All, op);
 
-                                AddTransaction(entrypointSubs, op);
+                                if (entrypointSub.Addresses != null)
+                                    AddTransaction(entrypointSub.Addresses, op);
                             }
+                        }
+                    }
                 }
 
                 if (reveals.Result.Any())
@@ -453,7 +461,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region add to subs
                 foreach (var type in parameter.TypesList)
                 {
-                    if (parameter.Entrypoints?.Count != 0) {
+                    if (parameter.Entrypoints?.Count != 0 && type == Operations.Transactions) {
                         // parameter.TypesList == ["transactions"] — verified by `parameter.EnsureValid()`
                         foreach (var entrypoint in parameter.Entrypoints)
                             TryAdd(EntrypointsSubs, entrypoint, parameter.Address, connectionId);
