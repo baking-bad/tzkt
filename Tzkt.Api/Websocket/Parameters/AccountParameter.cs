@@ -9,8 +9,10 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (Address != null && !Regex.IsMatch(Address, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$"))
-                throw new HubException("Invalid contract address");
+            if (string.IsNullOrEmpty(Address))
+                throw new HubException("Empty address parameter");
+            if (!Regex.IsMatch(Address, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$"))
+                throw new HubException("Invalid subscription address");
         }
     }
 }

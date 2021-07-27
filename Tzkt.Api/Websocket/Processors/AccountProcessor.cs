@@ -78,8 +78,8 @@ namespace Tzkt.Api.Websocket.Processors
                 };
                 const int limit = 1_000_000;
 
-                var updates = (await Repo.Get(null, null, null, null, null, level, null, null, limit)).ToList();
-                var count = updates.Count;
+                var accounts = (await Repo.Get(null, null, null, null, null, level, null, null, limit)).ToList();
+                var count = accounts.Count;
 
                 Logger.LogDebug("{0} account updates fetched", count);
                 #endregion
@@ -87,8 +87,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region prepare to send
                 var toSend = new Dictionary<string, List<Account>>();
 
-                //TODO WAAT?
-                void Add(HashSet<string> subs, Account update)
+                void Add(HashSet<string> subs, Account account)
                 {
                     foreach (var clientId in subs)
                     {
@@ -97,16 +96,16 @@ namespace Tzkt.Api.Websocket.Processors
                             list = new(4);
                             toSend.Add(clientId, list);
                         }
-                        list.Add(update);
+                        list.Add(account);
                     }
                 }
 
-                foreach (var update in updates)
+                foreach (var account in accounts)
                 {
-                    if (AccountSubs.TryGetValue(update.Address, out var accountSubs))
+                    if (AccountSubs.TryGetValue(account.Address, out var accountSubs))
                     {
                         if (accountSubs != null)
-                            Add(accountSubs, update);
+                            Add(accountSubs, account);
                     }
                 }
                 #endregion
@@ -114,13 +113,9 @@ namespace Tzkt.Api.Websocket.Processors
                 #region send
                 foreach (var (connectionId, updatesList) in toSend.Where(x => x.Value.Count > 0))
                 {
-                    var data = updatesList.Count > 1
-                        ? Distinct(updatesList).OrderBy(x => x.Address)
-                        : (IEnumerable<Account>)updatesList;
-
                     sendings.Add(Context.Clients
                         .Client(connectionId)
-                        .SendData(AccountsChannel, data, State.Current.Level));
+                        .SendData(AccountsChannel, updatesList, State.Current.Level));
 
                     Logger.LogDebug("{0} account updates sent to {1}", updatesList.Count, connectionId);
                 }
@@ -166,19 +161,16 @@ namespace Tzkt.Api.Websocket.Processors
                 #endregion
 
                 #region add to subs
-                if (parameter.Address != null)
+                if (!AccountSubs.TryGetValue(parameter.Address, out var accountSub))
                 {
-                    if (!AccountSubs.TryGetValue(parameter.Address, out var accountSub))
-                    {
-                        accountSub = new(4);
-                        AccountSubs.Add(parameter.Address, accountSub);
-                    }
-                    
-                    TryAdd(accountSub, connectionId);
+                    accountSub = new(4);
+                    AccountSubs.Add(parameter.Address, accountSub);
                 }
-                else
+                    
+                if (!accountSub.Contains(connectionId))
                 {
-                    throw new HubException("Empty address parameter");
+                    accountSub.Add(connectionId);
+                    Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
                 }
                 #endregion
 
@@ -221,7 +213,9 @@ namespace Tzkt.Api.Websocket.Processors
 
                 foreach (var (key, value) in AccountSubs)
                 {
-                    TryRemove(value, connectionId);
+                    if (value.Remove(connectionId))
+                        Limits[connectionId]--;
+                    
                     if (value.Count == 0)
                         AccountSubs.Remove(key);
                 }
@@ -239,34 +233,6 @@ namespace Tzkt.Api.Websocket.Processors
             finally
             {
                 Sema.Release();
-            }
-        }
-
-        private static void TryAdd(HashSet<string> set, string connectionId)
-        {
-            if (!set.Contains(connectionId))
-            {
-                set.Add(connectionId);
-                Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-            }
-        }
-
-        private static void TryRemove(HashSet<string> set, string connectionId)
-        {
-            if (set.Remove(connectionId))
-                Limits[connectionId]--;
-        }
-
-        private static IEnumerable<Account> Distinct(List<Account> items)
-        {
-            var hashset = new HashSet<string>(items.Count);
-            foreach (var item in items)
-            {
-                if (!hashset.Contains(item.Address))
-                {
-                    hashset.Add(item.Address);
-                    yield return item;
-                }
             }
         }
     }
