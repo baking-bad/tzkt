@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Services
                     Constants = await Rpc.GetObjectAsync<Constants>("chains/main/blocks/head/context/constants");
 
                 NextBlock = header.Level != Header?.Level
-                    ? header.Timestamp.AddSeconds(Constants.BlockIntervals[0])
+                    ? header.Timestamp.AddSeconds(Constants.MinBlockDelay ?? Constants.BlockIntervals[0])
                     : DateTime.UtcNow.AddSeconds(1);
 
                 Header = header;
