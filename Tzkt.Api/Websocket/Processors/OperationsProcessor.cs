@@ -461,8 +461,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region add to subs
                 foreach (var type in parameter.TypesList)
                 {
-                    if (parameter.Entrypoints?.Count != 0 && type == Operations.Transactions) {
-                        // parameter.TypesList == ["transactions"] — verified by `parameter.EnsureValid()`
+                    if (parameter.Entrypoints != null && type == Operations.Transactions) {
                         foreach (var entrypoint in parameter.Entrypoints)
                             TryAdd(EntrypointsSubs, entrypoint, parameter.Address, connectionId);
                     }
