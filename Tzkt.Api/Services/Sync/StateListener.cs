@@ -17,25 +17,37 @@ namespace Tzkt.Api.Services.Sync
 {
     public class StateListener : BackgroundService
     {
+        #region static
+        const string StateTrigger = "state_changed";
+        const string AccountMetadataTrigger = "account_metadata_changed";
+        const string SoftwareMetadataTrigger = "software_metadata_changed";
+        //const string ProposalMetadataTrigger = "proposal_metadata_changed";
+        //const string ProtocolMetadataTrigger = "protocol_metadata_changed";
+        #endregion
+
         readonly string ConnectionString;
 
         readonly StateCache State;
         readonly BigMapsCache BigMaps;
         readonly AccountsCache Accounts;
+        readonly AliasesCache Aliases;
         readonly ProtocolsCache Protocols;
+        readonly SoftwareCache Software;
         readonly QuotesCache Quotes;
         readonly TimeCache Times;
         readonly HomeService Home;
         readonly IEnumerable<IHubProcessor> Processors;
         readonly ILogger Logger;
 
-        Task Notifying = Task.CompletedTask;
-        readonly List<(int Level, string Hash)> Changes = new List<(int, string)>(4);
+        Task StateNotifying = Task.CompletedTask;
+        readonly List<(int Level, string Hash)> StateChanges = new(4);
 
         public StateListener(
             StateCache state,
             BigMapsCache bigMaps,
             AccountsCache accounts,
+            AliasesCache aliases,
+            SoftwareCache software,
             ProtocolsCache protocols,
             QuotesCache quotes,
             TimeCache times,
@@ -49,7 +61,9 @@ namespace Tzkt.Api.Services.Sync
             State = state;
             BigMaps = bigMaps;
             Accounts = accounts;
+            Aliases = aliases;
             Protocols = protocols;
+            Software = software;
             Quotes = quotes;
             Times = times;
             Home = home;
@@ -61,10 +75,10 @@ namespace Tzkt.Api.Services.Sync
         {
             try
             {
-                Logger.LogInformation("State listener started");
+                Logger.LogInformation("DB listener started");
 
                 using var db = new NpgsqlConnection(ConnectionString);
-                db.Notification += OnStateChanged;
+                db.Notification += OnNotification;
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -73,8 +87,13 @@ namespace Tzkt.Api.Services.Sync
                         if (db.State != ConnectionState.Open)
                         {
                             await db.OpenAsync(cancellationToken);
-                            await db.ExecuteAsync("LISTEN state_changed;");
-                            Logger.LogInformation("State listener connected");
+                            await db.ExecuteAsync($@"
+                                LISTEN {StateTrigger};
+                                LISTEN {AccountMetadataTrigger};
+                                LISTEN {SoftwareMetadataTrigger};");
+                                //LISTEN { ProposalMetadataTrigger};
+                                //LISTEN { ProtocolMetadataTrigger};
+                            Logger.LogInformation("Db listener connected");
                         }
                         await db.WaitAsync(cancellationToken);
                     }
@@ -82,26 +101,26 @@ namespace Tzkt.Api.Services.Sync
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { break; }
                     catch (Exception ex)
                     {
-                        Logger.LogError("State listener disconnected: {0}", ex.Message);
+                        Logger.LogError("DB listener disconnected: {0}", ex.Message);
                         await Task.Delay(1000, cancellationToken);
                     }
                 }
 
-                db.Notification -= OnStateChanged;
+                db.Notification -= OnNotification;
             }
             catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex)
             {
-                Logger.LogCritical($"State listener crashed: {ex.Message}");
+                Logger.LogCritical($"DB listener crashed: {ex.Message}");
             }
             finally
             {
-                Logger.LogWarning("State listener stopped");
+                Logger.LogWarning("DB listener stopped");
             }
         }
 
-        private void OnStateChanged(object sender, NpgsqlNotificationEventArgs e)
+        private void OnNotification(object sender, NpgsqlNotificationEventArgs e)
         {
             Logger.LogDebug("Received {1} notification with payload {2}", e.Channel, e.Payload);
 
@@ -111,27 +130,34 @@ namespace Tzkt.Api.Services.Sync
                 return;
             }
 
-            var data = e.Payload.Split(':', StringSplitOptions.RemoveEmptyEntries);
-            if (data.Length != 2 || !int.TryParse(data[0], out var level) || data[1].Length != 51)
+            if (e.Channel == StateTrigger)
             {
-                Logger.LogCritical("Invalid trigger payload {1}", e.Payload);
-                return;
+                var data = e.Payload.Split(':', StringSplitOptions.RemoveEmptyEntries);
+                if (data.Length != 2 || !int.TryParse(data[0], out var level) || data[1].Length != 51)
+                {
+                    Logger.LogCritical("Invalid trigger payload {1}", e.Payload);
+                    return;
+                }
+
+                lock (StateChanges)
+                {
+                    StateChanges.Add((level, data[1]));
+
+                    if (StateNotifying.IsCompleted)
+                        StateNotifying = NotifyStateAsync(); // async run
+                }
             }
-
-            lock (Changes)
+            else
             {
-                Changes.Add((level, data[1]));
-
-                if (Notifying.IsCompleted)
-                    Notifying = NotifyAsync(); // async run
+                NotifyMetadata(e.Channel, e.Payload);
             }
         }
 
-        private async Task NotifyAsync()
+        async Task NotifyStateAsync()
         {
             try
             {
-                Logger.LogDebug("Processing notification...");
+                Logger.LogDebug("Processing state notification...");
 
                 #region update state
                 RawState newState;
@@ -143,21 +169,21 @@ namespace Tzkt.Api.Services.Sync
                     if (attempts++ > 32)
                     {
                         // should never get here, but to make sure there are no infinite loops...
-                        Logger.LogCritical("Failed to reach state equal to trigger's payload '{1}'", Changes[^1].Hash);
+                        Logger.LogCritical("Failed to reach state equal to trigger's payload '{1}'", StateChanges[^1].Hash);
                         return;
                     }
 
                     newState = await State.LoadAsync();
-                    lock (Changes)
+                    lock (StateChanges)
                     {
-                        if (newState.Hash != Changes[^1].Hash)
+                        if (newState.Hash != StateChanges[^1].Hash)
                         {
                             Logger.LogDebug("Lost sync. Retrying...");
                             continue;
                         }
 
-                        changes = Changes.ToList();
-                        Changes.Clear();
+                        changes = StateChanges.ToList();
+                        StateChanges.Clear();
                         break;
                     }
                 }
@@ -182,24 +208,62 @@ namespace Tzkt.Api.Services.Sync
                 _ = Home.UpdateAsync();
                 #endregion
 
-                Logger.LogDebug("Notification processed");
+                Logger.LogDebug("State notification processed");
 
-                lock (Changes)
+                lock (StateChanges)
                 {
-                    if (Changes.Count > 0)
+                    if (StateChanges.Count > 0)
                     {
-                        Logger.LogDebug("Handle pending notification");
-                        Notifying = NotifyAsync(); // async run
+                        Logger.LogDebug("Handle pending state notification");
+                        StateNotifying = NotifyStateAsync(); // async run
                     }
                     else
                     {
-                        Notifying = Task.CompletedTask;
+                        StateNotifying = Task.CompletedTask;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process notification: {1}", ex.Message);
+                Logger.LogError("Failed to process state notification: {1}", ex.Message);
+            }
+        }
+
+        void NotifyMetadata(string channel, string payload)
+        {
+            try
+            {
+                Logger.LogDebug("Processing metadata notification...");
+
+                var divider = payload.IndexOf(':');
+                if (divider == -1)
+                {
+                    Logger.LogError("Invalid metadata notification payload");
+                    return;
+                }
+
+                var key = payload[0..divider];
+                var value = payload[(divider + 1)..];
+                if (value == string.Empty) value = null;
+
+                switch (channel)
+                {
+                    case AccountMetadataTrigger:
+                        Accounts.UpdateMetadata(key, value);
+                        Aliases.UpdateMetadata(key, value);
+                        break;
+                    case SoftwareMetadataTrigger:
+                        Software.UpdateMetadata(key);
+                        break;
+                    default:
+                        break;
+                }
+
+                Logger.LogDebug("Metadata notification processed");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to process metadata notification: {1}", ex.Message);
             }
         }
     }

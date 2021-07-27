@@ -126,18 +126,10 @@ namespace Tzkt.Api.Services.Cache
             return (await GetAsync(id)).Info;
         }
 
-        public async Task ReloadMetadata(List<string> addresses)
+        public void UpdateMetadata(string address, string json)
         {
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(
-                @"SELECT ""Id"", ""Metadata"" FROM ""Accounts"" WHERE ""Address"" = ANY(@addresses::character(36)[])",
-                new { addresses });
-
-            foreach (var row in rows)
-            {
-                var user = await GetAsync((int)row.Id);
-                user.Metadata = AccountMetadata.Parse((string)row.Metadata);
-            }
+            if (TryGetSafe(address, out var account))
+                account.Metadata = AccountMetadata.Parse(json);
         }
         #endregion
 

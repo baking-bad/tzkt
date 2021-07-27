@@ -56,24 +56,28 @@ namespace Tzkt.Data.Migrations
                 CREATE TRIGGER account_metadata_changed
                     AFTER UPDATE OF ""Metadata"" ON ""Accounts""
                     FOR EACH ROW
+                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
                     EXECUTE PROCEDURE notify_account_metadata();");
 
             migrationBuilder.Sql(@"
                 CREATE TRIGGER proposal_metadata_changed
                     AFTER UPDATE OF ""Metadata"" ON ""Proposals""
                     FOR EACH ROW
+                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
                     EXECUTE PROCEDURE notify_proposal_metadata();");
 
             migrationBuilder.Sql(@"
                 CREATE TRIGGER protocol_metadata_changed
                     AFTER UPDATE OF ""Metadata"" ON ""Protocols""
                     FOR EACH ROW
+                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
                     EXECUTE PROCEDURE notify_protocol_metadata();");
 
             migrationBuilder.Sql(@"
                 CREATE TRIGGER software_metadata_changed
                     AFTER UPDATE OF ""Metadata"" ON ""Software""
                     FOR EACH ROW
+                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
                     EXECUTE PROCEDURE notify_software_metadata();");
         }
 

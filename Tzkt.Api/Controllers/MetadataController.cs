@@ -73,15 +73,7 @@ namespace Tzkt.Api.Controllers
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$")))
                     return BadRequest("Invalid account address");
 
-                var res = await Metadata.UpdateAccountMetadata(metadata);
-
-                #region update cached metadata
-                var addresses = res.Select(x => x.Key).ToList();
-                await Accounts.ReloadMetadata(addresses);
-                await Aliases.Reload(addresses);
-                #endregion
-
-                return Ok(res);
+                return Ok(await Metadata.UpdateAccountMetadata(metadata));
             }
             catch (JsonException ex)
             {
@@ -221,14 +213,7 @@ namespace Tzkt.Api.Controllers
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^[0-9a-f]{8}$")))
                     return BadRequest("Invalid software short hash");
 
-                var res = await Metadata.UpdateSoftwareMetadata(metadata);
-
-                #region update cached metadata
-                var hashes = res.Select(x => x.Key).ToList();
-                await Software.Reload(hashes);
-                #endregion
-                
-                return Ok(res);
+                return Ok(await Metadata.UpdateSoftwareMetadata(metadata));
             }
             catch (JsonException ex)
             {
