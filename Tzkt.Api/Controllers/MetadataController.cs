@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 
 using Tzkt.Api.Services.Auth;
-using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Repositories;
 
 namespace Tzkt.Api.Controllers
@@ -19,17 +18,11 @@ namespace Tzkt.Api.Controllers
     [Route("v1/metadata")]
     public class MetadataController : ControllerBase
     {
-        readonly AccountsCache Accounts;
-        readonly AliasesCache Aliases;
-        readonly SoftwareCache Software;
         readonly MetadataRepository Metadata;
         readonly IAuthService Auth;
 
-        public MetadataController(AccountsCache accounts, AliasesCache aliases, SoftwareCache software, MetadataRepository metadata, IAuthService auth)
+        public MetadataController(MetadataRepository metadata, IAuthService auth)
         {
-            Accounts = accounts;
-            Aliases = aliases;
-            Software = software;
             Metadata = metadata;
             Auth = auth;
         }

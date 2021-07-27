@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxItems = 1024; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, ContractScript> CachedById = new Dictionary<int, ContractScript>(1027);
+        static readonly Dictionary<int, ContractScript> CachedById = new(1027);
 
         readonly TzktContext Db;
 

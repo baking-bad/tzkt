@@ -182,7 +182,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of accounts delegated to the specified account.
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with tz)</param>
         /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`).</param>
         /// <param name="balance">Filters delegators by balance.</param>
         /// <param name="delegationLevel">Number of items to skip</param>
@@ -424,7 +424,10 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/counter")]
         public async Task<int> GetCounter([Required][Address] string address)
         {
-            return (await Accounts.GetRawAsync(address))?.Counter ?? State.Current.ManagerCounter;
+            var rawAccount = await Accounts.GetRawAsync(address);
+            return rawAccount == null || rawAccount is RawUser && rawAccount.Balance == 0
+                ? State.Current.ManagerCounter
+                : rawAccount.Counter;
         }
 
         /// <summary>

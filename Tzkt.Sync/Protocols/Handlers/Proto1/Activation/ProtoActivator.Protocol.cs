@@ -27,7 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Required("header")
                 .Required("content")
                 .RequiredString("protocol_parameters")
-                .Substring(8));
+                [8..]);
 
             SetParameters(protocol, parameters);
             return (protocol, parameters);

@@ -12,13 +12,11 @@ namespace Tzkt.Api.Repositories
 {
     public class CyclesRepository : DbConnection
     {
-        readonly ProtocolsCache Protocols;
         readonly QuotesCache Quotes;
         readonly TimeCache Times;
 
-        public CyclesRepository(ProtocolsCache protocols, QuotesCache quotes, TimeCache times, IConfiguration config) : base(config)
+        public CyclesRepository(QuotesCache quotes, TimeCache times, IConfiguration config) : base(config)
         {
-            Protocols = protocols;
             Quotes = quotes;
             Times = times;
         }

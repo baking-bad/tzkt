@@ -238,14 +238,16 @@ namespace Tzkt.Sync.Services
                 UPDATE ""AppState"" SET ""QuoteLevel"" = {last.Level}, ""QuoteBtc"" = {{0}}, ""QuoteEur"" = {{1}}, ""QuoteUsd"" = {{2}}, ""QuoteCny"" = {{3}}, ""QuoteJpy"" = {{4}}, ""QuoteKrw"" = {{5}}, ""QuoteEth"" = {{6}};
                 INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"") VALUES");
 
-            var param = new List<object>(cnt * 7 + 6);
-            param.Add(last.Btc);
-            param.Add(last.Eur);
-            param.Add(last.Usd);
-            param.Add(last.Cny);
-            param.Add(last.Jpy);
-            param.Add(last.Krw);
-            param.Add(last.Eth);
+            var param = new List<object>(cnt * 7 + 6)
+            {
+                last.Btc,
+                last.Eur,
+                last.Usd,
+                last.Cny,
+                last.Jpy,
+                last.Krw,
+                last.Eth
+            };
 
             var p = 7;
             var i = 0;

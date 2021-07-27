@@ -896,7 +896,7 @@ namespace Tzkt.Api.Controllers
             }
         }
 
-        string WrapKey(string key)
+        static string WrapKey(string key)
         {
             switch (key[0])
             {

@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols
             foreach (var error in errors.EnumerateArray())
             {
                 var id = error.GetProperty("id").GetString();
-                var type = id.Substring(id.IndexOf('.', id.IndexOf('.') + 1) + 1);
+                var type = id[(id.IndexOf('.', id.IndexOf('.') + 1) + 1)..];
 
                 res.Add(type switch
                 {

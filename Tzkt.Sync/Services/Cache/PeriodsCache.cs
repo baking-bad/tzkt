@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxPeriods = 16; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, VotingPeriod> Cached = new Dictionary<int, VotingPeriod>(17);
+        static readonly Dictionary<int, VotingPeriod> Cached = new(17);
 
         readonly TzktContext Db;
 

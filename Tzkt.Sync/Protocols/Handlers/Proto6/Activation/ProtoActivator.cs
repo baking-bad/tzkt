@@ -73,7 +73,6 @@ namespace Tzkt.Sync.Protocols.Proto6
         protected override async Task RevertContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            var protocol = await Cache.Protocols.GetAsync(block.ProtoCode);
 
             await Db.Database.ExecuteSqlRawAsync($@"
                 UPDATE  ""BakerCycles""
