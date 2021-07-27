@@ -30,7 +30,7 @@ namespace Tzkt.Api
                     appConfig.Sources.Clear();
                     appConfig.AddJsonFile("appsettings.json", true);
                     appConfig.AddJsonFile($"appsettings.{host.HostingEnvironment.EnvironmentName}.json", true);
-                    appConfig.AddEnvironmentVariables("TZKT_");
+                    appConfig.AddEnvironmentVariables();
                     appConfig.AddEnvironmentVariables("TZKT_API_");
                     appConfig.AddCommandLine(args);
                 })

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -27,29 +28,29 @@ namespace Tzkt.Api.Services.Cache
             logger.LogInformation("Loaded {1} aliases", Aliases.Count);
         }
 
-        public async Task Reload(List<string> addresses)
+        public void UpdateMetadata(string address, string json)
         {
-            using var db = GetConnection();
-            var rows = await db.QueryAsync<Alias>(
-                $@"{SelectQuery} WHERE ""Address"" = ANY(@addresses::character(36)[])",
-                new { addresses });
+            string name = null;
+            if (json != null)
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("alias", out var alias))
+                    name = alias.GetString();
+            }
 
             lock (this)
             {
-                foreach (var row in rows)
+                if (name != null)
                 {
-                    if (row.Name != null)
-                    {
-                        var alias = Aliases.FirstOrDefault(x => x.Address == row.Address);
-                        if (alias == null)
-                            Aliases.Add(row);
-                        else
-                            alias.Name = row.Name;
-                    }
+                    var alias = Aliases.FirstOrDefault(x => x.Address == address);
+                    if (alias == null)
+                        Aliases.Add(new Alias { Address = address, Name = name });
                     else
-                    {
-                        Aliases.RemoveAll(x => x.Address == row.Address);
-                    }
+                        alias.Name = name;
+                }
+                else
+                {
+                    Aliases.RemoveAll(x => x.Address == address);
                 }
             }
         }

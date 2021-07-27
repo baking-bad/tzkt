@@ -27,7 +27,7 @@ namespace Tzkt.Sync
                     appConfig.Sources.Clear();
                     appConfig.AddJsonFile("appsettings.json", true);
                     appConfig.AddJsonFile($"appsettings.{host.HostingEnvironment.EnvironmentName}.json", true);
-                    appConfig.AddEnvironmentVariables("TZKT_");
+                    appConfig.AddEnvironmentVariables();
                     appConfig.AddEnvironmentVariables("TZKT_SYNC_");
                     appConfig.AddCommandLine(args);
                 })

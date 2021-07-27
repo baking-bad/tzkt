@@ -57,15 +57,13 @@ namespace Tzkt.Api.Services.Cache
             Logger.LogDebug("Loaded {0} software", Software.Count);
         }
 
-        public async Task Reload(List<string> hashes)
+        public void UpdateMetadata(string shortHash)
         {
-            using var db = GetConnection();
-            var rows = await db.QueryAsync($@"{SelectQuery} WHERE ""ShortHash"" = ANY(@hashes::character(8)[])", new { hashes });
-
             lock (this)
             {
-                foreach (var row in rows)
-                    Software[(int)row.Id] = Parse(row);
+                using var db = GetConnection();
+                var row = db.QueryFirstOrDefault($@"{SelectQuery} WHERE ""ShortHash"" = @shortHash::character(8)", new { shortHash });
+                if (row != null) Software[(int)row.Id] = Parse(row);
             }
         }
 
