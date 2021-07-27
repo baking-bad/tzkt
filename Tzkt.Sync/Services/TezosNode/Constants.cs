@@ -10,5 +10,8 @@ namespace Tzkt.Sync.Services
 
         [JsonPropertyName("time_between_blocks")]
         public List<int> BlockIntervals { get; set; }
+
+        [JsonPropertyName("minimal_block_delay")]
+        public int? MinBlockDelay { get; set; }
     }
 }
