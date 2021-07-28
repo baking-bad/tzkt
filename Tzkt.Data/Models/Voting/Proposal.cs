@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
@@ -15,8 +14,6 @@ namespace Tzkt.Data.Models
         public int Upvotes { get; set; }
         public int Rolls { get; set; }
         public ProposalStatus Status { get; set; }
-
-        public string Metadata { get; set; }
     }
 
     public static class ProposalModel
@@ -28,27 +25,24 @@ namespace Tzkt.Data.Models
                 .HasKey(x => x.Id);
             #endregion
 
-            #region indexes
-            modelBuilder.Entity<Proposal>()
-                .HasIndex(x => x.Epoch);
-
-            modelBuilder.Entity<Proposal>()
-                .HasIndex(x => x.Hash);
-            #endregion
-
             #region props
             modelBuilder.Entity<Proposal>()
                 .Property(nameof(Proposal.Hash))
                 .IsFixedLength(true)
                 .HasMaxLength(51);
 
+            // shadow property
             modelBuilder.Entity<Proposal>()
-                .Property(x => x.Metadata)
+                .Property<string>("Metadata")
                 .HasColumnType("jsonb");
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<Proposal>()
+                .HasIndex(x => x.Epoch);
 
             modelBuilder.Entity<Proposal>()
-                .Property(x => x.Metadata)
-                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+                .HasIndex(x => x.Hash);
             #endregion
         }
     }

@@ -82,6 +82,11 @@ namespace Tzkt.Data.Models
     {
         public static void BuildBakerCycleModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<BakerCycle>()
+                .HasKey(x => x.Id);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<BakerCycle>()
                 .HasIndex(x => x.Id)
@@ -96,11 +101,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<BakerCycle>()
                 .HasIndex(x => new { x.Cycle, x.BakerId })
                 .IsUnique(true);
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<BakerCycle>()
-                .HasKey(x => x.Id);
             #endregion
         }
     }

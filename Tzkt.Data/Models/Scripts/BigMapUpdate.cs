@@ -31,6 +31,17 @@ namespace Tzkt.Data.Models
     {
         public static void BuildBigMapUpdateModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<BigMapUpdate>()
+                .HasKey(x => x.Id);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<BigMapUpdate>()
+                .Property(x => x.JsonValue)
+                .HasColumnType("jsonb");
+            #endregion
+
             #region indexes
             modelBuilder.Entity<BigMapUpdate>()
                 .HasIndex(x => x.Id)
@@ -57,17 +68,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<BigMapUpdate>()
                 .HasIndex(x => x.MigrationId)
                 .HasFilter($@"""{nameof(BigMapUpdate.MigrationId)}"" is not null");
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<BigMapUpdate>()
-                .HasKey(x => x.Id);
-            #endregion
-
-            #region props
-            modelBuilder.Entity<BigMapUpdate>()
-                .Property(x => x.JsonValue)
-                .HasColumnType("jsonb");
             #endregion
         }
     }

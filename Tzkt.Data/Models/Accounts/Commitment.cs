@@ -16,16 +16,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildCommitmentModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<Commitment>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Commitment>()
-                .HasIndex(x => x.Address)
-                .IsUnique();
-            #endregion
-
             #region keys
             modelBuilder.Entity<Commitment>()
                 .HasKey(x => x.Id);
@@ -37,6 +27,16 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(37)
                 .IsRequired();
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<Commitment>()
+                .HasIndex(x => x.Id)
+                .IsUnique();
+
+            modelBuilder.Entity<Commitment>()
+                .HasIndex(x => x.Address)
+                .IsUnique();
             #endregion
         }
     }

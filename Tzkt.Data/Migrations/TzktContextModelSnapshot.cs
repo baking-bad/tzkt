@@ -212,6 +212,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ManagerCounter")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Metadata")
+                        .HasColumnType("jsonb");
+
                     b.Property<int>("MigrationOpsCount")
                         .HasColumnType("integer");
 
@@ -826,6 +829,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("jsonb");
 
                     b.Property<int>("Operations")
                         .HasColumnType("integer");

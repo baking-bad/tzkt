@@ -23,12 +23,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildCycleModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<Cycle>()
-                .HasIndex(x => x.Index)
-                .IsUnique();
-            #endregion
-
             #region keys
             modelBuilder.Entity<Cycle>()
                 .HasKey(x => x.Id);
@@ -43,6 +37,12 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(64)
                 .IsRequired();
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<Cycle>()
+                .HasIndex(x => x.Index)
+                .IsUnique();
             #endregion
         }
     }

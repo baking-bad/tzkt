@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
@@ -61,8 +60,6 @@ namespace Tzkt.Data.Models
         /// 1/2 window size of 2000 blocks with precision of 1000 for integer computation
         /// </summary>
         public int LBEscapeThreshold { get; set; }
-
-        public string Metadata { get; set; }
 
         #region helpers
         public int GetCycleStart(int cycle)
@@ -125,13 +122,10 @@ namespace Tzkt.Data.Models
                 .HasMaxLength(51)
                 .IsRequired();
 
+            // shadow property
             modelBuilder.Entity<Protocol>()
-                .Property(x => x.Metadata)
+                .Property<string>("Metadata")
                 .HasColumnType("jsonb");
-
-            modelBuilder.Entity<Protocol>()
-                .Property(x => x.Metadata)
-                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
             #endregion
         }
     }

@@ -15,14 +15,14 @@ namespace Tzkt.Data.Models
     {
         public static void BuildSnapshotBalanceModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<SnapshotBalance>()
-                .HasIndex(x => x.Level);
-            #endregion
-
             #region keys
             modelBuilder.Entity<SnapshotBalance>()
                 .HasKey(x => x.Id);
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<SnapshotBalance>()
+                .HasIndex(x => x.Level);
             #endregion
         }
     }

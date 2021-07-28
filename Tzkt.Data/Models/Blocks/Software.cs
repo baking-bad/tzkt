@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
@@ -10,8 +9,6 @@ namespace Tzkt.Data.Models
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
         public string ShortHash { get; set; }
-
-        public string Metadata { get; set; }
     }
 
     public static class SoftwareModel
@@ -30,13 +27,10 @@ namespace Tzkt.Data.Models
                 .HasMaxLength(8)
                 .IsRequired();
 
+            // shadow property
             modelBuilder.Entity<Software>()
-                .Property(x => x.Metadata)
+                .Property<string>("Metadata")
                 .HasColumnType("jsonb");
-
-            modelBuilder.Entity<Software>()
-                .Property(x => x.Metadata)
-                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
             #endregion
         }
     }

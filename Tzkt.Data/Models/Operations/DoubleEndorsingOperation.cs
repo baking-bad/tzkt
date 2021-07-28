@@ -29,6 +29,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildDoubleEndorsingOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+            
+            #region props
+            modelBuilder.Entity<DoubleEndorsingOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
             #region indexes
             modelBuilder.Entity<DoubleEndorsingOperation>()
                 .HasIndex(x => x.Level);
@@ -42,20 +55,7 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<DoubleEndorsingOperation>()
                 .HasIndex(x => x.OffenderId);
             #endregion
-            
-            #region keys
-            modelBuilder.Entity<DoubleEndorsingOperation>()
-                .HasKey(x => x.Id);
-            #endregion
-            
-            #region props
-            modelBuilder.Entity<DoubleEndorsingOperation>()
-                .Property(x => x.OpHash)
-                .IsFixedLength(true)
-                .HasMaxLength(51)
-                .IsRequired();
-            #endregion
-            
+
             #region relations
             modelBuilder.Entity<DoubleEndorsingOperation>()
                 .HasOne(x => x.Block)

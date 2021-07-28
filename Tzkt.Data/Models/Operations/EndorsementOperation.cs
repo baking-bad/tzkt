@@ -24,17 +24,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildEndorsementOperationModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<EndorsementOperation>()
-                .HasIndex(x => x.Level);
-
-            modelBuilder.Entity<EndorsementOperation>()
-                .HasIndex(x => x.OpHash);
-
-            modelBuilder.Entity<EndorsementOperation>()
-                .HasIndex(x => x.DelegateId);
-            #endregion
-            
             #region keys
             modelBuilder.Entity<EndorsementOperation>()
                 .HasKey(x => x.Id);
@@ -47,7 +36,18 @@ namespace Tzkt.Data.Models
                 .HasMaxLength(51)
                 .IsRequired();
             #endregion
-            
+
+            #region indexes
+            modelBuilder.Entity<EndorsementOperation>()
+                .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<EndorsementOperation>()
+                .HasIndex(x => x.OpHash);
+
+            modelBuilder.Entity<EndorsementOperation>()
+                .HasIndex(x => x.DelegateId);
+            #endregion
+
             #region relations
             modelBuilder.Entity<EndorsementOperation>()
                 .HasOne(x => x.Block)

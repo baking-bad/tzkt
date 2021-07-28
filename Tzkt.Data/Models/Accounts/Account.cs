@@ -28,8 +28,6 @@ namespace Tzkt.Data.Models
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
 
-        public string Metadata { get; set; }
-
         #region relations
         [ForeignKey(nameof(DelegateId))]
         public Delegate Delegate { get; set; }
@@ -45,30 +43,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildAccountModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Address)
-                .IsUnique();
-
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Type);
-
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Staked);
-
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.DelegateId);
-
-            modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Metadata)
-                .HasMethod("gin")
-                .HasOperators("jsonb_path_ops");
-            #endregion
-
             #region keys
             modelBuilder.Entity<Account>()
                 .HasKey(x => x.Id);
@@ -91,14 +65,35 @@ namespace Tzkt.Data.Models
                 .HasMaxLength(36)
                 .IsRequired();
 
+            // shadow property
             modelBuilder.Entity<Account>()
-                .Property(x => x.Metadata)
+                .Property<string>("Metadata")
                 .HasColumnType("jsonb");
+            #endregion
 
-            // TODO: don't load metadata to the indexer at all
+            #region indexes
             modelBuilder.Entity<Account>()
-                .Property(x => x.Metadata)
-                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+                .HasIndex(x => x.Id)
+                .IsUnique();
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.Address)
+                .IsUnique();
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.Type);
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.Staked);
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.DelegateId);
+
+            // shadow property
+            modelBuilder.Entity<Account>()
+                .HasIndex("Metadata")
+                .HasMethod("gin")
+                .HasOperators("jsonb_path_ops");
             #endregion
 
             #region relations

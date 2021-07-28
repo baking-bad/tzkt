@@ -23,6 +23,25 @@ namespace Tzkt.Data.Models
     {
         public static void BuildBigMapKeyModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<BigMapKey>()
+                .HasKey(x => x.Id);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<BigMapKey>()
+                .Property(x => x.KeyHash)
+                .HasMaxLength(54);
+
+            modelBuilder.Entity<BigMapKey>()
+                .Property(x => x.JsonKey)
+                .HasColumnType("jsonb");
+
+            modelBuilder.Entity<BigMapKey>()
+                .Property(x => x.JsonValue)
+                .HasColumnType("jsonb");
+            #endregion
+
             #region indexes
             modelBuilder.Entity<BigMapKey>()
                 .HasIndex(x => x.Id)
@@ -50,25 +69,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.JsonValue)
                 .HasMethod("gin")
                 .HasOperators("jsonb_path_ops");
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<BigMapKey>()
-                .HasKey(x => x.Id);
-            #endregion
-
-            #region props
-            modelBuilder.Entity<BigMapKey>()
-                .Property(x => x.KeyHash)
-                .HasMaxLength(54);
-
-            modelBuilder.Entity<BigMapKey>()
-                .Property(x => x.JsonKey)
-                .HasColumnType("jsonb");
-
-            modelBuilder.Entity<BigMapKey>()
-                .Property(x => x.JsonValue)
-                .HasColumnType("jsonb");
             #endregion
         }
     }

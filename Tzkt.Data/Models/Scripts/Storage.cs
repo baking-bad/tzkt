@@ -20,6 +20,17 @@ namespace Tzkt.Data.Models
     {
         public static void BuildStorageModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<Storage>()
+                .HasKey(x => x.Id);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<Storage>()
+                .Property(x => x.JsonValue)
+                .HasColumnType("jsonb");
+            #endregion
+
             #region indexes
             modelBuilder.Entity<Storage>()
                 .HasIndex(x => x.Id)
@@ -30,21 +41,10 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Storage>()
                 .HasIndex(x => x.ContractId);
-            
+
             modelBuilder.Entity<Storage>()
                 .HasIndex(x => new { x.ContractId, x.Current })
                 .HasFilter($@"""{nameof(Storage.Current)}"" = true");
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<Storage>()
-                .HasKey(x => x.Id);
-            #endregion
-
-            #region props
-            modelBuilder.Entity<Storage>()
-                .Property(x => x.JsonValue)
-                .HasColumnType("jsonb");
             #endregion
         }
     }

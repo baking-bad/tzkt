@@ -11,17 +11,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildRevealOperationModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<RevealOperation>()
-                .HasIndex(x => x.Level);
-
-            modelBuilder.Entity<RevealOperation>()
-                .HasIndex(x => x.OpHash);
-
-            modelBuilder.Entity<RevealOperation>()
-                .HasIndex(x => x.SenderId);
-            #endregion
-            
             #region keys
             modelBuilder.Entity<RevealOperation>()
                 .HasKey(x => x.Id);
@@ -34,7 +23,18 @@ namespace Tzkt.Data.Models
                 .HasMaxLength(51)
                 .IsRequired();
             #endregion
-            
+
+            #region indexes
+            modelBuilder.Entity<RevealOperation>()
+                .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<RevealOperation>()
+                .HasIndex(x => x.OpHash);
+
+            modelBuilder.Entity<RevealOperation>()
+                .HasIndex(x => x.SenderId);
+            #endregion
+
             #region relations
             modelBuilder.Entity<RevealOperation>()
                 .HasOne(x => x.Block)

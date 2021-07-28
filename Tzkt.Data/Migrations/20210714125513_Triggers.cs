@@ -4,96 +4,86 @@ namespace Tzkt.Data.Migrations
 {
     public partial class Triggers : Migration
     {
+        #region static
+        static void AddNotificationTrigger(MigrationBuilder builder, string name, string table, string column, string payload)
+        {
+            builder.Sql($@"
+                CREATE OR REPLACE FUNCTION notify_{name}() RETURNS TRIGGER AS $$
+                    BEGIN
+                    PERFORM pg_notify('{name}', {payload});
+                    RETURN null;
+                    END;
+                $$ LANGUAGE plpgsql;");
+
+            builder.Sql($@"
+                CREATE TRIGGER {name}
+                    AFTER UPDATE OF ""{column}"" ON ""{table}""
+                    FOR EACH ROW
+                    WHEN (OLD.""{column}"" IS DISTINCT FROM NEW.""{column}"")
+                    EXECUTE PROCEDURE notify_{name}();");
+        }
+
+        static void RemoveNotificationTrigger(MigrationBuilder builder, string name, string table)
+        {
+            builder.Sql($@"DROP TRIGGER IF EXISTS {name} ON ""{table}"" CASCADE");
+            builder.Sql($@"DROP FUNCTION IF EXISTS notify_{name} CASCADE");
+        }
+        #endregion
+
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"
-                CREATE OR REPLACE FUNCTION notify_state() RETURNS TRIGGER AS $$
-                    BEGIN
-                    PERFORM pg_notify('state_changed', NEW.""Level"" || ':' || NEW.""Hash"");
-                    RETURN null;
-                    END;
-                $$ LANGUAGE plpgsql;");
+            AddNotificationTrigger(migrationBuilder,
+                "state_hash_changed",
+                "AppState",
+                "Hash",
+                @"NEW.""Level"" || ':' || NEW.""Hash""");
 
-            migrationBuilder.Sql(@"
-                CREATE OR REPLACE FUNCTION notify_account_metadata() RETURNS TRIGGER AS $$
-                    BEGIN
-                    PERFORM pg_notify('account_metadata_changed', NEW.""Address"" || ':' || COALESCE(NEW.""Metadata""::text, ''));
-                    RETURN null;
-                    END;
-                $$ LANGUAGE plpgsql;");
+            AddNotificationTrigger(migrationBuilder,
+                "state_metadata_changed",
+                "AppState",
+                "Metadata",
+                @"NEW.""Id"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
 
-            migrationBuilder.Sql(@"
-                CREATE OR REPLACE FUNCTION notify_proposal_metadata() RETURNS TRIGGER AS $$
-                    BEGIN
-                    PERFORM pg_notify('proposal_metadata_changed', NEW.""Hash"" || ':' || COALESCE(NEW.""Metadata""::text, ''));
-                    RETURN null;
-                    END;
-                $$ LANGUAGE plpgsql;");
+            AddNotificationTrigger(migrationBuilder,
+                "account_metadata_changed",
+                "Accounts",
+                "Metadata",
+                @"NEW.""Address"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
 
-            migrationBuilder.Sql(@"
-                CREATE OR REPLACE FUNCTION notify_protocol_metadata() RETURNS TRIGGER AS $$
-                    BEGIN
-                    PERFORM pg_notify('protocol_metadata_changed', NEW.""Hash"" || ':' || COALESCE(NEW.""Metadata""::text, ''));
-                    RETURN null;
-                    END;
-                $$ LANGUAGE plpgsql;");
+            AddNotificationTrigger(migrationBuilder,
+                "proposal_metadata_changed",
+                "Proposals",
+                "Metadata",
+                @"NEW.""Hash"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
 
-            migrationBuilder.Sql(@"
-                CREATE OR REPLACE FUNCTION notify_software_metadata() RETURNS TRIGGER AS $$
-                    BEGIN
-                    PERFORM pg_notify('software_metadata_changed', NEW.""ShortHash"" || ':' || COALESCE(NEW.""Metadata""::text, ''));
-                    RETURN null;
-                    END;
-                $$ LANGUAGE plpgsql;");
+            AddNotificationTrigger(migrationBuilder,
+                "protocol_metadata_changed",
+                "Protocols",
+                "Metadata",
+                @"NEW.""Hash"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
 
-            migrationBuilder.Sql(@"
-                CREATE TRIGGER state_changed
-                    AFTER UPDATE ON ""AppState""
-                    FOR EACH ROW
-                    EXECUTE PROCEDURE notify_state();");
+            AddNotificationTrigger(migrationBuilder,
+                "software_metadata_changed",
+                "Software",
+                "Metadata",
+                @"NEW.""ShortHash"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
 
-            migrationBuilder.Sql(@"
-                CREATE TRIGGER account_metadata_changed
-                    AFTER UPDATE OF ""Metadata"" ON ""Accounts""
-                    FOR EACH ROW
-                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
-                    EXECUTE PROCEDURE notify_account_metadata();");
-
-            migrationBuilder.Sql(@"
-                CREATE TRIGGER proposal_metadata_changed
-                    AFTER UPDATE OF ""Metadata"" ON ""Proposals""
-                    FOR EACH ROW
-                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
-                    EXECUTE PROCEDURE notify_proposal_metadata();");
-
-            migrationBuilder.Sql(@"
-                CREATE TRIGGER protocol_metadata_changed
-                    AFTER UPDATE OF ""Metadata"" ON ""Protocols""
-                    FOR EACH ROW
-                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
-                    EXECUTE PROCEDURE notify_protocol_metadata();");
-
-            migrationBuilder.Sql(@"
-                CREATE TRIGGER software_metadata_changed
-                    AFTER UPDATE OF ""Metadata"" ON ""Software""
-                    FOR EACH ROW
-                    WHEN (OLD.""Metadata"" IS DISTINCT FROM NEW.""Metadata"")
-                    EXECUTE PROCEDURE notify_software_metadata();");
+            AddNotificationTrigger(migrationBuilder,
+                "block_metadata_changed",
+                "Blocks",
+                "Metadata",
+                @"NEW.""Level"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"DROP TRIGGER IF EXISTS state_changed ON ""AppState"" CASCADE");
-            migrationBuilder.Sql(@"DROP TRIGGER IF EXISTS account_metadata_changed ON ""Accounts"" CASCADE");
-            migrationBuilder.Sql(@"DROP TRIGGER IF EXISTS proposal_metadata_changed ON ""Proposals"" CASCADE");
-            migrationBuilder.Sql(@"DROP TRIGGER IF EXISTS protocol_metadata_changed ON ""Protocols"" CASCADE");
-            migrationBuilder.Sql(@"DROP TRIGGER IF EXISTS software_metadata_changed ON ""Software"" CASCADE");
-
-            migrationBuilder.Sql(@"DROP FUNCTION IF EXISTS notify_state CASCADE");
-            migrationBuilder.Sql(@"DROP FUNCTION IF EXISTS notify_account_metadata CASCADE");
-            migrationBuilder.Sql(@"DROP FUNCTION IF EXISTS notify_proposal_metadata CASCADE");
-            migrationBuilder.Sql(@"DROP FUNCTION IF EXISTS notify_protocol_metadata CASCADE");
-            migrationBuilder.Sql(@"DROP FUNCTION IF EXISTS notify_software_metadata CASCADE");
+            RemoveNotificationTrigger(migrationBuilder, "state_hash_changed", "AppState");
+            RemoveNotificationTrigger(migrationBuilder, "state_metadata_changed", "AppState");
+            RemoveNotificationTrigger(migrationBuilder, "account_metadata_changed", "Accounts");
+            RemoveNotificationTrigger(migrationBuilder, "proposal_metadata_changed", "Proposals");
+            RemoveNotificationTrigger(migrationBuilder, "protocol_metadata_changed", "Protocols");
+            RemoveNotificationTrigger(migrationBuilder, "software_metadata_changed", "Software");
+            RemoveNotificationTrigger(migrationBuilder, "block_metadata_changed", "Blocks");
         }
     }
 }

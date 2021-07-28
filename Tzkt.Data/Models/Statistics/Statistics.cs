@@ -28,6 +28,11 @@ namespace Tzkt.Data.Models
     {
         public static void BuildStatisticsModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<Statistics>()
+                .HasKey(x => x.Id);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<Statistics>()
                 .HasIndex(x => x.Level)
@@ -42,11 +47,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.Date)
                 .HasFilter(@"""Date"" IS NOT NULL")
                 .IsUnique();
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<Statistics>()
-                .HasKey(x => x.Id);
             #endregion
         }
     }
