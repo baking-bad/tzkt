@@ -20,7 +20,6 @@ namespace Tzkt.Api.Websocket.Processors
         static readonly SemaphoreSlim Sema = new(1, 1);
 
         static readonly Dictionary<string, HashSet<string>> AccountSubs = new();
-
         static readonly Dictionary<string, int> Limits = new();
         #endregion
 
@@ -144,7 +143,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task Subscribe(IClientProxy client, string connectionId, AccountParameter parameter)
+        public async Task Subscribe(IClientProxy client, string connectionId, AccountsParameter parameter)
         {
             Task sending = Task.CompletedTask;
             try
@@ -161,16 +160,19 @@ namespace Tzkt.Api.Websocket.Processors
                 #endregion
 
                 #region add to subs
-                if (!AccountSubs.TryGetValue(parameter.Address, out var accountSub))
+                foreach (var address in parameter.Addresses)
                 {
-                    accountSub = new(4);
-                    AccountSubs.Add(parameter.Address, accountSub);
-                }
-                    
-                if (!accountSub.Contains(connectionId))
-                {
-                    accountSub.Add(connectionId);
-                    Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+                    if (!AccountSubs.TryGetValue(address, out var accountSub))
+                    {
+                        accountSub = new(4);
+                        AccountSubs.Add(address, accountSub);
+                    }
+
+                    if (!accountSub.Contains(connectionId))
+                    {
+                        accountSub.Add(connectionId);
+                        Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+                    }
                 }
                 #endregion
 
@@ -203,11 +205,11 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task Unsubscribe(string connectionId)
+        public void Unsubscribe(string connectionId)
         {
             try
             {
-                await Sema.WaitAsync();
+                Sema.Wait();
                 if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
 

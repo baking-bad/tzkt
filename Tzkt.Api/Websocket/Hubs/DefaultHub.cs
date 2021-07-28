@@ -52,7 +52,7 @@ namespace Tzkt.Api.Websocket.Hubs
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
         
-        public Task SubscribeToAccount(AccountParameter parameters)
+        public Task SubscribeToAccount(AccountsParameter parameters)
         {
             parameters.EnsureValid();
             return Account.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
