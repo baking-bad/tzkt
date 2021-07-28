@@ -12,7 +12,7 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Websocket.Processors
 {
-    public class AccountProcessor<T> : IHubProcessor where T : Hub
+    public class AccountsProcessor<T> : IHubProcessor where T : Hub
     {
         #region static
         const string AccountsGroup = "account";
@@ -29,7 +29,7 @@ namespace Tzkt.Api.Websocket.Processors
         readonly WebsocketConfig Config;
         readonly ILogger Logger;
 
-        public AccountProcessor(StateCache state, AccountRepository accounts, IHubContext<T> hubContext, IConfiguration config, ILogger<AccountProcessor<T>> logger)
+        public AccountsProcessor(StateCache state, AccountRepository accounts, IHubContext<T> hubContext, IConfiguration config, ILogger<AccountsProcessor<T>> logger)
         {
             State = state;
             Repo = accounts;
@@ -152,7 +152,8 @@ namespace Tzkt.Api.Websocket.Processors
                 Logger.LogDebug("New subscription...");
 
                 #region check limits
-                if (Limits.TryGetValue(connectionId, out var cnt) && cnt >= Config.MaxAccountSubscriptions)
+                if (parameter.Addresses.Count > Config.MaxAccountsSubscriptions 
+                || (Limits.TryGetValue(connectionId, out var cnt) && cnt + parameter.Addresses.Count > Config.MaxAccountsSubscriptions))
                     throw new HubException($"Subscriptions limit exceeded");
                 
                 if (cnt > 0) // reuse already allocated string

@@ -98,8 +98,8 @@ namespace Tzkt.Api
                 services.AddTransient<BigMapsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
 
-                services.AddTransient<AccountProcessor<DefaultHub>>();
-                services.AddTransient<IHubProcessor, AccountProcessor<DefaultHub>>();
+                services.AddTransient<AccountsProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, AccountsProcessor<DefaultHub>>();
 
                 services.AddSignalR(options =>
                 {
