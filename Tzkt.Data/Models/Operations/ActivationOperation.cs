@@ -19,18 +19,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildActivationOperationModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<ActivationOperation>()
-                .HasIndex(x => x.Level);
-            
-            modelBuilder.Entity<ActivationOperation>()
-                .HasIndex(x => x.OpHash);
-            
-            modelBuilder.Entity<ActivationOperation>()
-                .HasIndex(x => x.AccountId)
-                .IsUnique();
-            #endregion
-
             #region keys
             modelBuilder.Entity<ActivationOperation>()
                 .HasKey(x => x.Id);
@@ -42,6 +30,18 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(51)
                 .IsRequired();
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<ActivationOperation>()
+                .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<ActivationOperation>()
+                .HasIndex(x => x.OpHash);
+
+            modelBuilder.Entity<ActivationOperation>()
+                .HasIndex(x => x.AccountId)
+                .IsUnique();
             #endregion
 
             #region relations

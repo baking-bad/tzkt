@@ -58,6 +58,14 @@ namespace Tzkt.Data.Models
     {
         public static void BuildBigMapModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<BigMap>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<BigMap>()
+                .HasAlternateKey(x => x.Ptr);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<BigMap>()
                 .HasIndex(x => x.Id)
@@ -72,14 +80,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<BigMapKey>()
                 .HasIndex(x => x.LastLevel);
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<BigMap>()
-                .HasKey(x => x.Id);
-
-            modelBuilder.Entity<BigMap>()
-                .HasAlternateKey(x => x.Ptr);
             #endregion
         }
     }

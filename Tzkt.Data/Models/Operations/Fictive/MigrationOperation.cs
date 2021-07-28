@@ -48,17 +48,17 @@ namespace Tzkt.Data.Models
     {
         public static void BuildMigrationOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<MigrationOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<MigrationOperation>()
                 .HasIndex(x => x.Level);
 
             modelBuilder.Entity<MigrationOperation>()
                 .HasIndex(x => x.AccountId);
-            #endregion
-            
-            #region keys
-            modelBuilder.Entity<MigrationOperation>()
-                .HasKey(x => x.Id);
             #endregion
 
             #region relations

@@ -35,6 +35,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildOriginationOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<OriginationOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+            
+            #region props
+            modelBuilder.Entity<OriginationOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
             #region indexes
             modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.Level);
@@ -58,19 +71,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.ContractId);
             #endregion
 
-            #region keys
-            modelBuilder.Entity<OriginationOperation>()
-                .HasKey(x => x.Id);
-            #endregion
-            
-            #region props
-            modelBuilder.Entity<OriginationOperation>()
-                .Property(x => x.OpHash)
-                .IsFixedLength(true)
-                .HasMaxLength(51)
-                .IsRequired();
-            #endregion
-            
             #region relations
             modelBuilder.Entity<OriginationOperation>()
                 .HasOne(x => x.Block)

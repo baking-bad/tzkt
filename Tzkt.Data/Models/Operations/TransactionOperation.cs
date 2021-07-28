@@ -33,6 +33,23 @@ namespace Tzkt.Data.Models
     {
         public static void BuildTransactionOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<TransactionOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+            
+            #region props
+            modelBuilder.Entity<TransactionOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+
+            modelBuilder.Entity<TransactionOperation>()
+                .Property(x => x.JsonParameters)
+                .HasColumnType("jsonb");
+            #endregion
+
             #region indexes
             modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.Level);
@@ -55,23 +72,6 @@ namespace Tzkt.Data.Models
                 .HasOperators("jsonb_path_ops");
             #endregion
 
-            #region keys
-            modelBuilder.Entity<TransactionOperation>()
-                .HasKey(x => x.Id);
-            #endregion
-            
-            #region props
-            modelBuilder.Entity<TransactionOperation>()
-                .Property(x => x.OpHash)
-                .IsFixedLength(true)
-                .HasMaxLength(51)
-                .IsRequired();
-
-            modelBuilder.Entity<TransactionOperation>()
-                .Property(x => x.JsonParameters)
-                .HasColumnType("jsonb");
-            #endregion
-            
             #region relations
             modelBuilder.Entity<TransactionOperation>()
                 .HasOne(x => x.Block)

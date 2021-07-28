@@ -26,6 +26,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildDelegationOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<DelegationOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<DelegationOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
             #region indexes
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.Level);
@@ -44,19 +57,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.PrevDelegateId);
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<DelegationOperation>()
-                .HasKey(x => x.Id);
-            #endregion
-
-            #region props
-            modelBuilder.Entity<DelegationOperation>()
-                .Property(x => x.OpHash)
-                .IsFixedLength(true)
-                .HasMaxLength(51)
-                .IsRequired();
             #endregion
 
             #region relations

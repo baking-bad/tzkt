@@ -22,15 +22,15 @@ namespace Tzkt.Data.Models
     {
         public static void BuildQuoteModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<Quote>()
+                .HasKey(x => x.Id);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<Quote>()
                 .HasIndex(x => x.Level)
                 .IsUnique();
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<Quote>()
-                .HasKey(x => x.Id);
             #endregion
         }
     }

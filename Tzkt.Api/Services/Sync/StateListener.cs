@@ -18,11 +18,13 @@ namespace Tzkt.Api.Services.Sync
     public class StateListener : BackgroundService
     {
         #region static
-        const string StateTrigger = "state_changed";
-        const string AccountMetadataTrigger = "account_metadata_changed";
-        const string SoftwareMetadataTrigger = "software_metadata_changed";
-        //const string ProposalMetadataTrigger = "proposal_metadata_changed";
-        //const string ProtocolMetadataTrigger = "protocol_metadata_changed";
+        const string StateHashChanged = "state_hash_changed";
+        const string StateMetadataChanged = "state_metadata_changed";
+        const string AccountMetadataChanged = "account_metadata_changed";
+        const string ProposalMetadataChanged = "proposal_metadata_changed";
+        const string ProtocolMetadataChanged = "protocol_metadata_changed";
+        const string SoftwareMetadataChanged = "software_metadata_changed";
+        const string BlockMetadataChanged = "block_metadata_changed";
         #endregion
 
         readonly string ConnectionString;
@@ -88,11 +90,13 @@ namespace Tzkt.Api.Services.Sync
                         {
                             await db.OpenAsync(cancellationToken);
                             await db.ExecuteAsync($@"
-                                LISTEN {StateTrigger};
-                                LISTEN {AccountMetadataTrigger};
-                                LISTEN {SoftwareMetadataTrigger};");
-                                //LISTEN { ProposalMetadataTrigger};
-                                //LISTEN { ProtocolMetadataTrigger};
+                                LISTEN {StateHashChanged};
+                                LISTEN {AccountMetadataChanged};
+                                LISTEN {SoftwareMetadataChanged};");
+                                //LISTEN {StateMetadataChanged};
+                                //LISTEN {ProposalMetadataChanged};
+                                //LISTEN {ProtocolMetadataChanged};
+                                //LISTEN {BlockMetadataChanged};
                             Logger.LogInformation("Db listener connected");
                         }
                         await db.WaitAsync(cancellationToken);
@@ -130,7 +134,7 @@ namespace Tzkt.Api.Services.Sync
                 return;
             }
 
-            if (e.Channel == StateTrigger)
+            if (e.Channel == StateHashChanged)
             {
                 var data = e.Payload.Split(':', StringSplitOptions.RemoveEmptyEntries);
                 if (data.Length != 2 || !int.TryParse(data[0], out var level) || data[1].Length != 51)
@@ -248,13 +252,21 @@ namespace Tzkt.Api.Services.Sync
 
                 switch (channel)
                 {
-                    case AccountMetadataTrigger:
+                    //case StateMetadataChanged:
+                    //    break;
+                    case AccountMetadataChanged:
                         Accounts.UpdateMetadata(key, value);
                         Aliases.UpdateMetadata(key, value);
                         break;
-                    case SoftwareMetadataTrigger:
+                    //case ProposalMetadataChanged:
+                    //    break;
+                    //case ProtocolMetadataChanged:
+                    //    break;
+                    case SoftwareMetadataChanged:
                         Software.UpdateMetadata(key);
                         break;
+                    //case BlockMetadataChanged:
+                    //    break;
                     default:
                         break;
                 }

@@ -63,6 +63,11 @@ namespace Tzkt.Data.Models
     {
         public static void BuildScriptModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<Script>()
+                .HasKey(x => x.Id);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<Script>()
                 .HasIndex(x => x.Id)
@@ -71,11 +76,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Script>()
                 .HasIndex(x => new { x.ContractId, x.Current })
                 .HasFilter($@"""{nameof(Script.Current)}"" = true");
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<Script>()
-                .HasKey(x => x.Id);
             #endregion
         }
     }

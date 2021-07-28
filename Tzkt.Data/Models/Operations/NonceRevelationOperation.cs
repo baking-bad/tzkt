@@ -27,20 +27,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildNonceRevelationOperationModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<NonceRevelationOperation>()
-                .HasIndex(x => x.Level);
-
-            modelBuilder.Entity<NonceRevelationOperation>()
-                .HasIndex(x => x.OpHash);
-
-            modelBuilder.Entity<NonceRevelationOperation>()
-                .HasIndex(x => x.BakerId);
-
-            modelBuilder.Entity<NonceRevelationOperation>()
-                .HasIndex(x => x.SenderId);
-            #endregion
-            
             #region keys
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasKey(x => x.Id);
@@ -56,7 +42,21 @@ namespace Tzkt.Data.Models
                 .HasMaxLength(51)
                 .IsRequired();
             #endregion
-            
+
+            #region indexes
+            modelBuilder.Entity<NonceRevelationOperation>()
+                .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<NonceRevelationOperation>()
+                .HasIndex(x => x.OpHash);
+
+            modelBuilder.Entity<NonceRevelationOperation>()
+                .HasIndex(x => x.BakerId);
+
+            modelBuilder.Entity<NonceRevelationOperation>()
+                .HasIndex(x => x.SenderId);
+            #endregion
+
             #region relations
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasOne(x => x.Block)

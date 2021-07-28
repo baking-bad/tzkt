@@ -29,17 +29,17 @@ namespace Tzkt.Data.Models
     {
         public static void BuildRevelationPenaltyOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<RevelationPenaltyOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<RevelationPenaltyOperation>()
                 .HasIndex(x => x.Level);
 
             modelBuilder.Entity<RevelationPenaltyOperation>()
                 .HasIndex(x => x.BakerId);
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<RevelationPenaltyOperation>()
-                .HasKey(x => x.Id);
             #endregion
 
             #region relations

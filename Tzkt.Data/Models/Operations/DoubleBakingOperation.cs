@@ -29,6 +29,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildDoubleBakingOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+            
+            #region props
+            modelBuilder.Entity<DoubleBakingOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
             #region indexes
             modelBuilder.Entity<DoubleBakingOperation>()
                 .HasIndex(x => x.Level);
@@ -41,19 +54,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DoubleBakingOperation>()
                 .HasIndex(x => x.OffenderId);
-            #endregion
-            
-            #region keys
-            modelBuilder.Entity<DoubleBakingOperation>()
-                .HasKey(x => x.Id);
-            #endregion
-            
-            #region props
-            modelBuilder.Entity<DoubleBakingOperation>()
-                .Property(x => x.OpHash)
-                .IsFixedLength(true)
-                .HasMaxLength(51)
-                .IsRequired();
             #endregion
 
             #region relations

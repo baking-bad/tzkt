@@ -27,6 +27,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildProposalOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<ProposalOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+            
+            #region props
+            modelBuilder.Entity<ProposalOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
             #region indexes
             modelBuilder.Entity<ProposalOperation>()
                 .HasIndex(x => x.Epoch);
@@ -43,20 +56,7 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<ProposalOperation>()
                 .HasIndex(x => x.SenderId);
             #endregion
-            
-            #region keys
-            modelBuilder.Entity<ProposalOperation>()
-                .HasKey(x => x.Id);
-            #endregion
-            
-            #region props
-            modelBuilder.Entity<ProposalOperation>()
-                .Property(x => x.OpHash)
-                .IsFixedLength(true)
-                .HasMaxLength(51)
-                .IsRequired();
-            #endregion
-            
+
             #region relations
             modelBuilder.Entity<ProposalOperation>()
                 .HasOne(x => x.Block)

@@ -60,7 +60,8 @@ namespace Tzkt.Data.Migrations
                     QuoteCny = table.Column<double>(type: "double precision", nullable: false),
                     QuoteJpy = table.Column<double>(type: "double precision", nullable: false),
                     QuoteKrw = table.Column<double>(type: "double precision", nullable: false),
-                    QuoteEth = table.Column<double>(type: "double precision", nullable: false)
+                    QuoteEth = table.Column<double>(type: "double precision", nullable: false),
+                    Metadata = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -579,7 +580,8 @@ namespace Tzkt.Data.Migrations
                     RevelationId = table.Column<int>(type: "integer", nullable: true),
                     ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
                     LBEscapeVote = table.Column<bool>(type: "boolean", nullable: false),
-                    LBEscapeEma = table.Column<int>(type: "integer", nullable: false)
+                    LBEscapeEma = table.Column<int>(type: "integer", nullable: false),
+                    Metadata = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1207,8 +1209,8 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "AccountCounter", "AccountsCount", "ActivationOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "Cycle", "CyclesCount", "DelegationOpsCount", "DoubleBakingOpsCount", "DoubleEndorsingOpsCount", "EndorsementOpsCount", "Hash", "KnownHead", "LastSync", "Level", "ManagerCounter", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "ProposalOpsCount", "ProposalsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "StorageCounter", "Timestamp", "TransactionOpsCount", "VotingEpoch", "VotingPeriod" },
-                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, null, null, 0, -1, 0, 0, 0, 0, 0, "", 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, 0, "", 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 0, -1, -1 });
+                columns: new[] { "Id", "AccountCounter", "AccountsCount", "ActivationOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "Cycle", "CyclesCount", "DelegationOpsCount", "DoubleBakingOpsCount", "DoubleEndorsingOpsCount", "EndorsementOpsCount", "Hash", "KnownHead", "LastSync", "Level", "ManagerCounter", "Metadata", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "ProposalOpsCount", "ProposalsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "StorageCounter", "Timestamp", "TransactionOpsCount", "VotingEpoch", "VotingPeriod" },
+                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, null, null, 0, -1, 0, 0, 0, 0, 0, "", 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, null, 0, "", 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 0, -1, -1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",

@@ -72,16 +72,6 @@ namespace Tzkt.Data.Models
     {
         public static void BuildBlockModel(this ModelBuilder modelBuilder)
         {
-            #region indexes
-            modelBuilder.Entity<Block>()
-                .HasIndex(x => x.Level)
-                .IsUnique();
-
-            modelBuilder.Entity<Block>()
-                .HasIndex(x => x.Hash)
-                .IsUnique();
-            #endregion
-
             #region keys
             modelBuilder.Entity<Block>()
                 .HasKey(x => x.Id);
@@ -96,6 +86,21 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(51)
                 .IsRequired();
+
+            // shadow property
+            modelBuilder.Entity<Block>()
+                .Property<string>("Metadata")
+                .HasColumnType("jsonb");
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<Block>()
+                .HasIndex(x => x.Level)
+                .IsUnique();
+
+            modelBuilder.Entity<Block>()
+                .HasIndex(x => x.Hash)
+                .IsUnique();
             #endregion
 
             #region relations

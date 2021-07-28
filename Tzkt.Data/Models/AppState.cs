@@ -76,6 +76,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildAppStateModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<AppState>()
+                .HasKey(x => x.Id);
+            #endregion
+
+            #region props
+            // shadow property
+            modelBuilder.Entity<AppState>()
+                .Property<string>("Metadata")
+                .HasColumnType("jsonb");
+            #endregion
+
+            #region seed
             modelBuilder.Entity<AppState>().HasData(
                 new AppState
                 {
@@ -90,6 +103,7 @@ namespace Tzkt.Data.Models
                     VotingPeriod = -1,
                     QuoteLevel = -1
                 });
+            #endregion
         }
     }
 }

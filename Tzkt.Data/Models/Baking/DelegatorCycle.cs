@@ -16,6 +16,11 @@ namespace Tzkt.Data.Models
     {
         public static void BuildDelegatorCycleModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<DelegatorCycle>()
+                .HasKey(x => x.Id);
+            #endregion
+
             #region indexes
             modelBuilder.Entity<DelegatorCycle>()
                 .HasIndex(x => x.Cycle);
@@ -29,11 +34,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DelegatorCycle>()
                 .HasIndex(x => new { x.Cycle, x.BakerId });
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<DelegatorCycle>()
-                .HasKey(x => x.Id);
             #endregion
         }
     }

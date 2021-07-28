@@ -27,6 +27,19 @@ namespace Tzkt.Data.Models
     {
         public static void BuildBallotOperationModel(this ModelBuilder modelBuilder)
         {
+            #region keys
+            modelBuilder.Entity<BallotOperation>()
+                .HasKey(x => x.Id);
+            #endregion
+
+            #region props
+            modelBuilder.Entity<BallotOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
             #region indexes
             modelBuilder.Entity<BallotOperation>()
                 .HasIndex(x => x.Epoch);
@@ -42,19 +55,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<BallotOperation>()
                 .HasIndex(x => x.SenderId);
-            #endregion
-
-            #region keys
-            modelBuilder.Entity<BallotOperation>()
-                .HasKey(x => x.Id);
-            #endregion
-
-            #region props
-            modelBuilder.Entity<BallotOperation>()
-                .Property(x => x.OpHash)
-                .IsFixedLength(true)
-                .HasMaxLength(51)
-                .IsRequired();
             #endregion
 
             #region relations
