@@ -239,7 +239,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="parameters">**DEPRECATED**. Use `entrypoint` and `parameter` instead.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="status">Filters transactions, delegations, originations and reveals by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
-        /// <param name="sort">Sort mode (0 - ascending, 1 - descending)</param>
+        /// <param name="sort">Sort mode (0 - ascending, 1 - descending), operations of different types can only be sorted by ID.</param>
         /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
         /// <param name="limit">Number of items to return</param>
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
