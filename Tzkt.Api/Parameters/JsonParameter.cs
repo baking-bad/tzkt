@@ -9,7 +9,6 @@ namespace Tzkt.Api
 {
     public class JsonParameterFilter<TValue>
     {
-        [Required]
         public string Path { get; set; }
 
         [Required]
