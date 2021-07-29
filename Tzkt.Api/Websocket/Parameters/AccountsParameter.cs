@@ -11,7 +11,7 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (!Addresses.Any())
+            if (Addresses == null || !Addresses.Any())
                 throw new HubException("Empty accounts array. At least one address should be provided");
             if (Addresses.Any(string.IsNullOrEmpty))
                 throw new HubException("Empty address. Array should not contain nulls or empty strings");

@@ -15,8 +15,8 @@ namespace Tzkt.Api.Websocket.Processors
     public class AccountsProcessor<T> : IHubProcessor where T : Hub
     {
         #region static
-        const string AccountsGroup = "account";
-        const string AccountsChannel = "account";
+        const string AccountsGroup = "accounts";
+        const string AccountsChannel = "accounts";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
         static readonly Dictionary<string, HashSet<string>> AccountSubs = new();

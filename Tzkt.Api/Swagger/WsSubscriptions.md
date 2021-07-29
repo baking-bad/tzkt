@@ -70,17 +70,17 @@ Sends an account with the specified address, if there are any changes to the acc
 
 ### Method
 
-`SubscribeToAccount`
+`SubscribeToAccounts`
 
 ### Channel
 
-`account`
+`accounts`
 
 ### Parameters
 
 ````js
 {
-	address: '', // address you want to subscribe to
+	addresses: [], // address you want to subscribe to
 }
 ````
 
@@ -97,9 +97,9 @@ State contains level (`int`) of the last processed block.
 ### Example
 
 ````js
-connection.on("account", (msg) => { console.log(msg); });
+connection.on("accounts", (msg) => { console.log(msg); });
 // subscribe to an account
-await connection.invoke("SubscribeToAccount", { address: 'tz1234...' });
+await connection.invoke("SubscribeToAccounts", { address: 'tz1234...' });
 ````
 
 ---			
