@@ -29,5 +29,7 @@ namespace Tzkt.Api
         /// Example: `?offset.cr=45837`.
         /// </summary>
         public long? Cr { get; set; }
+
+        public static implicit operator OffsetParameter(int offset) => new() { El = offset };
     }
 }

@@ -453,7 +453,7 @@ namespace Tzkt.Api.Services
             var period = epoch.Periods.Last();
             var proposals = epoch.Proposals.OrderByDescending(x => x.Rolls).ToList();
             var proposal = proposals.FirstOrDefault();
-            var proposalMeta = proposal?.Metadata == null ? null : DJson.Parse(proposal.Metadata.Json);
+            var proposalMeta = proposal?.Metadata == null ? null : DJson.Parse(proposal.Metadata);
             
             if (period.Kind == PeriodKinds.Proposal)
             {
