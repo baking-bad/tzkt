@@ -12,12 +12,14 @@ namespace Tzkt.Api.Websocket.Hubs
         readonly BlocksProcessor<DefaultHub> Blocks;
         readonly OperationsProcessor<DefaultHub> Operations;
         readonly BigMapsProcessor<DefaultHub> BigMaps;
+        readonly AccountsProcessor<DefaultHub> Accounts;
 
         public DefaultHub(
             HeadProcessor<DefaultHub> head,
             BlocksProcessor<DefaultHub> blocks,
             OperationsProcessor<DefaultHub> operations,
             BigMapsProcessor<DefaultHub> bigMaps,
+            AccountsProcessor<DefaultHub> accounts,
             ILogger<DefaultHub> logger,
             IConfiguration config) : base(logger, config)
         {
@@ -25,6 +27,7 @@ namespace Tzkt.Api.Websocket.Hubs
             Blocks = blocks;
             Operations = operations;
             BigMaps = bigMaps;
+            Accounts = accounts;
         }
 
         public Task SubscribeToHead()
@@ -48,11 +51,18 @@ namespace Tzkt.Api.Websocket.Hubs
             parameters.EnsureValid();
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
+        
+        public Task SubscribeToAccounts(AccountsParameter parameters)
+        {
+            parameters.EnsureValid();
+            return Accounts.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+        }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
             Operations.Unsubscribe(Context.ConnectionId);
             BigMaps.Unsubscribe(Context.ConnectionId);
+            Accounts.Unsubscribe(Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
     }

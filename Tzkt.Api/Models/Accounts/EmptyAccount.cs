@@ -16,7 +16,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Public key hash of the account
         /// </summary>
-        public string Address { get; set; }
+        public override string Address { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
