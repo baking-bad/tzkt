@@ -11,6 +11,11 @@ namespace Tzkt.Api.Models
         public override string Type => AccountTypes.Delegate;
 
         /// <summary>
+        /// Public key hash of the delegate (baker)
+        /// </summary>
+        public override string Address { get; set; }
+
+        /// <summary>
         /// Delegation status (`true` - active, `false` - deactivated)
         /// </summary>
         public bool Active { get; set; }
@@ -19,11 +24,6 @@ namespace Tzkt.Api.Models
         /// Name of the baking service
         /// </summary>
         public string Alias { get; set; }
-
-        /// <summary>
-        /// Public key hash of the delegate (baker)
-        /// </summary>
-        public string Address { get; set; }
 
         /// <summary>
         /// Public key of the delegate (baker)

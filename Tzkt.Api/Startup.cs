@@ -98,6 +98,9 @@ namespace Tzkt.Api
                 services.AddTransient<BigMapsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
 
+                services.AddTransient<AccountsProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, AccountsProcessor<DefaultHub>>();
+
                 services.AddSignalR(options =>
                 {
                     options.EnableDetailedErrors = true;

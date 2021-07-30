@@ -64,6 +64,46 @@ await connection.invoke("SubscribeToBlocks");
 
 ---
 
+## SubscribeToAccount
+
+Sends an account with the specified address, if there are any changes to the account.
+
+### Method
+
+`SubscribeToAccounts`
+
+### Channel
+
+`accounts`
+
+### Parameters
+
+````js
+{
+	addresses: [], // address you want to subscribe to
+}
+````
+
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
+
+### Data model
+
+Same as in [/accounts/{address}](#operation/Accounts_GetByAddress).
+
+### State
+
+State contains level (`int`) of the last processed block.
+
+### Example
+
+````js
+connection.on("accounts", (msg) => { console.log(msg); });
+// subscribe to an account
+await connection.invoke("SubscribeToAccounts", { address: 'tz1234...' });
+````
+
+---			
+
 ## SubscribeToOperations 
 														  
 Sends operations of specified types or related to specified accounts, included into the blockchain
