@@ -49,8 +49,8 @@ namespace Tzkt.Api.Models
         {
             get
             {
-                if (Metadata?.Json == null) return null;
-                using var doc = JsonDocument.Parse(Metadata.Json);
+                if (Metadata == null) return null;
+                using var doc = JsonDocument.Parse(Metadata);
                 return doc.RootElement.TryGetProperty("commitDate", out var v) && v.TryGetDateTime(out var dt) ? dt : null;
             }
         }
@@ -62,8 +62,8 @@ namespace Tzkt.Api.Models
         {
             get
             {
-                if (Metadata?.Json == null) return null;
-                using var doc = JsonDocument.Parse(Metadata.Json);
+                if (Metadata == null) return null;
+                using var doc = JsonDocument.Parse(Metadata);
                 return doc.RootElement.TryGetProperty("commitHash", out var v) ? v.GetString() : null;
             }
         }
@@ -75,8 +75,8 @@ namespace Tzkt.Api.Models
         {
             get
             {
-                if (Metadata?.Json == null) return null;
-                using var doc = JsonDocument.Parse(Metadata.Json);
+                if (Metadata == null) return null;
+                using var doc = JsonDocument.Parse(Metadata);
                 return doc.RootElement.TryGetProperty("version", out var v) ? v.GetString() : null;
             }
         }
@@ -88,8 +88,8 @@ namespace Tzkt.Api.Models
         {
             get
             {
-                if (Metadata?.Json == null) return null;
-                using var doc = JsonDocument.Parse(Metadata.Json);
+                if (Metadata == null) return null;
+                using var doc = JsonDocument.Parse(Metadata);
                 return doc.RootElement.TryGetProperty("tags", out var v) && v.ValueKind == JsonValueKind.Array
                     ? v.EnumerateArray().Select(x => x.GetString()).ToList() : null;
             }

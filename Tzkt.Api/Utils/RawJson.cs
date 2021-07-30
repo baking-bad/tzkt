@@ -7,11 +7,13 @@ namespace Tzkt.Api
     [JsonConverter(typeof(RawJsonConverter))]
     public class RawJson
     {
-        public string Json { get; }
+        string Json { get; }
         RawJson(string json) => Json = json;
 
-        public static implicit operator RawJson (string value) => new(value);
-        public static explicit operator string (RawJson value) => value?.Json;
+        public static implicit operator RawJson (string value) => value is null ? null : new(value);
+        public static implicit operator string (RawJson value) => value?.Json;
+
+        public override string ToString() => Json;
     }
 
     class RawJsonConverter : JsonConverter<RawJson>
@@ -24,7 +26,7 @@ namespace Tzkt.Api
 
         public override void Write(Utf8JsonWriter writer, RawJson value, JsonSerializerOptions options)
         {
-            using var doc = JsonDocument.Parse(value.Json, new JsonDocumentOptions { MaxDepth = 1024 });
+            using var doc = JsonDocument.Parse(value, new JsonDocumentOptions { MaxDepth = 1024 });
             doc.WriteTo(writer);
         }
     }

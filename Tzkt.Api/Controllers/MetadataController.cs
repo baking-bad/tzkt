@@ -27,32 +27,20 @@ namespace Tzkt.Api.Controllers
             Auth = auth;
         }
 
-        #region accounts
-        [HttpGet("accounts")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> GetAccountMetadata(
+        #region state
+        [HttpGet("state")]
+        public async Task<ActionResult<RawJson>> GetStateMetadata(
             [FromHeader] AuthHeaders headers,
-            [Min(0)] int offset = 0,
-            [Range(0, 10000)] int limit = 100)
-        {
-            if (!Auth.TryAuthenticate(headers, out var error))
-                return Unauthorized(error);
-            
-            return Ok(await Metadata.GetAccountMetadata(offset, limit));
-        }
-
-        [HttpGet("accounts/{address}")]
-        public async Task<ActionResult<RawJson>> GetAccountMetadata(
-            [FromHeader] AuthHeaders headers,
-            [Address] string address)
+            string section = null)
         {
             if (!Auth.TryAuthenticate(headers, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetAccountMetadata(address));
+            return Ok(await Metadata.GetStateMetadata(section));
         }
 
-        [HttpPost("accounts")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> UpdateAccountMetadata(
+        [HttpPost("state")]
+        public async Task<ActionResult<MetadataUpdate>> UpdateStateMetadata(
             [FromHeader] AuthHeaders headers)
         {
             try
@@ -62,45 +50,97 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<ObjectMetadata>>(body);
+                var metadata = JsonSerializer.Deserialize<MetadataUpdate>(body);
+                return Ok(await Metadata.UpdateStateMetadata(metadata));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest("body", "Invalid json");
+            }
+        }
+        #endregion
+
+        #region accounts
+        [HttpGet("accounts/{address}")]
+        public async Task<ActionResult<RawJson>> GetAccountMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Address] string address,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetAccountMetadata(address, section));
+        }
+
+        [HttpGet("accounts")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetAccountMetadata(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter metadata,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetAccountMetadata(metadata, offset, limit, section));
+        }
+
+        [HttpPost("accounts")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateAccountMetadata(
+            [FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+
+                if (!Auth.TryAuthenticate(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$")))
-                    return BadRequest("Invalid account address");
+                    return new BadRequest("body", "Invalid account address");
 
                 return Ok(await Metadata.UpdateAccountMetadata(metadata));
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
-                return new BadRequest("body", ex.Message);
+                return new BadRequest("body", "Invalid json");
             }
         }
         #endregion
 
         #region proposals
-        [HttpGet("proposals")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> GetProposalMetadata(
-            [FromHeader] AuthHeaders headers,
-            [Min(0)] int offset = 0,
-            [Range(0, 10000)] int limit = 100)
-        {
-            if (!Auth.TryAuthenticate(headers, out var error))
-                return Unauthorized(error);
-
-            return Ok(await Metadata.GetProposalMetadata(offset, limit));
-        }
-
         [HttpGet("proposals/{hash}")]
         public async Task<ActionResult<RawJson>> GetProposalMetadata(
             [FromHeader] AuthHeaders headers,
-            [ProtocolHash] string hash)
+            [ProtocolHash] string hash,
+            string section = null)
         {
             if (!Auth.TryAuthenticate(headers, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetProposalMetadata(hash));
+            return Ok(await Metadata.GetProposalMetadata(hash, section));
+        }
+
+        [HttpGet("proposals")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetProposalMetadata(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter metadata,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetProposalMetadata(metadata, offset, limit, section));
         }
 
         [HttpPost("proposals")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> UpdateProposalMetadata([FromHeader] AuthHeaders headers)
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateProposalMetadata(
+            [FromHeader] AuthHeaders headers)
         {
             try
             {
@@ -109,45 +149,49 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<ObjectMetadata>>(body);
+                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
                     return BadRequest("Invalid proposal hash");
 
                 return Ok(await Metadata.UpdatProposalMetadata(metadata));
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
-                return new BadRequest("body", ex.Message);
+                return new BadRequest("body", "Invalid json");
             }
         }
         #endregion
 
         #region protocols
-        [HttpGet("protocols")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> GetProtocolMetadata(
-            [FromHeader] AuthHeaders headers,
-            [Min(0)] int offset = 0,
-            [Range(0, 10000)] int limit = 100)
-        {
-            if (!Auth.TryAuthenticate(headers, out var error))
-                return Unauthorized(error);
-
-            return Ok(await Metadata.GetProtocolMetadata(offset, limit));
-        }
-
         [HttpGet("protocols/{hash}")]
         public async Task<ActionResult<RawJson>> GetProtocolMetadata(
             [FromHeader] AuthHeaders headers,
-            [ProtocolHash] string hash)
+            [ProtocolHash] string hash,
+            string section = null)
         {
             if (!Auth.TryAuthenticate(headers, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetProtocolMetadata(hash));
+            return Ok(await Metadata.GetProtocolMetadata(hash, section));
+        }
+
+        [HttpGet("protocols")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetProtocolMetadata(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter metadata,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetProtocolMetadata(metadata, offset, limit, section));
         }
 
         [HttpPost("protocols")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> UpdateProtocolMetadata([FromHeader] AuthHeaders headers)
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateProtocolMetadata(
+            [FromHeader] AuthHeaders headers)
         {
             try
             {
@@ -156,45 +200,49 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<ObjectMetadata>>(body);
+                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
                     return BadRequest("Invalid protocol hash");
 
                 return Ok(await Metadata.UpdatProtocolMetadata(metadata));
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
-                return new BadRequest("body", ex.Message);
+                return new BadRequest("body", "Invalid json");
             }
         }
         #endregion
 
         #region software
-        [HttpGet("software")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> GetSoftwareMetadata(
-            [FromHeader] AuthHeaders headers,
-            [Min(0)] int offset = 0,
-            [Range(0, 10000)] int limit = 100)
-        {
-            if (!Auth.TryAuthenticate(headers, out var error))
-                return Unauthorized(error);
-
-            return Ok(await Metadata.GetSoftwareMetadata(offset, limit));
-        }
-
         [HttpGet("software/{shortHash}")]
         public async Task<ActionResult<RawJson>> GetSoftwareMetadata(
             [FromHeader] AuthHeaders headers,
-            string shortHash)
+            [Hex(8)] string shortHash,
+            string section = null)
         {
             if (!Auth.TryAuthenticate(headers, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetSoftwareMetadata(shortHash));
+            return Ok(await Metadata.GetSoftwareMetadata(shortHash, section));
+        }
+
+        [HttpGet("software")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetSoftwareMetadata(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter metadata,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetSoftwareMetadata(metadata, offset, limit, section));
         }
 
         [HttpPost("software")]
-        public async Task<ActionResult<IEnumerable<ObjectMetadata>>> UpdateSoftwareMetadata([FromHeader] AuthHeaders headers)
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateSoftwareMetadata(
+            [FromHeader] AuthHeaders headers)
         {
             try
             {
@@ -202,15 +250,62 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<ObjectMetadata>>(body);
+                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^[0-9a-f]{8}$")))
                     return BadRequest("Invalid software short hash");
 
                 return Ok(await Metadata.UpdateSoftwareMetadata(metadata));
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
-                return new BadRequest("body", ex.Message);
+                return new BadRequest("body", "Invalid json");
+            }
+        }
+        #endregion
+
+        #region blocks
+        [HttpGet("blocks/{level:int}")]
+        public async Task<ActionResult<RawJson>> GetBlockMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Min(0)] int level,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetBlockMetadata(level, section));
+        }
+
+        [HttpGet("blocks")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> GetBlockMetadata(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter metadata,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetBlockMetadata(metadata, offset, limit, section));
+        }
+
+        [HttpPost("blocks")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> UpdateBlockMetadata(
+            [FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+                if (!Auth.TryAuthenticate(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<int>>>(body);
+                return Ok(await Metadata.UpdateBlockMetadata(metadata));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest("body", "Invalid json");
             }
         }
         #endregion

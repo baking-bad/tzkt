@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
 using Tzkt.Api.Services.Auth;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Repositories
 {
@@ -12,100 +13,173 @@ namespace Tzkt.Api.Repositories
         public MetadataRepository(IConfiguration config) : base(config) {}
 
         #region get
-        public Task<RawJson> GetAccountMetadata(string key)
-            => Get("Accounts", "Address", "character(36)", key);
+        public Task<RawJson> GetStateMetadata(string section = null)
+            => Get("AppState", "Id", "integer", -1, section);
 
-        public Task<RawJson> GetProposalMetadata(string key)
-            => Get("Proposals", "Hash", "character(51)", key);
+        public Task<RawJson> GetAccountMetadata(string address, string section = null)
+            => Get("Accounts", "Address", "character(36)", address, section);
 
-        public Task<RawJson> GetProtocolMetadata(string key)
-            => Get("Protocols", "Hash", "character(51)", key);
+        public Task<RawJson> GetProposalMetadata(string hash, string section = null)
+            => Get("Proposals", "Hash", "character(51)", hash, section);
 
-        public Task<RawJson> GetSoftwareMetadata(string key)
-            => Get("Software", "ShortHash", "character(8)", key);
+        public Task<RawJson> GetProtocolMetadata(string hash, string section = null)
+            => Get("Protocols", "Hash", "character(51)", hash, section);
 
-        public Task<IEnumerable<ObjectMetadata>> GetAccountMetadata(int offset, int limit)
-            => Get("Accounts", "Address", offset, limit);
+        public Task<RawJson> GetSoftwareMetadata(string shortHash, string section = null)
+            => Get("Software", "ShortHash", "character(8)", shortHash, section);
 
-        public Task<IEnumerable<ObjectMetadata>> GetProposalMetadata(int offset, int limit)
-            => Get("Proposals", "Hash", offset, limit);
+        public Task<RawJson> GetBlockMetadata(int level, string section = null)
+            => Get("Blocks", "Level", "integer", level, section);
 
-        public Task<IEnumerable<ObjectMetadata>> GetProtocolMetadata(int offset, int limit)
-            => Get("Protocols", "Hash", offset, limit);
-
-        public Task<IEnumerable<ObjectMetadata>> GetSoftwareMetadata(int offset, int limit)
-            => Get("Software", "ShortHash", offset, limit);
-
-        async Task<RawJson> Get(string table, string key, string keyType, string keyValue)
+        async Task<RawJson> Get<T>(string table, string keyColumn, string keyType, T key, string section)
         {
+            var path = section != null
+                ? " -> @section::text"
+                : string.Empty;
+
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
-                SELECT ""Metadata""
+                SELECT ""Metadata""{path} as metadata
                 FROM ""{table}""
-                WHERE ""{key}"" = @keyValue::{keyType}
+                WHERE ""{keyColumn}"" = @key::{keyType}
                 LIMIT 1",
-                new { keyValue });
+                new { section, key });
 
-            return row?.Metadata;
+            return row?.metadata;
         }
+        #endregion
 
-        async Task<IEnumerable<ObjectMetadata>> Get(string table, string key, int offset, int limit)
+        #region get all
+        public Task<IEnumerable<MetadataUpdate<string>>> GetAccountMetadata(JsonParameter metadata, int offset, int limit, string section = null)
+            => Get<string>("Accounts", "Address", metadata, offset, limit, section);
+
+        public Task<IEnumerable<MetadataUpdate<string>>> GetProposalMetadata(JsonParameter metadata, int offset, int limit, string section = null)
+            => Get<string>("Proposals", "Hash", metadata, offset, limit, section);
+
+        public Task<IEnumerable<MetadataUpdate<string>>> GetProtocolMetadata(JsonParameter metadata, int offset, int limit, string section = null)
+            => Get<string>("Protocols", "Hash", metadata, offset, limit, section);
+
+        public Task<IEnumerable<MetadataUpdate<string>>> GetSoftwareMetadata(JsonParameter metadata, int offset, int limit, string section = null)
+            => Get<string>("Software", "ShortHash", metadata, offset, limit, section);
+
+        public Task<IEnumerable<MetadataUpdate<int>>> GetBlockMetadata(JsonParameter metadata, int offset, int limit, string section = null)
+            => Get<int>("Blocks", "Level", metadata, offset, limit, section);
+
+        async Task<IEnumerable<MetadataUpdate<T>>> Get<T>(string table, string keyColumn, JsonParameter metadata, int offset, int limit, string section)
         {
-            using var db = GetConnection();
-            var rows = await db.QueryAsync($@"
-                SELECT ""{key}"" AS key, ""Metadata"" as metadata
-                FROM ""{table}""
-                WHERE ""Metadata"" @> '{{}}'
-                ORDER BY ""Id""
-                OFFSET {offset}
-                LIMIT {limit}");
+            var path = section != null
+                ? " -> @section::text"
+                : string.Empty;
 
-            return rows.Select(row => new ObjectMetadata
+            var sql = new SqlBuilder($@"
+                SELECT ""{keyColumn}"" AS key, ""Metadata""{path} as metadata
+                FROM ""{table}""");
+
+            sql.Filter(@"""Metadata"" IS NOT NULL");
+            if (section != null)
+            {
+                sql.Filter(@"""Metadata"" @> @sectionObj::jsonb");
+                sql.Params.Add("@sectionObj", $@"{{ ""{section}"": {{}} }}");
+                sql.Params.Add("@section", section);
+            }
+
+            if (metadata != null && section != null)
+            {
+                var sectionPath = new JsonPath(section);
+                void PrependSection<TValue>(List<(JsonPath[], TValue)> list)
+                {
+                    if (list == null) return;
+
+                    var items = list
+                        .Select(x => (new[] { sectionPath }.Concat(x.Item1).ToArray(), x.Item2))
+                        .ToList();
+
+                    list.Clear();
+                    list.AddRange(items);
+                }
+
+                PrependSection(metadata.As);
+                PrependSection(metadata.Eq);
+                PrependSection(metadata.Ge);
+                PrependSection(metadata.Gt);
+                PrependSection(metadata.In);
+                PrependSection(metadata.Le);
+                PrependSection(metadata.Lt);
+                PrependSection(metadata.Ne);
+                PrependSection(metadata.Ni);
+                PrependSection(metadata.Null);
+                PrependSection(metadata.Un);
+            }
+
+            sql.Filter("Metadata", metadata);
+            sql.Take(offset, limit);
+
+            using var db = GetConnection();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            return rows.Select(row => new MetadataUpdate<T>
             {
                 Key = row.key,
+                Section = section,
                 Metadata = row.metadata
             });
         }
         #endregion
 
         #region update
-        public Task<List<ObjectMetadata>> UpdateAccountMetadata(List<ObjectMetadata> metadata)
+        public async Task<MetadataUpdate> UpdateStateMetadata(MetadataUpdate metadata)
+            => (await Update("AppState", "Id", "integer", new List<MetadataUpdate<int>>
+            {
+                new()
+                {
+                    Key = -1,
+                    Section = metadata.Section,
+                    Metadata = metadata.Metadata
+                }
+            }))
+            .Select(x => new MetadataUpdate
+            {
+                Section = x.Section,
+                Metadata = x.Metadata
+            })
+            .FirstOrDefault();
+
+        public Task<List<MetadataUpdate<string>>> UpdateAccountMetadata(List<MetadataUpdate<string>> metadata)
             => Update("Accounts", "Address", "character(36)", metadata);
 
-        public Task<List<ObjectMetadata>> UpdatProposalMetadata(List<ObjectMetadata> metadata)
+        public Task<List<MetadataUpdate<string>>> UpdatProposalMetadata(List<MetadataUpdate<string>> metadata)
             => Update("Proposals", "Hash", "character(51)", metadata);
 
-        public Task<List<ObjectMetadata>> UpdatProtocolMetadata(List<ObjectMetadata> metadata)
+        public Task<List<MetadataUpdate<string>>> UpdatProtocolMetadata(List<MetadataUpdate<string>> metadata)
             => Update("Protocols", "Hash", "character(51)", metadata);
 
-        public Task<List<ObjectMetadata>> UpdateSoftwareMetadata(List<ObjectMetadata> metadata)
+        public Task<List<MetadataUpdate<string>>> UpdateSoftwareMetadata(List<MetadataUpdate<string>> metadata)
             => Update("Software", "ShortHash", "character(8)", metadata);
 
-        async Task<List<ObjectMetadata>> Update(string table, string key, string keyType, List<ObjectMetadata> metadata)
+        public Task<List<MetadataUpdate<int>>> UpdateBlockMetadata(List<MetadataUpdate<int>> metadata)
+            => Update("Blocks", "Level", "integer", metadata);
+
+        async Task<List<MetadataUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<MetadataUpdate<T>> metadata)
         {
-            var res = new List<ObjectMetadata>(metadata.Count);
+            var res = new List<MetadataUpdate<T>>(metadata.Count);
             using var db = GetConnection();
             foreach (var meta in metadata)
             {
-                int rows;
-                if (meta.Metadata != null)
+                var value = (meta.Section == null, meta.Metadata == null) switch
                 {
-                    rows = await db.ExecuteAsync($@"
-                        UPDATE ""{table}""
-                        SET ""Metadata"" = @metadata::jsonb
-                        WHERE ""{key}"" = @key::{keyType}",
-                        new { key = meta.Key, metadata = meta.Metadata.Json });
-                }
-                else
-                {
-                    rows = await db.ExecuteAsync($@"
-                        UPDATE ""{table}""
-                        SET ""Metadata"" = NULL
-                        WHERE ""{key}"" = @key::{keyType}",
-                        new { key = meta.Key });
-                }
+                    (false, false) => @"jsonb_set(COALESCE(""Metadata"", '{}'), @section::text[], @metadata::jsonb)", // set section
+                    (false, true) => @"NULLIF(COALESCE(""Metadata"", '{}') #- @section::text[], '{}')", // remove section
+                    (true, false) => "@metadata::jsonb", // set root
+                    (true, true) => "NULL", // remove root
+                };
+                
+                var rows = await db.ExecuteAsync($@"
+                    UPDATE ""{table}""
+                    SET ""Metadata"" = {value}
+                    WHERE ""{keyColumn}"" = @key::{keyType}",
+                    new { key = meta.Key, metadata = (string)meta.Metadata, section = new[] { meta.Section } });
 
-                if (rows == 1)
+                if (rows > 0)
                     res.Add(meta);
             }
             return res;
