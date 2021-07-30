@@ -28,7 +28,7 @@ First of all, install `git`, `make`, `docker`, `docker-compose`, then run the fo
 git clone https://github.com/baking-bad/tzkt.git
 cd tzkt/
 
-make init #run this command just once to init database from the latest snapshot
+make init #run this command if you want to restore the DB from the latest snapshot
 make start
 
 curl http://127.0.0.1:5000/v1/head
@@ -88,13 +88,13 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.5.2.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
 
 ````c
-// mainnet restoring takes ~10 min (of course, depending on hardware)
+// full mainnet restoring takes ~30 min (depending on hardware)
 sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -1 /tmp/tzkt_db.backup
 ````
 
@@ -116,7 +116,7 @@ dotnet publish -o ~/tzkt-sync
 
 #### Configure indexer
 
-Edit configuration file `~/tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
+Edit configuration file `~/tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
 
 Like this:
 
@@ -128,7 +128,6 @@ Like this:
   },
 
   "TezosNode": {
-    "ChainId": "NetXdQprcVkpaWU",
     "Endpoint": "https://mainnet-tezos.giganode.io/",
     "Timeout": 60
   },
@@ -141,7 +140,14 @@ Like this:
   },
 
   "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;"
+  },
+
+  "HealthChecks": {
+    "Enabled": true,
+    "Delay": 10,
+    "Period": 10,
+    "FilePath": "sync.health"
   },
 
   "Logging": {
@@ -196,25 +202,30 @@ Like this:
 
 ````js
 {
-  "Metadata": {
-    "AccountsPath": "*",
-    "ProposalsPath": "*",
-    "ProtocolsPath": "*"
-  },
-
-  "Websocket": {
-    "Enabled": true,
-    "MaxConnections": 100,
-    "MaxAccountSubscriptions": 10
-  },
-
   "Cache": {
     "LoadRate": 0.75,
     "MaxAccounts": 32000
   },
 
+  "Websocket": {
+    "Enabled": true,
+    "MaxConnections": 1000,
+    "MaxOperationSubscriptions": 50,
+    "MaxBigMapSubscriptions": 50
+  },
+
   "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;"
+  },
+
+  "Home": {
+    "Enabled": false,
+    "UpdatePeriod": 30
+  },
+
+  "HealthChecks": {
+    "Enabled": true,
+    "Endpoint": "/health"
   },
 
   "Logging": {
@@ -258,215 +269,13 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 
 ## Install Tzkt Indexer and API for testnets
 
-In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (chain id and RPC endpoint). Here are some presets for testnets:
- - Edonet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/edo2_tzkt_v1.5.1.backup
-   - RPC node: https://rpc.tzkt.io/edo2net/
-   - Chain id: NetXSgo1ZT2DRUG
+In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (RPC endpoint). Here are some presets for testnets:
  - Florencenet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.1.backup
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_florencenet.backup
    - RPC node: https://rpc.tzkt.io/florencenobanet/
-   - Chain id: NetXxkAx4woPLyu     
  - Granadanet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/granadanet.backup
+   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_granadanet.backup
    - RPC node: https://rpc.tzkt.io/granadanet/
-   - Chain id: NetXz969SFaFn8k
-
-Anyway, let's do it, for reference, from scratch for the `florencenet`.
-
-### Prepare database
-
-#### Create an empty database and its user
-
-````
-sudo -u postgres psql
-
-postgres=# create database flor_tzkt_db;
-postgres=# create user tzkt with encrypted password 'qwerty';
-postgres=# grant all privileges on database flor_tzkt_db to tzkt;
-postgres=# \q
-````
-
-#### Download fresh snapshot
-
-````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/flor_tzkt_v1.5.1.backup" -O /tmp/flor_tzkt_db.backup
-````
-
-#### Restore database from the snapshot
-
-````c
-// florencenet restoring takes ~1 min
-sudo -u postgres pg_restore -c --if-exists -v -d flor_tzkt_db -1 /tmp/flor_tzkt_db.backup
-````
-
-### Clone, build, configure and run Tzkt Indexer
-
-#### Clone
-
-````
-cd ~
-git clone https://github.com/baking-bad/tzkt.git
-````
-
-#### Build indexer
-
-````
-cd ~/tzkt/Tzkt.Sync/
-dotnet publish -o ~/flor-tzkt-sync
-````
-
-#### Configure indexer
-
-Edit configuration file `~/flor-tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `Diagnostics` (just disable it), `TezosNode.ChainId`, `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
-
-Like this:
-
-````json
-{
-  "Protocols": {
-    "Diagnostics": false,
-    "Validation": true
-  },
-
-  "TezosNode": {
-    "ChainId": "NetXxkAx4woPLyu",
-    "Endpoint": "https://rpc.tzkt.io/florencenobanet/",
-    "Timeout": 30
-  },
-
-  "Quotes": {
-    "Async": true,
-    "Provider": null
-  },
-
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=flor_tzkt_db;username=tzkt;password=qwerty;"
-  },
-
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Information"
-    }
-  }
-}
-````
-
-#### Run indexer
-
-````c
-cd ~/flor-tzkt-sync
-dotnet Tzkt.Sync.dll
-
-// info: Microsoft.Hosting.Lifetime[0]
-//       Application started. Press Ctrl+C to shut down.
-// info: Microsoft.Hosting.Lifetime[0]
-//       Hosting environment: Production
-// info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/flor-tzkt-sync
-// warn: Tzkt.Sync.Services.Observer[0]
-//       Observer is started
-// info: Tzkt.Sync.Services.Observer[0]
-//       Applied 125790
-// info: Tzkt.Sync.Services.Observer[0]
-//       Applied 125791
-// ....
-````
-
-That's it. If you want to run the indexer as a daemon, take a look at this guide: https://docs.microsoft.com/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-3.1#create-the-service-file.
-
-### Build, configure and run Tzkt API for the florencenet indexer
-
-Suppose you have already created database `flor_tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
-
-#### Build API
-
-````
-cd ~/tzkt/Tzkt.Api/
-dotnet publish -o ~/flor-tzkt-api
-````
-
-#### Configure API
-
-Edit configuration file `~/flor-tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
-
-By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates.
-
-If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json`.
-
-Like this:
-
-````js
-{
-  "Metadata": {
-    "AccountsPath": "*",
-    "ProposalsPath": "*",
-    "ProtocolsPath": "*"
-  },
-
-  "Cache": {
-    "LoadRate": 0.75,
-    "MaxAccounts": 32000
-  },
-
-  "Websocket": {
-    "Enabled": true,
-    "MaxConnections": 100,
-    "MaxAccountSubscriptions": 10
-  },
-
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=5432;database=flor_tzkt_db;username=tzkt;password=qwerty;"
-  },
-
-  "Kestrel": {
-    "EndPoints": {
-      "Http": {
-        "Url": "http://localhost:5010"
-      }
-    }
-  },
-
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Information"
-    }
-  },
-
-  "AllowedHosts": "*"
-}
-````
-
-#### Run API
-
-````c
-cd ~/flor-tzkt-api
-dotnet Tzkt.Api.dll
-
-// info: Tzkt.Api.Services.Metadata.AccountMetadataService[0]
-//       Accounts metadata not found
-// info: Tzkt.Api.Services.Sync.SyncWorker[0]
-//       Sync worker initialized with level 205804 and blocks time 30s
-// info: Tzkt.Api.Services.Sync.SyncWorker[0]
-//       Syncronization started
-// info: Microsoft.Hosting.Lifetime[0]
-//       Now listening on: http://localhost:5020
-// info: Microsoft.Hosting.Lifetime[0]
-//       Now listening on: https://localhost:5021
-// info: Microsoft.Hosting.Lifetime[0]
-//       Application started. Press Ctrl+C to shut down.
-// info: Microsoft.Hosting.Lifetime[0]
-//       Hosting environment: Production
-// info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/flor-tzkt-api
-// ....
-````
-
-That's it.
 
 ## Have a question?
 
