@@ -78,33 +78,26 @@ namespace Tzkt.Api.Websocket.Processors
                 const int limit = 1_000_000;
 
                 var accounts = (await Repo.Get(null, null, null, null, null, level, null, null, limit)).ToList();
-                var count = accounts.Count;
 
-                Logger.LogDebug("{0} account updates fetched", count);
+                Logger.LogDebug("{0} account updates fetched", accounts.Count);
                 #endregion
 
                 #region prepare to send
                 var toSend = new Dictionary<string, List<Account>>();
 
-                void Add(HashSet<string> subs, Account account)
-                {
-                    foreach (var clientId in subs)
-                    {
-                        if (!toSend.TryGetValue(clientId, out var list))
-                        {
-                            list = new(4);
-                            toSend.Add(clientId, list);
-                        }
-                        list.Add(account);
-                    }
-                }
-
                 foreach (var account in accounts)
                 {
                     if (AccountSubs.TryGetValue(account.Address, out var accountSubs))
                     {
-                        if (accountSubs != null)
-                            Add(accountSubs, account);
+                        foreach (var clientId in accountSubs)
+                        {
+                            if (!toSend.TryGetValue(clientId, out var list))
+                            {
+                                list = new(4);
+                                toSend.Add(clientId, list);
+                            }
+                            list.Add(account);
+                        }
                     }
                 }
                 #endregion
@@ -119,7 +112,7 @@ namespace Tzkt.Api.Websocket.Processors
                     Logger.LogDebug("{0} account updates sent to {1}", updatesList.Count, connectionId);
                 }
 
-                Logger.LogDebug("{0} account updates sent", count);
+                Logger.LogDebug("{0} account updates sent", accounts.Count);
                 #endregion
             }
             catch (Exception ex)
@@ -152,8 +145,9 @@ namespace Tzkt.Api.Websocket.Processors
                 Logger.LogDebug("New subscription...");
 
                 #region check limits
-                if (parameter.Addresses.Count > Config.MaxAccountsSubscriptions 
-                || (Limits.TryGetValue(connectionId, out var cnt) && cnt + parameter.Addresses.Count > Config.MaxAccountsSubscriptions))
+                var cnt = Limits.GetValueOrDefault(connectionId);
+
+                if (cnt + parameter.Addresses.Count > Config.MaxAccountsSubscriptions)
                     throw new HubException($"Subscriptions limit exceeded");
                 
                 if (cnt > 0) // reuse already allocated string
@@ -169,11 +163,8 @@ namespace Tzkt.Api.Websocket.Processors
                         AccountSubs.Add(address, accountSub);
                     }
 
-                    if (!accountSub.Contains(connectionId))
-                    {
-                        accountSub.Add(connectionId);
+                    if (accountSub.Add(connectionId))
                         Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-                    }
                 }
                 #endregion
 
