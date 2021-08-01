@@ -1,6 +1,6 @@
 ## SubscribeToHead
 
-Sends the blockchain head every time it has been updated.
+Sends the blockchain head every time it is changed.
 		
 ### Method 
 
@@ -66,7 +66,7 @@ await connection.invoke("SubscribeToBlocks");
 
 ## SubscribeToAccount
 
-Sends an account with the specified address, if there are any changes to the account.
+Sends touched accounts (affected by any operation in any way).
 
 ### Method
 
@@ -80,7 +80,7 @@ Sends an account with the specified address, if there are any changes to the acc
 
 ````js
 {
-	addresses: [], // address you want to subscribe to
+	addresses: [], // [required] array of address you want to subscribe to
 }
 ````
 
@@ -99,7 +99,7 @@ State contains level (`int`) of the last processed block.
 ````js
 connection.on("accounts", (msg) => { console.log(msg); });
 // subscribe to an account
-await connection.invoke("SubscribeToAccounts", { address: 'tz1234...' });
+await connection.invoke("SubscribeToAccounts", { addresses: [ 'tz1234...' ] });
 ````
 
 ---			
