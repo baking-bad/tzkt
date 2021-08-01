@@ -59,5 +59,5 @@ Reorg messages signal about chain reorganizations, when some blocks, including a
 in favor of blocks with higher weight.  Chain reorgs happen quite often, so it's not something you can ignore.
 You have to handle such messages correctly, otherwise you will likely accumulate duplicate data or, worse, invalid data.
 
-For example, in you receive blocks `10`, `11`, `12`, `13` and then receive reorg message with `state: 11`,
+For example, if you receive blocks `10`, `11`, `12`, `13` and then receive reorg message with `state: 11`,
 you should remove blocks `12` and `13` (if you saved them) as they are no longer valid.
