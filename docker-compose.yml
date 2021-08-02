@@ -22,6 +22,8 @@ services:
     image: bakingbad/tzkt-api:latest
     depends_on:
       - db
+    environment:
+      - TZKT_API_KESTREL__ENDPOINTS__HTTP__URL=http://0.0.0.0:5000
     expose:
       - 5000
     ports:
