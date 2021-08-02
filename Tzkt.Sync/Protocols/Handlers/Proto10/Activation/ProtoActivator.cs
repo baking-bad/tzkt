@@ -109,18 +109,10 @@ namespace Tzkt.Sync.Protocols.Proto10
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
-            #region update voting periods
-            if (state.VotingPeriod > 1)
-            {
-                var prevPeriod = await Cache.Periods.GetAsync(state.VotingPeriod - 1);
-                Db.TryAttach(prevPeriod);
-                prevPeriod.LastLevel += 1;
-            }
-
+            #region update voting period
             var newPeriod = await Cache.Periods.GetAsync(state.VotingPeriod);
             Db.TryAttach(newPeriod); 
-            newPeriod.FirstLevel += 1;
-            newPeriod.LastLevel = newPeriod.FirstLevel + nextProto.BlocksPerVoting - 1;
+            newPeriod.LastLevel = newPeriod.FirstLevel + nextProto.BlocksPerVoting; // - 1 + 1
             #endregion
 
             var cycles = await MigrateCycles(state, nextProto);
@@ -146,16 +138,8 @@ namespace Tzkt.Sync.Protocols.Proto10
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             #region update voting periods
-            if (state.VotingPeriod > 1)
-            {
-                var prevPeriod = await Cache.Periods.GetAsync(state.VotingPeriod - 1);
-                Db.TryAttach(prevPeriod);
-                prevPeriod.LastLevel -= 1;
-            }
-
             var newPeriod = await Cache.Periods.GetAsync(state.VotingPeriod);
             Db.TryAttach(newPeriod);
-            newPeriod.FirstLevel -= 1;
             newPeriod.LastLevel = newPeriod.FirstLevel + prevProto.BlocksPerVoting - 1;
             #endregion
 

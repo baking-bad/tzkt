@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto8
 
             var period = await Cache.Periods.GetAsync(Cache.AppState.Get().VotingPeriod);
 
-            if (Level < period.LastLevel)
+            if (Level > period.FirstLevel && Level < period.LastLevel)
             {
                 if (periodIndex != period.Index)
                     throw new ValidationException("invalid voting period index");
