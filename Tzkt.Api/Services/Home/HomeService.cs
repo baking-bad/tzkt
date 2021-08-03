@@ -19,25 +19,25 @@ namespace Tzkt.Api.Services
     public class HomeService : DbConnection
     {
         #region static
-        public static object[][] AccountsTab { get; private set; }
+        public static object[][] AccountsTab { get; private set; } = Array.Empty<object[]>();
         public static readonly string[] AccountFields = new[]
         {
             "alias", "address", "type", "delegate", "firstActivityTime", "balance", "numTransactions", "lastActivityTime"
         };
 
-        public static object[][] BakersTab { get; private set; }
+        public static object[][] BakersTab { get; private set; } = Array.Empty<object[]>();
         public static readonly string[] BakerFields = new[]
         {
             "alias", "address", "firstActivityTime", "balance", "stakingBalance", "numDelegators", "lastActivityTime"
         };
 
-        public static object[][] AssetsTab { get; private set; }
+        public static object[][] AssetsTab { get; private set; } = Array.Empty<object[]>();
         public static readonly string[] AssetFields = new[]
         {
             "alias", "address", "tzips", "creator", "firstActivityTime", "balance", "numTransactions", "lastActivityTime"
         };
 
-        public static object[][] BlocksTab { get; private set; }
+        public static object[][] BlocksTab { get; private set; } = Array.Empty<object[]>();
         public static readonly string[] BlockFields = new[]
         {
             "timestamp", "level", "baker", "priority", "validations", "reward", "fees", "hash"
