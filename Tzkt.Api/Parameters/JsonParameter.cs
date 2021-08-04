@@ -109,7 +109,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.amount.in=1,2,3` or `?parameter.in=[{"from":"tz1","to":"tz2"},{"from":"tz2","to":"tz1"}]`.
         /// </summary>
-        [JsonSchemaType(typeof(string))]
+        [JsonSchemaType(typeof(List<string>))]
         [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "array[string]")]
         public List<(JsonPath[], string[])> In { get; set; }
 
@@ -120,7 +120,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.amount.ni=1,2,3` or `?parameter.ni=[{"from":"tz1","to":"tz2"},{"from":"tz2","to":"tz1"}]`.
         /// </summary>
-        [JsonSchemaType(typeof(string))]
+        [JsonSchemaType(typeof(List<string>))]
         [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "array[string]")]
         public List<(JsonPath[], string[])> Ni { get; set; }
 
@@ -130,7 +130,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.null` or `?parameter.null=false` or `?parameter.sigs.[0].null=false`.
         /// </summary>
-        [JsonSchemaType(typeof(string))]
+        [JsonSchemaType(typeof(bool))]
         [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "boolean")]
         public List<(JsonPath[], bool)> Null { get; set; }
     }
