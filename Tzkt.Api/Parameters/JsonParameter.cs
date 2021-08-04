@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -7,27 +6,6 @@ using Tzkt.Api.Utils;
 
 namespace Tzkt.Api
 {
-    public class JsonParameterFilter<TValue>
-    {
-        [Required]
-        public string JsonPath { get; set; }
-
-        [Required]
-        public TValue Value { get; set; }
-    }
-
-    public class JsonParameterStringFilter : JsonParameterFilter<string>
-    {
-    }
-
-    public class JsonParameterStringListFilter : JsonParameterFilter<IEnumerable<string>>
-    {
-    }
-
-    public class JsonParameterBoolFilter : JsonParameterFilter<bool>
-    {
-    }
-
     [ModelBinder(BinderType = typeof(JsonBinder))]
     public class JsonParameter
     {
@@ -37,7 +15,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.from=tz1...` or `?parameter.signatures.[3].[0]=null` or `?parameter.sigs.[*]=null`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> Eq { get; set; }
 
         /// <summary>
@@ -46,7 +25,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.ne=true` or `?parameter.amount.ne=0`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> Ne { get; set; }
 
         /// <summary>
@@ -58,7 +38,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.gt=1234` or `?parameter.time.gt=2021-02-01`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> Gt { get; set; }
 
         /// <summary>
@@ -70,7 +51,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.ge=1234` or `?parameter.time.ge=2021-02-01`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> Ge { get; set; }
 
         /// <summary>
@@ -82,7 +64,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.lt=1234` or `?parameter.time.lt=2021-02-01`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> Lt { get; set; }
 
         /// <summary>
@@ -94,7 +77,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.balance.le=1234` or `?parameter.time.le=2021-02-01`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> Le { get; set; }
 
         /// <summary>
@@ -104,7 +88,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.as=*mid*` or `?parameter.as=*end`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> As { get; set; }
 
         /// <summary>
@@ -114,7 +99,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.un=*mid*` or `?parameter.un=*end`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "string")]
         public List<(JsonPath[], string)> Un { get; set; }
 
         /// <summary>
@@ -123,7 +109,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.amount.in=1,2,3` or `?parameter.in=[{"from":"tz1","to":"tz2"},{"from":"tz2","to":"tz1"}]`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringListFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "array[string]")]
         public List<(JsonPath[], string[])> In { get; set; }
 
         /// <summary>
@@ -133,7 +120,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.amount.ni=1,2,3` or `?parameter.ni=[{"from":"tz1","to":"tz2"},{"from":"tz2","to":"tz1"}]`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterStringListFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "array[string]")]
         public List<(JsonPath[], string[])> Ni { get; set; }
 
         /// <summary>
@@ -142,7 +130,8 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameter.null` or `?parameter.null=false` or `?parameter.sigs.[0].null=false`.
         /// </summary>
-        [JsonSchemaType(typeof(JsonParameterBoolFilter))]
+        [JsonSchemaType(typeof(string))]
+        [JsonSchemaExtensionData("x-tzkt-jsonFilterType", "boolean")]
         public List<(JsonPath[], bool)> Null { get; set; }
     }
 }
