@@ -306,8 +306,7 @@ namespace Tzkt.Api.Repositories
 
             foreach (var row in rows)
             {
-                var ts = row.Status == 0 ? state.Timestamp.AddSeconds(proto.TimeBetweenBlocks * (row.Level - state.Level)) : Time[row.Level];
-                var i = (int)(ts - from).TotalHours;
+                var i = (int)(Time[row.Level] - from).TotalHours;
                 if (i >= intervals.Count) continue;
 
                 if (intervals[i].LastLevel == null || row.Level > intervals[i].LastLevel)

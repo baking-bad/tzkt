@@ -269,19 +269,17 @@ namespace Tzkt.Api.Services
 
         async Task<DailyData> GetDailyData(IDbConnection db)
         {
-            var period = 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //day
-            var currPeriod = State.Current.Level - period;
-            var prevPeriod = currPeriod - period;
-
+            var currPeriod = Times.FindLevel(State.Current.Timestamp.AddDays(-1), SearchMode.ExactOrHigher);
+            var prevPeriod = Times.FindLevel(State.Current.Timestamp.AddDays(-2), SearchMode.ExactOrHigher);
 
             var txs = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
+                $@"SELECT COALESCE(SUM(""Amount""), 0)::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
             var calls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
             var accounts = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""FirstLevel"" >= {currPeriod}");
 
-            if (prevPeriod <= 0)
+            if (prevPeriod == currPeriod)
             {
                 return new DailyData
                 {
@@ -293,7 +291,7 @@ namespace Tzkt.Api.Services
             }
             
             var prevTxs = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT SUM(""Amount"")::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
+                $@"SELECT COALESCE(SUM(""Amount""), 0)::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
             var prevCalls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
             var prevAccounts = await db.ExecuteScalarAsync<int>(
@@ -338,13 +336,11 @@ namespace Tzkt.Api.Services
 
         async Task<TxsData> GetTxsData(IDbConnection db)
         {
-            var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
-            var currPeriod = State.Current.Level - period;
-            var prevPeriod = currPeriod - period;
-
+            var currPeriod = Times.FindLevel(State.Current.Timestamp.AddMonths(-1), SearchMode.ExactOrHigher);
+            var prevPeriod = Times.FindLevel(State.Current.Timestamp.AddMonths(-2), SearchMode.ExactOrHigher);
 
             var fees = await db.QueryFirstOrDefaultAsync($@"
-                SELECT SUM(fee)::bigint AS paid, SUM(burn)::bigint AS burned FROM
+                SELECT COALESCE(SUM(fee), 0)::bigint AS paid, COALESCE(SUM(burn), 0)::bigint AS burned FROM
                 (
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
@@ -356,12 +352,12 @@ namespace Tzkt.Api.Services
                 ) AS current");
             
             var txs = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count, SUM(""Amount"")::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
+                $@"SELECT COUNT(*)::integer AS count, COALESCE(SUM(""Amount""), 0)::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
             
             var calls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
 
-            if (prevPeriod <= 0)
+            if (prevPeriod == currPeriod)
             {
                 return new TxsData
                 {
@@ -374,7 +370,7 @@ namespace Tzkt.Api.Services
             }
             
             var prevFees = await db.QueryFirstOrDefaultAsync($@"
-                SELECT SUM(fee)::bigint AS paid, SUM(burn)::bigint AS burned FROM
+                SELECT COALESCE(SUM(fee), 0)::bigint AS paid, COALESCE(SUM(burn), 0)::bigint AS burned FROM
                 (
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
@@ -386,7 +382,7 @@ namespace Tzkt.Api.Services
                 ) AS previous");
             
             var prevTxs = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer AS count, SUM(""Amount"")::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
+                $@"SELECT COUNT(*)::integer AS count, COALESCE(SUM(""Amount""), 0)::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
             
             var prevCalls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
@@ -411,7 +407,7 @@ namespace Tzkt.Api.Services
             var protocol = Protocols.Current;
 
             var total = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer as bakers, SUM(""StakingBalance"")::bigint AS staking, SUM((""StakingBalance"" / {protocol.TokensPerRoll})::integer)::integer as rolls FROM ""Accounts"" WHERE ""Type"" = 1 AND ""Staked"" = true");
+                $@"SELECT COUNT(*)::integer as bakers, COALESCE(SUM(""StakingBalance""), 0)::bigint AS staking, COALESCE(SUM((""StakingBalance"" / {protocol.TokensPerRoll})::integer), 0)::integer as rolls FROM ""Accounts"" WHERE ""Type"" = 1 AND ""Staked"" = true");
 
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
             var maxBlockReward = protocol.EndorsersPerBlock * (protocol.BlockReward0 + protocol.EndorsementReward0); //microtez
@@ -429,8 +425,7 @@ namespace Tzkt.Api.Services
 
         async Task<AccountsData> GetAccountsData(IDbConnection db)
         {
-            var period = 30 * 24 * 60 * 60 / Protocols.Current.TimeBetweenBlocks; //month
-            var currPeriod = State.Current.Level - period;
+            var currPeriod = Times.FindLevel(State.Current.Timestamp.AddMonths(-1), SearchMode.ExactOrHigher);
 
             return new AccountsData
             {
