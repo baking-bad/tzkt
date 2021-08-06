@@ -167,8 +167,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
-                FutureBakingRights = (await Proto.Rpc.GetBakingRightsAsync(block.Level, futureCycle)).EnumerateArray();
-                FutureEndorsingRights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, futureCycle)).EnumerateArray();
+                FutureBakingRights = await GetBakingRights(block, futureCycle);
+                FutureEndorsingRights = await GetEndorsingRights(block, futureCycle);
 
                 foreach (var er in FutureEndorsingRights)
                     if (!await Cache.Accounts.ExistsAsync(er.RequiredString("delegate")))
@@ -240,6 +240,24 @@ namespace Tzkt.Sync.Protocols.Proto1
                     OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.PreservedCycles)}");
             }
             #endregion
+        }
+
+        protected virtual async Task<IEnumerable<JsonElement>> GetBakingRights(Block block, int cycle)
+        {
+            var rights = (await Proto.Rpc.GetBakingRightsAsync(block.Level, cycle)).RequiredArray().EnumerateArray();
+            if (!rights.Any() || rights.Count(x => x.RequiredInt32("priority") == 0) != block.Protocol.BlocksPerCycle)
+                throw new ValidationException("Rpc returned less baking rights (with priority 0) than it should be");
+
+            return rights;
+        }
+
+        protected virtual async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, int cycle)
+        {
+            var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, cycle)).RequiredArray().EnumerateArray();
+            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != block.Protocol.BlocksPerCycle * block.Protocol.EndorsersPerBlock)
+                throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
+
+            return rights;
         }
     }
 }

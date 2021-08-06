@@ -286,7 +286,9 @@ namespace Tzkt.Sync.Protocols.Proto10
         async Task FetchBakingRights(Protocol protocol, int block, Cycle cycle, Dictionary<int, BakerCycle> bakerCycles)
         {
             GC.Collect();
-            var rights = (await Proto.Rpc.GetBakingRightsAsync(block, cycle.Index)).EnumerateArray();
+            var rights = (await Proto.Rpc.GetBakingRightsAsync(block, cycle.Index)).RequiredArray().EnumerateArray();
+            if (!rights.Any() || rights.Count(x => x.RequiredInt32("priority") == 0) != protocol.BlocksPerCycle)
+                throw new ValidationException("Rpc returned less baking rights (with priority 0) than it should be");
 
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
@@ -319,7 +321,12 @@ namespace Tzkt.Sync.Protocols.Proto10
         async Task<List<JsonElement>> FetchEndorsingRights(Protocol protocol, int block, Cycle cycle, Dictionary<int, BakerCycle> bakerCycles, List<JsonElement> shiftedRights)
         {
             GC.Collect();
-            var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block, cycle.Index)).EnumerateArray();
+            //var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block, cycle.Index)).RequiredArray().EnumerateArray();
+            var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.EndorsersPerBlock / 2);
+            for (int level = cycle.FirstLevel; level <= cycle.LastLevel; level++)
+                rights.AddRange((await Proto.Rpc.GetLevelEndorsingRightsAsync(block, level)).RequiredArray().EnumerateArray());
+            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
+                throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
 
             #region save rights
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;

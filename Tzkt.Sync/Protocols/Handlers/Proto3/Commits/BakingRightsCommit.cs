@@ -139,8 +139,8 @@ namespace Tzkt.Sync.Protocols.Proto3
             {
                 var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
-                FutureBakingRights = (await Proto.Rpc.GetBakingRightsAsync(block.Level, futureCycle)).EnumerateArray();
-                FutureEndorsingRights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, futureCycle)).EnumerateArray();
+                FutureBakingRights = await GetBakingRights(block, futureCycle);
+                FutureEndorsingRights = await GetEndorsingRights(block, futureCycle);
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
