@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
@@ -323,8 +324,24 @@ namespace Tzkt.Sync.Protocols.Proto10
             GC.Collect();
             //var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block, cycle.Index)).RequiredArray().EnumerateArray();
             var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.EndorsersPerBlock / 2);
+            var attempts = 0;
+
             for (int level = cycle.FirstLevel; level <= cycle.LastLevel; level++)
-                rights.AddRange((await Proto.Rpc.GetLevelEndorsingRightsAsync(block, level)).RequiredArray().EnumerateArray());
+            {
+                try
+                {
+                    rights.AddRange((await Proto.Rpc.GetLevelEndorsingRightsAsync(block, level)).RequiredArray().EnumerateArray());
+                    attempts = 0;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError("Failed to fetch endorsing rights for level {0}: {1}", level, ex.Message);
+                    if (++attempts >= 10) throw new Exception("Too many RPC errors when fetching endorsing rights");
+                    await Task.Delay(3000);
+                    level--;
+                }
+            }
+
             if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
                 throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
 
