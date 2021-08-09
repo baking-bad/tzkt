@@ -454,6 +454,7 @@ namespace Tzkt.Api.Services
             {
                 return new GovernanceData
                 {
+                    Epoch = period.Epoch,
                     Period = period.Kind,
                     Protocol = proposals.Any() ? null : State.Current.Protocol,
                     Proposals = proposals.Select(x => new ProposalData
@@ -472,6 +473,7 @@ namespace Tzkt.Api.Services
 
             var result = new GovernanceData
             {
+                Epoch = period.Epoch,
                 Proposal = proposal.Hash,
                 Protocol = proposalMeta?.alias,
                 Period = period.Kind,

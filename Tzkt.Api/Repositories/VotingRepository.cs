@@ -40,6 +40,7 @@ namespace Tzkt.Api.Repositories
                 SELECT      *
                 FROM        ""Proposals""
                 WHERE       ""Hash"" = @hash::character(51)
+                ORDER BY    ""Epoch"" DESC
                 LIMIT       1";
 
             using var db = GetConnection();

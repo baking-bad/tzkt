@@ -49,12 +49,12 @@ namespace Tzkt.Sync.Services.Cache
             return proposal;
         }
 
-        public async Task<Proposal> GetAsync(string hash)
+        public async Task<Proposal> GetAsync(string hash, int epoch)
         {
-            if (!CachedByHash.TryGetValue(hash, out var proposal))
+            if (!CachedByHash.TryGetValue(hash, out var proposal) || proposal.Epoch != epoch)
             {
-                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash)
-                    ?? throw new Exception($"Proposal {hash} doesn't exist");
+                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash && x.Epoch == epoch)
+                    ?? throw new Exception($"Proposal {hash} from epoch {epoch} doesn't exist");
 
                 Add(proposal);
             }
@@ -62,22 +62,22 @@ namespace Tzkt.Sync.Services.Cache
             return proposal;
         }
 
-        public async Task<Proposal> GetOrDefaultAsync(string hash)
+        public async Task<Proposal> GetOrDefaultAsync(string hash, int epoch)
         {
-            if (!CachedByHash.TryGetValue(hash, out var proposal))
+            if (!CachedByHash.TryGetValue(hash, out var proposal) || proposal.Epoch != epoch)
             {
-                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash);
+                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash && x.Epoch == epoch);
                 if (proposal != null) Add(proposal);
             }
 
             return proposal;
         }
 
-        public async Task<Proposal> GetOrCreateAsync(string hash, Func<Proposal> create)
+        public async Task<Proposal> GetOrCreateAsync(string hash, int epoch, Func<Proposal> create)
         {
-            if (!CachedByHash.TryGetValue(hash, out var proposal))
+            if (!CachedByHash.TryGetValue(hash, out var proposal) || proposal.Epoch != epoch)
             {
-                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash)
+                proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash && x.Epoch == epoch)
                     ?? create();
 
                 // just created proposal has id = 0 so CachedById will contain wrong key, but it's fine

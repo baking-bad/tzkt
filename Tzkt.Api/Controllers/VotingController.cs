@@ -92,7 +92,7 @@ namespace Tzkt.Api.Controllers
         /// Get proposal by hash
         /// </summary>
         /// <remarks>
-        /// Returns a protocol proposal with the specified hash.
+        /// Returns the most recent protocol proposal with the specified hash.
         /// </remarks>
         /// <param name="hash">Proposal hash</param>
         /// <returns></returns>

@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto3
         {
             #region init
             var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
-            var proposal = await Cache.Proposals.GetAsync(content.RequiredString("proposal"));
+            var proposal = await Cache.Proposals.GetAsync(content.RequiredString("proposal"), period.Epoch);
             var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
 
             var snapshot = await Db.VotingSnapshots

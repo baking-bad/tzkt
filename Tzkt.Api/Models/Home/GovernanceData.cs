@@ -8,6 +8,7 @@ namespace Tzkt.Api.Models
         public string Protocol { get; set; }
         public string Proposal { get; set; }
         
+        public int Epoch { get; set; }
         public string Period { get; set; }
         public DateTime PeriodEndTime { get; set; }
         public DateTime EpochStartTime { get; set; }
