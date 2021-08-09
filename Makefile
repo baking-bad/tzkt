@@ -34,6 +34,9 @@ migration:
 sync:
 	export $$(cat .env | xargs) && dotnet run -p Tzkt.Sync -v normal
 
+api:
+	export $$(cat .env | xargs) && dotnet run -p Tzkt.Api -v normal
+
 api-image:
 	docker build -t bakingbad/tzkt-api:latest -f ./Tzkt.Api/Dockerfile .
 
