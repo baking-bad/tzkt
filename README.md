@@ -95,7 +95,7 @@ wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_mainnet.bac
 
 ````c
 // full mainnet restoring takes ~30 min (depending on hardware)
-sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -1 /tmp/tzkt_db.backup
+sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -U tzkt -1 /tmp/tzkt_db.backup
 ````
 
 ### Clone, build, configure and run Tzkt Indexer
