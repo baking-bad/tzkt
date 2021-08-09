@@ -54,12 +54,6 @@ namespace Tzkt.Sync
             RequestTimeout = TimeSpan.FromSeconds(timeoutSec);
         }
 
-        public Task<byte[]> GetBytesAsync(string path)
-            => HttpClient.GetByteArrayAsync(path);
-
-        public Task<string> GetStringAsync(string path)
-            => HttpClient.GetStringAsync(path);
-
         public Task<Stream> GetStreamAsync(string path)
             => HttpClient.GetStreamAsync(path);
 

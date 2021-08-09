@@ -49,11 +49,8 @@ namespace Tzkt.Sync.Services
             var _from = (long)(from - DateTime.UnixEpoch).TotalSeconds;
             var _to = (long)(to - DateTime.UnixEpoch).TotalSeconds;
 
-            using var stream = await Client.GetStreamAsync(
-                $"coins/tezos/market_chart/range?vs_currency={currency}&from={_from}&to={_to}");
-
-            var res = await JsonSerializer.DeserializeAsync<CoingeckoQuotes>(stream);
-            return res.Prices;
+            return (await Client.GetObjectAsync<CoingeckoQuotes>(
+                $"coins/tezos/market_chart/range?vs_currency={currency}&from={_from}&to={_to}")).Prices;
         }
     }
 

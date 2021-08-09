@@ -8,6 +8,7 @@ namespace Tzkt.Sync.Services
 {
     public sealed class TezosNode : IDisposable
     {
+        public string BaseUrl { get; }
         readonly TzktClient Rpc;
 
         Header Header;
@@ -17,13 +18,15 @@ namespace Tzkt.Sync.Services
         public TezosNode(IConfiguration config)
         {
             var nodeConf = config.GetTezosNodeConfig();
-            Rpc = new TzktClient(nodeConf.Endpoint, nodeConf.Timeout);
+            BaseUrl = $"{nodeConf.Endpoint.TrimEnd('/')}/";
+            Rpc = new TzktClient(BaseUrl, nodeConf.Timeout);
         }
 
         public async Task<JsonElement> GetAsync(string url)
         {
             using var stream = await Rpc.GetStreamAsync(url);
-            return (await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 256 })).RootElement;
+            using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 256 });
+            return doc.RootElement.Clone();
         }
 
         public async Task<Header> GetHeaderAsync()
