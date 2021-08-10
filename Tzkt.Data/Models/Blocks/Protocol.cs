@@ -5,6 +5,7 @@ namespace Tzkt.Data.Models
 {
     public class Protocol
     {
+        // TODO: generate ID in app state
         public int Id { get; set; }
         public int Code { get; set; }
         public string Hash { get; set; }

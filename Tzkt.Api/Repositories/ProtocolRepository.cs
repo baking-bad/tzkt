@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
             var sql = $@"
                 SELECT      *
                 FROM        ""Protocols""
-                WHERE       (""FirstLevel"" - 1) / GREATEST(""BlocksPerCycle"", 1) <= {cycle}
+                WHERE       ""FirstCycle"" <= {cycle}
                 ORDER BY    ""FirstLevel"" DESC
                 LIMIT       1";
 
@@ -196,12 +196,11 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Protocol>> Get(SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Protocols""")
-                .Take(sort, offset, limit, x => x switch
+                .Take(sort ?? new(){ Asc = "code" }, offset, limit, x => x switch
                 {
-                    "code" => ("Id", "Code"),
-                    "firstLevel" => ("Id", "FirstLevel"),
-                    "lastLevel" => ("Id", "LastLevel"),
-                    _ => ("Id", "Id")
+                    "firstLevel" => ("Code", "FirstLevel"),
+                    "lastLevel" => ("Code", "LastLevel"),
+                    _ => ("Code", "Code")
                 });
 
             using var db = GetConnection();

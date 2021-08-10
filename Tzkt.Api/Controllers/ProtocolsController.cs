@@ -42,7 +42,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of protocols.
         /// </remarks>
-        /// <param name="sort">Sorts protocols by specified field. Supported fields: `id` (default), `code`, `firstLevel`, `lastLevel`.</param>
+        /// <param name="sort">Sorts protocols by specified field. Supported fields: `code` (default), `firstLevel`, `lastLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -53,7 +53,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "code", "firstLevel", "lastLevel"))
+            if (sort != null && !sort.Validate("code", "firstLevel", "lastLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
