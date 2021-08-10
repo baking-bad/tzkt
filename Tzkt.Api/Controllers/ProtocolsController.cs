@@ -53,7 +53,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("code", "firstLevel", "lastLevel"))
+            if (sort != null && !sort.Validate("id", "code", "firstLevel", "lastLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
