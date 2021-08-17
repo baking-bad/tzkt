@@ -410,15 +410,17 @@ namespace Tzkt.Api.Services
                 $@"SELECT COUNT(*)::integer as bakers, COALESCE(SUM(""StakingBalance""), 0)::bigint AS staking, COALESCE(SUM((""StakingBalance"" / {protocol.TokensPerRoll})::integer), 0)::integer as rolls FROM ""Accounts"" WHERE ""Type"" = 1 AND ""Staked"" = true");
 
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
-            var maxBlockReward = protocol.EndorsersPerBlock * (protocol.BlockReward0 + protocol.EndorsementReward0 + protocol.LBSubsidy); //microtez
+            var maxBlockReward = protocol.EndorsersPerBlock * (protocol.BlockReward0 + protocol.EndorsementReward0); //microtez
             var totalRewardsPerYear = maxBlockReward * blocksPerYear;
+            var maxBlockCreated = maxBlockReward + protocol.LBSubsidy; //microtez
+            var totalCreatedPerYear = maxBlockCreated * blocksPerYear;
 
             return new StakingData
             {
                 TotalStaking = total.staking,
                 StakingPercentage = Math.Round(100.0 * total.staking / totalSupply, 2),
                 AvgRoi = Math.Round(100.0 * totalRewardsPerYear / (protocol.TokensPerRoll * total.rolls), 2),
-                Inflation = Math.Round(100.0 * totalRewardsPerYear / totalSupply, 2),
+                Inflation = Math.Round(100.0 * totalCreatedPerYear / totalSupply, 2),
                 Bakers = total.bakers
             };
         }
