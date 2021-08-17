@@ -297,6 +297,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             AccountParameter target,
             Int64Parameter amount,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
@@ -343,6 +344,7 @@ namespace Tzkt.Api.Repositories
                         ? new Int32NullParameter { Null = true }
                         : null)
                 .Filter("Status", status)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(realSort, realOffset, realLimit, x => x switch
@@ -496,6 +498,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             AccountParameter target,
             Int64Parameter amount,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
@@ -581,6 +584,7 @@ namespace Tzkt.Api.Repositories
                         ? new Int32NullParameter { Null = true }
                         : null)
                 .Filter("Status", status)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -747,6 +751,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             AccountParameter target,
             Int64Parameter amount,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
@@ -829,6 +834,7 @@ namespace Tzkt.Api.Repositories
                         ? new Int32NullParameter { Null = true }
                         : null)
                 .Filter("Status", status)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch

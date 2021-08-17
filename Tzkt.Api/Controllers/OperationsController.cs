@@ -1269,6 +1269,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
         /// <param name="amount">Filters transactions by amount (microtez).</param>
+        /// <param name="id">Filters transactions by id.</param>
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
@@ -1291,6 +1292,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter sender,
             AccountParameter target,
             Int64Parameter amount,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
@@ -1356,25 +1358,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }

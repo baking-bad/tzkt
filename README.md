@@ -96,6 +96,9 @@ wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_mainnet.bac
 ````c
 // full mainnet restoring takes ~30 min (depending on hardware)
 sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -1 /tmp/tzkt_db.backup
+
+// for Docker use you may need to add "-U tzkt", like this
+sudo -u postgres pg_restore -c --if-exists -v -d tzkt_db -U tzkt -1 /tmp/tzkt_db.backup
 ````
 
 ### Clone, build, configure and run Tzkt Indexer
@@ -211,7 +214,8 @@ Like this:
     "Enabled": true,
     "MaxConnections": 1000,
     "MaxOperationSubscriptions": 50,
-    "MaxBigMapSubscriptions": 50
+    "MaxBigMapSubscriptions": 50,
+    "MaxAccountsSubscriptions": 50
   },
 
   "ConnectionStrings": {
@@ -233,6 +237,14 @@ Like this:
       "Default": "Information",
       "Microsoft": "Warning",
       "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+     
+  "Kestrel": {
+    "Endpoints": {
+      "Http": {
+        "Url": "http://localhost:5000"
+      }
     }
   },
 

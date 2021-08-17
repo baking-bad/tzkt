@@ -685,7 +685,7 @@ namespace Tzkt.Api.Repositories
             var proposals = await GetProposals(
                 new Int32Parameter { Eq = index },
                 new SortParameter { Desc = "rolls" },
-                null, 10);
+                null, 1000);
 
             return new VotingEpoch
             {
