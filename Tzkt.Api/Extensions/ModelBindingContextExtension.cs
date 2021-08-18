@@ -528,7 +528,7 @@ namespace Tzkt.Api
                     foreach (var rawValue in rawValues)
                     {
 
-                        if (!BigMapTags.TryParse(valueObject.FirstValue, out var tag))
+                        if (!BigMapTags.TryParse(rawValue, out var tag))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "Invalid bigmap tags.");
                             return false;
