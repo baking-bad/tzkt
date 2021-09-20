@@ -71,7 +71,7 @@ namespace Tzkt.Api.Repositories
             if (account == null) return Enumerable.Empty<HistoricalBalance>();
 
             #region dumb users
-            if (limit == 1 && offset == 0 && sort.Desc != null)
+            if (limit == 1 && offset == 0 && sort?.Desc != null)
             {
                 return new[]
                 {
