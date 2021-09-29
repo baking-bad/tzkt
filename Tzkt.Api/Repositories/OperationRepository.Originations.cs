@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema"", sc.""Views""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -60,12 +60,15 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var code = row.ParameterSchema == null ? null : new MichelineArray
+                MichelineArray code = null;
+                if (row.ParameterSchema != null)
                 {
-                    Micheline.FromBytes(row.ParameterSchema),
-                    Micheline.FromBytes(row.StorageSchema),
-                    Micheline.FromBytes(row.CodeSchema)
-                };
+                    code = new();
+                    code.Add(Micheline.FromBytes(row.ParameterSchema));
+                    code.Add(Micheline.FromBytes(row.StorageSchema));
+                    code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                    code.Add(Micheline.FromBytes(row.CodeSchema));
+                }
 
                 return new OriginationOperation
                 {
@@ -110,7 +113,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema"", sc.""Views""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -144,12 +147,15 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var code = row.ParameterSchema == null ? null : new MichelineArray
+                MichelineArray code = null;
+                if (row.ParameterSchema != null)
                 {
-                    Micheline.FromBytes(row.ParameterSchema),
-                    Micheline.FromBytes(row.StorageSchema),
-                    Micheline.FromBytes(row.CodeSchema)
-                };
+                    code = new();
+                    code.Add(Micheline.FromBytes(row.ParameterSchema));
+                    code.Add(Micheline.FromBytes(row.StorageSchema));
+                    code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                    code.Add(Micheline.FromBytes(row.CodeSchema));
+                }
 
                 return new OriginationOperation
                 {
@@ -194,7 +200,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
-                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema""
+                SELECT      o.*, b.""Hash"", sc.""ParameterSchema"", sc.""StorageSchema"", sc.""CodeSchema"", sc.""Views""
                 FROM        ""OriginationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -228,12 +234,15 @@ namespace Tzkt.Api.Repositories
                 var contract = row.ContractId == null ? null
                     : (RawContract)Accounts.Get((int)row.ContractId);
 
-                var code = row.ParameterSchema == null ? null : new MichelineArray
+                MichelineArray code = null;
+                if (row.ParameterSchema != null)
                 {
-                    Micheline.FromBytes(row.ParameterSchema),
-                    Micheline.FromBytes(row.StorageSchema),
-                    Micheline.FromBytes(row.CodeSchema)
-                };
+                    code = new();
+                    code.Add(Micheline.FromBytes(row.ParameterSchema));
+                    code.Add(Micheline.FromBytes(row.StorageSchema));
+                    code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                    code.Add(Micheline.FromBytes(row.CodeSchema));
+                }
 
                 return new OriginationOperation
                 {
@@ -507,6 +516,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"sc.""ParameterSchema""");
                         columns.Add(@"sc.""StorageSchema""");
                         columns.Add(@"sc.""CodeSchema""");
+                        columns.Add(@"sc.""Views""");
                         joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                         break;
                     case "storage": columns.Add(@"o.""StorageId"""); break;
@@ -641,12 +651,15 @@ namespace Tzkt.Api.Repositories
                     case "code":
                         foreach (var row in rows)
                         {
-                            var code = row.ParameterSchema == null ? null : new MichelineArray
+                            MichelineArray code = null;
+                            if (row.ParameterSchema != null)
                             {
-                                Micheline.FromBytes(row.ParameterSchema),
-                                Micheline.FromBytes(row.StorageSchema),
-                                Micheline.FromBytes(row.CodeSchema)
-                            };
+                                code = new();
+                                code.Add(Micheline.FromBytes(row.ParameterSchema));
+                                code.Add(Micheline.FromBytes(row.StorageSchema));
+                                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                                code.Add(Micheline.FromBytes(row.CodeSchema));
+                            }
                             result[j++][i] = (int)format % 2 == 0 ? code : code.ToJson();
                         }
                         break;
@@ -760,6 +773,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"sc.""ParameterSchema""");
                     columns.Add(@"sc.""StorageSchema""");
                     columns.Add(@"sc.""CodeSchema""");
+                    columns.Add(@"sc.""Views""");
                     joins.Add(@"LEFT JOIN ""Scripts"" as sc ON sc.""Id"" = o.""ScriptId""");
                     break;
                 case "storage": columns.Add(@"o.""StorageId"""); break;
@@ -891,12 +905,15 @@ namespace Tzkt.Api.Repositories
                 case "code":
                     foreach (var row in rows)
                     {
-                        var code = row.ParameterSchema == null ? null : new MichelineArray
+                        MichelineArray code = null;
+                        if (row.ParameterSchema != null)
                         {
-                            Micheline.FromBytes(row.ParameterSchema),
-                            Micheline.FromBytes(row.StorageSchema),
-                            Micheline.FromBytes(row.CodeSchema)
-                        };
+                            code = new();
+                            code.Add(Micheline.FromBytes(row.ParameterSchema));
+                            code.Add(Micheline.FromBytes(row.StorageSchema));
+                            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                            code.Add(Micheline.FromBytes(row.CodeSchema));
+                        }
                         result[j++] = (int)format % 2 == 0 ? code : code.ToJson();
                     }
                     break;
