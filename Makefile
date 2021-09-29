@@ -47,7 +47,7 @@ sync-image:
 granada-init:
 	docker build -t tzkt-snapshot-granada -f Dockerfile-granada-snapshot .
 	docker run --name tzkt-granada-snapshot tzkt-snapshot-granada
-	docker cp tzkt-granada-snapshot:/tzkt_db.backup .
+	docker cp tzkt-granada-snapshot:/granada_db.backup .
 	docker rm tzkt-granada-snapshot
 	docker rmi tzkt-snapshot-granada
 	docker-compose up -d granada-db
@@ -67,7 +67,7 @@ granada-stop:
 florence-init:
 	docker build -t tzkt-snapshot-florence -f Dockerfile-florence-snapshot .
 	docker run --name tzkt-florence-snapshot tzkt-snapshot-florence
-	docker cp tzkt-florence-snapshot:/tzkt_db.backup .
+	docker cp tzkt-florence-snapshot:/florence_db.backup .
 	docker rm tzkt-florence-snapshot
 	docker rmi tzkt-snapshot-florence
 	docker-compose up -d florence-db
