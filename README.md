@@ -88,7 +88,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -283,10 +283,10 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 
 In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (RPC endpoint). Here are some presets for testnets:
  - Florencenet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_florencenet.backup
+   - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_florencenet.backup
    - RPC node: https://rpc.tzkt.io/florencenobanet/
  - Granadanet:
-   - Snapshot: https://tzkt-snapshots.s3.eu-central-1.amazonaws.com/tzkt_v1.6_granadanet.backup
+   - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_granadanet.backup
    - RPC node: https://rpc.tzkt.io/granadanet/
 
 ## Have a question?
