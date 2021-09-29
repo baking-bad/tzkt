@@ -50,7 +50,7 @@ granada-init:
 	docker cp tzkt-granada-snapshot:/granada_db.backup .
 	docker rm tzkt-granada-snapshot
 	docker rmi tzkt-snapshot-granada
-	docker-compose up -d granada-db
+	docker-compose -f docker-compose.granada.yml up -d granada-db
 	docker-compose exec -T granada-db psql -U tzkt postgres -c '\l'
 	docker-compose exec -T granada-db dropdb -U tzkt --if-exists tzkt_db
 	docker-compose exec -T granada-db createdb -U tzkt -T template0 tzkt_db
@@ -63,6 +63,9 @@ granada-start:
 
 granada-stop:
 	docker-compose -f docker-compose.granada.yml down
+
+granada-db:
+	docker-compose -f docker-compose.granada.yml up -d granada-db
 	
 florence-init:
 	docker build -t tzkt-snapshot-florence -f Dockerfile-florence-snapshot .
@@ -70,7 +73,7 @@ florence-init:
 	docker cp tzkt-florence-snapshot:/florence_db.backup .
 	docker rm tzkt-florence-snapshot
 	docker rmi tzkt-snapshot-florence
-	docker-compose up -d florence-db
+	docker-compose -f docker-compose.florence.ym up -d florence-db
 	docker-compose exec -T florence-db psql -U tzkt postgres -c '\l'
 	docker-compose exec -T florence-db dropdb -U tzkt --if-exists tzkt_db
 	docker-compose exec -T florence-db createdb -U tzkt -T template0 tzkt_db
@@ -83,3 +86,6 @@ florence-start:
 
 florence-stop:
 	docker-compose -f docker-compose.florence.yml down
+
+florence-db:
+	docker-compose -f docker-compose.florence.yml up -d florence-db
