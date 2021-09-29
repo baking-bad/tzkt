@@ -18,6 +18,7 @@ namespace Tzkt.Data.Models
         public byte[] ParameterSchema { get; set; }
         public byte[] StorageSchema { get; set; }
         public byte[] CodeSchema { get; set; }
+        public byte[][] Views { get; set; }
 
         public int TypeHash { get; set; }
         public int CodeHash { get; set; }

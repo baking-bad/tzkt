@@ -122,6 +122,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
                 var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
                 var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+                var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
                 var newSchema = new Netezos.Contracts.ContractScript(code);
                 var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
@@ -157,6 +158,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     ParameterSchema = micheParameter,
                     StorageSchema = micheStorage,
                     CodeSchema = micheCode,
+                    Views = micheViews.Select(x => x.ToBytes()).ToArray(),
                     Current = true
                 };
                 var newStorage = new Storage
@@ -170,7 +172,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Current = true
                 };
 
-                var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema);
+                var viewsBytes = newScript.Views
+                    .OrderBy(x => x)
+                    .SelectMany(x => x)
+                    .ToArray();
+                var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
                 var fullSchema = typeSchema.Concat(newScript.CodeSchema);
                 contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
                 contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);

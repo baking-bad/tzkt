@@ -629,12 +629,11 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
-            var code = new MichelineArray
-            {
-                Micheline.FromBytes(row.ParameterSchema),
-                Micheline.FromBytes(row.StorageSchema),
-                Micheline.FromBytes(row.CodeSchema)
-            };
+            var code = new MichelineArray();
+            code.Add(Micheline.FromBytes(row.ParameterSchema));
+            code.Add(Micheline.FromBytes(row.StorageSchema));
+            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToBytes();
         }
@@ -651,12 +650,11 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
-            var code = new MichelineArray
-            {
-                Micheline.FromBytes(row.ParameterSchema),
-                Micheline.FromBytes(row.StorageSchema),
-                Micheline.FromBytes(row.CodeSchema)
-            };
+            var code = new MichelineArray();
+            code.Add(Micheline.FromBytes(row.ParameterSchema));
+            code.Add(Micheline.FromBytes(row.StorageSchema));
+            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code;
         }
@@ -673,12 +671,11 @@ namespace Tzkt.Api.Repositories
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
-            var code = new MichelineArray
-            {
-                Micheline.FromBytes(row.ParameterSchema),
-                Micheline.FromBytes(row.StorageSchema),
-                Micheline.FromBytes(row.CodeSchema)
-            };
+            var code = new MichelineArray();
+            code.Add(Micheline.FromBytes(row.ParameterSchema));
+            code.Add(Micheline.FromBytes(row.StorageSchema));
+            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToMichelson();
         }
