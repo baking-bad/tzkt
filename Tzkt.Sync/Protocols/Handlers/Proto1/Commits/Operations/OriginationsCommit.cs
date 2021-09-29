@@ -520,6 +520,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
             var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
             var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
+            var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
             var script = new Script
             {
                 Id = Cache.AppState.NextScriptId(),
@@ -529,10 +530,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ParameterSchema = micheParameter.ToBytes(),
                 StorageSchema = micheStorage.ToBytes(),
                 CodeSchema = micheCode.ToBytes(),
+                Views = micheViews.Select(x => x.ToBytes()).ToArray(),
                 Current = true
             };
 
-            var typeSchema = script.ParameterSchema.Concat(script.StorageSchema);
+            var viewsBytes = script.Views
+                .OrderBy(x => x)
+                .SelectMany(x => x)
+                .ToArray();
+            var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
             var fullSchema = typeSchema.Concat(script.CodeSchema);
             contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
             contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
