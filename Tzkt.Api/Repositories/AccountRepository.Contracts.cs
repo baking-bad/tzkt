@@ -823,6 +823,56 @@ namespace Tzkt.Api.Repositories
                 });
         }
 
+        public async Task<ContractView> GetView(string address, string name, bool json, bool micheline, bool michelson)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract || contract.Kind == 0) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null || row.Views == null) return null;
+
+            var view = ((byte[][])row.Views)
+                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
+                .Where(x => (x.Args[0] as MichelineString).Value == name)
+                .FirstOrDefault();
+            if (view == null) return null;
+
+            return new ContractView
+            {
+                Name = (view.Args[0] as MichelineString).Value,
+                JsonParameterType = json ? Schema.Create(view.Args[1] as MichelinePrim).Humanize() : null,
+                JsonReturnType = json ? Schema.Create(view.Args[2] as MichelinePrim).Humanize() : null,
+                MichelineParameterType = micheline ? view.Args[1] : null,
+                MichelineReturnType = micheline ? view.Args[2] : null,
+                MichelsonParameterType = michelson ? view.Args[1].ToMichelson() : null,
+                MichelsonReturnType = michelson ? view.Args[2].ToMichelson() : null
+            };
+        }
+
+        public async Task<IEnumerable<ContractView>> GetViews(string address, bool json, bool micheline, bool michelson)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract || contract.Kind == 0) return Enumerable.Empty<ContractView>();
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null || row.Views == null) return Enumerable.Empty<ContractView>();
+
+            return ((byte[][])row.Views)
+                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
+                .Select(view => new ContractView
+                {
+                    Name = (view.Args[0] as MichelineString).Value,
+                    JsonParameterType = json ? Schema.Create(view.Args[1] as MichelinePrim).Humanize() : null,
+                    JsonReturnType = json ? Schema.Create(view.Args[2] as MichelinePrim).Humanize() : null,
+                    MichelineParameterType = micheline ? view.Args[1] : null,
+                    MichelineReturnType = micheline ? view.Args[2] : null,
+                    MichelsonParameterType = michelson ? view.Args[1].ToMichelson() : null,
+                    MichelsonReturnType = michelson ? view.Args[2].ToMichelson() : null
+                });
+        }
+
         public async Task<string> GetStorageValue(string address, JsonPath[] path)
         {
             var rawAccount = await Accounts.GetAsync(address);
