@@ -209,6 +209,25 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, ExpressionParameter expression)
+        {
+            if (expression == null) return this;
+
+            if (expression.Eq != null)
+                AppendFilter($@"""{column}"" = {Param(expression.Eq)}::character(54)");
+
+            if (expression.Ne != null)
+                AppendFilter($@"""{column}"" != {Param(expression.Ne)}::character(54)");
+
+            if (expression.In != null)
+                AppendFilter($@"""{column}"" = ANY ({Param(expression.In)})");
+
+            if (expression.Ni != null && expression.Ni.Count > 0)
+                AppendFilter($@"NOT (""{column}"" = ANY ({Param(expression.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, ProtocolParameter protocol)
         {
             if (protocol == null) return this;

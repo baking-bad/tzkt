@@ -148,6 +148,11 @@ namespace Tzkt.Api.Models
         public IEnumerable<RevealOperation> Reveals { get; set; }
 
         /// <summary>
+        /// List of register global constant operations, included in the block
+        /// </summary>
+        public IEnumerable<RegisterConstantOperation> RegisterConstants { get; set; }
+
+        /// <summary>
         /// List of migration operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<MigrationOperation> Migrations { get; set; }

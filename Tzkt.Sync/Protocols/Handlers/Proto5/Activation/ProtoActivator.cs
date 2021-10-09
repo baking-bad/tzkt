@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -158,7 +159,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                     ParameterSchema = micheParameter,
                     StorageSchema = micheStorage,
                     CodeSchema = micheCode,
-                    Views = micheViews.Select(x => x.ToBytes()).ToArray(),
+                    Views = micheViews.Any()
+                        ? micheViews.Select(x => x.ToBytes()).ToArray()
+                        : null,
                     Current = true
                 };
                 var newStorage = new Storage
@@ -172,10 +175,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Current = true
                 };
 
-                var viewsBytes = newScript.Views
-                    .OrderBy(x => x)
+                var viewsBytes = newScript.Views?
+                    .OrderBy(x => x, new BytesComparer())
                     .SelectMany(x => x)
-                    .ToArray();
+                    .ToArray()
+                    ?? Array.Empty<byte>();
                 var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
                 var fullSchema = typeSchema.Concat(newScript.CodeSchema);
                 contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);

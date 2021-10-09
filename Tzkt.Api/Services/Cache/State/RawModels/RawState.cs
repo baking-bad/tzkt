@@ -36,6 +36,7 @@ namespace Tzkt.Api.Services.Cache
         public int ProtocolsCount { get; set; }
         public int ProposalsCount { get; set; }
         public int CyclesCount { get; set; }
+        public int ConstantsCount { get; set; }
 
         public int ActivationOpsCount { get; set; }
         public int BallotOpsCount { get; set; }
@@ -47,6 +48,7 @@ namespace Tzkt.Api.Services.Cache
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
+        public int RegisterConstantOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }

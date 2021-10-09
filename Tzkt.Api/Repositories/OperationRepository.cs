@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -26,13 +25,15 @@ namespace Tzkt.Api.Repositories
             var originations = GetOriginations(hash, format, quote);
             var transactions = GetTransactions(hash, format, quote);
             var reveals = GetReveals(hash, quote);
+            var registerConstants = GetRegisterConstants(hash, format, quote);
 
-            await Task.WhenAll(delegations, originations, transactions, reveals);
+            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants);
 
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
                 .Concat(transactions.Result)
-                .Concat(reveals.Result);
+                .Concat(reveals.Result)
+                .Concat(registerConstants.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
@@ -85,8 +86,12 @@ namespace Tzkt.Api.Repositories
             var originations = GetOriginations(hash, counter, format, quote);
             var transactions = GetTransactions(hash, counter, format, quote);
             var reveals = GetReveals(hash, counter, quote);
+            var registerConstants = GetRegisterConstants(hash, counter, format, quote);
 
-            await Task.WhenAll(delegations, originations, transactions, reveals);
+            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants);
+
+            if (registerConstants.Result.Any())
+                return registerConstants.Result;
 
             if (reveals.Result.Any())
                 return reveals.Result;

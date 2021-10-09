@@ -126,6 +126,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetReveals(null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevealOperation>());
 
+                var registerConstants = TypesSubs.TryGetValue(Operations.RegisterConstant, out var registerConstantsSub)
+                    ? Repo.GetRegisterConstants(null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.RegisterConstantOperation>());
+
                 var migrations = TypesSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -150,6 +154,7 @@ namespace Tzkt.Api.Websocket.Processors
                     originations,
                     transactions,
                     reveals,
+                    registerConstants,
                     migrations,
                     penalties,
                     baking);
@@ -347,6 +352,17 @@ namespace Tzkt.Api.Websocket.Processors
                     if (revealsSub.Addresses != null)
                         foreach (var op in reveals.Result)
                             if (revealsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+                }
+
+                if (registerConstants.Result.Any())
+                {
+                    if (registerConstantsSub.All != null)
+                        AddRange(registerConstantsSub.All, registerConstants.Result);
+
+                    if (registerConstantsSub.Addresses != null)
+                        foreach (var op in registerConstants.Result)
+                            if (registerConstantsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs, op);
                 }
 

@@ -16,7 +16,7 @@ namespace Tzkt.Api
 
         /// <summary>
         /// **Not equal** filter mode. \
-        /// Specify  a protocol hash to get items where the specified field is not equal to the specified value.
+        /// Specify a protocol hash to get items where the specified field is not equal to the specified value.
         /// 
         /// Example: `?sender.ne=PsBabyM1eUX...`.
         /// </summary>

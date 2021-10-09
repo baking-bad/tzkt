@@ -86,6 +86,7 @@ namespace Tzkt.Api.Repositories
                         NumOriginations = delegat.OriginationsCount,
                         NumProposals = delegat.ProposalsCount,
                         NumReveals = delegat.RevealsCount,
+                        NumRegisterConstants = delegat.RegisterConstantsCount,
                         NumMigrations = delegat.MigrationsCount,
                         NumTransactions = delegat.TransactionsCount,
                         Metadata = metadata ? delegat.Metadata : null,
@@ -122,6 +123,7 @@ namespace Tzkt.Api.Repositories
                         NumDelegations = user.DelegationsCount,
                         NumOriginations = user.OriginationsCount,
                         NumReveals = user.RevealsCount,
+                        NumRegisterConstants = user.RegisterConstantsCount,
                         NumMigrations = user.MigrationsCount,
                         NumTransactions = user.TransactionsCount,
                         Metadata = metadata ? user.Metadata : null
@@ -143,7 +145,7 @@ namespace Tzkt.Api.Repositories
                         Alias = contract.Alias,
                         Address = contract.Address,
                         Kind = ContractKinds.ToString(contract.Kind),
-                        Tzips = GetTzips(contract.Tzips),
+                        Tzips = GetTzips(contract.Tags),
                         Balance = contract.Balance,
                         Creator = creator == null ? null : new CreatorInfo
                         {
@@ -262,6 +264,7 @@ namespace Tzkt.Api.Repositories
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
+                            NumRegisterConstants = row.RegisterConstantsCount,
                             NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount
                         });
@@ -304,6 +307,7 @@ namespace Tzkt.Api.Repositories
                             NumOriginations = row.OriginationsCount,
                             NumProposals = row.ProposalsCount,
                             NumReveals = row.RevealsCount,
+                            NumRegisterConstants = row.RegisterConstantsCount,
                             NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount,
                             Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
@@ -326,7 +330,7 @@ namespace Tzkt.Api.Repositories
                             Alias = row.Alias,
                             Address = row.Address,
                             Kind = ContractKinds.ToString(row.Kind),
-                            Tzips = GetTzips(row.Tzips),
+                            Tzips = GetTzips(row.Tags),
                             Balance = row.Balance,
                             Creator = creator == null ? null : new CreatorInfo
                             {
@@ -419,6 +423,7 @@ namespace Tzkt.Api.Repositories
                     case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                     case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                     case "numReveals": columns.Add(@"""RevealsCount"""); break;
+                    case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
@@ -428,7 +433,7 @@ namespace Tzkt.Api.Repositories
                     case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
 
                     case "kind": columns.Add(@"""Kind"""); break;
-                    case "tzips": columns.Add(@"""Tzips"""); break;
+                    case "tzips": columns.Add(@"""Tags"""); break;
                     case "creator": columns.Add(@"""CreatorId"""); break;
                     case "manager": columns.Add(@"""ManagerId"""); break;
                 }
@@ -601,6 +606,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.RevealsCount;
                         break;
+                    case "numRegisterConstants":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RegisterConstantsCount;
+                        break;
                     case "numMigrations":
                         foreach (var row in rows)
                             result[j++][i] = row.MigrationsCount;
@@ -639,7 +648,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "tzips":
                         foreach (var row in rows)
-                            result[j++][i] = GetTzips(row.Tzips);
+                            result[j++][i] = GetTzips(row.Tags);
                         break;
                     case "creator":
                         foreach (var row in rows)
@@ -719,6 +728,7 @@ namespace Tzkt.Api.Repositories
                 case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                 case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                 case "numReveals": columns.Add(@"""RevealsCount"""); break;
+                case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
@@ -728,7 +738,7 @@ namespace Tzkt.Api.Repositories
                 case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
 
                 case "kind": columns.Add(@"""Kind"""); break;
-                case "tzips": columns.Add(@"""Tzips"""); break;
+                case "tzips": columns.Add(@"""Tags"""); break;
                 case "creator": columns.Add(@"""CreatorId"""); break;
                 case "manager": columns.Add(@"""ManagerId"""); break;
             }
@@ -897,6 +907,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.RevealsCount;
                     break;
+                case "numRegisterConstants":
+                    foreach (var row in rows)
+                        result[j++] = row.RegisterConstantsCount;
+                    break;
                 case "numMigrations":
                     foreach (var row in rows)
                         result[j++] = row.MigrationsCount;
@@ -935,7 +949,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "tzips":
                     foreach (var row in rows)
-                        result[j++] = GetTzips(row.Tzips);
+                        result[j++] = GetTzips(row.Tags);
                     break;
                 case "creator":
                     foreach (var row in rows)
@@ -1130,6 +1144,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(_delegat, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var registerConstants = delegat.RegisterConstantsCount > 0 && types.Contains(OpTypes.RegisterConstant)
+                        ? Operations.GetRegisterConstants(_delegat, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1154,6 +1172,7 @@ namespace Tzkt.Api.Repositories
                         originations,
                         transactions,
                         reveals,
+                        registerConstants,
                         migrations,
                         revelationPenalties,
                         blockOps);
@@ -1169,6 +1188,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
                     result.AddRange(reveals.Result);
+                    result.AddRange(registerConstants.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(blockOps.Result);
@@ -1197,6 +1217,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(_user, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var userRegisterConstants = user.RegisterConstantsCount > 0 && types.Contains(OpTypes.RegisterConstant)
+                        ? Operations.GetRegisterConstants(_user, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
+
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1207,6 +1231,7 @@ namespace Tzkt.Api.Repositories
                         userOriginations,
                         userTransactions,
                         userReveals,
+                        userRegisterConstants,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -1214,6 +1239,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userOriginations.Result);
                     result.AddRange(userTransactions.Result);
                     result.AddRange(userReveals.Result);
+                    result.AddRange(userRegisterConstants.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;

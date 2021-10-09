@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
 
@@ -75,7 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     _ => throw new NotImplementedException()
                 },
                 Errors = result.TryGetProperty("errors", out var errors)
-                    ? OperationErrors.Parse(errors)
+                    ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
@@ -154,7 +155,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    ProcessScript(origination, content, code, storage);
+                    await ProcessScript(origination, content, code, storage);
                 }
             }
             #endregion
@@ -222,7 +223,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     _ => throw new NotImplementedException()
                 },
                 Errors = result.TryGetProperty("errors", out var errors)
-                    ? OperationErrors.Parse(errors)
+                    ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
@@ -305,7 +306,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    ProcessScript(origination, content, code, storage);
+                    await ProcessScript(origination, content, code, storage);
                 }
             }
             #endregion
@@ -514,13 +515,30 @@ namespace Tzkt.Sync.Protocols.Proto1
                 : BlockEvents.None;
         }
 
-        protected void ProcessScript(OriginationOperation origination, JsonElement content, MichelineArray code, IMicheline storageValue)
+        protected async Task ProcessScript(OriginationOperation origination, JsonElement content, MichelineArray code, IMicheline storageValue)
         {
             var contract = origination.Contract;
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
             var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
             var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
             var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
+
+            #region process constants
+            var constants = await Constants.Find(Db, code);
+            if (constants.Count > 0)
+            {
+                contract.Tags |= ContractTags.Constants;
+                foreach (var constant in constants)
+                {
+                    Db.TryAttach(constant);
+                    constant.Refs++;
+                }
+                var dict = constants.ToDictionary(x => x.Address, x => Micheline.FromBytes(x.Value));
+                micheParameter = Constants.Expand(micheParameter, dict);
+                micheStorage = Constants.Expand(micheStorage, dict);
+            }
+            #endregion
+
             var script = new Script
             {
                 Id = Cache.AppState.NextScriptId(),
@@ -530,31 +548,33 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ParameterSchema = micheParameter.ToBytes(),
                 StorageSchema = micheStorage.ToBytes(),
                 CodeSchema = micheCode.ToBytes(),
-                Views = micheViews.Select(x => x.ToBytes()).ToArray(),
+                Views = micheViews.Any()
+                    ? micheViews.Select(x => x.ToBytes()).ToArray()
+                    : null,
                 Current = true
             };
 
-            var viewsBytes = script.Views
-                .OrderBy(x => x)
+            var viewsBytes = script.Views?
+                .OrderBy(x => x, new BytesComparer())
                 .SelectMany(x => x)
-                .ToArray();
+                .ToArray()
+                ?? Array.Empty<byte>();
             var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
             var fullSchema = typeSchema.Concat(script.CodeSchema);
             contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
             contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
 
-            contract.Tzips = Tzip.None;
             if (script.Schema.IsFA1())
             {
                 if (script.Schema.IsFA12())
-                    contract.Tzips |= Tzip.FA12;
+                    contract.Tags |= ContractTags.FA12;
 
-                contract.Tzips |= Tzip.FA1;
+                contract.Tags |= ContractTags.FA1;
                 contract.Kind = ContractKind.Asset;
             }
             if (script.Schema.IsFA2())
             {
-                contract.Tzips |= Tzip.FA2;
+                contract.Tags |= ContractTags.FA2;
                 contract.Kind = ContractKind.Asset;
             }
 
@@ -592,6 +612,34 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected async Task RevertScript(OriginationOperation origination)
         {
             var contract = origination.Contract;
+
+            #region process constants
+            if (contract.Tags.HasFlag(ContractTags.Constants))
+            {
+                var script = await Db.Scripts
+                    .AsNoTracking()
+                    .Where(x => x.ContractId == contract.Id && x.Current)
+                    .Select(x => new { x.ParameterSchema, x.StorageSchema, x.CodeSchema, x.Views })
+                    .FirstAsync();
+
+                var code = new MichelineArray
+                {
+                    Micheline.FromBytes(script.ParameterSchema),
+                    Micheline.FromBytes(script.StorageSchema),
+                    Micheline.FromBytes(script.CodeSchema)
+                };
+                if (script.Views != null)
+                    foreach (var bytes in script.Views)
+                        code.Add(Micheline.FromBytes(bytes));
+
+                var constants = await Constants.Find(Db, code);
+                foreach (var constant in constants)
+                {
+                    Db.TryAttach(constant);
+                    constant.Refs--;
+                }
+            }
+            #endregion
 
             Db.Scripts.Remove(new Script { Id = (int)origination.ScriptId });
             Cache.Schemas.Remove(contract);
