@@ -24,6 +24,7 @@ namespace Tzkt.Api.Services.Sync
         const string ProposalMetadataChanged = "proposal_metadata_changed";
         const string ProtocolMetadataChanged = "protocol_metadata_changed";
         const string SoftwareMetadataChanged = "software_metadata_changed";
+        const string ConstantMetadataChanged = "constant_metadata_changed";
         const string BlockMetadataChanged = "block_metadata_changed";
         #endregion
 
@@ -93,6 +94,7 @@ namespace Tzkt.Api.Services.Sync
                                 LISTEN {StateHashChanged};
                                 LISTEN {AccountMetadataChanged};
                                 LISTEN {SoftwareMetadataChanged};");
+                                //LISTEN {ConstantMetadataChanged};
                                 //LISTEN {StateMetadataChanged};
                                 //LISTEN {ProposalMetadataChanged};
                                 //LISTEN {ProtocolMetadataChanged};
@@ -265,6 +267,8 @@ namespace Tzkt.Api.Services.Sync
                     case SoftwareMetadataChanged:
                         Software.UpdateMetadata(key);
                         break;
+                    //case ConstantMetadataChanged:
+                    //    break;
                     //case BlockMetadataChanged:
                     //    break;
                     default:

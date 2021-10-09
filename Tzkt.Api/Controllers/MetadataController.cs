@@ -263,6 +263,56 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region constants
+        [HttpGet("constants/{address}")]
+        public async Task<ActionResult<RawJson>> GetConstantMetadata(
+            [FromHeader] AuthHeaders headers,
+            [ExpressionHash] string address,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetConstantMetadata(address, section));
+        }
+
+        [HttpGet("constants")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetConstantMetadata(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter metadata,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetConstantMetadata(metadata, offset, limit, section));
+        }
+
+        [HttpPost("constants")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateConstantMetadata(
+            [FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+                if (!Auth.TryAuthenticate(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
+                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^expr[0-9A-Za-z]{50}$")))
+                    return BadRequest("Invalid expression hash");
+
+                return Ok(await Metadata.UpdateConstantMetadata(metadata));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest("body", "Invalid json");
+            }
+        }
+        #endregion
+
         #region blocks
         [HttpGet("blocks/{level:int}")]
         public async Task<ActionResult<RawJson>> GetBlockMetadata(
