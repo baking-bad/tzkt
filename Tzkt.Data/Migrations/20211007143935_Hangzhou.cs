@@ -112,6 +112,12 @@ namespace Tzkt.Data.Migrations
                 name: "IX_RegisterConstantOps_SenderId",
                 table: "RegisterConstantOps",
                 column: "SenderId");
+
+            Triggers.AddNotificationTrigger(migrationBuilder,
+                "constant_metadata_changed",
+                "RegisterConstantOps",
+                "Metadata",
+                @"NEW.""Address"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -139,6 +145,8 @@ namespace Tzkt.Data.Migrations
                 name: "Tags",
                 table: "Accounts",
                 newName: "Tzips");
+
+            Triggers.RemoveNotificationTrigger(migrationBuilder, "constant_metadata_changed", "RegisterConstantOps");
         }
     }
 }

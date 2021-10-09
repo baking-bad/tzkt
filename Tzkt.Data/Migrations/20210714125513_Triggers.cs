@@ -5,7 +5,7 @@ namespace Tzkt.Data.Migrations
     public partial class Triggers : Migration
     {
         #region static
-        static void AddNotificationTrigger(MigrationBuilder builder, string name, string table, string column, string payload)
+        public static void AddNotificationTrigger(MigrationBuilder builder, string name, string table, string column, string payload)
         {
             builder.Sql($@"
                 CREATE OR REPLACE FUNCTION notify_{name}() RETURNS TRIGGER AS $$
@@ -23,7 +23,7 @@ namespace Tzkt.Data.Migrations
                     EXECUTE PROCEDURE notify_{name}();");
         }
 
-        static void RemoveNotificationTrigger(MigrationBuilder builder, string name, string table)
+        public static void RemoveNotificationTrigger(MigrationBuilder builder, string name, string table)
         {
             builder.Sql($@"DROP TRIGGER IF EXISTS {name} ON ""{table}"" CASCADE");
             builder.Sql($@"DROP FUNCTION IF EXISTS notify_{name} CASCADE");
@@ -69,12 +69,6 @@ namespace Tzkt.Data.Migrations
                 @"NEW.""ShortHash"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
 
             AddNotificationTrigger(migrationBuilder,
-                "constant_metadata_changed",
-                "RegisterConstantOps",
-                "Metadata",
-                @"NEW.""Address"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
-
-            AddNotificationTrigger(migrationBuilder,
                 "block_metadata_changed",
                 "Blocks",
                 "Metadata",
@@ -89,7 +83,6 @@ namespace Tzkt.Data.Migrations
             RemoveNotificationTrigger(migrationBuilder, "proposal_metadata_changed", "Proposals");
             RemoveNotificationTrigger(migrationBuilder, "protocol_metadata_changed", "Protocols");
             RemoveNotificationTrigger(migrationBuilder, "software_metadata_changed", "Software");
-            RemoveNotificationTrigger(migrationBuilder, "constant_metadata_changed", "RegisterConstantOps");
             RemoveNotificationTrigger(migrationBuilder, "block_metadata_changed", "Blocks");
         }
     }
