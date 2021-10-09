@@ -37,5 +37,9 @@ namespace Tzkt.Api
         /// Example: `?address.ni=expr1,expr2`.
         /// </summary>
         public List<string> Ni { get; set; }
+
+        #region operators
+        public static implicit operator ExpressionParameter(string value) => new() { Eq = value };
+        #endregion
     }
 }
