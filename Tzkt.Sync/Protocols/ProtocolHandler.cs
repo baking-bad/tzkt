@@ -285,6 +285,7 @@ namespace Tzkt.Sync
                         b.Proposals = null;
                         b.Protocol = null;
                         b.Reveals = null;
+                        b.RegisterConstants = null;
                         b.Revelation = null;
                         b.Revelations = null;
                         b.Transactions = null;

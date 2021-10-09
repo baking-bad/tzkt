@@ -52,6 +52,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                     statistics.TotalBurned += originations.Sum(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             }
 
+            if (block.RegisterConstants != null)
+            {
+                var registerConstants = block.RegisterConstants.Where(x => x.Status == OperationStatus.Applied);
+                if (registerConstants.Any())
+                    statistics.TotalBurned += registerConstants.Sum(x => x.StorageFee ?? 0);
+            }
+
             if (block.Transactions != null)
             {
                 var transactions = block.Transactions.Where(x => x.Status == OperationStatus.Applied);

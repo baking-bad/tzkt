@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api
@@ -30,6 +27,7 @@ namespace Tzkt.Api
                 "contract.balance_too_low" => JsonSerializer.Deserialize<BalanceTooLowError>(ref reader, options),
                 "contract.manager.unregistered_delegate" => JsonSerializer.Deserialize<UnregisteredDelegateError>(ref reader, options),
                 "contract.non_existing_contract" => JsonSerializer.Deserialize<NonExistingContractError>(ref reader, options),
+                "Expression_already_registered" => JsonSerializer.Deserialize<ExpressionAlreadyRegisteredError>(ref reader, options),
                 _ => JsonSerializer.Deserialize<BaseOperationError>(ref reader, options)
             };
         }

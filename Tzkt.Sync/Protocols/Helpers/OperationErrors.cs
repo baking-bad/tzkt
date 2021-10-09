@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Text.Json;
+using Netezos.Contracts;
+using Netezos.Encoding;
 
 namespace Tzkt.Sync.Protocols
 {
     static class OperationErrors
     {
-        public static string Parse(JsonElement errors)
+        public static string Parse(JsonElement content, JsonElement errors)
         {
             if (errors.ValueKind == JsonValueKind.Undefined)
                 return null;
@@ -36,6 +36,11 @@ namespace Tzkt.Sync.Protocols
                     {
                         type,
                         contract = error.GetProperty("contract").GetString()
+                    },
+                    "Expression_already_registered" => new
+                    {
+                        type,
+                        expression = ConstantSchema.GetGlobalAddress(Micheline.FromJson(content.Required("value")))
                     },
                     _ => new { type }
                 });

@@ -265,6 +265,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawUser user)
             {
                 if (user.Activated == true) SumActivations(union, from, to);
+                if (user.RegisterConstantsCount > 0) SumRegisterConstants(union, from, to);
             }
 
             if (account is RawDelegate delegat)
@@ -575,6 +576,22 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void SumRegisterConstants(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+            sql.Append(@"FROM ""RegisterConstantOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
         void SumRevelationPenalties(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -622,6 +639,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawUser user)
             {
                 if (user.Activated == true) UnionActivations(union);
+                if (user.RegisterConstantsCount > 0) UnionRegisterConstants(union);
             }
 
             if (account is RawDelegate delegat)
@@ -873,6 +891,19 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"(-""BakerFee"") as ""Change"" ");
 
             sql.Append(@"FROM ""RevealOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionRegisterConstants(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+
+            sql.Append(@"FROM ""RegisterConstantOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
 
             sql.AppendLine();

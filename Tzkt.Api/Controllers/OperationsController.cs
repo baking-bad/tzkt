@@ -1575,6 +1575,121 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region register constants
+        /// <summary>
+        /// Get register constants
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of register global constant operations.
+        /// </remarks>
+        /// <param name="sender">Filters operations by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="address">Filters operations by global address of the created constant (starts with `expr..`).</param>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <param name="status">Filters operations by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts operations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the constant value: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("register_constants")]
+        public async Task<ActionResult<IEnumerable<RegisterConstantOperation>>> GetRegisterConstants(
+            AccountParameter sender,
+            ExpressionParameter address,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<RegisterConstantOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, micheline, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
+                else
+                    return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get register constant by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns register global constant operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="micheline">Format of the constant value: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("register_constants/{hash}")]
+        public Task<IEnumerable<RegisterConstantOperation>> GetRegisterConstantByHash(
+            [Required][OpHash] string hash,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetRegisterConstants(hash, micheline, quote);
+        }
+
+        /// <summary>
+        /// Get register constants count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of register global constant operations.
+        /// </remarks>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("register_constants/count")]
+        public Task<int> GetRegisterConstantsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.RegisterConstantOpsCount);
+
+            return Operations.GetRegisterConstantsCount(level, timestamp);
+        }
+        #endregion
+
         #region migrations
         /// <summary>
         /// Get migrations

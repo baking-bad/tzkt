@@ -24,6 +24,8 @@ namespace Tzkt.Data.Models
 
         Migrations          = 0b_0000_1000_0000_0000,
         RevelationPenalty   = 0b_0001_0000_0000_0000,
-        Baking              = 0b_0010_0000_0000_0000
+        Baking              = 0b_0010_0000_0000_0000,
+
+        RegisterConstant    = 0b_0100_0000_0000_0000
     }
 }

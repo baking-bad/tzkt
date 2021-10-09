@@ -47,7 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     _ => throw new NotImplementedException()
                 },
                 Errors = result.TryGetProperty("errors", out var errors)
-                    ? OperationErrors.Parse(errors)
+                    ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = result.OptionalInt32("consumed_gas") ?? 0
             };
@@ -168,7 +168,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     _ => throw new NotImplementedException()
                 },
                 Errors = result.TryGetProperty("errors", out var errors)
-                    ? OperationErrors.Parse(errors)
+                    ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = result.OptionalInt32("consumed_gas") ?? 0
             };
@@ -431,6 +431,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 OriginationsCount = user.OriginationsCount,
                 TransactionsCount = user.TransactionsCount,
                 RevealsCount = user.RevealsCount,
+                RegisterConstantsCount = user.RegisterConstantsCount,
                 ContractsCount = user.ContractsCount,
                 MigrationsCount = user.MigrationsCount,
                 PublicKey = user.PublicKey,
@@ -553,6 +554,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 OriginationsCount = delegat.OriginationsCount,
                 TransactionsCount = delegat.TransactionsCount,
                 RevealsCount = delegat.RevealsCount,
+                RegisterConstantsCount = delegat.RegisterConstantsCount,
                 ContractsCount = delegat.ContractsCount,
                 MigrationsCount = delegat.MigrationsCount,
                 PublicKey = delegat.PublicKey,

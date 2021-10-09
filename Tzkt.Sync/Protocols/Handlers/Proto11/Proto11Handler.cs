@@ -133,6 +133,9 @@ namespace Tzkt.Sync.Protocols
                         case "reveal":
                             await new RevealsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "register_global_constant":
+                            await new RegisterConstantsCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         case "delegation":
                             await new DelegationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
@@ -240,6 +243,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Reveals))
                 operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
+                operations.AddRange(await Db.RegisterConstantOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Revelations))
                 operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -308,6 +314,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case RevealOperation reveal:
                         await new RevealsCommit(this).Revert(currBlock, reveal);
+                        break;
+                    case RegisterConstantOperation registerConstant:
+                        await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
                         break;
                     case DelegationOperation delegation:
                         if (delegation.InitiatorId == null)

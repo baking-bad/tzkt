@@ -66,7 +66,8 @@ namespace Tzkt.Api.Repositories
                     code = new();
                     code.Add(Micheline.FromBytes(row.ParameterSchema));
                     code.Add(Micheline.FromBytes(row.StorageSchema));
-                    code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                    if (row.Views != null)
+                        code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
                     code.Add(Micheline.FromBytes(row.CodeSchema));
                 }
 
@@ -153,7 +154,8 @@ namespace Tzkt.Api.Repositories
                     code = new();
                     code.Add(Micheline.FromBytes(row.ParameterSchema));
                     code.Add(Micheline.FromBytes(row.StorageSchema));
-                    code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                    if (row.Views != null)
+                        code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
                     code.Add(Micheline.FromBytes(row.CodeSchema));
                 }
 
@@ -240,7 +242,8 @@ namespace Tzkt.Api.Repositories
                     code = new();
                     code.Add(Micheline.FromBytes(row.ParameterSchema));
                     code.Add(Micheline.FromBytes(row.StorageSchema));
-                    code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                    if (row.Views != null)
+                        code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
                     code.Add(Micheline.FromBytes(row.CodeSchema));
                 }
 
@@ -657,7 +660,8 @@ namespace Tzkt.Api.Repositories
                                 code = new();
                                 code.Add(Micheline.FromBytes(row.ParameterSchema));
                                 code.Add(Micheline.FromBytes(row.StorageSchema));
-                                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                                if (row.Views != null)
+                                    code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
                                 code.Add(Micheline.FromBytes(row.CodeSchema));
                             }
                             result[j++][i] = (int)format % 2 == 0 ? code : code.ToJson();
@@ -911,7 +915,8 @@ namespace Tzkt.Api.Repositories
                             code = new();
                             code.Add(Micheline.FromBytes(row.ParameterSchema));
                             code.Add(Micheline.FromBytes(row.StorageSchema));
-                            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                            if (row.Views != null)
+                                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
                             code.Add(Micheline.FromBytes(row.CodeSchema));
                         }
                         result[j++] = (int)format % 2 == 0 ? code : code.ToJson();

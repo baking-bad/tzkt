@@ -42,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     _ => throw new NotImplementedException()
                 },
                 Errors = result.TryGetProperty("errors", out var errors)
-                    ? OperationErrors.Parse(errors)
+                    ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = result.OptionalInt32("consumed_gas") ?? 0
         };

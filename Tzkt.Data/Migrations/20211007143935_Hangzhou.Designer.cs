@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
@@ -9,14 +10,15 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    partial class TzktContextModelSnapshot : ModelSnapshot
+    [Migration("20211007143935_Hangzhou")]
+    partial class Hangzhou
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.8")
+                .HasAnnotation("ProductVersion", "5.0.10")
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             modelBuilder.Entity("Tzkt.Data.Models.Account", b =>
@@ -257,9 +259,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<double>("QuoteEur")
                         .HasColumnType("double precision");
 
-                    b.Property<double>("QuoteGbp")
-                        .HasColumnType("double precision");
-
                     b.Property<double>("QuoteJpy")
                         .HasColumnType("double precision");
 
@@ -341,7 +340,6 @@ namespace Tzkt.Data.Migrations
                             QuoteCny = 0.0,
                             QuoteEth = 0.0,
                             QuoteEur = 0.0,
-                            QuoteGbp = 0.0,
                             QuoteJpy = 0.0,
                             QuoteKrw = 0.0,
                             QuoteLevel = -1,
@@ -1672,9 +1670,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<double>("Eur")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("Gbp")
                         .HasColumnType("double precision");
 
                     b.Property<double>("Jpy")
