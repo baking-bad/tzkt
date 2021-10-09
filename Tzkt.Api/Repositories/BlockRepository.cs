@@ -488,6 +488,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetReveals(block, quote)
                 : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+            var registerConstants = operations.HasFlag(Data.Models.Operations.RegisterConstant)
+                ? Operations.GetRegisterConstants(block, format, quote)
+                : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -508,6 +512,7 @@ namespace Tzkt.Api.Repositories
                 originations,
                 transactions,
                 reveals,
+                registerConstants,
                 migrations,
                 penalties);
 
@@ -522,6 +527,7 @@ namespace Tzkt.Api.Repositories
             block.Originations = originations.Result;
             block.Transactions = transactions.Result;
             block.Reveals = reveals.Result;
+            block.RegisterConstants = registerConstants.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
         }

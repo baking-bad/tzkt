@@ -7,6 +7,7 @@ namespace Tzkt.Data.Models
         public bool? Activated { get; set; }
         public string PublicKey { get; set; }
         public bool Revealed { get; set; }
+        public int RegisterConstantsCount { get; set; }
     }
 
     public static class UserModel

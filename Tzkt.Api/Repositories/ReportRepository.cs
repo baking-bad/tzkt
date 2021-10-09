@@ -40,6 +40,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawUser user)
             {
                 if (user.Activated == true) UnionActivations(sql);
+                if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -149,6 +150,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawUser user)
             {
                 if (user.Activated == true) UnionActivations(sql);
+                if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -291,6 +293,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawUser user)
             {
                 if (user.Activated == true) UnionActivations(sql);
+                if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -906,6 +909,33 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void UnionRegisterConstant(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"18 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""RegisterConstantOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
         void UnionRevelationPenalties(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -982,6 +1012,7 @@ namespace Tzkt.Api.Repositories
             "code change",          // 15
             "implicit origination", // 16
             "subsidy",              // 17
+            "register constant",    // 18
         };
     }
 }

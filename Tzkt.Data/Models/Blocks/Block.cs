@@ -62,6 +62,7 @@ namespace Tzkt.Data.Models
         public List<OriginationOperation> Originations { get; set; }
         public List<TransactionOperation> Transactions { get; set; }
         public List<RevealOperation> Reveals { get; set; }
+        public List<RegisterConstantOperation> RegisterConstants { get; set; }
 
         public List<MigrationOperation> Migrations { get; set; }
         public List<RevelationPenaltyOperation> RevelationPenalties { get; set; }

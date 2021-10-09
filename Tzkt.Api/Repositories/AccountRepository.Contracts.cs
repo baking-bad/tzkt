@@ -35,7 +35,7 @@ namespace Tzkt.Api.Repositories
                 Alias = contract.Alias,
                 Address = contract.Address,
                 Kind = ContractKinds.ToString(contract.Kind),
-                Tzips = GetTzips(contract.Tzips),
+                Tzips = GetTzips(contract.Tags),
                 Balance = contract.Balance,
                 Creator = creator == null ? null : new CreatorInfo
                 {
@@ -142,7 +142,7 @@ namespace Tzkt.Api.Repositories
                     Alias = row.Alias,
                     Address = row.Address,
                     Kind = ContractKinds.ToString(row.Kind),
-                    Tzips = GetTzips(row.Tzips),
+                    Tzips = GetTzips(row.Tags),
                     Balance = row.Balance,
                     Creator = creator == null ? null : new CreatorInfo
                     {
@@ -205,7 +205,7 @@ namespace Tzkt.Api.Repositories
                     case "alias": columns.Add(AliasQuery); break;
                     case "type": columns.Add(@"acc.""Type"""); break;
                     case "kind": columns.Add(@"acc.""Kind"""); break;
-                    case "tzips": columns.Add(@"acc.""Tzips"""); break;
+                    case "tzips": columns.Add(@"acc.""Tags"""); break;
                     case "address": columns.Add(@"acc.""Address"""); break;
                     case "balance": columns.Add(@"acc.""Balance"""); break;
                     case "creator": columns.Add(@"acc.""CreatorId"""); break;
@@ -281,7 +281,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "tzips":
                         foreach (var row in rows)
-                            result[j++][i] = GetTzips(row.Tzips);
+                            result[j++][i] = GetTzips(row.Tags);
                         break;
                     case "address":
                         foreach (var row in rows)
@@ -425,7 +425,7 @@ namespace Tzkt.Api.Repositories
                 case "alias": columns.Add(AliasQuery); break;
                 case "type": columns.Add(@"acc.""Type"""); break;
                 case "kind": columns.Add(@"acc.""Kind"""); break;
-                case "tzips": columns.Add(@"acc.""Tzips"""); break;
+                case "tzips": columns.Add(@"acc.""Tags"""); break;
                 case "address": columns.Add(@"acc.""Address"""); break;
                 case "balance": columns.Add(@"acc.""Balance"""); break;
                 case "creator": columns.Add(@"acc.""CreatorId"""); break;
@@ -497,7 +497,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "tzips":
                     foreach (var row in rows)
-                        result[j++] = GetTzips(row.Tzips);
+                        result[j++] = GetTzips(row.Tags);
                     break;
                 case "address":
                     foreach (var row in rows)
@@ -632,7 +632,8 @@ namespace Tzkt.Api.Repositories
             var code = new MichelineArray();
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
-            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            if (row.Views != null)
+                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToBytes();
@@ -653,7 +654,8 @@ namespace Tzkt.Api.Repositories
             var code = new MichelineArray();
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
-            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            if (row.Views != null)
+                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code;
@@ -674,7 +676,8 @@ namespace Tzkt.Api.Repositories
             var code = new MichelineArray();
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
-            code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            if (row.Views != null)
+                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToMichelson();
@@ -1226,16 +1229,16 @@ namespace Tzkt.Api.Repositories
                 : null;
         }
 
-        IEnumerable<string> GetTzips(int? value)
+        IEnumerable<string> GetTzips(int tags)
         {
-            if (value == null || value == 0) return null;
+            if (tags == 0) return null;
             var res = new List<string>(1);
 
-            if (((int)value & (int)Data.Models.Tzip.FA2) == (int)Data.Models.Tzip.FA2)
+            if ((tags & (int)Data.Models.ContractTags.FA2) == (int)Data.Models.ContractTags.FA2)
                 res.Add("fa2");
-            else if (((int)value & (int)Data.Models.Tzip.FA12) == (int)Data.Models.Tzip.FA12)
+            else if ((tags & (int)Data.Models.ContractTags.FA12) == (int)Data.Models.ContractTags.FA12)
                 res.Add("fa12");
-            else if (((int)value & (int)Data.Models.Tzip.FA1) == (int)Data.Models.Tzip.FA1)
+            else if ((tags & (int)Data.Models.ContractTags.FA1) == (int)Data.Models.ContractTags.FA1)
                 res.Add("fa1");
 
             return res;

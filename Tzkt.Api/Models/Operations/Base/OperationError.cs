@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Threading.Tasks;
 using NJsonSchema.Converters;
 using Newtonsoft.Json;
 
@@ -13,6 +10,7 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(BalanceTooLowError))]
     [KnownType(typeof(NonExistingContractError))]
     [KnownType(typeof(UnregisteredDelegateError))]
+    [KnownType(typeof(ExpressionAlreadyRegisteredError))]
     public abstract class OperationError
     {
         /// <summary>
@@ -40,6 +38,9 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(UnregisteredDelegateError))
                 return "contract.manager.unregistered_delegate";
+
+            if (type == typeof(ExpressionAlreadyRegisteredError))
+                return "Expression_already_registered";
 
             return base.GetDiscriminatorValue(type);
         }

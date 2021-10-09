@@ -85,6 +85,11 @@ namespace Tzkt.Api.Models
         public int NumReveals { get; set; }
 
         /// <summary>
+        /// Number of register global constant operations of the delegate (baker)
+        /// </summary>
+        public int NumRegisterConstants { get; set; }
+
+        /// <summary>
         /// Number of migration (result of the context (database) migration during a protocol update) operations,
         /// related to the account (synthetic type) 
         /// </summary>

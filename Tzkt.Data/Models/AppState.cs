@@ -51,6 +51,7 @@ namespace Tzkt.Data.Models
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }
+        public int RegisterConstantOpsCount { get; set; }
 
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
@@ -58,6 +59,7 @@ namespace Tzkt.Data.Models
         public int ProposalsCount { get; set; }
 
         public int CyclesCount { get; set; }
+        public int ConstantsCount { get; set; }
         #endregion
 
         #region quotes

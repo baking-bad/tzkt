@@ -51,6 +51,7 @@ namespace Tzkt.Api.Repositories
                 NumOriginations = delegat.OriginationsCount,
                 NumProposals = delegat.ProposalsCount,
                 NumReveals = delegat.RevealsCount,
+                NumRegisterConstants = delegat.RegisterConstantsCount,
                 NumMigrations = delegat.MigrationsCount,
                 NumTransactions = delegat.TransactionsCount,
                 Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
@@ -128,6 +129,7 @@ namespace Tzkt.Api.Repositories
                     NumOriginations = row.OriginationsCount,
                     NumProposals = row.ProposalsCount,
                     NumReveals = row.RevealsCount,
+                    NumRegisterConstants = row.RegisterConstantsCount,
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
                     Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
@@ -182,6 +184,7 @@ namespace Tzkt.Api.Repositories
                     case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                     case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                     case "numReveals": columns.Add(@"""RevealsCount"""); break;
+                    case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
@@ -352,6 +355,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.RevealsCount;
                         break;
+                    case "numRegisterConstants":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RegisterConstantsCount;
+                        break;
                     case "numMigrations":
                         foreach (var row in rows)
                             result[j++][i] = row.MigrationsCount;
@@ -415,6 +422,7 @@ namespace Tzkt.Api.Repositories
                 case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                 case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                 case "numReveals": columns.Add(@"""RevealsCount"""); break;
+                case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
@@ -580,6 +588,10 @@ namespace Tzkt.Api.Repositories
                 case "numReveals":
                     foreach (var row in rows)
                         result[j++] = row.RevealsCount;
+                    break;
+                case "numRegisterConstants":
+                    foreach (var row in rows)
+                        result[j++] = row.RegisterConstantsCount;
                     break;
                 case "numMigrations":
                     foreach (var row in rows)

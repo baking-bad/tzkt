@@ -477,31 +477,33 @@ namespace Tzkt.Sync.Protocols.Proto10
                 ParameterSchema = micheParameter.ToBytes(),
                 StorageSchema = micheStorage.ToBytes(),
                 CodeSchema = micheCode.ToBytes(),
-                Views = micheViews.Select(x => x.ToBytes()).ToArray(),
+                Views = micheViews.Any()
+                    ? micheViews.Select(x => x.ToBytes()).ToArray()
+                    : null,
                 Current = true
             };
 
-            var viewsBytes = script.Views
-                .OrderBy(x => x)
+            var viewsBytes = script.Views?
+                .OrderBy(x => x, new BytesComparer())
                 .SelectMany(x => x)
-                .ToArray();
+                .ToArray()
+                ?? Array.Empty<byte>();
             var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
             var fullSchema = typeSchema.Concat(script.CodeSchema);
             contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
             contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
 
-            contract.Tzips = Tzip.None;
             if (script.Schema.IsFA1())
             {
                 if (script.Schema.IsFA12())
-                    contract.Tzips |= Tzip.FA12;
+                    contract.Tags |= ContractTags.FA12;
 
-                contract.Tzips |= Tzip.FA1;
+                contract.Tags |= ContractTags.FA1;
                 contract.Kind = ContractKind.Asset;
             }
             if (script.Schema.IsFA2())
             {
-                contract.Tzips |= Tzip.FA2;
+                contract.Tags |= ContractTags.FA2;
                 contract.Kind = ContractKind.Asset;
             }
 

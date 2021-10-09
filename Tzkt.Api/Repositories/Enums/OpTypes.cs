@@ -19,6 +19,7 @@ namespace Tzkt.Api
         public const string Origination = "origination";
         public const string Transaction = "transaction";
         public const string Reveal = "reveal";
+        public const string RegisterConstant = "register_constant";
 
         public const string Migration = "migration";
         public const string RevelationPenalty = "revelation_penalty";
@@ -40,6 +41,7 @@ namespace Tzkt.Api
                 case Origination: res = Operations.Originations; break;
                 case Transaction: res = Operations.Transactions; break;
                 case Reveal: res = Operations.Reveals; break;
+                case RegisterConstant: res = Operations.RegisterConstant; break;
                 case Migration: res = Operations.Migrations; break;
                 case RevelationPenalty: res = Operations.RevelationPenalty; break;
                 case Baking: res = Operations.Baking; break;
@@ -60,6 +62,7 @@ namespace Tzkt.Api
             Origination,
             Transaction,
             Reveal,
+            RegisterConstant,
             Migration,
             RevelationPenalty
         };

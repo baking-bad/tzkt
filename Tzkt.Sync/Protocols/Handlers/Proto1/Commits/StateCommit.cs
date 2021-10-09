@@ -61,6 +61,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Reveals != null)
                 state.RevealOpsCount += block.Reveals.Count;
 
+            if (block.RegisterConstants != null)
+                state.RegisterConstantOpsCount += block.RegisterConstants.Count;
+
             if (block.Transactions != null)
                 state.TransactionOpsCount += block.Transactions.Count;
 
@@ -126,6 +129,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (block.Reveals != null)
                 state.RevealOpsCount -= block.Reveals.Count;
+
+            if (block.RegisterConstants != null)
+                state.RegisterConstantOpsCount -= block.RegisterConstants.Count;
 
             if (block.Transactions != null)
                 state.TransactionOpsCount -= block.Transactions.Count;
