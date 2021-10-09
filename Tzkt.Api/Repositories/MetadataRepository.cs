@@ -28,6 +28,9 @@ namespace Tzkt.Api.Repositories
         public Task<RawJson> GetSoftwareMetadata(string shortHash, string section = null)
             => Get("Software", "ShortHash", "character(8)", shortHash, section);
 
+        public Task<RawJson> GetConstantMetadata(string address, string section = null)
+            => Get("RegisterConstantOps", "Address", "character(54)", address, section);
+
         public Task<RawJson> GetBlockMetadata(int level, string section = null)
             => Get("Blocks", "Level", "integer", level, section);
 
@@ -61,6 +64,9 @@ namespace Tzkt.Api.Repositories
 
         public Task<IEnumerable<MetadataUpdate<string>>> GetSoftwareMetadata(JsonParameter metadata, int offset, int limit, string section = null)
             => Get<string>("Software", "ShortHash", metadata, offset, limit, section);
+
+        public Task<IEnumerable<MetadataUpdate<string>>> GetConstantMetadata(JsonParameter metadata, int offset, int limit, string section = null)
+            => Get<string>("RegisterConstantOps", "Address", metadata, offset, limit, section);
 
         public Task<IEnumerable<MetadataUpdate<int>>> GetBlockMetadata(JsonParameter metadata, int offset, int limit, string section = null)
             => Get<int>("Blocks", "Level", metadata, offset, limit, section);
@@ -155,6 +161,9 @@ namespace Tzkt.Api.Repositories
 
         public Task<List<MetadataUpdate<string>>> UpdateSoftwareMetadata(List<MetadataUpdate<string>> metadata)
             => Update("Software", "ShortHash", "character(8)", metadata);
+
+        public Task<List<MetadataUpdate<string>>> UpdateConstantMetadata(List<MetadataUpdate<string>> metadata)
+            => Update("RegisterConstantOps", "Address", "character(54)", metadata);
 
         public Task<List<MetadataUpdate<int>>> UpdateBlockMetadata(List<MetadataUpdate<int>> metadata)
             => Update("Blocks", "Level", "integer", metadata);

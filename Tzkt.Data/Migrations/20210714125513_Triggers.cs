@@ -69,6 +69,12 @@ namespace Tzkt.Data.Migrations
                 @"NEW.""ShortHash"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
 
             AddNotificationTrigger(migrationBuilder,
+                "constant_metadata_changed",
+                "RegisterConstantOps",
+                "Metadata",
+                @"NEW.""Address"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
+
+            AddNotificationTrigger(migrationBuilder,
                 "block_metadata_changed",
                 "Blocks",
                 "Metadata",
@@ -83,6 +89,7 @@ namespace Tzkt.Data.Migrations
             RemoveNotificationTrigger(migrationBuilder, "proposal_metadata_changed", "Proposals");
             RemoveNotificationTrigger(migrationBuilder, "protocol_metadata_changed", "Protocols");
             RemoveNotificationTrigger(migrationBuilder, "software_metadata_changed", "Software");
+            RemoveNotificationTrigger(migrationBuilder, "constant_metadata_changed", "RegisterConstantOps");
             RemoveNotificationTrigger(migrationBuilder, "block_metadata_changed", "Blocks");
         }
     }
