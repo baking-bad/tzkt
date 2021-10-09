@@ -347,6 +347,41 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get contract views
+        /// </summary>
+        /// <remarks>
+        /// Returns all views of the specified contract.
+        /// </remarks>
+        /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="json">Include parameter and return types in human-readable JSON format</param>
+        /// <param name="micheline">Include parameter and return types in micheline format</param>
+        /// <param name="michelson">Include parameter and return types in michelson format</param>
+        /// <returns></returns>
+        [HttpGet("{address}/views")]
+        public Task<IEnumerable<ContractView>> GetContractViews([Required][KTAddress] string address, bool json = true, bool micheline = false, bool michelson = false)
+        {
+            return Accounts.GetViews(address, json, micheline, michelson);
+        }
+
+        /// <summary>
+        /// Get view by name
+        /// </summary>
+        /// <remarks>
+        /// Returns contract view with specified name.
+        /// </remarks>
+        /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="name">View name</param>
+        /// <param name="json">Include parameter and return types in human-readable JSON format</param>
+        /// <param name="micheline">Include parameter and return types in micheline format</param>
+        /// <param name="michelson">Include parameter and return types in michelson format</param>
+        /// <returns></returns>
+        [HttpGet("{address}/views/{name}")]
+        public Task<ContractView> GetContractViewByName([Required][KTAddress] string address, [Required] string name, bool json = true, bool micheline = false, bool michelson = false)
+        {
+            return Accounts.GetView(address, name, json, micheline, michelson);
+        }
+
+        /// <summary>
         /// Build entrypoint parameters
         /// </summary>
         /// <remarks>
