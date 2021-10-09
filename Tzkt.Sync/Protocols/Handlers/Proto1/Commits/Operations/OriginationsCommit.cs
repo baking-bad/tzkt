@@ -536,6 +536,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var dict = constants.ToDictionary(x => x.Address, x => Micheline.FromBytes(x.Value));
                 micheParameter = Constants.Expand(micheParameter, dict);
                 micheStorage = Constants.Expand(micheStorage, dict);
+                foreach (MichelinePrim view in micheViews)
+                {
+                    view.Args[1] = Constants.Expand(view.Args[1], dict);
+                    view.Args[2] = Constants.Expand(view.Args[2], dict);
+                }
             }
             #endregion
 
