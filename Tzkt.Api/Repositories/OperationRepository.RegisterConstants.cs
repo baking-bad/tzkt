@@ -49,7 +49,7 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee,
+                StorageFee = row.StorageFee ?? 0,
                 Status = OpStatuses.ToString(row.Status),
                 Address = row.Address,
                 Value = row.Value == null ? null : ((int)format % 2 == 0 ? Micheline.FromBytes(row.Value) : Micheline.ToJson(row.Value)),
@@ -85,7 +85,7 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee,
+                StorageFee = row.StorageFee ?? 0,
                 Status = OpStatuses.ToString(row.Status),
                 Address = row.Address,
                 Value = row.Value == null ? null : ((int)format % 2 == 0 ? Micheline.FromBytes(row.Value) : Micheline.ToJson(row.Value)),
@@ -119,7 +119,7 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
-                StorageFee = row.StorageFee,
+                StorageFee = row.StorageFee ?? 0,
                 Status = OpStatuses.ToString(row.Status),
                 Address = row.Address,
                 Value = row.Value == null ? null : ((int)format % 2 == 0 ? Micheline.FromBytes(row.Value) : Micheline.ToJson(row.Value)),
@@ -310,7 +310,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "storageFee":
                         foreach (var row in rows)
-                            result[j++][i] = row.StorageFee;
+                            result[j++][i] = row.StorageFee ?? 0;
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -457,7 +457,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "storageFee":
                     foreach (var row in rows)
-                        result[j++] = row.StorageFee;
+                        result[j++] = row.StorageFee ?? 0;
                     break;
                 case "status":
                     foreach (var row in rows)
