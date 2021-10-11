@@ -40,6 +40,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `creationLevel`, `size`, `refs`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="format">Constant value format (`0` - micheline, `1` - michelson, `2` - bytes (base64))</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Constant>>> Get(
@@ -52,7 +53,8 @@ namespace Tzkt.Api.Controllers
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100)
+            [Range(0, 10000)] int limit = 100,
+            [Range(0, 2)] int format = 0)
         {
             #region validate
             if (sort != null && !sort.Validate("creationLevel", "size", "refs"))
@@ -60,25 +62,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit));
+                return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, format));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Values[0]));
+                    return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Values[0], format));
                 else
-                    return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Values));
+                    return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Values, format));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Fields[0], format));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Fields)
+                        Rows = await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Fields, format)
                     });
                 }
             }
@@ -91,12 +93,13 @@ namespace Tzkt.Api.Controllers
         /// Returns global constant with specified address (expression hash).
         /// </remarks>
         /// <param name="address">Global address (starts with `expr..`)</param>
+        /// <param name="format">Constant value format (`0` - micheline, `1` - michelson, `2` - bytes (base64))</param>
         /// <returns></returns>
         [HttpGet("{address}")]
         public async Task<Constant> GetByAddress(
-            [Required][ExpressionHash] string address)
+            [Required][ExpressionHash] string address, [Range(0, 2)] int format = 0)
         {
-            var res = await Constants.Get(address, null, null, null, null, null, null, null, 1);
+            var res = await Constants.Get(address, null, null, null, null, null, null, null, 1, format);
             return res.FirstOrDefault();
         }
 
