@@ -37,7 +37,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter size,
             SortParameter sort,
             OffsetParameter offset,
-            int limit)
+            int limit,
+            int format)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""RegisterConstantOps""")
                 .Filter(@"""Address"" IS NOT NULL")
@@ -66,7 +67,7 @@ namespace Tzkt.Api.Repositories
                 Creator = Accounts.GetAlias(row.SenderId),
                 Refs = row.Refs,
                 Size = row.StorageUsed,
-                Value = Micheline.FromBytes(row.Value),
+                Value = FormatConstantValue(row.Value, format),
                 Metadata = row.Metadata
             });
         }
@@ -81,7 +82,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string[] fields)
+            string[] fields,
+            int format)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -155,7 +157,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "value":
                         foreach (var row in rows)
-                            result[j++][i] = Micheline.FromBytes(row.Value);
+                            result[j++][i] = FormatConstantValue(row.Value, format);
                         break;
                     case "metadata":
                         foreach (var row in rows)
@@ -177,7 +179,8 @@ namespace Tzkt.Api.Repositories
             SortParameter sort,
             OffsetParameter offset,
             int limit,
-            string field)
+            string field,
+            int format)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -245,7 +248,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "value":
                     foreach (var row in rows)
-                        result[j++] = Micheline.FromBytes(row.Value);
+                        result[j++] = FormatConstantValue(row.Value, format);
                     break;
                 case "metadata":
                     foreach (var row in rows)
@@ -255,5 +258,13 @@ namespace Tzkt.Api.Repositories
 
             return result;
         }
+
+        static object FormatConstantValue(byte[] value, int format) => format switch
+        {
+            0 => Micheline.FromBytes(value),
+            1 => Micheline.FromBytes(value).ToMichelson(),
+            2 => value,
+            _ => null
+        };
     }
 }

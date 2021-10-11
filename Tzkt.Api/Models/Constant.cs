@@ -11,9 +11,9 @@ namespace Tzkt.Api.Models
         public string Address { get; set; }
 
         /// <summary>
-        /// Constant micheline expression
+        /// Constant value (either micheline, michelson or bytes, depending on the `format` parameter)
         /// </summary>
-        public IMicheline Value { get; set; }
+        public object Value { get; set; }
 
         /// <summary>
         /// Constant size in bytes
