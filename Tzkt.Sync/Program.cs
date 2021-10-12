@@ -98,6 +98,7 @@ namespace Tzkt.Sync
                 if (appliedMigrations.Count < migrations.Count)
                 {
                     logger.LogWarning($"{migrations.Count - appliedMigrations.Count} migrations can be applied. Migrating database...");
+                    db.Database.SetCommandTimeout(0);
                     db.Database.Migrate();
                 }
 
