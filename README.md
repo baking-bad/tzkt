@@ -289,6 +289,22 @@ In general the steps are the same as for the mainnet, you just need to use diffe
    - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_granadanet.backup
    - RPC node: https://rpc.tzkt.io/granadanet/
 
+### Testnet installation using docker containers
+
+First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Florencenet use the `florance-` prefix):
+
+````sh
+git clone https://github.com/baking-bad/tzkt.git
+cd tzkt/
+
+make granada-init #run this command if you want to restore the DB from the latest snapshot
+make granada-start
+# for florencenet used port 5020
+curl http://127.0.0.1:5010/v1/head 
+
+make granada-stop
+````
+
 ## Have a question?
 
 Feel free to contact us via:
