@@ -113,7 +113,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
-                return null;
+                return Enumerable.Empty<BakerRewards>();
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BakerCycles""")
                 .Filter("BakerId", baker.Id)
@@ -188,7 +188,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
-                return null;
+                return Array.Empty<object[]>();
 
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -483,7 +483,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
-                return null;
+                return Array.Empty<object>();
 
             var columns = new HashSet<string>(1);
             switch (field)
@@ -852,7 +852,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
-            if (acc == null) return null;
+            if (acc == null) return Enumerable.Empty<DelegatorRewards>();
 
             var sql = new SqlBuilder(@"
                 SELECT      bc.*, dc.""Balance""
@@ -929,7 +929,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
-            if (acc == null) return null;
+            if (acc == null) return Array.Empty<object[]>();
 
             var columns = new HashSet<string>(fields.Length);
             var join = false;
@@ -1210,7 +1210,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
-            if (acc == null) return null;
+            if (acc == null) return Array.Empty<object>();
 
             var columns = new HashSet<string>(1);
             var join = false;

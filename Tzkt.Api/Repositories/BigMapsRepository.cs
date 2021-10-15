@@ -898,7 +898,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1",
                 new { ptr, key });
 
-            if (keyRow == null) return null;
+            if (keyRow == null) return Enumerable.Empty<BigMapKeyUpdate>();
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BigMapUpdates""")
                 .Filter("BigMapKeyId", (int)keyRow.Id)
@@ -925,7 +925,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1",
                 new { ptr, hash });
 
-            if (keyRow == null) return null;
+            if (keyRow == null) return Enumerable.Empty<BigMapKeyUpdate>();
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BigMapUpdates""")
                 .Filter("BigMapKeyId", (int)keyRow.Id)
