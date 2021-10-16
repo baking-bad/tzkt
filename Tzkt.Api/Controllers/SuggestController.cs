@@ -28,9 +28,9 @@ namespace Tzkt.Api.Controllers
 
         [OpenApiIgnore]
         [HttpGet("accounts/{search}")]
-        public IEnumerable<Alias> GetAccounts([Required] string search)
+        public IEnumerable<Alias> GetAccounts([Required] string search, [Range(0, 100)] int limit = 20)
         {
-            return Aliases.Search(search);
+            return Aliases.Search(search, limit);
         }
 
         [OpenApiIgnore]

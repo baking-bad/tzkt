@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Dapper;
@@ -18,6 +17,7 @@ namespace Tzkt.Api.Services.Cache
         #endregion
 
         public List<Alias> Aliases { get; }
+        public Dictionary<string, List<Alias>> Dictionary = new();
 
         public AliasesCache(IConfiguration config, ILogger<AliasesCache> logger) : base(config)
         {
@@ -25,7 +25,11 @@ namespace Tzkt.Api.Services.Cache
             Aliases = db.Query<Alias>(
                 $@"{SelectQuery} WHERE ""Metadata""@>'{{}}' AND ""Metadata""#>>'{{alias}}' IS NOT NULL")
                 .ToList();
+
             logger.LogInformation("Loaded {1} aliases", Aliases.Count);
+
+            foreach (var alias in Aliases)
+                AddTrigrams(alias);
         }
 
         public void UpdateMetadata(string address, string json)
@@ -44,33 +48,82 @@ namespace Tzkt.Api.Services.Cache
                 {
                     var alias = Aliases.FirstOrDefault(x => x.Address == address);
                     if (alias == null)
-                        Aliases.Add(new Alias { Address = address, Name = name });
+                    {
+                        var newAlias = new Alias { Address = address, Name = name };
+                        Aliases.Add(newAlias);
+                        AddTrigrams(newAlias);
+                    }
                     else
+                    {
+                        RemoveTrigrams(alias);
                         alias.Name = name;
+                        AddTrigrams(alias);
+                    }
                 }
                 else
                 {
+                    foreach (var alias in Aliases.Where(x => x.Address == address))
+                        RemoveTrigrams(alias);
+
                     Aliases.RemoveAll(x => x.Address == address);
                 }
             }
         }
 
-        public IEnumerable<Alias> Search(string str)
+        public IEnumerable<Alias> Search(string search, int limit)
         {
-            var search = str.ToLower();
+            search = search.Trim().ToLower();
+
+            if (search.Length < 3)
+                return SimpleSearch(search, limit);
+
+            var candidates = new Dictionary<Alias, int>();
+
+            lock (this)
+            {
+                foreach (var trigram in GetTrigrams(search))
+                {
+                    if (Dictionary.TryGetValue(trigram, out var aliases))
+                    {
+                        foreach (var alias in aliases)
+                        {
+                            if (!candidates.TryAdd(alias, 1))
+                                candidates[alias] += 1;
+                        }
+                    }
+                }
+
+                if (Dictionary.TryGetValue($" {search[..2]}", out var aliases2))
+                {
+                    foreach (var alias in aliases2)
+                    {
+                        if (alias.Name.ToLower() == search)
+                            candidates[alias] += 1000;
+                    }
+                }
+            }
+
+            return candidates.OrderByDescending(x => x.Value)
+                .ThenBy(x => x.Key.Name)
+                .Select(x => x.Key)
+                .Take(limit);
+        }
+
+        public IEnumerable<Alias> SimpleSearch(string search, int limit)
+        {
             var res = new List<(Alias alias, int priority)>();
 
             lock (this)
             {
                 foreach (var item in Aliases)
                 {
-                    var alias = item.Name.ToLower();
+                    var name = item.Name.ToLower();
 
-                    if (alias == search)
+                    if (name == search)
                         res.Add((item, 0));
-                    else if (alias.StartsWith(search))
+                    else if (name.StartsWith(search))
                         res.Add((item, 1));
-                    else if (alias.Contains(search))
+                    else if (name.Contains(search))
                         res.Add((item, 2));
                 }
             }
@@ -78,7 +131,42 @@ namespace Tzkt.Api.Services.Cache
             return res.OrderBy(x => x.priority)
                 .ThenBy(x => x.alias.Name)
                 .Select(x => x.alias)
-                .Take(10);
+                .Take(limit);
+        }
+
+        void AddTrigrams(Alias alias)
+        {
+            foreach (var trigram in GetTrigrams(alias.Name.ToLower()))
+            {
+                if (!Dictionary.TryGetValue(trigram, out var list))
+                {
+                    list = new();
+                    Dictionary.Add(trigram, list);
+                }
+                list.Add(alias);
+            }
+        }
+
+        void RemoveTrigrams(Alias alias)
+        {
+            foreach (var trigram in GetTrigrams(alias.Name.ToLower()))
+            {
+                if (Dictionary.TryGetValue(trigram, out var list))
+                {
+                    if (list.Remove(alias) && list.Count == 0)
+                        Dictionary.Remove(trigram);
+                }
+            }
+        }
+
+        static HashSet<string> GetTrigrams(string s)
+        {
+            var res = new HashSet<string>();
+            for (int i = 0; i < s.Length - 2; i++)
+                res.Add($"{s[i]}{s[i + 1]}{s[i + 2]}");
+            res.Add($" {s[0]}{s[1]}");
+            res.Add($"{s[^2]}{s[^1]} ");
+            return res;
         }
     }
 }
