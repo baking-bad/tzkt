@@ -44,6 +44,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of protocol proposals.
         /// </remarks>
+        /// <param name="hash">Filters proposals by hash</param>
         /// <param name="epoch">Filters proposals by voting epoch</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts proposals by specified field. Supported fields: `id` (default), `upvotes`, `rolls`.</param>
@@ -52,6 +53,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<Proposal>>> GetProposals(
+            ProtocolParameter hash,
             Int32Parameter epoch,
             SelectParameter select,
             SortParameter sort,
@@ -64,25 +66,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Voting.GetProposals(epoch, sort, offset, limit));
+                return Ok(await Voting.GetProposals(hash, epoch, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Voting.GetProposals(epoch, sort, offset, limit, select.Values[0]));
+                    return Ok(await Voting.GetProposals(hash, epoch, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Voting.GetProposals(epoch, sort, offset, limit, select.Values));
+                    return Ok(await Voting.GetProposals(hash, epoch, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Voting.GetProposals(epoch, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Voting.GetProposals(hash, epoch, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Voting.GetProposals(epoch, sort, offset, limit, select.Fields)
+                        Rows = await Voting.GetProposals(hash, epoch, sort, offset, limit, select.Fields)
                     });
                 }
             }

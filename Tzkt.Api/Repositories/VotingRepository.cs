@@ -62,12 +62,14 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Proposal>> GetProposals(
+            ProtocolParameter hash,
             Int32Parameter epoch,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Proposals""")
+                .Filter("Hash", hash)
                 .Filter("Epoch", epoch)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -94,6 +96,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetProposals(
+            ProtocolParameter hash,
             Int32Parameter epoch,
             SortParameter sort,
             OffsetParameter offset,
@@ -122,6 +125,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals""")
+                .Filter("Hash", hash)
                 .Filter("Epoch", epoch)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -184,6 +188,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetProposals(
+            ProtocolParameter hash,
             Int32Parameter epoch,
             SortParameter sort,
             OffsetParameter offset,
@@ -209,6 +214,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals""")
+                .Filter("Hash", hash)
                 .Filter("Epoch", epoch)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -683,6 +689,7 @@ namespace Tzkt.Api.Repositories
             if (!rows.Any()) return null;
 
             var proposals = await GetProposals(
+                hash: null,
                 new Int32Parameter { Eq = index },
                 new SortParameter { Desc = "rolls" },
                 null, 1000);
@@ -748,6 +755,7 @@ namespace Tzkt.Api.Repositories
 
             var epochs = rows.Select(x => (int)x.Epoch).ToHashSet();
             var proposals = (await GetProposals(
+                hash: null,
                 new Int32Parameter { In = epochs.ToList() },
                 new SortParameter { Desc = "rolls" },
                 null, limit * 10))
@@ -816,6 +824,7 @@ namespace Tzkt.Api.Repositories
             rows = rows.Where(x => x.Epoch == epoch).OrderBy(x => x.Index);
 
             var proposals = await GetProposals(
+                hash: null,
                 new Int32Parameter { Eq = epoch },
                 new SortParameter { Desc = "rolls" },
                 null, 10);
