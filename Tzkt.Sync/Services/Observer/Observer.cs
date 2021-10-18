@@ -166,7 +166,6 @@ namespace Tzkt.Sync.Services
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                var sync = DateTime.UtcNow;
                 var header = await Node.GetHeaderAsync();
                 if (AppState.Level == header.Level) break;
 
@@ -177,7 +176,7 @@ namespace Tzkt.Sync.Services
 
                 using var scope = Services.CreateScope();
                 var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
-                AppState = await protocol.CommitBlock(header.Level, sync);
+                AppState = await protocol.CommitBlock(header.Level);
 
                 Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
             }
