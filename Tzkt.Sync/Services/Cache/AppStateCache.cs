@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data;
@@ -15,6 +16,15 @@ namespace Tzkt.Sync.Services.Cache
         public AppStateCache(TzktContext db)
         {
             Db = db;
+        }
+
+        public void UpdateSyncState(int knownHead, DateTime lastSync)
+        {
+            if (AppState != null)
+            {
+                AppState.KnownHead = knownHead;
+                AppState.LastSync = lastSync;
+            }
         }
 
         public async Task ResetAsync()

@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using Tzkt.Data;
+using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
@@ -10,16 +14,21 @@ namespace Tzkt.Sync.Services
     {
         public string BaseUrl { get; }
         readonly TzktClient Rpc;
+        readonly IServiceScopeFactory Services;
+        readonly ILogger Logger;
 
         Header Header;
         Constants Constants;
         DateTime NextBlock;
+        DateTime NextSyncStateUpdate;
 
-        public TezosNode(IConfiguration config)
+        public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger)
         {
             var nodeConf = config.GetTezosNodeConfig();
             BaseUrl = $"{nodeConf.Endpoint.TrimEnd('/')}/";
             Rpc = new TzktClient(BaseUrl, nodeConf.Timeout);
+            Services = services;
+            Logger = logger;
         }
 
         public async Task<JsonElement> GetAsync(string url)
@@ -41,6 +50,32 @@ namespace Tzkt.Sync.Services
                 NextBlock = header.Level != Header?.Level
                     ? header.Timestamp.AddSeconds(Constants.MinBlockDelay ?? Constants.BlockIntervals[0])
                     : DateTime.UtcNow.AddSeconds(1);
+
+                #region update last sync
+                if (header.Level != Header?.Level || DateTime.UtcNow >= NextSyncStateUpdate)
+                {
+                    try
+                    {
+                        using var scope = Services.CreateScope();
+                        var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
+                        var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
+
+                        var syncTime = DateTime.UtcNow;
+                        await db.Database.ExecuteSqlRawAsync($@"
+                        UPDATE  ""{nameof(TzktContext.AppState)}""
+                        SET     ""{nameof(AppState.KnownHead)}"" = {header.Level},
+                                ""{nameof(AppState.LastSync)}"" = '{syncTime:yyyy-MM-ddTHH:mm:ssZ}';");
+                        cache.AppState.UpdateSyncState(header.Level, syncTime);
+
+                        NextSyncStateUpdate = syncTime.AddSeconds(5);
+                    }
+                    catch (Exception ex)
+                    {
+                        // no big deal...
+                        Logger.LogWarning("Failed to update AppState.LastSync: {0}", ex.Message);
+                    }
+                }
+                #endregion
 
                 Header = header;
             }

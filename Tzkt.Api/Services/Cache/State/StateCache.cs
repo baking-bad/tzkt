@@ -23,7 +23,7 @@ namespace Tzkt.Api.Services.Cache
             logger.LogDebug("Initializing state cache...");
             Logger = logger;
             using var db = GetConnection();
-            Current =  db.QueryFirst<RawState>(StateSql);
+            Current = db.QueryFirst<RawState>(StateSql);
             logger.LogInformation("Loaded state [{1}:{2}]", Current.Level, Current.Hash);
         }
 
@@ -41,6 +41,12 @@ namespace Tzkt.Api.Services.Cache
 
             if (Reorganized) Logger.LogDebug("Reorg after block {1} detected", validLevel);
             Logger.LogDebug("New state [{1}:{2}]", Current.Level, Current.Hash);
+        }
+
+        public void UpdateSyncState(int knownHead, DateTime lastSync)
+        {
+            Current.KnownHead = knownHead;
+            Current.LastSync = lastSync;
         }
 
         public async Task<RawState> LoadAsync()

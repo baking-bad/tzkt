@@ -18,6 +18,7 @@ namespace Tzkt.Api.Services.Sync
     public class StateListener : BackgroundService
     {
         #region static
+        const string SyncStateChanged = "sync_state_changed";
         const string StateHashChanged = "state_hash_changed";
         const string StateMetadataChanged = "state_metadata_changed";
         const string AccountMetadataChanged = "account_metadata_changed";
@@ -91,6 +92,7 @@ namespace Tzkt.Api.Services.Sync
                         {
                             await db.OpenAsync(cancellationToken);
                             await db.ExecuteAsync($@"
+                                LISTEN {SyncStateChanged};
                                 LISTEN {StateHashChanged};
                                 LISTEN {AccountMetadataChanged};
                                 LISTEN {SoftwareMetadataChanged};");
@@ -136,7 +138,19 @@ namespace Tzkt.Api.Services.Sync
                 return;
             }
 
-            if (e.Channel == StateHashChanged)
+            if (e.Channel == SyncStateChanged)
+            {
+                var separator = e.Payload.IndexOf(':');
+                if (separator == -1 ||
+                    !int.TryParse(e.Payload[..separator], out var knownHead) ||
+                    !DateTime.TryParse(e.Payload[(separator + 1)..], out var lastSync))
+                {
+                    Logger.LogCritical("Invalid trigger payload {1}", e.Payload);
+                    return;
+                }
+                State.UpdateSyncState(knownHead, lastSync);
+            }
+            else if (e.Channel == StateHashChanged)
             {
                 var data = e.Payload.Split(':', StringSplitOptions.RemoveEmptyEntries);
                 if (data.Length != 2 || !int.TryParse(data[0], out var level) || data[1].Length != 51)
