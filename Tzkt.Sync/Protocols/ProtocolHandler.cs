@@ -39,7 +39,7 @@ namespace Tzkt.Sync
             Logger = logger;
         }
 
-        public virtual async Task<AppState> CommitBlock(int head, DateTime sync)
+        public virtual async Task<AppState> CommitBlock(int head)
         {
             var state = Cache.AppState.Get();
 
@@ -78,9 +78,6 @@ namespace Tzkt.Sync
                     Logger.LogDebug("Diagnostics");
                     await nextProtocol.Diagnostics.Run(block);
                 }
-
-                state.KnownHead = head;
-                state.LastSync = sync;
 
                 Logger.LogDebug("Save changes");
                 await Db.SaveChangesAsync();
