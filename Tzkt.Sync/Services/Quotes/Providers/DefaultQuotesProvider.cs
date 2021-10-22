@@ -17,7 +17,8 @@ namespace Tzkt.Sync.Services
                 FillCnyQuotes(quotes, last),
                 FillJpyQuotes(quotes, last),
                 FillKrwQuotes(quotes, last),
-                FillEthQuotes(quotes, last));
+                FillEthQuotes(quotes, last),
+                FillGbpQuotes(quotes, last));
 
             return filled.Min();
         }
@@ -246,6 +247,38 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
+        async Task<int> FillGbpQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        {
+            var res = (await GetGbp(
+                quotes.First().Timestamp.AddMinutes(-30),
+                quotes.Last().Timestamp)).ToList();
+
+            if (res.Count == 0)
+            {
+                foreach (var quote in quotes)
+                    quote.Gbp = last?.Gbp ?? 0;
+            }
+            else
+            {
+                var i = 0;
+                foreach (var quote in quotes)
+                {
+                    if (quote.Timestamp < res[0].Timestamp)
+                    {
+                        quote.Gbp = last?.Gbp ?? 0;
+                    }
+                    else
+                    {
+                        while (i < res.Count - 1 && quote.Timestamp >= res[i + 1].Timestamp) i++;
+
+                        quote.Gbp = res[i].Price;
+                    }
+                }
+            }
+
+            return quotes.Count();
+        }
+
         #region virtual
         public virtual Task<IEnumerable<IDefaultQuote>> GetBtc(DateTime from, DateTime to)
             => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
@@ -266,6 +299,9 @@ namespace Tzkt.Sync.Services
             => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
 
         public virtual Task<IEnumerable<IDefaultQuote>> GetEth(DateTime from, DateTime to)
+            => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
+
+        public virtual Task<IEnumerable<IDefaultQuote>> GetGbp(DateTime from, DateTime to)
             => Task.FromResult(Enumerable.Empty<IDefaultQuote>());
         #endregion
     }

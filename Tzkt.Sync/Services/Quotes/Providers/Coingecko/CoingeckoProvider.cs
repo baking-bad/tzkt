@@ -44,6 +44,9 @@ namespace Tzkt.Sync.Services
         public override async Task<IEnumerable<IDefaultQuote>> GetEth(DateTime from, DateTime to)
             => await GetQuotes("eth", from, to);
 
+        public override async Task<IEnumerable<IDefaultQuote>> GetGbp(DateTime from, DateTime to)
+            => await GetQuotes("gbp", from, to);
+
         async Task<List<CoingeckoQuote>> GetQuotes(string currency, DateTime from, DateTime to)
         {
             var _from = (long)(from - DateTime.UnixEpoch).TotalSeconds;

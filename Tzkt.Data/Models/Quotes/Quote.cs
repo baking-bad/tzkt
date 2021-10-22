@@ -16,6 +16,7 @@ namespace Tzkt.Data.Models
         public double Jpy { get; set; }
         public double Krw { get; set; }
         public double Eth { get; set; }
+        public double Gbp { get; set; }
     }
 
     public static class QuoteModel
