@@ -6,6 +6,10 @@ namespace Tzkt.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql(@"DELETE FROM ""Quotes""");
+            migrationBuilder.Sql(@"UPDATE ""AppState"" SET ""QuoteLevel"" = -1");
+            
+            
             migrationBuilder.AddColumn<double>(
                 name: "Gbp",
                 table: "Quotes",
