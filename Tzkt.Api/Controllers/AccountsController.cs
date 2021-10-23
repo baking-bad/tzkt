@@ -592,6 +592,7 @@ namespace Tzkt.Api.Controllers
                 "jpy" => 4,
                 "krw" => 5,
                 "eth" => 6,
+                "gbp" => 7,
                 _ => -1
             };
             #endregion

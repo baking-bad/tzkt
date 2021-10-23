@@ -179,6 +179,7 @@ namespace Tzkt.Api.Repositories
                 4 => "JPY",
                 5 => "KRW",
                 6 => "ETH",
+                7 => "GBP",
                 _ => ""
             };
 
@@ -321,6 +322,7 @@ namespace Tzkt.Api.Repositories
                 4 => "JPY",
                 5 => "KRW",
                 6 => "ETH",
+                7 => "GBP",
                 _ => ""
             };
 

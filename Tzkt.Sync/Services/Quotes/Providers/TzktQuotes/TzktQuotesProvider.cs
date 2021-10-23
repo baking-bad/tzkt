@@ -57,7 +57,6 @@ namespace Tzkt.Sync.Services
                         quote.Jpy = last?.Jpy ?? 0;
                         quote.Krw = last?.Krw ?? 0;
                         quote.Eth = last?.Eth ?? 0;
-                        quote.Eth = last?.Eth ?? 0;
                         quote.Gbp = last?.Gbp ?? 0;
                     }
                     else

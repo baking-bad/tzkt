@@ -19,12 +19,12 @@ namespace Tzkt.Api.Services.Cache
         {
             logger.LogDebug("Initializing quotes cache...");
 
-            Quotes = new List<double>[7];
+            Quotes = new List<double>[8];
             State = state;
             Logger = logger;
 
             var sql = @"
-                SELECT    ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth""
+                SELECT    ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp""
                 FROM      ""Quotes""
                 ORDER BY  ""Level""";
 
@@ -44,6 +44,7 @@ namespace Tzkt.Api.Services.Cache
                 Quotes[4].Add(row.Jpy);
                 Quotes[5].Add(row.Krw);
                 Quotes[6].Add(row.Eth);
+                Quotes[7].Add(row.Gbp);
             }
 
             logger.LogInformation("Loaded {1} quotes", Quotes[0].Count);
@@ -53,7 +54,7 @@ namespace Tzkt.Api.Services.Cache
         {
             Logger.LogDebug("Updating quotes cache");
             var sql = $@"
-                SELECT    ""Level"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth""
+                SELECT    ""Level"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp""
                 FROM      ""Quotes""
                 WHERE     ""Level"" > @fromLevel
                 ORDER BY  ""Level""";
@@ -72,6 +73,7 @@ namespace Tzkt.Api.Services.Cache
                     Quotes[4][row.Level] = row.Jpy;
                     Quotes[5][row.Level] = row.Krw;
                     Quotes[6][row.Level] = row.Eth;
+                    Quotes[7][row.Level] = row.Gbp;
                 }
                 else
                 {
@@ -82,6 +84,7 @@ namespace Tzkt.Api.Services.Cache
                     Quotes[4].Add(row.Jpy);
                     Quotes[5].Add(row.Krw);
                     Quotes[6].Add(row.Eth);
+                    Quotes[7].Add(row.Gbp);
                 }
             }
             Logger.LogDebug("{1} quotes updates", rows.Count());
@@ -126,6 +129,9 @@ namespace Tzkt.Api.Services.Cache
 
                 if (symbols.HasFlag(Symbols.Eth))
                     quote.Eth = Quotes[6][^1];
+
+                if (symbols.HasFlag(Symbols.Gbp))
+                    quote.Gbp = Quotes[7][^1];
             }
             else
             {
@@ -149,6 +155,9 @@ namespace Tzkt.Api.Services.Cache
 
                 if (symbols.HasFlag(Symbols.Eth))
                     quote.Eth = Quotes[6][level];
+
+                if (symbols.HasFlag(Symbols.Gbp))
+                    quote.Gbp = Quotes[7][level];
             }
 
             return quote;

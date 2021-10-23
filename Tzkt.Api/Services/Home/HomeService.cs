@@ -111,6 +111,11 @@ namespace Tzkt.Api.Services
                     Date = x.Timestamp,
                     Value = x.Eth
                 }).ToList(),
+                Symbols.Gbp => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Gbp
+                }).ToList(),
                 Symbols.Eur => MarketChart?.Select(x => new ChartPoint<double>
                 {
                     Date = x.Timestamp,

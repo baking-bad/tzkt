@@ -41,7 +41,8 @@ namespace Tzkt.Api.Repositories
                 QuoteCny = appState.QuoteCny,
                 QuoteJpy = appState.QuoteJpy,
                 QuoteKrw = appState.QuoteKrw,
-                QuoteEth = appState.QuoteEth
+                QuoteEth = appState.QuoteEth,
+                QuoteGbp = appState.QuoteGbp
             };
         }
     }
