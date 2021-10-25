@@ -101,21 +101,6 @@ namespace Tzkt.Api.Services
                     Date = x.Timestamp,
                     Value = x.Btc
                 }).ToList(),
-                Symbols.Cny => MarketChart?.Select(x => new ChartPoint<double>
-                {
-                    Date = x.Timestamp,
-                    Value = x.Cny
-                }).ToList(),
-                Symbols.Eth => MarketChart?.Select(x => new ChartPoint<double>
-                {
-                    Date = x.Timestamp,
-                    Value = x.Eth
-                }).ToList(),
-                Symbols.Gbp => MarketChart?.Select(x => new ChartPoint<double>
-                {
-                    Date = x.Timestamp,
-                    Value = x.Gbp
-                }).ToList(),
                 Symbols.Eur => MarketChart?.Select(x => new ChartPoint<double>
                 {
                     Date = x.Timestamp,
@@ -126,6 +111,11 @@ namespace Tzkt.Api.Services
                     Date = x.Timestamp,
                     Value = x.Usd
                 }).ToList(),
+                Symbols.Cny => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Cny
+                }).ToList(),
                 Symbols.Jpy => MarketChart?.Select(x => new ChartPoint<double>
                 {
                     Date = x.Timestamp,
@@ -135,6 +125,16 @@ namespace Tzkt.Api.Services
                 {
                     Date = x.Timestamp,
                     Value = x.Krw
+                }).ToList(),
+                Symbols.Eth => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Eth
+                }).ToList(),
+                Symbols.Gbp => MarketChart?.Select(x => new ChartPoint<double>
+                {
+                    Date = x.Timestamp,
+                    Value = x.Gbp
                 }).ToList(),
                 _ => MarketChart?.Select(x => new ChartPoint<double>
                 {

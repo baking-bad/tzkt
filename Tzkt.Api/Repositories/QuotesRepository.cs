@@ -47,7 +47,8 @@ namespace Tzkt.Api.Repositories
                 Cny = Quotes.Get(3),
                 Jpy = Quotes.Get(4),
                 Krw = Quotes.Get(5),
-                Eth = Quotes.Get(6)
+                Eth = Quotes.Get(6),
+                Gbp = Quotes.Get(7)
             };
         }
 
