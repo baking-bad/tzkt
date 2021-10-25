@@ -241,7 +241,7 @@ namespace Tzkt.Sync.Services
                 UPDATE ""AppState"" SET ""QuoteLevel"" = {last.Level}, ""QuoteBtc"" = {{0}}, ""QuoteEur"" = {{1}}, ""QuoteUsd"" = {{2}}, ""QuoteCny"" = {{3}}, ""QuoteJpy"" = {{4}}, ""QuoteKrw"" = {{5}}, ""QuoteEth"" = {{6}}, ""QuoteGbp"" = {{7}};
                 INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp"") VALUES");
 
-            var param = new List<object>(cnt * 8 + 6)
+            var param = new List<object>(cnt * 9 + 8)
             {
                 last.Btc,
                 last.Eur,
