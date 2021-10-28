@@ -62,8 +62,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     throw new ValidationException($"non-existent deactivated baker {baker}");
 
             var balanceUpdates = ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray());
-            ValidateBlockRewards(balanceUpdates.Take(Cycle < Protocol.NoRewardCycles ? 2 : 3));
-            ValidateCycleRewards(balanceUpdates.Skip(Cycle < Protocol.NoRewardCycles ? 2 : 3));
+            ValidateBlockRewards(balanceUpdates.Where(x => x.IsBlockUpdate));
+            ValidateCycleRewards(balanceUpdates.Where(x => x.IsCycleUpdate));
         }
 
         protected virtual async Task ValidateBlockVoting(JsonElement metadata)
@@ -90,28 +90,48 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual void ValidateBlockRewards(IEnumerable<BalanceUpdate> balanceUpdates)
         {
-            if (balanceUpdates.Any())
+            var deposit = GetBlockDeposit();
+            var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract);
+            var depostisUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits);
+
+            if (deposit > 0)
             {
-                var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract)
-                    ?? throw new ValidationException("missed block contract balance update");
+                if (contractUpdate == null)
+                    throw new ValidationException("missed block contract balance update");
 
-                var depostisUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits)
-                    ?? throw new ValidationException("missed block freezer depostis update");
+                if (depostisUpdate == null)
+                    throw new ValidationException("missed block freezer depostis update");
 
-                if (contractUpdate.Account != Baker || contractUpdate.Change != -GetBlockDeposit())
+                if (contractUpdate.Account != Baker || contractUpdate.Change != -deposit)
                     throw new ValidationException("invalid block contract balance update");
 
-                if (depostisUpdate.Account != Baker || depostisUpdate.Change != GetBlockDeposit())
+                if (depostisUpdate.Account != Baker || depostisUpdate.Change != deposit)
                     throw new ValidationException("invalid block freezer depostis update");
+            }
+            else
+            {
+                if (contractUpdate != null)
+                    throw new ValidationException("unexpected block contract balance update");
 
-                if (balanceUpdates.Count() == 3)
-                {
-                    var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards)
-                        ?? throw new ValidationException("missed block freezer rewards update");
+                if (depostisUpdate != null)
+                    throw new ValidationException("unexpected block freezer depostis update");
+            }
 
-                    if (rewardsUpdate.Account != Baker || rewardsUpdate.Change != GetBlockReward())
-                        throw new ValidationException("invalid block freezer rewards update");
-                }
+            var reward = GetBlockReward();
+            var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards);
+
+            if (reward > 0)
+            {
+                if (rewardsUpdate == null)
+                    throw new ValidationException("missed block freezer rewards update");
+
+                if (rewardsUpdate.Account != Baker || rewardsUpdate.Change != reward)
+                    throw new ValidationException("invalid block freezer rewards update");
+            }
+            else
+            {
+                if (rewardsUpdate != null)
+                    throw new ValidationException("unexpected block freezer rewards update");
             }
         }
 
@@ -182,31 +202,48 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!Cache.Accounts.DelegateExists(delegat))
                 throw new ValidationException($"unknown endorsement delegate {delegat}");
 
-            if (balanceUpdates.Count > 0)
+            var deposit = GetEndorsementDeposit(slots);
+            var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract);
+            var depostisUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits);
+
+            if (deposit > 0)
             {
-                if (balanceUpdates.Count != (Cycle < Protocol.NoRewardCycles ? 2 : 3))
-                    throw new ValidationException("invalid endorsement balance updates count");
+                if (contractUpdate == null)
+                    throw new ValidationException("missed endorsement contract balance update");
 
-                var contractUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Contract)
-                    ?? throw new ValidationException("missed endorsement contract balance update");
+                if (depostisUpdate == null)
+                    throw new ValidationException("missed endorsement freezer depostis update");
 
-                var depostisUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits)
-                    ?? throw new ValidationException("missed endorsement freezer depostis update");
-
-                if (contractUpdate.Account != delegat || contractUpdate.Change != -GetEndorsementDeposit(slots))
+                if (contractUpdate.Account != delegat || contractUpdate.Change != -deposit)
                     throw new ValidationException("invalid endorsement contract balance update");
 
-                if (depostisUpdate.Account != delegat || depostisUpdate.Change != GetEndorsementDeposit(slots))
+                if (depostisUpdate.Account != delegat || depostisUpdate.Change != deposit)
                     throw new ValidationException("invalid endorsement freezer depostis update");
+            }
+            else
+            {
+                if (contractUpdate != null)
+                    throw new ValidationException("unexpected endorsement contract balance update");
 
-                if (balanceUpdates.Count > 2)
-                {
-                    var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards)
-                        ?? throw new ValidationException("missed endorsement freezer rewards update");
+                if (depostisUpdate != null)
+                    throw new ValidationException("unexpected endorsement freezer depostis update");
+            }
 
-                    if (rewardsUpdate.Account != delegat || rewardsUpdate.Change != GetEndorsementReward(slots))
-                        throw new ValidationException("invalid endorsement freezer rewards update");
-                }
+            var reward = GetEndorsementReward(slots);
+            var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards);
+
+            if (reward > 0)
+            {
+                if (rewardsUpdate == null)
+                    throw new ValidationException("missed endorsement freezer rewards update");
+
+                if (rewardsUpdate.Account != delegat || rewardsUpdate.Change != reward)
+                    throw new ValidationException("invalid endorsement freezer rewards update");
+            }
+            else
+            {
+                if (rewardsUpdate != null)
+                    throw new ValidationException("unexpected endorsement freezer rewards update");
             }
         }
 
@@ -639,6 +676,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             public string Account { get; set; }
             public long Change { get; set; }
             public int Cycle { get; set; }
+
+            public bool IsBlockUpdate =>
+                Kind == BalanceUpdateKind.Contract && Change < 0 ||
+                Kind != BalanceUpdateKind.Contract && Change > 0;
+
+            public bool IsCycleUpdate =>
+                Kind == BalanceUpdateKind.Contract && Change > 0 ||
+                Kind != BalanceUpdateKind.Contract && Change < 0;
         }
     }
 }

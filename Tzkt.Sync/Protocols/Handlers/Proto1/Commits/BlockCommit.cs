@@ -18,8 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var events = BlockEvents.None;
 
             var metadata = rawBlock.Required("metadata");
-            var reward = GetBlockReward(metadata);
-            var deposit = GetBlockDeposit(metadata);
+            var (deposit, reward) = ParseBalanceUpdates(metadata.RequiredArray("balance_updates"));
 
             if (protocol.IsCycleStart(level))
                 events |= BlockEvents.CycleBegin;
@@ -48,8 +47,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Priority = rawBlock.Required("header").RequiredInt32("priority"),
                 Baker = Cache.Accounts.GetDelegate(rawBlock.Required("metadata").RequiredString("baker")),
                 Events = events,
-                Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0,
-                Deposit = deposit.ValueKind != JsonValueKind.Undefined ? deposit.RequiredInt64("change") : 0,
+                Reward = reward,
+                Deposit = deposit,
                 LBEscapeVote = GetLBEscapeVote(rawBlock),
                 LBEscapeEma = GetLBEscapeEma(rawBlock)
             };
@@ -114,22 +113,26 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.Blocks.Remove(Block);
         }
 
-        protected virtual JsonElement GetBlockReward(JsonElement metadata)
+        protected virtual (long, long) ParseBalanceUpdates(JsonElement balanceUpdates)
         {
-            return metadata
-                .RequiredArray("balance_updates")
-                .EnumerateArray()
-                .Take(3)
-                .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r');
-        }
+            var deposit = 0L;
+            var reward = 0L;
+            foreach (var bu in balanceUpdates.EnumerateArray().Take(3))
+            {
+                if (bu.RequiredString("kind")[0] == 'f')
+                {
+                    var change = bu.RequiredInt64("change");
+                    if (change > 0)
+                    {
+                        if (bu.RequiredString("category")[0] == 'd')
+                            deposit = change;
+                        else
+                            reward = change;
+                    }
 
-        protected virtual JsonElement GetBlockDeposit(JsonElement metadata)
-        {
-            return metadata
-                .RequiredArray("balance_updates")
-                .EnumerateArray()
-                .Take(3)
-                .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
+                }
+            }
+            return (deposit, reward);
         }
 
         protected virtual bool GetLBEscapeVote(JsonElement block) => false;
