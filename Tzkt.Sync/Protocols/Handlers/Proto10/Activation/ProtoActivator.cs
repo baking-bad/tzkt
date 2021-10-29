@@ -669,7 +669,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
         protected override long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
             => cycle < protocol.RampUpCycles
-                ? (slots * protocol.EndorsementDeposit * cycle / protocol.RampUpCycles)
+                ? (slots * (protocol.EndorsementDeposit * cycle / protocol.RampUpCycles))
                 : (slots * protocol.EndorsementDeposit);
     }
 }

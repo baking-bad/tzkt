@@ -123,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             ? (block.Protocol.BlockDeposit * block.Cycle / block.Protocol.RampUpCycles)
                             : block.Protocol.BlockDeposit)
                         : (block.Cycle < block.Protocol.RampUpCycles 
-                            ? (cr.Slots * block.Protocol.EndorsementDeposit * block.Cycle / block.Protocol.RampUpCycles)
+                            ? (cr.Slots * (block.Protocol.EndorsementDeposit * block.Cycle / block.Protocol.RampUpCycles))
                             : (cr.Slots * block.Protocol.EndorsementDeposit));
 
                     if (available < required)

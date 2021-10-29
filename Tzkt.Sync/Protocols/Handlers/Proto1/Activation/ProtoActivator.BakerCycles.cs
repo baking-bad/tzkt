@@ -115,7 +115,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
             => cycle < protocol.RampUpCycles
-                ? (slots * protocol.EndorsementDeposit * cycle / protocol.RampUpCycles)
+                ? (slots * (protocol.EndorsementDeposit * cycle / protocol.RampUpCycles))
                 : (slots * protocol.EndorsementDeposit);
         #endregion
     }
