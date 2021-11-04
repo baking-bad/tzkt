@@ -26,7 +26,7 @@ namespace Tzkt.Api
 
         public override void Write(Utf8JsonWriter writer, RawJson value, JsonSerializerOptions options)
         {
-            using var doc = JsonDocument.Parse(value, new JsonDocumentOptions { MaxDepth = 1024 });
+            using var doc = JsonDocument.Parse(value, new JsonDocumentOptions { MaxDepth = 100_000 });
             doc.WriteTo(writer);
         }
     }

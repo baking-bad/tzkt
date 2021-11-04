@@ -45,4 +45,8 @@
     <ProjectReference Include="..\Tzkt.Data\Tzkt.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="../libs/System.Text.Json/net5.0/System.Text.Json.dll" />
+  </ItemGroup>
+
 </Project>

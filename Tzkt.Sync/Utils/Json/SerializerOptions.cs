@@ -8,7 +8,7 @@ namespace Tzkt.Sync
 
         static SerializerOptions()
         {
-            Default = new JsonSerializerOptions { MaxDepth = 128 };
+            Default = new JsonSerializerOptions { MaxDepth = 100_000 };
             Default.Converters.Add(new JsonInt32Converter());
             Default.Converters.Add(new JsonInt64Converter());
         }

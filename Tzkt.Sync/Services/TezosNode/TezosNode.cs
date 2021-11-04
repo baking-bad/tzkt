@@ -25,7 +25,7 @@ namespace Tzkt.Sync.Services
         public async Task<JsonElement> GetAsync(string url)
         {
             using var stream = await Rpc.GetStreamAsync(url);
-            using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 256 });
+            using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 100_000 });
             return doc.RootElement.Clone();
         }
 

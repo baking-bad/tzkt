@@ -1,0 +1,172 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v5.0/",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v5.0": {},
+    ".NETCoreApp,Version=v5.0/": {
+      "System.Text.Json/5.0.12": {
+        "dependencies": {
+          "Microsoft.CodeAnalysis.NetAnalyzers": "5.0.0-rc1.20413.9",
+          "Microsoft.DotNet.ApiCompat": "5.0.0-beta.21513.1",
+          "Microsoft.DotNet.Build.Tasks.Packaging": "5.0.0-beta.21513.1",
+          "Microsoft.DotNet.CodeAnalysis": "5.0.0-beta.21513.1",
+          "Microsoft.DotNet.GenAPI": "5.0.0-beta.21513.1",
+          "Microsoft.DotNet.GenFacades": "5.0.0-beta.21513.1",
+          "Microsoft.NET.ILLink.Tasks": "5.0.0-rtm.21504.2",
+          "Microsoft.NETFramework.ReferenceAssemblies": "1.0.0-preview.2",
+          "Microsoft.Net.Compilers.Toolset": "3.8.0-4.20503.2",
+          "Microsoft.SourceLink.AzureRepos.Git": "1.1.0-beta-20206-02",
+          "Microsoft.SourceLink.GitHub": "1.1.0-beta-20206-02",
+          "StyleCop.Analyzers": "1.2.0-beta.164"
+        },
+        "runtime": {
+          "System.Text.Json.dll": {}
+        }
+      },
+      "Microsoft.Build.Tasks.Git/1.1.0-beta-20206-02": {},
+      "Microsoft.CodeAnalysis.NetAnalyzers/5.0.0-rc1.20413.9": {},
+      "Microsoft.DotNet.ApiCompat/5.0.0-beta.21513.1": {},
+      "Microsoft.DotNet.Build.Tasks.Packaging/5.0.0-beta.21513.1": {},
+      "Microsoft.DotNet.CodeAnalysis/5.0.0-beta.21513.1": {},
+      "Microsoft.DotNet.GenAPI/5.0.0-beta.21513.1": {},
+      "Microsoft.DotNet.GenFacades/5.0.0-beta.21513.1": {},
+      "Microsoft.Net.Compilers.Toolset/3.8.0-4.20503.2": {},
+      "Microsoft.NET.ILLink.Tasks/5.0.0-rtm.21504.2": {},
+      "Microsoft.NETFramework.ReferenceAssemblies/1.0.0-preview.2": {},
+      "Microsoft.SourceLink.AzureRepos.Git/1.1.0-beta-20206-02": {
+        "dependencies": {
+          "Microsoft.Build.Tasks.Git": "1.1.0-beta-20206-02",
+          "Microsoft.SourceLink.Common": "1.1.0-beta-20206-02"
+        }
+      },
+      "Microsoft.SourceLink.Common/1.1.0-beta-20206-02": {},
+      "Microsoft.SourceLink.GitHub/1.1.0-beta-20206-02": {
+        "dependencies": {
+          "Microsoft.Build.Tasks.Git": "1.1.0-beta-20206-02",
+          "Microsoft.SourceLink.Common": "1.1.0-beta-20206-02"
+        }
+      },
+      "StyleCop.Analyzers/1.2.0-beta.164": {
+        "dependencies": {
+          "StyleCop.Analyzers.Unstable": "1.2.0.164"
+        }
+      },
+      "StyleCop.Analyzers.Unstable/1.2.0.164": {}
+    }
+  },
+  "libraries": {
+    "System.Text.Json/5.0.12": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Build.Tasks.Git/1.1.0-beta-20206-02": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hZ9leS9Yd9MHpqvviMftSJFDcLYu2h1DrapW1TDm1s1fgOy71c8HvArNMd3fseVkXmp3VTfGnkgcw0FR+TI6xw==",
+      "path": "microsoft.build.tasks.git/1.1.0-beta-20206-02",
+      "hashPath": "microsoft.build.tasks.git.1.1.0-beta-20206-02.nupkg.sha512"
+    },
+    "Microsoft.CodeAnalysis.NetAnalyzers/5.0.0-rc1.20413.9": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-AT+It7+os9ODvHNyHyG4UMy63FqDkyf5crwbzF/oJOzFJnP2easmPu7WzGSST7/uv4OlYxa0D7KNP01ODsLtPA==",
+      "path": "microsoft.codeanalysis.netanalyzers/5.0.0-rc1.20413.9",
+      "hashPath": "microsoft.codeanalysis.netanalyzers.5.0.0-rc1.20413.9.nupkg.sha512"
+    },
+    "Microsoft.DotNet.ApiCompat/5.0.0-beta.21513.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qEImxEGzMo44CuKth1GCxr27GctrFo1p8GF2UZhb2wG2jR9QsEBOIpQgdkWBWqYc1Xik+TR69SotpPb4XBuS8w==",
+      "path": "microsoft.dotnet.apicompat/5.0.0-beta.21513.1",
+      "hashPath": "microsoft.dotnet.apicompat.5.0.0-beta.21513.1.nupkg.sha512"
+    },
+    "Microsoft.DotNet.Build.Tasks.Packaging/5.0.0-beta.21513.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Pa8YJ/axiL3nkRI3f0B/CsDlBgG4F3dRXMEq3ROQy+UJd4AGgt9G8+McaDVJcn3uDL9WMefiQief/WkiyPjG6w==",
+      "path": "microsoft.dotnet.build.tasks.packaging/5.0.0-beta.21513.1",
+      "hashPath": "microsoft.dotnet.build.tasks.packaging.5.0.0-beta.21513.1.nupkg.sha512"
+    },
+    "Microsoft.DotNet.CodeAnalysis/5.0.0-beta.21513.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-NkwjkiJyAZGGVB1Ku2UZUU/ZpfSHRiyxbnkm+g5IlWtSLQDjfjK1vpWKQLmN2lzyEjDgni5VXYmdUrJQo6asKw==",
+      "path": "microsoft.dotnet.codeanalysis/5.0.0-beta.21513.1",
+      "hashPath": "microsoft.dotnet.codeanalysis.5.0.0-beta.21513.1.nupkg.sha512"
+    },
+    "Microsoft.DotNet.GenAPI/5.0.0-beta.21513.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-AJzsBkUe5UupkP8bfBa8A4j2jbLQypsXYfZsb4QmlwXhWzKDbqpdqvkAjndrxNc9+6sORlI6VuV+eXfW7RrOvw==",
+      "path": "microsoft.dotnet.genapi/5.0.0-beta.21513.1",
+      "hashPath": "microsoft.dotnet.genapi.5.0.0-beta.21513.1.nupkg.sha512"
+    },
+    "Microsoft.DotNet.GenFacades/5.0.0-beta.21513.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Y+RXM+FryrKdVD4i1HiSEzGD/ox2QRHnjUctsL4DQ8dGHu++OcBkN0XK8RrH5IJV1i7KB94c/s6yDbMe88zkeg==",
+      "path": "microsoft.dotnet.genfacades/5.0.0-beta.21513.1",
+      "hashPath": "microsoft.dotnet.genfacades.5.0.0-beta.21513.1.nupkg.sha512"
+    },
+    "Microsoft.Net.Compilers.Toolset/3.8.0-4.20503.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jfscID/5IHHPVVEbFCAJEUEWCeWNZCLwyBcUFG3/u44oiRd/aseDOYRzl3OnIIvcwzi0U2lSAs6Lt2+rdRIDMg==",
+      "path": "microsoft.net.compilers.toolset/3.8.0-4.20503.2",
+      "hashPath": "microsoft.net.compilers.toolset.3.8.0-4.20503.2.nupkg.sha512"
+    },
+    "Microsoft.NET.ILLink.Tasks/5.0.0-rtm.21504.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hfN0nAn9xiVSERpfv/6yWNrm1mDsT2sKz70qOkOctmhNN/r7NWfPVNpRAYwcCo2u38gKcUcwF5yrUkS3FDHHWA==",
+      "path": "microsoft.net.illink.tasks/5.0.0-rtm.21504.2",
+      "hashPath": "microsoft.net.illink.tasks.5.0.0-rtm.21504.2.nupkg.sha512"
+    },
+    "Microsoft.NETFramework.ReferenceAssemblies/1.0.0-preview.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-m+pJPEO7HyXvrOna5Sr3s77ewXonjYWJTNL6drh8xACnMNxnlqUDKx9HfGeSE9wmfY0lQwppaeZpFTPGaH7kZg==",
+      "path": "microsoft.netframework.referenceassemblies/1.0.0-preview.2",
+      "hashPath": "microsoft.netframework.referenceassemblies.1.0.0-preview.2.nupkg.sha512"
+    },
+    "Microsoft.SourceLink.AzureRepos.Git/1.1.0-beta-20206-02": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vVYhSds9TfraTQkGHHMDMVWnr3kCkTZ7vmqUmrXQBDJFXiWTuMoP5RRa9s1M/KmgB4szi5TOb7sOaHWKDT9qDA==",
+      "path": "microsoft.sourcelink.azurerepos.git/1.1.0-beta-20206-02",
+      "hashPath": "microsoft.sourcelink.azurerepos.git.1.1.0-beta-20206-02.nupkg.sha512"
+    },
+    "Microsoft.SourceLink.Common/1.1.0-beta-20206-02": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-aek0RTQ+4Bf11WvqaXajwYoaBWkX2edBjAr5XJOvhAsHX6/9vPOb7IpHAiE/NyCse7IcpGWslJZHNkv4UBEFqw==",
+      "path": "microsoft.sourcelink.common/1.1.0-beta-20206-02",
+      "hashPath": "microsoft.sourcelink.common.1.1.0-beta-20206-02.nupkg.sha512"
+    },
+    "Microsoft.SourceLink.GitHub/1.1.0-beta-20206-02": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7A7P0EwL+lypaI/CEvG4IcpAlQeAt04uPPw1SO6Q9Jwz2nE9309pQXJ4TfP/RLL8IOObACidN66+gVR+bJDZHw==",
+      "path": "microsoft.sourcelink.github/1.1.0-beta-20206-02",
+      "hashPath": "microsoft.sourcelink.github.1.1.0-beta-20206-02.nupkg.sha512"
+    },
+    "StyleCop.Analyzers/1.2.0-beta.164": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-IWMH8RyJGDu8ZrYFKIwjfcuXizpJnjnMGE8tDRnZ36AIAQeFDjeUPH2EUEMwj4+63oQBu/KkzRe9clSW9s5mdA==",
+      "path": "stylecop.analyzers/1.2.0-beta.164",
+      "hashPath": "stylecop.analyzers.1.2.0-beta.164.nupkg.sha512"
+    },
+    "StyleCop.Analyzers.Unstable/1.2.0.164": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3WJ5JvRP9QjdrwspeLFjwD2AZw2CcDmYLQ7x8oofxvOzXvboZdFlPsSV8h56hLyK0lnMFvtpb48nxz7oQ4RgCQ==",
+      "path": "stylecop.analyzers.unstable/1.2.0.164",
+      "hashPath": "stylecop.analyzers.unstable.1.2.0.164.nupkg.sha512"
+    }
+  }
+}
