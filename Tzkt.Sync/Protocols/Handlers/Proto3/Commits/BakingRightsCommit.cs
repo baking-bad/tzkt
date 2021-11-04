@@ -92,10 +92,10 @@ namespace Tzkt.Sync.Protocols.Proto3
                     var available = baker.Balance - baker.FrozenDeposits - baker.FrozenRewards - baker.FrozenFees;
                     var required = cr.Type == BakingRightType.Baking
                         ? (block.Cycle < block.Protocol.RampUpCycles
-                            ? (block.Protocol.BlockDeposit * block.Cycle / block.Protocol.RampUpCycles)
+                            ? (block.Protocol.BlockDeposit / block.Protocol.RampUpCycles * block.Cycle)
                             : block.Protocol.BlockDeposit)
                         : (block.Cycle < block.Protocol.RampUpCycles
-                            ? (cr.Slots * block.Protocol.EndorsementDeposit * block.Cycle / block.Protocol.RampUpCycles)
+                            ? (cr.Slots * (block.Protocol.EndorsementDeposit / block.Protocol.RampUpCycles * block.Cycle))
                             : (cr.Slots * block.Protocol.EndorsementDeposit));
 
                     if (available < required)

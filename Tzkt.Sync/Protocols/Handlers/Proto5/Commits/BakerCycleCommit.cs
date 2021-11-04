@@ -701,7 +701,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         protected virtual long GetBlockDeposit(Protocol protocol, int cycle)
             => cycle < protocol.RampUpCycles
-                ? (protocol.BlockDeposit * cycle / protocol.RampUpCycles)
+                ? (protocol.BlockDeposit / protocol.RampUpCycles * cycle)
                 : protocol.BlockDeposit;
 
         protected virtual long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
@@ -712,7 +712,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         protected virtual long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
             => cycle < protocol.RampUpCycles
-                ? (slots * protocol.EndorsementDeposit * cycle / protocol.RampUpCycles)
+                ? (slots * (protocol.EndorsementDeposit / protocol.RampUpCycles * cycle))
                 : (slots * protocol.EndorsementDeposit);
         #endregion
     }

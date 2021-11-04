@@ -96,8 +96,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Required("metadata")
                 .Required("balance_updates")
                 .EnumerateArray()
-                .Skip(block.Cycle < block.Protocol.NoRewardCycles ? 2 : 3)
-                .Where(x => x.RequiredString("kind")[0] == 'f' && GetFreezerCycle(x) == block.Cycle - block.Protocol.PreservedCycles);
+                .Where(x => x.RequiredString("kind")[0] == 'f' &&
+                            x.RequiredInt64("change") < 0 &&
+                            GetFreezerCycle(x) == block.Cycle - block.Protocol.PreservedCycles);
         }
     }
 }

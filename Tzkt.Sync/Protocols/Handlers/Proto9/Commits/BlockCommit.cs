@@ -7,24 +7,26 @@ namespace Tzkt.Sync.Protocols.Proto9
     {
         public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override JsonElement GetBlockReward(JsonElement metadata)
+        protected override (long, long) ParseBalanceUpdates(JsonElement balanceUpdates)
         {
-            return metadata
-                .RequiredArray("balance_updates")
-                .EnumerateArray()
-                .Where(x => x.RequiredString("origin")[0] == 'b')
-                .Take(3)
-                .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'r');
-        }
+            var deposit = 0L;
+            var reward = 0L;
+            foreach (var bu in balanceUpdates.EnumerateArray().Where(x => x.RequiredString("origin")[0] == 'b').Take(3))
+            {
+                if (bu.RequiredString("kind")[0] == 'f')
+                {
+                    var change = bu.RequiredInt64("change");
+                    if (change > 0)
+                    {
+                        if (bu.RequiredString("category")[0] == 'd')
+                            deposit = change;
+                        else
+                            reward = change;
+                    }
 
-        protected override JsonElement GetBlockDeposit(JsonElement metadata)
-        {
-            return metadata
-                .RequiredArray("balance_updates")
-                .EnumerateArray()
-                .Where(x => x.RequiredString("origin")[0] == 'b')
-                .Take(3)
-                .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
+                }
+            }
+            return (deposit, reward);
         }
     }
 }
