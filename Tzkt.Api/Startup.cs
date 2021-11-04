@@ -69,7 +69,7 @@ namespace Tzkt.Api
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    options.JsonSerializerOptions.MaxDepth = 10240;
+                    options.JsonSerializerOptions.MaxDepth = 100_000;
                     options.JsonSerializerOptions.IgnoreNullValues = true;
                     options.JsonSerializerOptions.Converters.Add(new AccountConverter());
                     options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
@@ -108,7 +108,7 @@ namespace Tzkt.Api
                 })
                 .AddJsonProtocol(jsonOptions =>
                 {
-                    jsonOptions.PayloadSerializerOptions.MaxDepth = 10240;
+                    jsonOptions.PayloadSerializerOptions.MaxDepth = 100_000;
                     jsonOptions.PayloadSerializerOptions.IgnoreNullValues = true;
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new AccountConverter());
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new DateTimeConverter());
