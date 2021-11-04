@@ -539,7 +539,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="to">End of the datetime range to filter by (ISO 8601, e.g. 2019-12-31)</param>
         /// <param name="delimiter">Column delimiter (`comma`, `semicolon`)</param>
         /// <param name="separator">Decimal separator (`comma`, `point`)</param>
-        /// <param name="currency">Currency to convert amounts to (`btc`, `eur`, `usd`, `cny`, `jpy`, `krw`, `eth`)</param>
+        /// <param name="currency">Currency to convert amounts to (`btc`, `eur`, `usd`, `cny`, `jpy`, `krw`, `eth`, `gbp`)</param>
         /// <param name="historical">`true` if you want to use historical prices, `false` to use current price</param>
         /// <returns></returns>
         [HttpGet("{address}/report")]
@@ -592,6 +592,7 @@ namespace Tzkt.Api.Controllers
                 "jpy" => 4,
                 "krw" => 5,
                 "eth" => 6,
+                "gbp" => 7,
                 _ => -1
             };
             #endregion

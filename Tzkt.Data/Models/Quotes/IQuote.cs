@@ -14,5 +14,6 @@ namespace Tzkt.Data.Models
         double Jpy { get; set; }
         double Krw { get; set; }
         double Eth { get; set; }
+        double Gbp { get; set; }
     }
 }

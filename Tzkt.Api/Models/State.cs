@@ -103,5 +103,10 @@ namespace Tzkt.Api.Models
         /// Last known XTZ/ETH price
         /// </summary>
         public double QuoteEth { get; set; }
+
+        /// <summary>
+        /// Last known XTZ/GBP price
+        /// </summary>
+        public double QuoteGbp { get; set; }
     }
 }

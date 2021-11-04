@@ -176,7 +176,7 @@ namespace Tzkt.Sync.Services
         {
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             if (conn.State != System.Data.ConnectionState.Open) conn.Open();
-            using var writer = conn.BeginBinaryImport(@"COPY ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"") FROM STDIN (FORMAT BINARY)");
+            using var writer = conn.BeginBinaryImport(@"COPY ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp"") FROM STDIN (FORMAT BINARY)");
 
             foreach (var q in quotes)
             {
@@ -190,6 +190,7 @@ namespace Tzkt.Sync.Services
                 writer.Write(q.Jpy);
                 writer.Write(q.Krw);
                 writer.Write(q.Eth);
+                writer.Write(q.Gbp);
             }
 
             writer.Complete();
@@ -198,8 +199,8 @@ namespace Tzkt.Sync.Services
         void UpdateState(AppState state, Quote quote)
         {
             Db.Database.ExecuteSqlRaw($@"
-                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{1}}, ""QuoteEur"" = {{2}}, ""QuoteUsd"" = {{3}}, ""QuoteCny"" = {{4}}, ""QuoteJpy"" = {{5}}, ""QuoteKrw"" = {{6}}, ""QuoteEth"" = {{7}};",
-                quote.Level, quote.Btc, quote.Eur, quote.Usd, quote.Cny, quote.Jpy, quote.Krw, quote.Eth);
+                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{1}}, ""QuoteEur"" = {{2}}, ""QuoteUsd"" = {{3}}, ""QuoteCny"" = {{4}}, ""QuoteJpy"" = {{5}}, ""QuoteKrw"" = {{6}}, ""QuoteEth"" = {{7}}, ""QuoteGbp"" = {{8}};",
+                quote.Level, quote.Btc, quote.Eur, quote.Usd, quote.Cny, quote.Jpy, quote.Krw, quote.Eth, quote.Gbp);
 
             state.QuoteLevel = quote.Level;
             state.QuoteBtc = quote.Btc;
@@ -209,14 +210,15 @@ namespace Tzkt.Sync.Services
             state.QuoteJpy = quote.Jpy;
             state.QuoteKrw = quote.Krw;
             state.QuoteEth = quote.Eth;
+            state.QuoteGbp = quote.Gbp;
         }
 
         void SaveAndUpdate(AppState state, Quote quote)
         {
             Db.Database.ExecuteSqlRaw($@"
-                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"") VALUES ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}, {{6}}, {{7}}, {{8}});
-                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{2}}, ""QuoteEur"" = {{3}}, ""QuoteUsd"" = {{4}}, ""QuoteCny"" = {{5}}, ""QuoteJpy"" = {{6}}, ""QuoteKrw"" = {{7}}, ""QuoteEth"" = {{8}};",
-                quote.Level, quote.Timestamp, quote.Btc, quote.Eur, quote.Usd, quote.Cny, quote.Jpy, quote.Krw, quote.Eth);
+                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp"") VALUES ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}, {{6}}, {{7}}, {{8}}, {{9}});
+                UPDATE ""AppState"" SET ""QuoteLevel"" = {{0}}, ""QuoteBtc"" = {{2}}, ""QuoteEur"" = {{3}}, ""QuoteUsd"" = {{4}}, ""QuoteCny"" = {{5}}, ""QuoteJpy"" = {{6}}, ""QuoteKrw"" = {{7}}, ""QuoteEth"" = {{8}}, ""QuoteGbp"" = {{9}};",
+                quote.Level, quote.Timestamp, quote.Btc, quote.Eur, quote.Usd, quote.Cny, quote.Jpy, quote.Krw, quote.Eth, quote.Gbp);
 
             state.QuoteLevel = quote.Level;
             state.QuoteBtc = quote.Btc;
@@ -226,6 +228,7 @@ namespace Tzkt.Sync.Services
             state.QuoteJpy = quote.Jpy;
             state.QuoteKrw = quote.Krw;
             state.QuoteEth = quote.Eth;
+            state.QuoteGbp = quote.Gbp;
         }
 
         void SaveAndUpdate(AppState state, IEnumerable<Quote> quotes)
@@ -235,10 +238,10 @@ namespace Tzkt.Sync.Services
 
             var sql = new StringBuilder();
             sql.AppendLine($@"
-                UPDATE ""AppState"" SET ""QuoteLevel"" = {last.Level}, ""QuoteBtc"" = {{0}}, ""QuoteEur"" = {{1}}, ""QuoteUsd"" = {{2}}, ""QuoteCny"" = {{3}}, ""QuoteJpy"" = {{4}}, ""QuoteKrw"" = {{5}}, ""QuoteEth"" = {{6}};
-                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"") VALUES");
+                UPDATE ""AppState"" SET ""QuoteLevel"" = {last.Level}, ""QuoteBtc"" = {{0}}, ""QuoteEur"" = {{1}}, ""QuoteUsd"" = {{2}}, ""QuoteCny"" = {{3}}, ""QuoteJpy"" = {{4}}, ""QuoteKrw"" = {{5}}, ""QuoteEth"" = {{6}}, ""QuoteGbp"" = {{7}};
+                INSERT INTO ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp"") VALUES");
 
-            var param = new List<object>(cnt * 7 + 6)
+            var param = new List<object>(cnt * 9 + 8)
             {
                 last.Btc,
                 last.Eur,
@@ -246,15 +249,16 @@ namespace Tzkt.Sync.Services
                 last.Cny,
                 last.Jpy,
                 last.Krw,
-                last.Eth
+                last.Eth,
+                last.Gbp
             };
 
-            var p = 7;
+            var p = 8;
             var i = 0;
 
             foreach (var q in quotes)
             {
-                sql.Append($"({q.Level}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}})");
+                sql.Append($"({q.Level}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}}, {{{p++}}})");
                 if (++i < cnt) sql.AppendLine(",");
                 else sql.AppendLine(";");
 
@@ -266,6 +270,7 @@ namespace Tzkt.Sync.Services
                 param.Add(q.Jpy);
                 param.Add(q.Krw);
                 param.Add(q.Eth);
+                param.Add(q.Gbp);
             }
 
             Db.Database.ExecuteSqlRaw(sql.ToString(), param);
@@ -278,6 +283,7 @@ namespace Tzkt.Sync.Services
             state.QuoteJpy = last.Jpy;
             state.QuoteKrw = last.Krw;
             state.QuoteEth = last.Eth;
+            state.QuoteGbp = last.Gbp;
         }
 
         IQuote LastQuote(AppState state) => state.QuoteLevel == -1 ? null : new Quote
@@ -288,7 +294,8 @@ namespace Tzkt.Sync.Services
             Cny = state.QuoteCny,
             Jpy = state.QuoteJpy,
             Krw = state.QuoteKrw,
-            Eth = state.QuoteEth
+            Eth = state.QuoteEth,
+            Gbp = state.QuoteGbp
         };
     }
 

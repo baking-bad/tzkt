@@ -48,5 +48,10 @@ namespace Tzkt.Api.Models
         /// XTZ/ETH price
         /// </summary>
         public double Eth { get; set; }
+
+        /// <summary>
+        /// XTZ/GBP price
+        /// </summary>
+        public double Gbp { get; set; }
     }
 }
