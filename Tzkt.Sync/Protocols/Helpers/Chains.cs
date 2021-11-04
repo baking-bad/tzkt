@@ -9,6 +9,7 @@
             "NetXxkAx4woPLyu" => "florencenet",
             "NetXz969SFaFn8k" => "granadanet",
             "NetXuXoGoLxNK6o" => "hangzhounet",
+            "NetXZSsxBpMQeAT" => "hangzhou2net",
             _ => "private"
         };
     }
