@@ -10,8 +10,8 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20211007143935_Hangzhou")]
-    partial class Hangzhou
+    [Migration("20211105223424_SyncStateTriggers")]
+    partial class SyncStateTriggers
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -259,6 +259,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<double>("QuoteEur")
                         .HasColumnType("double precision");
 
+                    b.Property<double>("QuoteGbp")
+                        .HasColumnType("double precision");
+
                     b.Property<double>("QuoteJpy")
                         .HasColumnType("double precision");
 
@@ -340,6 +343,7 @@ namespace Tzkt.Data.Migrations
                             QuoteCny = 0.0,
                             QuoteEth = 0.0,
                             QuoteEur = 0.0,
+                            QuoteGbp = 0.0,
                             QuoteJpy = 0.0,
                             QuoteKrw = 0.0,
                             QuoteLevel = -1,
@@ -1670,6 +1674,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<double>("Eur")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Gbp")
                         .HasColumnType("double precision");
 
                     b.Property<double>("Jpy")
