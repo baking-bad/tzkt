@@ -420,7 +420,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task Subscribe(IClientProxy client, string connectionId, OperationsParameter parameter)
+        public async Task<int> Subscribe(IClientProxy client, string connectionId, OperationsParameter parameter)
         {
             Task sending = Task.CompletedTask;
             try
@@ -472,6 +472,7 @@ namespace Tzkt.Api.Websocket.Processors
                 sending = client.SendState(OperationsChannel, State.Current.Level);
 
                 Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, State.Current.Level);
+                return State.Current.Level;
             }
             catch (HubException)
             {
@@ -480,6 +481,7 @@ namespace Tzkt.Api.Websocket.Processors
             catch (Exception ex)
             {
                 Logger.LogError("Failed to add subscription: {0}", ex.Message);
+                return 0;
             }
             finally
             {

@@ -30,29 +30,29 @@ namespace Tzkt.Api.Websocket.Hubs
             Accounts = accounts;
         }
 
-        public Task SubscribeToHead()
+        public Task<int> SubscribeToHead()
         {
             return Head.Subscribe(Clients.Caller, Context.ConnectionId);
         }
 
-        public Task SubscribeToBlocks()
+        public Task<int> SubscribeToBlocks()
         {
             return Blocks.Subscribe(Clients.Caller, Context.ConnectionId);
         }
 
-        public Task SubscribeToOperations(OperationsParameter parameters)
+        public Task<int> SubscribeToOperations(OperationsParameter parameters)
         {
             parameters.EnsureValid();
             return Operations.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task SubscribeToBigMaps(BigMapsParameter parameters)
+        public Task<int> SubscribeToBigMaps(BigMapsParameter parameters)
         {
             parameters.EnsureValid();
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
         
-        public Task SubscribeToAccounts(AccountsParameter parameters)
+        public Task<int> SubscribeToAccounts(AccountsParameter parameters)
         {
             parameters.EnsureValid();
             return Accounts.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
