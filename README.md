@@ -278,21 +278,21 @@ dotnet Tzkt.Api.dll
 // ....
 ````
 
-That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates. If you want to run API on a different port, add the `"Kestrel"` section to the `appsettings.json` (see example below).
+That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates. If you want to run API on a different port, change the `"Kestrel"` section in the `appsettings.json`.
 
 ## Install Tzkt Indexer and API for testnets
 
-In general the steps are the same as for the mainnet, you just need to use different database, different snapshot and different appsettings (RPC endpoint). Here are some presets for testnets:
- - Florencenet:
-   - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_florencenet.backup
-   - RPC node: https://rpc.tzkt.io/florencenobanet/
+In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
  - Granadanet:
    - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_granadanet.backup
-   - RPC node: https://rpc.tzkt.io/granadanet/
+   - RPC node: https://rpc.tzkt.io/granadanet/    
+ - Hangzhou2net:
+   - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_hangzhou2net.backup
+   - RPC node: https://rpc.tzkt.io/hangzhou2net/
 
 ### Testnet installation using docker containers
 
-First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Florencenet use the `florance-` prefix):
+First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Hanghzou2net use the `hanghzou-` prefix):
 
 ````sh
 git clone https://github.com/baking-bad/tzkt.git
@@ -300,7 +300,7 @@ cd tzkt/
 
 make granada-init #run this command if you want to restore the DB from the latest snapshot
 make granada-start
-# for florencenet used port 5020
+# for hangzhou2net used port 5020
 curl http://127.0.0.1:5010/v1/head 
 
 make granada-stop

@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  florence-db:
-    container_name: florence-db
+  hangzhou-db:
+    container_name: hanghzou-db
     restart: always
     image: postgres:13
     environment:
@@ -16,29 +16,29 @@ services:
     ports:
       - 0.0.0.0:5434:5432
 
-  florence-api:
-    container_name: florence-api
+  hangzhou-api:
+    container_name: hanghzou-api
     restart: always
     image: bakingbad/tzkt-api:latest
     depends_on:
-      - florence-db
+      - hanghzou-db
     environment:
       TZKT_API_KESTREL__ENDPOINTS__HTTP__URL: http://0.0.0.0:5000
-      TZKT_API_ConnectionStrings__DefaultConnection: server=florence-db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
+      TZKT_API_ConnectionStrings__DefaultConnection: server=hanghzou-db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
     expose:
       - 5000
     ports:
       - 0.0.0.0:5020:5000
 
-  florence-sync:
-    container_name: florence-sync
+  hangzhou-sync:
+    container_name: hanghzou-sync
     restart: always
     image: bakingbad/tzkt-sync:latest
     environment:
-      TZKT_TezosNode__Endpoint: https://rpc.tzkt.io/florencenobanet/
-      TZKT_ConnectionStrings__DefaultConnection: server=florence-db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
+      TZKT_TezosNode__Endpoint: https://rpc.tzkt.io/hangzhou2net/
+      TZKT_ConnectionStrings__DefaultConnection: server=hangzhou-db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
     depends_on:
-      - florence-db
+      - hangzhou-db
 
 volumes:
   postgres:

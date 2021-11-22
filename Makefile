@@ -67,25 +67,25 @@ granada-stop:
 granada-db:
 	docker-compose -f docker-compose.granada.yml up -d granada-db
 	
-florence-init:
-	docker build -t tzkt-snapshot-florence -f Dockerfile-florence-snapshot .
-	docker run --name tzkt-florence-snapshot tzkt-snapshot-florence
-	docker cp tzkt-florence-snapshot:/florence_db.backup .
-	docker rm tzkt-florence-snapshot
-	docker-compose -f docker-compose.florence.yml up -d florence-db
-	docker-compose -f docker-compose.florence.yml exec -T florence-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.florence.yml exec -T florence-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.florence.yml exec -T florence-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.florence.yml exec -T florence-db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < florence_db.backup
-	rm florence_db.backup
-	docker rmi tzkt-snapshot-florence
+hangzhou-init:
+	docker build -t tzkt-snapshot-hangzhou -f Dockerfile-hangzhou-snapshot .
+	docker run --name tzkt-hangzhou-snapshot tzkt-snapshot-hangzhou
+	docker cp tzkt-hangzhou-snapshot:/hangzhou_db.backup .
+	docker rm tzkt-hangzhou-snapshot
+	docker-compose -f docker-compose.hangzhou.yml up -d hangzhou-db
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < hangzhou_db.backup
+	rm hangzhou_db.backup
+	docker rmi tzkt-snapshot-hangzhou
 	docker-compose pull
 	
-florence-start:
-	docker-compose -f docker-compose.florence.yml up -d
+hangzhou-start:
+	docker-compose -f docker-compose.hangzhou.yml up -d
 
-florence-stop:
-	docker-compose -f docker-compose.florence.yml down
+hangzhou-stop:
+	docker-compose -f docker-compose.hangzhou.yml down
 
-florence-db:
-	docker-compose -f docker-compose.florence.yml up -d florence-db
+hangzhou-db:
+	docker-compose -f docker-compose.hangzhou.yml up -d hangzhou-db

@@ -637,6 +637,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     foreach (var bytes in script.Views)
                         code.Add(Micheline.FromBytes(bytes));
 
+                // TODO: we're actually missing constants in parameter and storage,
+                // as they were expanded, so refs may be reverted inaccurately.
                 var constants = await Constants.Find(Db, code);
                 foreach (var constant in constants)
                 {
