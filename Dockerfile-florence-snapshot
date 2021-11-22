@@ -1,3 +1,0 @@
-FROM cirrusci/wget
-
-RUN wget "https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_florencenet.backup" -O florence_db.backup
