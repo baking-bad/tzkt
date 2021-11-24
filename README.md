@@ -292,7 +292,7 @@ In general the steps are the same as for the mainnet, you just need to use diffe
 
 ### Testnet installation using docker containers
 
-First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Hanghzou2net use the `hanghzou-` prefix):
+First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Hangzhou2net use the `hangzhou-` prefix):
 
 ````sh
 git clone https://github.com/baking-bad/tzkt.git
