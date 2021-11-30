@@ -74,7 +74,7 @@ hangzhou-init:
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt install -y wget
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_hangzhou2net.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 8 tzkt_db.backup
-	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db rm tzktgranada.backup
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db rm tzkt_db.backup
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
