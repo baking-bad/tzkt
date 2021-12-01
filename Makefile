@@ -1,16 +1,15 @@
 init:
-	docker build -t tzkt-snapshot-dl -f Dockerfile-snapshot .
-	docker run --name tzkt-snapshot tzkt-snapshot-dl
-	docker cp tzkt-snapshot:/tzkt_db.backup .
-	docker rm tzkt-snapshot
-	docker-compose up -d db
+	docker-compose up   -d db
 	docker-compose exec -T db psql -U tzkt postgres -c '\l'
 	docker-compose exec -T db dropdb -U tzkt --if-exists tzkt_db
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
-	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < tzkt_db.backup
-	rm tzkt_db.backup
-	docker rmi tzkt-snapshot-dl
-	docker-compose pull
+	docker-compose exec -T db apt update
+	docker-compose exec -T db apt install -y wget
+	docker-compose exec -T db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_mainnet.backup" -O tzkt_db.backup
+	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose exec -T db rm tzkt_db.backup
+	docker-compose exec -T db apt autoremove --purge -y wget
+	docker-compose pull	
 
 start:
 	docker-compose up -d
@@ -25,7 +24,7 @@ update:
 clean:
 	docker system prune --force
 
-db:
+db-start:
 	docker-compose up -d db
 
 migration:
@@ -45,17 +44,16 @@ sync-image:
 	docker build -t bakingbad/tzkt-sync:latest -f ./Tzkt.Sync/Dockerfile .
 	
 granada-init:
-	docker build -t tzkt-snapshot-granada -f Dockerfile-granada-snapshot .
-	docker run --name tzkt-granada-snapshot tzkt-snapshot-granada
-	docker cp tzkt-granada-snapshot:/granada_db.backup .
-	docker rm tzkt-granada-snapshot
-	docker-compose -f docker-compose.granada.yml up -d granada-db
+	docker-compose -f docker-compose.granada.yml up   -d granada-db
 	docker-compose -f docker-compose.granada.yml exec -T granada-db psql -U tzkt postgres -c '\l'
 	docker-compose -f docker-compose.granada.yml exec -T granada-db dropdb -U tzkt --if-exists tzkt_db
 	docker-compose -f docker-compose.granada.yml exec -T granada-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.granada.yml exec -T granada-db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < granada_db.backup
-	rm granada_db.backup
-	docker rmi tzkt-snapshot-granada
+	docker-compose -f docker-compose.granada.yml exec -T granada-db apt update
+	docker-compose -f docker-compose.granada.yml exec -T granada-db apt install -y wget
+	docker-compose -f docker-compose.granada.yml exec -T granada-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_granadanet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.granada.yml exec -T granada-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.granada.yml exec -T granada-db rm tzkt_db.backup
+	docker-compose -f docker-compose.granada.yml exec -T granada-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
 granada-start:
@@ -64,22 +62,21 @@ granada-start:
 granada-stop:
 	docker-compose -f docker-compose.granada.yml down
 
-granada-db:
+granada-db-start:
 	docker-compose -f docker-compose.granada.yml up -d granada-db
 	
 hangzhou-init:
-	docker build -t tzkt-snapshot-hangzhou -f Dockerfile-hangzhou-snapshot .
-	docker run --name tzkt-hangzhou-snapshot tzkt-snapshot-hangzhou
-	docker cp tzkt-hangzhou-snapshot:/hangzhou_db.backup .
-	docker rm tzkt-hangzhou-snapshot
-	docker-compose -f docker-compose.hangzhou.yml up -d hangzhou-db
+	docker-compose -f docker-compose.hangzhou.yml up   -d hangzhou-db
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db psql -U tzkt postgres -c '\l'
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db dropdb -U tzkt --if-exists tzkt_db
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db pg_restore -U tzkt -O -x -v -d tzkt_db -1 < hangzhou_db.backup
-	rm hangzhou_db.backup
-	docker rmi tzkt-snapshot-hangzhou
-	docker-compose pull
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt update
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt install -y wget
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_hangzhou2net.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db rm tzkt_db.backup
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt autoremove --purge -y wget
+	docker-compose pull	
 	
 hangzhou-start:
 	docker-compose -f docker-compose.hangzhou.yml up -d
@@ -87,5 +84,5 @@ hangzhou-start:
 hangzhou-stop:
 	docker-compose -f docker-compose.hangzhou.yml down
 
-hangzhou-db:
+hangzhou-db-start:
 	docker-compose -f docker-compose.hangzhou.yml up -d hangzhou-db

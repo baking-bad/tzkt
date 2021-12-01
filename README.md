@@ -88,7 +88,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -284,15 +284,15 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
  - Granadanet:
-   - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_granadanet.backup
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_granadanet.backup
    - RPC node: https://rpc.tzkt.io/granadanet/    
  - Hangzhou2net:
-   - Snapshot: https://tzkt.s3.eu-central-1.amazonaws.com/snapshots/tzkt_v1.6_hangzhou2net.backup
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_hangzhou2net.backup
    - RPC node: https://rpc.tzkt.io/hangzhou2net/
 
 ### Testnet installation using docker containers
 
-First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Hanghzou2net use the `hanghzou-` prefix):
+First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Hangzhou2net use the `hangzhou-` prefix):
 
 ````sh
 git clone https://github.com/baking-bad/tzkt.git
