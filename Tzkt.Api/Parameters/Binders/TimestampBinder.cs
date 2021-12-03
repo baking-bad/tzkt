@@ -55,12 +55,12 @@ namespace Tzkt.Api
 
             bindingContext.Result = ModelBindingResult.Success(new TimestampParameter
             {
-                Eq = (value ?? eq) == null ? null : (int?)Time.FindLevel((DateTime)(value ?? eq), SearchMode.Exact),
-                Ne = ne == null ? null : (int?)Time.FindLevel((DateTime)ne, SearchMode.Exact),
-                Gt = gt == null ? null : (int?)Time.FindLevel((DateTime)gt, SearchMode.ExactOrLower),
-                Ge = ge == null ? null : (int?)Time.FindLevel((DateTime)ge, SearchMode.ExactOrHigher),
-                Lt = lt == null ? null : (int?)Time.FindLevel((DateTime)lt, SearchMode.ExactOrHigher),
-                Le = le == null ? null : (int?)Time.FindLevel((DateTime)le, SearchMode.ExactOrLower),
+                Eq = (value ?? eq) == null ? null : Time.FindLevel((DateTime)(value ?? eq), SearchMode.Exact),
+                Ne = ne == null ? null : Time.FindLevel((DateTime)ne, SearchMode.Exact),
+                Gt = gt == null ? null : Time.FindLevel((DateTime)gt, SearchMode.ExactOrLower),
+                Ge = ge == null ? null : Time.FindLevel((DateTime)ge, SearchMode.ExactOrHigher),
+                Lt = lt == null ? null : Time.FindLevel((DateTime)lt, SearchMode.ExactOrHigher),
+                Le = le == null ? null : Time.FindLevel((DateTime)le, SearchMode.ExactOrLower),
                 In = @in?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),
                 Ni = ni?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),
             });

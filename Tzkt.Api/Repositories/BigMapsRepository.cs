@@ -942,6 +942,7 @@ namespace Tzkt.Api.Repositories
             BigMapActionParameter action,
             JsonParameter value,
             Int32Parameter level,
+            TimestampParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -954,6 +955,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Action", action)
                 .Filter("JsonValue", value)
                 .Filter("Level", level)
+                .Filter("Level", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -1026,6 +1028,7 @@ namespace Tzkt.Api.Repositories
             JsonParameter value,
             BigMapTagsParameter tags,
             Int32Parameter level,
+            TimestampParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -1045,6 +1048,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Tags", tags)
                 .Filter("ContractId", contract)
                 .Filter("Level", level)
+                .Filter("Level", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
