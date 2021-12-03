@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-
+﻿using Microsoft.Extensions.Configuration;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -31,6 +26,7 @@ namespace Tzkt.Api.Repositories
                 Cycle = appState.Cycle,
                 Level = appState.Level,
                 Protocol = appState.Protocol,
+                NextProtocol = appState.NextProtocol,
                 Timestamp = appState.Timestamp,
                 VotingEpoch = appState.VotingEpoch,
                 VotingPeriod = appState.VotingPeriod,

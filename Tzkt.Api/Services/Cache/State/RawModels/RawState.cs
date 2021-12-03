@@ -20,6 +20,8 @@ namespace Tzkt.Api.Services.Cache
 
         public string Protocol { get; set; }
 
+        public string NextProtocol { get; set; }
+
         public DateTime Timestamp { get; set; }
 
         public int VotingEpoch { get; set; }

@@ -33,7 +33,12 @@ namespace Tzkt.Api.Models
         /// Current protocol hash
         /// </summary>
         public string Protocol { get; set; }
-        
+
+        /// <summary>
+        /// Next block protocol hash
+        /// </summary>
+        public string NextProtocol { get; set; }
+
         /// <summary>
         /// The datetime at which the last block is claimed to have been created (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
