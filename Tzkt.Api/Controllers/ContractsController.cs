@@ -281,16 +281,28 @@ namespace Tzkt.Api.Controllers
         /// Returns a code of the specified contract.
         /// </remarks>
         /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="level">Level at which contract code should be taken. If `0` or not specified, the current value will be returned.</param>
         /// <param name="format">Code format (`0` - micheline, `1` - michelson, `2` - bytes (base64))</param>
         /// <returns></returns>
         [HttpGet("{address}/code")]
-        public async Task<object> GetCode([Required][KTAddress] string address, [Range(0, 2)] int format = 0)
+        public async Task<object> GetCode([Required][KTAddress] string address, [Min(0)] int level = 0, [Range(0, 2)] int format = 0)
         {
-            if (format == 0)
-                return await Accounts.GetMichelineCode(address);
-            else if (format == 1)
-                return await Accounts.GetMichelsonCode(address);
-            return await Accounts.GetByteCode(address);
+            if (level == 0)
+            {
+                if (format == 0)
+                    return await Accounts.GetMichelineCode(address);
+                else if (format == 1)
+                    return await Accounts.GetMichelsonCode(address);
+                return await Accounts.GetByteCode(address);
+            }
+            else
+            {
+                if (format == 0)
+                    return await Accounts.GetMichelineCode(address, level);
+                else if (format == 1)
+                    return await Accounts.GetMichelsonCode(address, level);
+                return await Accounts.GetByteCode(address, level);
+            }
         }
 
         /// <summary>

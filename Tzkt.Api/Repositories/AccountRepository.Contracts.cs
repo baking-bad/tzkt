@@ -639,6 +639,42 @@ namespace Tzkt.Api.Repositories
             return code.ToBytes();
         }
 
+        public async Task<byte[]> GetByteCode(string address, int level)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            if (level < contract.FirstLevel)
+                return null;
+
+            if (contract.Kind == 0)
+                return level < 655_360 && State.Current.Chain == "mainnet"
+                    ? null
+                    : Data.Models.Script.ManagerTzBytes;
+
+            if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
+                return await GetByteCode(address);
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT *
+                FROM ""Scripts""
+                WHERE ""ContractId"" = {contract.Id}
+                AND ""Level"" <= {level}
+                ORDER BY ""Level"" DESC
+                LIMIT 1");
+            if (row == null) return null;
+
+            var code = new MichelineArray();
+            code.Add(Micheline.FromBytes(row.ParameterSchema));
+            code.Add(Micheline.FromBytes(row.StorageSchema));
+            if (row.Views != null)
+                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            code.Add(Micheline.FromBytes(row.CodeSchema));
+
+            return code.ToBytes();
+        }
+
         public async Task<IMicheline> GetMichelineCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
@@ -661,6 +697,42 @@ namespace Tzkt.Api.Repositories
             return code;
         }
 
+        public async Task<IMicheline> GetMichelineCode(string address, int level)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            if (level < contract.FirstLevel)
+                return null;
+
+            if (contract.Kind == 0)
+                return level < 655_360 && State.Current.Chain == "mainnet"
+                    ? null
+                    : Micheline.FromBytes(Data.Models.Script.ManagerTzBytes);
+
+            if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
+                return await GetMichelineCode(address);
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT *
+                FROM ""Scripts""
+                WHERE ""ContractId"" = {contract.Id}
+                AND ""Level"" <= {level}
+                ORDER BY ""Level"" DESC
+                LIMIT 1");
+            if (row == null) return null;
+
+            var code = new MichelineArray();
+            code.Add(Micheline.FromBytes(row.ParameterSchema));
+            code.Add(Micheline.FromBytes(row.StorageSchema));
+            if (row.Views != null)
+                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            code.Add(Micheline.FromBytes(row.CodeSchema));
+
+            return code;
+        }
+
         public async Task<string> GetMichelsonCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
@@ -671,6 +743,42 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null) return null;
+
+            var code = new MichelineArray();
+            code.Add(Micheline.FromBytes(row.ParameterSchema));
+            code.Add(Micheline.FromBytes(row.StorageSchema));
+            if (row.Views != null)
+                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+            code.Add(Micheline.FromBytes(row.CodeSchema));
+
+            return code.ToMichelson();
+        }
+
+        public async Task<string> GetMichelsonCode(string address, int level)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            if (level < contract.FirstLevel)
+                return null;
+
+            if (contract.Kind == 0)
+                return level < 655_360 && State.Current.Chain == "mainnet"
+                    ? null
+                    : Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToMichelson();
+
+            if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
+                return await GetMichelsonCode(address);
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"
+                SELECT *
+                FROM ""Scripts""
+                WHERE ""ContractId"" = {contract.Id}
+                AND ""Level"" <= {level}
+                ORDER BY ""Level"" DESC
+                LIMIT 1");
             if (row == null) return null;
 
             var code = new MichelineArray();
@@ -906,14 +1014,16 @@ namespace Tzkt.Api.Repositories
             if (level < contract.FirstLevel)
                 return null;
 
-            if (level >= contract.LastLevel)
-                return await GetStorageValue(address, path);
-
             if (contract.Kind == 0)
             {
+                if (level < 655_360 && State.Current.Chain == "mainnet")
+                    return null;
                 var manager = await Accounts.GetAsync((int)contract.ManagerId);
                 return path?.Length > 0 ? null : $"\"{manager.Address}\"";
             }
+
+            if (level >= contract.LastLevel)
+                return await GetStorageValue(address, path);
 
             var pathSelector = path == null ? string.Empty : " #> @path";
             var pathParam = path == null ? null : new { path = JsonPath.Select(path) };
@@ -961,14 +1071,16 @@ namespace Tzkt.Api.Repositories
             if (level < contract.FirstLevel)
                 return null;
 
-            if (level >= contract.LastLevel)
-                return await GetRawStorageValue(address);
-
             if (contract.Kind == 0)
             {
+                if (level < 655_360 && State.Current.Chain == "mainnet")
+                    return null;
                 var manager = await Accounts.GetAsync((int)contract.ManagerId);
                 return new MichelineString(manager.Address);
             }
+
+            if (level >= contract.LastLevel)
+                return await GetRawStorageValue(address);
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
@@ -1011,11 +1123,13 @@ namespace Tzkt.Api.Repositories
             if (level < contract.FirstLevel)
                 return null;
 
+            if (contract.Kind == 0)
+                return level < 655_360 && State.Current.Chain == "mainnet"
+                    ? null
+                    : Data.Models.Script.ManagerTz.Storage.Humanize();
+
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetStorageSchema(address);
-
-            if (contract.Kind == 0)
-                return Data.Models.Script.ManagerTz.Storage.Humanize();
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
@@ -1058,11 +1172,13 @@ namespace Tzkt.Api.Repositories
             if (level < contract.FirstLevel)
                 return null;
 
+            if (contract.Kind == 0)
+                return level < 655_360 && State.Current.Chain == "mainnet"
+                    ? null
+                    : Data.Models.Script.ManagerTz.Storage.Schema.ToMicheline();
+
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetRawStorageSchema(address);
-
-            if (contract.Kind == 0)
-                return Data.Models.Script.ManagerTz.Storage.Schema.ToMicheline();
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync($@"
