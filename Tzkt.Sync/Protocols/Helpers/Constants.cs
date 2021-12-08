@@ -23,7 +23,6 @@ namespace Tzkt.Sync.Protocols
                     break;
 
                 var constants = await db.RegisterConstantOps
-                    .AsNoTracking()
                     .Where(x => pendingConstants.Contains(x.Address))
                     .ToListAsync();
 
