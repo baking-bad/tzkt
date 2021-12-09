@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -73,6 +74,9 @@ namespace Tzkt.Sync
             using var scope = host.Services.CreateScope();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
+
+            logger.LogInformation("Version {verion}",
+                Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
             try
             {
