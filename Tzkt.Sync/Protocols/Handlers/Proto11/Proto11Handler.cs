@@ -186,6 +186,7 @@ namespace Tzkt.Sync.Protocols
             #endregion
 
             await bigMapCommit.Apply();
+            await new TokensCommit(this).Apply(blockCommit.Block, bigMapCommit.Updates);
 
             var brCommit = new BakingRightsCommit(this);
             await brCommit.Apply(blockCommit.Block);
@@ -285,6 +286,7 @@ namespace Tzkt.Sync.Protocols
             await new DelegatorCycleCommit(this).Revert(currBlock);
             await new CycleCommit(this).Revert(currBlock);
             await new BakingRightsCommit(this).Revert(currBlock);
+            await new TokensCommit(this).Revert(currBlock);
             await new BigMapCommit(this).Revert(currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))

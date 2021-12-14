@@ -38,6 +38,40 @@ namespace Tzkt.Sync.Services.Cache
             }
         }
 
+        public async Task Preload(IEnumerable<int> ids)
+        {
+            var missed = ids.Where(x => !CachedById.ContainsKey(x)).ToHashSet();
+            if (missed.Count > 0)
+            {
+                CheckSpaceFor(missed.Count);
+
+                var accounts = await Db.Accounts.Where(x => missed.Contains(x.Id)).ToListAsync();
+                
+                foreach (var account in accounts)
+                {
+                    CachedById[account.Id] = account;
+                    CachedByAddress[account.Address] = account;
+                }
+            }
+        }
+
+        public async Task Preload(IEnumerable<string> addresses)
+        {
+            var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToHashSet();
+            if (missed.Count > 0)
+            {
+                CheckSpaceFor(missed.Count);
+
+                var accounts = await Db.Accounts.Where(x => missed.Contains(x.Address)).ToListAsync();
+
+                foreach (var account in accounts)
+                {
+                    CachedById[account.Id] = account;
+                    CachedByAddress[account.Address] = account;
+                }
+            }
+        }
+
         public async Task LoadAsync(IEnumerable<string> addresses)
         {
             var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToHashSet();
@@ -58,7 +92,6 @@ namespace Tzkt.Sync.Services.Cache
                     foreach (var address in missed.Where(x => !CachedByAddress.ContainsKey(x) && x[0] == 't'))
                     {
                         var account = CreateUser(address);
-
                         CachedById[account.Id] = account;
                         CachedByAddress[account.Address] = account;
                     }
@@ -107,6 +140,21 @@ namespace Tzkt.Sync.Services.Cache
             }
 
             return account != null && (account.Type == type || type == null);
+        }
+
+        public Account GetCached(int id)
+        {
+            return CachedById[id];
+        }
+
+        public Account GetCached(string address)
+        {
+            return CachedByAddress[address];
+        }
+
+        public bool TryGetCached(string address, out Account account)
+        {
+            return CachedByAddress.TryGetValue(address, out account);
         }
 
         public async Task<Account> GetAsync(int? id)
@@ -173,7 +221,7 @@ namespace Tzkt.Sync.Services.Cache
 
             if (CachedByAddress.TryGetValue(address, out var account) && account is Data.Models.Delegate delegat)
                 return delegat;
-         
+
             throw new Exception($"Unknown delegate '{address}'");
         }
 

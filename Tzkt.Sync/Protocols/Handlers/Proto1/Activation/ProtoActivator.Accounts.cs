@@ -33,6 +33,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region allocate null-address
             var nullAddress = (User)await Cache.Accounts.GetAsync(NullAddress.Address);
+            nullAddress.FirstLevel = 1;
+            nullAddress.LastLevel = 1;
             if (nullAddress.Id != NullAddress.Id)
                 throw new Exception("Failed to allocate null-address");
             #endregion

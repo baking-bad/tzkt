@@ -76,9 +76,30 @@ namespace Tzkt.Sync.Services.Cache
             return block;
         }
 
+        public Block GetCached(int level)
+        {
+            if (!CachedBlocks.TryGetValue(level, out var block))
+                throw new Exception($"Block #{level} is not cached");
+            return block;
+        }
+
         public void Remove(Block block)
         {
             CachedBlocks.Remove(block.Level);
+        }
+
+        public async Task Preload(IEnumerable<int> levels)
+        {
+            var missed = levels.Where(x => !CachedBlocks.ContainsKey(x)).ToHashSet();
+            if (missed.Count > 0)
+            {
+                var items = await Db.Blocks
+                    .Where(x => missed.Contains(x.Level))
+                    .ToListAsync();
+
+                foreach (var item in items)
+                    Add(item);
+            }
         }
 
         void CheckSpace()

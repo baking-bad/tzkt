@@ -31,6 +31,8 @@ namespace Tzkt.Data.Models
         public int BigMapUpdateCounter { get; set; }
         public int StorageCounter { get; set; }
         public int ScriptCounter { get; set; }
+        public int TokenCounter { get; set; }
+        public int TokenBalanceCounter { get; set; }
         #endregion
 
         #region entities count
@@ -60,6 +62,10 @@ namespace Tzkt.Data.Models
 
         public int CyclesCount { get; set; }
         public int ConstantsCount { get; set; }
+
+        public int TokensCount { get; set; }
+        public int TokenBalancesCount { get; set; }
+        public int TokenTransfersCount { get; set; }
         #endregion
 
         #region quotes

@@ -49,9 +49,21 @@ namespace Tzkt.Data.Models
     [Flags]
     public enum BigMapTag
     {
-        None                = 0b_0000,
-        TokenMetadata       = 0b_0001, // tzip-12
-        Metadata            = 0b_0010, // tzip-16
+        None            = 0b_0000_0000_0000_0000,
+        Persistent      = 0b_0000_0000_0000_0001, // is not a list/set/map item
+        Metadata        = 0b_0000_0000_0000_0010, // big_map %metadata string bytes
+        TokenMetadata   = 0b_0000_0000_0000_0100, // big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes))
+
+        Ledger          = 0b_0000_0000_0001_0000, // ledger
+        Ledger1         = 0b_0000_0000_0011_0000, // big_map address nat
+        Ledger2         = 0b_0000_0000_0101_0000, // big_map nat address
+        Ledger3         = 0b_0000_0000_1001_0000, // big_map (pair address nat) nat
+        Ledger4         = 0b_0000_0001_0001_0000, // big_map (pair nat address) nat
+        Ledger5         = 0b_0000_0010_0001_0000, // big_map address (pair nat (map address nat))
+        Ledger6         = 0b_0000_0100_0001_0000, // big_map address (pair (map address nat) nat)
+        Ledger7         = 0b_0000_1000_0001_0000, // big_map bytes bytes
+        LedgerTypes     = 0b_0000_1111_1110_0000,
+        LedgerMask      = 0b_0000_1111_1111_0000,
     }
 
     public static class BigMapModel

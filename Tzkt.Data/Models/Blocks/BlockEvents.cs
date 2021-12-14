@@ -15,6 +15,7 @@ namespace Tzkt.Data.Models
         BalanceSnapshot     = 0b_0000_0100_0000,
         SmartContracts      = 0b_0000_1000_0000,
         DelegatorContracts  = 0b_0001_0000_0000,
-        Bigmaps             = 0b_0010_0000_0000
+        Bigmaps             = 0b_0010_0000_0000,
+        Tokens              = 0b_0100_0000_0000
     }
 }

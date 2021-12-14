@@ -75,6 +75,12 @@ namespace Tzkt.Data
         public DbSet<BigMapUpdate> BigMapUpdates { get; set; }
         #endregion
 
+        #region tokens
+        public DbSet<Token> Tokens { get; set; }
+        public DbSet<TokenBalance> TokenBalances { get; set; }
+        public DbSet<TokenTransfer> TokenTransfers { get; set; }
+        #endregion
+
         public TzktContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -146,6 +152,12 @@ namespace Tzkt.Data
             modelBuilder.BuildBigMapModel();
             modelBuilder.BuildBigMapKeyModel();
             modelBuilder.BuildBigMapUpdateModel();
+            #endregion
+
+            #region tokens
+            modelBuilder.BuildTokenModel();
+            modelBuilder.BuildTokenBalanceModel();
+            modelBuilder.BuildTokenTransferModel();
             #endregion
         }
     }

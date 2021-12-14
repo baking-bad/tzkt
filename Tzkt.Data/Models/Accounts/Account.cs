@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
-    public abstract class Account
+    public class Account
     {
         public int Id { get; set; }
         public string Address { get; set; }
@@ -16,6 +16,9 @@ namespace Tzkt.Data.Models
         public int Counter { get; set; }
 
         public int ContractsCount { get; set; }
+        public int ActiveTokensCount { get; set; }
+        public int TokenBalancesCount { get; set; }
+        public int TokenTransfersCount { get; set; }
 
         public int DelegationsCount { get; set; }
         public int OriginationsCount { get; set; }
@@ -39,6 +42,14 @@ namespace Tzkt.Data.Models
         public override string ToString() => Address;
     }
 
+    public enum AccountType : byte
+    {
+        User,
+        Delegate,
+        Contract,
+        Ghost
+    }
+
     public static class AccountModel
     {
         public static void BuildAccountModel(this ModelBuilder modelBuilder)
@@ -53,7 +64,8 @@ namespace Tzkt.Data.Models
                 .HasDiscriminator<AccountType>(nameof(Account.Type))
                 .HasValue<User>(AccountType.User)
                 .HasValue<Delegate>(AccountType.Delegate)
-                .HasValue<Contract>(AccountType.Contract);
+                .HasValue<Contract>(AccountType.Contract)
+                .HasValue<Account>(AccountType.Ghost);
 
             modelBuilder.Entity<Account>()
                 .Property(x => x.Type)
@@ -109,12 +121,5 @@ namespace Tzkt.Data.Models
                 .HasForeignKey(x => x.DelegateId);
             #endregion
         }
-    }
-
-    public enum AccountType : byte
-    {
-        User,
-        Delegate,
-        Contract
     }
 }

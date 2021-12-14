@@ -30,26 +30,69 @@ namespace Tzkt.Sync.Protocols.Proto1
             var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
+            Db.TryAttach(block.Baker);
+            Db.TryAttach(sender);
+            Db.TryAttach(sender.Delegate);
+            Db.TryAttach(manager);
+            Db.TryAttach(delegat);
+
             var result = content.Required("metadata").Required("operation_result");
 
-            var contract = result.RequiredString("status") == "applied" ?
-                new Contract
+            Contract contract = null;
+            if (result.RequiredString("status") == "applied")
+            {
+                var address = result.RequiredArray("originated_contracts", 1)[0].RequiredString();
+                var ghost = await Cache.Accounts.GetAsync(address);
+                if (ghost != null)
                 {
-                    Id = Cache.AppState.NextAccountId(),
-                    Address = result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
-                    Balance = content.RequiredInt64("balance"),
-                    Counter = 0,
-                    Delegate = delegat,
-                    DelegationLevel = delegat != null ? (int?)block.Level : null,
-                    WeirdDelegate = await GetWeirdDelegate(content),
-                    Creator = sender,
-                    Manager = manager,
-                    Staked = delegat?.Staked ?? false,
-                    Type = AccountType.Contract,
-                    Kind = GetContractKind(content),
-                    Spendable = GetSpendable(content)
+                    contract = new Contract
+                    {
+                        Id = ghost.Id,
+                        FirstLevel = ghost.FirstLevel,
+                        LastLevel = ghost.LastLevel,
+                        Address = address,
+                        Balance = content.RequiredInt64("balance"),
+                        Counter = 0,
+                        Delegate = delegat,
+                        DelegationLevel = delegat != null ? block.Level : null,
+                        WeirdDelegate = await GetWeirdDelegate(content),
+                        Creator = sender,
+                        Manager = manager,
+                        Staked = delegat?.Staked ?? false,
+                        Type = AccountType.Contract,
+                        Kind = GetContractKind(content),
+                        Spendable = GetSpendable(content),
+                        ActiveTokensCount = ghost.ActiveTokensCount,
+                        TokenBalancesCount = ghost.TokenBalancesCount,
+                        TokenTransfersCount = ghost.TokenTransfersCount
+                    };
+                    Db.Entry(ghost).State = EntityState.Detached;
+                    Db.Entry(contract).State = EntityState.Modified;
                 }
-                : null;
+                else
+                {
+                    contract = new Contract
+                    {
+                        Id = Cache.AppState.NextAccountId(),
+                        FirstLevel = block.Level,
+                        LastLevel = block.Level,
+                        Address = address,
+                        Balance = content.RequiredInt64("balance"),
+                        Counter = 0,
+                        Delegate = delegat,
+                        DelegationLevel = delegat != null ? block.Level : null,
+                        WeirdDelegate = await GetWeirdDelegate(content),
+                        Creator = sender,
+                        Manager = manager,
+                        Staked = delegat?.Staked ?? false,
+                        Type = AccountType.Contract,
+                        Kind = GetContractKind(content),
+                        Spendable = GetSpendable(content)
+                    };
+                    Db.Contracts.Add(contract);
+                }
+                Cache.Accounts.Add(contract);
+            }
 
             var origination = new OriginationOperation
             {
@@ -95,12 +138,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             var contractManager = origination.Manager;
 
             //Db.TryAttach(block);
-            Db.TryAttach(blockBaker);
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            Db.TryAttach(contract);
-            Db.TryAttach(contractDelegate);
-            Db.TryAttach(contractManager);
+            //Db.TryAttach(blockBaker);
+            //Db.TryAttach(sender);
+            //Db.TryAttach(senderDelegate);
+            //Db.TryAttach(contract);
+            //Db.TryAttach(contractDelegate);
+            //Db.TryAttach(contractManager);
             #endregion
 
             #region apply operation
@@ -147,8 +190,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 block.Events |= GetBlockEvents(contract);
 
-                Db.Contracts.Add(contract);
-
                 if (contract.Kind > ContractKind.DelegatorContract)
                 {
                     var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
@@ -178,26 +219,68 @@ namespace Tzkt.Sync.Protocols.Proto1
             var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
+            Db.TryAttach(sender);
+            Db.TryAttach(sender.Delegate);
+            Db.TryAttach(manager);
+            Db.TryAttach(delegat);
+
             var result = content.Required("result");
 
-            var contract = result.RequiredString("status") == "applied" ?
-                new Contract
+            Contract contract = null;
+            if (result.RequiredString("status") == "applied")
+            {
+                var address = result.RequiredArray("originated_contracts", 1)[0].RequiredString();
+                var ghost = await Cache.Accounts.GetAsync(address);
+                if (ghost != null)
                 {
-                    Id = Cache.AppState.NextAccountId(),
-                    Address = result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
-                    Balance = content.RequiredInt64("balance"),
-                    Counter = 0,
-                    Delegate = delegat,
-                    DelegationLevel = delegat != null ? (int?)block.Level : null,
-                    WeirdDelegate = await GetWeirdDelegate(content),
-                    Creator = sender,
-                    Manager = manager,
-                    Staked = delegat?.Staked ?? false,
-                    Type = AccountType.Contract,
-                    Kind = manager == null && content.TryGetProperty("script", out var _) ? ContractKind.SmartContract : ContractKind.DelegatorContract,
-                    Spendable = GetSpendable(content)
+                    contract = new Contract
+                    {
+                        Id = ghost.Id,
+                        FirstLevel = ghost.FirstLevel,
+                        LastLevel = ghost.LastLevel,
+                        Address = address,
+                        Balance = content.RequiredInt64("balance"),
+                        Counter = 0,
+                        Delegate = delegat,
+                        DelegationLevel = delegat != null ? block.Level : null,
+                        WeirdDelegate = await GetWeirdDelegate(content),
+                        Creator = sender,
+                        Manager = manager,
+                        Staked = delegat?.Staked ?? false,
+                        Type = AccountType.Contract,
+                        Kind = GetContractKind(content),
+                        Spendable = GetSpendable(content),
+                        ActiveTokensCount = ghost.ActiveTokensCount,
+                        TokenBalancesCount = ghost.TokenBalancesCount,
+                        TokenTransfersCount = ghost.TokenTransfersCount
+                    };
+                    Db.Entry(ghost).State = EntityState.Detached;
+                    Db.Entry(contract).State = EntityState.Modified;
                 }
-                : null;
+                else
+                {
+                    contract = new Contract
+                    {
+                        Id = Cache.AppState.NextAccountId(),
+                        FirstLevel = block.Level,
+                        LastLevel = block.Level,
+                        Address = address,
+                        Balance = content.RequiredInt64("balance"),
+                        Counter = 0,
+                        Delegate = delegat,
+                        DelegationLevel = delegat != null ? (int?)block.Level : null,
+                        WeirdDelegate = await GetWeirdDelegate(content),
+                        Creator = sender,
+                        Manager = manager,
+                        Staked = delegat?.Staked ?? false,
+                        Type = AccountType.Contract,
+                        Kind = GetContractKind(content),
+                        Spendable = GetSpendable(content)
+                    };
+                    Db.Contracts.Add(contract);
+                }
+                Cache.Accounts.Add(contract);
+            }
 
             var origination = new OriginationOperation
             {
@@ -246,12 +329,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             //Db.TryAttach(parentSender);
             //Db.TryAttach(parentDelegate);
 
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
+            //Db.TryAttach(sender);
+            //Db.TryAttach(senderDelegate);
 
-            Db.TryAttach(contract);
-            Db.TryAttach(contractDelegate);
-            Db.TryAttach(contractManager);
+            //Db.TryAttach(contract);
+            //Db.TryAttach(contractDelegate);
+            //Db.TryAttach(contractManager);
             #endregion
 
             #region apply operation
@@ -297,8 +380,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount++;
 
                 block.Events |= GetBlockEvents(contract);
-
-                Db.Contracts.Add(contract);
 
                 if (contract.Kind > ContractKind.DelegatorContract)
                 {
@@ -374,8 +455,30 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contract.Kind > ContractKind.DelegatorContract)
                     await RevertScript(origination);
 
-                Db.Contracts.Remove(contract);
-                Cache.Accounts.Remove(contract);
+                if (contract.TokenTransfersCount == 0)
+                {
+                    Db.Contracts.Remove(contract);
+                    Cache.Accounts.Remove(contract);
+                }
+                else
+                {
+                    var ghost = new Account
+                    {
+                        Id = contract.Id,
+                        Address = contract.Address,
+                        FirstBlock = contract.FirstBlock,
+                        FirstLevel = contract.FirstLevel,
+                        LastLevel = contract.LastLevel,
+                        ActiveTokensCount = contract.ActiveTokensCount,
+                        TokenBalancesCount = contract.TokenBalancesCount,
+                        TokenTransfersCount = contract.TokenTransfersCount,
+                        Type = AccountType.Ghost,
+                    };
+
+                    Db.Entry(contract).State = EntityState.Detached;
+                    Db.Entry(ghost).State = EntityState.Modified;
+                    Cache.Accounts.Add(ghost);
+                }
             }
             #endregion
 
@@ -469,8 +572,30 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contract.Kind > ContractKind.DelegatorContract)
                     await RevertScript(origination);
 
-                Db.Contracts.Remove(contract);
-                Cache.Accounts.Remove(contract);
+                if (contract.TokenTransfersCount == 0)
+                {
+                    Db.Contracts.Remove(contract);
+                    Cache.Accounts.Remove(contract);
+                }
+                else
+                {
+                    var ghost = new Account
+                    {
+                        Id = contract.Id,
+                        Address = contract.Address,
+                        FirstBlock = contract.FirstBlock,
+                        FirstLevel = contract.FirstLevel,
+                        LastLevel = contract.LastLevel,
+                        ActiveTokensCount = contract.ActiveTokensCount,
+                        TokenBalancesCount = contract.TokenBalancesCount,
+                        TokenTransfersCount = contract.TokenTransfersCount,
+                        Type = AccountType.Ghost,
+                    };
+
+                    Db.Entry(contract).State = EntityState.Detached;
+                    Db.Entry(ghost).State = EntityState.Modified;
+                    Cache.Accounts.Add(ghost);
+                }
             }
             #endregion
 

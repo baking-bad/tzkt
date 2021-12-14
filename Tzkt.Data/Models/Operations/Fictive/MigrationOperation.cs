@@ -17,6 +17,7 @@ namespace Tzkt.Data.Models
         public int? ScriptId { get; set; }
         public int? StorageId { get; set; }
         public int? BigMapUpdates { get; set; }
+        public int? TokenTransfers { get; set; }
 
         #region relations
         [ForeignKey(nameof(Level))]

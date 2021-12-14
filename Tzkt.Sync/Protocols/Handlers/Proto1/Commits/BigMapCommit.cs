@@ -13,6 +13,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class BigMapCommit : ProtocolCommit
     {
+        public List<(BigMap, BigMapKey, BigMapUpdate, ContractOperation)> Updates = new();
+
         readonly List<(ContractOperation op, Contract contract, BigMapDiff diff)> Diffs = new();
         readonly Dictionary<int, int> TempPtrs = new(7);
         int TempPtr = 0;
@@ -82,6 +84,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await Db.BigMapKeys.AsNoTracking().Where(x => copiedFrom.Contains(x.BigMapPtr)).ToListAsync();
             #endregion
 
+            BigMapUpdate bigMapUpdate;
             var images = new Dictionary<int, Dictionary<string, BigMapKey>>();
             foreach (var diff in Diffs)
             {
@@ -107,20 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     .FirstOrDefault(x => x.Schema.Prim == PrimType.big_map && x.Value is MichelineInt v && v.Value == alloc.Ptr)
                                         ?? throw new Exception($"Allocated big_map {alloc.Ptr} missed in the storage");
                             }
-
                             var bigMapSchema = bigMapNode.Schema as BigMapSchema;
-
-                            Db.BigMapUpdates.Add(new BigMapUpdate
-                            {
-                                Id = Cache.AppState.NextBigMapUpdateId(),
-                                Action = BigMapAction.Allocate,
-                                BigMapPtr = alloc.Ptr,
-                                Level = diff.op.Level,
-                                TransactionId = (diff.op as TransactionOperation)?.Id,
-                                OriginationId = (diff.op as OriginationOperation)?.Id
-                            });
-                            diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
-
                             var allocatedBigMap = new BigMap
                             {
                                 Id = Cache.AppState.NextBigMapId(),
@@ -135,10 +125,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 ActiveKeys = 0,
                                 TotalKeys = 0,
                                 Updates = 1,
-                                Tags = BigMaps.GetTags(bigMapNode)
+                                Tags = GetTags(diff.contract, bigMapNode)
                             };
                             Db.BigMaps.Add(allocatedBigMap);
                             Cache.BigMaps.Cache(allocatedBigMap);
+
+                            bigMapUpdate = new BigMapUpdate
+                            {
+                                Id = Cache.AppState.NextBigMapUpdateId(),
+                                Action = BigMapAction.Allocate,
+                                BigMapPtr = alloc.Ptr,
+                                Level = diff.op.Level,
+                                TransactionId = (diff.op as TransactionOperation)?.Id,
+                                OriginationId = (diff.op as OriginationOperation)?.Id
+                            };
+                            Db.BigMapUpdates.Add(bigMapUpdate);
+                            Updates.Add((allocatedBigMap, null, bigMapUpdate, diff.op));
+                            diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
 
                             images.Add(alloc.Ptr, new());
                             #endregion
@@ -204,29 +207,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                             Db.BigMapKeys.AddRange(keys);
                             Cache.BigMapKeys.Cache(keys);
 
-                            Db.BigMapUpdates.Add(new BigMapUpdate
-                            {
-                                Id = Cache.AppState.NextBigMapUpdateId(),
-                                Action = BigMapAction.Allocate,
-                                BigMapPtr = copy.Ptr,
-                                Level = diff.op.Level,
-                                TransactionId = (diff.op as TransactionOperation)?.Id,
-                                OriginationId = (diff.op as OriginationOperation)?.Id
-                            });
-                            Db.BigMapUpdates.AddRange(keys.Select(x => new BigMapUpdate
-                            {
-                                Id = Cache.AppState.NextBigMapUpdateId(),
-                                Action = BigMapAction.AddKey,
-                                BigMapKeyId = x.Id,
-                                BigMapPtr = x.BigMapPtr,
-                                JsonValue = x.JsonValue,
-                                RawValue = x.RawValue,
-                                Level = x.FirstLevel,
-                                TransactionId = (diff.op as TransactionOperation)?.Id,
-                                OriginationId = (diff.op as OriginationOperation)?.Id
-                            }));
-                            diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + keys.Count + 1;
-
                             var copiedBigMap = new BigMap
                             {
                                 Id = Cache.AppState.NextBigMapId(),
@@ -241,11 +221,41 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 ActiveKeys = keys.Count,
                                 TotalKeys = keys.Count,
                                 Updates = keys.Count + 1,
-                                Tags = BigMaps.GetTags(bigMapNode)
+                                Tags = GetTags(diff.contract, bigMapNode)
                             };
-
                             Db.BigMaps.Add(copiedBigMap);
                             Cache.BigMaps.Cache(copiedBigMap);
+
+                            bigMapUpdate = new BigMapUpdate
+                            {
+                                Id = Cache.AppState.NextBigMapUpdateId(),
+                                Action = BigMapAction.Allocate,
+                                BigMapPtr = copy.Ptr,
+                                Level = diff.op.Level,
+                                TransactionId = (diff.op as TransactionOperation)?.Id,
+                                OriginationId = (diff.op as OriginationOperation)?.Id
+                            };
+                            Db.BigMapUpdates.Add(bigMapUpdate);
+                            Updates.Add((copiedBigMap, null, bigMapUpdate, diff.op));
+
+                            foreach (var key in keys)
+                            {
+                                bigMapUpdate = new BigMapUpdate
+                                {
+                                    Id = Cache.AppState.NextBigMapUpdateId(),
+                                    Action = BigMapAction.AddKey,
+                                    BigMapKeyId = key.Id,
+                                    BigMapPtr = key.BigMapPtr,
+                                    JsonValue = key.JsonValue,
+                                    RawValue = key.RawValue,
+                                    Level = key.FirstLevel,
+                                    TransactionId = (diff.op as TransactionOperation)?.Id,
+                                    OriginationId = (diff.op as OriginationOperation)?.Id
+                                };
+                                Db.BigMapUpdates.Add(bigMapUpdate);
+                                Updates.Add((copiedBigMap, key, bigMapUpdate, diff.op));
+                            }
+                            diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + keys.Count + 1;
 
                             images.Add(copy.Ptr, keys.ToDictionary(x => x.KeyHash));
                             #endregion
@@ -286,7 +296,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     key.LastLevel = diff.op.Level;
                                     key.Updates++;
 
-                                    Db.BigMapUpdates.Add(new BigMapUpdate
+                                    bigMapUpdate = new BigMapUpdate
                                     {
                                         Id = Cache.AppState.NextBigMapUpdateId(),
                                         Action = BigMapAction.UpdateKey,
@@ -297,7 +307,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                                         Level = key.LastLevel,
                                         TransactionId = (diff.op as TransactionOperation)?.Id,
                                         OriginationId = (diff.op as OriginationOperation)?.Id
-                                    });
+                                    };
+                                    Db.BigMapUpdates.Add(bigMapUpdate);
+                                    Updates.Add((bigMap, key, bigMapUpdate, diff.op));
                                     diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                     #endregion
                                 }
@@ -314,7 +326,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     key.LastLevel = diff.op.Level;
                                     key.Updates++;
 
-                                    Db.BigMapUpdates.Add(new BigMapUpdate
+                                    bigMapUpdate = new BigMapUpdate
                                     {
                                         Id = Cache.AppState.NextBigMapUpdateId(),
                                         Action = BigMapAction.RemoveKey,
@@ -325,7 +337,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                                         Level = key.LastLevel,
                                         TransactionId = (diff.op as TransactionOperation)?.Id,
                                         OriginationId = (diff.op as OriginationOperation)?.Id
-                                    });
+                                    };
+                                    Db.BigMapUpdates.Add(bigMapUpdate);
+                                    Updates.Add((bigMap, key, bigMapUpdate, diff.op));
                                     diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                     #endregion
                                 }
@@ -357,7 +371,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 Db.BigMapKeys.Add(key);
                                 Cache.BigMapKeys.Cache(key);
 
-                                Db.BigMapUpdates.Add(new BigMapUpdate
+                                bigMapUpdate = new BigMapUpdate
                                 {
                                     Id = Cache.AppState.NextBigMapUpdateId(),
                                     Action = BigMapAction.AddKey,
@@ -368,7 +382,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     Level = key.LastLevel,
                                     TransactionId = (diff.op as TransactionOperation)?.Id,
                                     OriginationId = (diff.op as OriginationOperation)?.Id
-                                });
+                                };
+                                Db.BigMapUpdates.Add(bigMapUpdate);
+                                Updates.Add((bigMap, key, bigMapUpdate, diff.op));
                                 diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                 #endregion
                             }
@@ -405,7 +421,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case RemoveDiff remove:
                         if (remove.Ptr >= 0)
                         {
-                            Db.BigMapUpdates.Add(new BigMapUpdate
+                            var removedBigMap = Cache.BigMaps.Get(remove.Ptr);
+
+                            Db.TryAttach(removedBigMap);
+                            removedBigMap.Active = false;
+                            removedBigMap.LastLevel = diff.op.Level;
+                            removedBigMap.Updates++;
+
+                            bigMapUpdate = new BigMapUpdate
                             {
                                 Id = Cache.AppState.NextBigMapUpdateId(),
                                 Action = BigMapAction.Remove,
@@ -413,18 +436,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 Level = diff.op.Level,
                                 TransactionId = (diff.op as TransactionOperation)?.Id,
                                 OriginationId = (diff.op as OriginationOperation)?.Id
-                            });
+                            };
+                            Db.BigMapUpdates.Add(bigMapUpdate);
+                            Updates.Add((removedBigMap, null, bigMapUpdate, diff.op));
                             diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
-
-                            var removed = Cache.BigMaps.Get(remove.Ptr);
-                            Db.TryAttach(removed);
-                            removed.Active = false;
-                            removed.LastLevel = diff.op.Level;
-                            removed.Updates++;
-                        }
-                        else
-                        {
-                            // is it possible?
                         }
                         break;
                     default:
@@ -440,6 +455,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ? GetOrigin(prevCopy)
                     : copy.SourcePtr;
         }
+
+        protected virtual BigMapTag GetTags(Contract contract, TreeView node) => BigMaps.GetTags(contract, node);
 
         public virtual async Task Revert(Block block)
         {
