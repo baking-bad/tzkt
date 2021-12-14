@@ -180,7 +180,20 @@ namespace Tzkt.Api.Repositories
                         CodeHash = contract.CodeHash,
                         Metadata = metadata ? contract.Metadata : null
                     };
-                    #endregion
+                #endregion
+                case RawAccount ghost:
+                    #region build ghost
+                    return new Ghost
+                    {
+                        Alias = ghost.Alias,
+                        Address = ghost.Address,
+                        FirstActivity = ghost.FirstLevel,
+                        FirstActivityTime = Time[ghost.FirstLevel],
+                        LastActivity = ghost.LastLevel,
+                        LastActivityTime = Time[ghost.LastLevel],
+                        Metadata = metadata ? ghost.Metadata : null
+                    };
+                #endregion
                 default:
                     throw new Exception($"Invalid raw account type");
             }
@@ -363,6 +376,19 @@ namespace Tzkt.Api.Repositories
                             NumTransactions = row.TransactionsCount,
                             TypeHash = row.TypeHash,
                             CodeHash = row.CodeHash,
+                        });
+                        #endregion
+                        break;
+                    case 3:
+                        #region build ghost
+                        accounts.Add(new Ghost
+                        {
+                            Alias = row.Alias,
+                            Address = row.Address,
+                            FirstActivity = row.FirstLevel,
+                            FirstActivityTime = Time[row.FirstLevel],
+                            LastActivity = row.LastLevel,
+                            LastActivityTime = Time[row.LastLevel],
                         });
                         #endregion
                         break;
@@ -1279,6 +1305,9 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(contractReveals.Result);
                     result.AddRange(contractMigrations.Result);
 
+                    break;
+
+                case RawAccount ghost:
                     break;
             }
 

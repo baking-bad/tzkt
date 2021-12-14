@@ -9,12 +9,13 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(User))]
     [KnownType(typeof(Delegate))]
     [KnownType(typeof(Contract))]
+    [KnownType(typeof(Ghost))]
     [KnownType(typeof(EmptyAccount))]
     public abstract class Account
     {
         /// <summary>
         /// Type of the account (`user` - simple wallet account, `delegate` - account, registered as a delegate (baker),
-        /// `contract` - smart contract programmable account , `empty` - account hasn't appeared in the blockchain yet)
+        /// `contract` - smart contract programmable account, `ghost` - non-existent contract, `empty` - account hasn't appeared in the blockchain yet)
         /// </summary>
         public abstract string Type { get; }
         
@@ -35,6 +36,9 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(Contract))
                 return AccountTypes.Contract;
+
+            if (type == typeof(Ghost))
+                return AccountTypes.Ghost;
 
             if (type == typeof(EmptyAccount))
                 return AccountTypes.Empty;
