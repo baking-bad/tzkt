@@ -35,7 +35,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of accounts.
         /// </remarks>
-        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`).</param>
+        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `ghost`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="delegate">Filters accounts by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="balance">Filters accounts by balance</param>
@@ -112,7 +112,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a number of accounts.
         /// </remarks>
-        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`).</param>
+        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `ghost`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="balance">Filters accounts by balance</param>
         /// <param name="staked">Filters accounts by participation in staking</param>
@@ -183,7 +183,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts delegated to the specified account.
         /// </remarks>
         /// <param name="address">Account address (starting with tz)</param>
-        /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`).</param>
+        /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`, `ghost`).</param>
         /// <param name="balance">Filters delegators by balance.</param>
         /// <param name="delegationLevel">Number of items to skip</param>
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `delegationLevel` (default, desc), `balance`.</param>

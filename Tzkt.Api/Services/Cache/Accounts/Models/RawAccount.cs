@@ -2,10 +2,8 @@
 
 namespace Tzkt.Api.Services.Cache
 {
-    public abstract class RawAccount
+    public class RawAccount
     {
-        public virtual string Type => "account";
-
         public int Id { get; set; }
         public string Address { get; set; }
         public int FirstLevel { get; set; }

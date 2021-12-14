@@ -47,11 +47,12 @@ namespace Tzkt.Api.Services.Cache
             AccountsById = new Dictionary<int, RawAccount>(capacity);
             AccountsByAddress = new Dictionary<string, RawAccount>(capacity);
 
-            var parsers = new Func<IDataReader, RawAccount>[3]
+            var parsers = new Func<IDataReader, RawAccount>[4]
             {
                 reader.GetRowParser<RawUser>(),
                 reader.GetRowParser<RawDelegate>(),
-                reader.GetRowParser<RawContract>()
+                reader.GetRowParser<RawContract>(),
+                reader.GetRowParser<RawAccount>()
             };
 
             while (reader.Read())
@@ -94,11 +95,12 @@ namespace Tzkt.Api.Services.Cache
             using var db = GetConnection();
             using var reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
 
-            var parsers = new Func<IDataReader, RawAccount>[3]
+            var parsers = new Func<IDataReader, RawAccount>[4]
             {
                 reader.GetRowParser<RawUser>(),
                 reader.GetRowParser<RawDelegate>(),
-                reader.GetRowParser<RawContract>()
+                reader.GetRowParser<RawContract>(),
+                reader.GetRowParser<RawAccount>()
             };
 
             var cnt = 0;
@@ -208,6 +210,7 @@ namespace Tzkt.Api.Services.Cache
                 0 => reader.GetRowParser<RawUser>()(reader),
                 1 => reader.GetRowParser<RawDelegate>()(reader),
                 2 => reader.GetRowParser<RawContract>()(reader),
+                3 => reader.GetRowParser<RawAccount>()(reader),
                 _ => throw new Exception($"Invalid account type")
             };
         }
@@ -223,6 +226,7 @@ namespace Tzkt.Api.Services.Cache
                 0 => reader.GetRowParser<RawUser>()(reader),
                 1 => reader.GetRowParser<RawDelegate>()(reader),
                 2 => reader.GetRowParser<RawContract>()(reader),
+                3 => reader.GetRowParser<RawAccount>()(reader),
                 _ => throw new Exception($"Invalid account type")
             };
         }
