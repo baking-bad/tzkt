@@ -22,23 +22,27 @@ namespace Tzkt.Sync.Services
         public StoragesCache Storages { get; private set; }
         public BigMapsCache BigMaps { get; private set; }
         public BigMapKeysCache BigMapKeys { get; private set; }
+        public TokensCache Tokens { get; private set; }
+        public TokenBalancesCache TokenBalances { get; private set; }
 
         public CacheService(TzktContext db)
         {
-            AppState = new AppStateCache(db);
-            BakerCycles = new BakerCyclesCache(db);
-            BakingRights = new BakingRightsCache(db);
-            Accounts = new AccountsCache(this, db);
-            Blocks = new BlocksCache(this, db);
-            Periods = new PeriodsCache(db);
-            Proposals = new ProposalsCache(db);
-            Protocols = new ProtocolsCache(db);
-            Statistics = new StatisticsCache(db);
-            Software = new SoftwareCache(db);
-            Schemas = new SchemasCache(db);
-            Storages = new StoragesCache(db);
-            BigMaps = new BigMapsCache(db);
-            BigMapKeys = new BigMapKeysCache(db);
+            AppState = new(db);
+            BakerCycles = new(db);
+            BakingRights = new(db);
+            Accounts = new(this, db);
+            Blocks = new(this, db);
+            Periods = new(db);
+            Proposals = new(db);
+            Protocols = new(db);
+            Statistics = new(db);
+            Software = new(db);
+            Schemas = new(db);
+            Storages = new(db);
+            BigMaps = new(db);
+            BigMapKeys = new(db);
+            Tokens = new(db);
+            TokenBalances = new(db);
         }
 
         public async Task ResetAsync()
@@ -55,9 +59,17 @@ namespace Tzkt.Sync.Services
             Storages.Reset();
             BigMaps.Reset();
             BigMapKeys.Reset();
+            Tokens.Reset();
+            TokenBalances.Reset();
 
             await AppState.ResetAsync();
             await Accounts.ResetAsync();
+        }
+
+        public void Vacuum()
+        {
+            Tokens.Vacuum();
+            TokenBalances.Vacuum();
         }
     }
 

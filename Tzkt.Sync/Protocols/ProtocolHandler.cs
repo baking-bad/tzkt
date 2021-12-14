@@ -97,6 +97,7 @@ namespace Tzkt.Sync
                 throw;
             }
 
+            Cache.Vacuum();
             ClearCachedRelations();
             return Cache.AppState.Get();
         }
@@ -147,6 +148,7 @@ namespace Tzkt.Sync
                 throw;
             }
 
+            Cache.Vacuum();
             ClearCachedRelations();
             return Cache.AppState.Get();
         }
@@ -219,9 +221,8 @@ namespace Tzkt.Sync
                 else if (entry.State == EntityState.Added)
                 {
                     state.AccountsCount++;
-                    account.FirstLevel = state.Level;
-                    account.LastLevel = state.Level;
-                    block.Events |= BlockEvents.NewAccounts;
+                    if (account.FirstLevel == block.Level)
+                        block.Events |= BlockEvents.NewAccounts;
                 }
             }
         }
