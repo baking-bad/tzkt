@@ -34,3 +34,17 @@ jobs:
           file: Tzkt.Api/Dockerfile
           push: true
           tags: bakingbad/tzkt-api:latest
+          
+      - name: Docker Hub TzKT Sync Description Update
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKER_LOGIN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: bakingbad/tzkt-sync
+          
+      - name: Docker Hub TzKT API Description Update
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKER_LOGIN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: bakingbad/tzkt-api
