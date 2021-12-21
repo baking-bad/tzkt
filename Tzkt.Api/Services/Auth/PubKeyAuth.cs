@@ -16,13 +16,13 @@ namespace Tzkt.Api.Services.Auth
         public PubKeyAuth(IConfiguration config)
         {
             Config = config.GetAuthConfig();
-            Nonces = Config.Credentials.ToDictionary(x => x.Key, x => long.MinValue );
+            Nonces = Config.Credentials.ToDictionary(x => x.User, _ => long.MinValue );
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, out string error)
         {
             error = null;
-
+            
             if (string.IsNullOrEmpty(headers?.User))
             {
                 error = $"The X-TZKT-USER header is required";
@@ -41,12 +41,20 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!Config.Credentials.TryGetValue(headers.User, out var pubKey))
+            var credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
+
+            if (credentials == null)
             {
                 error = $"User {headers.User} doesn't exist";
                 return false;
             }
 
+            if (credentials.AuthRights < requiredRights)
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requiredRights} required. {credentials.AuthRights} granted";
+                return false;
+            }
+            
             var nonce = (long)headers.Nonce;
             var nonceTime = DateTime.UnixEpoch.AddMilliseconds(nonce);
 
@@ -62,7 +70,7 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            var key = PubKey.FromBase58(pubKey);
+            var key = PubKey.FromBase58(credentials.PubKey);
             if (!key.Verify($"{headers.Nonce}", headers.Signature))
             {
                 error = $"Invalid signature";
@@ -73,7 +81,7 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, string json, out string error)
         {
             error = null;
 
@@ -101,9 +109,17 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!Config.Credentials.TryGetValue(headers.User, out var pubKey))
+            var credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
+
+            if (credentials == null)
             {
                 error = $"User {headers.User} doesn't exist";
+                return false;
+            }
+            
+            if (credentials.AuthRights < requiredRights)
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requiredRights} required. {credentials.AuthRights} granted";
                 return false;
             }
 
@@ -124,7 +140,7 @@ namespace Tzkt.Api.Services.Auth
 
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
             
-            var key = PubKey.FromBase58(pubKey);
+            var key = PubKey.FromBase58(credentials.PubKey);
             if (!key.Verify($"{headers.Nonce}{hash}", headers.Signature))
             {
                 error = $"Invalid signature";
