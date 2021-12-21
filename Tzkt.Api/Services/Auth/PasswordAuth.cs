@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 
 namespace Tzkt.Api.Services.Auth
@@ -11,7 +12,7 @@ namespace Tzkt.Api.Services.Auth
             Config = config.GetAuthConfig();
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, out string error)
         {
             error = null;
 
@@ -27,13 +28,21 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!Config.Credentials.TryGetValue(headers.User, out var password))
+            var credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
+
+            if (credentials == null)
             {
                 error = $"User {headers.User} doesn't exist";
                 return false;
             }
+            
+            if (credentials.AuthRights < requiredRights)
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requiredRights} required. {credentials.AuthRights} granted";
+                return false;
+            }
 
-            if (headers.Password != password)
+            if (headers.Password != credentials.Password)
             {
                 error = $"Invalid password";
                 return false;
@@ -42,9 +51,9 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, string json, out string error)
         {
-            return TryAuthenticate(headers, out error);
+            return TryAuthenticate(headers, requiredRights, out error);
         }
     }
 }

@@ -33,7 +33,7 @@ namespace Tzkt.Api.Controllers
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetStateMetadata(section));
@@ -47,7 +47,7 @@ namespace Tzkt.Api.Controllers
             {
                 var body = await Request.Body.ReadAsStringAsync();
 
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, AuthRights.Write,body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<MetadataUpdate>(body);
@@ -67,7 +67,7 @@ namespace Tzkt.Api.Controllers
             [Address] string address,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetAccountMetadata(address, section));
@@ -81,7 +81,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetAccountMetadata(metadata, offset, limit, section));
@@ -95,7 +95,7 @@ namespace Tzkt.Api.Controllers
             {
                 var body = await Request.Body.ReadAsStringAsync();
 
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, AuthRights.Write, body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
@@ -118,7 +118,7 @@ namespace Tzkt.Api.Controllers
             [ProtocolHash] string hash,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetProposalMetadata(hash, section));
@@ -132,7 +132,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetProposalMetadata(metadata, offset, limit, section));
@@ -146,7 +146,7 @@ namespace Tzkt.Api.Controllers
             {
                 var body = await Request.Body.ReadAsStringAsync();
 
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, AuthRights.Write, body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
@@ -169,7 +169,7 @@ namespace Tzkt.Api.Controllers
             [ProtocolHash] string hash,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetProtocolMetadata(hash, section));
@@ -183,7 +183,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetProtocolMetadata(metadata, offset, limit, section));
@@ -197,7 +197,7 @@ namespace Tzkt.Api.Controllers
             {
                 var body = await Request.Body.ReadAsStringAsync();
 
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, AuthRights.Write, body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
@@ -220,7 +220,7 @@ namespace Tzkt.Api.Controllers
             [Hex(8)] string shortHash,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetSoftwareMetadata(shortHash, section));
@@ -234,7 +234,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetSoftwareMetadata(metadata, offset, limit, section));
@@ -247,7 +247,7 @@ namespace Tzkt.Api.Controllers
             try
             {
                 var body = await Request.Body.ReadAsStringAsync();
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, AuthRights.Write, body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
@@ -270,7 +270,7 @@ namespace Tzkt.Api.Controllers
             [ExpressionHash] string address,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetConstantMetadata(address, section));
@@ -284,7 +284,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetConstantMetadata(metadata, offset, limit, section));
@@ -297,7 +297,7 @@ namespace Tzkt.Api.Controllers
             try
             {
                 var body = await Request.Body.ReadAsStringAsync();
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, AuthRights.Write,body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
@@ -320,7 +320,7 @@ namespace Tzkt.Api.Controllers
             [Min(0)] int level,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetBlockMetadata(level, section));
@@ -334,7 +334,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            if (!Auth.TryAuthenticate(headers, AuthRights.Read, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetBlockMetadata(metadata, offset, limit, section));
@@ -347,7 +347,7 @@ namespace Tzkt.Api.Controllers
             try
             {
                 var body = await Request.Body.ReadAsStringAsync();
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, AuthRights.Write, body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<int>>>(body);
