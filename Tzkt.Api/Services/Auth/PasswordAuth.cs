@@ -12,7 +12,7 @@ namespace Tzkt.Api.Services.Auth
             Config = config.GetAuthConfig();
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights access, out string error)
         {
             error = null;
 
@@ -36,9 +36,9 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
             
-            if (credentials.AuthRights < requiredRights)
+            if (credentials.Access < access)
             {
-                error = $"User {headers.User} doesn't have required permissions. {requiredRights} required. {credentials.AuthRights} granted";
+                error = $"User {headers.User} doesn't have required permissions. {access} required. {credentials.Access} granted";
                 return false;
             }
 
@@ -51,7 +51,7 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights access, string json, out string error)
         {
             if (string.IsNullOrEmpty(json))
             {
@@ -59,7 +59,7 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
             
-            return TryAuthenticate(headers, requiredRights, out error);
+            return TryAuthenticate(headers, access, out error);
         }
     }
 }

@@ -1,13 +1,12 @@
 {
-  "Authentication":
-  {
+  "Authentication": {
     "Method": "PubKey",
     "NonceLifetime": 1000,
     "Credentials": [
       {
         "User": "alexey",
         "PubKey": "edpkvJbQThvxUT9L4EuF9SQtAnsF6wLXTJ2J435Jvds6aaK5Yw725N",
-        "AuthRights": "Read"
+        "Access": "Read"
       }
     ]
   },
