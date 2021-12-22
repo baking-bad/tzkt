@@ -67,7 +67,7 @@ public class AuthServiceTests
         Assert.True(auth.TryAuthenticate(headers, AccessRights.Read, out error));
         
         Assert.False(auth.TryAuthenticate(headers, AccessRights.None, out error));
-        expectedError = $"Nonce {headers.Nonce} has already used";
+        expectedError = $"Nonce {headers.Nonce} has already been used";
         Assert.Equal(expectedError, error);
 
         string json = null;
