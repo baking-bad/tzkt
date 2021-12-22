@@ -17,8 +17,7 @@ public class AuthServiceTests
         string expectedError = null;
         string error = null;
         var configuration = new ConfigurationBuilder()
-            .AddJsonFile(
-                $"Auth/Samples/PubKeyAuthSample.json")
+            .AddJsonFile("Auth/Samples/PubKeyAuthSample.json")
             .Build();
 
         var headers = new AuthHeaders();
