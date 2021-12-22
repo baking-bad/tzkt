@@ -23,13 +23,11 @@ namespace Tzkt.Api.Services.Auth
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, access, out error))
+            if (!TryAuthenticateBase(headers, access, out error, out var credentials))
             {
                 return false;
             }
 
-            var credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
-            
             var key = PubKey.FromBase58(credentials.PubKey);
             if (!key.Verify($"{headers.Nonce}", headers.Signature))
             {
@@ -45,7 +43,7 @@ namespace Tzkt.Api.Services.Auth
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, access, out error))
+            if (!TryAuthenticateBase(headers, access, out error, out var credentials))
             {
                 return false;
             }
@@ -56,8 +54,6 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            var credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
-            
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
             
             var key = PubKey.FromBase58(credentials.PubKey);
@@ -71,9 +67,10 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights access, out string error)
+        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights access, out string error, out AuthUser credentials)
         {
             error = null;
+            credentials = null;
             
             if (string.IsNullOrEmpty(headers?.User))
             {
@@ -93,7 +90,7 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            var credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
+            credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
 
             if (credentials == null)
             {
