@@ -27,7 +27,6 @@ public class AuthServiceTests
         var credentials = config.Credentials.FirstOrDefault();
         var key = Key.FromBase58(configuration.GetSection("PrivKey").Value);
 
-        
         Assert.False(auth.TryAuthenticate(headers, AccessRights.None, out error));
         expectedError = "The X-TZKT-USER header is required";
         Assert.Equal(expectedError, error);
