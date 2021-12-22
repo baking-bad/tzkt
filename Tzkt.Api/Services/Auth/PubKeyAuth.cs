@@ -119,7 +119,7 @@ namespace Tzkt.Api.Services.Auth
 
             if (nonce <= Nonces[headers.User])
             {
-                error = $"Nonce {nonce} has already used";
+                error = $"Nonce {nonce} has already been used";
                 return false;
             }
 
