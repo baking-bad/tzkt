@@ -20,11 +20,11 @@ namespace Tzkt.Api.Services.Auth
             Nonces = Config.Credentials.ToDictionary(x => x.User, _ => long.MinValue );
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights access, out string error)
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, requiredRights, out error))
+            if (!TryAuthenticateBase(headers, access, out error))
             {
                 return false;
             }
@@ -42,11 +42,11 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights access, string json, out string error)
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, requiredRights, out error))
+            if (!TryAuthenticateBase(headers, access, out error))
             {
                 return false;
             }
@@ -72,7 +72,7 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        private bool TryAuthenticateBase(AuthHeaders headers, AuthRights requiredRights, out string error)
+        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights access, out string error)
         {
             error = null;
             
@@ -102,9 +102,9 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (credentials.AuthRights < requiredRights)
+            if (credentials.Access < access)
             {
-                error = $"User {headers.User} doesn't have required permissions. {requiredRights} required. {credentials.AuthRights} granted";
+                error = $"User {headers.User} doesn't have required permissions. {access} required. {credentials.Access} granted";
                 return false;
             }
             
