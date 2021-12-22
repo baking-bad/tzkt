@@ -22,7 +22,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="Auth\Samples\ReadPubKey.json">
+      <None Include="Auth\Samples\PubKeyAuthSample.json">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </None>
+      <None Update="Auth\Samples\PasswordAuthSample.json">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

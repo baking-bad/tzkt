@@ -53,6 +53,12 @@ namespace Tzkt.Api.Services.Auth
 
         public bool TryAuthenticate(AuthHeaders headers, AuthRights requiredRights, string json, out string error)
         {
+            if (string.IsNullOrEmpty(json))
+            {
+                error = $"The body is empty";
+                return false;
+            }
+            
             return TryAuthenticate(headers, requiredRights, out error);
         }
     }
