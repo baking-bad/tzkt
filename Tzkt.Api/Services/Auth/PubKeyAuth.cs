@@ -12,18 +12,25 @@ namespace Tzkt.Api.Services.Auth
     {
         readonly AuthConfig Config;
         readonly Dictionary<string, long> Nonces;
-
+        Dictionary<string, Dictionary<string, Dictionary<string, Access>>> Rights;
+        Dictionary<string, AuthUser> Users;
+        
         public PubKeyAuth(IConfiguration config)
         {
             Config = config.GetAuthConfig();
-            Nonces = Config.Credentials.ToDictionary(x => x.User, _ => long.MinValue );
+            Nonces = Config.Users.ToDictionary(x => x.Name, _ => long.MinValue );
+            Rights = Config.Users.ToDictionary(x => x.Name, x => x.Rights
+                .GroupBy(y => y.Table)
+                .ToDictionary(z => z.Key, z => z
+                    .ToDictionary(q => q.Section, q => q.Access)));
+            Users = Config.Users.ToDictionary(x => x.Name, x => x);
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AccessRights access, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error)
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, access, out error, out var credentials))
+            if (!TryAuthenticateBase(headers, requestedRights, out error, out var credentials))
             {
                 return false;
             }
@@ -39,11 +46,11 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AccessRights access, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string json, out string error)
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, access, out error, out var credentials))
+            if (!TryAuthenticateBase(headers, requestedRights, out error, out var credentials))
             {
                 return false;
             }
@@ -67,7 +74,7 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights access, out string error, out AuthUser credentials)
+        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights requestedRights, out string error, out AuthUser credentials)
         {
             error = null;
             credentials = null;
@@ -90,17 +97,33 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            credentials = Config.Credentials.FirstOrDefault(x => x.User == headers.User);
-
-            if (credentials == null)
+            if (!Users.TryGetValue(headers.User, out credentials))
             {
                 error = $"User {headers.User} doesn't exist";
                 return false;
             }
-
-            if (credentials.Access < access)
+            
+            if (headers.Password != credentials.Password)
             {
-                error = $"User {headers.User} doesn't have required permissions. {access} required. {credentials.Access} granted";
+                error = $"Invalid password";
+                return false;
+            }
+
+            if (!Rights.GetValueOrDefault(headers.User).TryGetValue(requestedRights.Table, out var sections))
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
+                return false;
+            }
+
+            if (!sections.TryGetValue(requestedRights.Section, out var access))
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Section} required.";
+                return false;
+            }
+            
+            if (access < requestedRights.Access)
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required. {access} granted";
                 return false;
             }
             
