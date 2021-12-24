@@ -12,17 +12,18 @@ namespace Tzkt.Api.Services.Auth
     {
         readonly AuthConfig Config;
         readonly Dictionary<string, long> Nonces;
-        Dictionary<string, Dictionary<string, Dictionary<string, Access>>> Rights;
+        Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
         Dictionary<string, AuthUser> Users;
         
         public PubKeyAuth(IConfiguration config)
         {
             Config = config.GetAuthConfig();
             Nonces = Config.Users.ToDictionary(x => x.Name, _ => long.MinValue );
-            Rights = Config.Users.ToDictionary(x => x.Name, x => x.Rights
+            Rights = Config.Users.ToDictionary(x => x.Name, x => x.Rights?
                 .GroupBy(y => y.Table)
-                .ToDictionary(z => z.Key, z => z
-                    .ToDictionary(q => q.Section, q => q.Access)));
+                .ToDictionary(z => z.Key, z => (z.Where(k => k.Section == null).FirstOrDefault()?.Access ?? Access.None , z
+                    .Where(p => p.Section != null)
+                    .ToDictionary(q => q.Section, q => q.Access))));
             Users = Config.Users.ToDictionary(x => x.Name, x => x);
         }
 
@@ -108,24 +109,6 @@ namespace Tzkt.Api.Services.Auth
                 error = $"Invalid password";
                 return false;
             }
-
-            if (!Rights.GetValueOrDefault(headers.User).TryGetValue(requestedRights.Table, out var sections))
-            {
-                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
-                return false;
-            }
-
-            if (!sections.TryGetValue(requestedRights.Section, out var access))
-            {
-                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Section} required.";
-                return false;
-            }
-            
-            if (access < requestedRights.Access)
-            {
-                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required. {access} granted";
-                return false;
-            }
             
             var nonce = (long)headers.Nonce;
             var nonceTime = DateTime.UnixEpoch.AddMilliseconds(nonce);
@@ -141,6 +124,47 @@ namespace Tzkt.Api.Services.Auth
                 error = $"Nonce {nonce} has already been used";
                 return false;
             }
+
+            if (!Rights.TryGetValue(headers.User, out var user))
+            {
+                error = $"User {headers.User} doesn't exist";
+                return false;
+            }
+
+            if (user == null)
+            {
+                return true;
+            }
+            
+            if (!user.TryGetValue(requestedRights.Table, out var sections))
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
+                return false;
+            }
+
+            if (sections.access >= requestedRights.Access)
+            {
+                return true;
+            }
+
+            if (requestedRights.Section == null)
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required.";
+                return false;
+            }
+
+            if (!sections.sections.TryGetValue(requestedRights.Section, out var access))
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Section} required.";
+                return false;
+            }
+            
+            if (access < requestedRights.Access)
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required. {access} granted";
+                return false;
+            }
+
 
             return true;
         }
