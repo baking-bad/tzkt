@@ -6,19 +6,18 @@ namespace Tzkt.Api.Services.Auth
 {
     public class PasswordAuth : IAuthService
     {
-        readonly AuthConfig Config;
         Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
         Dictionary<string, AuthUser> Users;
 
         public PasswordAuth(IConfiguration config)
         {
-            Config = config.GetAuthConfig();
-            Rights = Config.Users.ToDictionary(x => x.Name, x => x.Rights
+            var cfg = config.GetAuthConfig();
+            Rights = cfg.Users.ToDictionary(x => x.Name, x => x.Rights?
                                       .GroupBy(y => y.Table)
                                  .ToDictionary(z => z.Key, z => (z.Where(k => k.Section == null).FirstOrDefault()?.Access ?? Access.None , z
                                  .Where(p => p.Section != null)
                                  .ToDictionary(q => q.Section, q => q.Access))));
-            Users = Config.Users.ToDictionary(x => x.Name, x => x);
+            Users = cfg.Users.ToDictionary(x => x.Name, x => x);
         }
 
         public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error)
@@ -49,15 +48,32 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!Rights.GetValueOrDefault(headers.User).TryGetValue(requestedRights.Table, out var sections))
+            if (!Rights.TryGetValue(headers.User, out var user))
+            {
+                error = $"User {headers.User} doesn't exist";
+                return false;
+            }
+
+            if (user == null)
+            {
+                return true;
+            }
+            
+            if (!user.TryGetValue(requestedRights.Table, out var sections))
             {
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
                 return false;
             }
 
-            if (sections.access != Access.None)
+            if (sections.access >= requestedRights.Access)
             {
                 return true;
+            }
+
+            if (requestedRights.Section == null)
+            {
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required.";
+                return false;
             }
 
             if (!sections.sections.TryGetValue(requestedRights.Section, out var access))

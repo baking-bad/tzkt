@@ -4,12 +4,15 @@
     "NonceLifetime": 1000,
     "Users": [
       {
+        "Name": "full",
+        "PubKey": "edpkvJbQThvxUT9L4EuF9SQtAnsF6wLXTJ2J435Jvds6aaK5Yw725N"
+      },
+      {
         "Name": "alexey",
         "PubKey": "edpkvJbQThvxUT9L4EuF9SQtAnsF6wLXTJ2J435Jvds6aaK5Yw725N",
         "Rights": [
           {
             "Table": "Accounts",
-            "Section": "AccountsSectionOne",
             "Access": "Read"
           },
           {
@@ -28,34 +31,8 @@
             "Access": "Write"
           }
         ]
-      },
-      {
-        "Name": "vadim",
-        "PubKey": "edpkvJbQThvxUT9L4EuF9SQtAnsF6wLXTJ2J435Jvds6aaK5Yw725N",
-        "Rights": [
-          {
-            "Table": "AppState",
-            "Section": "AppStateSectionOne",
-            "Access": "None"
-          },
-          {
-            "Table": "AppState",
-            "Section": "AppStateSectionTwo",
-            "Access": "Read"
-          },
-          {
-            "Table": "Quotes",
-            "Section": "ContractsSectionOne",
-            "Access": "Write"
-          },
-          {
-            "Table": "Quotes",
-            "Section": "QuotesSectionTwo",
-            "Access": "None"
-          }
-        ]
       }
-    ]
+      ]
   },
   "PrivKey": "edsk2zaL631nxAfvG7xHAGf6ne1atpKuKY9qh3iv6DburheLovKuTW"
 }
