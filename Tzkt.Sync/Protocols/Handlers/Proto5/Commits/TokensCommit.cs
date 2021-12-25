@@ -1013,26 +1013,26 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 foreach (var transfer in arr)
                 {
-                    var transferPrim = transfer as MichelinePrim;
-                    var from = transferPrim.Args[0].ParseAddress();
-                    foreach (var tx in transferPrim.Args[1] as MichelineArray)
+                    var transferPair = transfer as MichelinePrim;
+                    var from = transferPair.Args[0].ParseAddress();
+                    foreach (var tx in transferPair.Args[1] as MichelineArray)
                     {
-                        var txPrim = tx as MichelinePrim;
-                        var to = txPrim.Args[0].ParseAddress();
-                        var (tokenId, amount) = txPrim.Args[1] is MichelinePrim inner
-                            ? ((inner.Args[0] as MichelineInt).Value, (inner.Args[1] as MichelineInt).Value)
-                            : ((txPrim.Args[1] as MichelineInt).Value, (txPrim.Args[2] as MichelineInt).Value);
+                        var txPair = tx as MichelinePrim;
+                        var to = txPair.Args[0].ParseAddress();
+                        var txPair2 = txPair.Args[1] as MichelinePrim;
+                        var tokenId = (txPair2.Args[0] as MichelineInt).Value;
+                        var amount = (txPair2.Args[1] as MichelineInt).Value;
 
                         transfers.Add((from, to, tokenId, amount));
                     }
                 }
             }
-            else if (micheline is MichelinePrim prim)
+            else if (micheline is MichelinePrim pair)
             {
-                var from = prim.Args[0].ParseAddress();
-                var (to, value) = prim.Args[1] is MichelinePrim inner
-                    ? (inner.Args[0].ParseAddress(), (inner.Args[1] as MichelineInt).Value)
-                    : (prim.Args[1].ParseAddress(), (prim.Args[2] as MichelineInt).Value);
+                var from = pair.Args[0].ParseAddress();
+                var pair2 = pair.Args[1] as MichelinePrim;
+                var to = pair2.Args[0].ParseAddress();
+                var value = (pair2.Args[1] as MichelineInt).Value;
 
                 transfers.Add((from, to, BigInteger.Zero, value));
             }

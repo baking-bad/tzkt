@@ -454,24 +454,48 @@ namespace Tzkt.Sync.Protocols.Proto10
             var rawContract = await Proto.Rpc.GetContractAsync(block.Level, address);
 
             #region contract
-            var contract = new Contract
+            Contract contract;
+            var ghost = await Cache.Accounts.GetAsync(address);
+            if (ghost != null)
             {
-                Id = Cache.AppState.NextAccountId(),
-                FirstLevel = block.Level,
-                LastLevel = block.Level,
-                FirstBlock = block,
-                Address = address,
-                Balance = rawContract.RequiredInt64("balance"),
-                Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
-                Type = AccountType.Contract,
-                Kind = ContractKind.SmartContract,
-                MigrationsCount = 1,
-            };
+                contract = new Contract
+                {
+                    Id = ghost.Id,
+                    FirstLevel = ghost.FirstLevel,
+                    LastLevel = block.Level,
+                    Address = address,
+                    Balance = rawContract.RequiredInt64("balance"),
+                    Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
+                    Type = AccountType.Contract,
+                    Kind = ContractKind.SmartContract,
+                    MigrationsCount = 1,
+                    ActiveTokensCount = ghost.ActiveTokensCount,
+                    TokenBalancesCount = ghost.TokenBalancesCount,
+                    TokenTransfersCount = ghost.TokenTransfersCount
+                };
+                Db.Entry(ghost).State = EntityState.Detached;
+                Db.Entry(contract).State = EntityState.Modified;
+            }
+            else
+            {
+                contract = new Contract
+                {
+                    Id = Cache.AppState.NextAccountId(),
+                    FirstLevel = block.Level,
+                    LastLevel = block.Level,
+                    Address = address,
+                    Balance = rawContract.RequiredInt64("balance"),
+                    Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
+                    Type = AccountType.Contract,
+                    Kind = ContractKind.SmartContract,
+                    MigrationsCount = 1,
+                };
+                Db.Accounts.Add(contract);
+            }
+            Cache.Accounts.Add(contract);
 
             Db.TryAttach(contract.Creator);
             contract.Creator.ContractsCount++;
-
-            Db.Accounts.Add(contract);
             #endregion
 
             #region script
@@ -609,6 +633,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     var rawKey = new MichelineString(NullAddress.Address);
                     var rawValue = new MichelineInt(100);
 
+                    allocated.Tags |= BigMapTag.Ledger1;
                     allocated.ActiveKeys++;
                     allocated.TotalKeys++;
                     allocated.Updates++;
@@ -695,6 +720,10 @@ namespace Tzkt.Sync.Protocols.Proto10
                     block.Events |= BlockEvents.Tokens;
                     #endregion
                 }
+                else if (address == FallbackToken && allocated.StoragePath == "tokens")
+                {
+                    allocated.Tags |= BigMapTag.Ledger1;
+                }
             }
             #endregion
         }
@@ -750,6 +779,26 @@ namespace Tzkt.Sync.Protocols.Proto10
             Cache.BigMapKeys.Reset();
             foreach (var bigmap in bigmaps)
                 Cache.BigMaps.Remove(bigmap);
+
+            if (contract.TokenTransfersCount != 0)
+            {
+                var ghost = new Account
+                {
+                    Id = contract.Id,
+                    Address = contract.Address,
+                    FirstBlock = contract.FirstBlock,
+                    FirstLevel = contract.FirstLevel,
+                    LastLevel = contract.LastLevel,
+                    ActiveTokensCount = contract.ActiveTokensCount,
+                    TokenBalancesCount = contract.TokenBalancesCount,
+                    TokenTransfersCount = contract.TokenTransfersCount,
+                    Type = AccountType.Ghost,
+                };
+
+                Db.Entry(contract).State = EntityState.Detached;
+                Db.Entry(ghost).State = EntityState.Modified;
+                Cache.Accounts.Add(ghost);
+            }
         }
 
         protected override long GetFutureBlockReward(Protocol protocol, int cycle)

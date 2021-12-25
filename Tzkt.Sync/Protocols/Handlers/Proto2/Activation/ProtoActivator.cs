@@ -192,6 +192,9 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Staked = true,
                 StakingBalance = user.Balance,
                 Type = AccountType.Delegate,
+                ActiveTokensCount = user.ActiveTokensCount,
+                TokenBalancesCount = user.TokenBalancesCount,
+                TokenTransfersCount = user.TokenTransfersCount,
             };
 
             Db.Entry(user).State = EntityState.Detached;
@@ -226,6 +229,9 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Revealed = delegat.Revealed,
                 Staked = false,
                 Type = AccountType.User,
+                ActiveTokensCount = delegat.ActiveTokensCount,
+                TokenBalancesCount = delegat.TokenBalancesCount,
+                TokenTransfersCount = delegat.TokenTransfersCount,
             };
 
             Db.Entry(delegat).State = EntityState.Detached;
