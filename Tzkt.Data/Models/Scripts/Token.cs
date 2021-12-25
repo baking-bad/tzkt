@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -25,6 +26,7 @@ namespace Tzkt.Data.Models
         public int? OwnerId { get; set; }
     }
 
+    [Flags]
     public enum TokenTags
     {
         None    = 0b_0000,

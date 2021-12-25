@@ -439,6 +439,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Staked = true,
                 StakingBalance = user.Balance,
                 Type = AccountType.Delegate,
+                ActiveTokensCount = user.ActiveTokensCount,
+                TokenBalancesCount = user.TokenBalancesCount,
+                TokenTransfersCount = user.TokenTransfersCount,
             };
 
             #region update relations
@@ -561,6 +564,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Revealed = delegat.Revealed,
                 Staked = false,
                 Type = AccountType.User,
+                ActiveTokensCount = delegat.ActiveTokensCount,
+                TokenBalancesCount = delegat.TokenBalancesCount,
+                TokenTransfersCount = delegat.TokenTransfersCount,
             };
 
             #region update relations

@@ -11,10 +11,10 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class AccountsCache
     {
-        public const int MaxAccounts = 16 * 4096; //TODO: set limits in app settings
+        public const int MaxAccounts = 216091; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, Account> CachedById = new(65537);
-        static readonly Dictionary<string, Account> CachedByAddress = new(65537);
+        static readonly Dictionary<int, Account> CachedById = new(MaxAccounts);
+        static readonly Dictionary<string, Account> CachedByAddress = new(MaxAccounts);
 
         readonly CacheService Cache;
         readonly TzktContext Db;
@@ -179,7 +179,9 @@ namespace Tzkt.Sync.Services.Cache
 
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
-                account = await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
+                account = await Db.Accounts
+                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::character(36)", address)
+                    .FirstOrDefaultAsync()
                     ?? (address[0] == 't' ? CreateUser(address) : null);
 
                 if (account != null) Add(account);
