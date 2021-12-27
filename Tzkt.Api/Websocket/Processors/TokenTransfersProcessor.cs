@@ -422,29 +422,28 @@ namespace Tzkt.Api.Websocket.Processors
 
         private static Dictionary<TSubKey, HashSet<string>> TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId)
         {
-            if (subs != null)
+            if (subs == null) return null;
+            foreach (var (key, value) in subs)
             {
-                foreach (var (key, value) in subs)
-                {
-                    if (value.Remove(connectionId))
-                        Limits[connectionId]--;
+                if (value.Remove(connectionId))
+                    Limits[connectionId]--;
 
-                    if (value.Count == 0)
-                        subs.Remove(key);
-                }
-                if (subs.Count > 0) return subs;
+                if (value.Count == 0)
+                    subs.Remove(key);
             }
-            return null;
+            if (subs.Count == 0) return null;
+            return subs;
         }
 
         private static HashSet<string> TryRemove(HashSet<string> set, string connectionId)
         {
-            if (set != null && set.Remove(connectionId))
+            if (set == null) return null;
+            if (set.Remove(connectionId))
             {
                 Limits[connectionId]--;
-                if (set.Count > 0) return set;
+                if (set.Count == 0) return null;
             }
-            return null;
+            return set;
         }
 
         private static IEnumerable<Models.TokenTransfer> Distinct(List<Models.TokenTransfer> items)

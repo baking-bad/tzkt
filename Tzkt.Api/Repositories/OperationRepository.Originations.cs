@@ -348,6 +348,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
@@ -380,6 +381,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"c.""CodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
@@ -471,6 +473,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
@@ -551,6 +554,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"c.""CodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
@@ -731,6 +735,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
@@ -808,6 +813,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
                 .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"c.""CodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)

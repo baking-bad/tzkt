@@ -115,7 +115,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
 
                 var originations = TypesSubs.TryGetValue(Operations.Originations, out var originationsSub)
-                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
                 var transactions = TypesSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
@@ -131,7 +131,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.RegisterConstantOperation>());
 
                 var migrations = TypesSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
-                    ? Repo.GetMigrations(null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                    ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
 
                 var penalties = TypesSubs.TryGetValue(Operations.RevelationPenalty, out var penaltiesSub)
