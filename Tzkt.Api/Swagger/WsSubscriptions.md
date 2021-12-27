@@ -232,4 +232,85 @@ await connection.invoke("SubscribeToBigMaps", { contract: 'KT123...' });
 await connection.invoke("SubscribeToBigMaps", { ptr: 123 });
 ````
 
+---			
+
+## SubscribeToTokenTransfers
+														  
+Sends token transfers
+		
+### Method 
+
+`SubscribeToTokenTransfers`
+
+### Channel 
+
+`transfers`
+
+### Parameters
+
+This method accepts the following parameters:
+
+````js
+{
+	account: '',	// address of the account that sends/receives tokens
+	contract: '',	// address of the contract that manages tokens
+	tokenId: ''		// id of the token within the specified contract
+}
+````
+
+You can set various combinations of these fields to configure what you want to subscribe to. For example:
+
+````js
+// subscribe to all transfers
+{
+}
+
+// subscribe to transfers of all tokens within the contract
+{
+	contract: 'KT1...'
+}
+
+// subscribe to transfers of a particular token
+{
+	contract: 'KT1...',
+	tokenId: '0'
+} 	 
+
+// subscribe to transfers from/to the account
+{		
+	account: 'tz1...'
+} 	 
+
+// subscribe to transfers of all tokens within the contract from/to the account
+{		
+	account: 'tz1...',
+	contract: 'KT1...'
+} 
+
+// subscribe to transfers of a particular token from/to the account
+{		
+	account: 'tz1...',
+	contract: 'KT1...',
+	tokenId: '0'
+}
+````
+
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
+
+### Data model
+
+Same as in [/tokens/transfers](#operation/Tokens_GetTokenTransfers).
+
+### State
+
+State contains level (`int`) of the last processed block.
+
+### Example
+
+````js
+connection.on("transfers", (msg) => { console.log(msg); });
+// subscribe to all transfers of the 'tz123...' contract
+await connection.invoke("SubscribeToTokenTransfers", { account: 'tz123...' });
+````
+
 ---

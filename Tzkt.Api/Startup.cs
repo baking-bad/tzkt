@@ -100,6 +100,9 @@ namespace Tzkt.Api
                 services.AddTransient<BigMapsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
 
+                services.AddTransient<TokenTransfersProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, TokenTransfersProcessor<DefaultHub>>();
+
                 services.AddTransient<AccountsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, AccountsProcessor<DefaultHub>>();
 

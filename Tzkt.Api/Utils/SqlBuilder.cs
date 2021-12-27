@@ -160,10 +160,10 @@ namespace Tzkt.Api
             if (standard == null) return this;
 
             if (standard.Eq != null)
-                AppendFilter($@"{column} & {standard.Eq} = {standard.Eq}");
+                AppendFilter($"{column} & {standard.Eq} = {standard.Eq}");
 
             if (standard.Ne != null)
-                AppendFilter($@"{column} & {standard.Ne} != {standard.Ne}");
+                AppendFilter($"{column} & {standard.Ne} != {standard.Ne}");
 
             return this;
         }
