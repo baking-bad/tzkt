@@ -29,6 +29,8 @@ namespace Tzkt.Api.Services.Cache
         public int VotingPeriod { get; set; }
 
         public int ManagerCounter { get; set; }
+        
+        public int OperationCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }
