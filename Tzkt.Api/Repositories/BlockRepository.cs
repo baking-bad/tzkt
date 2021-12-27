@@ -493,7 +493,7 @@ namespace Tzkt.Api.Repositories
                 : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
 
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
-                ? Operations.GetMigrations(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
+                ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
             var penalties = operations.HasFlag(Data.Models.Operations.RevelationPenalty)
