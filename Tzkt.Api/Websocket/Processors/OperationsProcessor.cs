@@ -119,7 +119,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
                 var transactions = TypesSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
-                    ? Repo.GetTransactions(null, null, null, null, null, null, level, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                    ? Repo.GetTransactions(null, null, null, null, null, null, level, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.TransactionOperation>());
 
                 var reveals = TypesSubs.TryGetValue(Operations.Reveals, out var revealsSub)
