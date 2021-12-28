@@ -6,9 +6,9 @@ services:
     restart: always
     image: postgres:13
     environment:
-      POSTGRES_USER: tzkt
-      POSTGRES_PASSWORD: qwerty
-      POSTGRES_DB: tzkt_db
+      POSTGRES_USER: ${POSTGRES_USER:-tzkt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
+      POSTGRES_DB: ${POSTGRES_DB:-tzkt_db}
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
@@ -21,7 +21,7 @@ services:
     depends_on:
       - db
     environment:
-      ConnectionStrings__DefaultConnection: host=db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
       TZKT_API_KESTREL__ENDPOINTS__HTTP__URL: http://0.0.0.0:5000
     ports:
       - 0.0.0.0:5000:5000
@@ -31,10 +31,9 @@ services:
     restart: always
     image: bakingbad/tzkt-sync:latest
     environment:
-      ConnectionStrings__DefaultConnection: host=db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
     depends_on:
       - db
 
 volumes:
   postgres:
-

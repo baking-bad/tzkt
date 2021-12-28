@@ -6,9 +6,9 @@ services:
     restart: always
     image: postgres:13
     environment:
-      POSTGRES_USER: tzkt
-      POSTGRES_PASSWORD: qwerty
-      POSTGRES_DB: tzkt_db
+      POSTGRES_USER: ${POSTGRES_USER:-tzkt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
+      POSTGRES_DB: ${POSTGRES_DB:-tzkt_db}
     volumes:
       - postgres:/var/lib/postgresql/data
     expose:
@@ -24,7 +24,7 @@ services:
       - hangzhou-db
     environment:
       TZKT_API_KESTREL__ENDPOINTS__HTTP__URL: http://0.0.0.0:5000
-      TZKT_API_ConnectionStrings__DefaultConnection: server=hangzhou-db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
+      TZKT_API_ConnectionStrings__DefaultConnection: host=hangzhou-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
     expose:
       - 5000
     ports:
@@ -36,10 +36,9 @@ services:
     image: bakingbad/tzkt-sync:latest
     environment:
       TZKT_TezosNode__Endpoint: https://rpc.tzkt.io/hangzhou2net/
-      TZKT_ConnectionStrings__DefaultConnection: server=hangzhou-db;port=5432;database=tzkt_db;username=tzkt;password=qwerty;
+      TZKT_ConnectionStrings__DefaultConnection: host=hangzhou-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
     depends_on:
       - hangzhou-db
 
 volumes:
   postgres:
-      
