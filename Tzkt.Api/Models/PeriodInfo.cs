@@ -37,20 +37,5 @@ namespace Tzkt.Api.Models
         /// The height of the block in which the period ends
         /// </summary>
         public int LastLevel { get; set; }
-
-        /// <summary>
-        /// **DEPRECATED**. Use `index` instead.
-        /// </summary>
-        public int Id => Index;
-
-        /// <summary>
-        /// **DEPRECATED**. Use `firstLevel` instead.
-        /// </summary>
-        public int StartLevel => FirstLevel;
-
-        /// <summary>
-        /// **DEPRECATED**. Use `lastLevel` instead.
-        /// </summary>
-        public int EndLevel => LastLevel;
     }
 }

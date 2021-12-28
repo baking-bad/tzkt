@@ -1278,7 +1278,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
         /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
-        /// <param name="parameters">**DEPRECATED**. Use `entrypoint` and `parameter` instead.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
@@ -1299,7 +1298,6 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp,
             StringParameter entrypoint,
             JsonParameter parameter,
-            StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SelectParameter select,
@@ -1360,7 +1358,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {

@@ -236,7 +236,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
         /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
-        /// <param name="parameters">**DEPRECATED**. Use `entrypoint` and `parameter` instead.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="status">Filters transactions, delegations, originations and reveals by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="sort">Sort mode (0 - ascending, 1 - descending), operations of different types can only be sorted by ID.</param>
@@ -244,8 +243,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Number of items to return</param>
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
-        /// <param name="from">**DEPRECATED**. Use `timestamp.ge=` intead.</param>
-        /// <param name="to">**DEPRECATED**. Use `timestamp.lt=` intead.</param>
         /// <returns></returns>
         [HttpGet("{address}/operations")]
         public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
@@ -266,16 +263,13 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp,
             StringParameter entrypoint,
             JsonParameter parameter,
-            StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortMode sort = SortMode.Descending,
             int? lastId = null,
             [Range(0, 1000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
-            Symbols quote = Symbols.None,
-            DateTimeOffset? from = null,
-            DateTimeOffset? to = null)
+            Symbols quote = Symbols.None)
         {
             #region validate
             if (initiator != null)
@@ -388,15 +382,7 @@ namespace Tzkt.Api.Controllers
                 ? new OffsetParameter { Cr = lastId }
                 : null;
 
-            #region legacy
-            if (timestamp == null && (from != null || to != null))
-                timestamp = new DateTimeParameter();
-
-            if (from != null) timestamp.Ge = from.Value.DateTime;
-            if (to != null) timestamp.Lt = to.Value.DateTime;
-            #endregion
-
-            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, _sort, _offset, limit, micheline, quote));
+            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote));
         }
 
         /// <summary>

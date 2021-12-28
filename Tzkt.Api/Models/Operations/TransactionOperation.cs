@@ -141,11 +141,6 @@ namespace Tzkt.Api.Models
         /// </summary>
         public QuoteShort Quote { get; set; }
         #endregion
-
-        /// <summary>
-        /// **DEPRECATED**. Use `entrypoint` and `parameter` instead.
-        /// </summary>
-        public string Parameters { get; set; }
     }
 
     public class TxParameter
