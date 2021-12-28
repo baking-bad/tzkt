@@ -5,12 +5,14 @@ namespace Tzkt.Api.Models
     public class TokenTransfer
     {
         /// <summary>
-        /// Internal TzKT id.
+        /// Internal TzKT id.  
+        /// **[sortable]**
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// Level of the block, at which the token transfer was made.
+        /// Level of the block, at which the token transfer was made.  
+        /// **[sortable]**
         /// </summary>
         public int Level { get; set; }
 
@@ -38,7 +40,8 @@ namespace Tzkt.Api.Models
         public Alias To { get; set; }
 
         /// <summary>
-        /// Amount of tokens transferred (raw value, not divided by `decimals`).
+        /// Amount of tokens transferred (raw value, not divided by `decimals`).  
+        /// **[sortable]**
         /// </summary>
         public string Amount { get; set; }
 
