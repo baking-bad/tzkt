@@ -359,5 +359,52 @@ namespace Tzkt.Api.Controllers
             }
         }
         #endregion
+
+        #region tokens
+        [HttpGet("tokens/{id:int}")]
+        public async Task<ActionResult<RawJson>> GetTokenMetadata(
+            [FromHeader] AuthHeaders headers,
+            [Min(0)] int id,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetTokenMetadata(id, section));
+        }
+
+        [HttpGet("tokens")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> GetTokenMetadata(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter metadata,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            if (!Auth.TryAuthenticate(headers, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Metadata.GetTokenMetadata(metadata, offset, limit, section));
+        }
+
+        [HttpPost("tokens")]
+        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> UpdateTokenMetadata(
+            [FromHeader] AuthHeaders headers)
+        {
+            try
+            {
+                var body = await Request.Body.ReadAsStringAsync();
+                if (!Auth.TryAuthenticate(headers, body, out var error))
+                    return Unauthorized(error);
+
+                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<int>>>(body);
+                return Ok(await Metadata.UpdateTokenMetadata(metadata));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest("body", "Invalid json");
+            }
+        }
+        #endregion
     }
 }

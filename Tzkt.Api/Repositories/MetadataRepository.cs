@@ -34,6 +34,9 @@ namespace Tzkt.Api.Repositories
         public Task<RawJson> GetBlockMetadata(int level, string section = null)
             => Get("Blocks", "Level", "integer", level, section);
 
+        public Task<RawJson> GetTokenMetadata(int id, string section = null)
+            => Get("Tokens", "Id", "integer", id, section);
+
         async Task<RawJson> Get<T>(string table, string keyColumn, string keyType, T key, string section)
         {
             var path = section != null
@@ -70,6 +73,9 @@ namespace Tzkt.Api.Repositories
 
         public Task<IEnumerable<MetadataUpdate<int>>> GetBlockMetadata(JsonParameter metadata, int offset, int limit, string section = null)
             => Get<int>("Blocks", "Level", metadata, offset, limit, section);
+
+        public Task<IEnumerable<MetadataUpdate<int>>> GetTokenMetadata(JsonParameter metadata, int offset, int limit, string section = null)
+            => Get<int>("Tokens", "Id", metadata, offset, limit, section);
 
         async Task<IEnumerable<MetadataUpdate<T>>> Get<T>(string table, string keyColumn, JsonParameter metadata, int offset, int limit, string section)
         {
@@ -167,6 +173,9 @@ namespace Tzkt.Api.Repositories
 
         public Task<List<MetadataUpdate<int>>> UpdateBlockMetadata(List<MetadataUpdate<int>> metadata)
             => Update("Blocks", "Level", "integer", metadata);
+
+        public Task<List<MetadataUpdate<int>>> UpdateTokenMetadata(List<MetadataUpdate<int>> metadata)
+            => Update("Tokens", "Id", "integer", metadata);
 
         async Task<List<MetadataUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<MetadataUpdate<T>> metadata)
         {
