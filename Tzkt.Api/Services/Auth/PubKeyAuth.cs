@@ -1,4 +1,5 @@
 using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
@@ -12,38 +13,39 @@ namespace Tzkt.Api.Services.Auth
     {
         readonly AuthConfig Config;
         readonly Dictionary<string, long> Nonces;
-        Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
-        Dictionary<string, AuthUser> Users;
+        readonly Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
+        readonly Dictionary<string, PubKey> PubKeys;
         
         public PubKeyAuth(IConfiguration config)
         {
-            Config = config.GetAuthConfig();
-            Nonces = Config.Users.ToDictionary(x => x.Name, _ => long.MinValue );
-            Rights = Config.Users.ToDictionary(x => x.Name, x => x.Rights?
+            var cfg = config.GetAuthConfig();
+            Config = cfg;
+            Nonces = cfg.Users.ToDictionary(x => x.Name, _ => long.MinValue );
+            Rights = cfg.Users.ToDictionary(x => x.Name, x => x.Rights?
                 .GroupBy(y => y.Table)
-                .ToDictionary(z => z.Key, z => (z.Where(k => k.Section == null).FirstOrDefault()?.Access ?? Access.None , z
+                .ToDictionary(z => z.Key, z => (z
+                    .Where(k => k.Section == null).Select(a => a.Access).DefaultIfEmpty(Access.None).Max() , z
                     .Where(p => p.Section != null)
                     .ToDictionary(q => q.Section, q => q.Access))));
-            Users = Config.Users.ToDictionary(x => x.Name, x => x);
+            PubKeys = cfg.Users.ToDictionary(x => x.Name, x => PubKey.FromBase58(x.PubKey));
         }
 
         public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error)
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, requestedRights, out error, out var credentials))
+            if (!TryAuthenticateBase(headers, requestedRights, out error, out var pubKey))
             {
                 return false;
             }
 
-            var key = PubKey.FromBase58(credentials.PubKey);
-            if (!key.Verify($"{headers.Nonce}", headers.Signature))
+            if (!pubKey.Verify($"{headers.Nonce}", headers.Signature))
             {
                 error = $"Invalid signature";
                 return false;
             }
 
-            Nonces[headers.User] = (long)headers.Nonce;
+            Nonces[headers.User] = (long) headers.Nonce;
             return true;
         }
 
@@ -51,7 +53,7 @@ namespace Tzkt.Api.Services.Auth
         {
             error = null;
 
-            if (!TryAuthenticateBase(headers, requestedRights, out error, out var credentials))
+            if (!TryAuthenticateBase(headers, requestedRights, out error, out var pubKey))
             {
                 return false;
             }
@@ -64,8 +66,7 @@ namespace Tzkt.Api.Services.Auth
 
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
             
-            var key = PubKey.FromBase58(credentials.PubKey);
-            if (!key.Verify($"{headers.Nonce}{hash}", headers.Signature))
+            if (!pubKey.Verify($"{headers.Nonce}{hash}", headers.Signature))
             {
                 error = $"Invalid signature";
                 return false;
@@ -75,10 +76,10 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights requestedRights, out string error, out AuthUser credentials)
+        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights requestedRights, out string error, out PubKey pubKey)
         {
             error = null;
-            credentials = null;
+            pubKey = null;
             
             if (string.IsNullOrEmpty(headers?.User))
             {
@@ -98,15 +99,9 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!Users.TryGetValue(headers.User, out credentials))
+            if (!PubKeys.TryGetValue(headers.User, out pubKey))
             {
                 error = $"User {headers.User} doesn't exist";
-                return false;
-            }
-            
-            if (headers.Password != credentials.Password)
-            {
-                error = $"Invalid password";
                 return false;
             }
             

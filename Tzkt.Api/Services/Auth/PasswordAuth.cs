@@ -6,15 +6,15 @@ namespace Tzkt.Api.Services.Auth
 {
     public class PasswordAuth : IAuthService
     {
-        Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
-        Dictionary<string, AuthUser> Users;
+        readonly Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
+        readonly Dictionary<string, AuthUser> Users;
 
         public PasswordAuth(IConfiguration config)
         {
             var cfg = config.GetAuthConfig();
             Rights = cfg.Users.ToDictionary(x => x.Name, x => x.Rights?
                                       .GroupBy(y => y.Table)
-                                 .ToDictionary(z => z.Key, z => (z.Where(k => k.Section == null).FirstOrDefault()?.Access ?? Access.None , z
+                                 .ToDictionary(z => z.Key, z => (z.FirstOrDefault(k => k.Section == null)?.Access ?? Access.None , z
                                  .Where(p => p.Section != null)
                                  .ToDictionary(q => q.Section, q => q.Access))));
             Users = cfg.Users.ToDictionary(x => x.Name, x => x);
@@ -93,13 +93,11 @@ namespace Tzkt.Api.Services.Auth
 
         public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string json, out string error)
         {
-            if (string.IsNullOrEmpty(json))
-            {
-                error = $"The body is empty";
-                return false;
-            }
+            if (!string.IsNullOrEmpty(json)) return TryAuthenticate(headers, requestedRights, out error);
             
-            return TryAuthenticate(headers, requestedRights, out error);
+            error = $"The body is empty";
+            return false;
+
         }
     }
 }
