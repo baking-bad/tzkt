@@ -11,10 +11,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-tzkt_db}
     volumes:
       - postgres:/var/lib/postgresql/data
-    expose:
-      - 5432
     ports:
-      - 0.0.0.0:5433:5432
+      - 127.0.0.1:5433:5432
 
   granada-api:
     container_name: granada-api
@@ -23,10 +21,8 @@ services:
     depends_on:
       - granada-db
     environment:
-      TZKT_API_KESTREL__ENDPOINTS__HTTP__URL: http://0.0.0.0:5000
-      TZKT_API_ConnectionStrings__DefaultConnection: host=granada-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
-    expose:
-      - 5000
+      ConnectionStrings__DefaultConnection: host=granada-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
     ports:
       - 0.0.0.0:5010:5000
 
@@ -35,8 +31,8 @@ services:
     restart: always
     image: bakingbad/tzkt-sync:latest
     environment:
-      TZKT_TezosNode__Endpoint: https://rpc.tzkt.io/granadanet/
-      TZKT_ConnectionStrings__DefaultConnection: host=granada-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      ConnectionStrings__DefaultConnection: host=granada-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      TezosNode__Endpoint: https://rpc.tzkt.io/granadanet/
     depends_on:
       - granada-db
 
