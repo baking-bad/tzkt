@@ -67,6 +67,21 @@ namespace Tzkt.Api.Models
         public int NumContracts { get; set; }
 
         /// <summary>
+        /// Number of account tokens with non-zero balances
+        /// </summary>
+        public int ActiveTokensCount { get; set; }
+
+        /// <summary>
+        /// Number of tokens the account ever had
+        /// </summary>
+        public int TokenBalancesCount { get; set; }
+
+        /// <summary>
+        /// Number of token transfers from/to the account
+        /// </summary>
+        public int TokenTransfersCount { get; set; }
+
+        /// <summary>
         /// Number of delegation operations of the contract
         /// </summary>
         public int NumDelegations { get; set; }

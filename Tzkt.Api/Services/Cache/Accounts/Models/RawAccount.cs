@@ -13,6 +13,9 @@ namespace Tzkt.Api.Services.Cache
         public int Counter { get; set; }
 
         public int ContractsCount { get; set; }
+        public int ActiveTokensCount { get; set; }
+        public int TokenBalancesCount { get; set; }
+        public int TokenTransfersCount { get; set; }
 
         public int DelegationsCount { get; set; }
         public int OriginationsCount { get; set; }
