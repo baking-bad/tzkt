@@ -61,6 +61,9 @@ namespace Tzkt.Api.Repositories
                 LastActivity = contract.LastLevel,
                 LastActivityTime = Time[contract.LastLevel],
                 NumContracts = contract.ContractsCount,
+                ActiveTokensCount = contract.ActiveTokensCount,
+                TokenBalancesCount = contract.TokenBalancesCount,
+                TokenTransfersCount = contract.TokenTransfersCount,
                 NumDelegations = contract.DelegationsCount,
                 NumOriginations = contract.OriginationsCount,
                 NumReveals = contract.RevealsCount,
@@ -168,6 +171,9 @@ namespace Tzkt.Api.Repositories
                     LastActivity = row.LastLevel,
                     LastActivityTime = Time[row.LastLevel],
                     NumContracts = row.ContractsCount,
+                    ActiveTokensCount = row.ActiveTokensCount,
+                    TokenBalancesCount = row.TokenBalancesCount,
+                    TokenTransfersCount = row.TokenTransfersCount,
                     NumDelegations = row.DelegationsCount,
                     NumOriginations = row.OriginationsCount,
                     NumReveals = row.RevealsCount,
@@ -214,6 +220,9 @@ namespace Tzkt.Api.Repositories
                     case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
                     case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
                     case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
+                    case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
+                    case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
+                    case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
                     case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
                     case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
                     case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
@@ -338,6 +347,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.ContractsCount;
                         break;
+                    case "activeTokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveTokensCount;
+                        break;
+                    case "tokenBalancesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenBalancesCount;
+                        break;
+                    case "tokenTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenTransfersCount;
+                        break;
                     case "numDelegations":
                         foreach (var row in rows)
                             result[j++][i] = row.DelegationsCount;
@@ -434,6 +455,9 @@ namespace Tzkt.Api.Repositories
                 case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
                 case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
                 case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
+                case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
+                case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
+                case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
                 case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
                 case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
                 case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
@@ -553,6 +577,18 @@ namespace Tzkt.Api.Repositories
                 case "numContracts":
                     foreach (var row in rows)
                         result[j++] = row.ContractsCount;
+                    break;
+                case "activeTokensCount":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveTokensCount;
+                    break;
+                case "tokenBalancesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokenBalancesCount;
+                    break;
+                case "tokenTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokenTransfersCount;
                     break;
                 case "numDelegations":
                     foreach (var row in rows)
