@@ -17,11 +17,29 @@ namespace Tzkt.Api
         bool Filters;
         int Counter;
 
+        public SqlBuilder()
+        {
+            Params = new DynamicParameters();
+            Builder = new StringBuilder();
+        }
+
         public SqlBuilder(string select)
         {
             Params = new DynamicParameters();
             Builder = new StringBuilder(select, select.Length + 80);
             Builder.AppendLine();
+        }
+
+        public SqlBuilder Append(string sql)
+        {
+            Builder.AppendLine(sql);
+            return this;
+        }
+
+        public SqlBuilder ResetFilters()
+        {
+            Filters = false;
+            return this;
         }
 
         public SqlBuilder Filter(string expression)
@@ -709,10 +727,10 @@ namespace Tzkt.Api
             if (value == null) return this;
 
             if (value.Eq != null)
-                AppendFilter($@"""{column}""::numeric = {value.Eq}");
+                AppendFilter($@"""{column}"" = '{value.Eq}'");
 
             if (value.Ne != null)
-                AppendFilter($@"""{column}""::numeric != {value.Ne}");
+                AppendFilter($@"""{column}"" != '{value.Ne}'");
 
             if (value.Gt != null)
                 AppendFilter($@"""{column}""::numeric > {value.Gt}");
@@ -740,10 +758,10 @@ namespace Tzkt.Api
             if (value == null) return this;
 
             if (value.Eq != null)
-                AppendFilter($"{column}::numeric = {value.Eq}");
+                AppendFilter($"{column} = '{value.Eq}'");
 
             if (value.Ne != null)
-                AppendFilter($"{column}::numeric != {value.Ne}");
+                AppendFilter($"{column} != '{value.Ne}'");
 
             if (value.Gt != null)
                 AppendFilter($"{column}::numeric > {value.Gt}");

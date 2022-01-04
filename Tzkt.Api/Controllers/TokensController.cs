@@ -65,7 +65,7 @@ namespace Tzkt.Api.Controllers
         {
             if (selection.select == null)
                 return Ok(await Tokens.GetTokens(filter, pagination));
-            
+
             return Ok(new SelectionResponse
             {
                 Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
@@ -185,6 +185,45 @@ namespace Tzkt.Api.Controllers
             {
                 Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
                 Rows = await Tokens.GetTokenTransfers(filter, pagination, selection.select.Fields ?? selection.select.Values)
+            });
+        }
+        #endregion
+
+        #region historical balances
+        /// <summary>
+        /// Get historical token balances
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of token balances at the end of the specified block.
+        /// Note, this endpoint is quite heavy, therefore at least one of the filters
+        /// (`account`, `token.id`, `token.contract` with `token.tokenId`) must be specified.
+        /// </remarks>
+        /// <param name="level">Level of the block at the end of which historical balances must be calculated</param>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <returns></returns>
+        [HttpGet("historical_balances/{level:int}")]
+        public async Task<ActionResult<IEnumerable<TokenBalanceShort>>> GetTokenBalances(int level,
+            [FromQuery] TokenBalanceShortFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection)
+        {
+            if (filter.account?.Eq == null &&
+                filter.account?.In == null &&
+                filter.token.id?.Eq == null &&
+                filter.token.id?.In == null &&
+                (filter.token.contract?.Eq == null && filter.token.contract?.In == null ||
+                filter.token.tokenId?.Eq == null && filter.token.tokenId?.In == null))
+                return new BadRequest("query", "At least one of the filters (`account`, `token.id`, `token.contract` with `token.tokenId`) must be specified");
+
+            if (selection.select == null)
+                return Ok(await Tokens.GetHistoricalTokenBalances(level, filter, pagination));
+
+            return Ok(new SelectionResponse
+            {
+                Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                Rows = await Tokens.GetHistoricalTokenBalances(level, filter, pagination, selection.select.Fields ?? selection.select.Values)
             });
         }
         #endregion
