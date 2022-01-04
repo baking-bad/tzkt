@@ -777,5 +777,220 @@ namespace Tzkt.Api.Repositories
             return result;
         }
         #endregion
+
+        #region historical balances
+        async Task<IEnumerable<dynamic>> QueryHistoricalTokenBalancesAsync(int level, TokenBalanceShortFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        {
+            var select = @"
+                tb.""AccountId"",
+                tb.""Balance"",
+                tb.""TokenId"" as ""tId"",
+                t.""ContractId"" as ""tContractId"",
+                t.""TokenId"" as ""tTokenId"",
+                t.""Tags"" as ""tTags"",
+                t.""Metadata"" as ""tMetadata""";
+            if (fields != null)
+            {
+                var counter = 0;
+                var columns = new HashSet<string>(fields.Count);
+                foreach (var field in fields)
+                {
+                    switch (field.Field)
+                    {
+                        case "account": columns.Add(@"tb.""AccountId"""); break;
+                        case "balance": columns.Add(@"tb.""Balance"""); break;
+                        case "token":
+                            if (field.Path == null)
+                            {
+                                columns.Add(@"tb.""TokenId"" as ""tId""");
+                                columns.Add(@"t.""ContractId"" as ""tContractId""");
+                                columns.Add(@"t.""TokenId"" as ""tTokenId""");
+                                columns.Add(@"t.""Tags"" as ""tTags""");
+                                columns.Add(@"t.""Metadata"" as ""tMetadata""");
+                            }
+                            else
+                            {
+                                var subField = field.SubField();
+                                switch (subField.Field)
+                                {
+                                    case "id": columns.Add(@"tb.""TokenId"" as ""tId"""); break;
+                                    case "contract": columns.Add(@"t.""ContractId"" as ""tContractId"""); break;
+                                    case "tokenId": columns.Add(@"t.""TokenId"" as ""tTokenId"""); break;
+                                    case "standard": columns.Add(@"t.""Tags"" as ""tTags"""); break;
+                                    case "metadata":
+                                        if (subField.Path == null)
+                                        {
+                                            columns.Add(@"t.""Metadata"" as ""tMetadata""");
+                                        }
+                                        else
+                                        {
+                                            field.Column = $"c{counter++}";
+                                            columns.Add($@"t.""Metadata"" #> '{{{subField.PathString}}}' as {field.Column}");
+                                        }
+                                        break;
+                                }
+                            }
+                            break;
+                    }
+                }
+
+                if (columns.Count == 0)
+                    return Enumerable.Empty<dynamic>();
+
+                select = string.Join(',', columns);
+            }
+
+            static (string, string) TryMetaSort(string field)
+            {
+                if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
+                {
+                    var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
+                    return (col, col);
+                }
+                return (@"tb.""Id""", @"tb.""Id""");
+            }
+
+            var sql = new SqlBuilder()
+                .Append($@"SELECT {select} FROM (")
+                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TokenId"", ""AccountId"") as ""Id"", ""TokenId"", ""AccountId"", SUM(""Amount"")::text AS ""Balance"" FROM (")
+                        
+                        .Append(@"SELECT tr.""TokenId"", tr.""FromId"" AS ""AccountId"", -tr.""Amount""::numeric AS ""Amount"" FROM ""TokenTransfers"" as tr")
+                        .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
+                        .Filter($@"tr.""Level"" <= {level}")
+                        .Filter($@"tr.""FromId"" IS NOT NULL")
+                        .FilterA(@"tr.""FromId""", filter.account)
+                        .FilterA(@"tr.""TokenId""", filter.token.id)
+                        .FilterA(@"t.""ContractId""", filter.token.contract)
+                        .FilterA(@"t.""TokenId""", filter.token.tokenId)
+                        .FilterA(@"t.""Tags""", filter.token.standard)
+                        .FilterA(@"t.""Metadata""", filter.token.metadata)
+                        .ResetFilters()
+
+                        .Append("UNION ALL")
+
+                        .Append(@"SELECT tr.""TokenId"", tr.""ToId"" AS ""AccountId"", tr.""Amount""::numeric AS ""Amount"" FROM ""TokenTransfers"" as tr")
+                        .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
+                        .Filter($@"tr.""Level"" <= {level}")
+                        .Filter($@"tr.""ToId"" IS NOT NULL")
+                        .FilterA(@"tr.""ToId""", filter.account)
+                        .FilterA(@"tr.""TokenId""", filter.token.id)
+                        .FilterA(@"t.""ContractId""", filter.token.contract)
+                        .FilterA(@"t.""TokenId""", filter.token.tokenId)
+                        .FilterA(@"t.""Tags""", filter.token.standard)
+                        .FilterA(@"t.""Metadata""", filter.token.metadata)
+                        .ResetFilters()
+
+                    .Append(") as tb")
+                    .Append(@"GROUP BY tb.""TokenId"", tb.""AccountId""")
+                .Append(") as tb")
+                .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tb.""TokenId""")
+                .FilterA(@"tb.""Balance""", filter.balance)
+                .Take(pagination, x => x switch
+                {
+                    "balance" => (@"""Balance""::numeric", @"""Balance""::numeric"),
+                    "token.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
+                    _ => TryMetaSort(x)
+                }, @"tb.""Id""");
+
+            using var db = GetConnection();
+            return await db.QueryAsync(sql.Query, sql.Params);
+        }
+
+        public async Task<IEnumerable<TokenBalanceShort>> GetHistoricalTokenBalances(int level, TokenBalanceShortFilter filter, Pagination pagination)
+        {
+            var rows = await QueryHistoricalTokenBalancesAsync(level, filter, pagination);
+            return rows.Select(row => new TokenBalanceShort
+            {
+                Account = Accounts.GetAlias(row.AccountId),
+                Balance = row.Balance,
+                Token = new TokenInfo
+                {
+                    Id = row.tId,
+                    Contract = Accounts.GetAlias(row.tContractId),
+                    TokenId = row.tTokenId,
+                    Standard = TokenStandards.ToString(row.tTags),
+                    Metadata = (RawJson)row.tMetadata
+                }
+            });
+        }
+
+        public async Task<object[][]> GetHistoricalTokenBalances(int level, TokenBalanceShortFilter filter, Pagination pagination, List<SelectionField> fields)
+        {
+            var rows = await QueryHistoricalTokenBalancesAsync(level, filter, pagination, fields);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Count];
+
+            for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
+            {
+                switch (fields[i].Full)
+                {
+                    case "account":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.AccountId);
+                        break;
+                    case "account.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.AccountId).Name;
+                        break;
+                    case "account.address":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.AccountId).Address;
+                        break;
+                    case "balance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Balance;
+                        break;
+                    case "token":
+                        foreach (var row in rows)
+                            result[j++][i] = new TokenInfo
+                            {
+                                Id = row.tId,
+                                Contract = Accounts.GetAlias(row.tContractId),
+                                TokenId = row.tTokenId,
+                                Standard = TokenStandards.ToString(row.tTags),
+                                Metadata = (RawJson)row.tMetadata
+                            };
+                        break;
+                    case "token.id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tId;
+                        break;
+                    case "token.contract":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.tContractId);
+                        break;
+                    case "token.contract.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.tContractId).Alias;
+                        break;
+                    case "token.contract.address":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.tContractId).Address;
+                        break;
+                    case "token.tokenId":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTokenId;
+                        break;
+                    case "token.standard":
+                        foreach (var row in rows)
+                            result[j++][i] = TokenStandards.ToString(row.tTags);
+                        break;
+                    case "token.metadata":
+                        foreach (var row in rows)
+                            result[j++][i] = (RawJson)row.tMetadata;
+                        break;
+                    default:
+                        if (fields[i].Full.StartsWith("token.metadata."))
+                            foreach (var row in rows)
+                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                        break;
+                }
+            }
+
+            return result;
+        }
+        #endregion
     }
 }
