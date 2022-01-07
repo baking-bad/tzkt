@@ -21,12 +21,15 @@ namespace Tzkt.Api.Services.Auth
             var cfg = config.GetAuthConfig();
             Config = cfg;
             Nonces = cfg.Users.ToDictionary(x => x.Name, _ => long.MinValue );
+
             Rights = cfg.Users.ToDictionary(x => x.Name, x => x.Rights?
                 .GroupBy(y => y.Table)
                 .ToDictionary(z => z.Key, z => (z
-                    .Where(k => k.Section == null).Select(a => a.Access).DefaultIfEmpty(Access.None).Max() , z
+                    .FirstOrDefault(k => k.Section == null)?.Access ?? Access.None , z
                     .Where(p => p.Section != null)
                     .ToDictionary(q => q.Section, q => q.Access))));
+            
+            //TODO it throws an exception when the key is invalid, but only when the first authorization occurs.
             PubKeys = cfg.Users.ToDictionary(x => x.Name, x => PubKey.FromBase58(x.PubKey));
         }
 
@@ -133,6 +136,7 @@ namespace Tzkt.Api.Services.Auth
             
             if (!user.TryGetValue(requestedRights.Table, out var sections))
             {
+                //Done
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
                 return false;
             }
@@ -144,12 +148,14 @@ namespace Tzkt.Api.Services.Auth
 
             if (requestedRights.Section == null)
             {
+                //Done
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required.";
                 return false;
             }
 
             if (!sections.sections.TryGetValue(requestedRights.Section, out var access))
             {
+                // Done
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Section} required.";
                 return false;
             }
