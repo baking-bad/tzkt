@@ -254,7 +254,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (Cache.AppState.Get().VotingPeriod != periodIndex)
                 throw new ValidationException("invalid ballot voting period");
 
-            var proposal = await Cache.Proposals.GetOrDefaultAsync(content.RequiredString("proposal"), Cache.AppState.Get().VotingEpoch);
+            var proposal = await Cache.Proposals.GetOrDefaultAsync(Cache.AppState.Get().VotingEpoch, content.RequiredString("proposal"));
             if (proposal?.Status != ProposalStatus.Active)
                 throw new ValidationException("invalid ballot proposal");
 

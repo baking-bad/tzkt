@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Services.Cache
         public const int MaxItems = 216091; //TODO: set limits in app settings
 
         static readonly Dictionary<int, Token> CachedById = new(MaxItems);
-        static readonly Dictionary<(int, BigInteger), Token> CachedByContract = new(MaxItems);
+        static readonly Dictionary<(int, BigInteger), Token> CachedByKey = new(MaxItems);
 
         readonly TzktContext Db;
 
@@ -27,7 +27,7 @@ namespace Tzkt.Sync.Services.Cache
         public void Reset()
         {
             CachedById.Clear();
-            CachedByContract.Clear();
+            CachedByKey.Clear();
         }
 
         public void Vacuum()
@@ -47,18 +47,18 @@ namespace Tzkt.Sync.Services.Cache
         public void Add(Token token)
         {
             CachedById[token.Id] = token;
-            CachedByContract[(token.ContractId, token.TokenId)] = token;
+            CachedByKey[(token.ContractId, token.TokenId)] = token;
         }
 
         public void Remove(Token token)
         {
             CachedById.Remove(token.Id);
-            CachedByContract.Remove((token.ContractId, token.TokenId));
+            CachedByKey.Remove((token.ContractId, token.TokenId));
         }
 
         public bool Has(int contractId, BigInteger tokenId)
         {
-            return CachedByContract.ContainsKey((contractId, tokenId));
+            return CachedByKey.ContainsKey((contractId, tokenId));
         }
 
         public Token GetOrAdd(Token token)
@@ -78,14 +78,14 @@ namespace Tzkt.Sync.Services.Cache
 
         public Token Get(int contractId, BigInteger tokenId)
         {
-            if (!CachedByContract.TryGetValue((contractId, tokenId), out var token))
+            if (!CachedByKey.TryGetValue((contractId, tokenId), out var token))
                 throw new Exception($"Token ({contractId}, {tokenId}) doesn't exist");
             return token;
         }
 
         public bool TryGet(int contractId, BigInteger tokenId, out Token token)
         {
-            return CachedByContract.TryGetValue((contractId, tokenId), out token);
+            return CachedByKey.TryGetValue((contractId, tokenId), out token);
         }
 
         public async Task Preload(IEnumerable<int> ids)
@@ -104,7 +104,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task Preload(IEnumerable<(int, BigInteger)> ids)
         {
-            var missed = ids.Where(x => !CachedByContract.ContainsKey(x)).ToHashSet();
+            var missed = ids.Where(x => !CachedByKey.ContainsKey(x)).ToHashSet();
             if (missed.Count > 0)
             {
                 var corteges = string.Join(',', missed.Select(x => $"({x.Item1}, '{x.Item2}')"));

@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             var proposalOperations = new List<ProposalOperation>(4);
             foreach (var proposalHash in content.RequiredArray("proposals").EnumerateArray())
             {
-                var proposal = await Cache.Proposals.GetOrCreateAsync(proposalHash.RequiredString(), period.Epoch, () => new Proposal
+                var proposal = await Cache.Proposals.GetOrCreateAsync(period.Epoch, proposalHash.RequiredString(), () => new Proposal
                 {
                     Hash = proposalHash.RequiredString(),
                     Epoch = period.Epoch,

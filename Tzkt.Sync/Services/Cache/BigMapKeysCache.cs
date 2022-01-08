@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxItems = 216091; //TODO: set limits in app settings
 
-        static readonly Dictionary<string, BigMapKey> Cached = new(MaxItems);
+        static readonly Dictionary<(int, string), BigMapKey> Cached = new(MaxItems);
 
         readonly TzktContext Db;
 
@@ -29,13 +29,13 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task Prefetch(IEnumerable<(int ptr, string hash)> keys)
         {
-            var missed = keys.Where(x => !Cached.ContainsKey(x.ptr + x.hash)).ToList();
+            var missed = keys.Where(x => !Cached.ContainsKey((x.ptr, x.hash))).ToList();
             if (missed.Count > 0)
             {
                 #region check space
                 if (Cached.Count + missed.Count > MaxItems)
                 {
-                    var pinned = keys.Select(x => x.ptr + x.hash).ToHashSet();
+                    var pinned = keys.ToHashSet();
                     var toRemove = Cached
                         .Where(kv => !pinned.Contains(kv.Key))
                         .OrderBy(x => x.Value.LastLevel)
@@ -56,29 +56,29 @@ namespace Tzkt.Sync.Services.Cache
                     .ToListAsync();
 
                 foreach (var item in loaded)
-                    Cached.Add(item.BigMapPtr + item.KeyHash, item);
+                    Cached.Add((item.BigMapPtr, item.KeyHash), item);
             }
         }
 
         public bool TryGet(int ptr, string hash, out BigMapKey key)
         {
-            return Cached.TryGetValue(ptr + hash, out key);
+            return Cached.TryGetValue((ptr, hash), out key);
         }
 
         public void Cache(BigMapKey key)
         {
-            Cached[key.BigMapPtr + key.KeyHash] = key;
+            Cached[(key.BigMapPtr, key.KeyHash)] = key;
         }
 
         public void Cache(IEnumerable<BigMapKey> keys)
         {
             foreach (var key in keys)
-                Cached[key.BigMapPtr + key.KeyHash] = key;
+                Cached[(key.BigMapPtr, key.KeyHash)] = key;
         }
 
         public void Remove(BigMapKey key)
         {
-            Cached.Remove(key.BigMapPtr + key.KeyHash);
+            Cached.Remove((key.BigMapPtr, key.KeyHash));
         }
     }
 }
