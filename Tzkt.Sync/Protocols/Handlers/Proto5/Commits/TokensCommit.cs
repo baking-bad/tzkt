@@ -206,8 +206,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         var key = keys[(int)update.BigMapKeyId];
 
-                        var (address, tokenId, balance) = BigMaps.ParseLedger(bigmap, key, update);
-                        if (address != null)
+                        foreach (var (address, tokenId, balance) in BigMaps.ParseLedger(bigmap, key, update))
                         {
                             if (!opCtx.Tokens.TryGetValue(tokenId, out var tokenCtx))
                             {
@@ -272,8 +271,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 }
                 else
                 {
-                    var (address, tokenId, balance) = BigMaps.ParseLedger(bigmap, key, update);
-                    if (address != null)
+                    foreach (var (address, tokenId, balance) in BigMaps.ParseLedger(bigmap, key, update))
                     {
                         if (!opCtx.Tokens.TryGetValue(tokenId, out var tokenCtx))
                         {

@@ -1,4 +1,6 @@
-﻿using Netezos.Encoding;
+﻿using System.Collections.Generic;
+using Netezos.Contracts;
+using Netezos.Encoding;
 
 namespace Tzkt.Sync
 {
@@ -90,6 +92,29 @@ namespace Tzkt.Sync
             }
 
             return micheline;
+        }
+
+        public static IEnumerable<Schema> Children(this PairSchema pair)
+        {
+            if (pair.Left is PairSchema left && left.Name == null)
+            {
+                foreach (var child in left.Children())
+                    yield return child;
+            }
+            else
+            {
+                yield return pair.Left;
+            }
+
+            if (pair.Right is PairSchema right && right.Name == null)
+            {
+                foreach (var child in right.Children())
+                    yield return child;
+            }
+            else
+            {
+                yield return pair.Right;
+            }
         }
     }
 }

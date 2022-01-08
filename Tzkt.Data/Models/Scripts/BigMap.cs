@@ -61,9 +61,13 @@ namespace Tzkt.Data.Models
         Ledger4         = 0b_0000_0001_0001_0000, // big_map (pair nat address) nat
         Ledger5         = 0b_0000_0010_0001_0000, // big_map address (pair nat (map address nat))
         Ledger6         = 0b_0000_0100_0001_0000, // big_map address (pair (map address nat) nat)
-        Ledger7         = 0b_0000_1000_0001_0000, // big_map bytes bytes
-        LedgerTypes     = 0b_0000_1111_1110_0000,
-        LedgerMask      = 0b_0000_1111_1111_0000,
+        Ledger7         = 0b_0000_1000_0001_0000, // big_map bytes bytes (tzBTC)
+        Ledger8         = 0b_0001_0000_0001_0000, // big_map address { ... balance ... }
+        Ledger9         = 0b_0010_0000_0001_0000, // big_map (pair address nat) { ... balance ... }
+        Ledger10        = 0b_0100_0000_0001_0000, // big_map (pair nat address) { ... balance ... }
+        Ledger11        = 0b_1000_0000_0001_0000, // big_map address (pair (map nat nat) (set address)) (QUIPU)
+        LedgerTypes     = 0b_1111_1111_1110_0000,
+        LedgerMask      = 0b_1111_1111_1111_0000,
     }
 
     public static class BigMapModel
