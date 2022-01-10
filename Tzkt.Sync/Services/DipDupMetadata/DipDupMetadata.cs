@@ -197,7 +197,11 @@ namespace Tzkt.Sync.Services
                 + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
                 Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
-            var options = new JsonSerializerOptions { NumberHandling = JsonNumberHandling.AllowReadingFromString };
+            var options = new JsonSerializerOptions
+            {
+                NumberHandling = JsonNumberHandling.AllowReadingFromString,
+                MaxDepth = 10240
+            };
             return (await JsonSerializer.DeserializeAsync<TokenMetadataResponse>(
                 await res.Content.ReadAsStreamAsync(), options)).Data.Items;
         }
@@ -209,7 +213,11 @@ namespace Tzkt.Sync.Services
             var items = new List<TokenMetadataItem>(tokens.Count);
 
             using var client = new HttpClient();
-            var options = new JsonSerializerOptions { NumberHandling = JsonNumberHandling.AllowReadingFromString };
+            var options = new JsonSerializerOptions
+            {
+                NumberHandling = JsonNumberHandling.AllowReadingFromString,
+                MaxDepth = 10240
+            };
             var lastUpdateId = 0;
             while (true)
             {
@@ -233,6 +241,12 @@ namespace Tzkt.Sync.Services
             using var conn = new NpgsqlConnection(ConnectionString);
             var contracts = await GetContracts(conn, items.Select(x => x.Contract).ToHashSet().ToList());
             var saved = 0;
+            var options = new JsonSerializerOptions
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                NumberHandling = JsonNumberHandling.WriteAsString,
+                MaxDepth = 10240
+            };
             for (int i = 0; i < items.Count; i += 1000)
             {
                 var comma = false;
@@ -248,7 +262,7 @@ namespace Tzkt.Sync.Services
                     {
                         if (comma) sql.AppendLine(",");
                         else comma = true;
-                        param.Add($"@p{j}", item.Metadata.GetRawText());
+                        param.Add($"@p{j}", JsonSerializer.Serialize(item.Metadata, options));
                         sql.Append($"({contractId}, '{item.TokenId}', @p{j}::jsonb)");
                     }
                 }
