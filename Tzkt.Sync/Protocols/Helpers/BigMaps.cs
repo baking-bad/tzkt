@@ -249,6 +249,23 @@ namespace Tzkt.Sync.Protocols
                         ));
                     }
                     return res;
+                case BigMapTag.Ledger12:
+                    pair = (Micheline.FromBytes(update.RawValue) as MichelinePrim).Args[1] as MichelinePrim;
+                    var option = pair.Args[1] as MichelinePrim;
+                    if (option.Prim == PrimType.Some)
+                    {
+                        return new(1)
+                        {
+                            (
+                                (pair.Args[0] as MichelinePrim).Args[1].ParseAddress(),
+                                (option.Args[0] as MichelineInt).Value,
+                                update.Action != BigMapAction.RemoveKey
+                                    ? BigInteger.One
+                                    : BigInteger.Zero
+                            )
+                        };
+                    }
+                    return new(0);
                 default:
                     throw new NotSupportedException("Unsupported ledger type");
             }

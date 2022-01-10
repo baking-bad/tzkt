@@ -49,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         {
                             Db.TryAttach(contract);
                             contract.Tags |= ContractTags.Ledger;
-                            if (bigmap.Tags.HasFlag(BigMapTag.Ledger2))
+                            if ((bigmap.Tags & BigMapTag.LedgerNft) != 0)
                                 contract.Tags |= ContractTags.Nft;
                         }
                     }
@@ -64,7 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                         Db.TryAttach(contract);
                         contract.Tags &= ~ContractTags.Ledger;
-                        if (bigmap.Tags.HasFlag(BigMapTag.Ledger2))
+                        if ((bigmap.Tags & BigMapTag.LedgerNft) != 0)
                             contract.Tags &= ~ContractTags.Nft;
                     }
                 }
@@ -79,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         Db.TryAttach(contract);
                         contract.Tags |= ContractTags.Ledger;
-                        if (bigmap.Tags.HasFlag(BigMapTag.Ledger2))
+                        if ((bigmap.Tags & BigMapTag.LedgerNft) != 0)
                             contract.Tags |= ContractTags.Nft;
 
                         pendingBigMaps ??= new();
