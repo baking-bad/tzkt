@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -543,6 +544,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_baking")]
         public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionDataAttribute("x-tzkt-anyof-parameter", "accuser,offender")]
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
@@ -673,6 +676,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_endorsing")]
         public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionDataAttribute("x-tzkt-anyof-parameter", "accuser,offender")]
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
@@ -803,6 +808,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("nonce_revelations")]
         public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionDataAttribute("x-tzkt-anyof-parameter", "baker,sender")]
             AnyOfParameter anyof,
             AccountParameter baker,
             AccountParameter sender,
@@ -936,6 +943,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("delegations")]
         public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegations(
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionDataAttribute("x-tzkt-anyof-parameter", "sender,prevDelegate,newDelegate")]
             AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
@@ -1100,6 +1109,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("originations")]
         public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionDataAttribute("x-tzkt-anyof-parameter", "initiator,sender,contractManager,contractDelegate,originatedContract")]
             AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
@@ -1287,6 +1298,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transactions")]
         public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactions(
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionDataAttribute("x-tzkt-anyof-parameter", "sender,target,initiator")]
             AnyOfParameter anyof,
             AccountParameter initiator,
             AccountParameter sender,
@@ -1296,6 +1309,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
             JsonParameter parameter,
             StringParameter parameters,
             BoolParameter hasInternals,

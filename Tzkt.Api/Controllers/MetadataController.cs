@@ -76,6 +76,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("accounts")]
         public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetAccountMetadata(
             [FromHeader] AuthHeaders headers,
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
             JsonParameter metadata,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
@@ -127,6 +128,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetProposalMetadata(
             [FromHeader] AuthHeaders headers,
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
             JsonParameter metadata,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
@@ -178,6 +180,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("protocols")]
         public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetProtocolMetadata(
             [FromHeader] AuthHeaders headers,
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
             JsonParameter metadata,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
@@ -229,6 +232,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("software")]
         public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetSoftwareMetadata(
             [FromHeader] AuthHeaders headers,
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
             JsonParameter metadata,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
@@ -279,6 +283,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("constants")]
         public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetConstantMetadata(
             [FromHeader] AuthHeaders headers,
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
             JsonParameter metadata,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
@@ -329,6 +334,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("blocks")]
         public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> GetBlockMetadata(
             [FromHeader] AuthHeaders headers,
+            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
             JsonParameter metadata,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
