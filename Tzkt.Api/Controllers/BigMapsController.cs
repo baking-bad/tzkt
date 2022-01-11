@@ -123,7 +123,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter contract,
             BigMapTagsParameter tags,
             BigMapActionParameter action,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             Int32Parameter level,
             TimestampParameter timestamp,
@@ -197,9 +197,9 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<BigMapKey>>> GetKeys(
             [Min(0)] int id,
             bool? active,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             Int32Parameter lastLevel,
             SelectParameter select,
@@ -343,9 +343,9 @@ namespace Tzkt.Api.Controllers
             [Min(0)] int id,
             [Min(0)] int level,
             bool? active,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             SelectParameter select,
             SortParameter sort,

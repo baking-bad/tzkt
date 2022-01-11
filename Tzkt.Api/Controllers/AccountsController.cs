@@ -266,7 +266,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter parameter,
             StringParameter parameters,
             BoolParameter hasInternals,

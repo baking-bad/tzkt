@@ -669,9 +669,9 @@ namespace Tzkt.Api.Controllers
             [Required][KTAddress] string address,
             [Required] string name,
             bool? active,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             Int32Parameter lastLevel,
             SelectParameter select,
@@ -851,9 +851,9 @@ namespace Tzkt.Api.Controllers
             [Required] string name,
             [Min(0)] int level,
             bool? active,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
-            [OpenApiExtensionDataAttribute("x-tzkt-extension", "json-parameter")]
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             SelectParameter select,
             SortParameter sort,
