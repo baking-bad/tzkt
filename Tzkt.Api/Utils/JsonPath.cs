@@ -10,7 +10,7 @@ namespace Tzkt.Api.Utils
 
         public JsonPath(string value)
         {
-            if (Regex.IsMatch(value, @"^[\w_]+$"))
+            if (Regex.IsMatch(value, @"^\w+$"))
             {
                 Type = JsonPathType.Field;
                 Value = value;
@@ -20,7 +20,7 @@ namespace Tzkt.Api.Utils
                 Type = JsonPathType.Key;
                 Value = value[1..^1];
             }
-            else if (Regex.IsMatch(value, @"^\[\d+\]$"))
+            else if (Regex.IsMatch(value, @"^\[[0-9]+\]$"))
             {
                 Type = JsonPathType.Index;
                 Value = value[1..^1];

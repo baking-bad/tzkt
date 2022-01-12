@@ -66,10 +66,10 @@ namespace Tzkt.Sync.Services
             await Accounts.ResetAsync();
         }
 
-        public void Vacuum()
+        public void Trim()
         {
-            Tokens.Vacuum();
-            TokenBalances.Vacuum();
+            Tokens.Trim();
+            TokenBalances.Trim();
         }
     }
 

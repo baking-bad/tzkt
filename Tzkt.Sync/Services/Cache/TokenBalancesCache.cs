@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class TokenBalancesCache
     {
-        public const int MaxItems = 216091; //TODO: set limits in app settings
+        public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
 
         static readonly Dictionary<(int, int), TokenBalance> Cached = new(MaxItems);
 
@@ -27,7 +27,7 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Clear();
         }
 
-        public void Vacuum()
+        public void Trim()
         {
             if (Cached.Count > MaxItems * 0.9)
             {

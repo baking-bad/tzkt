@@ -1086,7 +1086,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractDelegate`.</param>
         /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractManager`.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="id">Filters origination operations internal TzKT id</param>
+        /// <param name="id">Filters origination operations by internal TzKT id</param>
         /// <param name="typeHash">Filters origination operations by 32-bit hash of originated contract parameter and storage types (helpful for searching originations of similar contracts)</param>
         /// <param name="codeHash">Filters origination operations by 32-bit hash of originated contract code (helpful for searching originations of same contracts)</param>
         /// <param name="level">Filters origination operations by level.</param>

@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class AccountsCache
     {
-        public const int MaxAccounts = 216091; //TODO: set limits in app settings
+        public const int MaxAccounts = 16 * 4096; //TODO: set limits in app settings
 
         static readonly Dictionary<int, Account> CachedById = new(MaxAccounts);
         static readonly Dictionary<string, Account> CachedByAddress = new(MaxAccounts);
