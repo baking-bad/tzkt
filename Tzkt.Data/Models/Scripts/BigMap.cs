@@ -52,7 +52,7 @@ namespace Tzkt.Data.Models
         None            = 0b_0000_0000_0000_0000_0000,
         Persistent      = 0b_0000_0000_0000_0000_0001, // is not a list/set/map item
         Metadata        = 0b_0000_0000_0000_0000_0010, // big_map %metadata string bytes
-        TokenMetadata   = 0b_0000_0000_0000_0000_0100, // big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes))
+        TokenMetadata   = 0b_0000_0000_0000_0000_0100, // big_map %token_metadata nat (pair nat (map string bytes))
 
         Ledger          = 0b_0000_0000_0000_0001_0000, // ledger
         Ledger1         = 0b_0000_0000_0000_0011_0000, // big_map address nat

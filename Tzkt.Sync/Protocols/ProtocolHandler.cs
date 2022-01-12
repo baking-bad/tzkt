@@ -97,7 +97,7 @@ namespace Tzkt.Sync
                 throw;
             }
 
-            Cache.Vacuum();
+            Cache.Trim();
             ClearCachedRelations();
             return Cache.AppState.Get();
         }
@@ -148,7 +148,7 @@ namespace Tzkt.Sync
                 throw;
             }
 
-            Cache.Vacuum();
+            Cache.Trim();
             ClearCachedRelations();
             return Cache.AppState.Get();
         }

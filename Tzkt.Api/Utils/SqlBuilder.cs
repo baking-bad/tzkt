@@ -406,38 +406,6 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, StringParameter str, Func<string, string> map = null)
-        {
-            if (str == null) return this;
-
-            if (str.Eq != null)
-                AppendFilter($"{column} = {Param(str.Eq)}");
-
-            if (str.Ne != null)
-                AppendFilter($"({column} IS NULL OR {column} != {Param(str.Ne)})");
-
-            if (str.As != null)
-                AppendFilter($"{column} LIKE {Param(str.As)}");
-
-            if (str.Un != null)
-                AppendFilter($"NOT ({column} LIKE ({Param(str.Un)}))");
-
-            if (str.In != null)
-                AppendFilter($"{column} = ANY ({Param(str.In)})");
-
-            if (str.Ni != null)
-                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(str.Ni)})))");
-
-            if (str.Null != null)
-            {
-                AppendFilter(str.Null == true
-                    ? $"{column} IS NULL"
-                    : $"{column} IS NOT NULL");
-            }
-
-            return this;
-        }
-
         public SqlBuilder Filter(string column, JsonParameter json, Func<string, string> map = null)
         {
             if (json == null) return this;
@@ -469,7 +437,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
                         : $@"{fld} > {val}");
                 }
@@ -482,7 +450,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
                         : $@"{fld} >= {val}");
                 }
@@ -495,7 +463,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
                         : $@"{fld} < {val}");
                 }
@@ -508,7 +476,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
                         : $@"{fld} <= {val}");
                 }
@@ -611,7 +579,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
                         : $"{fld} > {val}");
                 }
@@ -624,7 +592,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
                         : $"{fld} >= {val}");
                 }
@@ -637,7 +605,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
                         : $"{fld} < {val}");
                 }
@@ -650,7 +618,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
                         : $"{fld} <= {val}");
                 }
