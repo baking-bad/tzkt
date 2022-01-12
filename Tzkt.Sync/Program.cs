@@ -65,9 +65,9 @@ namespace Tzkt.Sync
                     #endregion
 
                     #region dipdup metadata
-                    var dipDupMetadata = hostContext.Configuration.GetDipDupMetadataConfig();
+                    var dipDupMetadata = hostContext.Configuration.GetTokenMetadataConfig();
                     if (dipDupMetadata.Enabled)
-                        services.AddHostedService<DipDupMetadata>();
+                        services.AddHostedService<TokenMetadata>();
                     #endregion
                 });
     }
