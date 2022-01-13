@@ -304,12 +304,8 @@ namespace Tzkt.Sync.Services
             using var conn = new NpgsqlConnection(ConnectionString);
             var contracts = await GetContractIds(conn, items.Select(x => x.Contract).ToHashSet().ToList());
             var saved = 0;
-            var options = new JsonSerializerOptions
-            {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                NumberHandling = JsonNumberHandling.WriteAsString,
-                MaxDepth = 10240
-            };
+            var options = new JsonSerializerOptions { MaxDepth = 1024 };
+            options.Converters.Add(new TokenMetadataConverter());
             for (int i = 0; i < items.Count; i += 1000)
             {
                 var comma = false;
