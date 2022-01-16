@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +35,8 @@ namespace Tzkt.Api
             services.AddDbContext<TzktContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
+
+            services.AddOptions<AuthConfig>().Bind(Configuration).Validate(o => o.Users.FirstOrDefault()).ValidateOnStart();
             services.AddSingleton<AccountsCache>();
             services.AddSingleton<BigMapsCache>();
             services.AddSingleton<AliasesCache>();
