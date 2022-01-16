@@ -17,7 +17,7 @@ namespace Tzkt.Api
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Init().Run();
+            CreateHostBuilder(args).Build().Check().Init().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -92,6 +92,12 @@ namespace Tzkt.Api
 
                 return host.Init(++attempt);
             }
+        }
+        
+        public static IHost Check(this IHost host)
+        {
+            //TODO Config validation
+            return host;
         }
     }
 }

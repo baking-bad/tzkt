@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Configuration;
 
 namespace Tzkt.Api.Services.Auth
@@ -15,6 +16,11 @@ namespace Tzkt.Api.Services.Auth
         public static AuthConfig GetAuthConfig(this IConfiguration config)
         {
             return config.GetSection("Authentication")?.Get<AuthConfig>();
+        }
+
+        public static bool Validate(this IConfiguration config)
+        {
+            
         }
     }
 }

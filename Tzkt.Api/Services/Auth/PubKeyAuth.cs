@@ -29,6 +29,24 @@ namespace Tzkt.Api.Services.Auth
                     .Where(p => p.Section != null)
                     .ToDictionary(q => q.Section, q => q.Access))));
             
+            Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> r = new();
+            foreach (var user in cfg.Users)
+            {
+                if (!user.Rights.Any())
+                {
+                    r.Add(user.Name, null);
+                    continue;
+                }
+                
+                Dictionary<string, (Access access, Dictionary<string, Access> sections)> ur = new();
+                r.Add(user.Name, ur);
+                
+                foreach (var right in user.Rights)
+                {
+                    
+                }
+            }
+            
             //TODO it throws an exception when the key is invalid, but only when the first authorization occurs.
             PubKeys = cfg.Users.ToDictionary(x => x.Name, x => PubKey.FromBase58(x.PubKey));
         }
