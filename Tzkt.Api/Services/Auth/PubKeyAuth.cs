@@ -135,7 +135,6 @@ namespace Tzkt.Api.Services.Auth
             
             if (!user.TryGetValue(requestedRights.Table, out var sections))
             {
-                //Done
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
                 return false;
             }
@@ -147,14 +146,12 @@ namespace Tzkt.Api.Services.Auth
 
             if (requestedRights.Section == null)
             {
-                //Done
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required.";
                 return false;
             }
 
             if (!sections.sections.TryGetValue(requestedRights.Section, out var access))
             {
-                // Done
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Section} required.";
                 return false;
             }
