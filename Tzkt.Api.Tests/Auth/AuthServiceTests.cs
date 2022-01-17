@@ -1,4 +1,4 @@
-using System;
+ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Netezos.Encoding;
@@ -29,7 +29,6 @@ public class AuthServiceTests
             var rights = new AccessRights()
             {
                 Table = "WrongTable",
-                Section = "WrongSection",
                 Access = Access.Write
             };
             
@@ -67,14 +66,14 @@ public class AuthServiceTests
                 expectedError = $"User {headers.User} doesn't have required permissions. {rights.Table} required.";
                 Assert.StartsWith(expectedError, error);
 
-                rights.Table = credentials.Rights.FirstOrDefault().Table;
-                Assert.False(auth.TryAuthenticate(headers, rights, out error));
-                expectedError = $"User {headers.User} doesn't have required permissions. {rights.Section} required.";
-                Assert.StartsWith(expectedError, error);
-
-                rights.Section = credentials.Rights.FirstOrDefault().Section;
+                rights.Table = credentials.Rights.FirstOrDefault(x => x.Section == null).Table;
                 Assert.False(auth.TryAuthenticate(headers, rights, out error));
                 expectedError = $"User {headers.User} doesn't have required permissions. {Access.Write} required.";
+                Assert.StartsWith(expectedError, error);
+
+                rights.Section = credentials.Rights.FirstOrDefault(x => x.Section != null).Section;
+                Assert.False(auth.TryAuthenticate(headers, rights, out error));
+                expectedError = $"User {headers.User} doesn't have required permissions. {rights.Section} required.";
                 Assert.StartsWith(expectedError, error);
             }
 

@@ -1,6 +1,8 @@
 using System;
+using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
+using Tzkt.Api.Services.Auth;
 using Tzkt.Data;
 
 namespace Tzkt.Api
@@ -17,7 +19,14 @@ namespace Tzkt.Api
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Check().Init().Run();
+            var host = CreateHostBuilder(args).Build();
+                
+            if (host.Check())
+            {
+                host.Init().Run();
+            }
+            
+            return;
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -94,10 +103,29 @@ namespace Tzkt.Api
             }
         }
         
-        public static IHost Check(this IHost host)
+        public static bool Check(this IHost host)
         {
-            //TODO Config validation
-            return host;
+            using var scope = host.Services.CreateScope();
+            var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+            try
+            {
+                config.ValidateAuthConfig(logger);
+            }
+            catch (ConfigurationException ex)
+            {
+                logger.LogError($"Configuration validation failed {ex}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical($"Configuration validation failed {ex}");
+                return false;
+            }
+
+                
+            return true;
         }
     }
 }
