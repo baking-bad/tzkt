@@ -71,9 +71,15 @@ public class AuthServiceTests
                 expectedError = $"User {headers.User} doesn't have required permissions. {Access.Write} required.";
                 Assert.StartsWith(expectedError, error);
 
-                rights.Section = credentials.Rights.FirstOrDefault(x => x.Section != null).Section;
+                rights.Section = "wrongSection";
                 Assert.False(auth.TryAuthenticate(headers, rights, out error));
                 expectedError = $"User {headers.User} doesn't have required permissions. {rights.Section} required.";
+                Assert.StartsWith(expectedError, error);
+                
+                rights.Section = credentials.Rights.FirstOrDefault(x => x.Section != null).Section;
+                rights.Access = Access.Write;
+                Assert.False(auth.TryAuthenticate(headers, rights, out error));
+                expectedError = $"User {headers.User} doesn't have required permissions. {rights.Access} required for section {rights.Section}.";
                 Assert.StartsWith(expectedError, error);
             }
 

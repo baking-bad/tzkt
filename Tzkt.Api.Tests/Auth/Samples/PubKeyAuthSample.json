@@ -18,7 +18,7 @@
           {
             "Table": "Accounts",
             "Section": "AccountsSectionTwo",
-            "Access": "Write"
+            "Access": "Read"
           },
           {
             "Table": "Operations",
