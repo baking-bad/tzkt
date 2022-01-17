@@ -165,7 +165,6 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-
             return true;
         }
     }
