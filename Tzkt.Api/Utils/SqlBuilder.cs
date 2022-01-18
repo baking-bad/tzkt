@@ -701,22 +701,22 @@ namespace Tzkt.Api
                 AppendFilter($@"""{column}"" != '{value.Ne}'");
 
             if (value.Gt != null)
-                AppendFilter($@"""{column}""::numeric > {value.Gt}");
+                AppendFilter($@"""{column}""::numeric > '{value.Gt}'::numeric");
 
             if (value.Ge != null)
-                AppendFilter($@"""{column}""::numeric >= {value.Ge}");
+                AppendFilter($@"""{column}""::numeric >= '{value.Ge}'::numeric");
 
             if (value.Lt != null)
-                AppendFilter($@"""{column}""::numeric < {value.Lt}");
+                AppendFilter($@"""{column}""::numeric < '{value.Lt}'::numeric");
 
             if (value.Le != null)
-                AppendFilter($@"""{column}""::numeric <= {value.Le}");
+                AppendFilter($@"""{column}""::numeric <= '{value.Le}'::numeric");
 
             if (value.In != null)
-                AppendFilter($@"""{column}""::numeric = ANY ({Param(value.In)})");
+                AppendFilter($@"""{column}""::numeric = ANY ({Param(value.In)}::numeric[])");
 
             if (value.Ni != null)
-                AppendFilter($@"NOT (""{column}""::numeric = ANY ({Param(value.Ni)}))");
+                AppendFilter($@"NOT (""{column}""::numeric = ANY ({Param(value.Ni)}::numeric[]))");
 
             return this;
         }
@@ -732,22 +732,22 @@ namespace Tzkt.Api
                 AppendFilter($"{column} != '{value.Ne}'");
 
             if (value.Gt != null)
-                AppendFilter($"{column}::numeric > {value.Gt}");
+                AppendFilter($"{column}::numeric > '{value.Gt}'::numeric");
 
             if (value.Ge != null)
-                AppendFilter($"{column}::numeric >= {value.Ge}");
+                AppendFilter($"{column}::numeric >= '{value.Ge}'::numeric");
 
             if (value.Lt != null)
-                AppendFilter($"{column}::numeric < {value.Lt}");
+                AppendFilter($"{column}::numeric < '{value.Lt}'::numeric");
 
             if (value.Le != null)
-                AppendFilter($"{column}::numeric <= {value.Le}");
+                AppendFilter($"{column}::numeric <= '{value.Le}'::numeric");
 
             if (value.In != null)
-                AppendFilter($"{column}::numeric = ANY ({Param(value.In)})");
+                AppendFilter($"{column}::numeric = ANY ({Param(value.In)}::numeric[])");
 
             if (value.Ni != null)
-                AppendFilter($"NOT ({column}::numeric = ANY ({Param(value.Ni)}))");
+                AppendFilter($"NOT ({column}::numeric = ANY ({Param(value.Ni)}::numeric[]))");
 
             return this;
         }
