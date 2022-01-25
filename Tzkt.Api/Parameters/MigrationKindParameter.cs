@@ -5,6 +5,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(MigrationKindBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "bootstrap,activate_delegate,airdrop,proposal_invoice,code_change,origination,subsidy")]
     public class MigrationKindParameter
     {
         /// <summary>

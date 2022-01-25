@@ -5,6 +5,7 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(AccountBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     public class AccountParameter
     {
         /// <summary>

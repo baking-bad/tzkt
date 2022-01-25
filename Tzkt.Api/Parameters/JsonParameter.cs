@@ -7,6 +7,7 @@ using Tzkt.Api.Utils;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(JsonBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
     public class JsonParameter
     {
         /// <summary>
