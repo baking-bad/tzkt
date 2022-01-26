@@ -73,6 +73,18 @@ namespace Tzkt.Data.Migrations
                 "Blocks",
                 "Metadata",
                 @"NEW.""Level"" || ':' || COALESCE(NEW.""Metadata""::text, '')");
+
+            AddNotificationTrigger(migrationBuilder,
+                "constant_metadata_changed",
+                "RegisterConstantOps",
+                "Metadata",
+                @"COALESCE(NEW.""Address"", '') || ':' || COALESCE(NEW.""Metadata""::text, '')");
+
+            AddNotificationTrigger(migrationBuilder,
+                name: "sync_state_changed",
+                table: "AppState",
+                column: "LastSync",
+                payload: @"NEW.""KnownHead"" || ':' || NEW.""LastSync"""); // ISO 8601 (1997-12-17 07:37:16)
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -84,6 +96,8 @@ namespace Tzkt.Data.Migrations
             RemoveNotificationTrigger(migrationBuilder, "protocol_metadata_changed", "Protocols");
             RemoveNotificationTrigger(migrationBuilder, "software_metadata_changed", "Software");
             RemoveNotificationTrigger(migrationBuilder, "block_metadata_changed", "Blocks");
+            RemoveNotificationTrigger(migrationBuilder, "constant_metadata_changed", "RegisterConstantOps");
+            RemoveNotificationTrigger(migrationBuilder, "sync_state_changed", "AppState");
         }
     }
 }
