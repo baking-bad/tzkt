@@ -133,7 +133,7 @@ namespace Tzkt.Api
             #endregion
 
             #region dapper
-            SqlMapper.AddTypeHandler(new AccountMetadataTypeHandler());
+            SqlMapper.AddTypeHandler(new ProfileMetadataTypeHandler());
             SqlMapper.AddTypeHandler(new JsonElementTypeHandler());
             SqlMapper.AddTypeHandler(new RawJsonTypeHandler());
             #endregion

@@ -27,7 +27,7 @@ namespace Tzkt.Api.Services.Cache
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
 
-        public AccountMetadata Metadata { get; set; }
+        public ProfileMetadata Metadata { get; set; }
 
         public string Alias => Metadata?.Alias;
 

@@ -12,7 +12,7 @@ namespace Tzkt.Api.Services.Cache
     {
         #region static
         const string SelectQuery = @"
-        SELECT ""Address"", ""Metadata""#>>'{alias}' AS ""Name""
+        SELECT ""Address"", ""Metadata""#>>'{profile,alias}' AS ""Name""
         FROM   ""Accounts""";
         #endregion
 
@@ -23,7 +23,7 @@ namespace Tzkt.Api.Services.Cache
         {
             using var db = GetConnection();
             Aliases = db.Query<Alias>(
-                $@"{SelectQuery} WHERE ""Metadata""@>'{{}}' AND ""Metadata""#>>'{{alias}}' IS NOT NULL")
+                $@"{SelectQuery} WHERE ""Metadata""@>'{{""profile"":{{}}}}' AND ""Metadata""#>>'{{profile,alias}}' IS NOT NULL")
                 .ToList();
 
             logger.LogInformation("Loaded {1} aliases", Aliases.Count);
@@ -38,7 +38,8 @@ namespace Tzkt.Api.Services.Cache
             if (json != null)
             {
                 using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty("alias", out var alias))
+                if (doc.RootElement.TryGetProperty("profile", out var profile) && 
+                    profile.TryGetProperty("alias", out var alias))
                     name = alias.GetString();
             }
 

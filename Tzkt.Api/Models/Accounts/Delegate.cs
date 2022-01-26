@@ -212,7 +212,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Metadata of the delegate (alias, logo, website, contacts, etc)
         /// </summary>
-        public AccountMetadata Metadata { get; set; }
+        public ProfileMetadata Metadata { get; set; }
 
         /// <summary>
         /// Last seen baker's software

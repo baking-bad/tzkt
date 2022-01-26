@@ -131,7 +131,7 @@ namespace Tzkt.Api.Services.Cache
         public void UpdateMetadata(string address, string json)
         {
             if (TryGetSafe(address, out var account))
-                account.Metadata = AccountMetadata.Parse(json);
+                account.Metadata = AccountMetadata.Parse(json)?.Profile;
         }
         #endregion
 
