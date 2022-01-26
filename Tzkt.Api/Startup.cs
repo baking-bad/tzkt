@@ -150,11 +150,17 @@ namespace Tzkt.Api
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .SetIsOriginAllowed(_ => true)
-                .AllowCredentials());
+                .AllowCredentials()
+                .WithExposedHeaders(
+                    StateHeadersMiddleware.TZKT_LEVEL,
+                    StateHeadersMiddleware.TZKT_KNOWN_LEVEL,
+                    StateHeadersMiddleware.TZKT_SYNCED_AT));
 
             app.UseOpenApi();
 
             app.UseRouting();
+
+            app.UseMiddleware<StateHeadersMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
