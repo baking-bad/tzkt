@@ -1,5 +1,4 @@
-﻿using Netezos.Encoding;
-using System;
+﻿using System;
 
 namespace Tzkt.Api.Models
 {

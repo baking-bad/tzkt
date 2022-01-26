@@ -394,7 +394,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <returns></returns>
         [HttpGet("{address}/metadata")]
-        public Task<AccountMetadata> GetMetadata([Required][Address] string address)
+        public Task<ProfileMetadata> GetMetadata([Required][Address] string address)
         {
             return Accounts.GetMetadata(address);
         }

@@ -14,7 +14,7 @@ namespace Tzkt.Api.Repositories
     public partial class AccountRepository : DbConnection
     {
         #region static
-        const string AliasQuery = @"""Metadata""#>>'{alias}' as ""Alias""";
+        const string AliasQuery = @"""Metadata""#>>'{profile,alias}' as ""Alias""";
         #endregion
 
         readonly AccountsCache Accounts;
@@ -1369,7 +1369,7 @@ namespace Tzkt.Api.Repositories
                 : result.OrderByDescending(x => x.Id).Take(limit);
         }
 
-        public async Task<AccountMetadata> GetMetadata(string address)
+        public async Task<ProfileMetadata> GetMetadata(string address)
         {
             var account = await Accounts.GetAsync(address);
             return account?.Metadata;

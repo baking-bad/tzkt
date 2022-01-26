@@ -57,6 +57,6 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Metadata of the ghost contract (alias, logo, website, contacts, etc)
         /// </summary>
-        public AccountMetadata Metadata { get; set; }
+        public ProfileMetadata Metadata { get; set; }
     }
 }

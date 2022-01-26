@@ -132,6 +132,6 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Metadata of the account (alias, logo, website, contacts, etc)
         /// </summary>
-        public AccountMetadata Metadata { get; set; }
+        public ProfileMetadata Metadata { get; set; }
     }
 }
