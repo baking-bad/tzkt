@@ -48,15 +48,18 @@ namespace Tzkt.Sync.Services.Cache
                 }
                 #endregion
 
-                var ptrHashes = string.Join(',', missed.Select(x => $"({x.ptr}, '{x.hash}')")); // TODO: use parameters
-                var loaded = await Db.BigMapKeys
-                    .FromSqlRaw($@"
+                for (int i = 0, n = 2048; i < missed.Count; i += n)
+                {
+                    var ptrHashes = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.ptr}, '{x.hash}')")); // TODO: use parameters
+                    var loaded = await Db.BigMapKeys
+                        .FromSqlRaw($@"
                         SELECT * FROM ""{nameof(TzktContext.BigMapKeys)}""
                         WHERE (""{nameof(BigMapKey.BigMapPtr)}"", ""{nameof(BigMapKey.KeyHash)}"") IN ({ptrHashes})")
-                    .ToListAsync();
+                        .ToListAsync();
 
-                foreach (var item in loaded)
-                    Cached.Add((item.BigMapPtr, item.KeyHash), item);
+                    foreach (var item in loaded)
+                        Cached.Add((item.BigMapPtr, item.KeyHash), item);
+                }
             }
         }
 

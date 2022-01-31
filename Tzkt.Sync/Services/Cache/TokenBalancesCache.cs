@@ -76,15 +76,18 @@ namespace Tzkt.Sync.Services.Cache
             var missed = ids.Where(x => !Cached.ContainsKey(x)).ToHashSet();
             if (missed.Count > 0)
             {
-                var corteges = string.Join(',', missed.Select(x => $"({x.Item1}, '{x.Item2}')"));
-                var items = await Db.TokenBalances
-                    .FromSqlRaw($@"
-                        SELECT * FROM ""{nameof(TzktContext.TokenBalances)}""
-                        WHERE (""{nameof(TokenBalance.AccountId)}"", ""{nameof(TokenBalance.TokenId)}"") IN ({corteges})")
-                    .ToListAsync();
+                for (int i = 0, n = 2048; i < missed.Count; i += n)
+                {
+                    var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, '{x.Item2}')"));
+                    var items = await Db.TokenBalances
+                        .FromSqlRaw($@"
+                            SELECT * FROM ""{nameof(TzktContext.TokenBalances)}""
+                            WHERE (""{nameof(TokenBalance.AccountId)}"", ""{nameof(TokenBalance.TokenId)}"") IN ({corteges})")
+                        .ToListAsync();
 
-                foreach (var item in items)
-                    Add(item);
+                    foreach (var item in items)
+                        Add(item);
+                }
             }
         }
     }
