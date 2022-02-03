@@ -29,8 +29,8 @@ And don't forget to star TzKT project [on GitHub](https://github.com/baking-bad/
 TzKT API is free for everyone and for both commercial and non-commercial usage.
 
 If your application or service uses the TzKT API in any forms: directly on frontend or indirectly on backend,
-you should mention that fact on your website or application by placing the label
-**"Powered by TzKT API"** with a direct link to [tzkt.io](https://tzkt.io).
+you must mention that fact on your website or application by placing the label
+**"Powered by TzKT API"** or **"Built with TzKT API"** with a direct link to [tzkt.io](https://tzkt.io).
 
 
 # Rate Limits
