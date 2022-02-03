@@ -2,7 +2,7 @@
 [![Made With](https://img.shields.io/badge/made%20with-C%23-success.svg?)](https://docs.microsoft.com/en-gb/dotnet/csharp/language-reference/)
 [![License: MIT](https://img.shields.io/github/license/baking-bad/netezos.svg)](https://opensource.org/licenses/MIT)
 
-TzKT is a lightweight [Tezos](https://tezos.com/) blockchain indexer with an advanced API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
+TzKT is the most advanced [Tezos](https://tezos.com/) blockchain indexer with powerful API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
 
 The indexer fetches raw data from the Tezos node, then processes it and stores in the database in such a way as to provide effective access to the blockchain data. For example, getting operations by hash, or getting all operations of the particular account, or getting detailed baking rewards, etc. None of this can be accessed via node RPC, but TzKT indexer makes this data (and much more) available.
 
@@ -155,6 +155,15 @@ Like this:
     "FilePath": "sync.health"
   },
 
+  "TokenMetadata": {
+    "Enabled": false,
+    "DipDupUrl": "https://metadata.dipdup.net/v1/graphql",
+    "Network": "mainnet",
+    "BatchSize": 10000,
+    "PeriodSec": 30,
+    "OverriddenMetadata": []
+  },
+
   "Logging": {
     "LogLevel": {
       "Default": "Information",
@@ -217,7 +226,8 @@ Like this:
     "MaxConnections": 1000,
     "MaxOperationSubscriptions": 50,
     "MaxBigMapSubscriptions": 50,
-    "MaxAccountsSubscriptions": 50
+    "MaxAccountsSubscriptions": 50,
+    "MaxTokenTransfersSubscriptions": 50
   },
 
   "ConnectionStrings": {
@@ -284,27 +294,24 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 ## Install Tzkt Indexer and API for testnets
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
- - Granadanet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_granadanet.backup
-   - RPC node: https://rpc.tzkt.io/granadanet/    
  - Hangzhou2net:
    - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_hangzhou2net.backup
    - RPC node: https://rpc.tzkt.io/hangzhou2net/
 
 ### Testnet installation using docker containers
 
-First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Hangzhou2net use the `hangzhou-` prefix):
+First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands:
 
 ````sh
 git clone https://github.com/baking-bad/tzkt.git
 cd tzkt/
 
-make granada-init #run this command if you want to restore the DB from the latest snapshot
-make granada-start
-# for hangzhou2net used port 5020
-curl http://127.0.0.1:5010/v1/head 
+make hangzhou-init #run this command if you want to restore the DB from the latest snapshot
+make hangzhou-start
 
-make granada-stop
+curl http://127.0.0.1:5020/v1/head 
+
+make hangzhou-stop
 ````
 
 ## Have a question?
