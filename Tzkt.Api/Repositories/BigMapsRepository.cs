@@ -640,7 +640,7 @@ namespace Tzkt.Api.Repositories
                 FROM     ""BigMapUpdates""
                 WHERE    ""BigMapKeyId"" = {key.Id}
                 AND      ""Level"" <= {level}
-                ORDER BY ""Level"" DESC
+                ORDER BY ""Id"" DESC
                 LIMIT    1";
 
             using var db = GetConnection();

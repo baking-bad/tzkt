@@ -12,6 +12,7 @@ namespace Tzkt.Api.Websocket.Hubs
         readonly BlocksProcessor<DefaultHub> Blocks;
         readonly OperationsProcessor<DefaultHub> Operations;
         readonly BigMapsProcessor<DefaultHub> BigMaps;
+        readonly TokenTransfersProcessor<DefaultHub> Transfers;
         readonly AccountsProcessor<DefaultHub> Accounts;
 
         public DefaultHub(
@@ -19,6 +20,7 @@ namespace Tzkt.Api.Websocket.Hubs
             BlocksProcessor<DefaultHub> blocks,
             OperationsProcessor<DefaultHub> operations,
             BigMapsProcessor<DefaultHub> bigMaps,
+            TokenTransfersProcessor<DefaultHub> transfers,
             AccountsProcessor<DefaultHub> accounts,
             ILogger<DefaultHub> logger,
             IConfiguration config) : base(logger, config)
@@ -27,6 +29,7 @@ namespace Tzkt.Api.Websocket.Hubs
             Blocks = blocks;
             Operations = operations;
             BigMaps = bigMaps;
+            Transfers = transfers;
             Accounts = accounts;
         }
 
@@ -42,18 +45,28 @@ namespace Tzkt.Api.Websocket.Hubs
 
         public Task<int> SubscribeToOperations(OperationsParameter parameters)
         {
+            parameters ??= new();
             parameters.EnsureValid();
             return Operations.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
         public Task<int> SubscribeToBigMaps(BigMapsParameter parameters)
         {
+            parameters ??= new();
             parameters.EnsureValid();
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
-        
+
+        public Task<int> SubscribeToTokenTransfers(TokenTransfersParameter parameters)
+        {
+            parameters ??= new();
+            parameters.EnsureValid();
+            return Transfers.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+        }
+
         public Task<int> SubscribeToAccounts(AccountsParameter parameters)
         {
+            parameters ??= new();
             parameters.EnsureValid();
             return Accounts.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
@@ -62,6 +75,7 @@ namespace Tzkt.Api.Websocket.Hubs
         {
             Operations.Unsubscribe(Context.ConnectionId);
             BigMaps.Unsubscribe(Context.ConnectionId);
+            Transfers.Unsubscribe(Context.ConnectionId);
             Accounts.Unsubscribe(Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }

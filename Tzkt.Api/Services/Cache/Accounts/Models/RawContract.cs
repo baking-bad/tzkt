@@ -2,8 +2,6 @@
 {
     public class RawContract : RawAccount
     {
-        public override string Type => AccountTypes.Contract;
-
         public int Kind { get; set; }
         public int TypeHash { get; set; }
         public int CodeHash { get; set; }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Tzkt.Api.Models
 {
@@ -57,6 +56,21 @@ namespace Tzkt.Api.Models
         /// Number of contracts, created (originated) and/or managed by the contract
         /// </summary>
         public int NumContracts { get; set; }
+
+        /// <summary>
+        /// Number of account tokens with non-zero balances
+        /// </summary>
+        public int ActiveTokensCount { get; set; }
+
+        /// <summary>
+        /// Number of tokens the account ever had
+        /// </summary>
+        public int TokenBalancesCount { get; set; }
+
+        /// <summary>
+        /// Number of token transfers from/to the account
+        /// </summary>
+        public int TokenTransfersCount { get; set; }
 
         /// <summary>
         /// Number of account activation operations. Are used to activate accounts that were recommended allocations of
@@ -118,6 +132,6 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Metadata of the account (alias, logo, website, contacts, etc)
         /// </summary>
-        public AccountMetadata Metadata { get; set; }
+        public ProfileMetadata Metadata { get; set; }
     }
 }

@@ -60,6 +60,7 @@ namespace Tzkt.Api
             services.AddTransient<StatisticsRepository>();
             services.AddTransient<SoftwareRepository>();
             services.AddTransient<BigMapsRepository>();
+            services.AddTransient<TokensRepository>();
             services.AddTransient<MetadataRepository>();
             services.AddTransient<ConstantsRepository>();
 
@@ -100,6 +101,9 @@ namespace Tzkt.Api
                 services.AddTransient<BigMapsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
 
+                services.AddTransient<TokenTransfersProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, TokenTransfersProcessor<DefaultHub>>();
+
                 services.AddTransient<AccountsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, AccountsProcessor<DefaultHub>>();
 
@@ -130,7 +134,7 @@ namespace Tzkt.Api
             #endregion
 
             #region dapper
-            SqlMapper.AddTypeHandler(new AccountMetadataTypeHandler());
+            SqlMapper.AddTypeHandler(new ProfileMetadataTypeHandler());
             SqlMapper.AddTypeHandler(new JsonElementTypeHandler());
             SqlMapper.AddTypeHandler(new RawJsonTypeHandler());
             #endregion
@@ -147,11 +151,17 @@ namespace Tzkt.Api
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .SetIsOriginAllowed(_ => true)
-                .AllowCredentials());
+                .AllowCredentials()
+                .WithExposedHeaders(
+                    StateHeadersMiddleware.TZKT_LEVEL,
+                    StateHeadersMiddleware.TZKT_KNOWN_LEVEL,
+                    StateHeadersMiddleware.TZKT_SYNCED_AT));
 
             app.UseOpenApi();
 
             app.UseRouting();
+
+            app.UseMiddleware<StateHeadersMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

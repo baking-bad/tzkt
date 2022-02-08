@@ -6,15 +6,13 @@ services:
     restart: always
     image: postgres:13
     environment:
-      POSTGRES_USER: tzkt
-      POSTGRES_PASSWORD: qwerty
-      POSTGRES_DB: tzkt_db
+      POSTGRES_USER: ${POSTGRES_USER:-tzkt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
+      POSTGRES_DB: ${POSTGRES_DB:-tzkt_db}
     volumes:
       - postgres:/var/lib/postgresql/data
-    expose:
-      - 5432
     ports:
-      - 0.0.0.0:5432:5432
+      - 127.0.0.1:5432:5432
 
   api:
     container_name: tzkt-api
@@ -23,9 +21,8 @@ services:
     depends_on:
       - db
     environment:
-      - TZKT_API_KESTREL__ENDPOINTS__HTTP__URL=http://0.0.0.0:5000
-    expose:
-      - 5000
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
     ports:
       - 0.0.0.0:5000:5000
 
@@ -33,9 +30,11 @@ services:
     container_name: tzkt-sync
     restart: always
     image: bakingbad/tzkt-sync:latest
+    environment:
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty}; 
+      TezosNode__Endpoint: https://mainnet-tezos.giganode.io/
     depends_on:
       - db
 
 volumes:
   postgres:
-      

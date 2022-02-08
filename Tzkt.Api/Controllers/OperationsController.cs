@@ -1086,6 +1086,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractDelegate`.</param>
         /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractManager`.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="id">Filters origination operations by internal TzKT id</param>
         /// <param name="typeHash">Filters origination operations by 32-bit hash of originated contract parameter and storage types (helpful for searching originations of similar contracts)</param>
         /// <param name="codeHash">Filters origination operations by 32-bit hash of originated contract code (helpful for searching originations of same contracts)</param>
         /// <param name="level">Filters origination operations by level.</param>
@@ -1106,6 +1107,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
+            Int32Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
@@ -1193,25 +1195,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }
@@ -1276,7 +1278,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
         /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
-        /// <param name="parameters">**DEPRECATED**. Use `entrypoint` and `parameter` instead.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
@@ -1297,7 +1298,6 @@ namespace Tzkt.Api.Controllers
             DateTimeParameter timestamp,
             StringParameter entrypoint,
             JsonParameter parameter,
-            StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SelectParameter select,
@@ -1358,7 +1358,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
@@ -1700,6 +1700,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="account">Filters migration operations by account. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="kind">Filters migration operations by kind (`bootstrap`, `activate_delegate`, `airdrop`, `proposal_invoice`, `origination`, `subsidy`).</param>
         /// <param name="balanceChange">Filters migration operations by amount.</param>
+        /// <param name="id">Filters migration operations by internal TzKT id.</param>
         /// <param name="level">Filters migration operations by level.</param>
         /// <param name="timestamp">Filters migration operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1714,6 +1715,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -1741,25 +1743,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Values[0], micheline, quote));
+                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Values, micheline, quote));
+                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields[0], micheline, quote));
+                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetMigrations(account, kind, balanceChange, level, timestamp, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }

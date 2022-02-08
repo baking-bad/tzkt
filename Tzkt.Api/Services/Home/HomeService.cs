@@ -441,7 +441,7 @@ namespace Tzkt.Api.Services
                 ActiveAccounts = await db.ExecuteScalarAsync<int>(
                     $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}"),
                 PublicAccounts = await db.ExecuteScalarAsync<int>(
-                    $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""Metadata"" @> '{{}}'"),
+                    $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""Metadata"" @> '{{""profile"":{{}}}}'"),
                 TotalContracts = await AccountsRepo.GetContractsCount(new ContractKindParameter
                 {
                     In = new List<int> { 1, 2 },

@@ -41,19 +41,19 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             var br = parameters["baking_reward_per_endorsement"] as JArray;
             var er = parameters["endorsement_reward"] as JArray;
-            
+
             protocol.BlockDeposit = parameters["block_security_deposit"]?.Value<long>() ?? 640_000_000;
             protocol.EndorsementDeposit = parameters["endorsement_security_deposit"]?.Value<long>() ?? 2_500_000;
             protocol.BlockReward0 = br == null ? 78_125 : br.Count > 0 ? br[0].Value<long>() : 0;
             protocol.BlockReward1 = br == null ? 11_719 : br.Count > 1 ? br[1].Value<long>() : protocol.BlockReward0;
             protocol.EndorsementReward0 = er == null ? 78_125 : er.Count > 0 ? er[0].Value<long>() : 0;
             protocol.EndorsementReward1 = er == null ? 52_083 : er.Count > 1 ? er[1].Value<long>() : protocol.EndorsementReward0;
-            
+
             protocol.BlocksPerCycle = parameters["blocks_per_cycle"]?.Value<int>() ?? 8192;
             protocol.BlocksPerCommitment = parameters["blocks_per_commitment"]?.Value<int>() ?? 64;
             protocol.BlocksPerSnapshot = parameters["blocks_per_roll_snapshot"]?.Value<int>() ?? 512;
             protocol.BlocksPerVoting = parameters["blocks_per_voting_period"]?.Value<int>() ?? 40960;
-            
+
             protocol.EndorsersPerBlock = parameters["endorsers_per_block"]?.Value<int>() ?? 256;
             protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 5_200_000;
             protocol.TimeBetweenBlocks = parameters["minimal_block_delay"]?.Value<int>() ?? 30;
@@ -97,12 +97,21 @@ namespace Tzkt.Sync.Protocols.Proto10
 
         protected override async Task DeactivateContext(AppState state)
         {
+            state.TokensCount--;
+            state.TokenBalancesCount--;
+            state.TokenTransfersCount--;
+
             await Db.Database.ExecuteSqlRawAsync(@"
                 DELETE FROM ""BigMapUpdates"";
                 DELETE FROM ""BigMapKeys"";
-                DELETE FROM ""BigMaps"";");
+                DELETE FROM ""BigMaps"";
+                DELETE FROM ""Tokens"";
+                DELETE FROM ""TokenBalances"";
+                DELETE FROM ""TokenTransfers"";");
             Cache.BigMapKeys.Reset();
             Cache.BigMaps.Reset();
+            Cache.Tokens.Reset();
+            Cache.TokenBalances.Reset();
         }
 
         protected override async Task MigrateContext(AppState state)
@@ -112,7 +121,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             #region update voting period
             var newPeriod = await Cache.Periods.GetAsync(state.VotingPeriod);
-            Db.TryAttach(newPeriod); 
+            Db.TryAttach(newPeriod);
             newPeriod.LastLevel = newPeriod.FirstLevel + nextProto.BlocksPerVoting; // - 1 + 1
             #endregion
 
@@ -322,25 +331,25 @@ namespace Tzkt.Sync.Protocols.Proto10
         async Task<List<JsonElement>> FetchEndorsingRights(Protocol protocol, int block, Cycle cycle, Dictionary<int, BakerCycle> bakerCycles, List<JsonElement> shiftedRights)
         {
             GC.Collect();
-            //var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block, cycle.Index)).RequiredArray().EnumerateArray();
-            var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.EndorsersPerBlock / 2);
-            var attempts = 0;
+            var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block, cycle.Index)).RequiredArray().EnumerateArray();
+            //var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.EndorsersPerBlock / 2);
+            //var attempts = 0;
 
-            for (int level = cycle.FirstLevel; level <= cycle.LastLevel; level++)
-            {
-                try
-                {
-                    rights.AddRange((await Proto.Rpc.GetLevelEndorsingRightsAsync(block, level)).RequiredArray().EnumerateArray());
-                    attempts = 0;
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError("Failed to fetch endorsing rights for level {0}: {1}", level, ex.Message);
-                    if (++attempts >= 10) throw new Exception("Too many RPC errors when fetching endorsing rights");
-                    await Task.Delay(3000);
-                    level--;
-                }
-            }
+            //for (int level = cycle.FirstLevel; level <= cycle.LastLevel; level++)
+            //{
+            //    try
+            //    {
+            //        rights.AddRange((await Proto.Rpc.GetLevelEndorsingRightsAsync(block, level)).RequiredArray().EnumerateArray());
+            //        attempts = 0;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Logger.LogError("Failed to fetch endorsing rights for level {0}: {1}", level, ex.Message);
+            //        if (++attempts >= 10) throw new Exception("Too many RPC errors when fetching endorsing rights");
+            //        await Task.Delay(3000);
+            //        level--;
+            //    }
+            //}
 
             if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
                 throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
@@ -445,22 +454,48 @@ namespace Tzkt.Sync.Protocols.Proto10
             var rawContract = await Proto.Rpc.GetContractAsync(block.Level, address);
 
             #region contract
-            var contract = new Contract
+            Contract contract;
+            var ghost = await Cache.Accounts.GetAsync(address);
+            if (ghost != null)
             {
-                Id = Cache.AppState.NextAccountId(),
-                FirstBlock = block,
-                Address = address,
-                Balance = rawContract.RequiredInt64("balance"),
-                Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
-                Type = AccountType.Contract,
-                Kind = ContractKind.SmartContract,
-                MigrationsCount = 1,
-            };
+                contract = new Contract
+                {
+                    Id = ghost.Id,
+                    FirstLevel = ghost.FirstLevel,
+                    LastLevel = block.Level,
+                    Address = address,
+                    Balance = rawContract.RequiredInt64("balance"),
+                    Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
+                    Type = AccountType.Contract,
+                    Kind = ContractKind.SmartContract,
+                    MigrationsCount = 1,
+                    ActiveTokensCount = ghost.ActiveTokensCount,
+                    TokenBalancesCount = ghost.TokenBalancesCount,
+                    TokenTransfersCount = ghost.TokenTransfersCount
+                };
+                Db.Entry(ghost).State = EntityState.Detached;
+                Db.Entry(contract).State = EntityState.Modified;
+            }
+            else
+            {
+                contract = new Contract
+                {
+                    Id = Cache.AppState.NextAccountId(),
+                    FirstLevel = block.Level,
+                    LastLevel = block.Level,
+                    Address = address,
+                    Balance = rawContract.RequiredInt64("balance"),
+                    Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
+                    Type = AccountType.Contract,
+                    Kind = ContractKind.SmartContract,
+                    MigrationsCount = 1,
+                };
+                Db.Accounts.Add(contract);
+            }
+            Cache.Accounts.Add(contract);
 
             Db.TryAttach(contract.Creator);
             contract.Creator.ContractsCount++;
-
-            Db.Accounts.Add(contract);
             #endregion
 
             #region script
@@ -536,7 +571,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 Account = contract,
                 BalanceChange = contract.Balance,
                 Script = script,
-                Storage = storage, 
+                Storage = storage,
             };
 
             script.MigrationId = migration.Id;
@@ -589,7 +624,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     ActiveKeys = 0,
                     TotalKeys = 0,
                     Updates = 1,
-                    Tags = BigMaps.GetTags(bigmap)
+                    Tags = BigMaps.GetTags(contract, bigmap)
                 };
                 Db.BigMaps.Add(allocated);
 
@@ -598,6 +633,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     var rawKey = new MichelineString(NullAddress.Address);
                     var rawValue = new MichelineInt(100);
 
+                    allocated.Tags |= BigMapTag.Ledger1;
                     allocated.ActiveKeys++;
                     allocated.TotalKeys++;
                     allocated.Updates++;
@@ -629,6 +665,64 @@ namespace Tzkt.Sync.Protocols.Proto10
                         Level = key.LastLevel,
                         MigrationId = migration.Id
                     });
+
+                    #region tokens
+                    var token = new Token
+                    {
+                        Id = Cache.AppState.NextTokenId(),
+                        Tags = TokenTags.Fa12,
+                        BalancesCount = 1,
+                        ContractId = contract.Id,
+                        FirstLevel = migration.Level,
+                        HoldersCount = 1,
+                        LastLevel = migration.Level,
+                        TokenId = 0,
+                        TotalBurned = 0,
+                        TotalMinted = 100,
+                        TotalSupply = 100,
+                        TransfersCount = 1
+                    };
+                    var tokenBalance = new TokenBalance
+                    {
+                        Id = Cache.AppState.NextTokenBalanceId(),
+                        AccountId = NullAddress.Id,
+                        Balance = 100,
+                        FirstLevel = migration.Level,
+                        LastLevel = migration.Level,
+                        TokenId = token.Id,
+                        TransfersCount = 1
+                    };
+                    var tokenTransfer = new TokenTransfer
+                    {
+                        Id = Cache.AppState.NextOperationId(),
+                        Amount = 100,
+                        Level = migration.Level,
+                        MigrationId = migration.Id,
+                        ToId = NullAddress.Id,
+                        TokenId = token.Id
+                    };
+
+                    Db.Tokens.Add(token);
+                    Db.TokenBalances.Add(tokenBalance);
+                    Db.TokenTransfers.Add(tokenTransfer);
+
+                    migration.TokenTransfers = 1;
+
+                    state.TokensCount++;
+                    state.TokenBalancesCount++;
+                    state.TokenTransfersCount++;
+
+                    contract.TokensCount++;
+                    contract.Creator.ActiveTokensCount++;
+                    contract.Creator.TokenBalancesCount++;
+                    contract.Creator.TokenTransfersCount++;
+
+                    block.Events |= BlockEvents.Tokens;
+                    #endregion
+                }
+                else if (address == FallbackToken && allocated.StoragePath == "tokens")
+                {
+                    allocated.Tags |= BigMapTag.Ledger1;
                 }
             }
             #endregion
@@ -648,6 +742,29 @@ namespace Tzkt.Sync.Protocols.Proto10
             Db.TryAttach(creator);
             creator.ContractsCount--;
 
+            if (address == LiquidityToken)
+            {
+                var token = await Db.Tokens
+                    .AsNoTracking()
+                    .Where(x => x.ContractId == contract.Id)
+                    .SingleAsync();
+
+                await Db.Database.ExecuteSqlRawAsync(@"
+                    DELETE FROM ""TokenTransfers"" WHERE ""TokenId"" = {0};
+                    DELETE FROM ""TokenBalances"" WHERE ""TokenId"" = {0};
+                    DELETE FROM ""Tokens"" WHERE ""Id"" = {0};",
+                    token.Id);
+
+                state.TokenTransfersCount--;
+                state.TokenBalancesCount--;
+                state.TokensCount--;
+
+                contract.TokensCount--;
+                creator.ActiveTokensCount--;
+                creator.TokenBalancesCount--;
+                creator.TokenTransfersCount--;
+            }
+
             await Db.Database.ExecuteSqlRawAsync(@"
                 DELETE FROM ""MigrationOps"" WHERE ""AccountId"" = {1};
                 DELETE FROM ""Storages"" WHERE ""ContractId"" = {1};
@@ -662,6 +779,26 @@ namespace Tzkt.Sync.Protocols.Proto10
             Cache.BigMapKeys.Reset();
             foreach (var bigmap in bigmaps)
                 Cache.BigMaps.Remove(bigmap);
+
+            if (contract.TokenTransfersCount != 0)
+            {
+                var ghost = new Account
+                {
+                    Id = contract.Id,
+                    Address = contract.Address,
+                    FirstBlock = contract.FirstBlock,
+                    FirstLevel = contract.FirstLevel,
+                    LastLevel = contract.LastLevel,
+                    ActiveTokensCount = contract.ActiveTokensCount,
+                    TokenBalancesCount = contract.TokenBalancesCount,
+                    TokenTransfersCount = contract.TokenTransfersCount,
+                    Type = AccountType.Ghost,
+                };
+
+                Db.Entry(contract).State = EntityState.Detached;
+                Db.Entry(ghost).State = EntityState.Modified;
+                Cache.Accounts.Add(ghost);
+            }
         }
 
         protected override long GetFutureBlockReward(Protocol protocol, int cycle)

@@ -91,8 +91,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level),
-                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
+                Quote = Quotes.Get(quote, row.Level)
             });
         }
 
@@ -163,8 +162,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level),
-                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
+                Quote = Quotes.Get(quote, row.Level)
             });
         }
 
@@ -235,8 +233,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level),
-                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
+                Quote = Quotes.Get(quote, row.Level)
             });
         }
 
@@ -286,8 +283,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, block.Level),
-                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
+                Quote = Quotes.Get(quote, block.Level)
             });
         }
 
@@ -302,7 +298,6 @@ namespace Tzkt.Api.Repositories
             DateTimeParameter timestamp,
             StringParameter entrypoint,
             JsonParameter parameter,
-            StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -313,19 +308,6 @@ namespace Tzkt.Api.Repositories
             bool includeStorage = false,
             bool includeBigmaps = false)
         {
-            #region backward compatibility
-            // TODO: remove it asap
-            var realSort = sort;
-            var realOffset = offset;
-            var realLimit = limit;
-            if (parameters != null)
-            {
-                realSort = null;
-                realOffset = null;
-                realLimit = 1_000_000;
-            }
-            #endregion
-
             var sql = new SqlBuilder(@"
                 SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" AS o
@@ -347,7 +329,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
-                .Take(realSort, realOffset, realLimit, x => x switch
+                .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
@@ -383,7 +365,7 @@ namespace Tzkt.Api.Repositories
                 : null;
             #endregion
 
-            var res = rows.Select(row => new TransactionOperation
+            return rows.Select(row => new TransactionOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -420,76 +402,8 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
-                Quote = Quotes.Get(quote, row.Level),
-                Parameters = row.RawParameters == null ? null : $"{{\"entrypoint\":\"{row.Entrypoint}\",\"value\":{Micheline.ToJson(row.RawParameters)}}}"
+                Quote = Quotes.Get(quote, row.Level)
             });
-
-            #region backward compatibility
-            // TODO: remove it asap
-            if (parameters != null)
-            {
-                if (parameters.Eq != null)
-                    res = res.Where(x => x.Parameters == parameters.Eq);
-                if (parameters.Ne != null)
-                    res = res.Where(x => x.Parameters != parameters.Ne);
-                if (parameters.In != null)
-                    res = res.Where(x => parameters.In.Contains(x.Parameters));
-                if (parameters.Ni != null)
-                    res = res.Where(x => !parameters.Ni.Contains(x.Parameters));
-                if (parameters.Null == true)
-                    res = res.Where(x => x.Parameters == null);
-                if (parameters.Null == false)
-                    res = res.Where(x => x.Parameters != null);
-                if (parameters.As != null)
-                {
-                    var pattern = $"^{parameters.As.Replace("%", ".*").Replace("[", "\\[").Replace("]", "\\]").Replace("{", "\\{").Replace("}", "\\}")}$";
-                    res = res.Where(x => x.Parameters != null && System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
-                }
-                if (parameters.Un != null)
-                {
-                    var pattern = $"^{parameters.Un.Replace("%", ".*").Replace("[", "\\[").Replace("]", "\\]").Replace("{", "\\{").Replace("}", "\\}")}$";
-                    res = res.Where(x => x.Parameters != null && !System.Text.RegularExpressions.Regex.IsMatch(x.Parameters, pattern));
-                }
-
-                if (sort?.Asc != null)
-                {
-                    res = sort.Asc switch
-                    {
-                        "level" => res.OrderBy(x => x.Level),
-                        "gasUsed" => res.OrderBy(x => x.GasUsed),
-                        "storageUsed" => res.OrderBy(x => x.StorageUsed),
-                        "bakerFee" => res.OrderBy(x => x.BakerFee),
-                        "storageFee" => res.OrderBy(x => x.StorageFee),
-                        "allocationFee" => res.OrderBy(x => x.AllocationFee),
-                        "amount" => res.OrderBy(x => x.Amount),
-                        _ => res.OrderBy(x => x.Id)
-                    };
-                }
-                else if (sort?.Desc != null)
-                {
-                    res = sort.Desc switch
-                    {
-                        "level" => res.OrderByDescending(x => x.Level),
-                        "gasUsed" => res.OrderByDescending(x => x.GasUsed),
-                        "storageUsed" => res.OrderByDescending(x => x.StorageUsed),
-                        "bakerFee" => res.OrderByDescending(x => x.BakerFee),
-                        "storageFee" => res.OrderByDescending(x => x.StorageFee),
-                        "allocationFee" => res.OrderByDescending(x => x.AllocationFee),
-                        "amount" => res.OrderByDescending(x => x.Amount),
-                        _ => res.OrderByDescending(x => x.Id)
-                    };
-                }
-
-                if (offset?.El != null)
-                    res = res.Skip((int)offset.El);
-                else if (offset?.Pg != null)
-                    res = res.Skip((int)offset.Pg * limit);
-
-                return res.Take(limit);
-            }
-            #endregion
-
-            return res;
         }
 
         public async Task<object[][]> GetTransactions(

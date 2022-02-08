@@ -17,11 +17,29 @@ namespace Tzkt.Api
         bool Filters;
         int Counter;
 
+        public SqlBuilder()
+        {
+            Params = new DynamicParameters();
+            Builder = new StringBuilder();
+        }
+
         public SqlBuilder(string select)
         {
             Params = new DynamicParameters();
             Builder = new StringBuilder(select, select.Length + 80);
             Builder.AppendLine();
+        }
+
+        public SqlBuilder Append(string sql)
+        {
+            Builder.AppendLine(sql);
+            return this;
+        }
+
+        public SqlBuilder ResetFilters()
+        {
+            Filters = false;
+            return this;
         }
 
         public SqlBuilder Filter(string expression)
@@ -138,6 +156,32 @@ namespace Tzkt.Api
 
             if (action.Ni != null && action.Ni.Count > 0)
                 AppendFilter($@"NOT (""{column}"" = ANY ({Param(action.Ni)}))");
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, TokenStandardParameter standard)
+        {
+            if (standard == null) return this;
+
+            if (standard.Eq != null)
+                AppendFilter($@"""{column}"" & {standard.Eq} = {standard.Eq}");
+            
+            if (standard.Ne != null)
+                AppendFilter($@"""{column}"" & {standard.Ne} != {standard.Ne}");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, TokenStandardParameter standard)
+        {
+            if (standard == null) return this;
+
+            if (standard.Eq != null)
+                AppendFilter($"{column} & {standard.Eq} = {standard.Eq}");
+
+            if (standard.Ne != null)
+                AppendFilter($"{column} & {standard.Ne} != {standard.Ne}");
 
             return this;
         }
@@ -365,7 +409,7 @@ namespace Tzkt.Api
         public SqlBuilder Filter(string column, JsonParameter json, Func<string, string> map = null)
         {
             if (json == null) return this;
-            
+
             if (json.Eq != null)
             {
                 foreach (var (path, value) in json.Eq)
@@ -393,7 +437,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
                         : $@"{fld} > {val}");
                 }
@@ -406,7 +450,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
                         : $@"{fld} >= {val}");
                 }
@@ -419,7 +463,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
                         : $@"{fld} < {val}");
                 }
@@ -432,7 +476,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^\d+$")
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
                         ? $@"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
                         : $@"{fld} <= {val}");
                 }
@@ -500,6 +544,210 @@ namespace Tzkt.Api
                     }
                 }
             }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, JsonParameter json, Func<string, string> map = null)
+        {
+            if (json == null) return this;
+
+            if (json.Eq != null)
+            {
+                foreach (var (path, value) in json.Eq)
+                {
+                    AppendFilter($"{column} @> {Param(JsonPath.Merge(path, value))}::jsonb");
+                    if (path.Any(x => x.Type == JsonPathType.Index))
+                        AppendFilter($"{column} #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb");
+                }
+            }
+
+            if (json.Ne != null)
+            {
+                foreach (var (path, value) in json.Ne)
+                {
+                    AppendFilter(path.Any(x => x.Type == JsonPathType.Any)
+                        ? $"NOT ({column} @> {Param(JsonPath.Merge(path, value))}::jsonb)"
+                        : $"NOT ({column} #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb)");
+                }
+            }
+
+            if (json.Gt != null)
+            {
+                foreach (var (path, value) in json.Gt)
+                {
+                    var val = Param(value);
+                    var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
+                        : $"{fld} > {val}");
+                }
+            }
+
+            if (json.Ge != null)
+            {
+                foreach (var (path, value) in json.Ge)
+                {
+                    var val = Param(value);
+                    var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
+                        : $"{fld} >= {val}");
+                }
+            }
+
+            if (json.Lt != null)
+            {
+                foreach (var (path, value) in json.Lt)
+                {
+                    var val = Param(value);
+                    var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
+                        : $"{fld} < {val}");
+                }
+            }
+
+            if (json.Le != null)
+            {
+                foreach (var (path, value) in json.Le)
+                {
+                    var val = Param(value);
+                    var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
+                        : $"{fld} <= {val}");
+                }
+            }
+
+            if (json.As != null)
+            {
+                foreach (var (path, value) in json.As)
+                {
+                    AppendFilter($"{column} #>> {Param(JsonPath.Select(path))} LIKE {Param(value)}");
+                }
+            }
+
+            if (json.Un != null)
+            {
+                foreach (var (path, value) in json.Un)
+                {
+                    AppendFilter($"NOT ({column} #>> {Param(JsonPath.Select(path))} LIKE {Param(value)})");
+                }
+            }
+
+            if (json.In != null)
+            {
+                foreach (var (path, values) in json.In)
+                {
+                    var sqls = new List<string>(values.Length);
+                    foreach (var value in values)
+                    {
+                        var sql = $"{column} @> {Param(JsonPath.Merge(path, value))}::jsonb";
+                        if (path.Any(x => x.Type == JsonPathType.Index))
+                            sql += $" AND {column} #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb";
+                        sqls.Add(sql);
+                    }
+                    AppendFilter($"({string.Join(" OR ", sqls)})");
+                }
+            }
+
+            if (json.Ni != null)
+            {
+                foreach (var (path, values) in json.Ni)
+                {
+                    foreach (var value in values)
+                    {
+                        AppendFilter(path.Any(x => x.Type == JsonPathType.Any)
+                            ? $"NOT ({column} @> {Param(JsonPath.Merge(path, value))}::jsonb)"
+                            : $"NOT ({column} #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb)");
+                    }
+                }
+            }
+
+            if (json.Null != null)
+            {
+                foreach (var (path, value) in json.Null)
+                {
+                    if (path.Length == 0)
+                    {
+                        AppendFilter($"{column} IS {(value ? "" : "NOT ")}NULL");
+                    }
+                    else
+                    {
+                        if (value)
+                            AppendFilter($"{column} IS NOT NULL");
+
+                        AppendFilter($"{column} #>> {Param(JsonPath.Select(path))} IS {(value ? "" : "NOT ")}NULL");
+                    }
+                }
+            }
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, NatParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"""{column}"" = '{value.Eq}'");
+
+            if (value.Ne != null)
+                AppendFilter($@"""{column}"" != '{value.Ne}'");
+
+            if (value.Gt != null)
+                AppendFilter($@"""{column}""::numeric > '{value.Gt}'::numeric");
+
+            if (value.Ge != null)
+                AppendFilter($@"""{column}""::numeric >= '{value.Ge}'::numeric");
+
+            if (value.Lt != null)
+                AppendFilter($@"""{column}""::numeric < '{value.Lt}'::numeric");
+
+            if (value.Le != null)
+                AppendFilter($@"""{column}""::numeric <= '{value.Le}'::numeric");
+
+            if (value.In != null)
+                AppendFilter($@"""{column}""::numeric = ANY ({Param(value.In)}::numeric[])");
+
+            if (value.Ni != null)
+                AppendFilter($@"NOT (""{column}""::numeric = ANY ({Param(value.Ni)}::numeric[]))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, NatParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = '{value.Eq}'");
+
+            if (value.Ne != null)
+                AppendFilter($"{column} != '{value.Ne}'");
+
+            if (value.Gt != null)
+                AppendFilter($"{column}::numeric > '{value.Gt}'::numeric");
+
+            if (value.Ge != null)
+                AppendFilter($"{column}::numeric >= '{value.Ge}'::numeric");
+
+            if (value.Lt != null)
+                AppendFilter($"{column}::numeric < '{value.Lt}'::numeric");
+
+            if (value.Le != null)
+                AppendFilter($"{column}::numeric <= '{value.Le}'::numeric");
+
+            if (value.In != null)
+                AppendFilter($"{column}::numeric = ANY ({Param(value.In)}::numeric[])");
+
+            if (value.Ni != null)
+                AppendFilter($"NOT ({column}::numeric = ANY ({Param(value.Ni)}::numeric[]))");
 
             return this;
         }
@@ -997,6 +1245,57 @@ namespace Tzkt.Api
             if (value.Ni != null)
                 AppendFilter($@"NOT ({column} = ANY ({Param(value.Ni)}))");
 
+            return this;
+        }
+
+        public SqlBuilder Take(Pagination pagination, Func<string, (string, string)> map, string id = @"""Id""")
+        {
+            var sortAsc = true;
+            var sortColumn = id;
+            var cursorColumn = id;
+
+            if (pagination.sort != null)
+            {
+                if (pagination.sort.Asc != null)
+                {
+                    (sortColumn, cursorColumn) = map(pagination.sort.Asc);
+                }
+                else if (pagination.sort.Desc != null)
+                {
+                    sortAsc = false;
+                    (sortColumn, cursorColumn) = map(pagination.sort.Desc);
+                }
+            }
+
+            if (pagination.offset?.Cr != null)
+            {
+                AppendFilter(sortAsc
+                    ? $"{cursorColumn} > {pagination.offset.Cr}"
+                    : $"{cursorColumn} < {pagination.offset.Cr}");
+            }
+
+            if (sortColumn == id)
+            {
+                Builder.AppendLine(sortAsc
+                    ? $"ORDER BY {id}"
+                    : $"ORDER BY {id} DESC");
+            }
+            else
+            {
+                Builder.AppendLine(sortAsc
+                    ? $"ORDER BY {sortColumn}, {id}"
+                    : $"ORDER BY {sortColumn} DESC, {id} DESC");
+            }
+
+            if (pagination.offset != null)
+            {
+                if (pagination.offset.El != null)
+                    Builder.AppendLine($"OFFSET {pagination.offset.El}");
+                else if (pagination.offset.Pg != null)
+                    Builder.AppendLine($"OFFSET {pagination.offset.Pg * pagination.limit}");
+            }
+
+            Builder.AppendLine($"LIMIT {pagination.limit}");
             return this;
         }
 

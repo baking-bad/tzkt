@@ -2,17 +2,18 @@
 [![Made With](https://img.shields.io/badge/made%20with-C%23-success.svg?)](https://docs.microsoft.com/en-gb/dotnet/csharp/language-reference/)
 [![License: MIT](https://img.shields.io/github/license/baking-bad/netezos.svg)](https://opensource.org/licenses/MIT)
 
-TzKT is a lightweight [Tezos](https://tezos.com/) blockchain indexer with an advanced API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
+TzKT is the most advanced [Tezos](https://tezos.com/) blockchain indexer with powerful API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
 
 The indexer fetches raw data from the Tezos node, then processes it and stores in the database in such a way as to provide effective access to the blockchain data. For example, getting operations by hash, or getting all operations of the particular account, or getting detailed baking rewards, etc. None of this can be accessed via node RPC, but TzKT indexer makes this data (and much more) available.
 
 ## Features:
 - **More detailed data.** TzKT not only collects blockchain data, but also processes and extends it with unique properties or even entities. For example, TzKT was the first indexer introduced synthetic operation types such as "migration" or "revelation penalty", which fill in the gaps in account history (because this data is missed in the blockchain), and the only indexer that correctly distinguishes smart contracts among all contracts.
 - **Micheline-to-JSON conversion** TzKT automatically converts raw Micheline JSON to human-readable JSON, so it's extremely handy to work with transaction parameters, contract storages, bigmaps keys, etc.
+- **Tokens support** TzKT also indexes FA1.2 and FA2 tokens, token balances and token transfers (including mints and burns), as well as synchronizes token metadata.
 - **Data quality comes first!** You will never see an incorrect account balance, or total rolls, or missed operations, etc. TzKT was built by professionals who know Tezos from A to Z (or, in other words, from tz to KT 😼).
 - **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly. In addition to basic data access TzKT API has a lot of cool features such as deep filtering, sorting, data selection, exporting .csv statements, calculating historical data (at any block) such as balances or BigMap keys, injecting historical quotes and metadata, optimized caching and much more. See the complete [API documentation](https://api.tzkt.io).
 - **WebSocket API.** TzKT allows to subscribe to real-time blockchain data, such as new blocks or new operations, etc. via WebSocket. TzKT uses SignalR, which is very easy to use and for which there are many client libraries for different languages.
-- **Low resource consumption.** TzKT is fairly lightweight. The indexer consumes up to 128MB of RAM, and the API up to 256MB-1024MB, depending on the network and configured cache size.
+- **Low resource consumption.** TzKT is fairly lightweight. The indexer consumes up to 256MB of RAM, and the API up to 256MB-1024MB, depending on the network and configured cache size.
 - **No local node needed.** TzKT indexer works well even with remote RPC node. By default it uses [tezos.giganode.io](https://tezos.giganode.io/), the most performant public RPC node in Tezos, which is more than enough for most cases.
 - **Quick start.** Indexer bootstrap takes ~15 minutes by using snapshots publicly available for all supported networks. Of course, you can run full synchronization from scratch as well.
 - **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data. Also, the indexer performs self-diagnostics after each block, which guarantees the correct commiting.
@@ -88,7 +89,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -154,6 +155,15 @@ Like this:
     "FilePath": "sync.health"
   },
 
+  "TokenMetadata": {
+    "Enabled": false,
+    "DipDupUrl": "https://metadata.dipdup.net/v1/graphql",
+    "Network": "mainnet",
+    "BatchSize": 10000,
+    "PeriodSec": 30,
+    "OverriddenMetadata": []
+  },
+
   "Logging": {
     "LogLevel": {
       "Default": "Information",
@@ -216,7 +226,8 @@ Like this:
     "MaxConnections": 1000,
     "MaxOperationSubscriptions": 50,
     "MaxBigMapSubscriptions": 50,
-    "MaxAccountsSubscriptions": 50
+    "MaxAccountsSubscriptions": 50,
+    "MaxTokenTransfersSubscriptions": 50
   },
 
   "ConnectionStrings": {
@@ -283,27 +294,24 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 ## Install Tzkt Indexer and API for testnets
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
- - Granadanet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_granadanet.backup
-   - RPC node: https://rpc.tzkt.io/granadanet/    
  - Hangzhou2net:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.6_hangzhou2net.backup
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_hangzhou2net.backup
    - RPC node: https://rpc.tzkt.io/hangzhou2net/
 
 ### Testnet installation using docker containers
 
-First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands (commands provided for Granadanet, for Hangzhou2net use the `hangzhou-` prefix):
+First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands:
 
 ````sh
 git clone https://github.com/baking-bad/tzkt.git
 cd tzkt/
 
-make granada-init #run this command if you want to restore the DB from the latest snapshot
-make granada-start
-# for hangzhou2net used port 5020
-curl http://127.0.0.1:5010/v1/head 
+make hangzhou-init #run this command if you want to restore the DB from the latest snapshot
+make hangzhou-start
 
-make granada-stop
+curl http://127.0.0.1:5020/v1/head 
+
+make hangzhou-stop
 ````
 
 ## Have a question?

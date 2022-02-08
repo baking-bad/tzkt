@@ -502,7 +502,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         var (normEp, normParam) = schema.NormalizeParameter(rawEp, rawParam);
 
                         transaction.Entrypoint = normEp;
-                        transaction.RawParameters = normParam.ToBytes();
+                        transaction.RawParameters = schema.OptimizeParameter(normEp, normParam).ToBytes();
                         transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
                     }
                     catch (Exception ex)

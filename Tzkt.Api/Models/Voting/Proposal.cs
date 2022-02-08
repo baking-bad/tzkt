@@ -53,10 +53,5 @@ namespace Tzkt.Api.Models
         /// </summary>
         [JsonSchemaType(typeof(ProposalMetadata), IsNullable = true)]
         public RawJson Metadata { get; set; }
-
-        /// <summary>
-        /// **DEPRECATED**. Use `firstPeriod` instead.
-        /// </summary>
-        public int Period => FirstPeriod;
     }
 }

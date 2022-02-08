@@ -9,6 +9,66 @@ namespace Tzkt.Api
 {
     static class ModelBindingContextExtension
     {
+        public static bool TryGetNat(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Regex.IsMatch(valueObject.FirstValue, @"^[0-9]+$"))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid nat value.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = valueObject.FirstValue;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetNatList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regex.IsMatch(rawValue, @"^[0-9]+$"))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid nat value.");
+                            return false;
+                        }
+                        result.Add(rawValue);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetInt32(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
@@ -328,6 +388,29 @@ namespace Tzkt.Api
                     }
                     hasValue = true;
                     result = type;
+                }
+            }
+
+            return true;
+        }
+        
+        public static bool TryGetTokenStandard(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!TokenStandards.TryParse(valueObject.FirstValue, out var standard))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid token standard value.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = standard;
                 }
             }
 
@@ -939,6 +1022,43 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                         result.Add(rawValue.Replace("ъуъ", ","));
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetSelectionFields(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<SelectionField> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    var res = new List<SelectionField>(rawValues.Length);
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!SelectionField.TryParse(rawValue, out var field))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid value.");
+                            return false;
+                        }
+                        res.Add(field);
+                    }
+
+                    hasValue = true;
+                    result = res;
                 }
             }
 

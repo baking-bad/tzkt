@@ -72,6 +72,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -86,6 +87,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccountId", account)
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -133,6 +135,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -175,6 +178,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccountId", account)
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -253,6 +257,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
+            Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -292,6 +297,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccountId", account)
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");

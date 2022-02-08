@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.SignalR;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Websocket

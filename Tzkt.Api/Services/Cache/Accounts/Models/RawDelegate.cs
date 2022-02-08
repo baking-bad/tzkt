@@ -2,8 +2,6 @@
 {
     public class RawDelegate : RawUser
     {
-        public override string Type => AccountTypes.Delegate;
-
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }
 

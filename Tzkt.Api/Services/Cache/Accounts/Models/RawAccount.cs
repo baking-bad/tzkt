@@ -2,10 +2,8 @@
 
 namespace Tzkt.Api.Services.Cache
 {
-    public abstract class RawAccount
+    public class RawAccount
     {
-        public virtual string Type => "account";
-
         public int Id { get; set; }
         public string Address { get; set; }
         public int FirstLevel { get; set; }
@@ -15,6 +13,9 @@ namespace Tzkt.Api.Services.Cache
         public int Counter { get; set; }
 
         public int ContractsCount { get; set; }
+        public int ActiveTokensCount { get; set; }
+        public int TokenBalancesCount { get; set; }
+        public int TokenTransfersCount { get; set; }
 
         public int DelegationsCount { get; set; }
         public int OriginationsCount { get; set; }
@@ -26,7 +27,7 @@ namespace Tzkt.Api.Services.Cache
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
 
-        public AccountMetadata Metadata { get; set; }
+        public ProfileMetadata Metadata { get; set; }
 
         public string Alias => Metadata?.Alias;
 

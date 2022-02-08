@@ -29,7 +29,6 @@ namespace Tzkt.Sync
                     appConfig.AddJsonFile("appsettings.json", true);
                     appConfig.AddJsonFile($"appsettings.{host.HostingEnvironment.EnvironmentName}.json", true);
                     appConfig.AddEnvironmentVariables();
-                    appConfig.AddEnvironmentVariables("TZKT_"); // TODO: remove deprecated prefix
                     appConfig.AddEnvironmentVariables("TZKT_SYNC_");
                     appConfig.AddCommandLine(args);
                 })
@@ -63,6 +62,12 @@ namespace Tzkt.Sync
                             config.Period = TimeSpan.FromSeconds(healthChecks.Period);
                         });
                     }
+                    #endregion
+
+                    #region token metadata
+                    var tokenMetadata = hostContext.Configuration.GetTokenMetadataConfig();
+                    if (tokenMetadata.Enabled)
+                        services.AddHostedService<TokenMetadata>();
                     #endregion
                 });
     }

@@ -14,7 +14,7 @@ namespace Tzkt.Api.Repositories
     public partial class AccountRepository : DbConnection
     {
         #region static
-        const string AliasQuery = @"""Metadata""#>>'{alias}' as ""Alias""";
+        const string AliasQuery = @"""Metadata""#>>'{profile,alias}' as ""Alias""";
         #endregion
 
         readonly AccountsCache Accounts;
@@ -75,6 +75,9 @@ namespace Tzkt.Api.Repositories
                         NumActivations = delegat.Activated == true ? 1 : 0,
                         NumBallots = delegat.BallotsCount,
                         NumContracts = delegat.ContractsCount,
+                        ActiveTokensCount = delegat.ActiveTokensCount,
+                        TokenBalancesCount = delegat.TokenBalancesCount,
+                        TokenTransfersCount = delegat.TokenTransfersCount,
                         NumDelegators = delegat.DelegatorsCount,
                         NumBlocks = delegat.BlocksCount,
                         NumDelegations = delegat.DelegationsCount,
@@ -120,6 +123,9 @@ namespace Tzkt.Api.Repositories
                         DelegationTime = userDelegate == null ? null : Time[(int)user.DelegationLevel],
                         NumActivations = user.Activated == true ? 1 : 0,
                         NumContracts = user.ContractsCount,
+                        ActiveTokensCount = user.ActiveTokensCount,
+                        TokenBalancesCount = user.TokenBalancesCount,
+                        TokenTransfersCount = user.TokenTransfersCount,
                         NumDelegations = user.DelegationsCount,
                         NumOriginations = user.OriginationsCount,
                         NumReveals = user.RevealsCount,
@@ -171,6 +177,9 @@ namespace Tzkt.Api.Repositories
                         LastActivity = contract.LastLevel,
                         LastActivityTime = Time[contract.LastLevel],
                         NumContracts = contract.ContractsCount,
+                        ActiveTokensCount = contract.ActiveTokensCount,
+                        TokenBalancesCount = contract.TokenBalancesCount,
+                        TokenTransfersCount = contract.TokenTransfersCount,
                         NumDelegations = contract.DelegationsCount,
                         NumOriginations = contract.OriginationsCount,
                         NumReveals = contract.RevealsCount,
@@ -180,7 +189,23 @@ namespace Tzkt.Api.Repositories
                         CodeHash = contract.CodeHash,
                         Metadata = metadata ? contract.Metadata : null
                     };
-                    #endregion
+                #endregion
+                case RawAccount ghost:
+                    #region build ghost
+                    return new Ghost
+                    {
+                        Alias = ghost.Alias,
+                        Address = ghost.Address,
+                        ActiveTokensCount = ghost.ActiveTokensCount,
+                        TokenBalancesCount = ghost.TokenBalancesCount,
+                        TokenTransfersCount = ghost.TokenTransfersCount,
+                        FirstActivity = ghost.FirstLevel,
+                        FirstActivityTime = Time[ghost.FirstLevel],
+                        LastActivity = ghost.LastLevel,
+                        LastActivityTime = Time[ghost.LastLevel],
+                        Metadata = metadata ? ghost.Metadata : null
+                    };
+                #endregion
                 default:
                     throw new Exception($"Invalid raw account type");
             }
@@ -261,6 +286,9 @@ namespace Tzkt.Api.Repositories
                             DelegationTime = userDelegate == null ? null : (DateTime?)Time[row.DelegationLevel],
                             NumActivations = row.Activated == true ? 1 : 0,
                             NumContracts = row.ContractsCount,
+                            ActiveTokensCount = row.ActiveTokensCount,
+                            TokenBalancesCount = row.TokenBalancesCount,
+                            TokenTransfersCount = row.TokenTransfersCount,
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
@@ -296,6 +324,9 @@ namespace Tzkt.Api.Repositories
                             NumActivations = row.Activated == true ? 1 : 0,
                             NumBallots = row.BallotsCount,
                             NumContracts = row.ContractsCount,
+                            ActiveTokensCount = row.ActiveTokensCount,
+                            TokenBalancesCount = row.TokenBalancesCount,
+                            TokenTransfersCount = row.TokenTransfersCount,
                             NumDelegators = row.DelegatorsCount,
                             NumBlocks = row.BlocksCount,
                             NumDelegations = row.DelegationsCount,
@@ -356,6 +387,9 @@ namespace Tzkt.Api.Repositories
                             LastActivity = row.LastLevel,
                             LastActivityTime = Time[row.LastLevel],
                             NumContracts = row.ContractsCount,
+                            ActiveTokensCount = row.ActiveTokensCount,
+                            TokenBalancesCount = row.TokenBalancesCount,
+                            TokenTransfersCount = row.TokenTransfersCount,
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
@@ -363,6 +397,22 @@ namespace Tzkt.Api.Repositories
                             NumTransactions = row.TransactionsCount,
                             TypeHash = row.TypeHash,
                             CodeHash = row.CodeHash,
+                        });
+                        #endregion
+                        break;
+                    case 3:
+                        #region build ghost
+                        accounts.Add(new Ghost
+                        {
+                            Alias = row.Alias,
+                            Address = row.Address,
+                            ActiveTokensCount = row.ActiveTokensCount,
+                            TokenBalancesCount = row.TokenBalancesCount,
+                            TokenTransfersCount = row.TokenTransfersCount,
+                            FirstActivity = row.FirstLevel,
+                            FirstActivityTime = Time[row.FirstLevel],
+                            LastActivity = row.LastLevel,
+                            LastActivityTime = Time[row.LastLevel],
                         });
                         #endregion
                         break;
@@ -412,6 +462,9 @@ namespace Tzkt.Api.Repositories
                     case "numActivations": columns.Add(@"""Activated"""); break;
                     case "numBallots": columns.Add(@"""BallotsCount"""); break;
                     case "numContracts": columns.Add(@"""ContractsCount"""); break;
+                    case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
+                    case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
+                    case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
                     case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                     case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                     case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
@@ -561,6 +614,18 @@ namespace Tzkt.Api.Repositories
                     case "numContracts":
                         foreach (var row in rows)
                             result[j++][i] = row.ContractsCount;
+                        break;
+                    case "activeTokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveTokensCount;
+                        break;
+                    case "tokenBalancesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenBalancesCount;
+                        break;
+                    case "tokenTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenTransfersCount;
                         break;
                     case "numDelegators":
                         foreach (var row in rows)
@@ -717,6 +782,9 @@ namespace Tzkt.Api.Repositories
                 case "numActivations": columns.Add(@"""Activated"""); break;
                 case "numBallots": columns.Add(@"""BallotsCount"""); break;
                 case "numContracts": columns.Add(@"""ContractsCount"""); break;
+                case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
+                case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
+                case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
                 case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                 case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                 case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
@@ -862,6 +930,18 @@ namespace Tzkt.Api.Repositories
                 case "numContracts":
                     foreach (var row in rows)
                         result[j++] = row.ContractsCount;
+                    break;
+                case "activeTokensCount":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveTokensCount;
+                    break;
+                case "tokenBalancesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokenBalancesCount;
+                    break;
+                case "tokenTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokenTransfersCount;
                     break;
                 case "numDelegators":
                     foreach (var row in rows)
@@ -1082,7 +1162,6 @@ namespace Tzkt.Api.Repositories
             DateTimeParameter timestamp,
             StringParameter entrypoint,
             JsonParameter parameter,
-            StringParameter parameters,
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortParameter sort,
@@ -1133,11 +1212,11 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = delegat.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = delegat.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -1149,7 +1228,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
 
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_delegat, null, null, level, timestamp, sort, offset, limit, format, quote)
+                        ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
@@ -1206,11 +1285,11 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = user.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = user.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -1222,7 +1301,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
 
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_user, null, null, level, timestamp, sort, offset, limit, format, quote)
+                        ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
@@ -1251,11 +1330,11 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = contract.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, parameters, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = contract.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -1263,7 +1342,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_contract, null, null, level, timestamp, sort, offset, limit, format, quote)
+                        ? Operations.GetMigrations(_contract, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     await Task.WhenAll(
@@ -1280,6 +1359,9 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(contractMigrations.Result);
 
                     break;
+
+                case RawAccount ghost:
+                    break;
             }
 
             return sort?.Desc == null
@@ -1287,7 +1369,7 @@ namespace Tzkt.Api.Repositories
                 : result.OrderByDescending(x => x.Id).Take(limit);
         }
 
-        public async Task<AccountMetadata> GetMetadata(string address)
+        public async Task<ProfileMetadata> GetMetadata(string address)
         {
             var account = await Accounts.GetAsync(address);
             return account?.Metadata;

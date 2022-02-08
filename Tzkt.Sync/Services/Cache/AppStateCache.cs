@@ -104,6 +104,18 @@ namespace Tzkt.Sync.Services.Cache
             return ++AppState.ScriptCounter;
         }
 
+        public int NextTokenId()
+        {
+            Db.TryAttach(AppState);
+            return ++AppState.TokenCounter;
+        }
+
+        public int NextTokenBalanceId()
+        {
+            Db.TryAttach(AppState);
+            return ++AppState.TokenBalanceCounter;
+        }
+
         public int GetManagerCounter()
         {
             return AppState.ManagerCounter;

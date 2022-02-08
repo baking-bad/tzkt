@@ -1,10 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-
 using Tzkt.Data;
 
 namespace Tzkt.Sync
@@ -13,21 +10,13 @@ namespace Tzkt.Sync
     {
         public TzktContext CreateDbContext(string[] args)
         {
-            var environment = Environment.GetEnvironmentVariable("TZKT_Environment")
-                ?? Environments.Production;
-
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile(
-                        $"appsettings.json",
-                        optional: false,
-                        reloadOnChange: false)
-                .AddJsonFile(
-                    $"appsettings.{environment}.json",
-                    optional: true,
+                    $"appsettings.json",
+                    optional: false,
                     reloadOnChange: false)
-
-                .AddEnvironmentVariables("TZKT_")
+                .AddEnvironmentVariables()
                 .Build();
 
             var builder = new DbContextOptionsBuilder<TzktContext>();
