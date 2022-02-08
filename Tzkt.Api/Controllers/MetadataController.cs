@@ -499,7 +499,14 @@ namespace Tzkt.Api.Controllers
             [Min(0)] int id,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            var rights = new AccessRights()
+            {
+                Table = "Tokens",
+                Section = section,
+                Access = Access.Read
+            };
+            
+            if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetTokenMetadata(id, section));
@@ -513,7 +520,14 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             string section = null)
         {
-            if (!Auth.TryAuthenticate(headers, out var error))
+            var rights = new AccessRights()
+            {
+                Table = "Tokens",
+                Section = section,
+                Access = Access.Read
+            };
+            
+            if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
             return Ok(await Metadata.GetTokenMetadata(metadata, offset, limit, section));
@@ -525,8 +539,14 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
+                var rights = new AccessRights()
+                {
+                    Table = "Tokens",
+                    Access = Access.Write
+                };
+                
                 var body = await Request.Body.ReadAsStringAsync();
-                if (!Auth.TryAuthenticate(headers, body, out var error))
+                if (!Auth.TryAuthenticate(headers, rights, body, out var error))
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<int>>>(body);
