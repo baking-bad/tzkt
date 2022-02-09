@@ -156,8 +156,8 @@ namespace Tzkt.Api.Repositories
             })
             .FirstOrDefault();
 
-        public Task<List<MetadataUpdate<string>>> UpdateAccountMetadata(List<MetadataUpdate<string>> metadata)
-            => Update("Accounts", "Address", "character(36)", metadata);
+        public Task<List<MetadataUpdate<string>>> UpdateAccountMetadata(List<MetadataUpdate<string>> metadata, string section)
+            => Update("Accounts", "Address", "character(36)", metadata, section);
 
         public Task<List<MetadataUpdate<string>>> UpdatProposalMetadata(List<MetadataUpdate<string>> metadata)
             => Update("Proposals", "Hash", "character(51)", metadata);
@@ -177,7 +177,7 @@ namespace Tzkt.Api.Repositories
         public Task<List<MetadataUpdate<int>>> UpdateTokenMetadata(List<MetadataUpdate<int>> metadata)
             => Update("Tokens", "Id", "integer", metadata);
 
-        async Task<List<MetadataUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<MetadataUpdate<T>> metadata)
+        async Task<List<MetadataUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<MetadataUpdate<T>> metadata, string section = null)
         {
             var res = new List<MetadataUpdate<T>>(metadata.Count);
             using var db = GetConnection();
