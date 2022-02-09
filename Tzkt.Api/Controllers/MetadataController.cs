@@ -115,13 +115,15 @@ namespace Tzkt.Api.Controllers
 
         [HttpPost("accounts")]
         public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateAccountMetadata(
-            [FromHeader] AuthHeaders headers)
+            [FromHeader] AuthHeaders headers,
+            string section = null)
         {
             try
             {
                 var rights = new AccessRights()
                 {
                     Table = "Accounts",
+                    Section = section,
                     Access = Access.Write
                 };
                 
@@ -134,7 +136,7 @@ namespace Tzkt.Api.Controllers
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$")))
                     return new BadRequest("body", "Invalid account address");
 
-                return Ok(await Metadata.UpdateAccountMetadata(metadata));
+                return Ok(await Metadata.UpdateAccountMetadata(metadata, section));
             }
             catch (JsonException)
             {

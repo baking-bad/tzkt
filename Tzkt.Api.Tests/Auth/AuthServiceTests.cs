@@ -1,6 +1,7 @@
  using System;
 using System.Linq;
-using Microsoft.Extensions.Configuration;
+ using System.Threading.Tasks;
+ using Microsoft.Extensions.Configuration;
 using Netezos.Encoding;
 using Netezos.Keys;
 using Netezos.Utils;
@@ -97,6 +98,7 @@ public class AuthServiceTests
             expectedError = $"Nonce {headers.Nonce} has already been used";
             Assert.Equal(expectedError, error);
 
+            Task.Delay(10);
             string json = null;
             headers.Nonce = (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
             Assert.False(auth.TryAuthenticate(headers, rights, json, out error));
