@@ -19,13 +19,10 @@ namespace Tzkt.Data.Models
         public int ExtraBlocks { get; set; }
         public int MissedOwnBlocks { get; set; }
         public int MissedExtraBlocks { get; set; }
-        public int UncoveredOwnBlocks { get; set; }
-        public int UncoveredExtraBlocks { get; set; }
 
         public int FutureEndorsements { get; set; }
         public int Endorsements { get; set; }
         public int MissedEndorsements { get; set; }
-        public int UncoveredEndorsements { get; set; }
         #endregion
 
         #region rewards
@@ -34,20 +31,15 @@ namespace Tzkt.Data.Models
         public long ExtraBlockRewards { get; set; }
         public long MissedOwnBlockRewards { get; set; }
         public long MissedExtraBlockRewards { get; set; }
-        public long UncoveredOwnBlockRewards { get; set; }
-        public long UncoveredExtraBlockRewards { get; set; }
 
         public long FutureEndorsementRewards { get; set; }
         public long EndorsementRewards { get; set; }
         public long MissedEndorsementRewards { get; set; }
-        public long UncoveredEndorsementRewards { get; set; }
 
         public long OwnBlockFees { get; set; }
         public long ExtraBlockFees { get; set; }
         public long MissedOwnBlockFees { get; set; }
         public long MissedExtraBlockFees { get; set; }
-        public long UncoveredOwnBlockFees { get; set; }
-        public long UncoveredExtraBlockFees { get; set; }
 
         public long DoubleBakingRewards { get; set; }
         public long DoubleBakingLostDeposits { get; set; }

@@ -87,9 +87,6 @@ namespace Tzkt.Sync.Protocols.Proto2
                 delegat.Balance -= penalty.LostReward;
                 delegat.Balance -= penalty.LostFees;
 
-                delegat.FrozenRewards -= penalty.LostReward;
-                delegat.FrozenFees -= penalty.LostFees;
-
                 delegat.StakingBalance -= penalty.LostFees;
 
                 delegat.RevelationPenaltiesCount++;
@@ -128,9 +125,6 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 delegat.Balance += penalty.LostReward;
                 delegat.Balance += penalty.LostFees;
-
-                delegat.FrozenRewards += penalty.LostReward;
-                delegat.FrozenFees += penalty.LostFees;
 
                 delegat.StakingBalance += penalty.LostFees;
 

@@ -7,7 +7,6 @@ namespace Tzkt.Api
     {
         public const string Future = "future";
         public const string Realized = "realized";
-        public const string Uncovered = "uncovered";
         public const string Missed = "missed";
 
         public static bool TryParse(string value, out int res)
@@ -16,7 +15,6 @@ namespace Tzkt.Api
             {
                 Future => (int)BakingRightStatus.Future,
                 Realized => (int)BakingRightStatus.Realized,
-                Uncovered => (int)BakingRightStatus.Uncovered,
                 Missed => (int)BakingRightStatus.Missed,
                 _ => -1
             };
@@ -27,7 +25,6 @@ namespace Tzkt.Api
         {
             (int)BakingRightStatus.Future => Future,
             (int)BakingRightStatus.Realized => Realized,
-            (int)BakingRightStatus.Uncovered => Uncovered,
             (int)BakingRightStatus.Missed => Missed,
             _ => throw new Exception("invalid baking right status value")
         };

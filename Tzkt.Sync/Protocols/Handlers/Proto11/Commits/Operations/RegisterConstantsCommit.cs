@@ -60,8 +60,12 @@ namespace Tzkt.Sync.Protocols.Proto11
 
             #region apply operation
             await Spend(sender, registerConstant.BakerFee);
-            if (senderDelegate != null) senderDelegate.StakingBalance -= registerConstant.BakerFee;
-            blockBaker.FrozenFees += registerConstant.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance -= registerConstant.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance -= registerConstant.BakerFee;
+            }
             blockBaker.Balance += registerConstant.BakerFee;
             blockBaker.StakingBalance += registerConstant.BakerFee;
 
@@ -78,7 +82,11 @@ namespace Tzkt.Sync.Protocols.Proto11
             {
                 await Spend(sender, registerConstant.StorageFee ?? 0);
                 if (senderDelegate != null)
+                {
                     senderDelegate.StakingBalance -= registerConstant.StorageFee ?? 0;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance -= registerConstant.StorageFee ?? 0;
+                }
 
                 registerConstant.Address = result.RequiredString("global_address");
                 registerConstant.Value = Micheline.FromJson(content.Required("value")).ToBytes();
@@ -116,7 +124,11 @@ namespace Tzkt.Sync.Protocols.Proto11
             {
                 await Return(sender, registerConstant.StorageFee ?? 0);
                 if (senderDelegate != null)
+                {
                     senderDelegate.StakingBalance += registerConstant.StorageFee ?? 0;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance += registerConstant.StorageFee ?? 0;
+                }
 
                 Cache.AppState.Get().ConstantsCount--;
             }
@@ -124,8 +136,12 @@ namespace Tzkt.Sync.Protocols.Proto11
 
             #region revert operation
             await Return(sender, registerConstant.BakerFee, true);
-            if (senderDelegate != null) senderDelegate.StakingBalance += registerConstant.BakerFee;
-            blockBaker.FrozenFees -= registerConstant.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance += registerConstant.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance += registerConstant.BakerFee;
+            }
             blockBaker.Balance -= registerConstant.BakerFee;
             blockBaker.StakingBalance -= registerConstant.BakerFee;
 

@@ -52,13 +52,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                         else
                             bakerCycle.ExtraBlocks++;
                     }
-                    else if (br.Status == BakingRightStatus.Uncovered)
-                    {
-                        if (br.Priority == 0)
-                            bakerCycle.UncoveredOwnBlocks++;
-                        else
-                            bakerCycle.UncoveredExtraBlocks++;
-                    }
                     else if (br.Status == BakingRightStatus.Missed)
                     {
                         if (br.Priority == 0)
@@ -81,10 +74,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         bakerCycle.Endorsements += (int)endorsingRight.Slots;
                         bakerCycle.EndorsementDeposits += GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
-                    }
-                    else if (endorsingRight.Status == BakingRightStatus.Uncovered)
-                    {
-                        bakerCycle.UncoveredEndorsements += (int)endorsingRight.Slots;
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                     {
@@ -112,27 +101,15 @@ namespace Tzkt.Sync.Protocols.Proto5
                         bakerCycle.EndorsementRewards += successReward;
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                         bakerCycle.MissedEndorsementRewards += successReward;
-                    else if (endorsingRight.Status == BakingRightStatus.Uncovered)
-                        bakerCycle.UncoveredEndorsementRewards += successReward;
                     else
                         throw new Exception("Unexpected future rights");
 
                     if (maxReward != successReward)
                     {
-                        if (bakingRights[0].Status == BakingRightStatus.Missed)
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.MissedOwnBlockRewards += maxReward - successReward;
-                            else
-                                bakerCycle.MissedExtraBlockRewards += maxReward - successReward;
-                        }
+                        if (bakingRights[0].Priority == 0)
+                            bakerCycle.MissedOwnBlockRewards += maxReward - successReward;
                         else
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.UncoveredOwnBlockRewards += maxReward - successReward;
-                            else
-                                bakerCycle.UncoveredExtraBlockRewards += maxReward - successReward;
-                        }
+                            bakerCycle.MissedExtraBlockRewards += maxReward - successReward;
                     }
                 }
                 #endregion
@@ -163,28 +140,15 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                     if (successReward != actualReward)
                     {
-                        if (bakingRights[0].Status == BakingRightStatus.Missed)
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.MissedOwnBlockRewards += successReward - actualReward;
-                            else
-                                bakerCycle.MissedExtraBlockRewards += successReward - actualReward;
-                        }
+                        if (bakingRights[0].Priority == 0)
+                            bakerCycle.MissedOwnBlockRewards += successReward - actualReward;
                         else
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.UncoveredOwnBlockRewards += successReward - actualReward;
-                            else
-                                bakerCycle.UncoveredExtraBlockRewards += successReward - actualReward;
-                        }
+                            bakerCycle.MissedExtraBlockRewards += successReward - actualReward;
                     }
 
                     if (maxReward != successReward)
                     {
-                        if (endorsingRight.Status == BakingRightStatus.Missed)
-                            bakerCycle.MissedEndorsementRewards += maxReward - successReward;
-                        else
-                            bakerCycle.UncoveredEndorsementRewards += maxReward - successReward;
+                        bakerCycle.MissedEndorsementRewards += maxReward - successReward;
                     }
                 }
                 #endregion
@@ -205,13 +169,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                             bakerCycle.MissedOwnBlockFees += block.Fees;
                         else
                             bakerCycle.MissedExtraBlockFees += block.Fees;
-                    }
-                    else if (bakingRights[0].Status == BakingRightStatus.Uncovered)
-                    {
-                        if (bakingRights[0].Priority == 0)
-                            bakerCycle.UncoveredOwnBlockFees += block.Fees;
-                        else
-                            bakerCycle.UncoveredExtraBlockFees += block.Fees;
                     }
                     else
                     {
@@ -450,13 +407,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                         else
                             bakerCycle.ExtraBlocks--;
                     }
-                    else if (br.Status == BakingRightStatus.Uncovered)
-                    {
-                        if (br.Priority == 0)
-                            bakerCycle.UncoveredOwnBlocks--;
-                        else
-                            bakerCycle.UncoveredExtraBlocks--;
-                    }
                     else if (br.Status == BakingRightStatus.Missed)
                     {
                         if (br.Priority == 0)
@@ -479,10 +429,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         bakerCycle.Endorsements -= (int)endorsingRight.Slots;
                         bakerCycle.EndorsementDeposits -= GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
-                    }
-                    else if (endorsingRight.Status == BakingRightStatus.Uncovered)
-                    {
-                        bakerCycle.UncoveredEndorsements -= (int)endorsingRight.Slots;
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                     {
@@ -510,27 +456,15 @@ namespace Tzkt.Sync.Protocols.Proto5
                         bakerCycle.EndorsementRewards -= successReward;
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                         bakerCycle.MissedEndorsementRewards -= successReward;
-                    else if (endorsingRight.Status == BakingRightStatus.Uncovered)
-                        bakerCycle.UncoveredEndorsementRewards -= successReward;
                     else
                         throw new Exception("Unexpected future rights");
 
                     if (maxReward != successReward)
                     {
-                        if (bakingRights[0].Status == BakingRightStatus.Missed)
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.MissedOwnBlockRewards -= maxReward - successReward;
-                            else
-                                bakerCycle.MissedExtraBlockRewards -= maxReward - successReward;
-                        }
+                        if (bakingRights[0].Priority == 0)
+                            bakerCycle.MissedOwnBlockRewards -= maxReward - successReward;
                         else
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.UncoveredOwnBlockRewards -= maxReward - successReward;
-                            else
-                                bakerCycle.UncoveredExtraBlockRewards -= maxReward - successReward;
-                        }
+                            bakerCycle.MissedExtraBlockRewards -= maxReward - successReward;
                     }
                 }
                 #endregion
@@ -561,28 +495,15 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                     if (successReward != actualReward)
                     {
-                        if (bakingRights[0].Status == BakingRightStatus.Missed)
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.MissedOwnBlockRewards -= successReward - actualReward;
-                            else
-                                bakerCycle.MissedExtraBlockRewards -= successReward - actualReward;
-                        }
+                        if (bakingRights[0].Priority == 0)
+                            bakerCycle.MissedOwnBlockRewards -= successReward - actualReward;
                         else
-                        {
-                            if (bakingRights[0].Priority == 0)
-                                bakerCycle.UncoveredOwnBlockRewards -= successReward - actualReward;
-                            else
-                                bakerCycle.UncoveredExtraBlockRewards -= successReward - actualReward;
-                        }
+                            bakerCycle.MissedExtraBlockRewards -= successReward - actualReward;
                     }
 
                     if (maxReward != successReward)
                     {
-                        if (endorsingRight.Status == BakingRightStatus.Missed)
-                            bakerCycle.MissedEndorsementRewards -= maxReward - successReward;
-                        else
-                            bakerCycle.UncoveredEndorsementRewards -= maxReward - successReward;
+                        bakerCycle.MissedEndorsementRewards -= maxReward - successReward;
                     }
                 }
                 #endregion
@@ -603,13 +524,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                             bakerCycle.MissedOwnBlockFees -= block.Fees;
                         else
                             bakerCycle.MissedExtraBlockFees -= block.Fees;
-                    }
-                    else if (bakingRights[0].Status == BakingRightStatus.Uncovered)
-                    {
-                        if (bakingRights[0].Priority == 0)
-                            bakerCycle.UncoveredOwnBlockFees -= block.Fees;
-                        else
-                            bakerCycle.UncoveredExtraBlockFees -= block.Fees;
                     }
                     else
                     {

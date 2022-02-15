@@ -34,14 +34,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 switch (update.RequiredString("category")[0])
                 {
                     case 'd':
-                        delegat.FrozenDeposits += change;
                         break;
                     case 'r':
-                        delegat.FrozenRewards += change;
                         delegat.StakingBalance -= change;
                         break;
                     case 'f':
-                        delegat.FrozenFees += change;
                         break;
                     default:
                         throw new Exception("unexpected freezer balance update type");
@@ -73,14 +70,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 switch (update.RequiredString("category")[0])
                 {
                     case 'd':
-                        delegat.FrozenDeposits -= change;
                         break;
                     case 'r':
-                        delegat.FrozenRewards -= change;
                         delegat.StakingBalance += change;
                         break;
                     case 'f':
-                        delegat.FrozenFees -= change;
                         break;
                     default:
                         throw new Exception("unexpected freezer balance update type");

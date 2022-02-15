@@ -59,9 +59,8 @@ namespace Tzkt.Api.Repositories
                         PublicKey = delegat.PublicKey,
                         Revealed = delegat.Revealed,
                         Balance = delegat.Balance,
-                        FrozenDeposits = delegat.FrozenDeposits,
-                        FrozenRewards = delegat.FrozenRewards,
-                        FrozenFees = delegat.FrozenFees,
+                        FrozenDeposit = delegat.FrozenDeposit,
+                        DelegatedBalance = delegat.DelegatedBalance,
                         Counter = delegat.Counter,
                         ActivationLevel = delegat.ActivationLevel,
                         ActivationTime = Time[delegat.ActivationLevel],
@@ -308,9 +307,8 @@ namespace Tzkt.Api.Repositories
                             PublicKey = row.PublicKey,
                             Revealed = row.Revealed,
                             Balance = row.Balance,
-                            FrozenDeposits = row.FrozenDeposits,
-                            FrozenRewards = row.FrozenRewards,
-                            FrozenFees = row.FrozenFees,
+                            FrozenDeposit = row.FrozenDeposit,
+                            DelegatedBalance = row.DelegatedBalance,
                             Counter = row.Counter,
                             ActivationLevel = row.ActivationLevel,
                             ActivationTime = Time[row.ActivationLevel],
@@ -445,10 +443,9 @@ namespace Tzkt.Api.Repositories
                     case "address": columns.Add(@"""Address"""); break;
                     case "publicKey": columns.Add(@"""PublicKey"""); break;
                     case "revealed": columns.Add(@"""Revealed"""); break;
-                    case "balance": columns.Add(@"""Balance"""); break;
-                    case "frozenDeposits": columns.Add(@"""FrozenDeposits"""); break;
-                    case "frozenRewards": columns.Add(@"""FrozenRewards"""); break;
-                    case "frozenFees": columns.Add(@"""FrozenFees"""); break;
+                    case "balance": columns.Add(@"""Balance"""); break; 
+                    case "frozenDeposit": columns.Add(@"""FrozenDeposit"""); break;
+                    case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                     case "counter": columns.Add(@"""Counter"""); break;
                     case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
                     case "activationTime": columns.Add(@"""ActivationLevel"""); break;
@@ -549,19 +546,15 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "balance":
                         foreach (var row in rows)
-                            result[j++][i] = row.Balance;
+                            result[j++][i] = row.Balance; 
                         break;
-                    case "frozenDeposits":
+                    case "frozenDeposit":
                         foreach (var row in rows)
-                            result[j++][i] = row.FrozenDeposits;
+                            result[j++][i] = row.FrozenDeposit;
                         break;
-                    case "frozenRewards":
+                    case "delegatedBalance":
                         foreach (var row in rows)
-                            result[j++][i] = row.FrozenRewards;
-                        break;
-                    case "frozenFees":
-                        foreach (var row in rows)
-                            result[j++][i] = row.FrozenFees;
+                            result[j++][i] = row.DelegatedBalance;
                         break;
                     case "counter":
                         foreach (var row in rows)
@@ -765,10 +758,9 @@ namespace Tzkt.Api.Repositories
                 case "address": columns.Add(@"""Address"""); break;
                 case "publicKey": columns.Add(@"""PublicKey"""); break;
                 case "revealed": columns.Add(@"""Revealed"""); break;
-                case "balance": columns.Add(@"""Balance"""); break;
-                case "frozenDeposits": columns.Add(@"""FrozenDeposits"""); break;
-                case "frozenRewards": columns.Add(@"""FrozenRewards"""); break;
-                case "frozenFees": columns.Add(@"""FrozenFees"""); break;
+                case "balance": columns.Add(@"""Balance"""); break; 
+                case "frozenDeposit": columns.Add(@"""FrozenDeposit"""); break;
+                case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                 case "counter": columns.Add(@"""Counter"""); break;
                 case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
                 case "activationTime": columns.Add(@"""ActivationLevel"""); break;
@@ -865,19 +857,15 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "balance":
                     foreach (var row in rows)
-                        result[j++] = row.Balance;
+                        result[j++] = row.Balance; 
                     break;
-                case "frozenDeposits":
+                case "frozenDeposit":
                     foreach (var row in rows)
-                        result[j++] = row.FrozenDeposits;
+                        result[j++] = row.FrozenDeposit;
                     break;
-                case "frozenRewards":
+                case "delegatedBalance":
                     foreach (var row in rows)
-                        result[j++] = row.FrozenRewards;
-                    break;
-                case "frozenFees":
-                    foreach (var row in rows)
-                        result[j++] = row.FrozenFees;
+                        result[j++] = row.DelegatedBalance;
                     break;
                 case "counter":
                     foreach (var row in rows)

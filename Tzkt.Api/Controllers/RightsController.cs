@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
@@ -33,7 +32,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="priority">Filters rights by priority</param>
-        /// <param name="status">Filters rights by status (`future`, `realized`, `uncovered`, `missed`)</param>
+        /// <param name="status">Filters rights by status (`future`, `realized`, `missed`)</param>
         /// <returns></returns>
         [HttpGet("count")]
         public Task<int> GetCount(
@@ -60,7 +59,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="priority">Filters rights by priority</param>
-        /// <param name="status">Filters rights by status (`future`, `realized`, `uncovered`, `missed`)</param>
+        /// <param name="status">Filters rights by status (`future`, `realized`, `missed`)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts rights by specified field. Supported fields: `level` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>

@@ -40,7 +40,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             blockBaker.Balance += block.Protocol.RevelationReward;
-            blockBaker.FrozenRewards += block.Protocol.RevelationReward;
 
             sender.NonceRevelationsCount++;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount++;
@@ -79,7 +78,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             blockBaker.Balance -= block.Protocol.RevelationReward;
-            blockBaker.FrozenRewards -= block.Protocol.RevelationReward;
 
             sender.NonceRevelationsCount--;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount--;

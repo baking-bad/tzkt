@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         BakerId = x.Id,
                         Rolls = rolls,
                         StakingBalance = x.StakingBalance,
-                        DelegatedBalance = x.StakingBalance - x.Balance, // nothing is frozen yet
+                        DelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
                         ExpectedBlocks = protocol.BlocksPerCycle * rollsShare, 
                         ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * rollsShare

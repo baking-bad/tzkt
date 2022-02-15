@@ -148,8 +148,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             await Spend(sender, origination.BakerFee);
-            if (senderDelegate != null) senderDelegate.StakingBalance -= origination.BakerFee;
-            blockBaker.FrozenFees += origination.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance -= origination.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance -= origination.BakerFee;
+            }
             blockBaker.Balance += origination.BakerFee;
             blockBaker.StakingBalance += origination.BakerFee;
 
@@ -177,12 +181,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                     senderDelegate.StakingBalance -= origination.Balance;
                     senderDelegate.StakingBalance -= origination.StorageFee ?? 0;
                     senderDelegate.StakingBalance -= origination.AllocationFee ?? 0;
+                    if (senderDelegate.Id != sender.Id)
+                    {
+                        senderDelegate.DelegatedBalance -= origination.Balance;
+                        senderDelegate.DelegatedBalance -= origination.StorageFee ?? 0;
+                        senderDelegate.DelegatedBalance -= origination.AllocationFee ?? 0;
+                    }
                 }
 
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount++;
                     contractDelegate.StakingBalance += contract.Balance;
+                    contractDelegate.DelegatedBalance += contract.Balance;
                 }
 
                 sender.ContractsCount++;
@@ -358,6 +369,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance -= origination.Balance;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance -= origination.Balance;
                 }
 
                 await Spend(parentSender,
@@ -368,12 +381,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     parentDelegate.StakingBalance -= origination.StorageFee ?? 0;
                     parentDelegate.StakingBalance -= origination.AllocationFee ?? 0;
+                    if (parentDelegate.Id != parentSender.Id)
+                    {
+                        parentDelegate.DelegatedBalance -= origination.StorageFee ?? 0;
+                        parentDelegate.DelegatedBalance -= origination.AllocationFee ?? 0;
+                    }
                 }
 
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount++;
                     contractDelegate.StakingBalance += contract.Balance;
+                    contractDelegate.DelegatedBalance += contract.Balance;
                 }
 
                 sender.ContractsCount++;
@@ -441,12 +460,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                     senderDelegate.StakingBalance += origination.Balance;
                     senderDelegate.StakingBalance += origination.StorageFee ?? 0;
                     senderDelegate.StakingBalance += origination.AllocationFee ?? 0;
+                    if (senderDelegate.Id != sender.Id)
+                    {
+                        senderDelegate.DelegatedBalance += origination.Balance;
+                        senderDelegate.DelegatedBalance += origination.StorageFee ?? 0;
+                        senderDelegate.DelegatedBalance += origination.AllocationFee ?? 0;
+                    }
                 }
 
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount--;
                     contractDelegate.StakingBalance -= contract.Balance;
+                    contractDelegate.DelegatedBalance -= contract.Balance;
                 }
 
                 sender.ContractsCount--;
@@ -484,8 +510,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region revert operation
             await Return(sender, origination.BakerFee);
-            if (senderDelegate != null) senderDelegate.StakingBalance += origination.BakerFee;
-            blockBaker.FrozenFees -= origination.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance += origination.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance += origination.BakerFee;
+            }
             blockBaker.Balance -= origination.BakerFee;
             blockBaker.StakingBalance -= origination.BakerFee;
 
@@ -548,6 +578,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance += origination.Balance;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance += origination.Balance;
                 }
 
                 await Return(parentSender,
@@ -558,12 +590,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     parentDelegate.StakingBalance += origination.StorageFee ?? 0;
                     parentDelegate.StakingBalance += origination.AllocationFee ?? 0;
+                    if (parentDelegate.Id != parentSender.Id)
+                    {
+                        parentDelegate.DelegatedBalance += origination.StorageFee ?? 0;
+                        parentDelegate.DelegatedBalance += origination.AllocationFee ?? 0;
+                    }
                 }
 
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount--;
                     contractDelegate.StakingBalance -= contract.Balance;
+                    contractDelegate.DelegatedBalance -= contract.Balance;
                 }
 
                 sender.ContractsCount--;

@@ -47,8 +47,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             sender.Balance += endorsement.Reward;
-            sender.FrozenRewards += endorsement.Reward;
-            sender.FrozenDeposits += endorsement.Deposit;
 
             sender.EndorsementsCount++;
 
@@ -87,8 +85,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region revert operation
             sender.Balance -= endorsement.Reward;
-            sender.FrozenRewards -= endorsement.Reward;
-            sender.FrozenDeposits -= endorsement.Deposit;
 
             sender.EndorsementsCount--;
 

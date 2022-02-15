@@ -19,6 +19,8 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 Db.TryAttach(delegat);
                 delegat.StakingBalance += Activation.Balance;
+                if (delegat.Id != Activation.Account.Id)
+                    delegat.DelegatedBalance += Activation.Balance;
             }
         }
 
@@ -33,6 +35,8 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 Db.TryAttach(delegat);
                 delegat.StakingBalance -= activation.Balance;
+                if (delegat.Id != activation.AccountId)
+                    delegat.DelegatedBalance -= activation.Balance;
             }
         }
     }

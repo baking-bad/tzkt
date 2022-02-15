@@ -48,6 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Address = PubKey.FromBase58(pubKey).Address,
                     Balance = balance,
                     StakingBalance = balance,
+                    DelegatedBalance = 0,
                     Counter = 0,
                     PublicKey = pubKey,
                     FirstLevel = 1,
@@ -111,6 +112,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     delegat.DelegatorsCount++;
                     delegat.StakingBalance += contract.Balance;
+                    delegat.DelegatedBalance += contract.Balance;
                 }
 
                 Cache.Accounts.Add(contract);

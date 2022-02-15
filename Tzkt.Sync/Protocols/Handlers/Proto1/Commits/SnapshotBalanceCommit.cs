@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"")
-                    SELECT {block.Level}, (""Balance"" - COALESCE(""FrozenRewards"", 0)), ""Id"", ""DelegateId""
+                    SELECT {block.Level}, (COALESCE(""StakingBalance"", ""Balance"") - COALESCE(""DelegatedBalance"", 0)), ""Id"", ""DelegateId""
                     FROM ""Accounts""
                     WHERE ""Staked"" = true");
 

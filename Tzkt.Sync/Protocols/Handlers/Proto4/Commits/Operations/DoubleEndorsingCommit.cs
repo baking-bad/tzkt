@@ -60,17 +60,13 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             #region apply operation
             accuser.Balance += doubleEndorsing.AccuserReward;
-            accuser.FrozenRewards += doubleEndorsing.AccuserReward;
 
             offender.Balance -= doubleEndorsing.OffenderLostDeposit;
-            offender.FrozenDeposits -= doubleEndorsing.OffenderLostDeposit;
             offender.StakingBalance -= doubleEndorsing.OffenderLostDeposit;
 
             offender.Balance -= doubleEndorsing.OffenderLostReward;
-            offender.FrozenRewards -= doubleEndorsing.OffenderLostReward;
 
             offender.Balance -= doubleEndorsing.OffenderLostFee;
-            offender.FrozenFees -= doubleEndorsing.OffenderLostFee;
             offender.StakingBalance -= doubleEndorsing.OffenderLostFee;
 
             accuser.DoubleEndorsingCount++;
@@ -105,17 +101,13 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             #region apply operation
             accuser.Balance -= doubleEndorsing.AccuserReward;
-            accuser.FrozenRewards -= doubleEndorsing.AccuserReward;
 
             offender.Balance += doubleEndorsing.OffenderLostDeposit;
-            offender.FrozenDeposits += doubleEndorsing.OffenderLostDeposit;
             offender.StakingBalance += doubleEndorsing.OffenderLostDeposit;
 
             offender.Balance += doubleEndorsing.OffenderLostReward;
-            offender.FrozenRewards += doubleEndorsing.OffenderLostReward;
 
             offender.Balance += doubleEndorsing.OffenderLostFee;
-            offender.FrozenFees += doubleEndorsing.OffenderLostFee;
             offender.StakingBalance += doubleEndorsing.OffenderLostFee;
 
             accuser.DoubleEndorsingCount--;

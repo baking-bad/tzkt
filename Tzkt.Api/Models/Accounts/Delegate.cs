@@ -42,18 +42,8 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Amount of security deposit, currently locked for baked (produced) blocks and (or) given endorsements (micro tez)
         /// </summary>
-        public long FrozenDeposits { get; set; }
+        public long FrozenDeposit { get; set; }
 
-        /// <summary>
-        /// Amount of currently frozen baking rewards (micro tez)
-        /// </summary>
-        public long FrozenRewards { get; set; }
-
-        /// <summary>
-        /// Amount of currently frozen fees paid by operations inside blocks, baked (produced) by the delegate (micro tez)
-        /// </summary>
-        public long FrozenFees { get; set; }
-        
         /// <summary>
         /// An account nonce which is used to prevent operation replay
         /// </summary>
@@ -83,6 +73,11 @@ namespace Tzkt.Api.Models
         /// Sum of delegate (baker) balance and delegated funds minus frozen rewards (micro tez)
         /// </summary>
         public long StakingBalance { get; set; }
+
+        /// <summary>
+        /// Total amount delegated to the baker, except for his own balance (micro tez)
+        /// </summary>
+        public long DelegatedBalance { get; set; }
 
         /// <summary>
         /// Number of contracts, created (originated) and/or managed by the delegate (baker)

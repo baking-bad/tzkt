@@ -72,6 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                     delegat.DelegatorsCount++;
                     delegat.StakingBalance += delegator.Balance;
+                    delegat.DelegatedBalance += delegator.Balance;
                 }
             }
 
@@ -122,6 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                     delegat.DelegatorsCount--;
                     delegat.StakingBalance -= delegator.Balance;
+                    delegat.DelegatedBalance -= delegator.Balance;
                 }
 
                 if (delegat.StakingBalance != delegat.Balance || delegat.DelegatorsCount > 0)
@@ -191,6 +193,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Revealed = user.Revealed,
                 Staked = true,
                 StakingBalance = user.Balance,
+                DelegatedBalance = 0,
                 Type = AccountType.Delegate,
                 ActiveTokensCount = user.ActiveTokensCount,
                 TokenBalancesCount = user.TokenBalancesCount,

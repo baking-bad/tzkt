@@ -28,8 +28,7 @@ namespace Tzkt.Data.Models
     {
         Future = 0,
         Realized = 1,
-        Uncovered = 2,
-        Missed = 3
+        Missed = 2
     }
 
     public static class BakingRightModel
