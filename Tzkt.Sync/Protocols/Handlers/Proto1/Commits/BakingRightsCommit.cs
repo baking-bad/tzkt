@@ -114,24 +114,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         er.Status = BakingRightStatus.Realized;
                 }
 
-                foreach (var cr in CurrentRights.Where(x => x.Status == BakingRightStatus.Missed))
-                {
-                    var baker = Cache.Accounts.GetDelegate(cr.BakerId);
-                    var available = baker.Balance - baker.FrozenDeposits - baker.FrozenRewards - baker.FrozenFees;
-                    var required = cr.Type == BakingRightType.Baking
-                        ? (block.Cycle < block.Protocol.RampUpCycles
-                            ? (block.Protocol.BlockDeposit / block.Protocol.RampUpCycles * block.Cycle)
-                            : block.Protocol.BlockDeposit)
-                        : (block.Cycle < block.Protocol.RampUpCycles 
-                            ? (cr.Slots * (block.Protocol.EndorsementDeposit / block.Protocol.RampUpCycles * block.Cycle))
-                            : (cr.Slots * block.Protocol.EndorsementDeposit));
-
-                    if (available < required)
-                        cr.Status = BakingRightStatus.Uncovered;
-                }
-
                 var realized = CurrentRights.Where(x => x.Status == BakingRightStatus.Realized);
-                var uncovered = CurrentRights.Where(x => x.Status == BakingRightStatus.Uncovered);
                 var missed = CurrentRights.Where(x => x.Status == BakingRightStatus.Missed);
 
                 sql += $@"
@@ -139,15 +122,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     SET     ""Status"" = {(int)BakingRightStatus.Realized}
                     WHERE   ""Level"" = {block.Level}
                     AND     ""Id"" = ANY(ARRAY[{string.Join(',', realized.Select(x => x.Id))}]);";
-
-                if (uncovered.Any())
-                {
-                    sql += $@"
-                        UPDATE  ""BakingRights""
-                        SET     ""Status"" = {(int)BakingRightStatus.Uncovered}
-                        WHERE   ""Level"" = {block.Level}
-                        AND     ""Id"" = ANY(ARRAY[{string.Join(',', uncovered.Select(x => x.Id))}]);";
-                }
 
                 if (missed.Any())
                 {

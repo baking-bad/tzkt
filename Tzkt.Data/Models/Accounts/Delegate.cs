@@ -9,12 +9,11 @@ namespace Tzkt.Data.Models
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }
 
-        public long FrozenDeposits { get; set; }
-        public long FrozenRewards { get; set; }
-        public long FrozenFees { get; set; }
+        public long FrozenDeposit { get; set; }
+        public long StakingBalance { get; set; }
+        public long DelegatedBalance { get; set; }
 
         public int DelegatorsCount { get; set; }
-        public long StakingBalance { get; set; }
 
         public int BlocksCount { get; set; }
         public int EndorsementsCount { get; set; }

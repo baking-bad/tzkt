@@ -112,17 +112,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 
-            var frozenBalances = remote.RequiredArray("frozen_balance_by_cycle").EnumerateArray();
-            
-            if ((frozenBalances.Any() ? frozenBalances.Sum(x => GetDeposits(x)) : 0) != delegat.FrozenDeposits)
-                throw new Exception($"Diagnostics failed: wrong frozen deposits {delegat.Address}");
-
-            if ((frozenBalances.Any() ? frozenBalances.Sum(x => x.RequiredInt64("rewards")) : 0) != delegat.FrozenRewards)
-                throw new Exception($"Diagnostics failed: wrong frozen rewards {delegat.Address}");
-
-            if ((frozenBalances.Any() ? frozenBalances.Sum(x => x.RequiredInt64("fees")) : 0) != delegat.FrozenFees)
-                throw new Exception($"Diagnostics failed: wrong frozen fees {delegat.Address}");
-
             TestDelegatorsCount(remote, delegat);
         }
 

@@ -85,22 +85,22 @@ namespace Tzkt.Api.Models
         public long MissedExtraBlockRewards { get; set; }
 
         /// <summary>
-        /// Number of blocks which were missed at priority `0` due to lack of bonds (for example, when a baker is overdelegated).
+        /// [DEPRECATED]
         /// </summary>
         public int UncoveredOwnBlocks { get; set; }
 
         /// <summary>
-        /// Rewards which were not received due to missing own blocks due to lack of bonds.
+        /// [DEPRECATED]
         /// </summary>
         public long UncoveredOwnBlockRewards { get; set; }
 
         /// <summary>
-        /// Number of blocks which were missed at priority `1+` due to lack of bonds (for example, when a baker is overdelegated).
+        /// [DEPRECATED]
         /// </summary>
         public int UncoveredExtraBlocks { get; set; }
 
         /// <summary>
-        /// Rewards which were not received due to missing extra blocks due to lack of bonds.
+        /// [DEPRECATED]
         /// </summary>
         public long UncoveredExtraBlockRewards { get; set; }
 
@@ -135,12 +135,12 @@ namespace Tzkt.Api.Models
         public long MissedEndorsementRewards { get; set; }
 
         /// <summary>
-        /// Number of endorsing slots which were missed due to lack of bonds (for example, when a baker is overdelegated).
+        /// [DEPRECATED]
         /// </summary>
         public int UncoveredEndorsements { get; set; }
 
         /// <summary>
-        /// Rewards which were not received due to missing endorsements due to lack of bonds.
+        /// [DEPRECATED]
         /// </summary>
         public long UncoveredEndorsementRewards { get; set; }
 
@@ -165,12 +165,12 @@ namespace Tzkt.Api.Models
         public long MissedExtraBlockFees { get; set; }
 
         /// <summary>
-        /// Operation fees which were not received due to missing own blocks (due to lack of bonds).
+        /// [DEPRECATED]
         /// </summary>
         public long UncoveredOwnBlockFees { get; set; }
 
         /// <summary>
-        /// Operation fees which were not received due to missing extra blocks (due to lack of bonds).
+        /// [DEPRECATED]
         /// </summary>
         public long UncoveredExtraBlockFees { get; set; }
 

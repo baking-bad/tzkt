@@ -94,8 +94,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             await Spend(sender, transaction.BakerFee);
-            if (senderDelegate != null) senderDelegate.StakingBalance -= transaction.BakerFee;
-            blockBaker.FrozenFees += transaction.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance -= transaction.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance -= transaction.BakerFee;
+            }
             blockBaker.Balance += transaction.BakerFee;
             blockBaker.StakingBalance += transaction.BakerFee;
 
@@ -122,6 +126,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     senderDelegate.StakingBalance -= transaction.Amount;
                     senderDelegate.StakingBalance -= transaction.StorageFee ?? 0;
                     senderDelegate.StakingBalance -= transaction.AllocationFee ?? 0;
+                    if (senderDelegate.Id != sender.Id)
+                    {
+                        senderDelegate.DelegatedBalance -= transaction.Amount;
+                        senderDelegate.DelegatedBalance -= transaction.StorageFee ?? 0;
+                        senderDelegate.DelegatedBalance -= transaction.AllocationFee ?? 0;
+                    }
                 }
 
                 target.Balance += transaction.Amount;
@@ -129,6 +139,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += transaction.Amount;
+                    if (targetDelegate.Id != target.Id)
+                        targetDelegate.DelegatedBalance += transaction.Amount;
                 }
 
                 await ResetGracePeriod(transaction);
@@ -245,6 +257,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     parentDelegate.StakingBalance -= transaction.StorageFee ?? 0;
                     parentDelegate.StakingBalance -= transaction.AllocationFee ?? 0;
+                    if (parentDelegate.Id != parentSender.Id)
+                    {
+                        parentDelegate.DelegatedBalance -= transaction.StorageFee ?? 0;
+                        parentDelegate.DelegatedBalance -= transaction.AllocationFee ?? 0;
+                    }
                 }
 
                 sender.Balance -= transaction.Amount;
@@ -252,6 +269,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance -= transaction.Amount;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance -= transaction.Amount;
                 }
 
                 target.Balance += transaction.Amount;
@@ -259,6 +278,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += transaction.Amount;
+                    if (targetDelegate.Id != target.Id)
+                        targetDelegate.DelegatedBalance += transaction.Amount;
                 }
 
                 await ResetGracePeriod(transaction);
@@ -320,6 +341,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance -= transaction.Amount;
+                    if (targetDelegate.Id != target.Id)
+                        targetDelegate.DelegatedBalance -= transaction.Amount;
                 }
 
                 if (target is Data.Models.Delegate delegat)
@@ -343,6 +366,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     senderDelegate.StakingBalance += transaction.Amount;
                     senderDelegate.StakingBalance += transaction.StorageFee ?? 0;
                     senderDelegate.StakingBalance += transaction.AllocationFee ?? 0;
+                    if (senderDelegate.Id != sender.Id)
+                    {
+                        senderDelegate.DelegatedBalance += transaction.Amount;
+                        senderDelegate.DelegatedBalance += transaction.StorageFee ?? 0;
+                        senderDelegate.DelegatedBalance += transaction.AllocationFee ?? 0;
+                    }
                 }
 
                 if (transaction.StorageId != null)
@@ -352,8 +381,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region revert operation
             await Return(sender, transaction.BakerFee);
-            if (senderDelegate != null) senderDelegate.StakingBalance += transaction.BakerFee;
-            blockBaker.FrozenFees -= transaction.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance += transaction.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance += transaction.BakerFee;
+            }
             blockBaker.Balance -= transaction.BakerFee;
             blockBaker.StakingBalance -= transaction.BakerFee;
 
@@ -411,6 +444,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance -= transaction.Amount;
+                    if (targetDelegate.Id != target.Id)
+                        targetDelegate.DelegatedBalance -= transaction.Amount;
                 }
 
                 if (target is Data.Models.Delegate delegat)
@@ -429,6 +464,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance += transaction.Amount;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance += transaction.Amount;
                 }
 
                 await Return(parentSender,
@@ -439,6 +476,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     parentDelegate.StakingBalance += transaction.StorageFee ?? 0;
                     parentDelegate.StakingBalance += transaction.AllocationFee ?? 0;
+                    if (parentDelegate.Id != parentSender.Id)
+                    {
+                        parentDelegate.DelegatedBalance += transaction.StorageFee ?? 0;
+                        parentDelegate.DelegatedBalance += transaction.AllocationFee ?? 0;
+                    }
                 }
 
                 if (transaction.StorageId != null)

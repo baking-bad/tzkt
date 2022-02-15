@@ -66,8 +66,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             await Spend(sender, delegation.BakerFee);
-            if (prevDelegate != null) prevDelegate.StakingBalance -= delegation.BakerFee;
-            blockBaker.FrozenFees += delegation.BakerFee;
+            if (prevDelegate != null)
+            {
+                prevDelegate.StakingBalance -= delegation.BakerFee;
+                if (prevDelegate.Id != sender.Id) 
+                    prevDelegate.DelegatedBalance -= delegation.BakerFee;
+            }
             blockBaker.Balance += delegation.BakerFee;
             blockBaker.StakingBalance += delegation.BakerFee;
 
@@ -322,8 +326,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region revert operation
             await Return(sender, delegation.BakerFee);
-            if (prevDelegate != null) prevDelegate.StakingBalance += delegation.BakerFee;
-            blockBaker.FrozenFees -= delegation.BakerFee;
+            if (prevDelegate != null)
+            {
+                prevDelegate.StakingBalance += delegation.BakerFee;
+                if (prevDelegate.Id != sender.Id)
+                    prevDelegate.DelegatedBalance += delegation.BakerFee;
+            }
             blockBaker.Balance -= delegation.BakerFee;
             blockBaker.StakingBalance -= delegation.BakerFee;
 
@@ -438,6 +446,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Revealed = user.Revealed,
                 Staked = true,
                 StakingBalance = user.Balance,
+                DelegatedBalance = 0,
                 Type = AccountType.Delegate,
                 ActiveTokensCount = user.ActiveTokensCount,
                 TokenBalancesCount = user.TokenBalancesCount,
@@ -711,6 +720,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             newDelegate.DelegatorsCount++;
             newDelegate.StakingBalance += sender.Balance;
+            newDelegate.DelegatedBalance += sender.Balance;
         }
 
         void ResetDelegate(Account sender, Data.Models.Delegate prevDelegate)
@@ -718,7 +728,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (prevDelegate != null)
             {
                 if (sender.Address != prevDelegate.Address)
+                {
                     prevDelegate.DelegatorsCount--;
+                    prevDelegate.DelegatedBalance -= sender.Balance;
+                }
                 
                 prevDelegate.StakingBalance -= sender.Balance;
             }

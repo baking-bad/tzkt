@@ -62,8 +62,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             await Spend(sender, reveal.BakerFee);
-            if (senderDelegate != null) senderDelegate.StakingBalance -= reveal.BakerFee;
-            blockBaker.FrozenFees += reveal.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance -= reveal.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance -= reveal.BakerFee;
+            }
             blockBaker.Balance += reveal.BakerFee;
             blockBaker.StakingBalance += reveal.BakerFee;
 
@@ -120,8 +124,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region revert operation
             await Return(sender, reveal.BakerFee, true);
-            if (senderDelegate != null) senderDelegate.StakingBalance += reveal.BakerFee;
-            blockBaker.FrozenFees -= reveal.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance += reveal.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance += reveal.BakerFee;
+            }
             blockBaker.Balance -= reveal.BakerFee;
             blockBaker.StakingBalance -= reveal.BakerFee;
 

@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 await Db.Database.ExecuteSqlRawAsync($@"
                     {delete}
                     INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"")
-                    SELECT {block.Level}, (""Balance"" - COALESCE(""FrozenRewards"", 0)), ""Id"", ""DelegateId""
+                    SELECT {block.Level}, (COALESCE(""StakingBalance"", ""Balance"") - COALESCE(""DelegatedBalance"", 0)), ""Id"", ""DelegateId""
                     FROM ""Accounts""
                     WHERE ""Staked"" = true;");
                 #endregion
@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                         foreach (var baker in deactivated)
                         {
                             sql += $@"
-                                ({block.Level}, {baker.Balance - baker.FrozenRewards}, {baker.Id}, NULL),";
+                                ({block.Level}, {baker.StakingBalance - baker.DelegatedBalance}, {baker.Id}, NULL),";
 
                             foreach (var delegator in baker.DelegatedAccounts)
                                 sql += $@"

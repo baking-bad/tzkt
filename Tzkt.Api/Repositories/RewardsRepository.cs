@@ -92,14 +92,6 @@ namespace Tzkt.Api.Repositories
                 RevelationLostRewards = row.RevelationLostRewards,
                 RevelationRewards = row.RevelationRewards,
                 StakingBalance = row.StakingBalance,
-                UncoveredEndorsementRewards = row.UncoveredEndorsementRewards,
-                UncoveredEndorsements = row.UncoveredEndorsements,
-                UncoveredExtraBlockFees = row.UncoveredExtraBlockFees,
-                UncoveredExtraBlockRewards = row.UncoveredExtraBlockRewards,
-                UncoveredExtraBlocks = row.UncoveredExtraBlocks,
-                UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
-                UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
                 Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             };
         }
@@ -166,14 +158,6 @@ namespace Tzkt.Api.Repositories
                 RevelationLostRewards = row.RevelationLostRewards,
                 RevelationRewards = row.RevelationRewards,
                 StakingBalance = row.StakingBalance,
-                UncoveredEndorsementRewards = row.UncoveredEndorsementRewards,
-                UncoveredEndorsements = row.UncoveredEndorsements,
-                UncoveredExtraBlockFees = row.UncoveredExtraBlockFees,
-                UncoveredExtraBlockRewards = row.UncoveredExtraBlockRewards,
-                UncoveredExtraBlocks = row.UncoveredExtraBlocks,
-                UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
-                UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
                 Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             });
         }
@@ -236,14 +220,6 @@ namespace Tzkt.Api.Repositories
                     case "revelationLostRewards": columns.Add(@"""RevelationLostRewards"""); break;
                     case "revelationRewards": columns.Add(@"""RevelationRewards"""); break;
                     case "stakingBalance": columns.Add(@"""StakingBalance"""); break;
-                    case "uncoveredEndorsementRewards": columns.Add(@"""UncoveredEndorsementRewards"""); break;
-                    case "uncoveredEndorsements": columns.Add(@"""UncoveredEndorsements"""); break;
-                    case "uncoveredExtraBlockFees": columns.Add(@"""UncoveredExtraBlockFees"""); break;
-                    case "uncoveredExtraBlockRewards": columns.Add(@"""UncoveredExtraBlockRewards"""); break;
-                    case "uncoveredExtraBlocks": columns.Add(@"""UncoveredExtraBlocks"""); break;
-                    case "uncoveredOwnBlockFees": columns.Add(@"""UncoveredOwnBlockFees"""); break;
-                    case "uncoveredOwnBlockRewards": columns.Add(@"""UncoveredOwnBlockRewards"""); break;
-                    case "uncoveredOwnBlocks": columns.Add(@"""UncoveredOwnBlocks"""); break;
                     case "quote": columns.Add(@"""Cycle"""); break;
                 }
             }
@@ -431,38 +407,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.StakingBalance;
                         break;
-                    case "uncoveredEndorsementRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredEndorsementRewards;
-                        break;
-                    case "uncoveredEndorsements":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredEndorsements;
-                        break;
-                    case "uncoveredExtraBlockFees":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredExtraBlockFees;
-                        break;
-                    case "uncoveredExtraBlockRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredExtraBlockRewards;
-                        break;
-                    case "uncoveredExtraBlocks":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredExtraBlocks;
-                        break;
-                    case "uncoveredOwnBlockFees":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredOwnBlockFees;
-                        break;
-                    case "uncoveredOwnBlockRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredOwnBlockRewards;
-                        break;
-                    case "uncoveredOwnBlocks":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredOwnBlocks;
-                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
@@ -529,14 +473,6 @@ namespace Tzkt.Api.Repositories
                 case "revelationLostRewards": columns.Add(@"""RevelationLostRewards"""); break;
                 case "revelationRewards": columns.Add(@"""RevelationRewards"""); break;
                 case "stakingBalance": columns.Add(@"""StakingBalance"""); break;
-                case "uncoveredEndorsementRewards": columns.Add(@"""UncoveredEndorsementRewards"""); break;
-                case "uncoveredEndorsements": columns.Add(@"""UncoveredEndorsements"""); break;
-                case "uncoveredExtraBlockFees": columns.Add(@"""UncoveredExtraBlockFees"""); break;
-                case "uncoveredExtraBlockRewards": columns.Add(@"""UncoveredExtraBlockRewards"""); break;
-                case "uncoveredExtraBlocks": columns.Add(@"""UncoveredExtraBlocks"""); break;
-                case "uncoveredOwnBlockFees": columns.Add(@"""UncoveredOwnBlockFees"""); break;
-                case "uncoveredOwnBlockRewards": columns.Add(@"""UncoveredOwnBlockRewards"""); break;
-                case "uncoveredOwnBlocks": columns.Add(@"""UncoveredOwnBlocks"""); break;
                 case "quote": columns.Add(@"""Cycle"""); break;
             }
 
@@ -721,38 +657,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.StakingBalance;
                     break;
-                case "uncoveredEndorsementRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredEndorsementRewards;
-                    break;
-                case "uncoveredEndorsements":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredEndorsements;
-                    break;
-                case "uncoveredExtraBlockFees":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredExtraBlockFees;
-                    break;
-                case "uncoveredExtraBlockRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredExtraBlockRewards;
-                    break;
-                case "uncoveredExtraBlocks":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredExtraBlocks;
-                    break;
-                case "uncoveredOwnBlockFees":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredOwnBlockFees;
-                    break;
-                case "uncoveredOwnBlockRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredOwnBlockRewards;
-                    break;
-                case "uncoveredOwnBlocks":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredOwnBlocks;
-                    break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
@@ -831,14 +735,6 @@ namespace Tzkt.Api.Repositories
                 RevelationLostRewards = row.RevelationLostRewards,
                 RevelationRewards = row.RevelationRewards,
                 StakingBalance = row.StakingBalance,
-                UncoveredEndorsementRewards = row.UncoveredEndorsementRewards,
-                UncoveredEndorsements = row.UncoveredEndorsements,
-                UncoveredExtraBlockFees = row.UncoveredExtraBlockFees,
-                UncoveredExtraBlockRewards = row.UncoveredExtraBlockRewards,
-                UncoveredExtraBlocks = row.UncoveredExtraBlocks,
-                UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
-                UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
                 Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             };
         }
@@ -907,14 +803,6 @@ namespace Tzkt.Api.Repositories
                 RevelationLostRewards = row.RevelationLostRewards,
                 RevelationRewards = row.RevelationRewards,
                 StakingBalance = row.StakingBalance,
-                UncoveredEndorsementRewards = row.UncoveredEndorsementRewards,
-                UncoveredEndorsements = row.UncoveredEndorsements,
-                UncoveredExtraBlockFees = row.UncoveredExtraBlockFees,
-                UncoveredExtraBlockRewards = row.UncoveredExtraBlockRewards,
-                UncoveredExtraBlocks = row.UncoveredExtraBlocks,
-                UncoveredOwnBlockFees = row.UncoveredOwnBlockFees,
-                UncoveredOwnBlockRewards = row.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = row.UncoveredOwnBlocks,
                 Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             });
         }
@@ -976,14 +864,6 @@ namespace Tzkt.Api.Repositories
                     case "revelationLostRewards": columns.Add(@"bc.""RevelationLostRewards"""); join = true; break;
                     case "revelationRewards": columns.Add(@"bc.""RevelationRewards"""); join = true; break;
                     case "stakingBalance": columns.Add(@"bc.""StakingBalance"""); join = true; break;
-                    case "uncoveredEndorsementRewards": columns.Add(@"bc.""UncoveredEndorsementRewards"""); join = true; break;
-                    case "uncoveredEndorsements": columns.Add(@"bc.""UncoveredEndorsements"""); join = true; break;
-                    case "uncoveredExtraBlockFees": columns.Add(@"bc.""UncoveredExtraBlockFees"""); join = true; break;
-                    case "uncoveredExtraBlockRewards": columns.Add(@"bc.""UncoveredExtraBlockRewards"""); join = true; break;
-                    case "uncoveredExtraBlocks": columns.Add(@"bc.""UncoveredExtraBlocks"""); join = true; break;
-                    case "uncoveredOwnBlockFees": columns.Add(@"bc.""UncoveredOwnBlockFees"""); join = true; break;
-                    case "uncoveredOwnBlockRewards": columns.Add(@"bc.""UncoveredOwnBlockRewards"""); join = true; break;
-                    case "uncoveredOwnBlocks": columns.Add(@"bc.""UncoveredOwnBlocks"""); join = true; break;
                 }
             }
 
@@ -1158,38 +1038,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.StakingBalance;
                         break;
-                    case "uncoveredEndorsementRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredEndorsementRewards;
-                        break;
-                    case "uncoveredEndorsements":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredEndorsements;
-                        break;
-                    case "uncoveredExtraBlockFees":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredExtraBlockFees;
-                        break;
-                    case "uncoveredExtraBlockRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredExtraBlockRewards;
-                        break;
-                    case "uncoveredExtraBlocks":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredExtraBlocks;
-                        break;
-                    case "uncoveredOwnBlockFees":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredOwnBlockFees;
-                        break;
-                    case "uncoveredOwnBlockRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredOwnBlockRewards;
-                        break;
-                    case "uncoveredOwnBlocks":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UncoveredOwnBlocks;
-                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
@@ -1255,14 +1103,6 @@ namespace Tzkt.Api.Repositories
                 case "revelationLostRewards": columns.Add(@"bc.""RevelationLostRewards"""); join = true; break;
                 case "revelationRewards": columns.Add(@"bc.""RevelationRewards"""); join = true; break;
                 case "stakingBalance": columns.Add(@"bc.""StakingBalance"""); join = true; break;
-                case "uncoveredEndorsementRewards": columns.Add(@"bc.""UncoveredEndorsementRewards"""); join = true; break;
-                case "uncoveredEndorsements": columns.Add(@"bc.""UncoveredEndorsements"""); join = true; break;
-                case "uncoveredExtraBlockFees": columns.Add(@"bc.""UncoveredExtraBlockFees"""); join = true; break;
-                case "uncoveredExtraBlockRewards": columns.Add(@"bc.""UncoveredExtraBlockRewards"""); join = true; break;
-                case "uncoveredExtraBlocks": columns.Add(@"bc.""UncoveredExtraBlocks"""); join = true; break;
-                case "uncoveredOwnBlockFees": columns.Add(@"bc.""UncoveredOwnBlockFees"""); join = true; break;
-                case "uncoveredOwnBlockRewards": columns.Add(@"bc.""UncoveredOwnBlockRewards"""); join = true; break;
-                case "uncoveredOwnBlocks": columns.Add(@"bc.""UncoveredOwnBlocks"""); join = true; break;
             }
 
             if (columns.Count == 0)
@@ -1434,38 +1274,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.StakingBalance;
                     break;
-                case "uncoveredEndorsementRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredEndorsementRewards;
-                    break;
-                case "uncoveredEndorsements":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredEndorsements;
-                    break;
-                case "uncoveredExtraBlockFees":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredExtraBlockFees;
-                    break;
-                case "uncoveredExtraBlockRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredExtraBlockRewards;
-                    break;
-                case "uncoveredExtraBlocks":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredExtraBlocks;
-                    break;
-                case "uncoveredOwnBlockFees":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredOwnBlockFees;
-                    break;
-                case "uncoveredOwnBlockRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredOwnBlockRewards;
-                    break;
-                case "uncoveredOwnBlocks":
-                    foreach (var row in rows)
-                        result[j++] = row.UncoveredOwnBlocks;
-                    break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
@@ -1551,14 +1359,6 @@ namespace Tzkt.Api.Repositories
                 RevelationLostRewards = rewards.RevelationLostRewards,
                 RevelationRewards = rewards.RevelationRewards,
                 StakingBalance = rewards.StakingBalance,
-                UncoveredEndorsementRewards = rewards.UncoveredEndorsementRewards,
-                UncoveredEndorsements = rewards.UncoveredEndorsements,
-                UncoveredExtraBlockFees = rewards.UncoveredExtraBlockFees,
-                UncoveredExtraBlockRewards = rewards.UncoveredExtraBlockRewards,
-                UncoveredExtraBlocks = rewards.UncoveredExtraBlocks,
-                UncoveredOwnBlockFees = rewards.UncoveredOwnBlockFees,
-                UncoveredOwnBlockRewards = rewards.UncoveredOwnBlockRewards,
-                UncoveredOwnBlocks = rewards.UncoveredOwnBlocks,
                 Delegators = delegators.Select(x => 
                 {
                     var delegator = Accounts.Get((int)x.DelegatorId);

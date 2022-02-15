@@ -47,8 +47,7 @@ namespace Tzkt.Api.Models
         /// Status of the baking or endorsing right:
         /// - `future` - the right is not realized yet;
         /// - `realized` - the right was successfully realized;
-        /// - `uncovered` - the right was not realized due to lack of bonds (for example, when a baker is overdelegated);
-        /// - `missed` - the right was not realized for no apparent reason (usually due to issues with network or node).
+        /// - `missed` - the right was not realized.
         /// </summary>
         public string Status { get; set; }
     }

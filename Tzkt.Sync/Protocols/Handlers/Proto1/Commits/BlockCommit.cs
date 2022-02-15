@@ -62,8 +62,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             baker.Balance += Block.Reward;
-            baker.FrozenRewards += Block.Reward;
-            baker.FrozenDeposits += Block.Deposit;
             baker.BlocksCount++;
 
             var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
@@ -98,8 +96,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             baker.Balance -= Block.Reward;
-            baker.FrozenRewards -= Block.Reward;
-            baker.FrozenDeposits -= Block.Deposit;
             baker.BlocksCount--;
 
             if (Block.ResetDeactivation != null)

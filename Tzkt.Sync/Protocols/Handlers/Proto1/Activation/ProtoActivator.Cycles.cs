@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var totalRolls = delegates.Sum(x => (int)(x.StakingBalance / protocol.TokensPerRoll));
             var totalStake = delegates.Sum(x => x.StakingBalance);
-            var totalDelegated = delegates.Sum(x => x.StakingBalance - x.Balance);
+            var totalDelegated = delegates.Sum(x => x.DelegatedBalance);
             var totalDelegators = delegates.Sum(x => x.DelegatorsCount);
             var totalBakers = delegates.Count();
 
