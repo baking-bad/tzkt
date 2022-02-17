@@ -303,12 +303,13 @@ namespace Tzkt.Sync.Services
         {
             using var conn = new NpgsqlConnection(ConnectionString);
             var contracts = await GetContractIds(conn, items.Select(x => x.Contract).ToHashSet().ToList());
+            if (contracts.Count == 0) return 0;
             var saved = 0;
             var options = new JsonSerializerOptions { MaxDepth = 1024 };
             options.Converters.Add(new TokenMetadataConverter());
             for (int i = 0; i < items.Count; i += 1000)
             {
-                var comma = false;
+                var any = false;
                 var sql = new StringBuilder();
                 var param = new DynamicParameters();
                 var max = Math.Min(1000, items.Count - i);
@@ -319,8 +320,8 @@ namespace Tzkt.Sync.Services
                     var item = items[i + j];
                     if (contracts.TryGetValue(item.Contract, out var contractId))
                     {
-                        if (comma) sql.AppendLine(",");
-                        else comma = true;
+                        if (any) sql.AppendLine(",");
+                        else any = true;
                         param.Add($"@p{j}", JsonSerializer.Serialize(item.Metadata, options));
                         sql.Append($"({contractId}, '{item.TokenId}', @p{j}::jsonb)");
                     }
@@ -329,7 +330,7 @@ namespace Tzkt.Sync.Services
                 sql.AppendLine(@") as v(contract, token, metadata)");
                 sql.AppendLine(@"WHERE ""ContractId"" = v.contract AND ""TokenId"" = v.token");
 
-                saved += await conn.ExecuteAsync(sql.ToString(), param);
+                if (any) saved += await conn.ExecuteAsync(sql.ToString(), param);
             }
             return saved;
         }
