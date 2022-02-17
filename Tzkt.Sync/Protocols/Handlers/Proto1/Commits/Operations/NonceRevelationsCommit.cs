@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
+using Netezos.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -22,7 +23,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Baker = block.Baker,
                 Sender = Cache.Accounts.GetDelegate(revealedBlock.BakerId),
                 RevealedBlock = revealedBlock,
-                RevealedLevel = revealedBlock.Level
+                RevealedLevel = revealedBlock.Level,
+                Nonce = Hex.Parse(content.RequiredString("nonce"))
             };
             #endregion
 

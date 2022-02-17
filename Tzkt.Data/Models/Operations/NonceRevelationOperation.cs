@@ -9,6 +9,7 @@ namespace Tzkt.Data.Models
         public int BakerId { get; set; }
         public int SenderId { get; set; }
         public int RevealedLevel { get; set; }
+        public byte[] Nonce { get; set; }
 
         #region relations
         [ForeignKey(nameof(BakerId))]
@@ -40,6 +41,12 @@ namespace Tzkt.Data.Models
                 .Property(x => x.OpHash)
                 .IsFixedLength(true)
                 .HasMaxLength(51)
+                .IsRequired();
+
+            modelBuilder.Entity<NonceRevelationOperation>()
+                .Property(x => x.Nonce)
+                .IsFixedLength(true)
+                .HasMaxLength(32)
                 .IsRequired();
             #endregion
 
