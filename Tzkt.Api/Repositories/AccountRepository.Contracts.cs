@@ -697,7 +697,7 @@ namespace Tzkt.Api.Repositories
                 FROM ""Scripts""
                 WHERE ""ContractId"" = {contract.Id}
                 AND ""Level"" <= {level}
-                ORDER BY ""Level"" DESC
+                ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT 1");
             if (row == null) return null;
 
@@ -755,7 +755,7 @@ namespace Tzkt.Api.Repositories
                 FROM ""Scripts""
                 WHERE ""ContractId"" = {contract.Id}
                 AND ""Level"" <= {level}
-                ORDER BY ""Level"" DESC
+                ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT 1");
             if (row == null) return null;
 
@@ -813,7 +813,7 @@ namespace Tzkt.Api.Repositories
                 FROM ""Scripts""
                 WHERE ""ContractId"" = {contract.Id}
                 AND ""Level"" <= {level}
-                ORDER BY ""Level"" DESC
+                ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT 1");
             if (row == null) return null;
 
@@ -1070,7 +1070,7 @@ namespace Tzkt.Api.Repositories
                 FROM     ""Storages""
                 WHERE    ""ContractId"" = {contract.Id}
                 AND      ""Level"" <= {level}
-                ORDER BY ""Id"" DESC
+                ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT    1",
                 pathParam);
 
@@ -1124,7 +1124,7 @@ namespace Tzkt.Api.Repositories
                 FROM     ""Storages""
                 WHERE    ""ContractId"" = {contract.Id}
                 AND      ""Level"" <= {level}
-                ORDER BY ""Id"" DESC
+                ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT    1");
 
             if (row == null) return null;
@@ -1173,7 +1173,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""Scripts""
                 WHERE       ""ContractId"" = {contract.Id}
                 AND         ""Level"" <= {level}
-                ORDER BY    ""Level"" DESC
+                ORDER BY    ""Level"" DESC, ""Id"" DESC
                 LIMIT       1");
 
             if (row == null) return null;
@@ -1222,7 +1222,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""Scripts""
                 WHERE       ""ContractId"" = {contract.Id}
                 AND         ""Level"" <= {level}
-                ORDER BY    ""Level"" DESC
+                ORDER BY    ""Level"" DESC, ""Id"" DESC
                 LIMIT       1");
 
             if (row == null) return null;

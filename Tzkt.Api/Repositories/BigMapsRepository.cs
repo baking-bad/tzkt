@@ -640,7 +640,7 @@ namespace Tzkt.Api.Repositories
                 FROM     ""BigMapUpdates""
                 WHERE    ""BigMapKeyId"" = {key.Id}
                 AND      ""Level"" <= {level}
-                ORDER BY ""Id"" DESC
+                ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT    1";
 
             using var db = GetConnection();
@@ -699,7 +699,7 @@ namespace Tzkt.Api.Repositories
                         ON  k.""Id"" = u.""BigMapKeyId""
                 WHERE       u.""BigMapPtr"" = {ptr}
                 AND         u.""Level"" <= {level}
-                ORDER BY    ""BigMapKeyId"", u.""Id"" DESC";
+                ORDER BY    ""BigMapKeyId"", u.""Level"" DESC, u.""Id"" DESC";
 
             var sql = new SqlBuilder($"SELECT * from ({subQuery}) as updates")
                 .Filter("Active", active)
@@ -754,7 +754,7 @@ namespace Tzkt.Api.Repositories
                         ON  k.""Id"" = u.""BigMapKeyId""
                 WHERE       u.""BigMapPtr"" = {ptr}
                 AND         u.""Level"" <= {level}
-                ORDER BY    ""BigMapKeyId"", u.""Id"" DESC";
+                ORDER BY    ""BigMapKeyId"", u.""Level"" DESC, u.""Id"" DESC";
 
             var sql = new SqlBuilder($"SELECT {string.Join(',', columns)} from ({subQuery}) as updates")
                 .Filter("Active", active)
@@ -837,7 +837,7 @@ namespace Tzkt.Api.Repositories
                         ON  k.""Id"" = u.""BigMapKeyId""
                 WHERE       u.""BigMapPtr"" = {ptr}
                 AND         u.""Level"" <= {level}
-                ORDER BY    ""BigMapKeyId"", u.""Id"" DESC";
+                ORDER BY    ""BigMapKeyId"", u.""Level"" DESC, u.""Id"" DESC";
 
             var sql = new SqlBuilder($"SELECT {string.Join(',', columns)} from ({subQuery}) as updates")
                 .Filter("Active", active)
