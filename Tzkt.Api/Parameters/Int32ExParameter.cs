@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(Int32ExBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     public class Int32ExParameter
     {
         /// <summary>

@@ -4,6 +4,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(AccountTypeBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "user,contract,delegate")]
     public class AccountTypeParameter
     {
         /// <summary>

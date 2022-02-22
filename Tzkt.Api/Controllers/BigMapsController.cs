@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NSwag.Annotations;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -122,6 +123,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter contract,
             BigMapTagsParameter tags,
             BigMapActionParameter action,
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             Int32Parameter level,
             TimestampParameter timestamp,
@@ -195,7 +197,9 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<BigMapKey>>> GetKeys(
             [Min(0)] int id,
             bool? active,
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             Int32Parameter lastLevel,
             SelectParameter select,
@@ -339,7 +343,9 @@ namespace Tzkt.Api.Controllers
             [Min(0)] int id,
             [Min(0)] int level,
             bool? active,
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             SelectParameter select,
             SortParameter sort,

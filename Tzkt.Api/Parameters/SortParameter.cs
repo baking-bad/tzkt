@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(SortBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     public class SortParameter
     {
         /// <summary>

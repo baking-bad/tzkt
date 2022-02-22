@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -262,6 +263,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
+            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter parameter,
             BoolParameter hasInternals,
             OperationStatusParameter status,

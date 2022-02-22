@@ -4,6 +4,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(BakingRightTypeBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "baking,endorsing")]
     public class BakingRightTypeParameter
     {
         /// <summary>

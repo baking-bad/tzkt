@@ -29,12 +29,14 @@ db-start:
 
 migration:
 	# Install EF: dotnet tool install --global dotnet-ef
-	cd Tzkt.Data && dotnet-ef database update -s ../Tzkt.Sync/Tzkt.Sync.csproj
+	export $$(cat .env | xargs) && cd Tzkt.Data && dotnet-ef database update -s ../Tzkt.Sync/Tzkt.Sync.csproj
 
 sync:
+	# Set up env file: cp .env.sample .env
 	export $$(cat .env | xargs) && dotnet run -p Tzkt.Sync -v normal
 
 api:
+	# Set up env file: cp .env.sample .env
 	export $$(cat .env | xargs) && dotnet run -p Tzkt.Api -v normal
 
 api-image:

@@ -5,6 +5,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(BigMapActionBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "allocate,add_key,update_key,remove_key,remove")]
     public class BigMapActionParameter
     {
         /// <summary>
