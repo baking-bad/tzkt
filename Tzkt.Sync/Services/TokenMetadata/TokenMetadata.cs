@@ -226,7 +226,7 @@ namespace Tzkt.Sync.Services
         {
             using var client = new HttpClient();
             using var res = (await client.PostAsync(Config.DipDupUrl, new StringContent(
-                $"{{\"query\":\"query{{token_metadata(where:{{network:{{_eq:\\\"{Config.Network}\\\"}},"
+                $"{{\"query\":\"query{{token_metadata(where:{{network:{{_eq:\\\"{Config.Network}\\\"}},metadata:{{_is_null:false}},"
                 + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}}}},order_by:{{update_id:asc}},limit:{Config.BatchSize})"
                 + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
                 Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
@@ -257,7 +257,7 @@ namespace Tzkt.Sync.Services
             while (true)
             {
                 using var res = (await client.PostAsync(Config.DipDupUrl, new StringContent(
-                    $"{{\"query\":\"query{{token_metadata(where:{{network:{{_eq:\\\"{Config.Network}\\\"}},"
+                    $"{{\"query\":\"query{{token_metadata(where:{{network:{{_eq:\\\"{Config.Network}\\\"}},metadata:{{_is_null:false}},"
                     + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}},contract:{{_in:[{contracts}]}},token_id:{{_in:[{tokenIds}]}}}},"
                     + $"order_by:{{update_id:asc}},limit:{Config.BatchSize}){{update_id contract token_id metadata}}}}\",\"variables\":null}}",
                     Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
