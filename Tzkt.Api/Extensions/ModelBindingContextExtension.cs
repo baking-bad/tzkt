@@ -908,7 +908,7 @@ namespace Tzkt.Api
                 {
                     try
                     {
-                        if (Regex.IsMatch(valueObject.FirstValue, @"^[\w,]+$"))
+                        if (Regex.IsMatch(valueObject.FirstValue, @"^[\w\s,]+$"))
                         {
                             result = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => NormalizeJson(x)).ToArray();
                         }
