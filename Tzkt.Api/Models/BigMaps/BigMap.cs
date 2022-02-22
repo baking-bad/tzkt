@@ -22,7 +22,7 @@ namespace Tzkt.Api.Models
         public string Path { get; set; }
 
         /// <summary>
-        /// List of tags (`token_metadata` - tzip-12, `metadata` - tzip-16, `null` - no tags)
+        /// List of tags ( `metadata`, `token_metadata`,`ledger`, or `null` if there are no tags)
         /// </summary>
         public List<string> Tags => BigMapTags.ToList(_Tags);
 

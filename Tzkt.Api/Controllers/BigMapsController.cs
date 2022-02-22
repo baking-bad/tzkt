@@ -44,7 +44,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="contract">Filters bigmaps by smart contract address.</param>
         /// <param name="path">Filters bigmaps by path in the contract storage.</param>
-        /// <param name="tags">Filters bigmaps by tags: `token_metadata` - tzip-12, `metadata` - tzip-16.</param>
+        /// <param name="tags">Filters bigmaps by tags: `metadata`, `token_metadata`, `ledger`.</param>
         /// <param name="active">Filters bigmaps by status: `true` - active, `false` - removed.</param>
         /// <param name="lastLevel">Filters bigmaps by the last update level.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -105,7 +105,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="bigmap">Filters updates by bigmap ptr</param>
         /// <param name="path">Filters updates by bigmap path</param>
         /// <param name="contract">Filters updates by bigmap contract</param>
-        /// <param name="tags">Filters updates by bigmap tags: `token_metadata` - tzip-12, `metadata` - tzip-16</param>
+        /// <param name="tags">Filters updates by bigmap tags: `metadata`, `token_metadata`, `ledger`</param>
         /// <param name="action">Filters updates by action</param>
         /// <param name="value">Filters updates by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
         /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>

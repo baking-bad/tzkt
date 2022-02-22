@@ -563,7 +563,7 @@ namespace Tzkt.Api.Controllers
         /// Returns all active bigmaps allocated in the contract storage.
         /// </remarks>
         /// <param name="address">Contract address</param>
-        /// <param name="tags">Filters bigmaps tags (`token_metadata` - tzip-12, `metadata` - tzip-16).</param>
+        /// <param name="tags">Filters bigmaps tags (`metadata`, `token_metadata`, `ledger`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object.
         /// If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts bigmaps by specified field. Supported fields: `id` (default), `firstLevel`, `lastLevel`, `totalKeys`, `activeKeys`, `updates`.</param>

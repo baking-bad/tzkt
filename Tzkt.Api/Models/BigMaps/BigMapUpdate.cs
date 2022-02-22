@@ -53,12 +53,14 @@ namespace Tzkt.Api.Models
 
         public IEnumerable<BigMapTag> EnumerateTags()
         {
-            if (_Tags != BigMapTag.None)
+            if (_Tags >= BigMapTag.Metadata)
             {
-                if (_Tags.HasFlag(BigMapTag.Metadata))
+                if ((_Tags & BigMapTag.Metadata) != 0)
                     yield return BigMapTag.Metadata;
-                if (_Tags.HasFlag(BigMapTag.TokenMetadata))
+                else if ((_Tags & BigMapTag.TokenMetadata) != 0)
                     yield return BigMapTag.TokenMetadata;
+                else if ((_Tags & BigMapTag.Ledger) != 0)
+                    yield return BigMapTag.Ledger;
             }
         }
     }
