@@ -107,7 +107,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.DoubleEndorsingOperation>());
 
                 var revelations = TypesSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
-                    ? Repo.GetNonceRevelations(null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetNonceRevelations(null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.NonceRevelationOperation>());
 
                 var delegations = TypesSubs.TryGetValue(Operations.Delegations, out var delegationsSub)

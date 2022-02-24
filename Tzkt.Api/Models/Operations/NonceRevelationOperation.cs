@@ -58,6 +58,16 @@ namespace Tzkt.Api.Models
         /// </summary>
         public int RevealedLevel { get; set; }
 
+        /// <summary>
+        /// Cycle for which seed nonce was revealed
+        /// </summary>
+        public int RevealedCycle { get; set; }
+
+        /// <summary>
+        /// Seed nonce hex
+        /// </summary>
+        public string Nonce { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation

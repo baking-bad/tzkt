@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
+using Netezos.Encoding;
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Repositories
@@ -24,7 +25,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", b.""Hash""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", o.""RevealedCycle"", o.""Nonce"", b.""Hash""
                 FROM        ""NonceRevelationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -45,6 +46,8 @@ namespace Tzkt.Api.Repositories
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel,
+                RevealedCycle = row.RevealedCycle,
+                Nonce = Hex.Convert(row.Nonce),
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -52,7 +55,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel""
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel"", o.""RevealedCycle"", o.""Nonce""
                 FROM      ""NonceRevelationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -71,6 +74,8 @@ namespace Tzkt.Api.Repositories
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel,
+                RevealedCycle = row.RevealedCycle,
+                Nonce = Hex.Convert(row.Nonce),
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -80,6 +85,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
+            Int32Parameter revealedCycle,
             DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
@@ -91,6 +97,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""RevealedCycle""", revealedCycle)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -113,6 +120,8 @@ namespace Tzkt.Api.Repositories
                 BakerRewards = 125_000,
                 Sender = Accounts.GetAlias(row.SenderId),
                 RevealedLevel = row.RevealedLevel,
+                RevealedCycle = row.RevealedCycle,
+                Nonce = Hex.Convert(row.Nonce),
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -122,6 +131,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
+            Int32Parameter revealedCycle,
             DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
@@ -143,6 +153,8 @@ namespace Tzkt.Api.Repositories
                     case "baker": columns.Add(@"o.""BakerId"""); break;
                     case "sender": columns.Add(@"o.""SenderId"""); break;
                     case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
+                    case "revealedCycle": columns.Add(@"o.""RevealedCycle"""); break;
+                    case "nonce": columns.Add(@"o.""Nonce"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -159,6 +171,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""RevealedCycle""", revealedCycle)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -210,6 +223,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.RevealedLevel;
                         break;
+                    case "revealedCycle":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RevealedCycle;
+                        break;
+                    case "nonce":
+                        foreach (var row in rows)
+                            result[j++][i] = Hex.Convert(row.Nonce);
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -225,6 +246,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
+            Int32Parameter revealedCycle,
             DateTimeParameter timestamp,
             SortParameter sort,
             OffsetParameter offset,
@@ -244,6 +266,8 @@ namespace Tzkt.Api.Repositories
                 case "baker": columns.Add(@"o.""BakerId"""); break;
                 case "sender": columns.Add(@"o.""SenderId"""); break;
                 case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
+                case "revealedCycle": columns.Add(@"o.""RevealedCycle"""); break;
+                case "nonce": columns.Add(@"o.""Nonce"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -259,6 +283,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
+                .FilterA(@"o.""RevealedCycle""", revealedCycle)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -307,6 +332,14 @@ namespace Tzkt.Api.Repositories
                 case "revealedLevel":
                     foreach (var row in rows)
                         result[j++] = row.RevealedLevel;
+                    break;
+                case "revealedCycle":
+                    foreach (var row in rows)
+                        result[j++] = row.RevealedCycle;
+                    break;
+                case "nonce":
+                    foreach (var row in rows)
+                        result[j++] = Hex.Convert(row.Nonce);
                     break;
                 case "quote":
                     foreach (var row in rows)

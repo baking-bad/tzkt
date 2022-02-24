@@ -24,6 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Sender = Cache.Accounts.GetDelegate(revealedBlock.BakerId),
                 RevealedBlock = revealedBlock,
                 RevealedLevel = revealedBlock.Level,
+                RevealedCycle = revealedBlock.Cycle,
                 Nonce = Hex.Parse(content.RequiredString("nonce"))
             };
             #endregion

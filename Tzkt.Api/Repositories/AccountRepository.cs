@@ -1192,7 +1192,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Value = delegat.Id }, baker, sender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Value = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)

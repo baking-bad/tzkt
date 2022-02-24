@@ -799,6 +799,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="baker">Filters nonce revelation operations by baker. Allowed fields for `.eqx` mode: `sender`.</param>
         /// <param name="sender">Filters nonce revelation operations by sender. Allowed fields for `.eqx` mode: `baker`.</param>
         /// <param name="level">Filters nonce revelation operations by level.</param>
+        /// <param name="revealedCycle">Filters by cycle for which the nonce was revealed.</param>
         /// <param name="timestamp">Filters nonce revelation operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts nonce revelation operations by specified field. Supported fields: `id` (default), `level`, `revealedLevel`.</param>
@@ -814,6 +815,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter baker,
             AccountParameter sender,
             Int32Parameter level,
+            Int32Parameter revealedCycle,
             DateTimeParameter timestamp,
             SelectParameter select,
             SortParameter sort,
@@ -860,25 +862,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, quote));
+                return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetNonceRevelations(anyof, baker, sender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

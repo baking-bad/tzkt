@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
+using Netezos.Encoding;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
@@ -46,7 +47,7 @@ namespace Tzkt.Api.Repositories
                 StartTime = Times[row.FirstLevel],
                 LastLevel = row.LastLevel,
                 EndTime = Times[row.LastLevel],
-                RandomSeed = row.Seed,
+                RandomSeed = Hex.Convert(row.Seed),
                 SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
@@ -79,7 +80,7 @@ namespace Tzkt.Api.Repositories
                 StartTime = Times[row.FirstLevel],
                 LastLevel = row.LastLevel,
                 EndTime = Times[row.LastLevel],
-                RandomSeed = row.Seed,
+                RandomSeed = Hex.Convert(row.Seed),
                 SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
@@ -161,7 +162,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "randomSeed":
                         foreach (var row in rows)
-                            result[j++][i] = row.Seed;
+                            result[j++][i] = Hex.Convert(row.Seed);
                         break;
                     case "snapshotIndex":
                         foreach (var row in rows)
@@ -266,7 +267,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "randomSeed":
                     foreach (var row in rows)
-                        result[j++] = row.Seed;
+                        result[j++] = Hex.Convert(row.Seed);
                     break;
                 case "snapshotIndex":
                     foreach (var row in rows)
