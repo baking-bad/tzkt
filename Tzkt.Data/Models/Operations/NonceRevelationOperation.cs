@@ -9,6 +9,7 @@ namespace Tzkt.Data.Models
         public int BakerId { get; set; }
         public int SenderId { get; set; }
         public int RevealedLevel { get; set; }
+        public int RevealedCycle { get; set; }
         public byte[] Nonce { get; set; }
 
         #region relations
@@ -62,6 +63,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasIndex(x => x.SenderId);
+
+            modelBuilder.Entity<NonceRevelationOperation>()
+                .HasIndex(x => x.RevealedCycle);
             #endregion
 
             #region relations

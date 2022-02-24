@@ -66,5 +66,39 @@ namespace Tzkt.Sync
 
             return true;
         }
+
+        public static int ReadInt32(this byte[] bytes, int pos)
+        {
+            var res = 0;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            return res;
+        }
+
+        public static long ReadInt64(this byte[] bytes, int pos)
+        {
+            var res = 0L;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            res <<= 8;
+            res += bytes[pos++];
+            return res;
+        }
     }
 }

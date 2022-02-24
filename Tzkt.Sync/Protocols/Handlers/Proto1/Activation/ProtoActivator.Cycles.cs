@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        public async Task BootstrapCycles(Protocol protocol, List<Account> accounts)
+        public void BootstrapCycles(Protocol protocol, List<Account> accounts)
         {
             var delegates = accounts
                 .Where(x => x.Type == AccountType.Delegate)
@@ -20,9 +20,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             var totalDelegators = delegates.Sum(x => x.DelegatorsCount);
             var totalBakers = delegates.Count();
 
+            var seeds = Seed.GetInitialSeeds(protocol.PreservedCycles + 1);
             for (int index = 0; index <= protocol.PreservedCycles; index++)
             {
-                var rawCycle = await Proto.Rpc.GetCycleAsync(1, index);
                 Db.Cycles.Add(new Cycle
                 {
                     Index = index,
@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     TotalDelegated = totalDelegated,
                     TotalDelegators = totalDelegators,
                     TotalBakers = totalBakers,
-                    Seed = rawCycle.RequiredString("random_seed")
+                    Seed = seeds[index]
                 });
             }
 

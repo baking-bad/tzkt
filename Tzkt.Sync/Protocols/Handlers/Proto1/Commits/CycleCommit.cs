@@ -19,17 +19,32 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+                
+                var lastSeed = await Db.Cycles
+                    .AsNoTracking()
+                    .Where(x => x.Index == futureCycle - 1)
+                    .Select(x => x.Seed)
+                    .FirstOrDefaultAsync()
+                    ?? throw new Exception($"Seed for cycle {futureCycle - 1} is missed");
+                
+                var nonces = block.Cycle < 2 ? Enumerable.Empty<byte[]>() : await Db.NonceRevelationOps
+                    .AsNoTracking()
+                    .Where(x => x.RevealedCycle == block.Cycle - 2)
+                    .OrderByDescending(x => x.RevealedLevel)
+                    .Select(x => x.Nonce)
+                    .ToListAsync();
 
-                var rawCycle = await Proto.Rpc.GetCycleAsync(block.Level, futureCycle);
+                var futureSeed = Seed.GetNextSeed(lastSeed, nonces);
+                var snapshotIndex = Seed.GetSnapshotIndex(futureSeed);
 
-                var snapshotIndex = rawCycle.RequiredInt32("roll_snapshot");
-                var snapshotLevel = 1;
-                if (block.Cycle >= 2)
-                {
-                    var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
-                    snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
-                }
-                var snapshotBalances = await Db.SnapshotBalances.AsNoTracking().Where(x => x.Level == snapshotLevel).ToListAsync();
+                var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
+                var snapshotLevel = block.Cycle < 2 ? 1 : snapshotProto
+                    .GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
+                
+                var snapshotBalances = await Db.SnapshotBalances
+                    .AsNoTracking()
+                    .Where(x => x.Level == snapshotLevel)
+                    .ToListAsync();
 
                 Snapshots = new Dictionary<int, DelegateSnapshot>(512);
                 foreach (var s in snapshotBalances)
@@ -65,12 +80,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     LastLevel = block.Protocol.GetCycleEnd(futureCycle),
                     SnapshotIndex = snapshotIndex,
                     SnapshotLevel = snapshotLevel,
-                    TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / block.Protocol.TokensPerRoll)),
+                    TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / snapshotProto.TokensPerRoll)),
                     TotalStaking = Snapshots.Values.Sum(x => x.StakingBalance),
                     TotalDelegated = Snapshots.Values.Sum(x => x.DelegatedBalance),
                     TotalDelegators = Snapshots.Values.Sum(x => x.DelegatorsCount),
                     TotalBakers = Snapshots.Count,
-                    Seed = rawCycle.RequiredString("random_seed")
+                    Seed = futureSeed
                 };
 
                 Db.Cycles.Add(FutureCycle);

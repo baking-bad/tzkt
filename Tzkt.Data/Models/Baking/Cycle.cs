@@ -16,7 +16,7 @@ namespace Tzkt.Data.Models
         public int TotalDelegators { get; set; }
         public int TotalBakers { get; set; }
 
-        public string Seed { get; set; }
+        public byte[] Seed { get; set; }
     }
 
     public static class CycleModel
@@ -35,7 +35,7 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Cycle>()
                 .Property(x => x.Seed)
                 .IsFixedLength(true)
-                .HasMaxLength(64)
+                .HasMaxLength(32)
                 .IsRequired();
             #endregion
 
