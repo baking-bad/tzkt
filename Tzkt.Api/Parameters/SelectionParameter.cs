@@ -7,6 +7,7 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(SelectionBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     public class SelectionParameter
     {
         /// <summary>
