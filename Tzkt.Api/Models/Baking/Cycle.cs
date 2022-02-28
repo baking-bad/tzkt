@@ -50,7 +50,7 @@ namespace Tzkt.Api.Models
         public int TotalBakers { get; set; }
 
         /// <summary>
-        /// Total number of rolls involved in baking rights distribution
+        /// [DEPRECATED]
         /// </summary>
         public int TotalRolls { get; set; }
 
