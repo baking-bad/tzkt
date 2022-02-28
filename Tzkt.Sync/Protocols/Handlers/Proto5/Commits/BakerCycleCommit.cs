@@ -40,12 +40,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                     if (br.Priority == 0)
                     {
                         bakerCycle.FutureBlocks--;
-                        bakerCycle.FutureBlockDeposits -= GetBlockDeposit(block.Protocol, block.Cycle);
                     }
 
                     if (br.Status == BakingRightStatus.Realized)
                     {
-                        bakerCycle.BlockDeposits += GetBlockDeposit(block.Protocol, block.Cycle);
+                        bakerCycle.Deposits += GetBlockDeposit(block.Protocol, block.Cycle);
                         bakerCycle.Blocks++;
                     }
                     else if (br.Status == BakingRightStatus.Missed)
@@ -61,12 +60,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 if (endorsingRight != null)
                 {
                     bakerCycle.FutureEndorsements -= (int)endorsingRight.Slots;
-                    bakerCycle.FutureEndorsementDeposits -= GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
                     {
                         bakerCycle.Endorsements += (int)endorsingRight.Slots;
-                        bakerCycle.EndorsementDeposits += GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
+                        bakerCycle.Deposits += GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                     {
@@ -247,7 +245,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                         throw new Exception("Nonexistent baker cycle");
 
                     bakerCycle.FutureBlocks++;
-                    bakerCycle.FutureBlockDeposits += GetBlockDeposit(block.Protocol, futureCycle.Index);
                     bakerCycle.FutureBlockRewards += GetFutureBlockReward(block.Protocol, futureCycle.Index);
                 }
                 #endregion
@@ -263,7 +260,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                     var slots = er.RequiredArray("slots").Count();
 
                     bakerCycle.FutureEndorsements += slots;
-                    bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(block.Protocol, futureCycle.Index, slots);
                     bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(block.Protocol, futureCycle.Index, slots);
                 }
                 #endregion
@@ -321,7 +317,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                     }
 
                     bakerCycle.FutureEndorsements += (int)er.Slots;
-                    bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(block.Protocol, futureCycle.Index, (int)er.Slots);
                     bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(block.Protocol, futureCycle.Index, (int)er.Slots);
                 }
                 #endregion
@@ -364,12 +359,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                     if (br.Priority == 0)
                     {
                         bakerCycle.FutureBlocks++;
-                        bakerCycle.FutureBlockDeposits += GetBlockDeposit(block.Protocol, block.Cycle);
                     }
 
                     if (br.Status == BakingRightStatus.Realized)
                     {
-                        bakerCycle.BlockDeposits -= GetBlockDeposit(block.Protocol, block.Cycle);
+                        bakerCycle.Deposits -= GetBlockDeposit(block.Protocol, block.Cycle);
                         bakerCycle.Blocks--;
                     }
                     else if (br.Status == BakingRightStatus.Missed)
@@ -385,12 +379,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 if (endorsingRight != null)
                 {
                     bakerCycle.FutureEndorsements += (int)endorsingRight.Slots;
-                    bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
                     {
                         bakerCycle.Endorsements -= (int)endorsingRight.Slots;
-                        bakerCycle.EndorsementDeposits -= GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
+                        bakerCycle.Deposits -= GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                     {

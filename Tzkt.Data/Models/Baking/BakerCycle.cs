@@ -45,11 +45,7 @@ namespace Tzkt.Data.Models
         #endregion
 
         #region deposits
-        public long FutureBlockDeposits { get; set; }
-        public long BlockDeposits { get; set; }
-
-        public long FutureEndorsementDeposits { get; set; }
-        public long EndorsementDeposits { get; set; }
+        public long Deposits { get; set; }
         #endregion
 
         #region expected

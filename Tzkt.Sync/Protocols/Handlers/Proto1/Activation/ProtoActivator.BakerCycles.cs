@@ -50,7 +50,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                         throw new Exception("Unknown baking right recipient");
 
                     bakerCycle.FutureBlocks++;
-                    bakerCycle.FutureBlockDeposits += GetBlockDeposit(protocol, cycle);
                     bakerCycle.FutureBlockRewards += GetFutureBlockReward(protocol, cycle);
                 }
                 #endregion
@@ -65,7 +64,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var slots = er.RequiredArray("slots").Count();
 
                     bakerCycle.FutureEndorsements += slots;
-                    bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(protocol, cycle, slots);
                     bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle, slots);
                 }
                 #endregion
@@ -82,7 +80,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                         var slots = er.RequiredArray("slots").Count();
 
                         bakerCycle.FutureEndorsements += slots;
-                        bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(protocol, cycle, slots);
                         bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle, slots);
                     }
                 }
