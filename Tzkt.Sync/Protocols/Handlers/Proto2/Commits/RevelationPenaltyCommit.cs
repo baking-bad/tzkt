@@ -15,13 +15,13 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             #region init
-            List<RevelationPenaltyOperation> revelationPanlties = null;
+            List<RevelationPenaltyOperation> revelationPenalties = null;
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                if (HasPanltiesUpdates(block, rawBlock))
+                if (HasPenaltiesUpdates(block, rawBlock))
                 {
-                    revelationPanlties = new List<RevelationPenaltyOperation>();
+                    revelationPenalties = new List<RevelationPenaltyOperation>();
 
                     var missedBlocks = await Db.Blocks
                         .Include(x => x.Baker)
@@ -39,22 +39,20 @@ namespace Tzkt.Sync.Protocols.Proto2
                         .Where(x => x.Cycle == block.Cycle - 1 && penalizedBakers.Contains(x.BakerId))
                         .ToListAsync();
 
-                    var freezerRewards = bakerCycles.ToDictionary(k => k.BakerId, v =>
-                        v.OwnBlockRewards + v.ExtraBlockRewards + v.EndorsementRewards
-                        + v.DoubleBakingRewards + v.DoubleEndorsingRewards + v.RevelationRewards
-                        - v.DoubleBakingLostRewards - v.DoubleEndorsingLostRewards - v.RevelationLostRewards);
-
-                    var freezerFees = bakerCycles.ToDictionary(k => k.BakerId, v => 
-                        v.OwnBlockFees + v.ExtraBlockFees
-                        - v.DoubleBakingLostFees - v.DoubleEndorsingLostFees - v.RevelationLostFees);
+                    var slashedBakers = bakerCycles
+                        .Where(x => x.EndorsementDeposits > 0 || x.BlockDeposits > 0)
+                        .Where(x => (x.BlockDeposits + x.EndorsementDeposits +
+                            x.BlockRewards + x.EndorsementRewards + x.BlockFees +
+                            x.DoubleBakingRewards + x.DoubleEndorsingRewards + x.RevelationRewards -
+                            x.DoubleBakingLosses - x.DoubleEndorsingLosses - x.RevelationLosses) == 0)
+                        .Select(x => x.BakerId)
+                        .ToHashSet();
 
                     foreach (var missedBlock in missedBlocks)
                     {
-                        var fr = freezerRewards[(int)missedBlock.BakerId];
-                        var ff = freezerFees[(int)missedBlock.BakerId];
-
                         Cache.Accounts.Add(missedBlock.Baker);
-                        revelationPanlties.Add(new RevelationPenaltyOperation
+                        var slashed = slashedBakers.Contains((int)missedBlock.BakerId);
+                        revelationPenalties.Add(new RevelationPenaltyOperation
                         {
                             Id = Cache.AppState.NextOperationId(),
                             Baker = missedBlock.Baker,
@@ -62,20 +60,16 @@ namespace Tzkt.Sync.Protocols.Proto2
                             Level = block.Level,
                             Timestamp = block.Timestamp,
                             MissedLevel = missedBlock.Level,
-                            LostReward = Math.Min(missedBlock.Reward, fr),
-                            LostFees = Math.Min(missedBlock.Fees, ff)
+                            Loss = slashed ? 0 : missedBlock.Reward + missedBlock.Fees
                         });
-
-                        freezerRewards[(int)missedBlock.BakerId] = Math.Max(fr - missedBlock.Reward, 0);
-                        freezerFees[(int)missedBlock.BakerId] = Math.Max(ff - missedBlock.Fees, 0);
                     }
                 }
             }
             #endregion
 
-            if (revelationPanlties == null) return;
+            if (revelationPenalties == null) return;
 
-            foreach (var penalty in revelationPanlties)
+            foreach (var penalty in revelationPenalties)
             {
                 #region entities
                 //var block = penalty.Block;
@@ -84,10 +78,10 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Db.TryAttach(delegat);
                 #endregion
 
-                delegat.Balance -= penalty.LostReward;
-                delegat.Balance -= penalty.LostFees;
-
-                delegat.StakingBalance -= penalty.LostFees;
+                delegat.Balance -= penalty.Loss;
+                delegat.StakingBalance -= penalty.Loss > 0
+                    ? (await Cache.Blocks.GetAsync(penalty.MissedLevel)).Fees
+                    : 0;
 
                 delegat.RevelationPenaltiesCount++;
                 block.Operations |= Operations.RevelationPenalty;
@@ -96,7 +90,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
         }
 
-        public virtual Task Revert(Block block)
+        public virtual async Task Revert(Block block)
         {
             #region init
             List<RevelationPenaltyOperation> revelationPanlties = null;
@@ -112,7 +106,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
             #endregion
 
-            if (revelationPanlties == null) return Task.CompletedTask;
+            if (revelationPanlties == null) return;
 
             foreach (var penalty in revelationPanlties)
             {
@@ -123,22 +117,20 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Db.TryAttach(delegat);
                 #endregion
 
-                delegat.Balance += penalty.LostReward;
-                delegat.Balance += penalty.LostFees;
-
-                delegat.StakingBalance += penalty.LostFees;
+                delegat.Balance += penalty.Loss;
+                delegat.StakingBalance += penalty.Loss > 0
+                    ? (await Cache.Blocks.GetAsync(penalty.MissedLevel)).Fees
+                    : 0;
 
                 delegat.RevelationPenaltiesCount--;
 
                 Db.RevelationPenaltyOps.Remove(penalty);
             }
-
-            return Task.CompletedTask;
         }
 
         protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
 
-        protected virtual bool HasPanltiesUpdates(Block block, JsonElement rawBlock)
+        protected virtual bool HasPenaltiesUpdates(Block block, JsonElement rawBlock)
         {
             return rawBlock
                 .Required("metadata")

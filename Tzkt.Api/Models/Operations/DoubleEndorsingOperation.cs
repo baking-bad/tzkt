@@ -52,6 +52,11 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Reward of the baker (delegate), produced the block, in which the operation was included
         /// </summary>
+        public long AccuserReward { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
         public long AccuserRewards { get; set; }
 
         /// <summary>
@@ -60,17 +65,22 @@ namespace Tzkt.Api.Models
         public Alias Offender { get; set; }
 
         /// <summary>
-        /// Amount of frozen security deposit, lost by accused baker (delegate)
+        /// Amount of frozen security deposit, rewards, and fees lost by accused baker (delegate)
+        /// </summary>
+        public long OffenderLoss { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public long OffenderLostDeposits { get; set; }
 
         /// <summary>
-        /// Amount of frozen rewards, lost by accused baker (delegate)
+        /// [DEPRECATED]
         /// </summary>
         public long OffenderLostRewards { get; set; }
 
         /// <summary>
-        /// Amount of frozen fees, lost by accused baker (delegate)
+        /// [DEPRECATED]
         /// </summary>
         public long OffenderLostFees { get; set; }
 

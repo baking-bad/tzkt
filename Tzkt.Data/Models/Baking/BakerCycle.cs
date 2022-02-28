@@ -15,10 +15,8 @@ namespace Tzkt.Data.Models
 
         #region rights
         public int FutureBlocks { get; set; }
-        public int OwnBlocks { get; set; }
-        public int ExtraBlocks { get; set; }
-        public int MissedOwnBlocks { get; set; }
-        public int MissedExtraBlocks { get; set; }
+        public int Blocks { get; set; }
+        public int MissedBlocks { get; set; }
 
         public int FutureEndorsements { get; set; }
         public int Endorsements { get; set; }
@@ -27,33 +25,24 @@ namespace Tzkt.Data.Models
 
         #region rewards
         public long FutureBlockRewards { get; set; }
-        public long OwnBlockRewards { get; set; }
-        public long ExtraBlockRewards { get; set; }
-        public long MissedOwnBlockRewards { get; set; }
-        public long MissedExtraBlockRewards { get; set; }
+        public long BlockRewards { get; set; }
+        public long MissedBlockRewards { get; set; }
 
         public long FutureEndorsementRewards { get; set; }
         public long EndorsementRewards { get; set; }
         public long MissedEndorsementRewards { get; set; }
 
-        public long OwnBlockFees { get; set; }
-        public long ExtraBlockFees { get; set; }
-        public long MissedOwnBlockFees { get; set; }
-        public long MissedExtraBlockFees { get; set; }
+        public long BlockFees { get; set; }
+        public long MissedBlockFees { get; set; }
 
         public long DoubleBakingRewards { get; set; }
-        public long DoubleBakingLostDeposits { get; set; }
-        public long DoubleBakingLostRewards { get; set; }
-        public long DoubleBakingLostFees { get; set; }
+        public long DoubleBakingLosses { get; set; }
 
         public long DoubleEndorsingRewards { get; set; }
-        public long DoubleEndorsingLostDeposits { get; set; }
-        public long DoubleEndorsingLostRewards { get; set; }
-        public long DoubleEndorsingLostFees { get; set; }
+        public long DoubleEndorsingLosses { get; set; }
 
         public long RevelationRewards { get; set; }
-        public long RevelationLostRewards { get; set; }
-        public long RevelationLostFees { get; set; }
+        public long RevelationLosses { get; set; }
         #endregion
 
         #region deposits

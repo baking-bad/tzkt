@@ -542,7 +542,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"(""OffenderLostDeposit"" + ""OffenderLostReward"" + ""OffenderLostFee"") as ""Loss"", ");
+            sql.Append(@"(""OffenderLoss"") as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");
@@ -595,7 +595,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"(""OffenderLostDeposit"" + ""OffenderLostReward"" + ""OffenderLostFee"") as ""Loss"", ");
+            sql.Append(@"(""OffenderLoss"") as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");
@@ -621,7 +621,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"125000 as ""Reward"", "); // TODO: get reward amount from protocol constants
+            sql.Append(@"""Reward"" as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -949,8 +949,8 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"null::integer as ""Reward"", "); // TODO: get reward amount from protocol constants
-            sql.Append(@"(""LostReward"" + ""LostFees"") as ""Loss"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"""Loss"" as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");

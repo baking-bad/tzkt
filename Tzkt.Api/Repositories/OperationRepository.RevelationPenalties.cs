@@ -43,8 +43,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,
-                LostReward = row.LostReward,
-                LostFees = row.LostFees,
+                Loss = row.Loss,
                 Quote = Quotes.Get(quote, row.Level)
             };
         }
@@ -75,8 +74,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 MissedLevel = row.MissedLevel,
-                LostReward = row.LostReward,
-                LostFees = row.LostFees,
+                Loss = row.Loss,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -103,8 +101,7 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "baker": columns.Add(@"o.""BakerId"""); break;
                     case "missedLevel": columns.Add(@"o.""MissedLevel"""); break;
-                    case "lostReward": columns.Add(@"o.""LostReward"""); break;
-                    case "lostFees": columns.Add(@"o.""LostFees"""); break;
+                    case "loss": columns.Add(@"o.""Loss"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -157,13 +154,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.MissedLevel;
                         break;
-                    case "lostReward":
+                    case "loss":
                         foreach (var row in rows)
-                            result[j++][i] = row.LostReward;
-                        break;
-                    case "lostFees":
-                        foreach (var row in rows)
-                            result[j++][i] = row.LostFees;
+                            result[j++][i] = row.Loss;
                         break;
                     case "quote":
                         foreach (var row in rows)
@@ -195,8 +188,7 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "baker": columns.Add(@"o.""BakerId"""); break;
                 case "missedLevel": columns.Add(@"o.""MissedLevel"""); break;
-                case "lostReward": columns.Add(@"o.""LostReward"""); break;
-                case "lostFees": columns.Add(@"o.""LostFees"""); break;
+                case "loss": columns.Add(@"o.""Loss"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -246,13 +238,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.MissedLevel;
                     break;
-                case "lostReward":
+                case "loss":
                     foreach (var row in rows)
-                        result[j++] = row.LostReward;
-                    break;
-                case "lostFees":
-                    foreach (var row in rows)
-                        result[j++] = row.LostFees;
+                        result[j++] = row.Loss;
                     break;
                 case "quote":
                     foreach (var row in rows)
