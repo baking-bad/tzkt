@@ -13,8 +13,7 @@ namespace Tzkt.Data.Models
         public int BakerId { get; set; }
         public int MissedLevel { get; set; }
 
-        public long LostReward { get; set; }
-        public long LostFees { get; set; }
+        public long Loss { get; set; }
 
         #region relations
         [ForeignKey(nameof(Level))]

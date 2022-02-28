@@ -25,7 +25,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
-                            o.""OffenderId"", o.""OffenderLostDeposit"", o.""OffenderLostReward"", o.""OffenderLostFee"", b.""Hash""
+                            o.""OffenderId"", o.""OffenderLoss"", b.""Hash""
                 FROM        ""DoubleEndorsingOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -44,11 +44,9 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 AccusedLevel = row.AccusedLevel,
                 Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserRewards = row.AccuserReward,
+                AccuserReward = row.AccuserReward,
                 Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLostDeposits = row.OffenderLostDeposit,
-                OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee,
+                OffenderLoss = row.OffenderLoss,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -57,7 +55,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                            ""OffenderId"", ""OffenderLostDeposit"", ""OffenderLostReward"", ""OffenderLostFee""
+                            ""OffenderId"", ""OffenderLoss""
                 FROM        ""DoubleEndorsingOps""
                 WHERE       ""Level"" = @level
                 ORDER BY    ""Id""";
@@ -74,11 +72,9 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
                 Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserRewards = row.AccuserReward,
+                AccuserReward = row.AccuserReward,
                 Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLostDeposits = row.OffenderLostDeposit,
-                OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee,
+                OffenderLoss = row.OffenderLoss,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -104,10 +100,8 @@ namespace Tzkt.Api.Repositories
                 {
                     "level" => ("Id", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
-                    "accuserRewards" => ("AccuserReward", "AccuserReward"),
-                    "offenderLostDeposits" => ("OffenderLostDeposit", "OffenderLostDeposit"),
-                    "offenderLostRewards" => ("OffenderLostReward", "OffenderLostReward"),
-                    "offenderLostFees" => ("OffenderLostFee", "OffenderLostFee"),
+                    "accuserReward" => ("AccuserReward", "AccuserReward"),
+                    "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -123,11 +117,9 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
                 Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserRewards = row.AccuserReward,
+                AccuserReward = row.AccuserReward,
                 Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLostDeposits = row.OffenderLostDeposit,
-                OffenderLostRewards = row.OffenderLostReward,
-                OffenderLostFees = row.OffenderLostFee,
+                OffenderLoss = row.OffenderLoss,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -157,11 +149,9 @@ namespace Tzkt.Api.Repositories
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
                     case "accuser": columns.Add(@"o.""AccuserId"""); break;
-                    case "accuserRewards": columns.Add(@"o.""AccuserReward"""); break;
+                    case "accuserReward": columns.Add(@"o.""AccuserReward"""); break;
                     case "offender": columns.Add(@"o.""OffenderId"""); break;
-                    case "offenderLostDeposits": columns.Add(@"o.""OffenderLostDeposit"""); break;
-                    case "offenderLostRewards": columns.Add(@"o.""OffenderLostReward"""); break;
-                    case "offenderLostFees": columns.Add(@"o.""OffenderLostFee"""); break;
+                    case "offenderLoss": columns.Add(@"o.""OffenderLoss"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -183,10 +173,8 @@ namespace Tzkt.Api.Repositories
                 {
                     "level" => ("Id", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
-                    "accuserRewards" => ("AccuserReward", "AccuserReward"),
-                    "offenderLostDeposits" => ("OffenderLostDeposit", "OffenderLostDeposit"),
-                    "offenderLostRewards" => ("OffenderLostReward", "OffenderLostReward"),
-                    "offenderLostFees" => ("OffenderLostFee", "OffenderLostFee"),
+                    "accuserReward" => ("AccuserReward", "AccuserReward"),
+                    "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -229,7 +217,7 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.AccuserId);
                         break;
-                    case "accuserRewards":
+                    case "accuserReward":
                         foreach (var row in rows)
                             result[j++][i] = row.AccuserReward;
                         break;
@@ -237,17 +225,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.OffenderId);
                         break;
-                    case "offenderLostDeposits":
+                    case "offenderLoss":
                         foreach (var row in rows)
-                            result[j++][i] = row.OffenderLostDeposit;
-                        break;
-                    case "offenderLostRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.OffenderLostReward;
-                        break;
-                    case "offenderLostFees":
-                        foreach (var row in rows)
-                            result[j++][i] = row.OffenderLostFee;
+                            result[j++][i] = row.OffenderLoss;
                         break;
                     case "quote":
                         foreach (var row in rows)
@@ -282,11 +262,9 @@ namespace Tzkt.Api.Repositories
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
                 case "accuser": columns.Add(@"o.""AccuserId"""); break;
-                case "accuserRewards": columns.Add(@"o.""AccuserReward"""); break;
+                case "accuserReward": columns.Add(@"o.""AccuserReward"""); break;
                 case "offender": columns.Add(@"o.""OffenderId"""); break;
-                case "offenderLostDeposits": columns.Add(@"o.""OffenderLostDeposit"""); break;
-                case "offenderLostRewards": columns.Add(@"o.""OffenderLostReward"""); break;
-                case "offenderLostFees": columns.Add(@"o.""OffenderLostFee"""); break;
+                case "offenderLoss": columns.Add(@"o.""OffenderLoss"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -307,10 +285,8 @@ namespace Tzkt.Api.Repositories
                 {
                     "level" => ("Id", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
-                    "accuserRewards" => ("AccuserReward", "AccuserReward"),
-                    "offenderLostDeposits" => ("OffenderLostDeposit", "OffenderLostDeposit"),
-                    "offenderLostRewards" => ("OffenderLostReward", "OffenderLostReward"),
-                    "offenderLostFees" => ("OffenderLostFee", "OffenderLostFee"),
+                    "accuserReward" => ("AccuserReward", "AccuserReward"),
+                    "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -351,7 +327,7 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.AccuserId);
                     break;
-                case "accuserRewards":
+                case "accuserReward":
                     foreach (var row in rows)
                         result[j++] = row.AccuserReward;
                     break;
@@ -359,17 +335,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.OffenderId);
                     break;
-                case "offenderLostDeposits":
+                case "offenderLoss":
                     foreach (var row in rows)
-                        result[j++] = row.OffenderLostDeposit;
-                    break;
-                case "offenderLostRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.OffenderLostReward;
-                    break;
-                case "offenderLostFees":
-                    foreach (var row in rows)
-                        result[j++] = row.OffenderLostFee;
+                        result[j++] = row.OffenderLoss;
                     break;
                 case "quote":
                     foreach (var row in rows)

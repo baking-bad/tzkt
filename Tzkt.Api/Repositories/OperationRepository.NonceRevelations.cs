@@ -25,7 +25,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""BakerId"", o.""SenderId"", o.""RevealedLevel"", o.""RevealedCycle"", o.""Nonce"", b.""Hash""
+                SELECT      o.*, b.""Hash""
                 FROM        ""NonceRevelationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -48,6 +48,7 @@ namespace Tzkt.Api.Repositories
                 RevealedLevel = row.RevealedLevel,
                 RevealedCycle = row.RevealedCycle,
                 Nonce = Hex.Convert(row.Nonce),
+                Reward = row.Reward,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -55,7 +56,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""BakerId"", ""SenderId"", ""RevealedLevel"", o.""RevealedCycle"", o.""Nonce""
+                SELECT    *
                 FROM      ""NonceRevelationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -76,6 +77,7 @@ namespace Tzkt.Api.Repositories
                 RevealedLevel = row.RevealedLevel,
                 RevealedCycle = row.RevealedCycle,
                 Nonce = Hex.Convert(row.Nonce),
+                Reward = row.Reward,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -122,6 +124,7 @@ namespace Tzkt.Api.Repositories
                 RevealedLevel = row.RevealedLevel,
                 RevealedCycle = row.RevealedCycle,
                 Nonce = Hex.Convert(row.Nonce),
+                Reward = row.Reward,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -155,6 +158,7 @@ namespace Tzkt.Api.Repositories
                     case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
                     case "revealedCycle": columns.Add(@"o.""RevealedCycle"""); break;
                     case "nonce": columns.Add(@"o.""Nonce"""); break;
+                    case "reward": columns.Add(@"o.""Reward"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -231,6 +235,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Hex.Convert(row.Nonce);
                         break;
+                    case "reward":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Reward;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -268,6 +276,7 @@ namespace Tzkt.Api.Repositories
                 case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
                 case "revealedCycle": columns.Add(@"o.""RevealedCycle"""); break;
                 case "nonce": columns.Add(@"o.""Nonce"""); break;
+                case "reward": columns.Add(@"o.""Reward"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -340,6 +349,10 @@ namespace Tzkt.Api.Repositories
                 case "nonce":
                     foreach (var row in rows)
                         result[j++] = Hex.Convert(row.Nonce);
+                    break;
+                case "reward":
+                    foreach (var row in rows)
+                        result[j++] = row.Reward;
                     break;
                 case "quote":
                     foreach (var row in rows)

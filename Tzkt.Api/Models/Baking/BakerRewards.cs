@@ -50,42 +50,62 @@ namespace Tzkt.Api.Models
         public long FutureBlockDeposits { get; set; }
 
         /// <summary>
-        /// Number of successfully baked blocks with priority `0`.
+        /// Number of successfully baked blocks.
+        /// </summary>
+        public int Blocks { get; set; }
+
+        /// <summary>
+        /// Rewards received for baked blocks.
+        /// </summary>
+        public long BlockRewards { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public int OwnBlocks { get; set; }
 
         /// <summary>
-        /// Rewards received for blocks baked with priority `0`.
+        /// [DEPRECATED]
         /// </summary>
         public long OwnBlockRewards { get; set; }
 
         /// <summary>
-        /// Number of successfully baked blocks with priority `1+`.
+        /// [DEPRECATED]
         /// </summary>
         public int ExtraBlocks { get; set; }
 
         /// <summary>
-        /// Rewards received for blocks baked with priority `1+`.
+        /// [DEPRECATED]
         /// </summary>
         public long ExtraBlockRewards { get; set; }
 
         /// <summary>
-        /// Number of blocks which were missed at priority `0` for no apparent reason (usually due to issues with network or node).
+        /// Number of missed blocks.
+        /// </summary>
+        public int MissedBlocks { get; set; }
+
+        /// <summary>
+        /// Rewards which were not received due to missing blocks.
+        /// </summary>
+        public long MissedBlockRewards { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public int MissedOwnBlocks { get; set; }
 
         /// <summary>
-        /// Rewards which were not received due to missing own blocks.
+        /// [DEPRECATED]
         /// </summary>
         public long MissedOwnBlockRewards { get; set; }
 
         /// <summary>
-        /// Number of blocks which were missed at priority `1+` for no apparent reason (usually due to issues with network or node).
+        /// [DEPRECATED]
         /// </summary>
         public int MissedExtraBlocks { get; set; }
 
         /// <summary>
-        /// Rewards which were not received due to missing extra blocks.
+        /// [DEPRECATED]
         /// </summary>
         public long MissedExtraBlockRewards { get; set; }
 
@@ -165,22 +185,32 @@ namespace Tzkt.Api.Models
         public long EndorsementDeposits { get; set; }
 
         /// <summary>
-        /// Operation fees which were harvested from successfully baked blocks with priority `0`.
+        /// Operation fees which were harvested from successfully baked blocks.
+        /// </summary>
+        public long BlockFees { get; set; }
+
+        /// <summary>
+        /// Operation fees which were not received due to missing blocks.
+        /// </summary>
+        public long MissedBlockFees { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public long OwnBlockFees { get; set; }
 
         /// <summary>
-        /// Operation fees which were harvested from successfully baked blocks with priority `1+`.
+        /// [DEPRECATED]
         /// </summary>
         public long ExtraBlockFees { get; set; }
 
         /// <summary>
-        /// Operation fees which were not received due to missing own blocks.
+        /// [DEPRECATED]
         /// </summary>
         public long MissedOwnBlockFees { get; set; }
 
         /// <summary>
-        /// Operation fees which were not received due to missing extra blocks.
+        /// [DEPRECATED]
         /// </summary>
         public long MissedExtraBlockFees { get; set; }
 
@@ -200,17 +230,22 @@ namespace Tzkt.Api.Models
         public long DoubleBakingRewards { get; set; }
 
         /// <summary>
-        /// Bonds lost due to double baking
+        /// Bonds, rewards and gathered fees lost due to double baking
+        /// </summary>
+        public long DoubleBakingLosses { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public long DoubleBakingLostDeposits { get; set; }
 
         /// <summary>
-        /// Rewards lost due to double baking
+        /// [DEPRECATED]
         /// </summary>
         public long DoubleBakingLostRewards { get; set; }
 
         /// <summary>
-        /// Fees lost due to double baking
+        /// [DEPRECATED]
         /// </summary>
         public long DoubleBakingLostFees { get; set; }
 
@@ -220,17 +255,22 @@ namespace Tzkt.Api.Models
         public long DoubleEndorsingRewards { get; set; }
 
         /// <summary>
-        /// Bonds lost due to double endorsing
+        /// Bonds, rewards and gathered fees lost due to double endorsing
+        /// </summary>
+        public long DoubleEndorsingLosses { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public long DoubleEndorsingLostDeposits { get; set; }
 
         /// <summary>
-        /// Rewards lost due to double endorsing
+        /// [DEPRECATED]
         /// </summary>
         public long DoubleEndorsingLostRewards { get; set; }
 
         /// <summary>
-        /// Fees lost due to double endorsing
+        /// [DEPRECATED]
         /// </summary>
         public long DoubleEndorsingLostFees { get; set; }
 
@@ -240,12 +280,17 @@ namespace Tzkt.Api.Models
         public long RevelationRewards { get; set; }
 
         /// <summary>
-        /// Rewards lost due to missing seed nonce revelation.
+        /// Rewards and gathered fees lost due to missing seed nonce revelation.
+        /// </summary>
+        public long RevelationLosses { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public long RevelationLostRewards { get; set; }
 
         /// <summary>
-        /// Fees lost due to missing seed nonce revelation.
+        /// [DEPRECATED]
         /// </summary>
         public long RevelationLostFees { get; set; }
 

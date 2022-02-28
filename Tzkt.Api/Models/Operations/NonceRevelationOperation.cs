@@ -68,6 +68,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public string Nonce { get; set; }
 
+        /// <summary>
+        /// Baker reward for including seed nonce revelation into a block
+        /// </summary>
+        public long Reward { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation

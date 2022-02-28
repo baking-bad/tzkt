@@ -349,7 +349,7 @@ namespace Tzkt.Api.Repositories
             sql.Append("UNION ALL SELECT ");
 
             #region offender
-            sql.Append(@"SUM(-""OffenderLostDeposit"" - ""OffenderLostReward"" - ""OffenderLostFee"") as ""Change"" ");
+            sql.Append(@"SUM(-""OffenderLoss"") as ""Change"" ");
             sql.Append(@"FROM ""DoubleBakingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
 
@@ -382,7 +382,7 @@ namespace Tzkt.Api.Repositories
             sql.Append("UNION ALL SELECT ");
 
             #region offender
-            sql.Append(@"SUM(-""OffenderLostDeposit"" - ""OffenderLostReward"" - ""OffenderLostFee"") as ""Change"" ");
+            sql.Append(@"SUM(-""OffenderLoss"") as ""Change"" ");
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
 
@@ -399,7 +399,7 @@ namespace Tzkt.Api.Repositories
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"COUNT(*) * 125000 "); // TODO: get reward amount from protocol constants
+            sql.Append(@"SUM(""Reward"") ");
             sql.Append(@"FROM ""NonceRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
@@ -596,7 +596,7 @@ namespace Tzkt.Api.Repositories
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"SUM(-""LostReward"" - ""LostFees"") as ""Change"" ");
+            sql.Append(@"SUM(-""Loss"") as ""Change"" ");
             sql.Append(@"FROM ""RevelationPenaltyOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
@@ -712,7 +712,7 @@ namespace Tzkt.Api.Repositories
 
             #region offender
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(-""OffenderLostDeposit"" - ""OffenderLostReward"" - ""OffenderLostFee"") as ""Change"" ");
+            sql.Append(@"(-""OffenderLoss"") as ""Change"" ");
 
             sql.Append(@"FROM ""DoubleBakingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
@@ -739,7 +739,7 @@ namespace Tzkt.Api.Repositories
 
             #region offender
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(-""OffenderLostDeposit"" - ""OffenderLostReward"" - ""OffenderLostFee"") as ""Change"" ");
+            sql.Append(@"(-""OffenderLoss"") as ""Change"" ");
 
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
@@ -753,7 +753,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"125000::bigint as ""Change"" "); // TODO: get reward amount from protocol constants
+            sql.Append(@"""Reward"" as ""Change"" ");
 
             sql.Append(@"FROM ""NonceRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
@@ -914,7 +914,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(-""LostReward"" - ""LostFees"") as ""Change"" ");
+            sql.Append(@"(-""Loss"") as ""Change"" ");
 
             sql.Append(@"FROM ""RevelationPenaltyOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");

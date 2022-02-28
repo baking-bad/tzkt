@@ -33,14 +33,14 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (block.DoubleBakings != null)
             {
-                var lost = block.DoubleBakings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+                var lost = block.DoubleBakings.Sum(x => x.OffenderLoss - x.AccuserReward);
                 statistics.TotalBurned += lost;
                 statistics.TotalFrozen -= lost;
             }
 
             if (block.DoubleEndorsings != null)
             {
-                var lost = block.DoubleEndorsings.Sum(x => x.OffenderLostDeposit + x.OffenderLostReward + x.OffenderLostFee - x.AccuserReward);
+                var lost = block.DoubleEndorsings.Sum(x => x.OffenderLoss - x.AccuserReward);
                 statistics.TotalBurned += lost;
                 statistics.TotalFrozen -= lost;
             }
@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (block.RevelationPenalties != null)
             {
-                var lost = block.RevelationPenalties.Sum(x => x.LostReward + x.LostFees);
+                var lost = block.RevelationPenalties.Sum(x => x.Loss);
                 statistics.TotalBurned += lost;
                 statistics.TotalFrozen -= lost;
             }
@@ -88,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (block.Revelations != null)
             {
-                var rewards = block.Revelations.Count * block.Protocol.RevelationReward;
+                var rewards = block.Revelations.Sum(x => x.Reward);
                 statistics.TotalCreated += rewards;
                 statistics.TotalFrozen += rewards;
             }

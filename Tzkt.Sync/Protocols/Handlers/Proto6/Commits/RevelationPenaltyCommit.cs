@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto6
     {
         public RevelationPenaltyCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override bool HasPanltiesUpdates(Block block, JsonElement rawBlock)
+        protected override bool HasPenaltiesUpdates(Block block, JsonElement rawBlock)
         {
             return rawBlock
                 .Required("metadata")

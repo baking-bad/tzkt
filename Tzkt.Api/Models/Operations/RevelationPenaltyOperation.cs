@@ -44,12 +44,17 @@ namespace Tzkt.Api.Models
         public int MissedLevel { get; set; }
 
         /// <summary>
-        /// Reward for baking the block, which was lost due to unrevealed seed nonces (micro tez)
+        /// Reward for baking and gathered fees from the block, which were lost due to unrevealed seed nonces (micro tez)
+        /// </summary>
+        public long Loss { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public long LostReward { get; set; }
 
         /// <summary>
-        /// Lost due to unrevealed seed nonce total fee paid by all operations, included in the block, which was to be revealed (micro tez)
+        /// [DEPRECATED]
         /// </summary>
         public long LostFees { get; set; }
 

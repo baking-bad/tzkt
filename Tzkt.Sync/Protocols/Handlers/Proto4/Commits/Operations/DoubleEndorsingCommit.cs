@@ -22,12 +22,15 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             var lostDeposits = balanceUpdates
                 .FirstOrDefault(x => x.RequiredString("category")[0] == 'd' && x.RequiredInt64("change") < 0);
+            var lostDepositsValue = lostDeposits.ValueKind != JsonValueKind.Undefined ? -lostDeposits.RequiredInt64("change") : 0;
 
             var lostRewards = balanceUpdates
                 .FirstOrDefault(x => x.RequiredString("category")[0] == 'r' && x.RequiredInt64("change") < 0);
+            var lostRewardsValue = lostRewards.ValueKind != JsonValueKind.Undefined ? -lostRewards.RequiredInt64("change") : 0;
 
             var lostFees = balanceUpdates
                 .FirstOrDefault(x => x.RequiredString("category")[0] == 'f' && x.RequiredInt64("change") < 0);
+            var lostFeesValue = lostFees.ValueKind != JsonValueKind.Undefined ? -lostFees.RequiredInt64("change") : 0;
 
             var doubleEndorsing = new DoubleEndorsingOperation
             {
@@ -42,9 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
                 AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
-                OffenderLostDeposit = lostDeposits.ValueKind != JsonValueKind.Undefined ? -lostDeposits.RequiredInt64("change") : 0,
-                OffenderLostReward = lostRewards.ValueKind != JsonValueKind.Undefined ? -lostRewards.RequiredInt64("change") : 0,
-                OffenderLostFee = lostFees.ValueKind != JsonValueKind.Undefined ? -lostFees.RequiredInt64("change") : 0,
+                OffenderLoss = lostDepositsValue + lostRewardsValue + lostFeesValue
             };
             #endregion
 
@@ -60,14 +61,9 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             #region apply operation
             accuser.Balance += doubleEndorsing.AccuserReward;
-
-            offender.Balance -= doubleEndorsing.OffenderLostDeposit;
-            offender.StakingBalance -= doubleEndorsing.OffenderLostDeposit;
-
-            offender.Balance -= doubleEndorsing.OffenderLostReward;
-
-            offender.Balance -= doubleEndorsing.OffenderLostFee;
-            offender.StakingBalance -= doubleEndorsing.OffenderLostFee;
+            offender.Balance -= doubleEndorsing.OffenderLoss;
+            offender.StakingBalance -= lostDepositsValue;
+            offender.StakingBalance -= lostFeesValue;
 
             accuser.DoubleEndorsingCount++;
             if (offender != accuser) offender.DoubleEndorsingCount++;
@@ -101,14 +97,10 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             #region apply operation
             accuser.Balance -= doubleEndorsing.AccuserReward;
-
-            offender.Balance += doubleEndorsing.OffenderLostDeposit;
-            offender.StakingBalance += doubleEndorsing.OffenderLostDeposit;
-
-            offender.Balance += doubleEndorsing.OffenderLostReward;
-
-            offender.Balance += doubleEndorsing.OffenderLostFee;
-            offender.StakingBalance += doubleEndorsing.OffenderLostFee;
+            offender.Balance += doubleEndorsing.OffenderLoss;
+            offender.StakingBalance += doubleEndorsing.AccuserReward * 2;
+            // here we can miss 1 mutez, but this may happen only in legacy protocols, so let's ignore
+            // TODO: replace it with NotImplementedException after Ithaca
 
             accuser.DoubleEndorsingCount--;
             if (offender != accuser) offender.DoubleEndorsingCount--;

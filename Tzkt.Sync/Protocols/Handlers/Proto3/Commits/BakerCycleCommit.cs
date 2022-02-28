@@ -50,18 +50,11 @@ namespace Tzkt.Sync.Protocols.Proto3
                     if (br.Status == BakingRightStatus.Realized)
                     {
                         bakerCycle.BlockDeposits += GetBlockDeposit(block.Protocol, block.Cycle);
-
-                        if (br.Priority == 0)
-                            bakerCycle.OwnBlocks++;
-                        else
-                            bakerCycle.ExtraBlocks++;
+                        bakerCycle.Blocks++;
                     }
                     else if (br.Status == BakingRightStatus.Missed)
                     {
-                        if (br.Priority == 0)
-                            bakerCycle.MissedOwnBlocks++;
-                        else
-                            bakerCycle.MissedExtraBlocks++;
+                        bakerCycle.MissedBlocks++;
                     }
                     else
                     {
@@ -118,10 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                         var prevBakerCycle = await Cache.BakerCycles.GetAsync(prevBlock.Cycle, rights.Key);
                         Db.TryAttach(prevBakerCycle);
 
-                        if (prevRights[0].Priority == 0)
-                            prevBakerCycle.MissedOwnBlockRewards += maxReward - successReward;
-                        else
-                            prevBakerCycle.MissedExtraBlockRewards += maxReward - successReward;
+                        prevBakerCycle.MissedBlockRewards += maxReward - successReward;
                     }
                 }
                 #endregion
@@ -144,18 +134,12 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     if (actualReward > 0)
                     {
-                        if (bakingRights[^1].Priority == 0)
-                            bakerCycle.OwnBlockRewards += actualReward;
-                        else
-                            bakerCycle.ExtraBlockRewards += actualReward;
+                        bakerCycle.BlockRewards += actualReward;
                     }
 
                     if (successReward != actualReward)
                     {
-                        if (bakingRights[0].Priority == 0)
-                            bakerCycle.MissedOwnBlockRewards += successReward - actualReward;
-                        else
-                            bakerCycle.MissedExtraBlockRewards += successReward - actualReward;
+                        bakerCycle.MissedBlockRewards += successReward - actualReward;
                     }
 
                     //if (maxReward != successReward)
@@ -170,17 +154,11 @@ namespace Tzkt.Sync.Protocols.Proto3
                 {
                     if (bakingRights[^1].Status == BakingRightStatus.Realized)
                     {
-                        if (bakingRights[^1].Priority == 0)
-                            bakerCycle.OwnBlockFees += block.Fees;
-                        else
-                            bakerCycle.ExtraBlockFees += block.Fees;
+                        bakerCycle.BlockFees += block.Fees;
                     }
                     else if (bakingRights[0].Status == BakingRightStatus.Missed)
                     {
-                        if (bakingRights[0].Priority == 0)
-                            bakerCycle.MissedOwnBlockFees += block.Fees;
-                        else
-                            bakerCycle.MissedExtraBlockFees += block.Fees;
+                        bakerCycle.MissedBlockFees += block.Fees;
                     }
                     else
                     {
@@ -198,9 +176,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleBakingLostDeposits += op.OffenderLostDeposit;
-                    offenderCycle.DoubleBakingLostRewards += op.OffenderLostReward;
-                    offenderCycle.DoubleBakingLostFees += op.OffenderLostFee;
+                    offenderCycle.DoubleBakingLosses += op.OffenderLoss;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
@@ -217,9 +193,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleEndorsingLostDeposits += op.OffenderLostDeposit;
-                    offenderCycle.DoubleEndorsingLostRewards += op.OffenderLostReward;
-                    offenderCycle.DoubleEndorsingLostFees += op.OffenderLostFee;
+                    offenderCycle.DoubleEndorsingLosses += op.OffenderLoss;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
@@ -235,7 +209,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
                     Db.TryAttach(bakerCycle);
 
-                    bakerCycle.RevelationRewards += block.Protocol.RevelationReward;
+                    bakerCycle.RevelationRewards += op.Reward;
                 }
             }
 
@@ -247,8 +221,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.Baker.Id);
                     Db.TryAttach(penaltyCycle);
 
-                    penaltyCycle.RevelationLostRewards += op.LostReward;
-                    penaltyCycle.RevelationLostFees += op.LostFees;
+                    penaltyCycle.RevelationLosses += op.Loss;
                 }
             }
             #endregion
