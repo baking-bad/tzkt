@@ -40,8 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                         .ToListAsync();
 
                     var slashedBakers = bakerCycles
-                        .Where(x => x.EndorsementDeposits > 0 || x.BlockDeposits > 0)
-                        .Where(x => (x.BlockDeposits + x.EndorsementDeposits +
+                        .Where(x => x.Deposits > 0 && (x.Deposits +
                             x.BlockRewards + x.EndorsementRewards + x.BlockFees +
                             x.DoubleBakingRewards + x.DoubleEndorsingRewards + x.RevelationRewards -
                             x.DoubleBakingLosses - x.DoubleEndorsingLosses - x.RevelationLosses) == 0)

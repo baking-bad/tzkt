@@ -46,7 +46,7 @@ namespace Tzkt.Api.Models
         public long FutureBlockRewards { get; set; }
 
         /// <summary>
-        /// Estimated value of bonds which will be locked as security deposit for future blocks.
+        /// [DEPRECATED]
         /// </summary>
         public long FutureBlockDeposits { get; set; }
 
@@ -131,7 +131,12 @@ namespace Tzkt.Api.Models
         public long UncoveredExtraBlockRewards { get; set; }
 
         /// <summary>
-        /// Bonds which were locked as a security deposit for baking own and extra blocks.
+        /// Bonds which were locked as a security deposit for baking and endorsing.
+        /// </summary>
+        public long Deposits { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
         /// </summary>
         public long BlockDeposits { get; set; }
 
@@ -146,7 +151,7 @@ namespace Tzkt.Api.Models
         public long FutureEndorsementRewards { get; set; }
 
         /// <summary>
-        /// Estimated value of bonds which will be locked as security deposit for future endorsements.
+        /// [DEPRECATED]
         /// </summary>
         public long FutureEndorsementDeposits { get; set; }
 
@@ -181,7 +186,7 @@ namespace Tzkt.Api.Models
         public long UncoveredEndorsementRewards { get; set; }
 
         /// <summary>
-        /// Bonds which were locked as a security deposit for endorsed slots.
+        /// [DEPRECATED]
         /// </summary>
         public long EndorsementDeposits { get; set; }
 

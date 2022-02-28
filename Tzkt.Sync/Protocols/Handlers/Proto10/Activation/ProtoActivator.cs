@@ -197,9 +197,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                 var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, br.BakerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureBlockDeposits -= GetBlockDeposit(prevProto, state.Cycle);
-                bakerCycle.FutureBlockDeposits += GetBlockDeposit(nextProto, state.Cycle);
-
                 bakerCycle.FutureBlockRewards -= GetFutureBlockReward(prevProto, state.Cycle);
                 bakerCycle.FutureBlockRewards += GetFutureBlockReward(nextProto, state.Cycle);
             }
@@ -209,7 +206,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                 var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.BakerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsementDeposits -= GetEndorsementDeposit(prevProto, state.Cycle, (int)er.Slots);
                 bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, (int)er.Slots);
                 bakerCycle.FutureEndorsements -= (int)er.Slots;
             }
@@ -245,7 +241,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                 var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.BakerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(nextProto, state.Cycle, (int)er.Slots);
                 bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(nextProto, state.Cycle, (int)er.Slots);
                 bakerCycle.FutureEndorsements += (int)er.Slots;
             }
@@ -280,10 +275,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                     var share = (double)bc.StakingBalance / cycle.TotalStaking;
                     bc.ExpectedBlocks = nextProto.BlocksPerCycle * share;
                     bc.ExpectedEndorsements = nextProto.EndorsersPerBlock * nextProto.BlocksPerCycle * share;
-                    bc.FutureBlockDeposits = 0;
                     bc.FutureBlockRewards = 0;
                     bc.FutureBlocks = 0;
-                    bc.FutureEndorsementDeposits = 0;
                     bc.FutureEndorsementRewards = 0;
                     bc.FutureEndorsements = 0;
                 }
@@ -310,7 +303,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                 if (priority == 0)
                 {
                     var bakerCycle = bakerCycles[bakerId];
-                    bakerCycle.FutureBlockDeposits += GetBlockDeposit(protocol, cycle.Index);
                     bakerCycle.FutureBlockRewards += GetFutureBlockReward(protocol, cycle.Index);
                     bakerCycle.FutureBlocks++;
                 }
@@ -381,7 +373,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                 if (!bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
                     throw new Exception("Nonexistent baker cycle");
 
-                bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(protocol, cycle.Index, slots);
                 bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle.Index, slots);
                 bakerCycle.FutureEndorsements += slots;
             }
@@ -430,7 +421,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                     #endregion
                 }
 
-                bakerCycle.FutureEndorsementDeposits += GetEndorsementDeposit(protocol, cycle.Index, slots);
                 bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle.Index, slots);
                 bakerCycle.FutureEndorsements += slots;
             }

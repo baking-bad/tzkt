@@ -55,18 +55,15 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
-                BlockDeposits = row.BlockDeposits,
+                Deposits = row.Deposits,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
-                EndorsementDeposits = row.EndorsementDeposits,
                 EndorsementRewards = row.EndorsementRewards,
                 Endorsements = row.Endorsements,
                 ExpectedBlocks = Math.Round(row.ExpectedBlocks, 2),
                 ExpectedEndorsements = Math.Round(row.ExpectedEndorsements, 2),
-                FutureBlockDeposits = row.FutureBlockDeposits,
                 FutureBlockRewards = row.FutureBlockRewards,
                 FutureBlocks = row.FutureBlocks,
-                FutureEndorsementDeposits = row.FutureEndorsementDeposits,
                 FutureEndorsementRewards = row.FutureEndorsementRewards,
                 FutureEndorsements = row.FutureEndorsements,
                 MissedEndorsementRewards = row.MissedEndorsementRewards,
@@ -110,18 +107,15 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
-                BlockDeposits = row.BlockDeposits,
+                Deposits = row.Deposits,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
-                EndorsementDeposits = row.EndorsementDeposits,
                 EndorsementRewards = row.EndorsementRewards,
                 Endorsements = row.Endorsements,
                 ExpectedBlocks = Math.Round(row.ExpectedBlocks, 2),
                 ExpectedEndorsements = Math.Round(row.ExpectedEndorsements, 2),
-                FutureBlockDeposits = row.FutureBlockDeposits,
                 FutureBlockRewards = row.FutureBlockRewards,
                 FutureBlocks = row.FutureBlocks,
-                FutureEndorsementDeposits = row.FutureEndorsementDeposits,
                 FutureEndorsementRewards = row.FutureEndorsementRewards,
                 FutureEndorsements = row.FutureEndorsements,
                 MissedEndorsementRewards = row.MissedEndorsementRewards,
@@ -161,18 +155,15 @@ namespace Tzkt.Api.Repositories
                     case "doubleBakingLosses": columns.Add(@"""DoubleBakingLosses"""); break;
                     case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
                     case "doubleEndorsingLosses": columns.Add(@"""DoubleEndorsingLosses"""); break;
-                    case "blockDeposits": columns.Add(@"""BlockDeposits"""); break;
+                    case "deposits": columns.Add(@"""Deposits"""); break;
                     case "cycle": columns.Add(@"""Cycle"""); break;
                     case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
-                    case "endorsementDeposits": columns.Add(@"""EndorsementDeposits"""); break;
                     case "endorsementRewards": columns.Add(@"""EndorsementRewards"""); break;
                     case "endorsements": columns.Add(@"""Endorsements"""); break;
                     case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
                     case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
-                    case "futureBlockDeposits": columns.Add(@"""FutureBlockDeposits"""); break;
                     case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                     case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
-                    case "futureEndorsementDeposits": columns.Add(@"""FutureEndorsementDeposits"""); break;
                     case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
                     case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
                     case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
@@ -226,9 +217,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleEndorsingLosses;
                         break;
-                    case "blockDeposits":
+                    case "deposits":
                         foreach (var row in rows)
-                            result[j++][i] = row.BlockDeposits;
+                            result[j++][i] = row.Deposits;
                         break;
                     case "cycle":
                         foreach (var row in rows)
@@ -237,10 +228,6 @@ namespace Tzkt.Api.Repositories
                     case "delegatedBalance":
                         foreach (var row in rows)
                             result[j++][i] = row.DelegatedBalance;
-                        break;
-                    case "endorsementDeposits":
-                        foreach (var row in rows)
-                            result[j++][i] = row.EndorsementDeposits;
                         break;
                     case "endorsementRewards":
                         foreach (var row in rows)
@@ -258,10 +245,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Math.Round(row.ExpectedEndorsements, 2);
                         break;
-                    case "futureBlockDeposits":
-                        foreach (var row in rows)
-                            result[j++][i] = row.FutureBlockDeposits;
-                        break;
                     case "futureBlockRewards":
                         foreach (var row in rows)
                             result[j++][i] = row.FutureBlockRewards;
@@ -269,10 +252,6 @@ namespace Tzkt.Api.Repositories
                     case "futureBlocks":
                         foreach (var row in rows)
                             result[j++][i] = row.FutureBlocks;
-                        break;
-                    case "futureEndorsementDeposits":
-                        foreach (var row in rows)
-                            result[j++][i] = row.FutureEndorsementDeposits;
                         break;
                     case "futureEndorsementRewards":
                         foreach (var row in rows)
@@ -359,18 +338,15 @@ namespace Tzkt.Api.Repositories
                 case "doubleBakingLosses": columns.Add(@"""DoubleBakingLosses"""); break;
                 case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
                 case "doubleEndorsingLosses": columns.Add(@"""DoubleEndorsingLosses"""); break;
-                case "blockDeposits": columns.Add(@"""BlockDeposits"""); break;
+                case "deposits": columns.Add(@"""Deposits"""); break;
                 case "cycle": columns.Add(@"""Cycle"""); break;
                 case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
-                case "endorsementDeposits": columns.Add(@"""EndorsementDeposits"""); break;
                 case "endorsementRewards": columns.Add(@"""EndorsementRewards"""); break;
                 case "endorsements": columns.Add(@"""Endorsements"""); break;
                 case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
                 case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
-                case "futureBlockDeposits": columns.Add(@"""FutureBlockDeposits"""); break;
                 case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                 case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
-                case "futureEndorsementDeposits": columns.Add(@"""FutureEndorsementDeposits"""); break;
                 case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
                 case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
                 case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
@@ -421,9 +397,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DoubleEndorsingLosses;
                     break;
-                case "blockDeposits":
+                case "deposits":
                     foreach (var row in rows)
-                        result[j++] = row.BlockDeposits;
+                        result[j++] = row.Deposits;
                     break;
                 case "cycle":
                     foreach (var row in rows)
@@ -432,10 +408,6 @@ namespace Tzkt.Api.Repositories
                 case "delegatedBalance":
                     foreach (var row in rows)
                         result[j++] = row.DelegatedBalance;
-                    break;
-                case "endorsementDeposits":
-                    foreach (var row in rows)
-                        result[j++] = row.EndorsementDeposits;
                     break;
                 case "endorsementRewards":
                     foreach (var row in rows)
@@ -453,10 +425,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Math.Round(row.ExpectedEndorsements, 2);
                     break;
-                case "futureBlockDeposits":
-                    foreach (var row in rows)
-                        result[j++] = row.FutureBlockDeposits;
-                    break;
                 case "futureBlockRewards":
                     foreach (var row in rows)
                         result[j++] = row.FutureBlockRewards;
@@ -464,10 +432,6 @@ namespace Tzkt.Api.Repositories
                 case "futureBlocks":
                     foreach (var row in rows)
                         result[j++] = row.FutureBlocks;
-                    break;
-                case "futureEndorsementDeposits":
-                    foreach (var row in rows)
-                        result[j++] = row.FutureEndorsementDeposits;
                     break;
                 case "futureEndorsementRewards":
                     foreach (var row in rows)
@@ -1058,18 +1022,15 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLosses = rewards.DoubleBakingLosses,
                 DoubleEndorsingRewards = rewards.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = rewards.DoubleEndorsingLosses,
-                BlockDeposits = rewards.BlockDeposits,
+                Deposits = rewards.Deposits,
                 Cycle = rewards.Cycle,
                 DelegatedBalance = rewards.DelegatedBalance,
-                EndorsementDeposits = rewards.EndorsementDeposits,
                 EndorsementRewards = rewards.EndorsementRewards,
                 Endorsements = rewards.Endorsements,
                 ExpectedBlocks = Math.Round(rewards.ExpectedBlocks, 2),
                 ExpectedEndorsements = Math.Round(rewards.ExpectedEndorsements, 2),
-                FutureBlockDeposits = rewards.FutureBlockDeposits,
                 FutureBlockRewards = rewards.FutureBlockRewards,
                 FutureBlocks = rewards.FutureBlocks,
-                FutureEndorsementDeposits = rewards.FutureEndorsementDeposits,
                 FutureEndorsementRewards = rewards.FutureEndorsementRewards,
                 FutureEndorsements = rewards.FutureEndorsements,
                 MissedEndorsementRewards = rewards.MissedEndorsementRewards,
