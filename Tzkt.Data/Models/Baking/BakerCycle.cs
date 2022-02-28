@@ -8,10 +8,9 @@ namespace Tzkt.Data.Models
         public int Cycle { get; set; }
         public int BakerId { get; set; }
 
-        public int Rolls { get; set; }
-        public long StakingBalance { get; set; }
-        public long DelegatedBalance { get; set; }
         public int DelegatorsCount { get; set; }
+        public long DelegatedBalance { get; set; }
+        public long StakingBalance { get; set; }
 
         #region rights
         public int FutureBlocks { get; set; }

@@ -30,7 +30,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     LastLevel = protocol.GetCycleEnd(index),
                     SnapshotIndex = 0,
                     SnapshotLevel = 1,
-                    TotalRolls = totalRolls,
                     TotalStaking = totalStake,
                     TotalDelegated = totalDelegated,
                     TotalDelegators = totalDelegators,

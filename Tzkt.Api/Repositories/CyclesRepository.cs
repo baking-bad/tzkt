@@ -53,7 +53,6 @@ namespace Tzkt.Api.Repositories
                 TotalBakers = row.TotalBakers,
                 TotalDelegated = row.TotalDelegated,
                 TotalDelegators = row.TotalDelegators,
-                TotalRolls = row.TotalRolls,
                 TotalStaking = row.TotalStaking,
                 Quote = Quotes.Get(quote, row.LastLevel)
             };
@@ -86,7 +85,6 @@ namespace Tzkt.Api.Repositories
                 TotalBakers = row.TotalBakers,
                 TotalDelegated = row.TotalDelegated,
                 TotalDelegators = row.TotalDelegators,
-                TotalRolls = row.TotalRolls,
                 TotalStaking = row.TotalStaking,
                 Quote = Quotes.Get(quote, row.LastLevel)
             });
@@ -116,7 +114,6 @@ namespace Tzkt.Api.Repositories
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                     case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
                     case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
-                    case "totalRolls": columns.Add(@"""TotalRolls"""); break;
                     case "totalStaking": columns.Add(@"""TotalStaking"""); break;
                     case "quote": columns.Add(@"""LastLevel"""); break;
                 }
@@ -184,10 +181,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalDelegators;
                         break;
-                    case "totalRolls":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TotalRolls;
-                        break;
                     case "totalStaking":
                         foreach (var row in rows)
                             result[j++][i] = row.TotalStaking;
@@ -224,7 +217,6 @@ namespace Tzkt.Api.Repositories
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                 case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
                 case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
-                case "totalRolls": columns.Add(@"""TotalRolls"""); break;
                 case "totalStaking": columns.Add(@"""TotalStaking"""); break;
                 case "quote": columns.Add(@"""LastLevel"""); break;
             }
@@ -288,10 +280,6 @@ namespace Tzkt.Api.Repositories
                 case "totalDelegators":
                     foreach (var row in rows)
                         result[j++] = row.TotalDelegators;
-                    break;
-                case "totalRolls":
-                    foreach (var row in rows)
-                        result[j++] = row.TotalRolls;
                     break;
                 case "totalStaking":
                     foreach (var row in rows)

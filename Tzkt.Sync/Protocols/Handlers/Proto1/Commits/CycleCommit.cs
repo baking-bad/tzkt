@@ -80,7 +80,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     LastLevel = block.Protocol.GetCycleEnd(futureCycle),
                     SnapshotIndex = snapshotIndex,
                     SnapshotLevel = snapshotLevel,
-                    TotalRolls = Snapshots.Values.Sum(x => (int)(x.StakingBalance / snapshotProto.TokensPerRoll)),
                     TotalStaking = Snapshots.Values.Sum(x => x.StakingBalance),
                     TotalDelegated = Snapshots.Values.Sum(x => x.DelegatedBalance),
                     TotalDelegators = Snapshots.Values.Sum(x => x.DelegatorsCount),

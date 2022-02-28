@@ -239,19 +239,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var baker = await Cache.Accounts.GetAsync(kv.Key); // WTF: rights were given to non-baker accounts
                     var snapshot = snapshots[kv.Key];
 
-                    var rolls = (int)(snapshot.StakingBalance / block.Protocol.TokensPerRoll);
-                    var rollsShare = (double)rolls / futureCycle.TotalRolls;
+                    var share = (double)snapshot.StakingBalance / futureCycle.TotalStaking;
 
                     var bakerCycle = new BakerCycle
                     {
                         Cycle = futureCycle.Index,
                         BakerId = kv.Key,
-                        Rolls = rolls,
                         StakingBalance = snapshot.StakingBalance,
                         DelegatedBalance = snapshot.DelegatedBalance,
                         DelegatorsCount = snapshot.DelegatorsCount,
-                        ExpectedBlocks = block.Protocol.BlocksPerCycle * rollsShare,
-                        ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * rollsShare
+                        ExpectedBlocks = block.Protocol.BlocksPerCycle * share,
+                        ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * share
                     };
 
                     bakerCycles.Add(baker.Address, bakerCycle);
@@ -320,19 +318,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (snapshotedBaker.RequiredInt32("grace_period") != block.Cycle - 3)
                             throw new Exception("Deactivated baker got baking rights");
 
-                        var rolls = (int)(snapshotedBaker.RequiredInt64("staking_balance") / block.Protocol.TokensPerRoll);
-                        var rollsShare = (double)rolls / futureCycle.TotalRolls;
+                        var share = (double)snapshotedBaker.RequiredInt64("staking_balance") / futureCycle.TotalStaking;
 
                         bakerCycle = new BakerCycle
                         {
                             Cycle = futureCycle.Index,
                             BakerId = baker.Id,
-                            Rolls = rolls,
                             StakingBalance = snapshotedBaker.RequiredInt64("staking_balance"),
                             DelegatedBalance = snapshotedBaker.RequiredInt64("delegated_balance"),
                             DelegatorsCount = delegators.Count(),
-                            ExpectedBlocks = block.Protocol.BlocksPerCycle * rollsShare,
-                            ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * rollsShare
+                            ExpectedBlocks = block.Protocol.BlocksPerCycle * share,
+                            ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * share
                         };
                         bakerCycles.Add(baker.Address, bakerCycle);
 

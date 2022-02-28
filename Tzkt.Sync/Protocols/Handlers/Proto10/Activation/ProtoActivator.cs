@@ -277,9 +277,9 @@ namespace Tzkt.Sync.Protocols.Proto10
 
                 foreach (var bc in bakerCycles.Values)
                 {
-                    var rollsShare = (double)bc.Rolls / cycle.TotalRolls;
-                    bc.ExpectedBlocks = nextProto.BlocksPerCycle * rollsShare;
-                    bc.ExpectedEndorsements = nextProto.EndorsersPerBlock * nextProto.BlocksPerCycle * rollsShare;
+                    var share = (double)bc.StakingBalance / cycle.TotalStaking;
+                    bc.ExpectedBlocks = nextProto.BlocksPerCycle * share;
+                    bc.ExpectedEndorsements = nextProto.EndorsersPerBlock * nextProto.BlocksPerCycle * share;
                     bc.FutureBlockDeposits = 0;
                     bc.FutureBlockRewards = 0;
                     bc.FutureBlocks = 0;
@@ -401,19 +401,17 @@ namespace Tzkt.Sync.Protocols.Proto10
                         .Select(x => x.RequiredString())
                         .Where(x => x != baker.Address);
 
-                    var rolls = (int)(snapshotedBaker.RequiredInt64("staking_balance") / protocol.TokensPerRoll);
-                    var rollsShare = (double)rolls / cycle.TotalRolls;
+                    var share = (double)snapshotedBaker.RequiredInt64("staking_balance") / cycle.TotalStaking;
 
                     bakerCycle = new BakerCycle
                     {
                         Cycle = cycle.Index,
                         BakerId = baker.Id,
-                        Rolls = rolls,
                         StakingBalance = snapshotedBaker.RequiredInt64("staking_balance"),
                         DelegatedBalance = snapshotedBaker.RequiredInt64("delegated_balance"),
                         DelegatorsCount = delegators.Count(),
-                        ExpectedBlocks = protocol.BlocksPerCycle * rollsShare,
-                        ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * rollsShare
+                        ExpectedBlocks = protocol.BlocksPerCycle * share,
+                        ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * share
                     };
                     bakerCycles.Add(baker.Id, bakerCycle);
                     Db.BakerCycles.Add(bakerCycle);
