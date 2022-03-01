@@ -35,12 +35,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .ToListAsync();
 
                 var futureSeed = Seed.GetNextSeed(lastSeed, nonces);
-                var snapshotIndex = Seed.GetSnapshotIndex(futureSeed);
+                var snapshotIndex = 0;
+                var snapshotLevel = 1;
 
-                var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
-                var snapshotLevel = block.Cycle < 2 ? 1 : snapshotProto
-                    .GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
-                
+                if (block.Cycle >= 2)
+                {
+                    var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
+                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed);
+                    snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
+                }
+
                 var snapshotBalances = await Db.SnapshotBalances
                     .AsNoTracking()
                     .Where(x => x.Level == snapshotLevel)
