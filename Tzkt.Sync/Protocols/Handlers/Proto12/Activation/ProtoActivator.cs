@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -58,6 +62,54 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.DoubleBakingPunishment = 640_000_000;
             protocol.DoubleEndorsingPunishmentNumerator = 1;
             protocol.DoubleEndorsingPunishmentDenominator = 2;
+        }
+
+        protected override async Task MigrateContext(AppState state)
+        {
+            var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
+            await MigrateBakers(nextProto);
+        }
+
+        protected override Task RevertContext(AppState state)
+        {
+            throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
+        }
+
+        async Task MigrateBakers(Protocol protocol)
+        {
+            var bakers = await Db.Delegates.ToListAsync();
+            foreach (var baker in bakers)
+            {
+                Cache.Accounts.Add(baker);
+                baker.StakingBalance = baker.Balance + baker.DelegatedBalance;
+                var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / protocol.FrozenDepositsPercentage);
+                if (activeStake >= protocol.TokensPerRoll)
+                {
+                    baker.FrozenDeposit = activeStake * protocol.FrozenDepositsPercentage / 100;
+                    if (!baker.Staked)
+                    {
+                        baker.Staked = true;
+                        foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
+                        {
+                            Cache.Accounts.Add(delegator);
+                            baker.Staked = true;
+                        }
+                    }
+                }
+                else
+                {
+                    baker.FrozenDeposit = 0;
+                    if (baker.Staked)
+                    {
+                        baker.Staked = false;
+                        foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
+                        {
+                            Cache.Accounts.Add(delegator);
+                            baker.Staked = false;
+                        }
+                    }
+                }
+            }
         }
     }
 }
