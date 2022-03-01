@@ -62,6 +62,15 @@ namespace Tzkt.Data.Models
         /// </summary>
         public int LBEscapeThreshold { get; set; }
 
+        public int ConsensusThreshold { get; set; }
+        public int MinParticipationNumerator { get; set; }
+        public int MinParticipationDenominator { get; set; }
+        public int MaxSlashingPeriod { get; set; }
+        public int FrozenDepositsPercentage { get; set; }
+        public long DoubleBakingPunishment { get; set; }
+        public int DoubleEndorsingPunishmentNumerator { get; set; }
+        public int DoubleEndorsingPunishmentDenominator { get; set; }
+
         #region helpers
         public int GetCycleStart(int cycle)
         {
