@@ -30,6 +30,8 @@ namespace Tzkt.Sync.Protocols
         }
 
         public override Task Activate(AppState state, JsonElement block) => new ProtoActivator(this).Activate(state, block);
+        public override Task PostActivation(AppState state) => new ProtoActivator(this).PostActivation(state);
+        public override Task PreDeactivation(AppState state) => new ProtoActivator(this).PreDeactivation(state);
         public override Task Deactivate(AppState state) => new ProtoActivator(this).Deactivate(state);
 
         public override async Task Commit(JsonElement block)

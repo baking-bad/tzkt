@@ -88,6 +88,12 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Process quotes");
                 await Quotes.Commit();
 
+                if (state.Protocol != state.NextProtocol)
+                {
+                    Logger.LogDebug("Run post activation");
+                    await nextProtocol.PostActivation(state);
+                }
+
                 Logger.LogDebug("Commit DB transaction");
                 await tx.CommitAsync();
             }
@@ -108,19 +114,26 @@ namespace Tzkt.Sync
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
+                var state = Cache.AppState.Get();
+                Db.TryAttach(state);
+
+                var nextProtocol = this;
+                if (state.Protocol != state.NextProtocol)
+                {
+                    Logger.LogDebug("Run pre deactivation");
+                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                    await nextProtocol.PreDeactivation(state);
+                }
+
                 Logger.LogDebug("Revert quotes");
                 await Quotes.Revert();
 
                 Logger.LogDebug("Revert post-changes");
                 await BeforeRevert();
 
-                var state = Cache.AppState.Get();
-                Db.TryAttach(state);
-
                 if (state.Protocol != state.NextProtocol)
                 {
                     Logger.LogDebug("Deactivate latest protocol");
-                    var nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
                     await nextProtocol.Deactivate(state);
                 }
 
@@ -191,6 +204,10 @@ namespace Tzkt.Sync
 
             return Cache.Accounts.LoadAsync(accounts);
         }
+
+        public virtual Task PostActivation(AppState state) => Task.CompletedTask;
+
+        public virtual Task PreDeactivation(AppState state) => Task.CompletedTask;
 
         public virtual Task Activate(AppState state, JsonElement block) => Task.CompletedTask;
 

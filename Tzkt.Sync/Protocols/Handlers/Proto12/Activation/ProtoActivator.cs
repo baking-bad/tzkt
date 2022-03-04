@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -66,8 +67,26 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected override async Task MigrateContext(AppState state)
         {
-            var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
-            await MigrateBakers(nextProto);
+            var protocol = await Cache.Protocols.GetAsync(state.NextProtocol);
+            var bakers = await MigrateBakers(protocol);
+            await MigrateCycles(state, bakers);
+
+        }
+
+        public async Task PostActivation(AppState state)
+        {
+            #region make snapshot
+            await Db.Database.ExecuteSqlRawAsync($@"
+                INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"")
+                    SELECT {state.Level}, ""Balance"", ""Id"", ""DelegateId""
+                    FROM ""Accounts""
+                    WHERE ""Staked"" = true");
+            #endregion
+        }
+
+        public Task PreDeactivation(AppState state)
+        {
+            throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
         }
 
         protected override Task RevertContext(AppState state)
@@ -75,7 +94,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
         }
 
-        async Task MigrateBakers(Protocol protocol)
+        async Task<List<Data.Models.Delegate>> MigrateBakers(Protocol protocol)
         {
             var bakers = await Db.Delegates.ToListAsync();
             foreach (var baker in bakers)
@@ -83,32 +102,29 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Cache.Accounts.Add(baker);
                 baker.StakingBalance = baker.Balance + baker.DelegatedBalance;
                 var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / protocol.FrozenDepositsPercentage);
-                if (activeStake >= protocol.TokensPerRoll)
-                {
-                    baker.FrozenDeposit = activeStake * protocol.FrozenDepositsPercentage / 100;
-                    if (!baker.Staked)
-                    {
-                        baker.Staked = true;
-                        foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
-                        {
-                            Cache.Accounts.Add(delegator);
-                            baker.Staked = true;
-                        }
-                    }
-                }
-                else
-                {
-                    baker.FrozenDeposit = 0;
-                    if (baker.Staked)
-                    {
-                        baker.Staked = false;
-                        foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
-                        {
-                            Cache.Accounts.Add(delegator);
-                            baker.Staked = false;
-                        }
-                    }
-                }
+                baker.FrozenDeposit = baker.Staked && activeStake >= protocol.TokensPerRoll
+                    ? activeStake * protocol.FrozenDepositsPercentage / 100
+                    : 0;
+            }
+            return bakers.Where(x => x.Staked).ToList();
+        }
+
+        async Task MigrateCycles(AppState state, List<Data.Models.Delegate> bakers)
+        {
+            var totalStaking = bakers.Sum(x => x.StakingBalance);
+            var totalDelegated = bakers.Sum(x => x.DelegatedBalance);
+            var totalDelegators = bakers.Sum(x => x.DelegatorsCount);
+            var totalBakers = bakers.Count;
+
+            var cycles = await Db.Cycles.Where(x => x.Index > state.Cycle).ToListAsync();
+            foreach (var cycle in cycles)
+            {
+                cycle.SnapshotIndex = 0;
+                cycle.SnapshotLevel = state.Level;
+                cycle.TotalStaking = totalStaking;
+                cycle.TotalDelegated = totalDelegated;
+                cycle.TotalDelegators = totalDelegators;
+                cycle.TotalBakers = totalBakers;
             }
         }
     }
