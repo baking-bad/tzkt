@@ -71,6 +71,9 @@ namespace Tzkt.Data.Models
         public int DoubleEndorsingPunishmentNumerator { get; set; }
         public int DoubleEndorsingPunishmentDenominator { get; set; }
 
+        public long MaxBakingReward { get; set; }
+        public long MaxEndorsingReward { get; set; }
+
         #region helpers
         public int GetCycleStart(int cycle)
         {

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
+using Npgsql;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -37,6 +39,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.DoubleBakingPunishment = parameters["double_baking_punishment"]?.Value<long>() ?? 640_000_000;
             protocol.DoubleEndorsingPunishmentNumerator = parameters["ratio_of_frozen_deposits_slashed_per_double_endorsement"]?["numerator"]?.Value<int>() ?? 1;
             protocol.DoubleEndorsingPunishmentDenominator = parameters["ratio_of_frozen_deposits_slashed_per_double_endorsement"]?["denominator"]?.Value<int>() ?? 2;
+
+            protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
+            protocol.MaxEndorsingReward = protocol.EndorsersPerBlock * protocol.EndorsementReward0;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
@@ -63,25 +68,30 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.DoubleBakingPunishment = 640_000_000;
             protocol.DoubleEndorsingPunishmentNumerator = 1;
             protocol.DoubleEndorsingPunishmentDenominator = 2;
+
+            protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
+            protocol.MaxEndorsingReward = protocol.EndorsersPerBlock * protocol.EndorsementReward0;
         }
 
         protected override async Task MigrateContext(AppState state)
         {
-            var protocol = await Cache.Protocols.GetAsync(state.NextProtocol);
-            var bakers = await MigrateBakers(protocol);
-            await MigrateCycles(state, bakers);
+            var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
+            var bakers = await MigrateBakers(nextProto);
+            await MigrateCycles(state, bakers, nextProto);
         }
 
         public async Task PostActivation(AppState state)
         {
-            #region make snapshot
-            await Db.Database.ExecuteSqlRawAsync($@"
-                INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"")
-                    SELECT {state.Level}, ""Balance"", ""Id"", ""DelegateId""
-                    FROM ""Accounts""
-                    WHERE ""Staked"" = true");
-            #endregion
+            var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
+            var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
+
+            await MigrateSnapshots(state);
+            await MigrateCurrentRights(state, prevProto, nextProto);
+            await MigrateFutureRights(state, nextProto);
+
+            Cache.BakingRights.Reset();
+            Cache.BakerCycles.Reset();
         }
 
         public Task PreDeactivation(AppState state)
@@ -94,30 +104,33 @@ namespace Tzkt.Sync.Protocols.Proto12
             throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
         }
 
-        async Task<List<Data.Models.Delegate>> MigrateBakers(Protocol protocol)
+        async Task<List<Data.Models.Delegate>> MigrateBakers(Protocol nextProto)
         {
             var bakers = await Db.Delegates.ToListAsync();
             foreach (var baker in bakers)
             {
                 Cache.Accounts.Add(baker);
                 baker.StakingBalance = baker.Balance + baker.DelegatedBalance;
-                var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / protocol.FrozenDepositsPercentage);
-                baker.FrozenDeposit = baker.Staked && activeStake >= protocol.TokensPerRoll
-                    ? activeStake * protocol.FrozenDepositsPercentage / 100
+                var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / nextProto.FrozenDepositsPercentage);
+                baker.FrozenDeposit = baker.Staked && activeStake >= nextProto.TokensPerRoll
+                    ? activeStake * nextProto.FrozenDepositsPercentage / 100
                     : 0;
             }
             return bakers.Where(x => x.Staked).ToList();
         }
 
-        async Task MigrateCycles(AppState state, List<Data.Models.Delegate> bakers)
+        async Task MigrateCycles(AppState state, List<Data.Models.Delegate> bakers, Protocol nextProto)
         {
             var totalStaking = bakers.Sum(x => x.StakingBalance);
             var totalDelegated = bakers.Sum(x => x.DelegatedBalance);
             var totalDelegators = bakers.Sum(x => x.DelegatorsCount);
             var totalBakers = bakers.Count;
+            var selectedBakers = bakers.Count(x => x.FrozenDeposit != 0);
+            var selectedStake = bakers
+                .Where(x => x.FrozenDeposit != 0)
+                .Sum(x => Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage));
 
-            var cycles = await Db.Cycles.Where(x => x.Index > state.Cycle).ToListAsync();
-            foreach (var cycle in cycles)
+            foreach (var cycle in await Db.Cycles.Where(x => x.Index > state.Cycle).ToListAsync())
             {
                 cycle.SnapshotIndex = 0;
                 cycle.SnapshotLevel = state.Level;
@@ -125,6 +138,275 @@ namespace Tzkt.Sync.Protocols.Proto12
                 cycle.TotalDelegated = totalDelegated;
                 cycle.TotalDelegators = totalDelegators;
                 cycle.TotalBakers = totalBakers;
+                cycle.SelectedBakers = selectedBakers;
+                cycle.SelectedStake = selectedStake;
+            }
+        }
+
+        async Task MigrateSnapshots(AppState state)
+        {
+            await Db.Database.ExecuteSqlRawAsync($@"
+                INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""FrozenDepositLimit"", ""StakingBalance"")
+                    SELECT {state.Level}, ""Balance"", ""Id"", ""DelegateId"", ""FrozenDepositLimit"", ""StakingBalance""
+                    FROM ""Accounts""
+                    WHERE ""Staked"" = true");
+        }
+
+        async Task MigrateCurrentRights(AppState state, Protocol prevProto, Protocol nextProto)
+        {
+            #region revert current rights
+            var rights = await Db.BakingRights
+                .AsNoTracking()
+                .Where(x => x.Level > state.Level && x.Cycle == state.Cycle)
+                .ToListAsync();
+
+            foreach (var br in rights.Where(x => x.Type == BakingRightType.Baking && x.Priority == 0))
+            {
+                var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, br.BakerId);
+                Db.TryAttach(bakerCycle);
+
+                bakerCycle.FutureBlocks--;
+                bakerCycle.FutureBlockRewards -= GetFutureBlockReward(prevProto, state.Cycle);
+            }
+
+            foreach (var er in rights.Where(x => x.Type == BakingRightType.Endorsing))
+            {
+                var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.BakerId);
+                Db.TryAttach(bakerCycle);
+
+                bakerCycle.FutureEndorsements -= (int)er.Slots;
+                bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, (int)er.Slots);
+            }
+
+            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Level"" > {state.Level}");
+            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakerCycles"" WHERE ""Cycle"" > {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""DelegatorCycles"" WHERE ""Cycle"" > {state.Cycle}");
+            #endregion
+
+            #region apply new rights
+            async Task<BakerCycle> GetBakerCycle(int bakerId)
+            {
+                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(state.Cycle, bakerId);
+                if (bakerCycle == null) // WTF: they use different snapshot
+                {
+                    var baker = Cache.Accounts.GetDelegate(bakerId);
+                    bakerCycle = new()
+                    {
+                        BakerId = baker.Id,
+                        Cycle = state.Cycle,
+                        DelegatedBalance = baker.DelegatedBalance,
+                        DelegatorsCount = baker.DelegatorsCount,
+                        StakingBalance = baker.StakingBalance
+                    };
+                    Db.BakerCycles.Add(bakerCycle);
+                    Cache.BakerCycles.Add(bakerCycle);
+
+                    if (baker.DelegatorsCount > 0)
+                    {
+                        await Db.Database.ExecuteSqlRawAsync($@"
+                            INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
+                            SELECT  {state.Cycle}, ""AccountId"", ""DelegateId"", ""Balance""
+                            FROM    ""SnapshotBalances""
+                            WHERE   ""Level"" = {state.Level}
+                            AND     ""DelegateId"" = {baker.Id}");
+                    }
+                }
+                else
+                {
+                    Db.TryAttach(bakerCycle);
+                }
+                return bakerCycle;
+            }
+
+            var cycle = await Db.Cycles.AsNoTracking().FirstAsync(x => x.Index == state.Cycle);
+            var sampler = await Sampler.CreateAsync(Proto, cycle.Index);
+            var brs = new List<RightsGenerator.BR>();
+            var ers = new List<RightsGenerator.ER>();
+            for (int level = state.Level + 1; level <= cycle.LastLevel; level++)
+            {
+                foreach (var br in RightsGenerator.GetBakingRights(sampler, cycle, level))
+                {
+                    brs.Add(br);
+                    if (br.Round == 0)
+                    {
+                        var bakerCycle = await GetBakerCycle(br.Baker);
+                        bakerCycle.FutureBlocks++;
+                        bakerCycle.FutureBlockRewards += nextProto.MaxBakingReward;
+                    }
+                }
+                foreach (var er in RightsGenerator.GetEndorsingRights(sampler, nextProto, cycle, level - 1))
+                {
+                    ers.Add(er);
+                    var bakerCycle = await GetBakerCycle(er.Baker);
+                    bakerCycle.FutureEndorsements += er.Slots;
+                }
+            }
+
+            var shifted = RightsGenerator.GetEndorsingRights(sampler, nextProto, cycle, cycle.LastLevel);
+
+            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            using var writer = conn.BeginBinaryImport(@"
+                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"")
+                    FROM STDIN (FORMAT BINARY)");
+
+            foreach (var er in ers)
+            {
+                writer.StartRow();
+                writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.WriteNull();
+                writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+            }
+
+            foreach (var er in shifted)
+            {
+                writer.StartRow();
+                writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.WriteNull();
+                writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+            }
+
+            foreach (var br in brs)
+            {
+                writer.StartRow();
+                writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.WriteNull();
+            }
+
+            writer.Complete();
+            #endregion
+        }
+
+        async Task MigrateFutureRights(AppState state, Protocol nextProto)
+        {
+            var sampler = await Sampler.CreateAsync(Proto, state.Cycle);
+            var bakers = await Db.Delegates.AsNoTracking().Where(x => x.Staked).ToListAsync();
+            var cycles = await Db.Cycles.AsNoTracking().Where(x => x.Index > state.Cycle).OrderBy(x => x.Index).ToListAsync();
+
+            var shifted = (await Db.BakingRights.AsNoTracking().Where(x => x.Cycle == state.Cycle + 1).ToListAsync())
+                .Select(x => new RightsGenerator.ER
+                {
+                    Baker = x.BakerId,
+                    Level = x.Level,
+                    Slots = (int)x.Slots
+                });
+            
+            foreach (var cycle in cycles)
+            {
+                GC.Collect();
+                var brs = await RightsGenerator.GetBakingRightsAsync(sampler, nextProto, cycle);
+                var ers = await RightsGenerator.GetEndorsingRightsAsync(sampler, nextProto, cycle);
+
+                #region save rights
+                var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+                using (var writer = conn.BeginBinaryImport(@"
+                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"")
+                    FROM STDIN (FORMAT BINARY)"))
+                {
+                    foreach (var er in ers)
+                    {
+                        writer.StartRow();
+                        writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
+                        writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                        writer.WriteNull();
+                        writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                    }
+
+                    foreach (var br in brs)
+                    {
+                        writer.StartRow();
+                        writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
+                        writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                        writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.WriteNull();
+                    }
+
+                    writer.Complete();
+                }
+                #endregion
+
+                #region save delegator cycles
+                await Db.Database.ExecuteSqlRawAsync($@"
+                    INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
+                    SELECT  {cycle.Index}, ""AccountId"", ""DelegateId"", ""Balance""
+                    FROM    ""SnapshotBalances""
+                    WHERE   ""Level"" = {cycle.SnapshotLevel}
+                    AND     ""DelegateId"" IS NOT NULL");
+                #endregion
+
+                #region save baker cycles
+                var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
+                {
+                    var activeStake = Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage);
+                    var bc = new BakerCycle
+                    {
+                        BakerId = x.Id,
+                        Cycle = cycle.Index,
+                        DelegatedBalance = x.DelegatedBalance,
+                        DelegatorsCount = x.DelegatorsCount, 
+                        StakingBalance = x.StakingBalance,
+                    };
+                    if (activeStake >= nextProto.TokensPerRoll)
+                    {
+                        var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * activeStake / cycle.SelectedStake);
+                        bc.ExpectedBlocks = nextProto.BlocksPerCycle * activeStake / cycle.SelectedStake;
+                        bc.ExpectedEndorsements = expectedEndorsements;
+                        bc.FutureEndorsementRewards = expectedEndorsements * nextProto.EndorsementReward0;
+                        bc.ActiveStake = activeStake;
+                        bc.Deposits = x.FrozenDeposit;
+                    }
+                    return bc;
+                });
+                Db.BakerCycles.AddRange(bakerCycles.Values);
+                #endregion
+
+                #region apply future baking rights
+                foreach (var br in brs.Where(x => x.Round == 0))
+                {
+                    if (!bakerCycles.TryGetValue(br.Baker, out var bakerCycle))
+                        throw new Exception("Nonexistent baker cycle");
+
+                    bakerCycle.FutureBlocks++;
+                    bakerCycle.FutureBlockRewards += nextProto.MaxBakingReward;
+                }
+                #endregion
+
+                #region apply future endorsing rights
+                foreach (var er in shifted)
+                {
+                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                        throw new Exception("Nonexistent baker cycle");
+
+                    bakerCycle.FutureEndorsements += er.Slots;
+                }
+                foreach (var er in ers.TakeWhile(x => x.Level < cycle.LastLevel))
+                {
+                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                        throw new Exception("Nonexistent baker cycle");
+
+                    bakerCycle.FutureEndorsements += er.Slots;
+                }
+                #endregion
+
+                shifted = ers.Where(x => x.Level == cycle.LastLevel).ToList();
             }
         }
     }

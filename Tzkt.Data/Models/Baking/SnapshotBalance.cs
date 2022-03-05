@@ -9,6 +9,8 @@ namespace Tzkt.Data.Models
         public long Balance { get; set; }
         public int AccountId { get; set; }
         public int? DelegateId { get; set; }
+        public long? FrozenDepositLimit { get; set; }
+        public long? StakingBalance { get; set; }
     }
 
     public static class SnapshotBalanceModel

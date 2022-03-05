@@ -14,6 +14,8 @@ namespace Tzkt.Data.Models
         public long TotalDelegated { get; set; }
         public int TotalDelegators { get; set; }
         public int TotalBakers { get; set; }
+        public int SelectedBakers { get; set; }
+        public long SelectedStake { get; set; }
 
         public byte[] Seed { get; set; }
     }
