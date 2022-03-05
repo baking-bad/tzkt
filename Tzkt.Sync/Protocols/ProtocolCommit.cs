@@ -53,7 +53,6 @@ namespace Tzkt.Sync.Protocols
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
             {
                 Cache.Accounts.Add(delegator);
-                Db.TryAttach(delegator);
                 delegator.Staked = staked;
             }
         }

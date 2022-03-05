@@ -22,11 +22,14 @@ namespace Tzkt.Data.Models
 
         public long Deposit { get; set; }
         public long Reward { get; set; }
+        public long Bonus { get; set; }
         public long Fees { get; set; }
 
         public int? BakerId { get; set; }
+        public int? ProposerId { get; set; }
         public int? RevelationId { get; set; }
-        public int? ResetDeactivation { get; set; }
+        public int? ResetBakerDeactivation { get; set; }
+        public int? ResetProposerDeactivation { get; set; }
 
         public bool LBEscapeVote { get; set; }
         public int LBEscapeEma { get; set; }
