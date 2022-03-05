@@ -11,6 +11,7 @@ namespace Tzkt.Data.Models
         public int DelegatorsCount { get; set; }
         public long DelegatedBalance { get; set; }
         public long StakingBalance { get; set; }
+        public long ActiveStake { get; set; }
 
         #region rights
         public int FutureBlocks { get; set; }

@@ -35,6 +35,9 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         public Task<JsonElement> GetDelegateAsync(int level, string address)
             => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetStakeDistribution(int block, int cycle)
+            => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics

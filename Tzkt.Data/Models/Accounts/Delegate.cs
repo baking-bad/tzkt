@@ -9,6 +9,7 @@ namespace Tzkt.Data.Models
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }
 
+        public long? FrozenDepositLimit { get; set; }
         public long FrozenDeposit { get; set; }
         public long StakingBalance { get; set; }
         public long DelegatedBalance { get; set; }

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Sync.Services;
 
@@ -34,6 +35,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual Task<JsonElement> GetDelegateAsync(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates/{address}");
+
+        public virtual Task<JsonElement> GetStakeDistribution(int block, int cycle)
+            => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics

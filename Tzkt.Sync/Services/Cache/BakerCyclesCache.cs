@@ -71,5 +71,12 @@ namespace Tzkt.Sync.Services.Cache
 
             return CachedBakerCycles.TryGetValue(bakerId, out var res) ? res : null;
         }
+
+        public void Add(BakerCycle bc)
+        {
+            if (CachedCycle != bc.Cycle)
+                throw new InvalidOperationException();
+            CachedBakerCycles[bc.BakerId] = bc;
+        }
     }
 }
