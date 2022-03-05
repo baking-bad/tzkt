@@ -70,7 +70,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (baker.DeactivationLevel <= Block.Level)
                     await UpdateDelegate(baker, true);
 
-                Block.ResetDeactivation = baker.DeactivationLevel;
+                Block.ResetBakerDeactivation = baker.DeactivationLevel;
                 baker.DeactivationLevel = newDeactivationLevel;
             }
 
@@ -98,12 +98,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             baker.Balance -= Block.Reward;
             baker.BlocksCount--;
 
-            if (Block.ResetDeactivation != null)
+            if (Block.ResetBakerDeactivation != null)
             {
-                if (Block.ResetDeactivation <= Block.Level)
+                if (Block.ResetBakerDeactivation <= Block.Level)
                     await UpdateDelegate(baker, false);
 
-                baker.DeactivationLevel = (int)Block.ResetDeactivation;
+                baker.DeactivationLevel = (int)Block.ResetBakerDeactivation;
             }
 
             Db.Blocks.Remove(Block);
