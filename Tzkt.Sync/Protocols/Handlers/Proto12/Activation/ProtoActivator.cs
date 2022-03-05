@@ -79,6 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var bakers = await MigrateBakers(nextProto);
             await MigrateCycles(state, bakers, nextProto);
+            await MigrateStatistics(state, bakers);
         }
 
         public async Task PostActivation(AppState state)
@@ -92,6 +93,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Cache.BakingRights.Reset();
             Cache.BakerCycles.Reset();
+
+            await Db.SaveChangesAsync();
         }
 
         public Task PreDeactivation(AppState state)
@@ -141,6 +144,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 cycle.SelectedBakers = selectedBakers;
                 cycle.SelectedStake = selectedStake;
             }
+        }
+
+        async Task MigrateStatistics(AppState state, List<Data.Models.Delegate> bakers)
+        {
+            var stats = await Cache.Statistics.GetAsync(state.Level);
+            Db.TryAttach(stats);
+            stats.TotalFrozen = bakers.Sum(x => x.FrozenDeposit);
         }
 
         async Task MigrateSnapshots(AppState state)
