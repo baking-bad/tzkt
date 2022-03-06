@@ -88,6 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             await MigrateSnapshots(state);
+            await MigrateCurrentBakerCycles(state, nextProto);
             await MigrateCurrentRights(state, prevProto, nextProto);
             await MigrateFutureRights(state, nextProto);
 
@@ -162,6 +163,56 @@ namespace Tzkt.Sync.Protocols.Proto12
                     WHERE ""Staked"" = true");
         }
 
+        async Task MigrateCurrentBakerCycles(AppState state, Protocol nextProto)
+        {
+            var cycle = await Db.Cycles.FirstAsync(x => x.Index == state.Cycle);
+            var bakers = await Db.Delegates.AsNoTracking().Where(x => x.Staked && x.FrozenDeposit > 0).ToListAsync();
+            var bakerCycles = await Cache.BakerCycles.GetAsync(state.Cycle);
+
+            cycle.SelectedBakers = bakers.Count;
+            cycle.SelectedStake = bakers
+                .Sum(x => Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage));
+
+            #region add missed
+            foreach (var baker in bakers)
+            {
+                if (!bakerCycles.TryGetValue(baker.Id, out var bc)) // WTF: they used different snapshot
+                {
+                    bc = new()
+                    {
+                        BakerId = baker.Id,
+                        Cycle = state.Cycle,
+                        DelegatedBalance = baker.DelegatedBalance,
+                        DelegatorsCount = baker.DelegatorsCount,
+                        StakingBalance = baker.StakingBalance,
+                        ActiveStake = 0
+                    };
+                    Db.BakerCycles.Add(bc);
+                    Cache.BakerCycles.Add(bc);
+
+                    if (baker.DelegatorsCount > 0)
+                    {
+                        await Db.Database.ExecuteSqlRawAsync($@"
+                            INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
+                            SELECT  {state.Cycle}, ""AccountId"", ""DelegateId"", ""Balance""
+                            FROM    ""SnapshotBalances""
+                            WHERE   ""Level"" = {state.Level}
+                            AND     ""DelegateId"" = {baker.Id}");
+                    }
+                }
+            }
+            #endregion
+
+            #region set deposits
+            foreach (var baker in bakers)
+            {
+                var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / nextProto.FrozenDepositsPercentage);
+                var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * activeStake / cycle.SelectedStake);
+                bakerCycles[baker.Id].FutureEndorsementRewards += expectedEndorsements * nextProto.EndorsementReward0;
+            }
+            #endregion
+        }
+
         async Task MigrateCurrentRights(AppState state, Protocol prevProto, Protocol nextProto)
         {
             #region revert current rights
@@ -194,40 +245,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply new rights
-            async Task<BakerCycle> GetBakerCycle(int bakerId)
-            {
-                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(state.Cycle, bakerId);
-                if (bakerCycle == null) // WTF: they use different snapshot
-                {
-                    var baker = Cache.Accounts.GetDelegate(bakerId);
-                    bakerCycle = new()
-                    {
-                        BakerId = baker.Id,
-                        Cycle = state.Cycle,
-                        DelegatedBalance = baker.DelegatedBalance,
-                        DelegatorsCount = baker.DelegatorsCount,
-                        StakingBalance = baker.StakingBalance
-                    };
-                    Db.BakerCycles.Add(bakerCycle);
-                    Cache.BakerCycles.Add(bakerCycle);
-
-                    if (baker.DelegatorsCount > 0)
-                    {
-                        await Db.Database.ExecuteSqlRawAsync($@"
-                            INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
-                            SELECT  {state.Cycle}, ""AccountId"", ""DelegateId"", ""Balance""
-                            FROM    ""SnapshotBalances""
-                            WHERE   ""Level"" = {state.Level}
-                            AND     ""DelegateId"" = {baker.Id}");
-                    }
-                }
-                else
-                {
-                    Db.TryAttach(bakerCycle);
-                }
-                return bakerCycle;
-            }
-
             var cycle = await Db.Cycles.AsNoTracking().FirstAsync(x => x.Index == state.Cycle);
             var sampler = await Sampler.CreateAsync(Proto, cycle.Index);
             var brs = new List<RightsGenerator.BR>();
@@ -239,7 +256,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                     brs.Add(br);
                     if (br.Round == 0)
                     {
-                        var bakerCycle = await GetBakerCycle(br.Baker);
+                        var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, br.Baker);
+                        Db.TryAttach(bakerCycle);
                         bakerCycle.FutureBlocks++;
                         bakerCycle.FutureBlockRewards += nextProto.MaxBakingReward;
                     }
@@ -247,7 +265,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 foreach (var er in RightsGenerator.GetEndorsingRights(sampler, nextProto, cycle, level - 1))
                 {
                     ers.Add(er);
-                    var bakerCycle = await GetBakerCycle(er.Baker);
+                    var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.Baker);
+                    Db.TryAttach(bakerCycle);
                     bakerCycle.FutureEndorsements += er.Slots;
                 }
             }
@@ -381,7 +400,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                         bc.ExpectedEndorsements = expectedEndorsements;
                         bc.FutureEndorsementRewards = expectedEndorsements * nextProto.EndorsementReward0;
                         bc.ActiveStake = activeStake;
-                        bc.Deposits = x.FrozenDeposit;
                     }
                     return bc;
                 });

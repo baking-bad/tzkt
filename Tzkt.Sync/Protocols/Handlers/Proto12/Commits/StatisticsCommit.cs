@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -12,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto12
     {
         public StatisticsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual async Task Apply(Block block, List<EndorsingRewardOperation> endorsingRewards, IEnumerable<JsonElement> freezerUpdates)
+        public virtual async Task Apply(Block block, List<EndorsingRewardOperation> endorsingRewards, long freezerChange)
         {
             var prev = await Cache.Statistics.GetAsync(block.Level - 1);
             var statistics = new Statistics
@@ -27,6 +26,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 TotalVested = prev.TotalVested,
                 TotalFrozen = prev.TotalFrozen
             };
+
+            statistics.TotalFrozen += freezerChange;
 
             statistics.TotalCreated += block.Reward;
             statistics.TotalCreated += block.Bonus;
@@ -95,9 +96,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var subsidy = block.Migrations.Where(x => x.Kind == MigrationKind.Subsidy).Sum(x => x.BalanceChange);
                 statistics.TotalCreated += subsidy;
             }
-
-            if (freezerUpdates != null && freezerUpdates.Any())
-                statistics.TotalFrozen += freezerUpdates.Sum(x => x.RequiredInt64("change"));
 
             if (block.Transactions != null)
             {
