@@ -792,17 +792,7 @@ namespace Tzkt.Sync.Protocols.Proto10
         protected override long GetFutureBlockReward(Protocol protocol, int cycle)
             => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.EndorsersPerBlock);
 
-        protected override long GetBlockDeposit(Protocol protocol, int cycle)
-            => cycle < protocol.RampUpCycles
-                ? (protocol.BlockDeposit / protocol.RampUpCycles * cycle)
-                : protocol.BlockDeposit;
-
         protected override long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
             => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
-
-        protected override long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
-            => cycle < protocol.RampUpCycles
-                ? (slots * (protocol.EndorsementDeposit / protocol.RampUpCycles * cycle))
-                : (slots * protocol.EndorsementDeposit);
     }
 }

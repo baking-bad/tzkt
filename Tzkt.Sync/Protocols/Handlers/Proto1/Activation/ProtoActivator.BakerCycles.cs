@@ -98,18 +98,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual long GetFutureBlockReward(Protocol protocol, int cycle)
             => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;
 
-        protected virtual long GetBlockDeposit(Protocol protocol, int cycle)
-            => cycle < protocol.RampUpCycles
-                ? (protocol.BlockDeposit / protocol.RampUpCycles * cycle)
-                : protocol.BlockDeposit;
-
         protected virtual long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
             => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
-
-        protected virtual long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
-            => cycle < protocol.RampUpCycles
-                ? (slots * (protocol.EndorsementDeposit / protocol.RampUpCycles * cycle))
-                : (slots * protocol.EndorsementDeposit);
         #endregion
     }
 }

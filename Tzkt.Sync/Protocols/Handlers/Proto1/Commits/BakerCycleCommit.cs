@@ -48,7 +48,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (br.Status == BakingRightStatus.Realized)
                     {
-                        bakerCycle.Deposits += GetBlockDeposit(block.Protocol, block.Cycle);
                         bakerCycle.Blocks++;
                     }
                     else if (br.Status == BakingRightStatus.Missed)
@@ -71,7 +70,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (endorsingRight.Status == BakingRightStatus.Realized)
                     {
                         bakerCycle.Endorsements += (int)endorsingRight.Slots;
-                        bakerCycle.Deposits += GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                     {
@@ -406,7 +404,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (br.Status == BakingRightStatus.Realized)
                     {
-                        bakerCycle.Deposits -= GetBlockDeposit(block.Protocol, block.Cycle);
                         bakerCycle.Blocks--;
                     }
                     else if (br.Status == BakingRightStatus.Missed)
@@ -426,7 +423,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (endorsingRight.Status == BakingRightStatus.Realized)
                     {
                         bakerCycle.Endorsements -= (int)endorsingRight.Slots;
-                        bakerCycle.Deposits -= GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                     {
@@ -596,18 +592,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected long GetFutureBlockReward(Protocol protocol, int cycle)
             => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;
 
-        protected long GetBlockDeposit(Protocol protocol, int cycle)
-            => cycle < protocol.RampUpCycles
-                ? (protocol.BlockDeposit / protocol.RampUpCycles * cycle)
-                : protocol.BlockDeposit;
-
         protected long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
             => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
-
-        protected long GetEndorsementDeposit(Protocol protocol, int cycle, int slots)
-            => cycle < protocol.RampUpCycles
-                ? (slots * (protocol.EndorsementDeposit / protocol.RampUpCycles * cycle))
-                : (slots * protocol.EndorsementDeposit);
 
         protected long GetBlockReward(Protocol protocol, int cycle, int priority, int slots)
             => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;

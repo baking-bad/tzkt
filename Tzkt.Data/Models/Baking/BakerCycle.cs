@@ -45,10 +45,6 @@ namespace Tzkt.Data.Models
         public long RevelationLosses { get; set; }
         #endregion
 
-        #region deposits
-        public long Deposits { get; set; }
-        #endregion
-
         #region expected
         public double ExpectedBlocks { get; set; }
         public double ExpectedEndorsements { get; set; }

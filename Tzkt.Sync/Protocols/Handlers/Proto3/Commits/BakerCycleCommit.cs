@@ -48,7 +48,6 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     if (br.Status == BakingRightStatus.Realized)
                     {
-                        bakerCycle.Deposits += GetBlockDeposit(block.Protocol, block.Cycle);
                         bakerCycle.Blocks++;
                     }
                     else if (br.Status == BakingRightStatus.Missed)
@@ -68,7 +67,6 @@ namespace Tzkt.Sync.Protocols.Proto3
                     if (endorsingRight.Status == BakingRightStatus.Realized)
                     {
                         bakerCycle.Endorsements += (int)endorsingRight.Slots;
-                        bakerCycle.Deposits += GetEndorsementDeposit(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
                     }
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                     {

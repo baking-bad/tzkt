@@ -55,7 +55,6 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
-                Deposits = row.Deposits,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
                 EndorsementRewards = row.EndorsementRewards,
@@ -107,7 +106,6 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
-                Deposits = row.Deposits,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
                 EndorsementRewards = row.EndorsementRewards,
@@ -155,7 +153,6 @@ namespace Tzkt.Api.Repositories
                     case "doubleBakingLosses": columns.Add(@"""DoubleBakingLosses"""); break;
                     case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
                     case "doubleEndorsingLosses": columns.Add(@"""DoubleEndorsingLosses"""); break;
-                    case "deposits": columns.Add(@"""Deposits"""); break;
                     case "cycle": columns.Add(@"""Cycle"""); break;
                     case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                     case "endorsementRewards": columns.Add(@"""EndorsementRewards"""); break;
@@ -216,10 +213,6 @@ namespace Tzkt.Api.Repositories
                     case "doubleEndorsingLosses":
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleEndorsingLosses;
-                        break;
-                    case "deposits":
-                        foreach (var row in rows)
-                            result[j++][i] = row.Deposits;
                         break;
                     case "cycle":
                         foreach (var row in rows)
@@ -338,7 +331,6 @@ namespace Tzkt.Api.Repositories
                 case "doubleBakingLosses": columns.Add(@"""DoubleBakingLosses"""); break;
                 case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
                 case "doubleEndorsingLosses": columns.Add(@"""DoubleEndorsingLosses"""); break;
-                case "deposits": columns.Add(@"""Deposits"""); break;
                 case "cycle": columns.Add(@"""Cycle"""); break;
                 case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                 case "endorsementRewards": columns.Add(@"""EndorsementRewards"""); break;
@@ -396,10 +388,6 @@ namespace Tzkt.Api.Repositories
                 case "doubleEndorsingLosses":
                     foreach (var row in rows)
                         result[j++] = row.DoubleEndorsingLosses;
-                    break;
-                case "deposits":
-                    foreach (var row in rows)
-                        result[j++] = row.Deposits;
                     break;
                 case "cycle":
                     foreach (var row in rows)
@@ -1022,7 +1010,6 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLosses = rewards.DoubleBakingLosses,
                 DoubleEndorsingRewards = rewards.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = rewards.DoubleEndorsingLosses,
-                Deposits = rewards.Deposits,
                 Cycle = rewards.Cycle,
                 DelegatedBalance = rewards.DelegatedBalance,
                 EndorsementRewards = rewards.EndorsementRewards,

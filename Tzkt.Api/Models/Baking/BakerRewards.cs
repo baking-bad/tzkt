@@ -130,11 +130,6 @@ namespace Tzkt.Api.Models
         public long UncoveredExtraBlockRewards { get; set; }
 
         /// <summary>
-        /// Bonds which were locked as a security deposit for baking and endorsing.
-        /// </summary>
-        public long Deposits { get; set; }
-
-        /// <summary>
         /// [DEPRECATED]
         /// </summary>
         public long BlockDeposits { get; set; }
