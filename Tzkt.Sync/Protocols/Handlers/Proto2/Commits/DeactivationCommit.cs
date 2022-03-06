@@ -14,9 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             #region init
-            var deactivationLevel = rawBlock.Required("header").RequiredInt32("level");
             List<Delegate> delegates = null;
-
             if (block.Events.HasFlag(BlockEvents.Deactivations))
             {
                 var deactivated = rawBlock
@@ -35,7 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             {
                 delegates = await Db.Delegates
                     .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.Staked && x.DeactivationLevel == deactivationLevel)
+                    .Where(x => x.Staked && x.DeactivationLevel == block.Level)
                     .ToListAsync();
             }
             #endregion
@@ -47,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Cache.Accounts.Add(delegat);
                 Db.TryAttach(delegat);
 
-                delegat.DeactivationLevel = deactivationLevel;
+                delegat.DeactivationLevel = block.Level;
                 delegat.Staked = false;
 
                 foreach (var delegator in delegat.DelegatedAccounts)
@@ -63,14 +61,12 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Revert(Block block)
         {
             #region init
-            var deactivationLevel = block.Level;
-            List<Data.Models.Delegate> delegates = null;
-
+            List<Delegate> delegates = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations) || block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 delegates = await Db.Delegates
                     .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.DeactivationLevel == deactivationLevel)
+                    .Where(x => x.DeactivationLevel == block.Level)
                     .ToListAsync();
             }
             #endregion
@@ -83,9 +79,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Db.TryAttach(delegat);
 
                 delegat.DeactivationLevel = block.Events.HasFlag(BlockEvents.CycleEnd)
-                    ? deactivationLevel + 1
-                    : deactivationLevel;
-
+                    ? block.Level + 1
+                    : block.Level;
                 delegat.Staked = true;
 
                 foreach (var delegator in delegat.DelegatedAccounts)
