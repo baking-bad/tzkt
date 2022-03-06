@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +13,8 @@ namespace Tzkt.Sync.Protocols.Proto10
 
         public virtual async Task Apply(Block block, JsonElement content)
         {
-            var balanceUpdate = content.RequiredArray("balance_updates")[0];
+            var balanceUpdate = content.RequiredArray("balance_updates").EnumerateArray()
+                .First(x => x.RequiredString("kind") == "contract");
             var contract = await Cache.Accounts.GetAsync(balanceUpdate.RequiredString("contract")) as Contract;
             Db.TryAttach(contract);
             var op = new MigrationOperation

@@ -40,8 +40,6 @@ namespace Tzkt.Sync.Protocols
             await blockCommit.Apply(block);
 
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
-
-            await new RevelationPenaltyCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
 
             #region implicit operations
@@ -62,7 +60,7 @@ namespace Tzkt.Sync.Protocols
                 {
                     switch (content.RequiredString("kind"))
                     {
-                        case "endorsement_with_slot":
+                        case "endorsement":
                             await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         default:
@@ -354,7 +352,6 @@ namespace Tzkt.Sync.Protocols
             await new SubsidyCommit(this).Revert(currBlock);
 
             await new DeactivationCommit(this).Revert(currBlock);
-            await new RevelationPenaltyCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
             await new BlockCommit(this).Revert(currBlock);
 
