@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
-            var version = rawBlock.Required("header").RequiredString("proof_of_work_nonce").Substring(0, 8);
+            var version = rawBlock.Required("header").RequiredString("proof_of_work_nonce")[..8];
             var software = await Cache.Software.GetOrCreateAsync(version, () => new Software
             {
                 FirstLevel = block.Level,

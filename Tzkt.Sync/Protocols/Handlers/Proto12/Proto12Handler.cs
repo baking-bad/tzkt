@@ -206,7 +206,10 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.Snapshots,
                 brCommit.CurrentRights);
 
-            await new StatisticsCommit(this).Apply(blockCommit.Block, freezerCommit.FreezerUpdates);
+            var endorsingRewardCommit = new EndorsingRewardCommit(this);
+            await endorsingRewardCommit.Apply(blockCommit.Block, block);
+
+            await new StatisticsCommit(this).Apply(blockCommit.Block, endorsingRewardCommit.Ops, freezerCommit.FreezerUpdates);
             await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
@@ -283,6 +286,8 @@ namespace Tzkt.Sync.Protocols
 
             await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
+
+            await new EndorsingRewardCommit(this).Revert(currBlock);
 
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);
