@@ -46,13 +46,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (bakerCycle.FutureEndorsementRewards != loss)
                         throw new Exception("FutureEndorsementRewards != loss");
 
-                    Ops[^1].Received -= loss; 
-                    bakerCycle.FutureEndorsementRewards -= loss;
-                    bakerCycle.MissedEndorsementRewards = loss;
+                    Ops[^1].Received = 0; 
+                    bakerCycle.MissedEndorsementRewards += bakerCycle.FutureEndorsementRewards;
+                    bakerCycle.FutureEndorsementRewards = 0;
                 }
                 else
                 {
-                    bakerCycle.EndorsementRewards = bakerCycle.FutureEndorsementRewards;
+                    bakerCycle.EndorsementRewards += bakerCycle.FutureEndorsementRewards;
                     bakerCycle.FutureEndorsementRewards = 0;
                 }
             }
@@ -94,8 +94,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Db.TryAttach(bakerCycle);
 
                 bakerCycle.FutureEndorsementRewards = op.Expected;
-                bakerCycle.EndorsementRewards = 0;
-                bakerCycle.MissedEndorsementRewards = 0;
+                if (op.Expected == op.Received)
+                    bakerCycle.EndorsementRewards -= op.Expected;
+                else
+                    bakerCycle.MissedEndorsementRewards -= op.Expected;
             }
 
             Cache.AppState.Get().EndorsingRewardOpsCount -= ops.Count;

@@ -41,9 +41,6 @@ namespace Tzkt.Sync.Protocols
 
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
 
-            var freezerCommit = new FreezerCommit(this);
-            await freezerCommit.Apply(blockCommit.Block, block);
-
             await new RevelationPenaltyCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
 
@@ -206,10 +203,13 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.Snapshots,
                 brCommit.CurrentRights);
 
+            var freezerCommit = new FreezerCommit(this);
+            freezerCommit.Apply(blockCommit.Block, block);
+
             var endorsingRewardCommit = new EndorsingRewardCommit(this);
             await endorsingRewardCommit.Apply(blockCommit.Block, block);
 
-            await new StatisticsCommit(this).Apply(blockCommit.Block, endorsingRewardCommit.Ops, freezerCommit.FreezerUpdates);
+            await new StatisticsCommit(this).Apply(blockCommit.Block, endorsingRewardCommit.Ops, freezerCommit.FreezerChange);
             await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
@@ -288,6 +288,7 @@ namespace Tzkt.Sync.Protocols
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new EndorsingRewardCommit(this).Revert(currBlock);
+            await new FreezerCommit(this).Revert(currBlock);
 
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);
@@ -354,7 +355,6 @@ namespace Tzkt.Sync.Protocols
 
             await new DeactivationCommit(this).Revert(currBlock);
             await new RevelationPenaltyCommit(this).Revert(currBlock);
-            await new FreezerCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
             await new BlockCommit(this).Revert(currBlock);
 
