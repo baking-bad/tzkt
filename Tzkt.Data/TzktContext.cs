@@ -38,6 +38,7 @@ namespace Tzkt.Data
         public DbSet<TransactionOperation> TransactionOps { get; set; }
         public DbSet<RegisterConstantOperation> RegisterConstantOps { get; set; }
 
+        public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
         #endregion
@@ -117,6 +118,7 @@ namespace Tzkt.Data
             modelBuilder.BuildTransactionOperationModel();
             modelBuilder.BuildRegisterConstantOperationModel();
 
+            modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
             #endregion

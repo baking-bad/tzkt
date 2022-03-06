@@ -42,6 +42,21 @@ namespace Tzkt.Sync.Services.Cache
             return CachedBakerCycles.ContainsKey(bakerId);
         }
 
+        public async Task<Dictionary<int, BakerCycle>> GetAsync(int cycle)
+        {
+            if (CachedCycle != cycle)
+            {
+                var bakerCycles = await Db.BakerCycles
+                    .Where(x => x.Cycle == cycle)
+                    .ToListAsync();
+
+                CachedBakerCycles = bakerCycles.ToDictionary(x => x.BakerId);
+                CachedCycle = cycle;
+            }
+
+            return CachedBakerCycles;
+        }
+
         public async Task<BakerCycle> GetAsync(int cycle, int bakerId)
         {
             if (CachedCycle != cycle)
