@@ -71,12 +71,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             var proto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             var accounts = entries.Where(x =>
-                x.Entity is Account &&
-                (x.State == EntityState.Modified ||
-                x.State == EntityState.Added))
+                x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
                 .Select(x => x.Entity as Account);
 
-            await TestState(level, state);
+            await TestGlobalCounter(level, state);
 
             foreach (var account in accounts)
             {
@@ -87,10 +85,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected virtual async Task TestState(int level, AppState state)
+        protected virtual async Task TestGlobalCounter(int level, AppState state)
         {
             if ((await Rpc.GetGlobalCounterAsync(level)).RequiredInt32() != state.ManagerCounter)
-                throw new Exception($"Diagnostics failed: wrong global counter");
+                throw new Exception("Diagnostics failed: wrong global counter");
         }
 
         protected virtual async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
@@ -125,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var remote = await Rpc.GetContractAsync(level, account.Address);
 
-            if (!(account is Data.Models.Delegate) && remote.RequiredInt64("balance") != account.Balance)
+            if (account is not Data.Models.Delegate && remote.RequiredInt64("balance") != account.Balance)
                 throw new Exception($"Diagnostics failed: wrong balance {account.Address}");
 
             TestAccountDelegate(remote, account);
@@ -136,7 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var remoteDelegate = remote.Required("delegate").OptionalString("value");
 
-            if (!(local is Data.Models.Delegate) && remoteDelegate != local.Delegate?.Address &&
+            if (local is not Data.Models.Delegate && remoteDelegate != local.Delegate?.Address &&
                 !(local is Contract c && (c.Manager == null || c.Manager.Address == remoteDelegate)))
                 throw new Exception($"Diagnostics failed: wrong delegate {local.Address}");
         }
@@ -146,7 +144,5 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (remote.RequiredInt64("balance") > 0 && remote.RequiredInt32("counter") != local.Counter)
                 throw new Exception($"Diagnostics failed: wrong counter {local.Address}");
         }
-
-        protected virtual long GetDeposits(JsonElement json) => json.RequiredInt64("deposit");
     }
 }

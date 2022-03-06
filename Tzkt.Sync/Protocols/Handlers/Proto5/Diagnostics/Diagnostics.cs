@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             var remoteDelegate = remote.OptionalString("delegate");
 
-            if (!(local is Data.Models.Delegate) && remoteDelegate != local.Delegate?.Address &&
+            if (local is not Data.Models.Delegate && remoteDelegate != local.Delegate?.Address &&
                 !(local is Contract c && (c.Manager == null || c.Manager.Address == remoteDelegate)))
                 throw new Exception($"Diagnostics failed: wrong delegate {local.Address}");
         }
