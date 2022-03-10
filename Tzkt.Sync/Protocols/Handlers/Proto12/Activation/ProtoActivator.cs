@@ -157,8 +157,8 @@ namespace Tzkt.Sync.Protocols.Proto12
         async Task MigrateSnapshots(AppState state)
         {
             await Db.Database.ExecuteSqlRawAsync($@"
-                INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""FrozenDepositLimit"", ""StakingBalance"")
-                    SELECT {state.Level}, ""Balance"", ""Id"", ""DelegateId"", ""FrozenDepositLimit"", ""StakingBalance""
+                INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"", ""FrozenDepositLimit"")
+                    SELECT {state.Level}, ""Balance"", ""Id"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"", ""FrozenDepositLimit""
                     FROM ""Accounts""
                     WHERE ""Staked"" = true");
         }
@@ -238,11 +238,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                 bakerCycle.FutureEndorsements -= (int)er.Slots;
                 bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, (int)er.Slots);
             }
+            #endregion
 
             await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Level"" > {state.Level}");
             await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakerCycles"" WHERE ""Cycle"" > {state.Cycle}");
             await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""DelegatorCycles"" WHERE ""Cycle"" > {state.Cycle}");
-            #endregion
 
             #region apply new rights
             var cycle = await Db.Cycles.AsNoTracking().FirstAsync(x => x.Index == state.Cycle);
@@ -420,10 +420,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                 #region apply future endorsing rights
                 foreach (var er in shifted)
                 {
-                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
-                        throw new Exception("Nonexistent baker cycle");
-
-                    bakerCycle.FutureEndorsements += er.Slots;
+                    if (bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                    {
+                        bakerCycle.FutureEndorsements += er.Slots;
+                    }
                 }
                 foreach (var er in ers.TakeWhile(x => x.Level < cycle.LastLevel))
                 {
