@@ -9,8 +9,10 @@ namespace Tzkt.Data.Models
         public long Balance { get; set; }
         public int AccountId { get; set; }
         public int? DelegateId { get; set; }
-        public long? FrozenDepositLimit { get; set; }
+        public int? DelegatorsCount { get; set; }
+        public long? DelegatedBalance { get; set; }
         public long? StakingBalance { get; set; }
+        public long? FrozenDepositLimit { get; set; }
     }
 
     public static class SnapshotBalanceModel
@@ -25,6 +27,10 @@ namespace Tzkt.Data.Models
             #region indexes
             modelBuilder.Entity<SnapshotBalance>()
                 .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<SnapshotBalance>()
+                .HasIndex(x => x.Level)
+                .HasFilter(@"""DelegateId"" IS NULL");
             #endregion
         }
     }
