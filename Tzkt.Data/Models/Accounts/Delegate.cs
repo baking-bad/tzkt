@@ -18,6 +18,7 @@ namespace Tzkt.Data.Models
 
         public int BlocksCount { get; set; }
         public int EndorsementsCount { get; set; }
+        public int PreendorsementsCount { get; set; }
         public int BallotsCount { get; set; }
         public int ProposalsCount { get; set; }
         public int DoubleBakingCount { get; set; }

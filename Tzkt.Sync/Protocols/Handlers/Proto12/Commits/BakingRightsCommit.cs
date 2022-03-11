@@ -149,7 +149,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 foreach (var br in FutureBakingRights)
                 {
                     writer.StartRow();
-                    writer.Write(futureCycle, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(futureCycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);

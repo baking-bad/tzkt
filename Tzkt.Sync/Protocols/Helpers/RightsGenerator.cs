@@ -18,6 +18,16 @@ namespace Tzkt.Sync.Protocols
             Buffer.BlockCopy(seed, 0, Seed, 0, seed.Length);
         }
 
+        IEnumerable<int> EnumerateBakingRights(int position, int rounds)
+        {
+            WriteInt32(Seed, 32, position);
+            for (var round = 0; round < rounds; round++)
+            {
+                WriteInt32(Seed, 36, round);
+                yield return Sampler.GetBaker(Seed);
+            }
+        }
+
         List<int> GetBakingRights(int position, int rounds)
         {
             WriteInt32(Seed, 32, position);
@@ -108,6 +118,21 @@ namespace Tzkt.Sync.Protocols
             }
             await Task.WhenAll(tasks);
             return res.OrderBy(x => x.Level).ThenByDescending(x => x.Slots);
+        }
+
+        public static IEnumerable<BR> EnumerateBakingRights(Sampler sampler, Cycle cycle, int level, int rounds)
+        {
+            var round = 0;
+            var generator = new RightsGenerator(sampler, cycle.Seed);
+            foreach (var bakerId in generator.EnumerateBakingRights(level - cycle.FirstLevel, rounds))
+            {
+                yield return new BR
+                {
+                    Baker = bakerId,
+                    Level = level,
+                    Round = round++
+                };
+            }
         }
 
         public static IEnumerable<BR> GetBakingRights(Sampler sampler, Cycle cycle, int level, int rounds = BakingRight.MaxPriority + 1)

@@ -52,6 +52,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Endorsements != null)
                 state.EndorsementOpsCount += block.Endorsements.Count;
 
+            if (block.Preendorsements != null)
+                state.PreendorsementOpsCount += block.Preendorsements.Count;
+
             if (block.Revelations != null)
                 state.NonceRevelationOpsCount += block.Revelations.Count;
 
@@ -120,6 +123,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (block.Endorsements != null)
                 state.EndorsementOpsCount -= block.Endorsements.Count;
+
+            if (block.Preendorsements != null)
+                state.PreendorsementOpsCount -= block.Preendorsements.Count;
 
             if (block.Revelations != null)
                 state.NonceRevelationOpsCount -= block.Revelations.Count;

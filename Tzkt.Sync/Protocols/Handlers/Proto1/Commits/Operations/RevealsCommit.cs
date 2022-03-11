@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -49,12 +47,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            //var block = reveal.Block;
             var blockBaker = block.Baker;
-            //var sender = reveal.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
-            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
@@ -101,12 +96,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            //var block = reveal.Block;
             var blockBaker = block.Baker;
             var sender = reveal.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
-            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);

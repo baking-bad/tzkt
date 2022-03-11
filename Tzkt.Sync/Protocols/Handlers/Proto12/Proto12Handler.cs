@@ -63,6 +63,9 @@ namespace Tzkt.Sync.Protocols
                         case "endorsement":
                             await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "preendorsement":
+                            new PreendorsementsCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[0]");
                     }
@@ -241,6 +244,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Endorsements))
                 operations.AddRange(await Db.EndorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.Preendorsements))
+                operations.AddRange(await Db.PreendorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Originations))
                 operations.AddRange(await Db.OriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -301,6 +307,9 @@ namespace Tzkt.Sync.Protocols
                 {
                     case EndorsementOperation endorsement:
                         await new EndorsementsCommit(this).Revert(currBlock, endorsement);
+                        break;
+                    case PreendorsementOperation preendorsement:
+                        await new PreendorsementsCommit(this).Revert(currBlock, preendorsement);
                         break;
                     case ProposalOperation proposal:
                         await new ProposalsCommit(this).Revert(currBlock, proposal);

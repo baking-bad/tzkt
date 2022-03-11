@@ -114,7 +114,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 1)
                     throw new ValidationException("invalid block bonus");
                 
-                if (balanceUpdates.Count() > 4 && !Protocol.IsCycleEnd(Level))
+                if (balanceUpdates.Count() > 5 && !Protocol.IsCycleEnd(Level))
                     throw new ValidationException("unexpected cycle rewards");
             }
             #endregion
@@ -162,17 +162,17 @@ namespace Tzkt.Sync.Protocols.Proto12
                         switch (content.RequiredString("kind"))
                         {
                             case "endorsement": ValidateEndorsement(content); break;
-                            case "preendorsement": ValidateEndorsement(content); break;
-                            case "ballot": await ValidateBallot(content); break;
-                            case "proposals": ValidateProposal(content); break;
-                            //case "activate_account": await ValidateActivation(content); break;
+                            case "preendorsement": ValidatePreendorsement(content); break;
+                            //case "ballot": await ValidateBallot(content); break;
+                            //case "proposals": ValidateProposal(content); break;
+                            case "activate_account": await ValidateActivation(content); break;
                             //case "double_baking_evidence": ValidateDoubleBaking(content); break;
                             //case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
-                            //case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
+                            case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
                             //case "delegation": await ValidateDelegation(content); break;
                             //case "origination": await ValidateOrigination(content); break;
-                            //case "transaction": await ValidateTransaction(content); break;
-                            //case "reveal": await ValidateReveal(content); break;
+                            case "transaction": await ValidateTransaction(content); break;
+                            case "reveal": await ValidateReveal(content); break;
                             //case "register_global_constant": await ValidateRegisterConstant(content); break;
                             default:
                                 throw new ValidationException("invalid operation content kind");
@@ -186,6 +186,15 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             if (content.RequiredInt32("level") != Cache.AppState.GetLevel())
                 throw new ValidationException("invalid endorsement level");
+
+            if (!Cache.Accounts.DelegateExists(content.Required("metadata").RequiredString("delegate")))
+                throw new ValidationException("unknown endorsement delegate");
+        }
+
+        protected virtual void ValidatePreendorsement(JsonElement content)
+        {
+            if (content.RequiredInt32("level") != Cache.AppState.GetLevel() + 1)
+                throw new ValidationException("invalid preendorsement level");
 
             if (!Cache.Accounts.DelegateExists(content.Required("metadata").RequiredString("delegate")))
                 throw new ValidationException("unknown endorsement delegate");
@@ -225,7 +234,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 ((await Cache.Accounts.GetAsync(account)) as User).Activated == true)
                 throw new ValidationException("account is already activated");
 
-            if (content.Required("metadata").RequiredArray("balance_updates", 1)[0].RequiredString("contract") != account)
+            if (content.Required("metadata").RequiredArray("balance_updates", 2)[1].RequiredString("contract") != account)
                 throw new ValidationException("invalid activation balance updates");
         }
 
@@ -326,13 +335,13 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (level % proto.BlocksPerCommitment != 0)
                 throw new ValidationException("invalid seed nonce revelation level");
 
-            var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates", 1)[0];
+            var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates", 2)[1];
 
-            if (balanceUpdate.RequiredString("delegate") != Baker)
+            if (balanceUpdate.RequiredString("kind") != "contract")
+                throw new ValidationException("invalid seed nonce revelation balance update kind");
+
+            if (balanceUpdate.RequiredString("contract") != Baker)
                 throw new ValidationException("invalid seed nonce revelation baker");
-
-            if (balanceUpdate.RequiredString("category") != "rewards")
-                throw new ValidationException("invalid seed nonce revelation balance update type");
 
             if (balanceUpdate.RequiredInt64("change") != Protocol.RevelationReward)
                 throw new ValidationException("invalid seed nonce revelation balance update amount");
@@ -350,7 +359,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (source != delegat && !Cache.Accounts.DelegateExists(delegat))
                     throw new ValidationException("unknown delegate account");
 
-            ValidateFeeBalanceUpdates(
+            ValidateFeeBalanceUpdates2(
                 ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
@@ -379,13 +388,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (!Cache.Accounts.DelegateExists(delegat))
                     throw new ValidationException("unknown delegate account");
 
-            ValidateFeeBalanceUpdates(
+            ValidateFeeBalanceUpdates2(
                 ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
-                ValidateTransferBalanceUpdates(
+                ValidateTransferBalanceUpdates2(
                     ParseBalanceUpdates(resultUpdates.EnumerateArray()),
                     source,
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
@@ -404,7 +413,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     throw new ValidationException("unknown delegate account");
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
-                ValidateTransferBalanceUpdates(
+                ValidateTransferBalanceUpdates2(
                     ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
                     content.RequiredString("source"),
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
@@ -424,7 +433,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             var metadata = content.Required("metadata");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray()),
+                metadata.RequiredArray("balance_updates").EnumerateArray(),
                 source,
                 content.RequiredInt64("fee"));
 
@@ -432,7 +441,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
+                    resultUpdates.RequiredArray().EnumerateArray(),
                     source,
                     content.RequiredString("destination"),
                     content.RequiredInt64("amount"),
@@ -460,7 +469,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             var result = content.Required("result");
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
-                ValidateTransferBalanceUpdates(
+                ValidateTransferBalanceUpdates2(
                     ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
                     content.RequiredString("source"),
                     content.RequiredString("destination"),
@@ -478,7 +487,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()),
+                content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -490,13 +499,85 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!await Cache.Accounts.ExistsAsync(source))
                 throw new ValidationException("unknown source account");
 
-            ValidateFeeBalanceUpdates(
+            ValidateFeeBalanceUpdates2(
                 ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()),
                 source,
                 content.RequiredInt64("fee"));
         }
 
-        protected virtual void ValidateFeeBalanceUpdates(List<BalanceUpdate> balanceUpdates, string sender, long fee)
+        protected virtual void ValidateFeeBalanceUpdates(IEnumerable<JsonElement> balanceUpdates, string sender, long fee)
+        {
+            if (fee != 0)
+            {
+                if (balanceUpdates.Count() != 2)
+                    throw new ValidationException("invalid fee balance updates count");
+
+                var first = balanceUpdates.First();
+                var last = balanceUpdates.Last();
+
+                if (first.RequiredString("kind") != "contract" ||
+                    first.RequiredString("contract") != sender ||
+                    first.RequiredInt64("change") != -fee)
+                    throw new ValidationException("invalid fee contract update");
+
+                if (last.RequiredString("kind") != "accumulator" ||
+                    last.RequiredString("category") != "block fees" ||
+                    last.RequiredInt64("change") != fee)
+                    throw new ValidationException("invalid fee accumulator update");
+            }
+            else
+            {
+                if (balanceUpdates.Any())
+                    throw new ValidationException("invalid fee balance updates count");
+            }
+        }
+
+        protected virtual void ValidateTransferBalanceUpdates(IEnumerable<JsonElement> balanceUpdates, string sender, string target, long amount, long storageFee, long allocationFee, string initiator = null)
+        {
+            if (balanceUpdates.Count() != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 1 : 0) + (allocationFee != 0 ? 2 : 0))
+                throw new ValidationException("invalid transfer balance updates count");
+
+            if (amount > 0)
+            {
+                if (!balanceUpdates.Any(x =>
+                    x.RequiredString("kind") == "contract" &&
+                    x.RequiredInt64("change") == -amount &&
+                    x.RequiredString("contract") == sender))
+                    throw new ValidationException("invalid transfer balance updates");
+
+                if (!balanceUpdates.Any(x =>
+                    x.RequiredString("kind") == "contract" &&
+                    x.RequiredInt64("change") == amount &&
+                    x.RequiredString("contract") == target))
+                    throw new ValidationException("invalid transfer balance updates");
+            }
+
+            if (storageFee > 0)
+            {
+                if (!balanceUpdates.Any(x =>
+                    x.RequiredString("kind") == "contract" &&
+                    x.RequiredInt64("change") == -storageFee &&
+                    x.RequiredString("contract") == (initiator ?? sender)))
+                    throw new ValidationException("invalid transfer balance updates");
+            }
+
+            if (allocationFee > 0)
+            {
+                if (!balanceUpdates.Any(x =>
+                    x.RequiredString("kind") == "contract" &&
+                    x.RequiredInt64("change") == -allocationFee &&
+                    x.RequiredString("contract") == (initiator ?? sender)))
+                    throw new ValidationException("invalid transfer balance updates");
+
+                if (!balanceUpdates.Any(x =>
+                    x.RequiredString("kind") == "burned" &&
+                    x.RequiredString("category") == "storage fees" &&
+                    x.RequiredInt64("change") == allocationFee))
+                    throw new ValidationException("invalid transfer balance updates");
+            }
+        }
+
+        protected virtual void ValidateFeeBalanceUpdates2(List<BalanceUpdate> balanceUpdates, string sender, long fee)
         {
             if (balanceUpdates.Count != (fee != 0 ? 2 : 0))
                 throw new ValidationException("invalid fee balance updates count");
@@ -516,7 +597,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
         }
 
-        protected virtual void ValidateTransferBalanceUpdates(List<BalanceUpdate> balanceUpdates, string sender, string target, long amount, long storageFee, long allocationFee, string initiator = null)
+        protected virtual void ValidateTransferBalanceUpdates2(List<BalanceUpdate> balanceUpdates, string sender, string target, long amount, long storageFee, long allocationFee, string initiator = null)
         {
             if (balanceUpdates.Count != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 1 : 0) + (allocationFee != 0 ? 1 : 0))
                 throw new ValidationException("invalid transfer balance updates count");

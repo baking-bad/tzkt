@@ -154,7 +154,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                     var snapshot = snapshots[bakerId];
                     var depositCap = Math.Min(snapshot.Balance, snapshot.FrozenDepositLimit ?? long.MaxValue);
                     var activeStake = Math.Min((long)snapshot.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
-                    var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * activeStake / futureCycle.SelectedStake);
                     var bakerCycle = new BakerCycle
                     {
                         BakerId = bakerId,
@@ -162,11 +161,15 @@ namespace Tzkt.Sync.Protocols.Proto12
                         DelegatedBalance = (long)snapshot.DelegatedBalance,
                         DelegatorsCount = (int)snapshot.DelegatorsCount,
                         StakingBalance = (long)snapshot.StakingBalance,
-                        ExpectedBlocks = block.Protocol.BlocksPerCycle * (long)snapshot.StakingBalance / futureCycle.TotalStaking,
-                        ExpectedEndorsements = expectedEndorsements,
-                        FutureEndorsementRewards = expectedEndorsements * block.Protocol.EndorsementReward0,
-                        ActiveStake = activeStake
                     };
+                    if (activeStake >= block.Protocol.TokensPerRoll)
+                    {
+                        var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * activeStake / futureCycle.SelectedStake);
+                        bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * activeStake / futureCycle.SelectedStake;
+                        bakerCycle.ExpectedEndorsements = expectedEndorsements;
+                        bakerCycle.FutureEndorsementRewards = expectedEndorsements * block.Protocol.EndorsementReward0;
+                        bakerCycle.ActiveStake = activeStake;
+                    }
                     return bakerCycle;
                 });
 

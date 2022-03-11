@@ -48,6 +48,7 @@ namespace Tzkt.Data.Models
         public int DoubleBakingOpsCount { get; set; }
         public int DoubleEndorsingOpsCount { get; set; }
         public int EndorsementOpsCount { get; set; }
+        public int PreendorsementOpsCount { get; set; }
         public int NonceRevelationOpsCount { get; set; }
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }

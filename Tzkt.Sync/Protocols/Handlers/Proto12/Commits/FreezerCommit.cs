@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
                 return;
 
-            foreach (var update in rawBlock.Required("metadata").RequiredArray("balance_update").EnumerateArray()
+            foreach (var update in rawBlock.Required("metadata").RequiredArray("balance_updates").EnumerateArray()
                 .Where(x => x.RequiredString("origin") == "block" &&
                             x.RequiredString("kind") == "freezer" &&
                             x.RequiredString("category") == "deposits"))
