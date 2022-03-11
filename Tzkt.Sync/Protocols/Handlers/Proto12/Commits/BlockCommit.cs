@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -45,22 +46,43 @@ namespace Tzkt.Sync.Protocols.Proto12
             Block = new Block
             {
                 Id = Cache.AppState.NextOperationId(),
-                Hash = rawBlock.RequiredString("hash"), 
+                Hash = rawBlock.RequiredString("hash"),
                 Cycle = protocol.GetCycle(level),
                 Level = level,
                 ProtoCode = protocol.Code,
                 Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
-                Priority = header.RequiredInt32("payload_round"),
-                Baker = baker,
-                BakerId = baker.Id,
-                ProposerId = proposer.Id,
+                PayloadRound = header.RequiredInt32("payload_round"),
+                Baker = proposer,
+                BakerId = proposer.Id,
+                ProposerId = baker.Id,
                 Events = events,
                 Reward = rewardUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -rewardUpdate.RequiredInt64("change"),
                 Bonus = bonusUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -bonusUpdate.RequiredInt64("change"),
                 LBEscapeVote = header.RequiredBool("liquidity_baking_escape_vote"),
                 LBEscapeEma = metadata.RequiredInt32("liquidity_baking_escape_ema")
             };
+
+            #region determine priority
+            var priority = (await Cache.BakingRights.GetAsync(Block.Cycle, Block.Level))
+                .Where(x => x.Type == BakingRightType.Baking)
+                .OrderBy(x => x.Priority)
+                .SkipWhile(x => x.Priority < Block.PayloadRound)
+                .FirstOrDefault(x => x.BakerId == Block.ProposerId)?
+                .Priority ?? -1;
+
+            if (priority == -1)
+            {
+                var cycle = await Db.Cycles.FirstAsync(x => x.Index == Block.Cycle);
+                var sampler = await Sampler.CreateAsync(Proto, Block.Cycle);
+                priority = RightsGenerator.EnumerateBakingRights(sampler, cycle, Block.Level, 9_999_999)
+                    .SkipWhile(x => x.Round < Block.PayloadRound)
+                    .First(x => x.Baker == Block.ProposerId)
+                    .Round;
+            }
+
+            Block.Priority = priority;
+            #endregion
 
             Db.TryAttach(baker);
             baker.Balance += Block.Reward;
@@ -99,11 +121,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 #endregion
             }
 
+            Db.TryAttach(protocol); // if we don't attach it, ef will recognize it as 'added'
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
-            {
-                Db.TryAttach(protocol);
                 protocol.LastLevel = Block.Level;
-            }
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);

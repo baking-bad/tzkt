@@ -296,6 +296,7 @@ namespace Tzkt.Sync
                         b.DoubleBakings = null;
                         b.DoubleEndorsings = null;
                         b.Endorsements = null;
+                        b.Preendorsements = null;
                         b.Originations = null;
                         b.Proposals = null;
                         b.Protocol = null;

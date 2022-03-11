@@ -31,12 +31,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            //var block = revelation.Block;
             var blockBaker = block.Baker;
             var sender = revelation.Sender;
-            //var revealedBlock = revelation.RevealedBlock;
 
-            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(revealedBlock);
@@ -69,12 +66,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            //var block = revelation.Block;
             var blockBaker = block.Baker;
             var sender = revelation.Sender;
             var revealedBlock = revelation.RevealedBlock;
 
-            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(revealedBlock);

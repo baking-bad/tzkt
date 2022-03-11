@@ -15,6 +15,7 @@ namespace Tzkt.Data.Models
         public int ProtoCode { get; set; }
         public int? SoftwareId { get; set; }
 
+        public int PayloadRound { get; set; }
         public int Priority { get; set; }
         public int Validations { get; set; }
         public BlockEvents Events { get; set; }
@@ -52,6 +53,7 @@ namespace Tzkt.Data.Models
         public List<Account> CreatedAccounts { get; set; }
 
         public List<EndorsementOperation> Endorsements { get; set; }
+        public List<PreendorsementOperation> Preendorsements { get; set; }
 
         public List<BallotOperation> Ballots { get; set; }
         public List<ProposalOperation> Proposals { get; set; }

@@ -4,12 +4,10 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class EndorsementOperation : BaseOperation
+    public class PreendorsementOperation : BaseOperation
     {
         public int DelegateId { get; set; }
         public int Slots { get; set; }
-        public long Reward { get; set; }
-        public long Deposit { get; set; }
 
         public int? ResetDeactivation { get; set; }
 
@@ -19,17 +17,17 @@ namespace Tzkt.Data.Models
         #endregion
     }
 
-    public static class EndorsementOperationModel
+    public static class PreendorsementOperationModel
     {
-        public static void BuildEndorsementOperationModel(this ModelBuilder modelBuilder)
+        public static void BuildPreendorsementOperationModel(this ModelBuilder modelBuilder)
         {
             #region keys
-            modelBuilder.Entity<EndorsementOperation>()
+            modelBuilder.Entity<PreendorsementOperation>()
                 .HasKey(x => x.Id);
             #endregion
             
             #region props
-            modelBuilder.Entity<EndorsementOperation>()
+            modelBuilder.Entity<PreendorsementOperation>()
                 .Property(x => x.OpHash)
                 .IsFixedLength(true)
                 .HasMaxLength(51)
@@ -37,20 +35,20 @@ namespace Tzkt.Data.Models
             #endregion
 
             #region indexes
-            modelBuilder.Entity<EndorsementOperation>()
+            modelBuilder.Entity<PreendorsementOperation>()
                 .HasIndex(x => x.Level);
 
-            modelBuilder.Entity<EndorsementOperation>()
+            modelBuilder.Entity<PreendorsementOperation>()
                 .HasIndex(x => x.OpHash);
 
-            modelBuilder.Entity<EndorsementOperation>()
+            modelBuilder.Entity<PreendorsementOperation>()
                 .HasIndex(x => x.DelegateId);
             #endregion
 
             #region relations
-            modelBuilder.Entity<EndorsementOperation>()
+            modelBuilder.Entity<PreendorsementOperation>()
                 .HasOne(x => x.Block)
-                .WithMany(x => x.Endorsements)
+                .WithMany(x => x.Preendorsements)
                 .HasForeignKey(x => x.Level)
                 .HasPrincipalKey(x => x.Level);
             #endregion

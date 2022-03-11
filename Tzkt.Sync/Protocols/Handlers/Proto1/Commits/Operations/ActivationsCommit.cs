@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Account = (User)await Cache.Accounts.GetAsync(content.RequiredString("pkh")),
-                Balance = content.Required("metadata").Required("balance_updates")[0].RequiredInt64("change")
+                Balance = content.Required("metadata").Required("balance_updates")[1].RequiredInt64("change")
             };
 
             var btz = Blind.GetBlindedAddress(content.RequiredString("pkh"), content.RequiredString("secret"));
@@ -30,10 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            //var block = activation.Block;
             var sender = activation.Account;
-
-            //Db.TryAttach(block);
             Db.TryAttach(sender);
             #endregion
 
@@ -61,10 +58,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            //var block = activation.Block;
             var sender = activation.Account;
-
-            //Db.TryAttach(block);
             Db.TryAttach(sender);
             #endregion
 
