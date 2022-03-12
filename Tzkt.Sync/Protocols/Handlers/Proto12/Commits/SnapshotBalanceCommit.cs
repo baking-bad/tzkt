@@ -62,6 +62,24 @@ namespace Tzkt.Sync.Protocols.Proto12
                     }
                 }
                 #endregion
+
+                #region revert endorsing rewards
+                if (block.Events.HasFlag(BlockEvents.CycleEnd))
+                {
+                    await Db.Database.ExecuteSqlRawAsync($@"
+                        UPDATE ""SnapshotBalances"" as sb
+                        SET ""Balance"" = ""Balance"" - bc.""EndorsementRewards"",
+                            ""StakingBalance"" = ""StakingBalance"" - bc.""EndorsementRewards""	                        
+                        FROM (
+	                        SELECT ""BakerId"", ""EndorsementRewards""
+	                        FROM ""BakerCycles""
+	                        WHERE ""Cycle"" = {block.Cycle}
+                            AND ""EndorsementRewards"" != 0
+                        ) as bc
+                        WHERE sb.""Level"" = {block.Level}
+                        AND sb.""AccountId"" = bc.""BakerId""");
+                }
+                #endregion
             }
         }
 
