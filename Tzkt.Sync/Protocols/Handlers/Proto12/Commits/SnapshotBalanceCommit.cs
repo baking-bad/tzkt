@@ -51,7 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                         foreach (var baker in deactivated)
                         {
                             sql += $@"
-                                ({block.Level}, {baker.Balance}, {baker.Id}, NULL, {baker.DelegatorsCount}, {baker.DelegatedBalance}, {baker.StakingBalance}, {baker.FrozenDepositLimit}),";
+                                ({block.Level}, {baker.Balance}, {baker.Id}, NULL, {baker.DelegatorsCount}, {baker.DelegatedBalance}, {baker.StakingBalance}, {baker.FrozenDepositLimit?.ToString() ?? "NULL"}),";
 
                             foreach (var delegator in baker.DelegatedAccounts)
                                 sql += $@"

@@ -166,14 +166,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                             //case "ballot": await ValidateBallot(content); break;
                             //case "proposals": ValidateProposal(content); break;
                             case "activate_account": await ValidateActivation(content); break;
-                            //case "double_baking_evidence": ValidateDoubleBaking(content); break;
+                            case "double_baking_evidence": ValidateDoubleBaking(content); break;
                             //case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
                             case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
-                            //case "delegation": await ValidateDelegation(content); break;
-                            //case "origination": await ValidateOrigination(content); break;
+                            case "delegation": await ValidateDelegation(content); break;
+                            case "origination": await ValidateOrigination(content); break;
                             case "transaction": await ValidateTransaction(content); break;
                             case "reveal": await ValidateReveal(content); break;
-                            //case "register_global_constant": await ValidateRegisterConstant(content); break;
+                            case "register_global_constant": await ValidateRegisterConstant(content); break;
                             default:
                                 throw new ValidationException("invalid operation content kind");
                         }
@@ -240,43 +240,27 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected virtual void ValidateDoubleBaking(JsonElement content)
         {
-            if (content.Required("bh1").RequiredInt32("level") != content.Required("bh2").RequiredInt32("level"))
-                throw new ValidationException("inconsistent double baking evidence");
-
-            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray());
-            if (balanceUpdates.Count > 0)
+            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
+            
+            var offenders = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
+            if (offenders.Any())
             {
-                var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change > 0);
-                var lostDepositsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits && x.Change < 0);
-                var lostRewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change < 0);
-                var lostFeesUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Fees && x.Change < 0);
-
-                if (balanceUpdates.Count != (rewardsUpdate != null ? 1 : 0) + (lostDepositsUpdate != null ? 1 : 0)
-                     + (lostRewardsUpdate != null ? 1 : 0) + (lostFeesUpdate != null ? 1 : 0))
-                    throw new ValidationException("invalid double baking balance updates count");
-
-                if (rewardsUpdate != null && rewardsUpdate.Account != Baker)
-                    throw new ValidationException("invalid double baking reward recipient");
-
-                if ((rewardsUpdate?.Change ?? 0) != -((lostDepositsUpdate?.Change ?? 0) + (lostFeesUpdate?.Change ?? 0)) / 2)
-                    throw new ValidationException("invalid double baking reward amount");
-
-                var offender = lostDepositsUpdate?.Account ?? lostRewardsUpdate?.Account ?? lostFeesUpdate?.Account;
-
-                if (!Cache.Accounts.DelegateExists(offender))
-                    throw new ValidationException("invalid double baking offender");
-
-                if (lostDepositsUpdate != null && lostDepositsUpdate.Account != offender ||
-                    lostRewardsUpdate != null && lostRewardsUpdate.Account != offender ||
-                    lostFeesUpdate != null && lostFeesUpdate.Account != offender)
+                if (offenders.Count() > 1)
                     throw new ValidationException("invalid double baking offender updates");
 
-                var accusedLevel = content.Required("bh1").RequiredInt32("level");
-                var accusedCycle = Cache.Blocks.Get(accusedLevel).Cycle;
-                if (lostDepositsUpdate != null && lostDepositsUpdate.Cycle != accusedCycle ||
-                    lostRewardsUpdate != null && lostRewardsUpdate.Cycle != accusedCycle ||
-                    lostFeesUpdate != null && lostFeesUpdate.Cycle != accusedCycle)
-                    throw new ValidationException("invalid double baking freezer level");
+                if (!Cache.Accounts.DelegateExists(offenders.First().RequiredString("delegate")))
+                    throw new ValidationException("invalid double baking offender");
+            }
+
+            var accusers = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
+            if (accusers.Any())
+            {
+                if (accusers.Count() > 1)
+                    throw new ValidationException("invalid double baking accuser updates");
+
+                var accuserAddress = accusers.First().RequiredString("contract");
+                if (!Cache.Accounts.DelegateExists(accuserAddress) || accuserAddress != Baker)
+                    throw new ValidationException("invalid double baking accuser");
             }
         }
 
@@ -359,8 +343,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (source != delegat && !Cache.Accounts.DelegateExists(delegat))
                     throw new ValidationException("unknown delegate account");
 
-            ValidateFeeBalanceUpdates2(
-                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()),
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -388,14 +372,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (!Cache.Accounts.DelegateExists(delegat))
                     throw new ValidationException("unknown delegate account");
 
-            ValidateFeeBalanceUpdates2(
-                ParseBalanceUpdates(metadata.RequiredArray("balance_updates").EnumerateArray()),
+            ValidateFeeBalanceUpdates(
+                metadata.RequiredArray("balance_updates").EnumerateArray(),
                 source,
                 content.RequiredInt64("fee"));
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
-                ValidateTransferBalanceUpdates2(
-                    ParseBalanceUpdates(resultUpdates.EnumerateArray()),
+                ValidateTransferBalanceUpdates(
+                    resultUpdates.EnumerateArray(),
                     source,
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
@@ -413,8 +397,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                     throw new ValidationException("unknown delegate account");
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
-                ValidateTransferBalanceUpdates2(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
+                ValidateTransferBalanceUpdates(
+                    resultUpdates.RequiredArray().EnumerateArray(),
                     content.RequiredString("source"),
                     result.RequiredArray("originated_contracts", 1)[0].RequiredString(),
                     content.RequiredInt64("balance"),
@@ -469,8 +453,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             var result = content.Required("result");
 
             if (result.TryGetProperty("balance_updates", out var resultUpdates))
-                ValidateTransferBalanceUpdates2(
-                    ParseBalanceUpdates(resultUpdates.RequiredArray().EnumerateArray()),
+                ValidateTransferBalanceUpdates(
+                    resultUpdates.RequiredArray().EnumerateArray(),
                     content.RequiredString("source"),
                     content.RequiredString("destination"),
                     content.RequiredInt64("amount"),
@@ -499,8 +483,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!await Cache.Accounts.ExistsAsync(source))
                 throw new ValidationException("unknown source account");
 
-            ValidateFeeBalanceUpdates2(
-                ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()),
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -534,7 +518,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected virtual void ValidateTransferBalanceUpdates(IEnumerable<JsonElement> balanceUpdates, string sender, string target, long amount, long storageFee, long allocationFee, string initiator = null)
         {
-            if (balanceUpdates.Count() != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 1 : 0) + (allocationFee != 0 ? 2 : 0))
+            if (balanceUpdates.Count() != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 2 : 0) + (allocationFee != 0 ? 2 : 0))
                 throw new ValidationException("invalid transfer balance updates count");
 
             if (amount > 0)
@@ -558,7 +542,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                     x.RequiredString("kind") == "contract" &&
                     x.RequiredInt64("change") == -storageFee &&
                     x.RequiredString("contract") == (initiator ?? sender)))
-                    throw new ValidationException("invalid transfer balance updates");
+                    throw new ValidationException("invalid storage fee balance updates");
+
+                if (!balanceUpdates.Any(x =>
+                    x.RequiredString("kind") == "burned" &&
+                    x.RequiredString("category") == "storage fees" &&
+                    x.RequiredInt64("change") == storageFee))
+                    throw new ValidationException("invalid storage fee balance updates");
             }
 
             if (allocationFee > 0)
@@ -567,72 +557,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                     x.RequiredString("kind") == "contract" &&
                     x.RequiredInt64("change") == -allocationFee &&
                     x.RequiredString("contract") == (initiator ?? sender)))
-                    throw new ValidationException("invalid transfer balance updates");
+                    throw new ValidationException("invalid allocation fee balance updates");
 
                 if (!balanceUpdates.Any(x =>
                     x.RequiredString("kind") == "burned" &&
                     x.RequiredString("category") == "storage fees" &&
                     x.RequiredInt64("change") == allocationFee))
-                    throw new ValidationException("invalid transfer balance updates");
-            }
-        }
-
-        protected virtual void ValidateFeeBalanceUpdates2(List<BalanceUpdate> balanceUpdates, string sender, long fee)
-        {
-            if (balanceUpdates.Count != (fee != 0 ? 2 : 0))
-                throw new ValidationException("invalid fee balance updates count");
-
-            if (fee != 0)
-            {
-                if (balanceUpdates[0].Kind != BalanceUpdateKind.Contract ||
-                    balanceUpdates[0].Change != -fee ||
-                    balanceUpdates[0].Account != sender)
-                    throw new ValidationException("invalid fee contract balance update");
-
-                if (balanceUpdates[1].Kind != BalanceUpdateKind.Fees ||
-                    balanceUpdates[1].Change != fee ||
-                    balanceUpdates[1].Account != Baker ||
-                    balanceUpdates[1].Cycle != Cycle)
-                    throw new ValidationException("invalid fee freezer fees update");
-            }
-        }
-
-        protected virtual void ValidateTransferBalanceUpdates2(List<BalanceUpdate> balanceUpdates, string sender, string target, long amount, long storageFee, long allocationFee, string initiator = null)
-        {
-            if (balanceUpdates.Count != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 1 : 0) + (allocationFee != 0 ? 1 : 0))
-                throw new ValidationException("invalid transfer balance updates count");
-
-            if (amount > 0)
-            {
-                if (!balanceUpdates.Any(x =>
-                    x.Kind == BalanceUpdateKind.Contract &&
-                    x.Change == -amount &&
-                    x.Account == sender))
-                    throw new ValidationException("invalid transfer balance updates");
-
-                if (!balanceUpdates.Any(x =>
-                    x.Kind == BalanceUpdateKind.Contract &&
-                    x.Change == amount &&
-                    x.Account == target))
-                    throw new ValidationException("invalid transfer balance updates");
-            }
-
-            if (storageFee > 0)
-            {
-                if (!balanceUpdates.Any(x =>
-                    x.Kind == BalanceUpdateKind.Contract &&
-                    x.Change == -storageFee &&
-                    x.Account == (initiator ?? sender)))
-                    throw new ValidationException("invalid transfer balance updates");
-            }
-
-            if (allocationFee > 0)
-            {
-                if (!balanceUpdates.Any(x =>
-                    x.Kind == BalanceUpdateKind.Contract &&
-                    x.Change == -allocationFee &&
-                    x.Account == (initiator ?? sender)))
-                    throw new ValidationException("invalid transfer balance updates");
+                    throw new ValidationException("invalid allocation fee balance updates");
             }
         }
 

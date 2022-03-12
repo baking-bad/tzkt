@@ -88,9 +88,10 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             foreach (var er in currentRights.Where(x => x.Type == BakingRightType.Endorsing))
             {
-                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, er.BakerId);
-                Db.TryAttach(bakerCycle);
+                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, er.BakerId);
+                if (bakerCycle == null) continue;
 
+                Db.TryAttach(bakerCycle);
                 bakerCycle.FutureEndorsements -= (int)er.Slots;
                 if (er.Status == BakingRightStatus.Realized)
                     bakerCycle.Endorsements += (int)er.Slots;

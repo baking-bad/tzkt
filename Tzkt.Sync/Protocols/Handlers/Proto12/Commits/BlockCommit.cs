@@ -18,8 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             var metadata = rawBlock.Required("metadata");
 
             var level = header.RequiredInt32("level");
-            var baker = Cache.Accounts.GetDelegate(metadata.RequiredString("baker"));
-            var proposer = Cache.Accounts.GetDelegate(metadata.RequiredString("proposer"));
+            var baker = Cache.Accounts.GetDelegate(metadata.RequiredString("proposer"));
+            var proposer = Cache.Accounts.GetDelegate(metadata.RequiredString("baker"));
             var protocol = await Cache.Protocols.GetAsync(rawBlock.RequiredString("protocol"));
             var events = BlockEvents.None;
 
@@ -53,9 +53,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
                 PayloadRound = header.RequiredInt32("payload_round"),
-                Baker = proposer,
-                BakerId = proposer.Id,
-                ProposerId = baker.Id,
+                Baker = baker,
+                BakerId = baker.Id,
+                ProposerId = proposer.Id,
                 Events = events,
                 Reward = rewardUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -rewardUpdate.RequiredInt64("change"),
                 Bonus = bonusUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -bonusUpdate.RequiredInt64("change"),

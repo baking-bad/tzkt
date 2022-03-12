@@ -31,14 +31,21 @@ namespace Tzkt.Sync.Protocols
             return res;
         }
 
-        public static int GetSnapshotIndex(byte[] seed)
+        public static int GetSnapshotIndex(byte[] seed, bool ithaca = false)
         {
-            var state = Blake2b.ComputeHash(32, Blake2b.ComputeHash(32, seed.Concat(new byte[45]
-            {
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                114, 111, 108, 108, 95, 115, 110, 97, 112, 115, 104, 111, 116
-            })));
+            var state = Blake2b.ComputeHash(32, Blake2b.ComputeHash(32, seed.Concat(ithaca
+                ? new byte[46]
+                {
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    115, 116, 97, 107, 101, 95, 115, 110, 97, 112, 115, 104, 111, 116
+                }
+                : new byte[45]
+                {
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    114, 111, 108, 108, 95, 115, 110, 97, 112, 115, 104, 111, 116
+                })));
             var max = int.MaxValue - int.MaxValue % SnapshotsCount;
             var tries = 1_000_000;
             while (--tries > 0)
