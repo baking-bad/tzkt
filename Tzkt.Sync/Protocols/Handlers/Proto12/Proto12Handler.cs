@@ -130,6 +130,9 @@ namespace Tzkt.Sync.Protocols
                 {
                     switch (content.RequiredString("kind"))
                     {
+                        case "set_deposits_limit":
+                            await new SetDepositsLimitCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         case "reveal":
                             await new RevealsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
@@ -253,6 +256,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Reveals))
                 operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.SetDepositsLimit))
+                operations.AddRange(await Db.SetDepositsLimitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
                 operations.AddRange(await Db.RegisterConstantOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -334,6 +340,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case RegisterConstantOperation registerConstant:
                         await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
+                        break;
+                    case SetDepositsLimitOperation setDepositsLimit:
+                        await new SetDepositsLimitCommit(this).Revert(currBlock, setDepositsLimit);
                         break;
                     case DelegationOperation delegation:
                         if (delegation.InitiatorId == null)

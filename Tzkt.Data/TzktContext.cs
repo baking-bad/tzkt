@@ -38,6 +38,7 @@ namespace Tzkt.Data
         public DbSet<RevealOperation> RevealOps { get; set; }
         public DbSet<TransactionOperation> TransactionOps { get; set; }
         public DbSet<RegisterConstantOperation> RegisterConstantOps { get; set; }
+        public DbSet<SetDepositsLimitOperation> SetDepositsLimitOps { get; set; }
 
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
@@ -120,6 +121,7 @@ namespace Tzkt.Data
             modelBuilder.BuildRevealOperationModel();
             modelBuilder.BuildTransactionOperationModel();
             modelBuilder.BuildRegisterConstantOperationModel();
+            modelBuilder.BuildSetDepositsLimitOperationModel();
 
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();

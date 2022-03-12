@@ -135,7 +135,7 @@ namespace Tzkt.Sync.Protocols.Proto11
             #endregion
 
             #region revert operation
-            await Return(sender, registerConstant.BakerFee, true);
+            await Return(sender, registerConstant.BakerFee);
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += registerConstant.BakerFee;
