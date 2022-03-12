@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt64("full_balance") != delegat.Balance)
                 throw new Exception($"Diagnostics failed: wrong balance {delegat.Address}");
 
-            if (remote.RequiredInt64("frozen_deposits") != delegat.FrozenDeposit)
+            if (remote.RequiredInt64("current_frozen_deposits") != delegat.FrozenDeposit)
                 throw new Exception($"Diagnostics failed: wrong frozen deposits {delegat.Address}");
 
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)

@@ -48,8 +48,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 else
                 {
                     var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2); // TODO: check if it's cycle - 1
-                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed);
-                    snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
+                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed, true);
+                    snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 1) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
                 }
             }
 
