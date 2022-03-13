@@ -34,6 +34,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     TotalDelegated = totalDelegated,
                     TotalDelegators = totalDelegators,
                     TotalBakers = totalBakers,
+                    SelectedStake = totalStake,
+                    SelectedBakers = totalBakers,
                     Seed = seeds[index]
                 });
             }
