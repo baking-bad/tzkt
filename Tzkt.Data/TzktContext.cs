@@ -30,6 +30,7 @@ namespace Tzkt.Data
         public DbSet<DelegationOperation> DelegationOps { get; set; }
         public DbSet<DoubleBakingOperation> DoubleBakingOps { get; set; }
         public DbSet<DoubleEndorsingOperation> DoubleEndorsingOps { get; set; }
+        public DbSet<DoublePreendorsingOperation> DoublePreendorsingOps { get; set; }
         public DbSet<EndorsementOperation> EndorsementOps { get; set; }
         public DbSet<PreendorsementOperation> PreendorsementOps { get; set; }
         public DbSet<NonceRevelationOperation> NonceRevelationOps { get; set; }
@@ -113,6 +114,7 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegationOperationModel();
             modelBuilder.BuildDoubleBakingOperationModel();
             modelBuilder.BuildDoubleEndorsingOperationModel();
+            modelBuilder.BuildDoublePreendorsingOperationModel();
             modelBuilder.BuildEndorsementOperationModel();
             modelBuilder.BuildPreendorsementOperationModel();
             modelBuilder.BuildNonceRevelationOperationModel();

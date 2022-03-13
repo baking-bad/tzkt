@@ -49,6 +49,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.DoubleEndorsings != null)
                 state.DoubleEndorsingOpsCount += block.DoubleEndorsings.Count;
 
+            if (block.DoublePreendorsings != null)
+                state.DoublePreendorsingOpsCount += block.DoublePreendorsings.Count;
+
             if (block.Endorsements != null)
                 state.EndorsementOpsCount += block.Endorsements.Count;
 
@@ -120,6 +123,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (block.DoubleEndorsings != null)
                 state.DoubleEndorsingOpsCount -= block.DoubleEndorsings.Count;
+
+            if (block.DoublePreendorsings != null)
+                state.DoublePreendorsingOpsCount -= block.DoublePreendorsings.Count;
 
             if (block.Endorsements != null)
                 state.EndorsementOpsCount -= block.Endorsements.Count;

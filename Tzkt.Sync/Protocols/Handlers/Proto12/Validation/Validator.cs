@@ -165,7 +165,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                             case "proposals": ValidateProposal(content); break;
                             case "activate_account": await ValidateActivation(content); break;
                             case "double_baking_evidence": ValidateDoubleBaking(content); break;
-                            case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
+                            case "double_endorsement_evidence": ValidateDoubleBaking(content); break;
+                            case "double_preendorsement_evidence": ValidateDoubleBaking(content); break;
                             case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
                             case "delegation": await ValidateDelegation(content); break;
                             case "origination": await ValidateOrigination(content); break;
@@ -260,32 +261,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var accuserAddress = accusers.First().RequiredString("contract");
                 if (!Cache.Accounts.DelegateExists(accuserAddress) || accuserAddress != Baker)
                     throw new ValidationException("invalid double baking accuser");
-            }
-        }
-
-        protected virtual void ValidateDoubleEndorsing(JsonElement content)
-        {
-            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
-
-            var offenders = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
-            if (offenders.Any())
-            {
-                if (offenders.Count() > 1)
-                    throw new ValidationException("invalid double endorsing offender updates");
-
-                if (!Cache.Accounts.DelegateExists(offenders.First().RequiredString("delegate")))
-                    throw new ValidationException("invalid double endorsing offender");
-            }
-
-            var accusers = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
-            if (accusers.Any())
-            {
-                if (accusers.Count() > 1)
-                    throw new ValidationException("invalid double endorsing accuser updates");
-
-                var accuserAddress = accusers.First().RequiredString("contract");
-                if (!Cache.Accounts.DelegateExists(accuserAddress) || accuserAddress != Baker)
-                    throw new ValidationException("invalid double endorsing accuser");
             }
         }
 

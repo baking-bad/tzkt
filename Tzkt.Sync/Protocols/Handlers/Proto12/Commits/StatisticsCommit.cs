@@ -45,8 +45,14 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             if (block.DoubleEndorsings != null)
             {
-                statistics.TotalBurned += block.DoubleBakings.Sum(x => x.OffenderLoss - x.AccuserReward);
-                statistics.TotalFrozen -= block.DoubleBakings.Sum(x => x.OffenderLoss);
+                statistics.TotalBurned += block.DoubleEndorsings.Sum(x => x.OffenderLoss - x.AccuserReward);
+                statistics.TotalFrozen -= block.DoubleEndorsings.Sum(x => x.OffenderLoss);
+            }
+
+            if (block.DoublePreendorsings != null)
+            {
+                statistics.TotalBurned += block.DoublePreendorsings.Sum(x => x.OffenderLoss - x.AccuserReward);
+                statistics.TotalFrozen -= block.DoublePreendorsings.Sum(x => x.OffenderLoss);
             }
 
             if (block.Originations != null)

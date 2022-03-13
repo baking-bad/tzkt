@@ -109,6 +109,9 @@ namespace Tzkt.Sync.Protocols
                         case "double_endorsement_evidence":
                             new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "double_preendorsement_evidence":
+                            new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
@@ -256,7 +259,7 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Reveals))
                 operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
-            if (currBlock.Operations.HasFlag(Operations.SetDepositsLimit))
+            if (currBlock.Operations.HasFlag(Operations.SetDepositsLimits))
                 operations.AddRange(await Db.SetDepositsLimitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
@@ -273,6 +276,9 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.Operations.HasFlag(Operations.DoubleEndorsings))
                 operations.AddRange(await Db.DoubleEndorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.DoublePreendorsings))
+                operations.AddRange(await Db.DoublePreendorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.Ballots))
                 operations.AddRange(await Db.BallotOps.Where(x => x.Level == currBlock.Level).ToListAsync());
@@ -331,6 +337,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case DoubleEndorsingOperation doubleEndorsing:
                         new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
+                        break;
+                    case DoublePreendorsingOperation doublePreendorsing:
+                        new DoublePreendorsingCommit(this).Revert(currBlock, doublePreendorsing);
                         break;
                     case NonceRevelationOperation revelation:
                         await new NonceRevelationsCommit(this).Revert(currBlock, revelation);

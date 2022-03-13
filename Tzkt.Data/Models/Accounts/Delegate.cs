@@ -23,6 +23,7 @@ namespace Tzkt.Data.Models
         public int ProposalsCount { get; set; }
         public int DoubleBakingCount { get; set; }
         public int DoubleEndorsingCount { get; set; }
+        public int DoublePreendorsingCount { get; set; }
         public int NonceRevelationsCount { get; set; }
         public int RevelationPenaltiesCount { get; set; }
         public int EndorsingRewardsCount { get; set; }
