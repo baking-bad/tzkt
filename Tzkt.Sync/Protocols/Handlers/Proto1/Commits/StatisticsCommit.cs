@@ -24,7 +24,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TotalBanished = prev.TotalBanished,
                 TotalCommitments = prev.TotalCommitments,
                 TotalCreated = prev.TotalCreated,
-                TotalVested = prev.TotalVested,
                 TotalFrozen = prev.TotalFrozen
             };
 
@@ -106,18 +105,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (freezerUpdates != null && freezerUpdates.Any())
                 statistics.TotalFrozen += freezerUpdates.Sum(x => x.RequiredInt64("change"));
-
-            if (block.Transactions != null)
-            {
-                var vestedSent = block.Transactions.Where(x => x.Status == OperationStatus.Applied && x.Sender.Type == AccountType.Contract && x.Sender.FirstLevel == 1);
-                var vestedReceived = block.Transactions.Where(x => x.Status == OperationStatus.Applied && x.Target.Type == AccountType.Contract && x.Target.FirstLevel == 1);
-
-                if (vestedSent.Any())
-                    statistics.TotalVested -= vestedSent.Sum(x => x.Amount);
-
-                if (vestedReceived.Any())
-                    statistics.TotalVested += vestedReceived.Sum(x => x.Amount);
-            }
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
                 statistics.Cycle = block.Cycle;

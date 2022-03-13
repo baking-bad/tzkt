@@ -19,7 +19,6 @@ namespace Tzkt.Data.Models
         public long TotalBurned { get; set; }
         public long TotalBanished { get; set; }
 
-        public long TotalVested { get; set; }
         public long TotalFrozen { get; set; }
         #endregion
     }
