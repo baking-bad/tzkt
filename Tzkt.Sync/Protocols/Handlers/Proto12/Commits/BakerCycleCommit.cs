@@ -105,16 +105,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.DoubleBakings)
                 {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
+                    if (offenderCycle != null)
+                    {
+                        Db.TryAttach(offenderCycle);
+                        offenderCycle.DoubleBakingLosses += op.OffenderLoss;
+                    }
 
-                    offenderCycle.DoubleBakingLosses += op.OffenderLoss;
-
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
-
-                    accuserCycle.DoubleBakingRewards += op.AccuserReward;
+                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
+                    if (accuserCycle != null)
+                    {
+                        Db.TryAttach(accuserCycle);
+                        accuserCycle.DoubleBakingRewards += op.AccuserReward;
+                    }
                 }
             }
 
@@ -122,16 +125,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.DoubleEndorsings)
                 {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
+                    if (offenderCycle != null)
+                    {
+                        Db.TryAttach(offenderCycle);
+                        offenderCycle.DoubleEndorsingLosses += op.OffenderLoss;
+                    }
 
-                    offenderCycle.DoubleEndorsingLosses += op.OffenderLoss;
-
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
-
-                    accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
+                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
+                    if (accuserCycle != null)
+                    {
+                        Db.TryAttach(accuserCycle);
+                        accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
+                    }
                 }
             }
 
@@ -139,16 +145,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.DoublePreendorsings)
                 {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
+                    if (offenderCycle != null)
+                    {
+                        Db.TryAttach(offenderCycle);
+                        offenderCycle.DoublePreendorsingLosses += op.OffenderLoss;
+                    }
 
-                    offenderCycle.DoublePreendorsingLosses += op.OffenderLoss;
-
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
-
-                    accuserCycle.DoublePreendorsingRewards += op.AccuserReward;
+                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
+                    if (accuserCycle != null)
+                    {
+                        Db.TryAttach(accuserCycle);
+                        accuserCycle.DoublePreendorsingRewards += op.AccuserReward;
+                    }
                 }
             }
 
@@ -156,10 +165,12 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.Revelations)
                 {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
-                    Db.TryAttach(bakerCycle);
-
-                    bakerCycle.RevelationRewards += op.Reward;
+                    var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Baker.Id);
+                    if (bakerCycle != null)
+                    {
+                        Db.TryAttach(bakerCycle);
+                        bakerCycle.RevelationRewards += op.Reward;
+                    }
                 }
             }
             #endregion
@@ -306,9 +317,10 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             foreach (var er in currentRights.Where(x => x.Type == BakingRightType.Endorsing))
             {
-                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, er.BakerId);
-                Db.TryAttach(bakerCycle);
+                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, er.BakerId);
+                if (bakerCycle == null) continue;
 
+                Db.TryAttach(bakerCycle);
                 bakerCycle.FutureEndorsements += (int)er.Slots;
                 if (er.Status == BakingRightStatus.Realized)
                     bakerCycle.Endorsements -= (int)er.Slots;
@@ -322,16 +334,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.DoubleBakings)
                 {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
+                    if (offenderCycle != null)
+                    {
+                        Db.TryAttach(offenderCycle);
+                        offenderCycle.DoubleBakingLosses -= op.OffenderLoss;
+                    }
 
-                    offenderCycle.DoubleBakingLosses -= op.OffenderLoss;
-
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
-
-                    accuserCycle.DoubleBakingRewards -= op.AccuserReward;
+                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
+                    if (accuserCycle != null)
+                    {
+                        Db.TryAttach(accuserCycle);
+                        accuserCycle.DoubleBakingRewards -= op.AccuserReward;
+                    }
                 }
             }
 
@@ -339,16 +354,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.DoubleEndorsings)
                 {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
+                    if (offenderCycle != null)
+                    {
+                        Db.TryAttach(offenderCycle);
+                        offenderCycle.DoubleEndorsingLosses -= op.OffenderLoss;
+                    }
 
-                    offenderCycle.DoubleEndorsingLosses -= op.OffenderLoss;
-
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
-
-                    accuserCycle.DoubleEndorsingRewards -= op.AccuserReward;
+                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
+                    if (accuserCycle != null)
+                    {
+                        Db.TryAttach(accuserCycle);
+                        accuserCycle.DoubleEndorsingRewards -= op.AccuserReward;
+                    }
                 }
             }
 
@@ -356,16 +374,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.DoublePreendorsings)
                 {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
+                    if (offenderCycle != null)
+                    {
+                        Db.TryAttach(offenderCycle);
+                        offenderCycle.DoublePreendorsingLosses -= op.OffenderLoss;
+                    }
 
-                    offenderCycle.DoublePreendorsingLosses -= op.OffenderLoss;
-
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
-
-                    accuserCycle.DoublePreendorsingRewards -= op.AccuserReward;
+                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
+                    if (accuserCycle != null)
+                    {
+                        Db.TryAttach(accuserCycle);
+                        accuserCycle.DoublePreendorsingRewards -= op.AccuserReward;
+                    }
                 }
             }
 
@@ -373,10 +394,12 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.Revelations)
                 {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
-                    Db.TryAttach(bakerCycle);
-
-                    bakerCycle.RevelationRewards -= op.Reward;
+                    var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Baker.Id);
+                    if (bakerCycle != null)
+                    {
+                        Db.TryAttach(bakerCycle);
+                        bakerCycle.RevelationRewards -= op.Reward;
+                    }
                 }
             }
             #endregion
