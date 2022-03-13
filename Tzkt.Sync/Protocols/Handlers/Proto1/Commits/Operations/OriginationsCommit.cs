@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
-            Db.TryAttach(block.Baker);
+            Db.TryAttach(block.Proposer);
             Db.TryAttach(sender);
             Db.TryAttach(sender.Delegate);
             Db.TryAttach(manager);
@@ -130,7 +130,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             //var block = origination.Block;
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             //var sender = origination.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             //var contract = origination.Contract;
@@ -420,7 +420,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             origination.Block ??= block;
             origination.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            origination.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            origination.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
             
             origination.Sender ??= await Cache.Accounts.GetAsync(origination.SenderId);
             origination.Sender.Delegate ??= Cache.Accounts.GetDelegate(origination.Sender.DelegateId);
@@ -431,7 +431,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             //var block = origination.Block;
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             var sender = origination.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var contract = origination.Contract;
@@ -535,7 +535,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             origination.Block ??= block;
             origination.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            origination.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            origination.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             origination.Sender ??= await Cache.Accounts.GetAsync(origination.SenderId);
             origination.Sender.Delegate ??= Cache.Accounts.GetDelegate(origination.Sender.DelegateId);

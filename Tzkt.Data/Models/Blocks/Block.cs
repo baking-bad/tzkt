@@ -16,7 +16,7 @@ namespace Tzkt.Data.Models
         public int? SoftwareId { get; set; }
 
         public int PayloadRound { get; set; }
-        public int Priority { get; set; }
+        public int BlockRound { get; set; }
         public int Validations { get; set; }
         public BlockEvents Events { get; set; }
         public Operations Operations { get; set; }
@@ -26,8 +26,8 @@ namespace Tzkt.Data.Models
         public long Bonus { get; set; }
         public long Fees { get; set; }
 
-        public int? BakerId { get; set; }
         public int? ProposerId { get; set; }
+        public int? ProducerId { get; set; }
         public int? RevelationId { get; set; }
         public int? ResetBakerDeactivation { get; set; }
         public int? ResetProposerDeactivation { get; set; }
@@ -39,8 +39,8 @@ namespace Tzkt.Data.Models
         [ForeignKey(nameof(ProtoCode))]
         public Protocol Protocol { get; set; }
 
-        [ForeignKey(nameof(BakerId))]
-        public Delegate Baker { get; set; }
+        [ForeignKey(nameof(ProposerId))]
+        public Delegate Proposer { get; set; }
 
         [ForeignKey(nameof(RevelationId))]
         public NonceRevelationOperation Revelation { get; set; }

@@ -27,11 +27,16 @@ namespace Tzkt.Api.Models
         public DateTime Timestamp { get; set; }
 
         /// <summary>
-        /// Priority (0 - ∞) with which baker can produce a block.
-        /// If a baker with priority `0` doesn't produce a block within a given time interval, then the right goes to a baker with priority` 1`, etc.
+        /// [DEPRECATED]
+        /// </summary>
+        public int? Priority => Round;
+
+        /// <summary>
+        /// Round (0 - ∞) at which the baker can propose/produce a block.
+        /// If a baker at round  `0` doesn't produce a block within the given time interval, then the right goes to a baker at round` 1`, etc.
         /// For `endorsing` rights this field is always `null`.
         /// </summary>
-        public int? Priority { get; set; }
+        public int? Round { get; set; }
 
         /// <summary>
         /// Number of slots (1 - 32) to be endorsed. For `baking` rights this field is always `null`.

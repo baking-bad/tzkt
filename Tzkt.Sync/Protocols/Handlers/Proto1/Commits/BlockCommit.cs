@@ -36,6 +36,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (level % protocol.BlocksPerSnapshot == 0)
                 events |= BlockEvents.BalanceSnapshot;
 
+            var round = rawBlock.Required("header").RequiredInt32("priority");
+            var baker = Cache.Accounts.GetDelegate(rawBlock.Required("metadata").RequiredString("baker"));
             Block = new Block
             {
                 Id = Cache.AppState.NextOperationId(),
@@ -44,8 +46,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Level = level,
                 Protocol = protocol,
                 Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),
-                Priority = rawBlock.Required("header").RequiredInt32("priority"),
-                Baker = Cache.Accounts.GetDelegate(rawBlock.Required("metadata").RequiredString("baker")),
+                PayloadRound = round,
+                BlockRound = round,
+                Proposer = baker,
+                ProposerId = baker.Id,
+                ProducerId = baker.Id,
                 Events = events,
                 Reward = reward,
                 Deposit = deposit,
@@ -55,8 +60,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             var proto = Block.Protocol;
-            var baker = Block.Baker;
-
             Db.TryAttach(proto);
             Db.TryAttach(baker);
             #endregion
@@ -85,11 +88,11 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             Block = block;
             Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             #region entities
             var proto = Block.Protocol;
-            var baker = Block.Baker;
+            var baker = Block.Proposer;
 
             Db.TryAttach(proto);
             Db.TryAttach(baker);

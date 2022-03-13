@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             //var block = transaction.Block;
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
 
             //var sender = transaction.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
@@ -301,7 +301,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             transaction.Block ??= block;
             transaction.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            transaction.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            transaction.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             transaction.Sender = await Cache.Accounts.GetAsync(transaction.SenderId);
             transaction.Sender.Delegate ??= Cache.Accounts.GetDelegate(transaction.Sender.DelegateId);
@@ -319,7 +319,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             //var block = transaction.Block;
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             var sender = transaction.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var target = transaction.Target;
@@ -405,7 +405,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             transaction.Block ??= block;
             transaction.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            transaction.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            transaction.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             transaction.Sender = await Cache.Accounts.GetAsync(transaction.SenderId);
             transaction.Sender.Delegate ??= Cache.Accounts.GetDelegate(transaction.Sender.DelegateId);

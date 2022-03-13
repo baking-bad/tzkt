@@ -20,8 +20,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Baker = block.Baker,
-                Sender = Cache.Accounts.GetDelegate(revealedBlock.BakerId),
+                Baker = block.Proposer,
+                Sender = Cache.Accounts.GetDelegate(revealedBlock.ProposerId),
                 RevealedBlock = revealedBlock,
                 RevealedLevel = revealedBlock.Level,
                 RevealedCycle = revealedBlock.Cycle,
@@ -31,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             var sender = revelation.Sender;
 
             Db.TryAttach(blockBaker);
@@ -58,7 +58,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             revelation.Block ??= block;
             revelation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            revelation.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            revelation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             revelation.Baker ??= Cache.Accounts.GetDelegate(revelation.BakerId);
             revelation.Sender ??= Cache.Accounts.GetDelegate(revelation.SenderId);
@@ -66,7 +66,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             var sender = revelation.Sender;
             var revealedBlock = revelation.RevealedBlock;
 

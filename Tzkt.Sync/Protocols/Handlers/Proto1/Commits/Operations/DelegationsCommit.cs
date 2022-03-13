@@ -55,7 +55,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             //var block = delegation.Block;
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
 
             //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
@@ -217,7 +217,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             delegation.Block ??= block;
             delegation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            delegation.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            delegation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             delegation.Sender ??= await Cache.Accounts.GetAsync(delegation.SenderId);
             delegation.Sender.Delegate ??= Cache.Accounts.GetDelegate(delegation.Sender.DelegateId);
@@ -227,7 +227,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             //var block = delegation.Block;
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             var sender = delegation.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var newDelegate = delegation.Delegate;
@@ -351,7 +351,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             delegation.Block ??= block;
             delegation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            delegation.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            delegation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             delegation.Sender ??= await Cache.Accounts.GetAsync(delegation.SenderId);
             delegation.Sender.Delegate ??= Cache.Accounts.GetDelegate(delegation.Sender.DelegateId);

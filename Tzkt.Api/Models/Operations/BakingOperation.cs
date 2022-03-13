@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
@@ -34,14 +30,34 @@ namespace Tzkt.Api.Models
         public string Block { get; set; }
 
         /// <summary>
-        /// Information about a delegate (baker), produced the block
+        /// [DEPRECATED]
         /// </summary>
-        public Alias Baker { get; set; }
+        public Alias Baker => Producer;
 
         /// <summary>
-        /// The position in the priority list of delegates at which the block was baked
+        /// [DEPRECATED]
         /// </summary>
-        public int Priority { get; set; }
+        public int Priority => BlockRound;
+
+        /// <summary>
+        /// Baker who proposed the block payload
+        /// </summary>
+        public Alias Proposer { get; set; }
+
+        /// <summary>
+        /// Baker who produced the block
+        /// </summary>
+        public Alias Producer { get; set; }
+
+        /// <summary>
+        /// Round at which the block payload was proposed
+        /// </summary>
+        public int PayloadRound { get; set; }
+
+        /// <summary>
+        /// Round at which the block was produced
+        /// </summary>
+        public int BlockRound { get; set; }
 
         /// <summary>
         /// Security deposit frozen on the baker's account for producing the block (micro tez)
@@ -52,6 +68,11 @@ namespace Tzkt.Api.Models
         /// Reward of the baker for producing the block (micro tez)
         /// </summary>
         public long Reward { get; set; }
+
+        /// <summary>
+        /// Reward of the baker for including extra endorsements (micro tez)
+        /// </summary>
+        public long Bonus { get; set; }
 
         /// <summary>
         /// Total fee paid by all operations, included in the block

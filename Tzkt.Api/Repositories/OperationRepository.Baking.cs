@@ -25,7 +25,7 @@ namespace Tzkt.Api.Repositories
         public async Task<BakingOperation> GetBaking(int id, Symbols quote)
         {
             var sql = $@"
-                SELECT      ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Deposit"", ""Reward"", ""Fees""
+                SELECT      *
                 FROM        ""Blocks""
                 WHERE       ""Id"" = @id
                 LIMIT       1";
@@ -39,18 +39,21 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
-                Baker = Accounts.GetAlias(row.BakerId),
+                Proposer = Accounts.GetAlias(row.ProposerId),
+                Producer = Accounts.GetAlias(row.ProducerId),
+                PayloadRound = row.PayloadRound,
+                BlockRound = row.BlockRound,
                 Block = row.Hash,
-                Priority = row.Priority,
                 Deposit = row.Deposit,
                 Reward = row.Reward,
+                Bonus = row.Bonus,
                 Fees = row.Fees,
                 Quote = Quotes.Get(quote, row.Level)
             };
         }
 
         public async Task<IEnumerable<BakingOperation>> GetBakings(
-            AccountParameter baker,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -58,9 +61,9 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var sql = new SqlBuilder(@"SELECT ""Id"", ""Level"", ""Timestamp"", ""BakerId"", ""Hash"", ""Priority"", ""Deposit"", ""Reward"", ""Fees"" FROM ""Blocks""")
-                .Filter("BakerId", baker)
-                .Filter(@"""BakerId"" IS NOT NULL")
+            var sql = new SqlBuilder(@"SELECT * FROM ""Blocks""")
+                .Filter("ProducerId", producer)
+                .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
@@ -73,18 +76,21 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = row.Timestamp,
-                Baker = Accounts.GetAlias(row.BakerId),
+                Proposer = Accounts.GetAlias(row.ProposerId),
+                Producer = Accounts.GetAlias(row.ProducerId),
+                PayloadRound = row.PayloadRound,
+                BlockRound = row.BlockRound,
                 Block = row.Hash,
-                Priority = row.Priority,
                 Deposit = row.Deposit,
                 Reward = row.Reward,
+                Bonus = row.Bonus,
                 Fees = row.Fees,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
 
         public async Task<object[][]> GetBakings(
-            AccountParameter baker,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -101,11 +107,14 @@ namespace Tzkt.Api.Repositories
                     case "id": columns.Add(@"""Id"""); break;
                     case "level": columns.Add(@"""Level"""); break;
                     case "timestamp": columns.Add(@"""Timestamp"""); break;
-                    case "baker": columns.Add(@"""BakerId"""); break;
                     case "block": columns.Add(@"""Hash"""); break;
-                    case "priority": columns.Add(@"""Priority"""); break;
+                    case "proposer": columns.Add(@"""ProposerId"""); break;
+                    case "producer": columns.Add(@"""ProducerId"""); break;
+                    case "payloadRound": columns.Add(@"""PayloadRound"""); break;
+                    case "blockRound": columns.Add(@"""BlockRound"""); break;
                     case "deposit": columns.Add(@"""Deposit"""); break;
                     case "reward": columns.Add(@"""Reward"""); break;
+                    case "bonus": columns.Add(@"""Bonus"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
                 }
@@ -115,7 +124,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
-                .Filter("BakerId", baker)
+                .Filter("ProducerId", producer)
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -144,17 +153,25 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Timestamp;
                         break;
-                    case "baker":
-                        foreach (var row in rows)
-                            result[j++][i] = await Accounts.GetAliasAsync(row.BakerId);
-                        break;
                     case "block":
                         foreach (var row in rows)
                             result[j++][i] = row.Hash;
                         break;
-                    case "priority":
+                    case "proposer":
                         foreach (var row in rows)
-                            result[j++][i] = row.Priority;
+                            result[j++][i] = await Accounts.GetAliasAsync(row.ProposerId);
+                        break;
+                    case "producer":
+                        foreach (var row in rows)
+                            result[j++][i] = await Accounts.GetAliasAsync(row.ProducerId);
+                        break;
+                    case "payloadRound":
+                        foreach (var row in rows)
+                            result[j++][i] = row.PayloadRound;
+                        break;
+                    case "blockRound":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRound;
                         break;
                     case "deposit":
                         foreach (var row in rows)
@@ -163,6 +180,10 @@ namespace Tzkt.Api.Repositories
                     case "reward":
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
+                        break;
+                    case "bonus":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Bonus;
                         break;
                     case "fees":
                         foreach (var row in rows)
@@ -179,7 +200,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetBakings(
-            AccountParameter baker,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -194,11 +215,14 @@ namespace Tzkt.Api.Repositories
                 case "id": columns.Add(@"""Id"""); break;
                 case "level": columns.Add(@"""Level"""); break;
                 case "timestamp": columns.Add(@"""Timestamp"""); break;
-                case "baker": columns.Add(@"""BakerId"""); break;
                 case "block": columns.Add(@"""Hash"""); break;
-                case "priority": columns.Add(@"""Priority"""); break;
+                case "proposer": columns.Add(@"""ProposerId"""); break;
+                case "producer": columns.Add(@"""ProducerId"""); break;
+                case "payloadRound": columns.Add(@"""PayloadRound"""); break;
+                case "blockRound": columns.Add(@"""BlockRound"""); break;
                 case "deposit": columns.Add(@"""Deposit"""); break;
                 case "reward": columns.Add(@"""Reward"""); break;
+                case "bonus": columns.Add(@"""Bonus"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "quote": columns.Add(@"""Level"""); break;
             }
@@ -207,7 +231,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
-                .Filter("BakerId", baker)
+                .Filter("ProducerId", producer)
                 .Filter(@"""BakerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -234,17 +258,25 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Timestamp;
                     break;
-                case "baker":
-                    foreach (var row in rows)
-                        result[j++] = await Accounts.GetAliasAsync(row.BakerId);
-                    break;
                 case "block":
                     foreach (var row in rows)
                         result[j++] = row.Hash;
                     break;
-                case "priority":
+                case "proposer":
                     foreach (var row in rows)
-                        result[j++] = row.Priority;
+                        result[j++] = await Accounts.GetAliasAsync(row.ProposerId);
+                    break;
+                case "producer":
+                    foreach (var row in rows)
+                        result[j++] = await Accounts.GetAliasAsync(row.ProducerId);
+                    break;
+                case "payloadRound":
+                    foreach (var row in rows)
+                        result[j++] = row.PayloadRound;
+                    break;
+                case "blockRound":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRound;
                     break;
                 case "deposit":
                     foreach (var row in rows)
@@ -253,6 +285,10 @@ namespace Tzkt.Api.Repositories
                 case "reward":
                     foreach (var row in rows)
                         result[j++] = row.Reward;
+                    break;
+                case "bonus":
+                    foreach (var row in rows)
+                        result[j++] = row.Bonus;
                     break;
                 case "fees":
                     foreach (var row in rows)

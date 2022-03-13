@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 OpHash = op.RequiredString("hash"),
 
                 AccusedLevel = content.Required("bh1").RequiredInt32("level"),
-                Accuser = block.Baker,
+                Accuser = block.Proposer,
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
                 AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
@@ -79,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         {
             #region init
             doubleBaking.Block ??= block;
-            doubleBaking.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            doubleBaking.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             doubleBaking.Accuser ??= Cache.Accounts.GetDelegate(doubleBaking.AccuserId);
             doubleBaking.Offender ??= Cache.Accounts.GetDelegate(doubleBaking.OffenderId);
