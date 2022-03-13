@@ -51,13 +51,16 @@ namespace Tzkt.Api.Repositories
                 Hash = row.Hash,
                 Timestamp = row.Timestamp,
                 Proto = row.ProtoCode,
-                Priority = row.Priority,
+                PayloadRound = row.PayloadRound,
+                BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
                 Reward = row.Reward,
+                Bonus = row.Bonus,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
+                Proposer = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null,
+                Producer = row.ProducerId != null ? await Accounts.GetAliasAsync(row.ProducerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBEscapeVote = row.LBEscapeVote,
                 LBEscapeEma = row.LBEscapeEma,
@@ -89,13 +92,16 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Timestamp = row.Timestamp,
                 Proto = row.ProtoCode,
-                Priority = row.Priority,
+                PayloadRound = row.PayloadRound,
+                BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
                 Reward = row.Reward,
+                Bonus = row.Bonus,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null,
+                Proposer = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null,
+                Producer = row.ProducerId != null ? await Accounts.GetAliasAsync(row.ProducerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBEscapeVote = row.LBEscapeVote,
                 LBEscapeEma = row.LBEscapeEma,
@@ -109,26 +115,28 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Block>> Get(
-            AccountParameter baker,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            Int32Parameter priority,
+            Int32Parameter blockRound,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Blocks""")
-                .Filter("BakerId", baker)
+                .Filter("ProducerId", producer)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
-                .Filter("Priority", priority)
+                .Filter("BlockRound", blockRound)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
-                    "priority" => ("Priority", "Priority"),
+                    "payloadRound" => ("PayloadRound", "PayloadRound"),
+                    "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
                     "reward" => ("Reward", "Reward"),
+                    "bonus" => ("Bonus", "Bonus"),
                     "fees" => ("Fees", "Fees"),
                     _ => ("Id", "Id")
                 });
@@ -143,13 +151,16 @@ namespace Tzkt.Api.Repositories
                 Hash = row.Hash,
                 Timestamp = row.Timestamp,
                 Proto = row.ProtoCode,
-                Priority = row.Priority,
+                PayloadRound = row.PayloadRound,
+                BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
                 Reward = row.Reward,
+                Bonus = row.Bonus,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
-                Baker = row.BakerId != null ? Accounts.GetAlias(row.BakerId) : null,
+                Proposer = row.ProposerId != null ? Accounts.GetAlias(row.ProposerId) : null,
+                Producer = row.ProducerId != null ? Accounts.GetAlias(row.ProducerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBEscapeVote = row.LBEscapeVote,
                 LBEscapeEma = row.LBEscapeEma,
@@ -158,10 +169,10 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> Get(
-            AccountParameter baker,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            Int32Parameter priority,
+            Int32Parameter blockRound,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -178,13 +189,16 @@ namespace Tzkt.Api.Repositories
                     case "hash": columns.Add(@"""Hash"""); break;
                     case "timestamp": columns.Add(@"""Timestamp"""); break;
                     case "proto": columns.Add(@"""ProtoCode"""); break;
-                    case "priority": columns.Add(@"""Priority"""); break;
+                    case "payloadRound": columns.Add(@"""PayloadRound"""); break;
+                    case "blockRound": columns.Add(@"""BlockRound"""); break;
                     case "validations": columns.Add(@"""Validations"""); break;
                     case "deposit": columns.Add(@"""Deposit"""); break;
                     case "reward": columns.Add(@"""Reward"""); break;
+                    case "bonus": columns.Add(@"""Bonus"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
-                    case "baker": columns.Add(@"""BakerId"""); break;
+                    case "proposer": columns.Add(@"""ProposerId"""); break;
+                    case "producer": columns.Add(@"""ProducerId"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
                     case "lbEscapeVote": columns.Add(@"""LBEscapeVote"""); break; 
@@ -196,16 +210,18 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
-                .Filter("BakerId", baker)
+                .Filter("ProducerId", producer)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
-                .Filter("Priority", priority)
+                .Filter("BlockRound", blockRound)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
-                    "priority" => ("Priority", "Priority"),
+                    "payloadRound" => ("PayloadRound", "PayloadRound"),
+                    "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
                     "reward" => ("Reward", "Reward"),
+                    "bonus" => ("Bonus", "Bonus"),
                     "fees" => ("Fees", "Fees"),
                     _ => ("Id", "Id")
                 });
@@ -241,9 +257,13 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.ProtoCode;
                         break;
-                    case "priority":
+                    case "payloadRound":
                         foreach (var row in rows)
-                            result[j++][i] = row.Priority;
+                            result[j++][i] = row.PayloadRound;
+                        break;
+                    case "blockRound":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRound;
                         break;
                     case "validations":
                         foreach (var row in rows)
@@ -257,6 +277,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
                         break;
+                    case "bonus":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Bonus;
+                        break;
                     case "fees":
                         foreach (var row in rows)
                             result[j++][i] = row.Fees;
@@ -265,9 +289,13 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.RevelationId != null;
                         break;
-                    case "baker":
+                    case "proposer":
                         foreach (var row in rows)
-                            result[j++][i] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
+                            result[j++][i] = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null;
+                        break;
+                    case "producer":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ProducerId != null ? await Accounts.GetAliasAsync(row.ProducerId) : null;
                         break;
                     case "software":
                         foreach (var row in rows)
@@ -292,10 +320,10 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> Get(
-            AccountParameter baker,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            Int32Parameter priority,
+            Int32Parameter blockRound,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -310,13 +338,16 @@ namespace Tzkt.Api.Repositories
                 case "hash": columns.Add(@"""Hash"""); break;
                 case "timestamp": columns.Add(@"""Timestamp"""); break;
                 case "proto": columns.Add(@"""ProtoCode"""); break;
-                case "priority": columns.Add(@"""Priority"""); break;
+                case "payloadRound": columns.Add(@"""PayloadRound"""); break;
+                case "blockRound": columns.Add(@"""BlockRound"""); break;
                 case "validations": columns.Add(@"""Validations"""); break;
                 case "deposit": columns.Add(@"""Deposit"""); break;
                 case "reward": columns.Add(@"""Reward"""); break;
+                case "bonus": columns.Add(@"""Bonus"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
-                case "baker": columns.Add(@"""BakerId"""); break;
+                case "proposer": columns.Add(@"""ProposerId"""); break;
+                case "producer": columns.Add(@"""ProducerId"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
                 case "quote": columns.Add(@"""Level"""); break;
                 case "lbEscapeVote": columns.Add(@"""LBEscapeVote"""); break;
@@ -327,16 +358,18 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
-                .Filter("BakerId", baker)
+                .Filter("ProducerId", producer)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
-                .Filter("Priority", priority)
+                .Filter("BlockRound", blockRound)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
-                    "priority" => ("Priority", "Priority"),
+                    "payloadRound" => ("PayloadRound", "PayloadRound"),
+                    "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
                     "reward" => ("Reward", "Reward"),
+                    "bonus" => ("Bonus", "Bonus"),
                     "fees" => ("Fees", "Fees"),
                     _ => ("Id", "Id")
                 });
@@ -370,9 +403,13 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.ProtoCode;
                     break;
-                case "priority":
+                case "payloadRound":
                     foreach (var row in rows)
-                        result[j++] = row.Priority;
+                        result[j++] = row.PayloadRound;
+                    break;
+                case "blockRound":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRound;
                     break;
                 case "validations":
                     foreach (var row in rows)
@@ -394,9 +431,13 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.RevelationId != null;
                     break;
-                case "baker":
+                case "proposer":
                     foreach (var row in rows)
-                        result[j++] = row.BakerId != null ? await Accounts.GetAliasAsync(row.BakerId) : null;
+                        result[j++] = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null;
+                    break;
+                case "producer":
+                    foreach (var row in rows)
+                        result[j++] = row.ProducerId != null ? await Accounts.GetAliasAsync(row.ProducerId) : null;
                     break;
                 case "software":
                     foreach (var row in rows)

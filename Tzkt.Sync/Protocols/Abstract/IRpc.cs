@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetCycleAsync(int level, int cycle);
         Task<JsonElement> GetBakingRightsAsync(int block, int cycle);
         Task<JsonElement> GetEndorsingRightsAsync(int block, int cycle);
-        Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxPriority);
+        Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxRound);
         Task<JsonElement> GetLevelEndorsingRightsAsync(int block, int level);
         Task<JsonElement> GetContractAsync(int level, string address);
         Task<JsonElement> GetDelegateAsync(int level, string address);

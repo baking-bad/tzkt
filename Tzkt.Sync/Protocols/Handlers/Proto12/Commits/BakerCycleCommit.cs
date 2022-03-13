@@ -21,9 +21,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             List<BakingRight> currentRights)
         {
             #region current rights
-            if (block.Priority == 0)
+            if (block.BlockRound == 0)
             {
-                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, (int)block.BakerId);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, (int)block.ProposerId);
                 Db.TryAttach(bakerCycle);
 
                 bakerCycle.FutureBlocks--;
@@ -37,24 +37,24 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var set = new HashSet<int>();
                 var bakerRound = currentRights
                     .Where(x => x.Type == BakingRightType.Baking)
-                    .OrderBy(x => x.Priority)
+                    .OrderBy(x => x.Round)
                     .First(x => x.Status == BakingRightStatus.Realized)
-                    .Priority;
+                    .Round;
 
-                foreach (var br in currentRights.Where(x => x.Type == BakingRightType.Baking).OrderBy(x => x.Priority))
+                foreach (var br in currentRights.Where(x => x.Type == BakingRightType.Baking).OrderBy(x => x.Round))
                 {
                     if (set.Add(br.BakerId))
                     {
                         var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, br.BakerId);
                         Db.TryAttach(bakerCycle);
 
-                        if (br.Priority == 0)
+                        if (br.Round == 0)
                         {
                             bakerCycle.FutureBlocks--;
                             bakerCycle.FutureBlockRewards -= block.Protocol.MaxBakingReward;
                         }
 
-                        if (br.BakerId == block.BakerId || br.BakerId == block.ProposerId)
+                        if (br.BakerId == block.ProposerId || br.BakerId == block.ProducerId)
                         {
                             bakerCycle.Blocks++;
                         }
@@ -63,18 +63,18 @@ namespace Tzkt.Sync.Protocols.Proto12
                             bakerCycle.MissedBlocks++;
                         }
 
-                        if (br.BakerId == block.BakerId)
+                        if (br.BakerId == block.ProposerId)
                         {
                             bakerCycle.BlockRewards += block.Reward;
                             bakerCycle.BlockFees += block.Fees;
                         }
-                        else if (br.Priority < bakerRound)
+                        else if (br.Round < bakerRound)
                         {
                             bakerCycle.MissedBlockRewards += block.Reward;
                             bakerCycle.MissedBlockFees += block.Fees;
                         }
 
-                        if (br.BakerId == block.ProposerId)
+                        if (br.BakerId == block.ProducerId)
                         {
                             bakerCycle.BlockRewards += block.Bonus;
                         }
@@ -250,9 +250,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region current rights
             var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
 
-            if (block.Priority == 0)
+            if (block.BlockRound == 0)
             {
-                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, (int)block.BakerId);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, (int)block.ProposerId);
                 Db.TryAttach(bakerCycle);
 
                 bakerCycle.FutureBlocks++;
@@ -266,24 +266,24 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var set = new HashSet<int>();
                 var bakerRound = currentRights
                     .Where(x => x.Type == BakingRightType.Baking)
-                    .OrderBy(x => x.Priority)
+                    .OrderBy(x => x.Round)
                     .First(x => x.Status == BakingRightStatus.Realized)
-                    .Priority;
+                    .Round;
 
-                foreach (var br in currentRights.Where(x => x.Type == BakingRightType.Baking).OrderBy(x => x.Priority))
+                foreach (var br in currentRights.Where(x => x.Type == BakingRightType.Baking).OrderBy(x => x.Round))
                 {
                     if (set.Add(br.BakerId))
                     {
                         var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, br.BakerId);
                         Db.TryAttach(bakerCycle);
 
-                        if (br.Priority == 0)
+                        if (br.Round == 0)
                         {
                             bakerCycle.FutureBlocks++;
                             bakerCycle.FutureBlockRewards += block.Protocol.MaxBakingReward;
                         }
 
-                        if (br.BakerId == block.BakerId || br.BakerId == block.ProposerId)
+                        if (br.BakerId == block.ProposerId || br.BakerId == block.ProducerId)
                         {
                             bakerCycle.Blocks--;
                         }
@@ -292,18 +292,18 @@ namespace Tzkt.Sync.Protocols.Proto12
                             bakerCycle.MissedBlocks--;
                         }
 
-                        if (br.BakerId == block.BakerId)
+                        if (br.BakerId == block.ProposerId)
                         {
                             bakerCycle.BlockRewards -= block.Reward;
                             bakerCycle.BlockFees -= block.Fees;
                         }
-                        else if (br.Priority < bakerRound)
+                        else if (br.Round < bakerRound)
                         {
                             bakerCycle.MissedBlockRewards -= block.Reward;
                             bakerCycle.MissedBlockFees -= block.Fees;
                         }
 
-                        if (br.BakerId == block.ProposerId)
+                        if (br.BakerId == block.ProducerId)
                         {
                             bakerCycle.BlockRewards -= block.Bonus;
                         }

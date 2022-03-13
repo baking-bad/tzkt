@@ -24,8 +24,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual Task<JsonElement> GetEndorsingRightsAsync(int block, int cycle)
             => Node.GetAsync($"chains/main/blocks/{block}/helpers/endorsing_rights?cycle={cycle}");
 
-        public virtual Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxPriority)
-            => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?level={level}&max_priority={maxPriority + 1}&all=true");
+        public virtual Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxRound)
+            => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?level={level}&max_priority={maxRound + 1}&all=true");
 
         public virtual Task<JsonElement> GetLevelEndorsingRightsAsync(int block, int level)
             => Node.GetAsync($"chains/main/blocks/{block}/helpers/endorsing_rights?level={level}");

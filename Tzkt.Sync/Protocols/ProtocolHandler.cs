@@ -289,7 +289,7 @@ namespace Tzkt.Sync
                         break;
                     case Block b:
                         b.Activations = null;
-                        b.Baker = null;
+                        b.Proposer = null;
                         b.Ballots = null;
                         b.CreatedAccounts = null;
                         b.Delegations = null;

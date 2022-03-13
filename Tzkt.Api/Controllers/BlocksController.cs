@@ -44,22 +44,22 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of blocks.
         /// </remarks>
-        /// <param name="baker">Filters blocks by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="producer">Filters blocks by block producer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters blocks by level.</param>
         /// <param name="timestamp">Filters blocks by timestamp.</param>
-        /// <param name="priority">Filters blocks by priority.</param>
+        /// <param name="blockRound">Filters blocks by block round.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `priority`, `validations`, `reward`, `fees`.</param>
+        /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `payloadRound`, `blockRound`, `validations`, `reward`, `bonus`, `fees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
-            AccountParameter baker,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
-            Int32Parameter priority,
+            Int32Parameter blockRound,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -67,42 +67,42 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
-            if (baker != null)
+            if (producer != null)
             {
-                if (baker.Eqx != null)
-                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+                if (producer.Eqx != null)
+                    return new BadRequest($"{nameof(producer)}.eqx", "This parameter doesn't support .eqx mode.");
 
-                if (baker.Nex != null)
-                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+                if (producer.Nex != null)
+                    return new BadRequest($"{nameof(producer)}.nex", "This parameter doesn't support .nex mode.");
 
-                if (baker.Eq == -1 || baker.In?.Count == 0)
+                if (producer.Eq == -1 || producer.In?.Count == 0)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
-            if (sort != null && !sort.Validate("id", "level", "priority", "validations", "reward", "fees"))
+            if (sort != null && !sort.Validate("id", "level", "payloadRound", "blockRound", "validations", "reward", "bonus", "fees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, quote));
+                return Ok(await Blocks.Get(producer, level, timestamp, blockRound, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Blocks.Get(producer, level, timestamp, blockRound, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Values, quote));
+                    return Ok(await Blocks.Get(producer, level, timestamp, blockRound, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Blocks.Get(producer, level, timestamp, blockRound, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Blocks.Get(baker, level, timestamp, priority, sort, offset, limit, select.Fields, quote)
+                        Rows = await Blocks.Get(producer, level, timestamp, blockRound, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

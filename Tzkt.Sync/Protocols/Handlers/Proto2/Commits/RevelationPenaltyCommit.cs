@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     revelationPenalties = new List<RevelationPenaltyOperation>();
 
                     var missedBlocks = await Db.Blocks
-                        .Include(x => x.Baker)
+                        .Include(x => x.Proposer)
                         .Include(x => x.Protocol)
                         .Where(x => x.Level % x.Protocol.BlocksPerCommitment == 0 &&
                             x.Cycle == block.Cycle - 1 &&
@@ -32,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                         .ToListAsync();
 
                     var penalizedBakers = missedBlocks
-                        .Select(x => x.BakerId)
+                        .Select(x => x.ProposerId)
                         .ToHashSet();
 
                     var bakerCycles = await Db.BakerCycles.AsNoTracking()
@@ -46,12 +46,12 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                     foreach (var missedBlock in missedBlocks)
                     {
-                        Cache.Accounts.Add(missedBlock.Baker);
-                        var slashed = slashedBakers.Contains((int)missedBlock.BakerId);
+                        Cache.Accounts.Add(missedBlock.Proposer);
+                        var slashed = slashedBakers.Contains((int)missedBlock.ProposerId);
                         revelationPenalties.Add(new RevelationPenaltyOperation
                         {
                             Id = Cache.AppState.NextOperationId(),
-                            Baker = missedBlock.Baker,
+                            Baker = missedBlock.Proposer,
                             Block = block,
                             Level = block.Level,
                             Timestamp = block.Timestamp,

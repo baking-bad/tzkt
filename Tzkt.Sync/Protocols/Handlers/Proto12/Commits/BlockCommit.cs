@@ -18,8 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             var metadata = rawBlock.Required("metadata");
 
             var level = header.RequiredInt32("level");
-            var baker = Cache.Accounts.GetDelegate(metadata.RequiredString("proposer"));
-            var proposer = Cache.Accounts.GetDelegate(metadata.RequiredString("baker"));
+            var proposer = Cache.Accounts.GetDelegate(metadata.RequiredString("proposer"));
+            var producer = Cache.Accounts.GetDelegate(metadata.RequiredString("baker"));
             var protocol = await Cache.Protocols.GetAsync(rawBlock.RequiredString("protocol"));
             var events = BlockEvents.None;
 
@@ -53,9 +53,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
                 PayloadRound = header.RequiredInt32("payload_round"),
-                Baker = baker,
-                BakerId = baker.Id,
+                Proposer = proposer,
                 ProposerId = proposer.Id,
+                ProducerId = producer.Id,
                 Events = events,
                 Reward = rewardUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -rewardUpdate.RequiredInt64("change"),
                 Bonus = bonusUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -bonusUpdate.RequiredInt64("change"),
@@ -63,60 +63,60 @@ namespace Tzkt.Sync.Protocols.Proto12
                 LBEscapeEma = metadata.RequiredInt32("liquidity_baking_escape_ema")
             };
 
-            #region determine priority
-            var priority = (await Cache.BakingRights.GetAsync(Block.Cycle, Block.Level))
+            #region determine block round
+            var blockRound = (await Cache.BakingRights.GetAsync(Block.Cycle, Block.Level))
                 .Where(x => x.Type == BakingRightType.Baking)
-                .OrderBy(x => x.Priority)
-                .SkipWhile(x => x.Priority < Block.PayloadRound)
-                .FirstOrDefault(x => x.BakerId == Block.ProposerId)?
-                .Priority ?? -1;
+                .OrderBy(x => x.Round)
+                .SkipWhile(x => x.Round < Block.PayloadRound)
+                .FirstOrDefault(x => x.BakerId == Block.ProducerId)?
+                .Round ?? -1;
 
-            if (priority == -1)
+            if (blockRound == -1)
             {
                 var cycle = await Db.Cycles.FirstAsync(x => x.Index == Block.Cycle);
                 var sampler = await Sampler.CreateAsync(Proto, Block.Cycle);
-                priority = RightsGenerator.EnumerateBakingRights(sampler, cycle, Block.Level, 9_999_999)
+                blockRound = RightsGenerator.EnumerateBakingRights(sampler, cycle, Block.Level, 9_999_999)
                     .SkipWhile(x => x.Round < Block.PayloadRound)
-                    .First(x => x.Baker == Block.ProposerId)
+                    .First(x => x.Baker == Block.ProducerId)
                     .Round;
             }
 
-            Block.Priority = priority;
-            #endregion
-
-            Db.TryAttach(baker);
-            baker.Balance += Block.Reward;
-            baker.StakingBalance += Block.Reward;
-            baker.BlocksCount++;
-
-            #region set baker active
-            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
-            if (baker.DeactivationLevel < newDeactivationLevel)
-            {
-                if (baker.DeactivationLevel <= Block.Level)
-                    await UpdateDelegate(baker, true);
-
-                Block.ResetBakerDeactivation = baker.DeactivationLevel;
-                baker.DeactivationLevel = newDeactivationLevel;
-            }
+            Block.BlockRound = blockRound;
             #endregion
 
             Db.TryAttach(proposer);
-            proposer.Balance += Block.Bonus;
-            proposer.StakingBalance += Block.Bonus;
-            if (proposer.Id != baker.Id)
+            proposer.Balance += Block.Reward;
+            proposer.StakingBalance += Block.Reward;
+            proposer.BlocksCount++;
+
+            #region set baker active
+            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            if (proposer.DeactivationLevel < newDeactivationLevel)
             {
-                proposer.BlocksCount++;
+                if (proposer.DeactivationLevel <= Block.Level)
+                    await UpdateDelegate(proposer, true);
+
+                Block.ResetBakerDeactivation = proposer.DeactivationLevel;
+                proposer.DeactivationLevel = newDeactivationLevel;
+            }
+            #endregion
+
+            Db.TryAttach(producer);
+            producer.Balance += Block.Bonus;
+            producer.StakingBalance += Block.Bonus;
+            if (producer.Id != proposer.Id)
+            {
+                producer.BlocksCount++;
 
                 #region set proposer active
-                newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
-                if (proposer.DeactivationLevel < newDeactivationLevel)
+                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+                if (producer.DeactivationLevel < newDeactivationLevel)
                 {
-                    if (proposer.DeactivationLevel <= Block.Level)
-                        await UpdateDelegate(proposer, true);
+                    if (producer.DeactivationLevel <= Block.Level)
+                        await UpdateDelegate(producer, true);
 
-                    Block.ResetProposerDeactivation = proposer.DeactivationLevel;
-                    proposer.DeactivationLevel = newDeactivationLevel;
+                    Block.ResetProposerDeactivation = producer.DeactivationLevel;
+                    producer.DeactivationLevel = newDeactivationLevel;
                 }
                 #endregion
             }
@@ -133,39 +133,39 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             Block = block;
             Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
             
-            var baker = Block.Baker;
-            Db.TryAttach(baker);
-            baker.Balance -= Block.Reward;
-            baker.StakingBalance -= Block.Reward;
-            baker.BlocksCount--;
+            var proposer = Block.Proposer;
+            Db.TryAttach(proposer);
+            proposer.Balance -= Block.Reward;
+            proposer.StakingBalance -= Block.Reward;
+            proposer.BlocksCount--;
 
             #region reset baker activity
             if (Block.ResetBakerDeactivation != null)
             {
                 if (Block.ResetBakerDeactivation <= Block.Level)
-                    await UpdateDelegate(baker, false);
+                    await UpdateDelegate(proposer, false);
 
-                baker.DeactivationLevel = (int)Block.ResetBakerDeactivation;
+                proposer.DeactivationLevel = (int)Block.ResetBakerDeactivation;
             }
             #endregion
 
-            var proposer = Cache.Accounts.GetDelegate(block.ProposerId);
-            Db.TryAttach(proposer);
-            proposer.Balance -= Block.Bonus;
-            proposer.StakingBalance -= Block.Bonus;
-            if (proposer.Id != baker.Id)
+            var producer = Cache.Accounts.GetDelegate(block.ProducerId);
+            Db.TryAttach(producer);
+            producer.Balance -= Block.Bonus;
+            producer.StakingBalance -= Block.Bonus;
+            if (producer.Id != proposer.Id)
             {
-                proposer.BlocksCount--;
+                producer.BlocksCount--;
 
                 #region reset proposer activity
                 if (Block.ResetProposerDeactivation != null)
                 {
                     if (Block.ResetProposerDeactivation <= Block.Level)
-                        await UpdateDelegate(proposer, false);
+                        await UpdateDelegate(producer, false);
 
-                    proposer.DeactivationLevel = (int)Block.ResetProposerDeactivation;
+                    producer.DeactivationLevel = (int)Block.ResetProposerDeactivation;
                 }
                 #endregion
             }

@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var offenderAddr = freezerUpdate.ValueKind != JsonValueKind.Undefined
                 ? freezerUpdate.RequiredString("delegate")
-                : block.Baker.Address; // this is wrong, but no big deal
+                : block.Proposer.Address; // this is wrong, but no big deal
 
             var offenderLoss = freezerUpdate.ValueKind != JsonValueKind.Undefined
                 ? -freezerUpdate.RequiredInt64("change")
@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 OpHash = op.RequiredString("hash"),
 
                 AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level") + 1,
-                Accuser = block.Baker,
+                Accuser = block.Proposer,
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
                 AccuserReward = accuserReward,
@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             #region init
             doubleEndorsing.Block ??= block;
-            doubleEndorsing.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            doubleEndorsing.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             doubleEndorsing.Accuser ??= Cache.Accounts.GetDelegate(doubleEndorsing.AccuserId);
             doubleEndorsing.Offender ??= Cache.Accounts.GetDelegate(doubleEndorsing.OffenderId);

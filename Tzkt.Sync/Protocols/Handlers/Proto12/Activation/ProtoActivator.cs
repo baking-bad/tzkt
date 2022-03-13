@@ -221,7 +221,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Where(x => x.Level > state.Level && x.Cycle == state.Cycle)
                 .ToListAsync();
 
-            foreach (var br in rights.Where(x => x.Type == BakingRightType.Baking && x.Priority == 0))
+            foreach (var br in rights.Where(x => x.Type == BakingRightType.Baking && x.Round == 0))
             {
                 var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, br.BakerId);
                 Db.TryAttach(bakerCycle);
@@ -275,7 +275,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             using var writer = conn.BeginBinaryImport(@"
-                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"")
+                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                     FROM STDIN (FORMAT BINARY)");
 
             foreach (var er in ers)
@@ -341,7 +341,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 #region save rights
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using (var writer = conn.BeginBinaryImport(@"
-                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"")
+                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                     FROM STDIN (FORMAT BINARY)"))
                 {
                     foreach (var er in ers)

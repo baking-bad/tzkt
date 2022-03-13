@@ -29,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(
-                    @"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
+                    @"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
                 foreach (var er in rawEndorsingRights.EnumerateArray())
                 {

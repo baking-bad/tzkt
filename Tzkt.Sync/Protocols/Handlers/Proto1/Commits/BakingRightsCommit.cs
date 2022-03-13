@@ -23,16 +23,16 @@ namespace Tzkt.Sync.Protocols.Proto1
             CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
             var sql = string.Empty;
 
-            if (block.Priority == 0 && block.Validations == block.Protocol.EndorsersPerBlock)
+            if (block.BlockRound == 0 && block.Validations == block.Protocol.EndorsersPerBlock)
             {
-                CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Priority > 0);
+                CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > 0);
                 CurrentRights.ForEach(x => x.Status = BakingRightStatus.Realized);
 
                 sql = $@"
                     DELETE  FROM ""BakingRights""
                     WHERE   ""Level"" = {block.Level}
                     AND     ""Type"" = {(int)BakingRightType.Baking}
-                    AND     ""Priority"" > 0;
+                    AND     ""Round"" > 0;
 
                     UPDATE  ""BakingRights""
                     SET     ""Status"" = {(int)BakingRightStatus.Realized}
@@ -40,21 +40,21 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             else
             {
-                #region load missed priority
-                var maxExistedPriority = CurrentRights
+                #region load missed rounds
+                var maxExistedRound = CurrentRights
                     .Where(x => x.Type == BakingRightType.Baking)
-                    .Select(x => x.Priority)
+                    .Select(x => x.Round)
                     .Max();
 
-                if (maxExistedPriority < block.Priority)
+                if (maxExistedRound < block.BlockRound)
                 {
-                    var bakingRights = await Proto.Rpc.GetLevelBakingRightsAsync(block.Level, block.Level, block.Priority);
-                    //bakingRights = bakingRights.OrderBy(x => x.Priority);
+                    var bakingRights = await Proto.Rpc.GetLevelBakingRightsAsync(block.Level, block.Level, block.BlockRound);
+                    //bakingRights = bakingRights.OrderBy(x => x.Round);
 
                     var sqlInsert = @"
-                        INSERT INTO ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") VALUES ";
+                        INSERT INTO ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") VALUES ";
 
-                    foreach (var bakingRight in bakingRights.EnumerateArray().SkipWhile(x => x.RequiredInt32("priority") <= maxExistedPriority))
+                    foreach (var bakingRight in bakingRights.EnumerateArray().SkipWhile(x => x.RequiredInt32("priority") <= maxExistedRound))
                     {
                         var delegat = Cache.Accounts.GetDelegateOrDefault(bakingRight.RequiredString("delegate"));
                         if (delegat == null) continue; // WTF: [level:28680] - Baking rights were given to non-baker account
@@ -67,7 +67,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     //TODO: execute sql with RETURNS to get identity
                     var addedRights = await Db.BakingRights
-                        .Where(x => x.Level == block.Level && x.Type == BakingRightType.Baking && x.Priority > maxExistedPriority)
+                        .Where(x => x.Level == block.Level && x.Type == BakingRightType.Baking && x.Round > maxExistedRound)
                         .ToListAsync();
 
                     CurrentRights.AddRange(addedRights);
@@ -75,13 +75,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #endregion
 
                 #region remove excess
-                if (CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Priority > block.Priority) > 0)
+                if (CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > block.BlockRound) > 0)
                 {
                     sql += $@"
                         DELETE  FROM ""BakingRights""
                         WHERE   ""Level"" = {block.Level}
                         AND     ""Type"" = {(int)BakingRightType.Baking}
-                        AND     ""Priority"" > {block.Priority};";
+                        AND     ""Round"" > {block.BlockRound};";
                 }
                 #endregion
 
@@ -105,7 +105,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var cr in CurrentRights)
                     cr.Status = BakingRightStatus.Missed;
 
-                CurrentRights.First(x => x.Priority == block.Priority).Status = BakingRightStatus.Realized;
+                CurrentRights.First(x => x.Round == block.BlockRound).Status = BakingRightStatus.Realized;
                 
                 if (block.Endorsements != null)
                 {
@@ -153,7 +153,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         throw new Exception($"Account {br.RequiredString("delegate")} doesn't exist");
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-                using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
+                using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
                 foreach (var er in FutureEndorsingRights)
                 {

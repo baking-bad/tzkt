@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto11
             #endregion
 
             #region entities
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
@@ -103,14 +103,14 @@ namespace Tzkt.Sync.Protocols.Proto11
         {
             #region init
             registerConstant.Block ??= block;
-            registerConstant.Block.Baker ??= Cache.Accounts.GetDelegate(block.BakerId);
+            registerConstant.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             registerConstant.Sender ??= await Cache.Accounts.GetAsync(registerConstant.SenderId);
             registerConstant.Sender.Delegate ??= Cache.Accounts.GetDelegate(registerConstant.Sender.DelegateId);
             #endregion
 
             #region entities
-            var blockBaker = block.Baker;
+            var blockBaker = block.Proposer;
             var sender = (User)registerConstant.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 

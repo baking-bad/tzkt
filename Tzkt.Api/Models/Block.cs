@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
@@ -31,12 +29,22 @@ namespace Tzkt.Api.Models
         /// Protocol code, representing a number of protocol changes since genesis (mod 256, but `-1` for the genesis block)
         /// </summary>
         public int Proto { get; set; }
-        
+
         /// <summary>
-        /// The position in the priority list of delegates at which the block was baked
+        /// [DEPRECATED]
         /// </summary>
-        public int Priority { get; set; }
-        
+        public int Priority => BlockRound;
+
+        /// <summary>
+        /// Round at which the block payload was proposed
+        /// </summary>
+        public int PayloadRound { get; set; }
+
+        /// <summary>
+        /// Round at which the block was baked
+        /// </summary>
+        public int BlockRound { get; set; }
+
         /// <summary>
         /// Number of endorsements, confirmed the block
         /// </summary>
@@ -48,9 +56,14 @@ namespace Tzkt.Api.Models
         public long Deposit { get; set; }
 
         /// <summary>
-        /// Reward of the baker for producing the block (micro tez)
+        /// Reward paid to payload proposer (micro tez)
         /// </summary>
         public long Reward { get; set; }
+
+        /// <summary>
+        /// Bonus paid to block producer (micro tez)
+        /// </summary>
+        public long Bonus { get; set; }
 
         /// <summary>
         /// Total fee paid by all operations, included in the block
@@ -65,9 +78,19 @@ namespace Tzkt.Api.Models
         public bool NonceRevealed { get; set; }
 
         /// <summary>
-        /// Information about a delegate (baker), produced the block
+        /// [DEPRECATED]
         /// </summary>
-        public Alias Baker { get; set; }
+        public Alias Baker => Producer;
+
+        /// <summary>
+        /// Baker who proposed the block payload
+        /// </summary>
+        public Alias Proposer { get; set; }
+
+        /// <summary>
+        /// Baker who produced the block
+        /// </summary>
+        public Alias Producer { get; set; }
 
         /// <summary>
         /// Information about baker's software

@@ -31,7 +31,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
-            Int32NullParameter priority,
+            Int32NullParameter round,
             BakingRightStatusParameter status)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""BakingRights""")
@@ -40,7 +40,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BakerId", baker)
                 .Filter("Type", type)
                 .Filter("Status", status)
-                .Filter("Priority", priority)
+                .Filter("Round", round)
                 .Filter("Slots", slots);
 
             using var db = GetConnection();
@@ -53,7 +53,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
-            Int32NullParameter priority,
+            Int32NullParameter round,
             BakingRightStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -65,7 +65,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BakerId", baker)
                 .Filter("Type", type)
                 .Filter("Status", status)
-                .Filter("Priority", priority)
+                .Filter("Round", round)
                 .Filter("Slots", slots)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
@@ -79,7 +79,7 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = Time[row.Level],
                 Baker = Accounts.GetAlias(row.BakerId),
-                Priority = row.Priority,
+                Round = row.Round,
                 Slots = row.Slots,
                 Status = BakingRightStatuses.ToString(row.Status)
             });
@@ -91,7 +91,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
-            Int32NullParameter priority,
+            Int32NullParameter round,
             BakingRightStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -108,7 +108,7 @@ namespace Tzkt.Api.Repositories
                     case "level": columns.Add(@"""Level"""); break;
                     case "timestamp": columns.Add(@"""Level"""); columns.Add(@"""Status"""); break;
                     case "baker": columns.Add(@"""BakerId"""); break;
-                    case "priority": columns.Add(@"""Priority"""); break;
+                    case "round": columns.Add(@"""Round"""); break;
                     case "slots": columns.Add(@"""Slots"""); break;
                     case "status": columns.Add(@"""Status"""); break;
                 }
@@ -123,7 +123,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BakerId", baker)
                 .Filter("Type", type)
                 .Filter("Status", status)
-                .Filter("Priority", priority)
+                .Filter("Round", round)
                 .Filter("Slots", slots)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
@@ -158,9 +158,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.BakerId);
                         break;
-                    case "priority":
+                    case "round":
                         foreach (var row in rows)
-                            result[j++][i] = row.Priority;
+                            result[j++][i] = row.Round;
                         break;
                     case "slots":
                         foreach (var row in rows)
@@ -182,7 +182,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
-            Int32NullParameter priority,
+            Int32NullParameter round,
             BakingRightStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -197,7 +197,7 @@ namespace Tzkt.Api.Repositories
                 case "level": columns.Add(@"""Level"""); break;
                 case "timestamp": columns.Add(@"""Level"""); columns.Add(@"""Status"""); break;
                 case "baker": columns.Add(@"""BakerId"""); break;
-                case "priority": columns.Add(@"""Priority"""); break;
+                case "round": columns.Add(@"""Round"""); break;
                 case "slots": columns.Add(@"""Slots"""); break;
                 case "status": columns.Add(@"""Status"""); break;
             }
@@ -211,7 +211,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BakerId", baker)
                 .Filter("Type", type)
                 .Filter("Status", status)
-                .Filter("Priority", priority)
+                .Filter("Round", round)
                 .Filter("Slots", slots)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
@@ -244,9 +244,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.BakerId);
                     break;
-                case "priority":
+                case "round":
                     foreach (var row in rows)
-                        result[j++] = row.Priority;
+                        result[j++] = row.Round;
                     break;
                 case "slots":
                     foreach (var row in rows)
@@ -261,7 +261,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<BakingInterval>> GetSchedule(string address, DateTime from, DateTime to, int maxPriority)
+        public async Task<IEnumerable<BakingInterval>> GetSchedule(string address, DateTime from, DateTime to, int maxRound)
         {
             var state = State.Current;
             var proto = Protocols.Current;
@@ -287,7 +287,7 @@ namespace Tzkt.Api.Repositories
                 WHERE ""BakerId"" = {rawAccount.Id}
                 AND   ""Cycle"" >= {fromCycle} AND ""Cycle"" <= {toCycle}
                 AND   ""Level"" >= {fromLevel} AND ""Level"" <= {toLevel}
-                AND   NOT(""Status"" = 0 AND ""Priority"" IS NOT NULL AND ""Priority"" > {maxPriority})";
+                AND   NOT(""Status"" = 0 AND ""Round"" IS NOT NULL AND ""Round"" > {maxRound})";
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql);

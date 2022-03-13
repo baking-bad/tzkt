@@ -5,7 +5,7 @@ namespace Tzkt.Data.Models
     public class BakingRight
     {
         #region settings
-        public const int MaxPriority = 7;
+        public const int MaxRound = 7;
         #endregion
 
         public int Id { get; set; }
@@ -14,7 +14,7 @@ namespace Tzkt.Data.Models
         public int BakerId { get; set; }
         public BakingRightType Type { get; set; }
         public BakingRightStatus Status { get; set; }
-        public int? Priority { get; set; }
+        public int? Round { get; set; }
         public int? Slots { get; set; }
     }
 

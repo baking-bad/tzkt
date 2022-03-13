@@ -67,7 +67,7 @@ namespace Tzkt.Sync.Protocols
 
         public static async Task<IEnumerable<BR>> GetBakingRightsAsync(Sampler sampler, Protocol protocol, Cycle cycle)
         {
-            var rounds = BakingRight.MaxPriority + 1;
+            var rounds = BakingRight.MaxRound + 1;
             var res = new List<BR>(protocol.BlocksPerCycle * rounds);
             var step = protocol.BlocksPerCycle / Environment.ProcessorCount;
             var tasks = new List<Task>();
@@ -135,7 +135,7 @@ namespace Tzkt.Sync.Protocols
             }
         }
 
-        public static IEnumerable<BR> GetBakingRights(Sampler sampler, Cycle cycle, int level, int rounds = BakingRight.MaxPriority + 1)
+        public static IEnumerable<BR> GetBakingRights(Sampler sampler, Cycle cycle, int level, int rounds = BakingRight.MaxRound + 1)
         {
             var generator = new RightsGenerator(sampler, cycle.Seed);
             var rights = generator.GetBakingRights(level - cycle.FirstLevel, rounds);

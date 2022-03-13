@@ -40,7 +40,7 @@ namespace Tzkt.Api.Services
         public static object[][] BlocksTab { get; private set; } = Array.Empty<object[]>();
         public static readonly string[] BlockFields = new[]
         {
-            "timestamp", "level", "baker", "priority", "validations", "reward", "fees", "hash"
+            "timestamp", "level", "producer", "blockRound", "validations", "reward", "fees", "hash"
         };
         #endregion
 

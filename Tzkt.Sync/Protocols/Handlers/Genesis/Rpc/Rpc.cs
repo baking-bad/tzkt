@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Genesis
         public Task<JsonElement> GetEndorsingRightsAsync(int block, int cycle)
             => throw new InvalidOperationException();
 
-        public Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxPriority)
+        public Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxRound)
             => throw new InvalidOperationException();
 
         public Task<JsonElement> GetLevelEndorsingRightsAsync(int block, int level)

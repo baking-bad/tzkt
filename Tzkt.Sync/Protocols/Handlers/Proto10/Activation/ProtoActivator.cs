@@ -192,7 +192,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 .Where(x => x.Level > state.Level && x.Cycle == state.Cycle)
                 .ToListAsync();
 
-            foreach (var br in rights.Where(x => x.Type == BakingRightType.Baking && x.Priority == 0))
+            foreach (var br in rights.Where(x => x.Type == BakingRightType.Baking && x.Round == 0))
             {
                 var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, br.BakerId);
                 Db.TryAttach(bakerCycle);
@@ -294,13 +294,13 @@ namespace Tzkt.Sync.Protocols.Proto10
                 throw new ValidationException("Rpc returned less baking rights (with priority 0) than it should be");
 
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
+            using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
             foreach (var br in rights)
             {
                 var bakerId = Cache.Accounts.GetDelegate(br.RequiredString("delegate")).Id;
-                var priority = br.RequiredInt32("priority");
-                if (priority == 0)
+                var round = br.RequiredInt32("priority");
+                if (round == 0)
                 {
                     var bakerCycle = bakerCycles[bakerId];
                     bakerCycle.FutureBlockRewards += GetFutureBlockReward(protocol, cycle.Index);
@@ -313,7 +313,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 writer.Write(bakerId, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
                 writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                writer.Write(priority, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(round, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.WriteNull();
             }
 
@@ -348,7 +348,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             #region save rights
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Priority"", ""Slots"") FROM STDIN (FORMAT BINARY)");
+            using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
             foreach (var er in rights)
             {
