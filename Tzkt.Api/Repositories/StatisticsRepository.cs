@@ -66,10 +66,9 @@ namespace Tzkt.Api.Repositories
                 TotalBurned = row.TotalBurned,
                 TotalBanished = row.TotalBanished,
                 TotalActivated = row.TotalActivated,
-                TotalVested = row.TotalVested,
                 TotalFrozen = row.TotalFrozen,
                 TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished,
-                CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalVested - row.TotalFrozen,
+                CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalFrozen,
                 Quote = Quotes.Get(quote, row.Level),
             });
         }
@@ -101,7 +100,6 @@ namespace Tzkt.Api.Repositories
                     case "totalBurned": columns.Add(@"""TotalBurned"""); break;
                     case "totalBanished": columns.Add(@"""TotalBanished"""); break;
                     case "totalActivated": columns.Add(@"""TotalActivated"""); break;
-                    case "totalVested": columns.Add(@"""TotalVested"""); break;
                     case "totalFrozen": columns.Add(@"""TotalFrozen"""); break;
                     case "totalSupply":
                         columns.Add(@"""TotalBootstrapped""");
@@ -116,7 +114,6 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"""TotalCreated""");
                         columns.Add(@"""TotalBurned""");
                         columns.Add(@"""TotalBanished""");
-                        columns.Add(@"""TotalVested""");
                         columns.Add(@"""TotalFrozen""");
                         break;
                     case "quote": columns.Add(@"""Level"""); break;
@@ -196,10 +193,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalActivated;
                         break;
-                    case "totalVested":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TotalVested;
-                        break;
                     case "totalFrozen":
                         foreach (var row in rows)
                             result[j++][i] = row.TotalFrozen;
@@ -210,7 +203,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "circulatingSupply":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalVested - row.TotalFrozen;
+                            result[j++][i] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalFrozen;
                         break;
                     case "quote":
                         foreach (var row in rows)
@@ -247,7 +240,6 @@ namespace Tzkt.Api.Repositories
                 case "totalBurned": columns.Add(@"""TotalBurned"""); break;
                 case "totalBanished": columns.Add(@"""TotalBanished"""); break;
                 case "totalActivated": columns.Add(@"""TotalActivated"""); break;
-                case "totalVested": columns.Add(@"""TotalVested"""); break;
                 case "totalFrozen": columns.Add(@"""TotalFrozen"""); break;
                 case "totalSupply":
                     columns.Add(@"""TotalBootstrapped""");
@@ -262,7 +254,6 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"""TotalCreated""");
                     columns.Add(@"""TotalBurned""");
                     columns.Add(@"""TotalBanished""");
-                    columns.Add(@"""TotalVested""");
                     columns.Add(@"""TotalFrozen""");
                     break;
                 case "quote": columns.Add(@"""Level"""); break;
@@ -338,10 +329,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TotalActivated;
                     break;
-                case "totalVested":
-                    foreach (var row in rows)
-                        result[j++] = row.TotalVested;
-                    break;
                 case "totalFrozen":
                     foreach (var row in rows)
                         result[j++] = row.TotalFrozen;
@@ -352,7 +339,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "circulatingSupply":
                     foreach (var row in rows)
-                        result[j++] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalVested - row.TotalFrozen;
+                        result[j++] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalFrozen;
                     break;
                 case "quote":
                     foreach (var row in rows)

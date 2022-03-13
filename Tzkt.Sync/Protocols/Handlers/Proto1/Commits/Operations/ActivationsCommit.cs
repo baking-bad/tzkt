@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Account = (User)await Cache.Accounts.GetAsync(content.RequiredString("pkh")),
-                Balance = content.Required("metadata").Required("balance_updates")[1].RequiredInt64("change")
+                Balance = ParseBalance(content.Required("metadata").Required("balance_updates"))
             };
 
             var btz = Blind.GetBlindedAddress(content.RequiredString("pkh"), content.RequiredString("secret"));
@@ -72,5 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.ActivationOps.Remove(activation);
         }
+
+        protected virtual long ParseBalance(JsonElement balanceUpdates) => balanceUpdates[0].RequiredInt64("change");
     }
 }

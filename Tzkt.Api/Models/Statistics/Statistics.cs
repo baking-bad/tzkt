@@ -65,7 +65,7 @@ namespace Tzkt.Api.Models
         public long TotalBanished { get; set; }
 
         /// <summary>
-        /// Total amount of tokens locked on vested contracts
+        /// [DEPRECATED]
         /// </summary>
         public long TotalVested { get; set; }
 

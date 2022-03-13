@@ -18,6 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region init
             var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
             var result = content.Required("metadata").Required("operation_result");
+            var limit = content.OptionalString("limit");
 
             var operation = new SetDepositsLimitOperation
             {
@@ -44,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     : null,
                 GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
                 StorageUsed = result.OptionalInt32("storage_size") ?? 0,
-                Limit = BigInteger.Parse(content.RequiredString("limit"))
+                Limit = limit == null ? null : BigInteger.Parse(limit)
             };
             #endregion
 
@@ -73,9 +74,16 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                sender.FrozenDepositLimit = operation.Limit > long.MaxValue
-                    ? long.MaxValue
-                    : (long)operation.Limit;
+                if (operation.Limit != null)
+                {
+                    sender.FrozenDepositLimit = operation.Limit > long.MaxValue
+                        ? long.MaxValue
+                        : (long)operation.Limit;
+                }
+                else
+                {
+                    sender.FrozenDepositLimit = null;
+                }
             }
             #endregion
 

@@ -23,7 +23,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 TotalBanished = prev.TotalBanished,
                 TotalCommitments = prev.TotalCommitments,
                 TotalCreated = prev.TotalCreated,
-                TotalVested = prev.TotalVested,
                 TotalFrozen = prev.TotalFrozen
             };
 
@@ -40,16 +39,14 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             if (block.DoubleBakings != null)
             {
-                var lost = block.DoubleBakings.Sum(x => x.OffenderLoss - x.AccuserReward);
-                statistics.TotalBurned += lost;
-                statistics.TotalFrozen -= lost;
+                statistics.TotalBurned += block.DoubleBakings.Sum(x => x.OffenderLoss - x.AccuserReward);
+                statistics.TotalFrozen -= block.DoubleBakings.Sum(x => x.OffenderLoss);
             }
 
             if (block.DoubleEndorsings != null)
             {
-                var lost = block.DoubleEndorsings.Sum(x => x.OffenderLoss - x.AccuserReward);
-                statistics.TotalBurned += lost;
-                statistics.TotalFrozen -= lost;
+                statistics.TotalBurned += block.DoubleBakings.Sum(x => x.OffenderLoss - x.AccuserReward);
+                statistics.TotalFrozen -= block.DoubleBakings.Sum(x => x.OffenderLoss);
             }
 
             if (block.Originations != null)
@@ -77,36 +74,16 @@ namespace Tzkt.Sync.Protocols.Proto12
                     statistics.TotalBanished += tx.Amount;
             }
 
-            if (block.RevelationPenalties != null)
-            {
-                var lost = block.RevelationPenalties.Sum(x => x.Loss);
-                statistics.TotalBurned += lost;
-                statistics.TotalFrozen -= lost;
-            }
-
             if (block.Revelations != null)
             {
                 var rewards = block.Revelations.Sum(x => x.Reward);
                 statistics.TotalCreated += rewards;
-                statistics.TotalFrozen += rewards;
             }
 
             if (block.Migrations != null && block.Migrations.Any(x => x.Kind == MigrationKind.Subsidy))
             {
                 var subsidy = block.Migrations.Where(x => x.Kind == MigrationKind.Subsidy).Sum(x => x.BalanceChange);
                 statistics.TotalCreated += subsidy;
-            }
-
-            if (block.Transactions != null)
-            {
-                var vestedSent = block.Transactions.Where(x => x.Status == OperationStatus.Applied && x.Sender.Type == AccountType.Contract && x.Sender.FirstLevel == 1);
-                var vestedReceived = block.Transactions.Where(x => x.Status == OperationStatus.Applied && x.Target.Type == AccountType.Contract && x.Target.FirstLevel == 1);
-
-                if (vestedSent.Any())
-                    statistics.TotalVested -= vestedSent.Sum(x => x.Amount);
-
-                if (vestedReceived.Any())
-                    statistics.TotalVested += vestedReceived.Sum(x => x.Amount);
             }
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
