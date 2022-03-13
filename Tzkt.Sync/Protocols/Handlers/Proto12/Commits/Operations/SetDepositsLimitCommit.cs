@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             sender.SetDepositsLimitsCount++;
             sender.Counter = Math.Max(sender.Counter, operation.Counter);
 
-            block.Operations |= Operations.SetDepositsLimit;
+            block.Operations |= Operations.SetDepositsLimits;
             block.Fees += operation.BakerFee;
 
             Cache.AppState.Get().SetDepositsLimitOpsCount++;

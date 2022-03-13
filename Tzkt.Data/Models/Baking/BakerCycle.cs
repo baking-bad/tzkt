@@ -41,6 +41,9 @@ namespace Tzkt.Data.Models
         public long DoubleEndorsingRewards { get; set; }
         public long DoubleEndorsingLosses { get; set; }
 
+        public long DoublePreendorsingRewards { get; set; }
+        public long DoublePreendorsingLosses { get; set; }
+
         public long RevelationRewards { get; set; }
         public long RevelationLosses { get; set; }
         #endregion

@@ -61,6 +61,7 @@ namespace Tzkt.Data.Models
         public List<ActivationOperation> Activations { get; set; }
         public List<DoubleBakingOperation> DoubleBakings { get; set; }
         public List<DoubleEndorsingOperation> DoubleEndorsings { get; set; }
+        public List<DoublePreendorsingOperation> DoublePreendorsings { get; set; }
         public List<NonceRevelationOperation> Revelations { get; set; }
 
         public List<DelegationOperation> Delegations { get; set; }
