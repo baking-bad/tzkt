@@ -104,10 +104,10 @@ namespace Tzkt.Sync.Protocols
                             await new ActivationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_baking_evidence":
-                            await new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
+                            new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_endorsement_evidence":
-                            await new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -327,10 +327,10 @@ namespace Tzkt.Sync.Protocols
                         await new ActivationsCommit(this).Revert(currBlock, activation);
                         break;
                     case DoubleBakingOperation doubleBaking:
-                        await new DoubleBakingCommit(this).Revert(currBlock, doubleBaking);
+                        new DoubleBakingCommit(this).Revert(currBlock, doubleBaking);
                         break;
                     case DoubleEndorsingOperation doubleEndorsing:
-                        await new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
+                        new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
                         break;
                     case NonceRevelationOperation revelation:
                         await new NonceRevelationsCommit(this).Revert(currBlock, revelation);

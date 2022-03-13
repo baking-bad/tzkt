@@ -10,7 +10,6 @@ namespace Tzkt.Sync.Protocols.Proto12
     class Validator : IValidator
     {
         readonly CacheService Cache;
-        JsonElement Block;
         Protocol Protocol;
         string Proposer;
         string Baker;
@@ -21,7 +20,6 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         public virtual async Task ValidateBlock(JsonElement block)
         {
-            Block = block;
             Protocol = await Cache.Protocols.GetAsync(Cache.AppState.GetNextProtocol());
 
             if (block.RequiredString("chain_id") != Cache.AppState.GetChainId())
@@ -163,11 +161,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                         {
                             case "endorsement": ValidateEndorsement(content); break;
                             case "preendorsement": ValidatePreendorsement(content); break;
-                            //case "ballot": await ValidateBallot(content); break;
-                            //case "proposals": ValidateProposal(content); break;
+                            case "ballot": await ValidateBallot(content); break;
+                            case "proposals": ValidateProposal(content); break;
                             case "activate_account": await ValidateActivation(content); break;
                             case "double_baking_evidence": ValidateDoubleBaking(content); break;
-                            //case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
+                            case "double_endorsement_evidence": ValidateDoubleEndorsing(content); break;
                             case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
                             case "delegation": await ValidateDelegation(content); break;
                             case "origination": await ValidateOrigination(content); break;
@@ -267,48 +265,27 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected virtual void ValidateDoubleEndorsing(JsonElement content)
         {
-            if (content.Required("op1").Required("operations").RequiredString("kind") != "endorsement" ||
-                content.Required("op2").Required("operations").RequiredString("kind") != "endorsement")
-                throw new ValidationException("inconsistent double endorsing evidence");
+            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
 
-            if (content.Required("op1").Required("operations").RequiredInt32("level")
-                != content.Required("op2").Required("operations").RequiredInt32("level"))
-                throw new ValidationException("inconsistent double endorsing evidence");
-
-            var balanceUpdates = ParseBalanceUpdates(content.Required("metadata").RequiredArray("balance_updates").EnumerateArray());
-            if (balanceUpdates.Count > 0)
+            var offenders = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
+            if (offenders.Any())
             {
-                var rewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change > 0);
-                var lostDepositsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Deposits && x.Change < 0);
-                var lostRewardsUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Rewards && x.Change < 0);
-                var lostFeesUpdate = balanceUpdates.FirstOrDefault(x => x.Kind == BalanceUpdateKind.Fees && x.Change < 0);
-
-                if (balanceUpdates.Count != (rewardsUpdate != null ? 1 : 0) + (lostDepositsUpdate != null ? 1 : 0)
-                     + (lostRewardsUpdate != null ? 1 : 0) + (lostFeesUpdate != null ? 1 : 0))
-                    throw new ValidationException("invalid double endorsing balance updates count");
-
-                if (rewardsUpdate != null && rewardsUpdate.Account != Baker)
-                    throw new ValidationException("invalid double endorsing reward recipient");
-
-                if ((rewardsUpdate?.Change ?? 0) != -((lostDepositsUpdate?.Change ?? 0) + (lostFeesUpdate?.Change ?? 0)) / 2)
-                    throw new ValidationException("invalid double endorsing reward amount");
-
-                var offender = lostDepositsUpdate?.Account ?? lostRewardsUpdate?.Account ?? lostFeesUpdate?.Account;
-
-                if (!Cache.Accounts.DelegateExists(offender))
-                    throw new ValidationException("invalid double endorsing offender");
-
-                if (lostDepositsUpdate != null && lostDepositsUpdate.Account != offender ||
-                    lostRewardsUpdate != null && lostRewardsUpdate.Account != offender ||
-                    lostFeesUpdate != null && lostFeesUpdate.Account != offender)
+                if (offenders.Count() > 1)
                     throw new ValidationException("invalid double endorsing offender updates");
 
-                var accusedLevel = content.Required("op1").Required("operations").RequiredInt32("level");
-                var accusedCycle = Cache.Blocks.Get(accusedLevel).Cycle;
-                if (lostDepositsUpdate != null && lostDepositsUpdate.Cycle != accusedCycle ||
-                    lostRewardsUpdate != null && lostRewardsUpdate.Cycle != accusedCycle ||
-                    lostFeesUpdate != null && lostFeesUpdate.Cycle != accusedCycle)
-                    throw new ValidationException("invalid double endorsing freezer level");
+                if (!Cache.Accounts.DelegateExists(offenders.First().RequiredString("delegate")))
+                    throw new ValidationException("invalid double endorsing offender");
+            }
+
+            var accusers = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
+            if (accusers.Any())
+            {
+                if (accusers.Count() > 1)
+                    throw new ValidationException("invalid double endorsing accuser updates");
+
+                var accuserAddress = accusers.First().RequiredString("contract");
+                if (!Cache.Accounts.DelegateExists(accuserAddress) || accuserAddress != Baker)
+                    throw new ValidationException("invalid double endorsing accuser");
             }
         }
 
@@ -579,62 +556,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                     x.RequiredInt64("change") == allocationFee))
                     throw new ValidationException("invalid allocation fee balance updates");
             }
-        }
-
-        protected virtual List<BalanceUpdate> ParseBalanceUpdates(IEnumerable<JsonElement> updates)
-        {
-            var res = new List<BalanceUpdate>(4);
-            foreach (var update in updates)
-            {
-                res.Add(update.RequiredString("kind") switch
-                {
-                    "contract" => new BalanceUpdate
-                    {
-                        Kind = BalanceUpdateKind.Contract,
-                        Account = update.RequiredString("contract"),
-                        Change = update.RequiredInt64("change")
-                    },
-                    "freezer" => new BalanceUpdate
-                    {
-                        Kind = update.RequiredString("category") switch
-                        {
-                            "deposits" => BalanceUpdateKind.Deposits,
-                            "rewards" => BalanceUpdateKind.Rewards,
-                            "fees" => BalanceUpdateKind.Fees,
-                            _ => throw new ValidationException("invalid freezer category")
-                        },
-                        Account = update.RequiredString("delegate"),
-                        Change = update.RequiredInt64("change"),
-                        Cycle = update.RequiredInt32("cycle"),
-                    },
-                    _ => throw new ValidationException("invalid balance update kind")
-                });
-            }
-            return res;
-        }
-
-        protected enum BalanceUpdateKind
-        {
-            Contract,
-            Deposits,
-            Rewards,
-            Fees
-        }
-
-        protected class BalanceUpdate
-        {
-            public BalanceUpdateKind Kind { get; set; }
-            public string Account { get; set; }
-            public long Change { get; set; }
-            public int Cycle { get; set; }
-
-            public bool IsBlockUpdate =>
-                Kind == BalanceUpdateKind.Contract && Change < 0 ||
-                Kind != BalanceUpdateKind.Contract && Change > 0;
-
-            public bool IsCycleUpdate =>
-                Kind == BalanceUpdateKind.Contract && Change > 0 ||
-                Kind != BalanceUpdateKind.Contract && Change < 0;
         }
     }
 }
