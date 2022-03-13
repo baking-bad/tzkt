@@ -13,7 +13,6 @@ namespace Tzkt.Data.Models
         public long FrozenDeposit { get; set; }
         public long StakingBalance { get; set; }
         public long DelegatedBalance { get; set; }
-
         public int DelegatorsCount { get; set; }
 
         public int BlocksCount { get; set; }

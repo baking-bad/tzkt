@@ -108,6 +108,12 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Block>()
                 .HasIndex(x => x.Hash)
                 .IsUnique();
+
+            modelBuilder.Entity<Block>()
+                .HasIndex(x => x.ProposerId);
+
+            modelBuilder.Entity<Block>()
+                .HasIndex(x => x.ProducerId);
             #endregion
 
             #region relations

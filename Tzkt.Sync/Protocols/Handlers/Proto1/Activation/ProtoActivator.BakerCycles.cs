@@ -32,6 +32,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Cycle = cycle,
                         BakerId = x.Id,
                         StakingBalance = x.StakingBalance,
+                        ActiveStake = x.StakingBalance,
+                        SelectedStake = totalStaking,
                         DelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
                         ExpectedBlocks = protocol.BlocksPerCycle * share, 

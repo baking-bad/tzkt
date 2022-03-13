@@ -399,6 +399,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                         Cycle = cycle.Index,
                         BakerId = baker.Id,
                         StakingBalance = snapshotedBaker.RequiredInt64("staking_balance"),
+                        ActiveStake = snapshotedBaker.RequiredInt64("staking_balance"),
+                        SelectedStake = cycle.SelectedStake,
                         DelegatedBalance = snapshotedBaker.RequiredInt64("delegated_balance"),
                         DelegatorsCount = delegators.Count(),
                         ExpectedBlocks = protocol.BlocksPerCycle * share,

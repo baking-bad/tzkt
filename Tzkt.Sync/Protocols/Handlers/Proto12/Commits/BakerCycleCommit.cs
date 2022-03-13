@@ -190,6 +190,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                         DelegatedBalance = (long)snapshot.DelegatedBalance,
                         DelegatorsCount = (int)snapshot.DelegatorsCount,
                         StakingBalance = (long)snapshot.StakingBalance,
+                        ActiveStake = 0,
+                        SelectedStake = futureCycle.SelectedStake
                     };
                     if (activeStake >= block.Protocol.TokensPerRoll)
                     {
