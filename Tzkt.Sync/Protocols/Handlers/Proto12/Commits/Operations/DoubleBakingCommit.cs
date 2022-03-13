@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -9,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto12
     {
         public DoubleBakingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual Task Apply(Block block, JsonElement op, JsonElement content)
+        public virtual void Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
@@ -67,10 +66,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.DoubleBakingOps.Add(doubleBaking);
-            return Task.CompletedTask;
         }
 
-        public virtual Task Revert(Block block, DoubleBakingOperation doubleBaking)
+        public virtual void Revert(Block block, DoubleBakingOperation doubleBaking)
         {
             #region init
             doubleBaking.Block ??= block;
@@ -100,7 +98,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.DoubleBakingOps.Remove(doubleBaking);
-            return Task.CompletedTask;
         }
     }
 }
