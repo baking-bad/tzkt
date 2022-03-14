@@ -8,6 +8,7 @@ namespace Tzkt.Data.Models
         public string PublicKey { get; set; }
         public bool Revealed { get; set; }
         public int RegisterConstantsCount { get; set; }
+        public int SetDepositsLimitsCount { get; set; }
     }
 
     public static class UserModel

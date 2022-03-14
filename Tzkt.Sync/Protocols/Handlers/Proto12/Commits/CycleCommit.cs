@@ -47,7 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
                 else
                 {
-                    var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2); // TODO: check if it's cycle - 1
+                    var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 1);
                     snapshotIndex = Seed.GetSnapshotIndex(futureSeed, true);
                     snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 1) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
                 }
@@ -63,8 +63,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var depositCap = x.FrozenDepositLimit != null
                     ? Math.Min((long)x.FrozenDepositLimit, x.Balance)
                     : x.Balance;
-                var activeStake = Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
-                return activeStake >= block.Protocol.TokensPerRoll ? activeStake : 0;
+                return x.StakingBalance >= block.Protocol.TokensPerRoll // activeStake >= block.Protocol.TokensPerRoll
+                    ? Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage)
+                    : 0;
             });
 
             FutureCycle = new Cycle
@@ -77,7 +78,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 TotalStaking = Snapshots.Values.Sum(x => (long)x.StakingBalance),
                 TotalDelegated = Snapshots.Values.Sum(x => (long)x.DelegatedBalance),
                 TotalDelegators = Snapshots.Values.Sum(x => (int)x.DelegatorsCount),
-                SelectedBakers = selectedStakes.Count(x => x > 0),
+                SelectedBakers = selectedStakes.Count(x => x != 0),
                 SelectedStake = selectedStakes.Sum(),
                 TotalBakers = Snapshots.Count,
                 Seed = futureSeed

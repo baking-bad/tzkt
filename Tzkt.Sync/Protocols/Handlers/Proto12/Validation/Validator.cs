@@ -173,7 +173,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                             case "transaction": await ValidateTransaction(content); break;
                             case "reveal": await ValidateReveal(content); break;
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
-                            case "set_deposits_limit": ValidateSetDepositsLimit(content); break;
+                            case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
                             default:
                                 throw new ValidationException("invalid operation content kind");
                         }
@@ -442,12 +442,12 @@ namespace Tzkt.Sync.Protocols.Proto12
                 content.RequiredInt64("fee"));
         }
 
-        protected virtual void ValidateSetDepositsLimit(JsonElement content)
+        protected virtual async Task ValidateSetDepositsLimit(JsonElement content)
         {
             var source = content.RequiredString("source");
 
-            if (!Cache.Accounts.DelegateExists(source))
-                throw new ValidationException("unknown source delegate");
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
                 content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),

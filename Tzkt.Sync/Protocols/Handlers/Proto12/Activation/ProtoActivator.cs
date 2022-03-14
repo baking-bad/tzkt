@@ -79,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
-            var bakers = await MigrateBakers(nextProto);
+            var bakers = await MigrateBakers(state, nextProto);
             await MigrateCycles(state, bakers, nextProto);
             await MigrateStatistics(state, bakers);
         }
@@ -90,7 +90,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             await MigrateSnapshots(state);
-            await MigrateCurrentBakerCycles(state, nextProto);
+            await MigrateCurrentCycleAndBakerCycles(state, nextProto);
             await MigrateCurrentRights(state, prevProto, nextProto);
             await MigrateFutureRights(state, nextProto);
 
@@ -110,15 +110,21 @@ namespace Tzkt.Sync.Protocols.Proto12
             throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
         }
 
-        async Task<List<Data.Models.Delegate>> MigrateBakers(Protocol nextProto)
+        async Task<List<Data.Models.Delegate>> MigrateBakers(AppState state, Protocol nextProto)
         {
+            // we don't know for sure how bakers are selected, so use RPC
+            var distribution = (await Proto.Rpc.GetStakeDistribution(state.Level, state.Cycle))
+                .EnumerateArray()
+                .Select(x => Cache.Accounts.GetDelegate(x.RequiredString("baker")).Id)
+                .ToHashSet();
+
             var bakers = await Db.Delegates.ToListAsync();
             foreach (var baker in bakers)
             {
                 Cache.Accounts.Add(baker);
                 baker.StakingBalance = baker.Balance + baker.DelegatedBalance;
                 var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / nextProto.FrozenDepositsPercentage);
-                baker.FrozenDeposit = baker.Staked && activeStake >= nextProto.TokensPerRoll
+                baker.FrozenDeposit = distribution.Contains(baker.Id) //baker.Staked && baker.StakingBalance >= nextProto.TokensPerRoll
                     ? activeStake * nextProto.FrozenDepositsPercentage / 100
                     : 0;
             }
@@ -159,13 +165,14 @@ namespace Tzkt.Sync.Protocols.Proto12
         async Task MigrateSnapshots(AppState state)
         {
             await Db.Database.ExecuteSqlRawAsync($@"
+                DELETE FROM ""SnapshotBalances"" WHERE ""Level"" = {state.Level};
                 INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"", ""FrozenDepositLimit"")
                     SELECT {state.Level}, ""Balance"", ""Id"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"", ""FrozenDepositLimit""
                     FROM ""Accounts""
-                    WHERE ""Staked"" = true");
+                    WHERE ""Staked"" = true;");
         }
 
-        async Task MigrateCurrentBakerCycles(AppState state, Protocol nextProto)
+        async Task MigrateCurrentCycleAndBakerCycles(AppState state, Protocol nextProto)
         {
             var cycle = await Db.Cycles.FirstAsync(x => x.Index == state.Cycle);
             var bakers = await Db.Delegates.AsNoTracking().Where(x => x.Staked && x.FrozenDeposit > 0).ToListAsync();
@@ -178,7 +185,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region add missed
             foreach (var baker in bakers)
             {
-                if (!bakerCycles.TryGetValue(baker.Id, out var bc)) // WTF: they used different snapshot
+                if (!bakerCycles.TryGetValue(baker.Id, out var bc))
                 {
                     bc = new()
                     {
@@ -350,7 +357,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     foreach (var er in ers)
                     {
                         writer.StartRow();
-                        writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(nextProto.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
@@ -387,7 +394,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 #region save baker cycles
                 var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
                 {
-                    var activeStake = Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage);
                     var bc = new BakerCycle
                     {
                         BakerId = x.Id,
@@ -398,8 +404,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                         ActiveStake = 0,
                         SelectedStake = cycle.SelectedStake
                     };
-                    if (activeStake >= nextProto.TokensPerRoll)
+                    if (x.FrozenDeposit != 0)
                     {
+                        var activeStake = Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage);
                         var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * activeStake / cycle.SelectedStake);
                         bc.ExpectedBlocks = nextProto.BlocksPerCycle * activeStake / cycle.SelectedStake;
                         bc.ExpectedEndorsements = expectedEndorsements;
