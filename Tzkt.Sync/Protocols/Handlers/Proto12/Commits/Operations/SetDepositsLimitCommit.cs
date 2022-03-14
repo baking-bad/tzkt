@@ -16,7 +16,9 @@ namespace Tzkt.Sync.Protocols.Proto12
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
+            var sender = (User)await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+
             var result = content.Required("metadata").Required("operation_result");
             var limit = content.OptionalString("limit");
 
@@ -51,13 +53,21 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             #region entities
             var blockBaker = block.Proposer;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
             #endregion
 
             #region apply operation
             await Spend(sender, operation.BakerFee);
-            sender.StakingBalance -= operation.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance -= operation.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance -= operation.BakerFee;
+            }
             
             blockBaker.Balance += operation.BakerFee;
             blockBaker.StakingBalance += operation.BakerFee;
@@ -76,13 +86,13 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 if (operation.Limit != null)
                 {
-                    sender.FrozenDepositLimit = operation.Limit > long.MaxValue
+                    (sender as Data.Models.Delegate).FrozenDepositLimit = operation.Limit > long.MaxValue
                         ? long.MaxValue
                         : (long)operation.Limit;
                 }
                 else
                 {
-                    sender.FrozenDepositLimit = null;
+                    (sender as Data.Models.Delegate).FrozenDepositLimit = null;
                 }
             }
             #endregion
@@ -95,14 +105,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region init
             op.Block ??= block;
             op.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
+
             op.Sender ??= await Cache.Accounts.GetAsync(op.SenderId);
+            op.Sender.Delegate ??= Cache.Accounts.GetDelegate(op.Sender.DelegateId);
             #endregion
 
             #region entities
             var blockBaker = block.Proposer;
-            var sender = (Data.Models.Delegate)op.Sender;
+            var sender = (User)op.Sender;
+            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
+            Db.TryAttach(senderDelegate);
             #endregion
 
             #region revert result
@@ -111,24 +126,29 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var prevOp = await Db.SetDepositsLimitOps
                     .AsNoTracking()
                     .OrderByDescending(x => x.Id)
-                    .FirstOrDefaultAsync(x => x.SenderId == op.SenderId && x.Id < op.Id);
+                    .FirstOrDefaultAsync(x => x.SenderId == op.SenderId && x.Status == OperationStatus.Applied && x.Id < op.Id);
                 
-                if (prevOp != null)
+                if (prevOp?.Limit != null)
                 {
-                    sender.FrozenDepositLimit = prevOp.Limit > long.MaxValue
+                    (sender as Data.Models.Delegate).FrozenDepositLimit = prevOp.Limit > long.MaxValue
                         ? long.MaxValue
                         : (long)prevOp.Limit;
                 }
                 else
                 {
-                    sender.FrozenDepositLimit = null;
+                    (sender as Data.Models.Delegate).FrozenDepositLimit = null;
                 }
             }
             #endregion
 
             #region revert operation
             await Return(sender, op.BakerFee);
-            sender.StakingBalance += op.BakerFee;
+            if (senderDelegate != null)
+            {
+                senderDelegate.StakingBalance += op.BakerFee;
+                if (senderDelegate.Id != sender.Id)
+                    senderDelegate.DelegatedBalance += op.BakerFee;
+            }
 
             blockBaker.Balance -= op.BakerFee;
             blockBaker.StakingBalance -= op.BakerFee;

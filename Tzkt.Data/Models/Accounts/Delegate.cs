@@ -26,7 +26,6 @@ namespace Tzkt.Data.Models
         public int NonceRevelationsCount { get; set; }
         public int RevelationPenaltiesCount { get; set; }
         public int EndorsingRewardsCount { get; set; }
-        public int SetDepositsLimitsCount { get; set; }
 
         public int? SoftwareId { get; set; }
 

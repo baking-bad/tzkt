@@ -303,6 +303,7 @@ namespace Tzkt.Sync
                         b.Protocol = null;
                         b.Reveals = null;
                         b.RegisterConstants = null;
+                        b.SetDepositsLimits = null;
                         b.Revelation = null;
                         b.Revelations = null;
                         b.Transactions = null;
