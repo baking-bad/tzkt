@@ -12,7 +12,6 @@ namespace Tzkt.Data.Models
         public int? DelegatorsCount { get; set; }
         public long? DelegatedBalance { get; set; }
         public long? StakingBalance { get; set; }
-        public long? FrozenDepositLimit { get; set; }
     }
 
     public static class SnapshotBalanceModel

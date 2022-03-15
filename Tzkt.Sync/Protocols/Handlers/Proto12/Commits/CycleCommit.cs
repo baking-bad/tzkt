@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto12
     class CycleCommit : ProtocolCommit
     {
         public Cycle FutureCycle { get; protected set; }
-        public Dictionary<int, SnapshotBalance> Snapshots { get; protected set; }
+        public List<SnapshotBalance> Snapshots { get; protected set; }
 
         public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -56,17 +56,16 @@ namespace Tzkt.Sync.Protocols.Proto12
             Snapshots = await Db.SnapshotBalances
                 .AsNoTracking()
                 .Where(x => x.Level == snapshotLevel && x.DelegateId == null)
-                .ToDictionaryAsync(x => x.AccountId);
+                .ToListAsync();
 
-            var selectedStakes = Snapshots.Values.Select(x =>
-            {
-                var depositCap = x.FrozenDepositLimit != null
-                    ? Math.Min((long)x.FrozenDepositLimit, x.Balance)
-                    : x.Balance;
-                return x.StakingBalance >= block.Protocol.TokensPerRoll // activeStake >= block.Protocol.TokensPerRoll
-                    ? Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage)
-                    : 0;
-            });
+            var selectedStakes = Snapshots
+                .Where(x => x.StakingBalance >= block.Protocol.TokensPerRoll)
+                .Select(x =>
+                {
+                    var baker = Cache.Accounts.GetDelegate(x.AccountId);
+                    var depositCap = Math.Min(baker.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
+                    return Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
+                });
 
             FutureCycle = new Cycle
             {
@@ -75,10 +74,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                 LastLevel = block.Protocol.GetCycleEnd(futureCycle),
                 SnapshotIndex = snapshotIndex,
                 SnapshotLevel = snapshotLevel,
-                TotalStaking = Snapshots.Values.Sum(x => (long)x.StakingBalance),
-                TotalDelegated = Snapshots.Values.Sum(x => (long)x.DelegatedBalance),
-                TotalDelegators = Snapshots.Values.Sum(x => (int)x.DelegatorsCount),
-                SelectedBakers = selectedStakes.Count(x => x != 0),
+                TotalStaking = Snapshots.Sum(x => (long)x.StakingBalance),
+                TotalDelegated = Snapshots.Sum(x => (long)x.DelegatedBalance),
+                TotalDelegators = Snapshots.Sum(x => (int)x.DelegatorsCount),
+                SelectedBakers = selectedStakes.Count(),
                 SelectedStake = selectedStakes.Sum(),
                 TotalBakers = Snapshots.Count,
                 Seed = futureSeed

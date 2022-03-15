@@ -435,8 +435,7 @@ namespace Tzkt.Data.Migrations
                     DelegateId = table.Column<int>(type: "integer", nullable: true),
                     DelegatorsCount = table.Column<int>(type: "integer", nullable: true),
                     DelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
-                    StakingBalance = table.Column<long>(type: "bigint", nullable: true),
-                    FrozenDepositLimit = table.Column<long>(type: "bigint", nullable: true)
+                    StakingBalance = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
