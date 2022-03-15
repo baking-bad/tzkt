@@ -25,6 +25,7 @@ namespace Tzkt.Api.Repositories
                 Revealed = delegat.Revealed,
                 Balance = delegat.Balance,
                 FrozenDeposit = delegat.FrozenDeposit,
+                FrozenDepositLimit = delegat.FrozenDepositLimit,
                 DelegatedBalance = delegat.DelegatedBalance,
                 Counter = delegat.Counter,
                 ActivationLevel = delegat.ActivationLevel,
@@ -47,13 +48,17 @@ namespace Tzkt.Api.Repositories
                 NumDelegations = delegat.DelegationsCount,
                 NumDoubleBaking = delegat.DoubleBakingCount,
                 NumDoubleEndorsing = delegat.DoubleEndorsingCount,
+                NumDoublePreendorsing = delegat.DoublePreendorsingCount,
                 NumEndorsements = delegat.EndorsementsCount,
+                NumPreendorsements = delegat.PreendorsementsCount,
                 NumNonceRevelations = delegat.NonceRevelationsCount,
                 NumRevelationPenalties = delegat.RevelationPenaltiesCount,
+                NumEndorsingRewards = delegat.EndorsingRewardsCount,
                 NumOriginations = delegat.OriginationsCount,
                 NumProposals = delegat.ProposalsCount,
                 NumReveals = delegat.RevealsCount,
                 NumRegisterConstants = delegat.RegisterConstantsCount,
+                NumSetDepositsLimits = delegat.SetDepositsLimitsCount,
                 NumMigrations = delegat.MigrationsCount,
                 NumTransactions = delegat.TransactionsCount,
                 Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
@@ -105,6 +110,7 @@ namespace Tzkt.Api.Repositories
                     Revealed = row.Revealed,
                     Balance = row.Balance,
                     FrozenDeposit = row.FrozenDeposit,
+                    FrozenDepositLimit = row.FrozenDepositLimit,
                     DelegatedBalance = row.DelegatedBalance,
                     Counter = row.Counter,
                     ActivationLevel = row.ActivationLevel,
@@ -127,13 +133,17 @@ namespace Tzkt.Api.Repositories
                     NumDelegations = row.DelegationsCount,
                     NumDoubleBaking = row.DoubleBakingCount,
                     NumDoubleEndorsing = row.DoubleEndorsingCount,
+                    NumDoublePreendorsing = row.DoublePreendorsingCount,
                     NumEndorsements = row.EndorsementsCount,
+                    NumPreendorsements = row.PreendorsementsCount,
                     NumNonceRevelations = row.NonceRevelationsCount,
                     NumRevelationPenalties = row.RevelationPenaltiesCount,
+                    NumEndorsingRewards = row.EndorsingRewardsCount,
                     NumOriginations = row.OriginationsCount,
                     NumProposals = row.ProposalsCount,
                     NumReveals = row.RevealsCount,
                     NumRegisterConstants = row.RegisterConstantsCount,
+                    NumSetDepositsLimits = row.SetDepositsLimitsCount,
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
                     Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
@@ -162,6 +172,7 @@ namespace Tzkt.Api.Repositories
                     case "revealed": columns.Add(@"""Revealed"""); break;
                     case "balance": columns.Add(@"""Balance"""); break;
                     case "frozenDeposit": columns.Add(@"""FrozenDeposit"""); break; 
+                    case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break; 
                     case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break; 
                     case "counter": columns.Add(@"""Counter"""); break;
                     case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
@@ -184,13 +195,17 @@ namespace Tzkt.Api.Repositories
                     case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
                     case "numDoubleBaking": columns.Add(@"""DoubleBakingCount"""); break;
                     case "numDoubleEndorsing": columns.Add(@"""DoubleEndorsingCount"""); break;
+                    case "numDoublePreendorsing": columns.Add(@"""DoublePreendorsingCount"""); break;
                     case "numEndorsements": columns.Add(@"""EndorsementsCount"""); break;
+                    case "numPreendorsements": columns.Add(@"""PreendorsementsCount"""); break;
                     case "numNonceRevelations": columns.Add(@"""NonceRevelationsCount"""); break;
                     case "numRevelationPenalties": columns.Add(@"""RevelationPenaltiesCount"""); break;
+                    case "numEndorsingRewards": columns.Add(@"""EndorsingRewardsCount"""); break;
                     case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                     case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                     case "numReveals": columns.Add(@"""RevealsCount"""); break;
                     case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
+                    case "numSetDepositsLimits": columns.Add(@"""SetDepositsLimitsCount"""); break;
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
@@ -256,6 +271,10 @@ namespace Tzkt.Api.Repositories
                     case "frozenDeposit":
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenDeposit;
+                        break;
+                    case "frozenDepositLimit":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FrozenDepositLimit;
                         break;
                     case "delegatedBalance":
                         foreach (var row in rows)
@@ -345,9 +364,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleEndorsingCount;
                         break;
+                    case "numDoublePreendorsing":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoublePreendorsingCount;
+                        break;
                     case "numEndorsements":
                         foreach (var row in rows)
                             result[j++][i] = row.EndorsementsCount;
+                        break;
+                    case "numPreendorsements":
+                        foreach (var row in rows)
+                            result[j++][i] = row.PreendorsementsCount;
                         break;
                     case "numNonceRevelations":
                         foreach (var row in rows)
@@ -356,6 +383,10 @@ namespace Tzkt.Api.Repositories
                     case "numRevelationPenalties":
                         foreach (var row in rows)
                             result[j++][i] = row.RevelationPenaltiesCount;
+                        break;
+                    case "numEndorsingRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EndorsingRewardsCount;
                         break;
                     case "numOriginations":
                         foreach (var row in rows)
@@ -372,6 +403,10 @@ namespace Tzkt.Api.Repositories
                     case "numRegisterConstants":
                         foreach (var row in rows)
                             result[j++][i] = row.RegisterConstantsCount;
+                        break;
+                    case "numSetDepositsLimits":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SetDepositsLimitsCount;
                         break;
                     case "numMigrations":
                         foreach (var row in rows)
@@ -408,8 +443,9 @@ namespace Tzkt.Api.Repositories
                 case "address": columns.Add(@"""Address"""); break;
                 case "publicKey": columns.Add(@"""PublicKey"""); break;
                 case "revealed": columns.Add(@"""Revealed"""); break;
-                case "balance": columns.Add(@"""Balance"""); break; 
+                case "balance": columns.Add(@"""Balance"""); break;
                 case "frozenDeposit": columns.Add(@"""FrozenDeposit"""); break;
+                case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break;
                 case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                 case "counter": columns.Add(@"""Counter"""); break;
                 case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
@@ -432,13 +468,17 @@ namespace Tzkt.Api.Repositories
                 case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
                 case "numDoubleBaking": columns.Add(@"""DoubleBakingCount"""); break;
                 case "numDoubleEndorsing": columns.Add(@"""DoubleEndorsingCount"""); break;
+                case "numDoublePreendorsing": columns.Add(@"""DoublePreendorsingCount"""); break;
                 case "numEndorsements": columns.Add(@"""EndorsementsCount"""); break;
+                case "numPreendorsements": columns.Add(@"""PreendorsementsCount"""); break;
                 case "numNonceRevelations": columns.Add(@"""NonceRevelationsCount"""); break;
                 case "numRevelationPenalties": columns.Add(@"""RevelationPenaltiesCount"""); break;
+                case "numEndorsingRewards": columns.Add(@"""EndorsingRewardsCount"""); break;
                 case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                 case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                 case "numReveals": columns.Add(@"""RevealsCount"""); break;
                 case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
+                case "numSetDepositsLimits": columns.Add(@"""SetDepositsLimitsCount"""); break;
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
@@ -500,6 +540,10 @@ namespace Tzkt.Api.Repositories
                 case "frozenDeposit":
                     foreach (var row in rows)
                         result[j++] = row.FrozenDeposit;
+                    break;
+                case "frozenDepositLimit":
+                    foreach (var row in rows)
+                        result[j++] = row.FrozenDepositLimit;
                     break;
                 case "delegatedBalance":
                     foreach (var row in rows)
@@ -589,9 +633,17 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DoubleEndorsingCount;
                     break;
+                case "numDoublePreendorsing":
+                    foreach (var row in rows)
+                        result[j++] = row.DoublePreendorsingCount;
+                    break;
                 case "numEndorsements":
                     foreach (var row in rows)
                         result[j++] = row.EndorsementsCount;
+                    break;
+                case "numPreendorsements":
+                    foreach (var row in rows)
+                        result[j++] = row.PreendorsementsCount;
                     break;
                 case "numNonceRevelations":
                     foreach (var row in rows)
@@ -600,6 +652,10 @@ namespace Tzkt.Api.Repositories
                 case "numRevelationPenalties":
                     foreach (var row in rows)
                         result[j++] = row.RevelationPenaltiesCount;
+                    break;
+                case "numEndorsingRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.EndorsingRewardsCount;
                     break;
                 case "numOriginations":
                     foreach (var row in rows)
@@ -616,6 +672,10 @@ namespace Tzkt.Api.Repositories
                 case "numRegisterConstants":
                     foreach (var row in rows)
                         result[j++] = row.RegisterConstantsCount;
+                    break;
+                case "numSetDepositsLimits":
+                    foreach (var row in rows)
+                        result[j++] = row.SetDepositsLimitsCount;
                     break;
                 case "numMigrations":
                     foreach (var row in rows)

@@ -45,6 +45,11 @@ namespace Tzkt.Api.Models
         public long FrozenDeposit { get; set; }
 
         /// <summary>
+        /// Configured max amount allowed to be locked as a security deposit (micro tez)
+        /// </summary>
+        public long? FrozenDepositLimit { get; set; }
+
+        /// <summary>
         /// An account nonce which is used to prevent operation replay
         /// </summary>
         public int Counter { get; set; }
@@ -70,12 +75,12 @@ namespace Tzkt.Api.Models
         public DateTime? DeactivationTime { get; set; }
 
         /// <summary>
-        /// Sum of delegate (baker) balance and delegated funds minus frozen rewards (micro tez)
+        /// Baker's own balance plus delegated balance (micro tez)
         /// </summary>
         public long StakingBalance { get; set; }
 
         /// <summary>
-        /// Total amount delegated to the baker, except for his own balance (micro tez)
+        /// Total amount delegated to the baker (micro tez)
         /// </summary>
         public long DelegatedBalance { get; set; }
 
@@ -115,6 +120,11 @@ namespace Tzkt.Api.Models
         public int NumEndorsements { get; set; }
 
         /// <summary>
+        /// Number of given preendorsements (approvals) by the delegate (baker)
+        /// </summary>
+        public int NumPreendorsements { get; set; }
+
+        /// <summary>
         /// Number of submitted by the delegate ballots during a voting period
         /// </summary>
         public int NumBallots { get; set; }
@@ -143,6 +153,12 @@ namespace Tzkt.Api.Models
         public int NumDoubleEndorsing { get; set; }
 
         /// <summary>
+        /// Number of double preendorsement (preendorsing two different blocks at the same block height) evidence operations,
+        /// included in blocks, baked (validated) by the delegate
+        /// </summary>
+        public int NumDoublePreendorsing { get; set; }
+
+        /// <summary>
         /// Number of seed nonce revelation (are used by the blockchain to create randomness) operations provided by the delegate
         /// </summary>
         public int NumNonceRevelations { get; set; }
@@ -151,6 +167,11 @@ namespace Tzkt.Api.Models
         /// Number of operations for all time in which rewards were lost due to unrevealed seed nonces by the delegate (synthetic type)
         /// </summary>
         public int NumRevelationPenalties { get; set; }
+
+        /// <summary>
+        /// Number of endorsing rewards received at the end of cycles (synthetic type)
+        /// </summary>
+        public int NumEndorsingRewards { get; set; }
 
         /// <summary>
         /// Number of all delegation related operations (new delegator, left delegator, registration as a baker),
@@ -174,10 +195,15 @@ namespace Tzkt.Api.Models
         public int NumReveals { get; set; }
 
         /// <summary>
-        /// Number of register global constant operations of the delegate (baker)
+        /// Number of register global constant operations sent by the baker
         /// </summary>
         public int NumRegisterConstants { get; set; }
-        
+
+        /// <summary>
+        /// Number of set deposits limit operations sent by the baker
+        /// </summary>
+        public int NumSetDepositsLimits { get; set; }
+
         /// <summary>
         /// Number of migration (result of the context (database) migration during a protocol update) operations,
         /// related to the delegate (synthetic type) 
@@ -213,5 +239,22 @@ namespace Tzkt.Api.Models
         /// Last seen baker's software
         /// </summary>
         public SoftwareAlias Software { get; set; }
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long FrozenDeposits => FrozenDeposit;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long FrozenRewards => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long FrozenFees => 0;
+        #endregion
     }
 }
