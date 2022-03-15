@@ -18,6 +18,7 @@ namespace Tzkt.Api.Swagger
                 options.DocumentName = Version;
                 options.OperationProcessors.Add(new TzktExtensionProcessor());
                 options.OperationProcessors.Add(new AnyOfExtensionProcessor("Tokens_GetTokenTransfers", "from,to"));
+                options.OperationProcessors.Add(new AnyOfExtensionProcessor("Tokens_GetTokenTransfersCount", "from,to"));
                 options.PostProcess = document =>
                 {
                     document.Info.Title = "TzKT API";
