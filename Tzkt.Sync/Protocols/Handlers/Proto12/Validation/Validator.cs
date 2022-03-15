@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         readonly CacheService Cache;
         Protocol Protocol;
         string Proposer;
-        string Baker;
+        string Producer;
         int Level;
         int Cycle;
 
@@ -50,8 +50,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!Cache.Accounts.DelegateExists(Proposer))
                 throw new ValidationException($"non-existent block proposer");
 
-            Baker = metadata.RequiredString("baker");
-            if (!Cache.Accounts.DelegateExists(Baker))
+            Producer = metadata.RequiredString("baker");
+            if (!Cache.Accounts.DelegateExists(Producer))
                 throw new ValidationException($"non-existent block baker");
             #endregion
 
@@ -259,7 +259,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     throw new ValidationException("invalid double baking accuser updates");
 
                 var accuserAddress = accusers.First().RequiredString("contract");
-                if (!Cache.Accounts.DelegateExists(accuserAddress) || accuserAddress != Baker)
+                if (!Cache.Accounts.DelegateExists(accuserAddress) || accuserAddress != Proposer)
                     throw new ValidationException("invalid double baking accuser");
             }
         }
@@ -277,7 +277,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (balanceUpdate.RequiredString("kind") != "contract")
                 throw new ValidationException("invalid seed nonce revelation balance update kind");
 
-            if (balanceUpdate.RequiredString("contract") != Baker)
+            if (balanceUpdate.RequiredString("contract") != Proposer)
                 throw new ValidationException("invalid seed nonce revelation baker");
 
             if (balanceUpdate.RequiredInt64("change") != Protocol.RevelationReward)
