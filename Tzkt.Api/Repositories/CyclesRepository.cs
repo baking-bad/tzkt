@@ -54,6 +54,8 @@ namespace Tzkt.Api.Repositories
                 TotalDelegated = row.TotalDelegated,
                 TotalDelegators = row.TotalDelegators,
                 TotalStaking = row.TotalStaking,
+                SelectedBakers = row.SelectedBakers,
+                SelectedStake = row.SelectedStake,
                 Quote = Quotes.Get(quote, row.LastLevel)
             };
         }
@@ -86,6 +88,8 @@ namespace Tzkt.Api.Repositories
                 TotalDelegated = row.TotalDelegated,
                 TotalDelegators = row.TotalDelegators,
                 TotalStaking = row.TotalStaking,
+                SelectedBakers = row.SelectedBakers,
+                SelectedStake = row.SelectedStake,
                 Quote = Quotes.Get(quote, row.LastLevel)
             });
         }
@@ -115,6 +119,8 @@ namespace Tzkt.Api.Repositories
                     case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
                     case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                     case "totalStaking": columns.Add(@"""TotalStaking"""); break;
+                    case "selectedBakers": columns.Add(@"""SelectedBakers"""); break;
+                    case "selectedStake": columns.Add(@"""SelectedStake"""); break;
                     case "quote": columns.Add(@"""LastLevel"""); break;
                 }
             }
@@ -185,6 +191,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalStaking;
                         break;
+                    case "selectedBakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SelectedBakers;
+                        break;
+                    case "selectedStake":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SelectedStake;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.LastLevel);
@@ -218,6 +232,8 @@ namespace Tzkt.Api.Repositories
                 case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
                 case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                 case "totalStaking": columns.Add(@"""TotalStaking"""); break;
+                case "selectedBakers": columns.Add(@"""SelectedBakers"""); break;
+                case "selectedStake": columns.Add(@"""SelectedStake"""); break;
                 case "quote": columns.Add(@"""LastLevel"""); break;
             }
 
@@ -284,6 +300,14 @@ namespace Tzkt.Api.Repositories
                 case "totalStaking":
                     foreach (var row in rows)
                         result[j++] = row.TotalStaking;
+                    break;
+                case "selectedBakers":
+                    foreach (var row in rows)
+                        result[j++] = row.SelectedBakers;
+                    break;
+                case "selectedStake":
+                    foreach (var row in rows)
+                        result[j++] = row.SelectedStake;
                     break;
                 case "quote":
                     foreach (var row in rows)

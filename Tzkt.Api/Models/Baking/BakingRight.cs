@@ -27,11 +27,6 @@ namespace Tzkt.Api.Models
         public DateTime Timestamp { get; set; }
 
         /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? Priority => Round;
-
-        /// <summary>
         /// Round (0 - ∞) at which the baker can propose/produce a block.
         /// If a baker at round  `0` doesn't produce a block within the given time interval, then the right goes to a baker at round` 1`, etc.
         /// For `endorsing` rights this field is always `null`.
@@ -55,5 +50,12 @@ namespace Tzkt.Api.Models
         /// - `missed` - the right was not realized.
         /// </summary>
         public string Status { get; set; }
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int? Priority => Round;
+        #endregion
     }
 }
