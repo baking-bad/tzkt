@@ -51,10 +51,14 @@ namespace Tzkt.Api.Repositories
 
             return new BakerRewards
             {
+                ActiveStake = row.ActiveStake,
+                SelectedStake = row.SelectedStake,
                 DoubleBakingRewards = row.DoubleBakingRewards,
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
+                DoublePreendorsingRewards = row.DoublePreendorsingRewards,
+                DoublePreendorsingLosses = row.DoublePreendorsingLosses,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
                 EndorsementRewards = row.EndorsementRewards,
@@ -102,10 +106,14 @@ namespace Tzkt.Api.Repositories
 
             return rows.Select(row => new BakerRewards
             {
+                ActiveStake = row.ActiveStake,
+                SelectedStake = row.SelectedStake,
                 DoubleBakingRewards = row.DoubleBakingRewards,
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
+                DoublePreendorsingRewards = row.DoublePreendorsingRewards,
+                DoublePreendorsingLosses = row.DoublePreendorsingLosses,
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
                 EndorsementRewards = row.EndorsementRewards,
@@ -149,10 +157,14 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
+                    case "activeStake": columns.Add(@"""ActiveStake"""); break;
+                    case "selectedStake": columns.Add(@"""SelectedStake"""); break;
                     case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
                     case "doubleBakingLosses": columns.Add(@"""DoubleBakingLosses"""); break;
                     case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
                     case "doubleEndorsingLosses": columns.Add(@"""DoubleEndorsingLosses"""); break;
+                    case "doublePreendorsingRewards": columns.Add(@"""DoublePreendorsingRewards"""); break;
+                    case "doublePreendorsingLosses": columns.Add(@"""DoublePreendorsingLosses"""); break;
                     case "cycle": columns.Add(@"""Cycle"""); break;
                     case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                     case "endorsementRewards": columns.Add(@"""EndorsementRewards"""); break;
@@ -198,6 +210,14 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
+                    case "activeStake":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveStake;
+                        break;
+                    case "selectedStake":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SelectedStake;
+                        break;
                     case "doubleBakingRewards":
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingRewards;
@@ -213,6 +233,14 @@ namespace Tzkt.Api.Repositories
                     case "doubleEndorsingLosses":
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleEndorsingLosses;
+                        break;
+                    case "doublePreendorsingRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoublePreendorsingRewards;
+                        break;
+                    case "doublePreendorsingLosses":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoublePreendorsingLosses;
                         break;
                     case "cycle":
                         foreach (var row in rows)
@@ -327,10 +355,14 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(1);
             switch (field)
             {
+                case "activeStake": columns.Add(@"""ActiveStake"""); break;
+                case "selectedStake": columns.Add(@"""SelectedStake"""); break;
                 case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
                 case "doubleBakingLosses": columns.Add(@"""DoubleBakingLosses"""); break;
                 case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
                 case "doubleEndorsingLosses": columns.Add(@"""DoubleEndorsingLosses"""); break;
+                case "doublePreendorsingRewards": columns.Add(@"""DoublePreendorsingRewards"""); break;
+                case "doublePreendorsingLosses": columns.Add(@"""DoublePreendorsingLosses"""); break;
                 case "cycle": columns.Add(@"""Cycle"""); break;
                 case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                 case "endorsementRewards": columns.Add(@"""EndorsementRewards"""); break;
@@ -373,6 +405,14 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "activeStake":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveStake;
+                    break;
+                case "selectedStake":
+                    foreach (var row in rows)
+                        result[j++] = row.SelectedStake;
+                    break;
                 case "doubleBakingRewards":
                     foreach (var row in rows)
                         result[j++] = row.DoubleBakingRewards;
@@ -388,6 +428,14 @@ namespace Tzkt.Api.Repositories
                 case "doubleEndorsingLosses":
                     foreach (var row in rows)
                         result[j++] = row.DoubleEndorsingLosses;
+                    break;
+                case "doublePreendorsingRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.DoublePreendorsingRewards;
+                    break;
+                case "doublePreendorsingLosses":
+                    foreach (var row in rows)
+                        result[j++] = row.DoublePreendorsingLosses;
                     break;
                 case "cycle":
                     foreach (var row in rows)
@@ -520,10 +568,14 @@ namespace Tzkt.Api.Repositories
             {
                 Baker = Accounts.GetAlias(row.BakerId),
                 Balance = row.Balance,
+                ActiveStake = row.ActiveStake,
+                SelectedStake = row.SelectedStake,
                 DoubleBakingRewards = row.DoubleBakingRewards,
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
+                DoublePreendorsingRewards = row.DoublePreendorsingRewards,
+                DoublePreendorsingLosses = row.DoublePreendorsingLosses,
                 Cycle = row.Cycle,
                 EndorsementRewards = row.EndorsementRewards,
                 Endorsements = row.Endorsements,
@@ -577,10 +629,14 @@ namespace Tzkt.Api.Repositories
             {
                 Baker = Accounts.GetAlias(row.BakerId),
                 Balance = row.Balance,
+                ActiveStake = row.ActiveStake,
+                SelectedStake = row.SelectedStake,
                 DoubleBakingRewards = row.DoubleBakingRewards,
                 DoubleBakingLosses = row.DoubleBakingLosses,
                 DoubleEndorsingRewards = row.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = row.DoubleEndorsingLosses,
+                DoublePreendorsingRewards = row.DoublePreendorsingRewards,
+                DoublePreendorsingLosses = row.DoublePreendorsingLosses,
                 Cycle = row.Cycle,
                 EndorsementRewards = row.EndorsementRewards,
                 Endorsements = row.Endorsements,
@@ -628,10 +684,14 @@ namespace Tzkt.Api.Repositories
                     case "balance": columns.Add(@"dc.""Balance"""); break;
                     case "cycle": columns.Add(@"dc.""Cycle"""); break;
                     case "quote": columns.Add(@"dc.""Cycle"""); break;
+                    case "activeStake": columns.Add(@"bc.""ActiveStake"""); join = true; break;
+                    case "selectedStake": columns.Add(@"bc.""SelectedStake"""); join = true; break;
                     case "doubleBakingRewards": columns.Add(@"bc.""DoubleBakingRewards"""); join = true; break;
                     case "doubleBakingLosses": columns.Add(@"bc.""DoubleBakingLosses"""); join = true; break;
                     case "doubleEndorsingRewards": columns.Add(@"bc.""DoubleEndorsingRewards"""); join = true; break;
                     case "doubleEndorsingLosses": columns.Add(@"bc.""DoubleEndorsingLosses"""); join = true; break;
+                    case "doublePreendorsingRewards": columns.Add(@"bc.""DoublePreendorsingRewards"""); join = true; break;
+                    case "doublePreendorsingLosses": columns.Add(@"bc.""DoublePreendorsingLosses"""); join = true; break;
                     case "endorsementRewards": columns.Add(@"bc.""EndorsementRewards"""); join = true; break;
                     case "endorsements": columns.Add(@"bc.""Endorsements"""); join = true; break;
                     case "expectedBlocks": columns.Add(@"bc.""ExpectedBlocks"""); join = true; break;
@@ -685,6 +745,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
+                    case "activeStake":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveStake;
+                        break;
+                    case "selectedStake":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SelectedStake;
+                        break;
                     case "doubleBakingRewards":
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingRewards;
@@ -700,6 +768,14 @@ namespace Tzkt.Api.Repositories
                     case "doubleEndorsingLosses":
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleEndorsingLosses;
+                        break;
+                    case "doublePreendorsingRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoublePreendorsingRewards;
+                        break;
+                    case "doublePreendorsingLosses":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoublePreendorsingLosses;
                         break;
                     case "cycle":
                         foreach (var row in rows)
@@ -812,10 +888,14 @@ namespace Tzkt.Api.Repositories
                 case "balance": columns.Add(@"dc.""Balance"""); break;
                 case "cycle": columns.Add(@"dc.""Cycle"""); break;
                 case "quote": columns.Add(@"dc.""Cycle"""); break;
+                case "activeStake": columns.Add(@"bc.""ActiveStake"""); join = true; break;
+                case "selectedStake": columns.Add(@"bc.""SelectedStake"""); join = true; break;
                 case "doubleBakingRewards": columns.Add(@"bc.""DoubleBakingRewards"""); join = true; break;
                 case "doubleBakingLosses": columns.Add(@"bc.""DoubleBakingLosses"""); join = true; break;
                 case "doubleEndorsingRewards": columns.Add(@"bc.""DoubleEndorsingRewards"""); join = true; break;
                 case "doubleEndorsingLosses": columns.Add(@"bc.""DoubleEndorsingLosses"""); join = true; break;
+                case "doublePreendorsingRewards": columns.Add(@"bc.""DoublePreendorsingRewards"""); join = true; break;
+                case "doublePreendorsingLosses": columns.Add(@"bc.""DoublePreendorsingLosses"""); join = true; break;
                 case "endorsementRewards": columns.Add(@"bc.""EndorsementRewards"""); join = true; break;
                 case "endorsements": columns.Add(@"bc.""Endorsements"""); join = true; break;
                 case "expectedBlocks": columns.Add(@"bc.""ExpectedBlocks"""); join = true; break;
@@ -866,6 +946,14 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Balance;
                     break;
+                case "activeStake":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveStake;
+                    break;
+                case "selectedStake":
+                    foreach (var row in rows)
+                        result[j++] = row.SelectedStake;
+                    break;
                 case "doubleBakingRewards":
                     foreach (var row in rows)
                         result[j++] = row.DoubleBakingRewards;
@@ -881,6 +969,14 @@ namespace Tzkt.Api.Repositories
                 case "doubleEndorsingLosses":
                     foreach (var row in rows)
                         result[j++] = row.DoubleEndorsingLosses;
+                    break;
+                case "doublePreendorsingRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.DoublePreendorsingRewards;
+                    break;
+                case "doublePreendorsingLosses":
+                    foreach (var row in rows)
+                        result[j++] = row.DoublePreendorsingLosses;
                     break;
                 case "cycle":
                     foreach (var row in rows)
@@ -1006,10 +1102,14 @@ namespace Tzkt.Api.Repositories
 
             return new RewardSplit
             {
+                ActiveStake = rewards.ActiveStake,
+                SelectedStake = rewards.SelectedStake,
                 DoubleBakingRewards = rewards.DoubleBakingRewards,
                 DoubleBakingLosses = rewards.DoubleBakingLosses,
                 DoubleEndorsingRewards = rewards.DoubleEndorsingRewards,
                 DoubleEndorsingLosses = rewards.DoubleEndorsingLosses,
+                DoublePreendorsingRewards = rewards.DoublePreendorsingRewards,
+                DoublePreendorsingLosses = rewards.DoublePreendorsingLosses,
                 Cycle = rewards.Cycle,
                 DelegatedBalance = rewards.DelegatedBalance,
                 EndorsementRewards = rewards.EndorsementRewards,
