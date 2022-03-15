@@ -32,6 +32,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="round">Filters rights by round</param>
+        /// <param name="priority">[DEPRECATED]</param>
         /// <param name="status">Filters rights by status (`future`, `realized`, `missed`)</param>
         /// <returns></returns>
         [HttpGet("count")]
@@ -42,9 +43,10 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             Int32NullParameter slots,
             Int32NullParameter round,
+            Int32NullParameter priority,
             BakingRightStatusParameter status)
         {
-            return BakingRights.GetCount(type, baker, cycle, level, slots, round, status);
+            return BakingRights.GetCount(type, baker, cycle, level, slots, round ?? priority, status);
         }
 
         /// <summary>
@@ -59,6 +61,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
         /// <param name="round">Filters rights by round</param>
+        /// <param name="priority">[DEPRECATED]</param>
         /// <param name="status">Filters rights by status (`future`, `realized`, `missed`)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts rights by specified field. Supported fields: `level` (default).</param>
@@ -73,6 +76,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             Int32NullParameter slots,
             Int32NullParameter round,
+            Int32NullParameter priority,
             BakingRightStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -85,25 +89,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round, status, sort, offset, limit));
+                return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round, status, sort, offset, limit, select.Values[0]));
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round, status, sort, offset, limit, select.Values));
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round, status, sort, offset, limit, select.Fields[0]));
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await BakingRights.Get(type, baker, cycle, level, slots, round, status, sort, offset, limit, select.Fields)
+                        Rows = await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Fields)
                     });
                 }
             }

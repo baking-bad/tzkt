@@ -47,15 +47,19 @@ namespace Tzkt.Api.Services.Cache
         public int DelegationOpsCount { get; set; }
         public int DoubleBakingOpsCount { get; set; }
         public int DoubleEndorsingOpsCount { get; set; }
+        public int DoublePreendorsingOpsCount { get; set; }
         public int EndorsementOpsCount { get; set; }
+        public int PreendorsementOpsCount { get; set; }
         public int NonceRevelationOpsCount { get; set; }
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
         public int RegisterConstantOpsCount { get; set; }
+        public int SetDepositsLimitOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
+        public int EndorsingRewardOpsCount { get; set; }
 
         public int TokensCount { get; set; }
         public int TokenBalancesCount { get; set; }

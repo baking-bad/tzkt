@@ -50,11 +50,6 @@ namespace Tzkt.Api.Models
         public int TotalBakers { get; set; }
 
         /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TotalRolls { get; set; }
-
-        /// <summary>
         /// Total staking balance of all active in this cycle bakers
         /// </summary>
         public long TotalStaking { get; set; }
@@ -69,11 +64,28 @@ namespace Tzkt.Api.Models
         /// </summary>
         public long TotalDelegated { get; set; }
 
+        /// <summary>
+        /// Total number of bakers in stake distribution for the cycle
+        /// </summary>
+        public int SelectedBakers { get; set; }
+
+        /// <summary>
+        /// Total stake of bakers in stake distribution for the cycle
+        /// </summary>
+        public long SelectedStake { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the end of the cycle
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int TotalRolls => 0;
         #endregion
     }
 }
