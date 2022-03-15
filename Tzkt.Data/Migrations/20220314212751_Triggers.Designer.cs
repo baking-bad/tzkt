@@ -2189,9 +2189,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("DelegatorsCount")
                         .HasColumnType("integer");
 
-                    b.Property<long?>("FrozenDepositLimit")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 

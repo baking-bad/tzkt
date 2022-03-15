@@ -86,8 +86,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 if (operation.Limit != null)
                 {
-                    (sender as Data.Models.Delegate).FrozenDepositLimit = operation.Limit > long.MaxValue
-                        ? long.MaxValue
+                    (sender as Data.Models.Delegate).FrozenDepositLimit = operation.Limit > long.MaxValue / 100
+                        ? long.MaxValue / 100
                         : (long)operation.Limit;
                 }
                 else
@@ -130,8 +130,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 
                 if (prevOp?.Limit != null)
                 {
-                    (sender as Data.Models.Delegate).FrozenDepositLimit = prevOp.Limit > long.MaxValue
-                        ? long.MaxValue
+                    (sender as Data.Models.Delegate).FrozenDepositLimit = prevOp.Limit > long.MaxValue / 100
+                        ? long.MaxValue / 100
                         : (long)prevOp.Limit;
                 }
                 else

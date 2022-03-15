@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             Cycle futureCycle,
             IEnumerable<RightsGenerator.BR> futureBakingRights,
             IEnumerable<RightsGenerator.ER> futureEndorsingRights,
-            Dictionary<int, SnapshotBalance> snapshots,
+            List<SnapshotBalance> snapshots,
             List<BakingRight> currentRights)
         {
             #region current rights
@@ -178,13 +178,11 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var bakerCycles = snapshots.Keys.ToDictionary(x => x, bakerId =>
+                var bakerCycles = snapshots.ToDictionary(x => x.AccountId, snapshot =>
                 {
-                    var snapshot = snapshots[bakerId];
-                    var depositCap = Math.Min(snapshot.Balance, snapshot.FrozenDepositLimit ?? long.MaxValue);
                     var bakerCycle = new BakerCycle
                     {
-                        BakerId = bakerId,
+                        BakerId = snapshot.AccountId,
                         Cycle = futureCycle.Index,
                         DelegatedBalance = (long)snapshot.DelegatedBalance,
                         DelegatorsCount = (int)snapshot.DelegatorsCount,
@@ -192,8 +190,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                         ActiveStake = 0,
                         SelectedStake = futureCycle.SelectedStake
                     };
-                    if (snapshot.StakingBalance >= block.Protocol.TokensPerRoll) // (activeStake >= block.Protocol.TokensPerRoll)
+                    if (snapshot.StakingBalance >= block.Protocol.TokensPerRoll)
                     {
+                        var baker = Cache.Accounts.GetDelegate(snapshot.AccountId);
+                        var depositCap = Math.Min(baker.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
                         var activeStake = Math.Min((long)snapshot.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
                         var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * activeStake / futureCycle.SelectedStake);
                         bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * activeStake / futureCycle.SelectedStake;

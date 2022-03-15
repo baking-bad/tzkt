@@ -28,8 +28,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 #region make snapshot
                 await Db.Database.ExecuteSqlRawAsync($@"
                     {delete}
-                    INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"", ""FrozenDepositLimit"")
-                    SELECT {block.Level}, ""Balance"", ""Id"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"", ""FrozenDepositLimit""
+                    INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"")
+                    SELECT {block.Level}, ""Balance"", ""Id"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance""
                     FROM ""Accounts""
                     WHERE ""Staked"" = true");
                 #endregion
@@ -46,16 +46,16 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (deactivated.Any())
                     {
                         var sql = @"
-                            INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"", ""FrozenDepositLimit"") VALUES ";
+                            INSERT INTO ""SnapshotBalances"" (""Level"", ""Balance"", ""AccountId"", ""DelegateId"", ""DelegatorsCount"", ""DelegatedBalance"", ""StakingBalance"") VALUES ";
 
                         foreach (var baker in deactivated)
                         {
                             sql += $@"
-                                ({block.Level}, {baker.Balance}, {baker.Id}, NULL, {baker.DelegatorsCount}, {baker.DelegatedBalance}, {baker.StakingBalance}, {baker.FrozenDepositLimit?.ToString() ?? "NULL"}),";
+                                ({block.Level}, {baker.Balance}, {baker.Id}, NULL, {baker.DelegatorsCount}, {baker.DelegatedBalance}, {baker.StakingBalance}),";
 
                             foreach (var delegator in baker.DelegatedAccounts)
                                 sql += $@"
-                                    ({block.Level}, {delegator.Balance}, {delegator.Id}, {delegator.DelegateId}, NULL, NULL, NULL, NULL),";
+                                    ({block.Level}, {delegator.Balance}, {delegator.Id}, {delegator.DelegateId}, NULL, NULL, NULL),";
                         }
 
                         await Db.Database.ExecuteSqlRawAsync(sql[..^1]);
