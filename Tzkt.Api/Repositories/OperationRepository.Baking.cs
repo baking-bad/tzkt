@@ -14,7 +14,7 @@ namespace Tzkt.Api.Repositories
             DateTimeParameter timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Blocks""")
-                .Filter(@"""BakerId"" IS NOT NULL")
+                .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
@@ -53,6 +53,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<BakingOperation>> GetBakings(
+            AnyOfParameter anyof,
+            AccountParameter proposer,
             AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -62,6 +64,8 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Blocks""")
+                .Filter(anyof, x => x == "proposer" ? "ProposerId" : "ProducerId")
+                .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Level", level)
@@ -90,6 +94,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetBakings(
+            AnyOfParameter anyof,
+            AccountParameter proposer,
             AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -124,8 +130,10 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Filter(anyof, x => x == "proposer" ? "ProposerId" : "ProducerId")
+                .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
-                .Filter(@"""BakerId"" IS NOT NULL")
+                .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
@@ -200,6 +208,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetBakings(
+            AnyOfParameter anyof,
+            AccountParameter proposer,
             AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -231,8 +241,10 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Filter(anyof, x => x == "proposer" ? "ProposerId" : "ProducerId")
+                .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
-                .Filter(@"""BakerId"" IS NOT NULL")
+                .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));

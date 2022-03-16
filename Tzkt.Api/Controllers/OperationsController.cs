@@ -1937,7 +1937,10 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
-        /// <param name="baker">Filters baking operations by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="baker">[DEPRECATED]</param>
+        /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.proposer.producer=tz1...`.</param>
+        /// <param name="proposer">Filters by block proposer. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="producer">Filters by block producer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters baking operations by level.</param>
         /// <param name="timestamp">Filters baking operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1949,6 +1952,9 @@ namespace Tzkt.Api.Controllers
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
             AccountParameter baker,
+            AnyOfParameter anyof,
+            AccountParameter proposer,
+            AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -1957,16 +1963,39 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
+            #region deprecated
+            producer ??= baker;
+            #endregion
+
             #region validate
-            if (baker != null)
+            if (anyof != null)
             {
-                if (baker.Eqx != null)
-                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+                if (anyof.Fields.Any(x => x != "proposer" && x != "producer"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `proposer`, `producer` fields only.");
 
-                if (baker.Nex != null)
-                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<BakingOperation>());
+            }
+            if (proposer != null)
+            {
+                if (proposer.Eqx != null)
+                    return new BadRequest($"{nameof(proposer)}.eqx", "This parameter doesn't support .eqx mode.");
 
-                if (baker.Eq == -1 || baker.In?.Count == 0 || baker.Null == true)
+                if (proposer.Nex != null)
+                    return new BadRequest($"{nameof(proposer)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (proposer.Eq == -1 || proposer.In?.Count == 0)
+                    return Ok(Enumerable.Empty<BakingOperation>());
+            }
+            if (producer != null)
+            {
+                if (producer.Eqx != null)
+                    return new BadRequest($"{nameof(producer)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (producer.Nex != null)
+                    return new BadRequest($"{nameof(producer)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (producer.Eq == -1 || producer.In?.Count == 0)
                     return Ok(Enumerable.Empty<BakingOperation>());
             }
 
@@ -1975,25 +2004,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBakings(baker, level, timestamp, sort, offset, limit, quote));
+                return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBakings(baker, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetBakings(baker, level, timestamp, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBakings(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBakings(baker, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

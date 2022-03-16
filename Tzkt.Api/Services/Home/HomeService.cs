@@ -217,7 +217,7 @@ namespace Tzkt.Api.Services
                 new SortParameter { Desc = "level" },
                 null, 5, BlockFields);
 
-            var blocks = await BlocksRepo.Get(null, null, null, null, 
+            var blocks = await BlocksRepo.Get(null, null, null, null, null, null, 
                 new SortParameter { Desc = "level" }, null, 7, BlockFields, Symbols.None);
 
             return upcoming.Concat(blocks).ToArray();

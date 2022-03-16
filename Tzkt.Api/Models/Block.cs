@@ -11,7 +11,7 @@ namespace Tzkt.Api.Models
         public int Cycle { get; set; }
 
         /// <summary>
-        /// The height of the block from the genesis block
+        /// Height of the block from the genesis
         /// </summary>
         public int Level { get; set; }
         
@@ -21,7 +21,7 @@ namespace Tzkt.Api.Models
         public string Hash { get; set; }
         
         /// <summary>
-        /// The datetime at which the block is claimed to have been created (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
+        /// Datetime at which the block is claimed to have been created (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime Timestamp { get; set; }
         
@@ -31,22 +31,17 @@ namespace Tzkt.Api.Models
         public int Proto { get; set; }
 
         /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int Priority => BlockRound;
-
-        /// <summary>
         /// Round at which the block payload was proposed
         /// </summary>
         public int PayloadRound { get; set; }
 
         /// <summary>
-        /// Round at which the block was baked
+        /// Round at which the block was produced
         /// </summary>
         public int BlockRound { get; set; }
 
         /// <summary>
-        /// Number of endorsements, confirmed the block
+        /// Number of endorsements (slots), included into the block
         /// </summary>
         public int Validations { get; set; }
 
@@ -56,17 +51,17 @@ namespace Tzkt.Api.Models
         public long Deposit { get; set; }
 
         /// <summary>
-        /// Reward paid to payload proposer (micro tez)
+        /// Fixed reward paid to the payload proposer (micro tez)
         /// </summary>
         public long Reward { get; set; }
 
         /// <summary>
-        /// Bonus paid to block producer (micro tez)
+        /// Bonus reward paid to the block producer (micro tez)
         /// </summary>
         public long Bonus { get; set; }
 
         /// <summary>
-        /// Total fee paid by all operations, included in the block
+        /// Total fee gathered from operations, included into the block
         /// </summary>
         public long Fees { get; set; }
 
@@ -76,11 +71,6 @@ namespace Tzkt.Api.Models
         /// `false` - there's no `seed_nonce_hash` in the block or seed nonce revelation has missed
         /// </summary>
         public bool NonceRevealed { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public Alias Baker => Producer;
 
         /// <summary>
         /// Baker who proposed the block payload
@@ -191,6 +181,18 @@ namespace Tzkt.Api.Models
         /// Injected historical quote at the time of block
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int Priority => BlockRound;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public Alias Baker => Producer;
         #endregion
     }
 }

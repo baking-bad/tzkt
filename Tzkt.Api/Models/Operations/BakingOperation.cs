@@ -15,12 +15,12 @@ namespace Tzkt.Api.Models
         public override int Id { get; set; }
 
         /// <summary>
-        /// The height of the block from the genesis block
+        /// Height of the block from the genesis
         /// </summary>
         public int Level { get; set; }
 
         /// <summary>
-        /// The datetime at which the block is claimed to have been created (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
+        /// Datetime at which the block is claimed to have been created (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime Timestamp { get; set; }
 
@@ -28,16 +28,6 @@ namespace Tzkt.Api.Models
         /// Block hash
         /// </summary>
         public string Block { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public Alias Baker => Producer;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int Priority => BlockRound;
 
         /// <summary>
         /// Baker who proposed the block payload
@@ -65,17 +55,17 @@ namespace Tzkt.Api.Models
         public long Deposit { get; set; }
 
         /// <summary>
-        /// Reward of the baker for producing the block (micro tez)
+        /// Fixed reward paid to the payload proposer (micro tez)
         /// </summary>
         public long Reward { get; set; }
 
         /// <summary>
-        /// Reward of the baker for including extra endorsements (micro tez)
+        /// Bonus reward paid to the block producer (micro tez)
         /// </summary>
         public long Bonus { get; set; }
 
         /// <summary>
-        /// Total fee paid by all operations, included in the block
+        /// Total fee gathered from operations, included into the block
         /// </summary>
         public long Fees { get; set; }
 
@@ -84,6 +74,18 @@ namespace Tzkt.Api.Models
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public Alias Baker => Producer;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int Priority => BlockRound;
         #endregion
     }
 }
