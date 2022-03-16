@@ -708,7 +708,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
 
                 if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
-                    return Ok(Enumerable.Empty<DoubleBakingOperation>());
+                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
             }
 
             if (offender != null)
@@ -720,7 +720,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
 
                 if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
-                    return Ok(Enumerable.Empty<DoubleBakingOperation>());
+                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))

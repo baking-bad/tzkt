@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
@@ -42,11 +38,6 @@ namespace Tzkt.Api.Models
         /// Information about the delegate (baker), who produced the block with the operation
         /// </summary>
         public Alias Baker { get; set; }
-
-        /// <summary>
-        /// Reward amount paid to baker, included this operation into a block
-        /// </summary>
-        public long BakerRewards { get; set; }
         
         /// <summary>
         /// Information about the delegate (baker), who revealed the nonce (sent the operation)
@@ -78,6 +69,13 @@ namespace Tzkt.Api.Models
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long BakerRewards => Reward;
         #endregion
     }
 }

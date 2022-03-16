@@ -24,8 +24,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""AccusedLevel"", o.""AccuserId"", o.""AccuserReward"",
-                            o.""OffenderId"", o.""OffenderLoss"", b.""Hash""
+                SELECT      o.*, b.""Hash""
                 FROM        ""DoubleBakingOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -54,8 +53,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""AccusedLevel"", ""AccuserId"", ""AccuserReward"",
-                            ""OffenderId"", ""OffenderLoss""
+                SELECT      *
                 FROM        ""DoubleBakingOps""
                 WHERE       ""Level"" = @level
                 ORDER BY    ""Id""";
