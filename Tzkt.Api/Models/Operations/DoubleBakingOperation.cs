@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
     public class DoubleBakingOperation : Operation
     {
         /// <summary>
-        /// Type of the operation, `double_baking` - is used by bakers to provide evidence of double baking (baking two different blocks at the same height) by a baker
+        /// Type of the operation, `double_baking` - is used by bakers to provide evidence of double baking
+        /// (baking two different blocks at the same height) by a baker
         /// </summary>
         public override string Type => OpTypes.DoubleBaking;
 
@@ -19,7 +16,7 @@ namespace Tzkt.Api.Models
         public override int Id { get; set; }
 
         /// <summary>
-        /// The height of the block from the genesis block, in which the operation was included
+        /// Height of the block from the genesis block, in which the operation was included
         /// </summary>
         public int Level { get; set; }
 
@@ -39,55 +36,57 @@ namespace Tzkt.Api.Models
         public string Hash { get; set; }
 
         /// <summary>
-        /// The height of the block from the genesis block, which was double baked
+        /// Height of the block from the genesis, which was double baked
         /// </summary>
         public int AccusedLevel { get; set; }
 
         /// <summary>
-        /// Information about the baker (delegate), produced the block, in which the operation was included
+        /// Information about the baker, produced the block, in which the accusation was included
         /// </summary>
         public Alias Accuser { get; set; }
 
         /// <summary>
-        /// Reward of the baker (delegate), produced the block, in which the operation was included
+        /// Reward of the baker, produced the block, in which the accusation was included
         /// </summary>
         public long AccuserReward { get; set; }
 
         /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long AccuserRewards { get; set; }
-
-        /// <summary>
-        /// Information about the baker (delegate), accused for producing two different blocks at the same height
+        /// Information about the baker, accused for producing two different blocks at the same level
         /// </summary>
         public Alias Offender { get; set; }
 
         /// <summary>
-        /// Amount of frozen security deposit, rewards, and fees lost by accused baker (delegate)
+        /// Amount of frozen deposits lost by accused baker
         /// </summary>
         public long OffenderLoss { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostDeposits { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostRewards { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostFees { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long AccuserRewards => AccuserReward;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLostDeposits => OffenderLoss;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLostRewards => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLostFees => 0;
         #endregion
     }
 }

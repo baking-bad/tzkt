@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
@@ -20,7 +16,7 @@ namespace Tzkt.Api.Models
         public override int Id { get; set; }
 
         /// <summary>
-        /// The height of the block from the genesis block, in which the operation was included
+        /// Height of the block from the genesis block, in which the operation was included
         /// </summary>
         public int Level { get; set; }
 
@@ -40,55 +36,57 @@ namespace Tzkt.Api.Models
         public string Hash { get; set; }
 
         /// <summary>
-        /// The height of the block from the genesis block, at which double endorsing occurred 
+        /// Height of the block from the genesis, at which double endorsing occurred 
         /// </summary>
         public int AccusedLevel { get; set; }
 
         /// <summary>
-        /// Information about the baker (delegate), produced the block, in which the operation was included
+        /// Information about the baker, produced the block, in which the accusation was included
         /// </summary>
         public Alias Accuser { get; set; }
 
         /// <summary>
-        /// Reward of the baker (delegate), produced the block, in which the operation was included
+        /// Reward of the baker, produced the block, in which the accusation was included
         /// </summary>
         public long AccuserReward { get; set; }
 
         /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long AccuserRewards { get; set; }
-
-        /// <summary>
-        /// Information about the baker (delegate), accused for producing two different endorsements at the same height
+        /// Information about the baker, accused for producing two different endorsements at the same level
         /// </summary>
         public Alias Offender { get; set; }
 
         /// <summary>
-        /// Amount of frozen security deposit, rewards, and fees lost by accused baker (delegate)
+        /// Amount of frozen deposits lost by accused baker
         /// </summary>
         public long OffenderLoss { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostDeposits { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostRewards { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostFees { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long AccuserRewards => AccuserReward;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLostDeposits => OffenderLoss;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLostRewards => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLostFees => 0;
         #endregion
     }
 }

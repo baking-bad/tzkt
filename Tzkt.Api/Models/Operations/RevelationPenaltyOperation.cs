@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace Tzkt.Api.Models
 {
@@ -48,21 +44,23 @@ namespace Tzkt.Api.Models
         /// </summary>
         public long Loss { get; set; }
 
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostReward { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostFees { get; set; }
-
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long LostReward => Loss;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long LostFees => 0;
         #endregion
     }
 }
