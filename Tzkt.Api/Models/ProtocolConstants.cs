@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Tzkt.Api.Models
 {
@@ -127,13 +124,55 @@ namespace Tzkt.Api.Models
         /// Liquidity baking subsidy is 1/16th of total rewards for a block of priority 0 with all endorsements
         /// </summary>
         public int LBSubsidy { get; set; }
+
         /// <summary>
         /// Level after protocol activation when liquidity baking shuts off
         /// </summary>
         public int LBSunsetLevel { get; set; }
+
         /// <summary>
         /// 1/2 window size of 2000 blocks with precision of 1000 for integer computation
         /// </summary>
         public int LBEscapeThreshold { get; set; }
+
+        /// <summary>
+        /// Endorsement quorum
+        /// </summary>
+        public int ConsensusThreshold { get; set; }
+
+        /// <summary>
+        /// Number of endorsed slots needed to receive endorsing rewards
+        /// </summary>
+        public int MinParticipationNumerator { get; set; }
+
+        /// <summary>
+        /// Number of endorsed slots needed to receive endorsing rewards
+        /// </summary>
+        public int MinParticipationDenominator { get; set; }
+
+        /// <summary>
+        /// Number of cycles after double baking/(pre)endorsing where an accusation operation can be injected
+        /// </summary>
+        public int MaxSlashingPeriod { get; set; }
+
+        /// <summary>
+        /// How much of baker's active stake is frozen as a security deposit
+        /// </summary>
+        public int FrozenDepositsPercentage { get; set; }
+
+        /// <summary>
+        /// How much mutez is burned from baker's frozen deposits, in case of double baking
+        /// </summary>
+        public long DoubleBakingPunishment { get; set; }
+
+        /// <summary>
+        /// How much is burned from baker's frozen deposits, in case of double (pre)endorsing
+        /// </summary>
+        public int DoubleEndorsingPunishmentNumerator { get; set; }
+
+        /// <summary>
+        /// How much is burned from baker's frozen deposits, in case of double (pre)endorsing
+        /// </summary>
+        public int DoubleEndorsingPunishmentDenominator { get; set; }
     }
 }

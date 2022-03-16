@@ -73,7 +73,15 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
                     LBSunsetLevel = row.LBSunsetLevel,
-                    LBEscapeThreshold = row.LBEscapeThreshold
+                    LBEscapeThreshold = row.LBEscapeThreshold,
+                    ConsensusThreshold = row.ConsensusThreshold,
+                    DoubleBakingPunishment = row.DoubleBakingPunishment,
+                    DoubleEndorsingPunishmentDenominator = row.DoubleEndorsingPunishmentDenominator,
+                    DoubleEndorsingPunishmentNumerator = row.DoubleEndorsingPunishmentNumerator,
+                    FrozenDepositsPercentage = row.FrozenDepositsPercentage,
+                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    MinParticipationDenominator = row.MinParticipationDenominator,
+                    MinParticipationNumerator = row.MinParticipationNumerator
                 },
                 Metadata = row.Metadata
             };
@@ -130,7 +138,15 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
                     LBSunsetLevel = row.LBSunsetLevel,
-                    LBEscapeThreshold = row.LBEscapeThreshold
+                    LBEscapeThreshold = row.LBEscapeThreshold,
+                    ConsensusThreshold = row.ConsensusThreshold,
+                    DoubleBakingPunishment = row.DoubleBakingPunishment,
+                    DoubleEndorsingPunishmentDenominator = row.DoubleEndorsingPunishmentDenominator,
+                    DoubleEndorsingPunishmentNumerator = row.DoubleEndorsingPunishmentNumerator,
+                    FrozenDepositsPercentage = row.FrozenDepositsPercentage,
+                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    MinParticipationDenominator = row.MinParticipationDenominator,
+                    MinParticipationNumerator = row.MinParticipationNumerator
                 },
                 Metadata = row.Metadata
             };
@@ -187,7 +203,15 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
                     LBSunsetLevel = row.LBSunsetLevel,
-                    LBEscapeThreshold = row.LBEscapeThreshold
+                    LBEscapeThreshold = row.LBEscapeThreshold,
+                    ConsensusThreshold = row.ConsensusThreshold,
+                    DoubleBakingPunishment = row.DoubleBakingPunishment,
+                    DoubleEndorsingPunishmentDenominator = row.DoubleEndorsingPunishmentDenominator,
+                    DoubleEndorsingPunishmentNumerator = row.DoubleEndorsingPunishmentNumerator,
+                    FrozenDepositsPercentage = row.FrozenDepositsPercentage,
+                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    MinParticipationDenominator = row.MinParticipationDenominator,
+                    MinParticipationNumerator = row.MinParticipationNumerator
                 },
                 Metadata = row.Metadata
             };
@@ -245,7 +269,15 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
                     LBSunsetLevel = row.LBSunsetLevel,
-                    LBEscapeThreshold = row.LBEscapeThreshold
+                    LBEscapeThreshold = row.LBEscapeThreshold,
+                    ConsensusThreshold = row.ConsensusThreshold,
+                    DoubleBakingPunishment = row.DoubleBakingPunishment,
+                    DoubleEndorsingPunishmentDenominator = row.DoubleEndorsingPunishmentDenominator,
+                    DoubleEndorsingPunishmentNumerator = row.DoubleEndorsingPunishmentNumerator,
+                    FrozenDepositsPercentage = row.FrozenDepositsPercentage,
+                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    MinParticipationDenominator = row.MinParticipationDenominator,
+                    MinParticipationNumerator = row.MinParticipationNumerator
                 },
                 Metadata = row.Metadata
             });
