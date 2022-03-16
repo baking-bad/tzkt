@@ -2,14 +2,12 @@
 
 namespace Tzkt.Api.Models
 {
-    public class EndorsementOperation : Operation
+    public class DoublePreendorsingOperation : Operation
     {
         /// <summary>
-        /// Type of the operation, `endorsement` - is operation, which specifies the head of the chain as seen by the endorser of a given slot.
-        /// The endorser is randomly selected to be included in the block that extends the head of the chain as specified in this operation.
-        /// A block with more endorsements improves the weight of the chain and increases the likelihood of that chain being the canonical one.
+        /// Type of the operation, `double_preendorsing`
         /// </summary>
-        public override string Type => OpTypes.Endorsement;
+        public override string Type => OpTypes.DoublePreendorsing;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -17,7 +15,7 @@ namespace Tzkt.Api.Models
         public override int Id { get; set; }
 
         /// <summary>
-        /// The height of the block from the genesis block, in which the operation was included
+        /// Height of the block from the genesis block, in which the operation was included
         /// </summary>
         public int Level { get; set; }
 
@@ -37,24 +35,29 @@ namespace Tzkt.Api.Models
         public string Hash { get; set; }
 
         /// <summary>
-        /// Information about the baker who sent the operation
+        /// Height of the block from the genesis, at which double preendorsing occurred 
         /// </summary>
-        public Alias Delegate { get; set; }
+        public int AccusedLevel { get; set; }
 
         /// <summary>
-        /// Number of assigned endorsement slots to the baker who sent the operation
+        /// Information about the baker, produced the block, in which the accusation was included
         /// </summary>
-        public int Slots { get; set; }
+        public Alias Accuser { get; set; }
 
         /// <summary>
-        /// Security deposit frozen on the baker's account
+        /// Reward of the baker, produced the block, in which the accusation was included
         /// </summary>
-        public long Deposit { get; set; }
+        public long AccuserReward { get; set; }
 
         /// <summary>
-        /// Reward of the baker for the operation
+        /// Information about the baker, accused for producing two different preendorsements at the same level
         /// </summary>
-        public long Rewards { get; set; }
+        public Alias Offender { get; set; }
+
+        /// <summary>
+        /// Amount of frozen deposits lost by accused baker
+        /// </summary>
+        public long OffenderLoss { get; set; }
 
         #region injecting
         /// <summary>

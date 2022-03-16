@@ -195,6 +195,111 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region preendorsements
+        /// <summary>
+        /// Get preendorsements
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of preendorsement operations.
+        /// </remarks>
+        /// <param name="delegate">Filters by delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("preendorsements")]
+        public async Task<ActionResult<IEnumerable<PreendorsementOperation>>> GetPreendorsements(
+            AccountParameter @delegate,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (@delegate != null)
+            {
+                if (@delegate.Eqx != null)
+                    return new BadRequest($"{nameof(@delegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (@delegate.Nex != null)
+                    return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (@delegate.Eq == -1 || @delegate.In?.Count == 0 || @delegate.Null == true)
+                    return Ok(Enumerable.Empty<EndorsementOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get preendorsement by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns an preendorsement operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("preendorsements/{hash}")]
+        public Task<IEnumerable<PreendorsementOperation>> GetPreendorsementByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        {
+            return Operations.GetPreendorsements(hash, quote);
+        }
+
+        /// <summary>
+        /// Get preendorsements count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of preendorsement operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("preendorsements/count")]
+        public Task<int> GetPreendorsementsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.PreendorsementOpsCount);
+
+            return Operations.GetPreendorsementsCount(level, timestamp);
+        }
+        #endregion
+
         #region ballots
         /// <summary>
         /// Get ballots
@@ -785,6 +890,138 @@ namespace Tzkt.Api.Controllers
                 return Task.FromResult(State.Current.DoubleEndorsingOpsCount);
 
             return Operations.GetDoubleEndorsingsCount(level, timestamp);
+        }
+        #endregion
+
+        #region double preendorsing
+        /// <summary>
+        /// Get double preendorsing
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of double preendorsing operations.
+        /// </remarks>
+        /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="accuser">Filters by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
+        /// <param name="offender">Filters by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("double_preendorsing")]
+        public async Task<ActionResult<IEnumerable<DoublePreendorsingOperation>>> GetDoublePreendorsing(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
+            AnyOfParameter anyof,
+            AccountParameter accuser,
+            AccountParameter offender,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
+
+                if (anyof.Value == -1)
+                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+            }
+
+            if (accuser != null)
+            {
+                if (accuser.Eqx != null && accuser.Eqx != "offender")
+                    return new BadRequest($"{nameof(accuser)}.eqx", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Nex != null && accuser.Nex != "offender")
+                    return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
+                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+            }
+
+            if (offender != null)
+            {
+                if (offender.Eqx != null && offender.Eqx != "accuser")
+                    return new BadRequest($"{nameof(offender)}.eqx", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Nex != null && offender.Nex != "accuser")
+                    return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
+                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get double preendorsing by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns a double preendorsing operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("double_preendorsing/{hash}")]
+        public Task<IEnumerable<DoublePreendorsingOperation>> GetDoublePreendorsingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        {
+            return Operations.GetDoublePreendorsings(hash, quote);
+        }
+
+        /// <summary>
+        /// Get double preendorsing count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of double preendorsing operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("double_preendorsing/count")]
+        public Task<int> GetDoublePreendorsingCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.DoublePreendorsingOpsCount);
+
+            return Operations.GetDoublePreendorsingsCount(level, timestamp);
         }
         #endregion
 
@@ -1706,6 +1943,115 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region set deposits limits
+        /// <summary>
+        /// Get set deposits limits
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of set deposits limit operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("set_deposits_limit")]
+        public async Task<ActionResult<IEnumerable<SetDepositsLimitOperation>>> GetSetDepositsLimits(
+            AccountParameter sender,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<RegisterConstantOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get set deposits limit by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns set deposits limit operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("set_deposits_limit/{hash}")]
+        public Task<IEnumerable<SetDepositsLimitOperation>> GetSetDepositsLimitByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetSetDepositsLimits(hash, quote);
+        }
+
+        /// <summary>
+        /// Get set deposits limits count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of set deposits limit operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("set_deposits_limit/count")]
+        public Task<int> GetSetDepositsLimitsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.SetDepositsLimitOpsCount);
+
+            return Operations.GetSetDepositsLimitsCount(level, timestamp);
+        }
+        #endregion
+
         #region migrations
         /// <summary>
         /// Get migrations
@@ -2063,6 +2409,113 @@ namespace Tzkt.Api.Controllers
                 return Task.FromResult(State.Current.BlocksCount - 2);
 
             return Operations.GetBakingsCount(level, timestamp);
+        }
+        #endregion
+
+        #region endorsing rewards
+        /// <summary>
+        /// Get endorsing rewards
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of endorsing reward operations (synthetic type).
+        /// </remarks>
+        /// <param name="baker">Filters by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("endorsing_rewards")]
+        public async Task<ActionResult<IEnumerable<EndorsingRewardOperation>>> GetEndorsingRewards(
+            AccountParameter baker,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (baker != null)
+            {
+                if (baker.Eqx != null)
+                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (baker.Nex != null)
+                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (baker.Eq == -1 || baker.In?.Count == 0 || baker.Null == true)
+                    return Ok(Enumerable.Empty<RevelationPenaltyOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get endorsing reward by id
+        /// </summary>
+        /// <remarks>
+        /// Returns endorsing reward operation with specified id.
+        /// </remarks>
+        /// <param name="id">Operation id</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("endorsing_rewards/{id:int}")]
+        public Task<EndorsingRewardOperation> GetEndorsingRewardById(
+            [Required][Min(0)] int id,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetEndorsingReward(id, quote);
+        }
+
+        /// <summary>
+        /// Get endorsing rewards count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of endorsing reward operations (synthetic type).
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("endorsing_rewards/count")]
+        public Task<int> GetEndorsingRewardsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.EndorsingRewardOpsCount);
+
+            return Operations.GetEndorsingRewardsCount(level, timestamp);
         }
         #endregion
     }

@@ -1233,6 +1233,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetEndorsements(_delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
+                    var preendorsements = delegat.PreendorsementsCount > 0 && types.Contains(OpTypes.Preendorsement)
+                        ? Operations.GetPreendorsements(_delegat, level, timestamp, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<PreendorsementOperation>());
+
                     var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
                         ? Operations.GetBallots(_delegat, level, timestamp, null, null, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
@@ -1252,6 +1256,10 @@ namespace Tzkt.Api.Repositories
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
                         ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Value = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
+
+                    var doublePreendorsing = delegat.DoublePreendorsingCount > 0 && types.Contains(OpTypes.DoublePreendorsing)
+                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Value = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
                         ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Value = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
@@ -1277,6 +1285,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetRegisterConstants(_delegat, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
 
+                    var setDepositsLimits = delegat.SetDepositsLimitsCount > 0 && types.Contains(OpTypes.SetDepositsLimit)
+                        ? Operations.GetSetDepositsLimits(_delegat, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1289,38 +1301,50 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Value = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
+                    var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
+                        ? Operations.GetEndorsingRewards(_delegat, level, timestamp, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
+
                     await Task.WhenAll(
                         endorsements,
+                        preendorsements,
                         proposals,
                         ballots,
                         activations,
                         doubleBaking,
                         doubleEndorsing,
+                        doublePreendorsing,
                         nonceRevelations,
                         delegations,
                         originations,
                         transactions,
                         reveals,
                         registerConstants,
+                        setDepositsLimits,
                         migrations,
                         revelationPenalties,
-                        bakingOps);
+                        bakingOps,
+                        endorsingRewards);
 
                     result.AddRange(endorsements.Result);
+                    result.AddRange(preendorsements.Result);
                     result.AddRange(proposals.Result);
                     result.AddRange(ballots.Result);
                     result.AddRange(activations.Result);
                     result.AddRange(doubleBaking.Result);
                     result.AddRange(doubleEndorsing.Result);
+                    result.AddRange(doublePreendorsing.Result);
                     result.AddRange(nonceRevelations.Result);
                     result.AddRange(delegations.Result);
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
                     result.AddRange(reveals.Result);
                     result.AddRange(registerConstants.Result);
+                    result.AddRange(setDepositsLimits.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
+                    result.AddRange(endorsingRewards.Result);
 
                     break;
                 case RawUser user:
@@ -1350,6 +1374,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetRegisterConstants(_user, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
 
+                    var userSetDepositsLimit = user.SetDepositsLimitsCount > 0 && types.Contains(OpTypes.SetDepositsLimit)
+                        ? Operations.GetSetDepositsLimits(_user, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
+
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1361,6 +1389,7 @@ namespace Tzkt.Api.Repositories
                         userTransactions,
                         userReveals,
                         userRegisterConstants,
+                        userSetDepositsLimit,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -1369,6 +1398,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userTransactions.Result);
                     result.AddRange(userReveals.Result);
                     result.AddRange(userRegisterConstants.Result);
+                    result.AddRange(userSetDepositsLimit.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;

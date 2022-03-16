@@ -26,14 +26,16 @@ namespace Tzkt.Api.Repositories
             var transactions = GetTransactions(hash, format, quote);
             var reveals = GetReveals(hash, quote);
             var registerConstants = GetRegisterConstants(hash, format, quote);
+            var setDepositsLimits = GetSetDepositsLimits(hash, quote);
 
-            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants);
+            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants, setDepositsLimits);
 
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
                 .Concat(transactions.Result)
                 .Concat(reveals.Result)
-                .Concat(registerConstants.Result);
+                .Concat(registerConstants.Result)
+                .Concat(setDepositsLimits.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
@@ -58,20 +60,28 @@ namespace Tzkt.Api.Repositories
 
             #region very unlikely
             var endorsements = GetEndorsements(hash, quote);
+            var preendorsements = GetPreendorsements(hash, quote);
             var dobleBaking = GetDoubleBakings(hash, quote);
             var doubleEndorsing = GetDoubleEndorsings(hash, quote);
+            var doublePreendorsing = GetDoublePreendorsings(hash, quote);
             var nonceRevelation = GetNonceRevelations(hash, quote);
 
-            await Task.WhenAll(endorsements, dobleBaking, doubleEndorsing, nonceRevelation);
+            await Task.WhenAll(endorsements, preendorsements, dobleBaking, doubleEndorsing, doublePreendorsing, nonceRevelation);
 
             if (endorsements.Result.Any())
                 return endorsements.Result;
+
+            if (preendorsements.Result.Any())
+                return preendorsements.Result;
 
             if (dobleBaking.Result.Any())
                 return dobleBaking.Result;
 
             if (doubleEndorsing.Result.Any())
                 return doubleEndorsing.Result;
+
+            if (doublePreendorsing.Result.Any())
+                return doublePreendorsing.Result;
 
             if (nonceRevelation.Result.Any())
                 return nonceRevelation.Result;
@@ -87,8 +97,12 @@ namespace Tzkt.Api.Repositories
             var transactions = GetTransactions(hash, counter, format, quote);
             var reveals = GetReveals(hash, counter, quote);
             var registerConstants = GetRegisterConstants(hash, counter, format, quote);
+            var setDepositsLimits = GetSetDepositsLimits(hash, counter, quote);
 
-            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants);
+            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants, setDepositsLimits);
+
+            if (setDepositsLimits.Result.Any())
+                return setDepositsLimits.Result;
 
             if (registerConstants.Result.Any())
                 return registerConstants.Result;
