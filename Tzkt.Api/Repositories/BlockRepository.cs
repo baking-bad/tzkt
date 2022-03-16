@@ -501,6 +501,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetEndorsements(block, quote)
                 : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
 
+            var preendorsements = operations.HasFlag(Data.Models.Operations.Preendorsements)
+                ? Operations.GetPreendorsements(block, quote)
+                : Task.FromResult(Enumerable.Empty<PreendorsementOperation>());
+
             var proposals = operations.HasFlag(Data.Models.Operations.Proposals)
                 ? Operations.GetProposals(block, quote)
                 : Task.FromResult(Enumerable.Empty<ProposalOperation>());
@@ -520,6 +524,10 @@ namespace Tzkt.Api.Repositories
             var doubleEndorsing = operations.HasFlag(Data.Models.Operations.DoubleEndorsings)
                 ? Operations.GetDoubleEndorsings(block, quote)
                 : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
+
+            var doublePreendorsing = operations.HasFlag(Data.Models.Operations.DoublePreendorsings)
+                ? Operations.GetDoublePreendorsings(block, quote)
+                : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
 
             var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations)
                 ? Operations.GetNonceRevelations(block, quote)
@@ -545,6 +553,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetRegisterConstants(block, format, quote)
                 : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
 
+            var setDepositsLimits = operations.HasFlag(Data.Models.Operations.SetDepositsLimits)
+                ? Operations.GetSetDepositsLimits(block, quote)
+                : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -553,36 +565,48 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetRevelationPenalties(null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
+            var endorsingRewards = operations.HasFlag(Data.Models.Operations.EndorsingRewards)
+                ? Operations.GetEndorsingRewards(null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
+
             await Task.WhenAll(
                 endorsements,
+                preendorsements,
                 proposals,
                 ballots,
                 activations,
                 doubleBaking,
                 doubleEndorsing,
+                doublePreendorsing,
                 nonceRevelations,
                 delegations,
                 originations,
                 transactions,
                 reveals,
                 registerConstants,
+                setDepositsLimits,
                 migrations,
-                penalties);
+                penalties,
+                endorsingRewards);
 
             block.Endorsements = endorsements.Result;
+            block.Preendorsements = preendorsements.Result;
             block.Proposals = proposals.Result;
             block.Ballots = ballots.Result;
             block.Activations = activations.Result;
             block.DoubleBaking = doubleBaking.Result;
             block.DoubleEndorsing = doubleEndorsing.Result;
+            block.DoublePreendorsing = doublePreendorsing.Result;
             block.NonceRevelations = nonceRevelations.Result;
             block.Delegations = delegations.Result;
             block.Originations = originations.Result;
             block.Transactions = transactions.Result;
             block.Reveals = reveals.Result;
             block.RegisterConstants = registerConstants.Result;
+            block.SetDepositsLimits = setDepositsLimits.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
+            block.EndorsingRewards = endorsingRewards.Result;
         }
     }
 }

@@ -2,14 +2,12 @@
 
 namespace Tzkt.Api.Models
 {
-    public class EndorsementOperation : Operation
+    public class PreendorsementOperation : Operation
     {
         /// <summary>
-        /// Type of the operation, `endorsement` - is operation, which specifies the head of the chain as seen by the endorser of a given slot.
-        /// The endorser is randomly selected to be included in the block that extends the head of the chain as specified in this operation.
-        /// A block with more endorsements improves the weight of the chain and increases the likelihood of that chain being the canonical one.
+        /// Type of the operation, `preendorsement`
         /// </summary>
-        public override string Type => OpTypes.Endorsement;
+        public override string Type => OpTypes.Preendorsement;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -45,16 +43,6 @@ namespace Tzkt.Api.Models
         /// Number of assigned endorsement slots to the baker who sent the operation
         /// </summary>
         public int Slots { get; set; }
-
-        /// <summary>
-        /// Security deposit frozen on the baker's account
-        /// </summary>
-        public long Deposit { get; set; }
-
-        /// <summary>
-        /// Reward of the baker for the operation
-        /// </summary>
-        public long Rewards { get; set; }
 
         #region injecting
         /// <summary>

@@ -105,6 +105,11 @@ namespace Tzkt.Api.Models
         public IEnumerable<EndorsementOperation> Endorsements { get; set; }
 
         /// <summary>
+        /// List of preendorsement operations, included in the block
+        /// </summary>
+        public IEnumerable<PreendorsementOperation> Preendorsements { get; set; }
+
+        /// <summary>
         /// List of proposal (is used by bakers (delegates) to submit and/or upvote proposals to amend the protocol)
         /// operations, included in the block
         /// </summary>
@@ -132,7 +137,12 @@ namespace Tzkt.Api.Models
         /// (endorsing two different blocks at the same block height) by a baker) operations, included in the block
         /// </summary>
         public IEnumerable<DoubleEndorsingOperation> DoubleEndorsing { get; set; }
-        
+
+        /// <summary>
+        /// List of double preendorsement evidence operations, included in the block
+        /// </summary>
+        public IEnumerable<DoublePreendorsingOperation> DoublePreendorsing { get; set; }
+
         /// <summary>
         /// List of nonce revelation (are used by the blockchain to create randomness) operations, included in the block
         /// </summary>
@@ -166,6 +176,11 @@ namespace Tzkt.Api.Models
         public IEnumerable<RegisterConstantOperation> RegisterConstants { get; set; }
 
         /// <summary>
+        /// List of set deposits limit operations, included in the block
+        /// </summary>
+        public IEnumerable<SetDepositsLimitOperation> SetDepositsLimits { get; set; }
+
+        /// <summary>
         /// List of migration operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<MigrationOperation> Migrations { get; set; }
@@ -174,6 +189,11 @@ namespace Tzkt.Api.Models
         /// List of revelation penalty operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<RevelationPenaltyOperation> RevelationPenalties { get; set; }
+
+        /// <summary>
+        /// List of endorsing rewards, implicitly applied at the end of the block
+        /// </summary>
+        public IEnumerable<EndorsingRewardOperation> EndorsingRewards { get; set; }
         #endregion
 
         #region injecting

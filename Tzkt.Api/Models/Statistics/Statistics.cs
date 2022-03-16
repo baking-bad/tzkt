@@ -65,11 +65,6 @@ namespace Tzkt.Api.Models
         public long TotalBanished { get; set; }
 
         /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TotalVested { get; set; }
-
-        /// <summary>
         /// Total amount of frozen tokens (frozen security deposits, frozen rewards and frozen fees)
         /// </summary>
         public long TotalFrozen { get; set; }
@@ -79,6 +74,13 @@ namespace Tzkt.Api.Models
         /// Injected historical quote at the time of the block at which the statistics has been calculated
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long TotalVested { get; set; }
         #endregion
     }
 }

@@ -10,7 +10,7 @@
             "NetXz969SFaFn8k" => "granadanet",
             "NetXuXoGoLxNK6o" => "hangzhounet",
             "NetXZSsxBpMQeAT" => "hangzhou2net",
-            "NetXbhmtAbMukLc" => "ithacanet",
+            "NetXnHfVqm9iesp" => "ithacanet",
             _ => "private"
         };
     }
