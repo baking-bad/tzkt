@@ -1285,8 +1285,8 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetRevelationPenalties(_delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
-                    var blockOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(_delegat, level, timestamp, sort, offset, limit, quote)
+                    var bakingOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
+                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Value = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     await Task.WhenAll(
@@ -1304,7 +1304,7 @@ namespace Tzkt.Api.Repositories
                         registerConstants,
                         migrations,
                         revelationPenalties,
-                        blockOps);
+                        bakingOps);
 
                     result.AddRange(endorsements.Result);
                     result.AddRange(proposals.Result);
@@ -1320,7 +1320,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(registerConstants.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
-                    result.AddRange(blockOps.Result);
+                    result.AddRange(bakingOps.Result);
 
                     break;
                 case RawUser user:

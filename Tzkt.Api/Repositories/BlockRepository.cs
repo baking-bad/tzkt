@@ -115,6 +115,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Block>> Get(
+            AnyOfParameter anyof,
+            AccountParameter proposer,
             AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -125,6 +127,8 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Blocks""")
+                .Filter(anyof, x => x == "proposer" ? "ProposerId" : "ProducerId")
+                .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -169,6 +173,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> Get(
+            AnyOfParameter anyof,
+            AccountParameter proposer,
             AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -210,6 +216,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Filter(anyof, x => x == "proposer" ? "ProposerId" : "ProducerId")
+                .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
@@ -320,6 +328,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> Get(
+            AnyOfParameter anyof,
+            AccountParameter proposer,
             AccountParameter producer,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -358,6 +368,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Blocks""")
+                .Filter(anyof, x => x == "proposer" ? "ProposerId" : "ProducerId")
+                .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)

@@ -67,7 +67,7 @@ namespace Tzkt.Api.Websocket.Processors
                 var limit = State.Current.Level - State.ValidLevel;
                 var symbols = Symbols.None;
 
-                var blocks = await Blocks.Get(null, level, null, null, null, null, limit, symbols);
+                var blocks = await Blocks.Get(null, null, null, level, null, null, null, null, limit, symbols);
                 var count = blocks.Count();
 
                 Logger.LogDebug("{0} blocks fetched", count);

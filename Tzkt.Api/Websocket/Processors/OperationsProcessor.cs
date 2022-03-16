@@ -139,7 +139,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.RevelationPenaltyOperation>());
 
                 var baking = TypesSubs.TryGetValue(Operations.Baking, out var bakingSub)
-                    ? Repo.GetBakings(null, level, null, null, null, limit, symbols)
+                    ? Repo.GetBakings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
                 await Task.WhenAll(
