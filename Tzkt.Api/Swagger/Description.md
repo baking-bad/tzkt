@@ -6,8 +6,8 @@ TzKT is an open-source project, so you can easily clone and build it and use it 
 TzKT API is available for the following Tezos networks with the following base URLs:
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io)) 
-- Granadanet: `https://api.granadanet.tzkt.io/` ([view docs](https://api.granadanet.tzkt.io))  	 
-- Hangzhou2net: `https://api.hangzhou2net.tzkt.io/` ([view docs](https://api.hangzhou2net.tzkt.io))
+- Hangzhounet: `https://api.hangzhounet.tzkt.io/` ([view docs](https://api.hangzhounet.tzkt.io))
+- Ithacanet: `https://api.ithacanet.tzkt.io/` ([view docs](https://api.ithacanet.tzkt.io))
 
 We also provide a staging environment for testing newest features and pre-updating client applications before deploying to production:
 
