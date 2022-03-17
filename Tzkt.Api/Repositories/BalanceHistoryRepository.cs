@@ -266,14 +266,17 @@ namespace Tzkt.Api.Repositories
             {
                 if (user.Activated == true) SumActivations(union, from, to);
                 if (user.RegisterConstantsCount > 0) SumRegisterConstants(union, from, to);
+                if (user.SetDepositsLimitsCount > 0) SumSetDepositsLimits(union, from, to);
             }
 
             if (account is RawDelegate delegat)
             {
+                if (delegat.EndorsingRewardsCount > 0) SumEndorsingRewards(union, from, to);
                 if (delegat.BlocksCount > 0) SumBaking(union, from, to);
                 if (delegat.EndorsementsCount > 0) SumEndorsements(union, from, to);
                 if (delegat.DoubleBakingCount > 0) SumDoubleBaking(union, from, to);
                 if (delegat.DoubleEndorsingCount > 0) SumDoubleEndorsing(union, from, to);
+                if (delegat.DoublePreendorsingCount > 0) SumDoublePreendorsing(union, from, to);
                 if (delegat.NonceRevelationsCount > 0) SumNonceRevelations(union, from, to);
                 if (delegat.RevelationPenaltiesCount > 0) SumRevelationPenalties(union, from, to);
             }
@@ -281,12 +284,12 @@ namespace Tzkt.Api.Repositories
             return union.ToString();
         }
 
-        void SumBaking(StringBuilder sql, int from, int to)
+        void SumEndorsingRewards(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"SUM(""Reward"" + ""Fees"") as ""Change"" ");
-            sql.Append(@"FROM ""Blocks"" ");
+            sql.Append(@"SUM(""Received"") as ""Change"" ");
+            sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
             if (from > 0)
@@ -295,6 +298,39 @@ namespace Tzkt.Api.Repositories
                 sql.Append($@"AND ""Level"" <= {to} ");
 
             sql.AppendLine();
+        }
+
+        void SumBaking(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region proposer
+            sql.Append(@"SUM(""Reward"" + ""Fees"") as ""Change"" ");
+            sql.Append(@"FROM ""Blocks"" ");
+            sql.Append(@"WHERE ""ProposerId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region producer
+            sql.Append(@"SUM(""Bonus"") as ""Change"" ");
+            sql.Append(@"FROM ""Blocks"" ");
+            sql.Append(@"WHERE ""ProducerId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
         }
 
         void SumEndorsements(StringBuilder sql, int from, int to)
@@ -384,6 +420,39 @@ namespace Tzkt.Api.Repositories
             #region offender
             sql.Append(@"SUM(-""OffenderLoss"") as ""Change"" ");
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
+            sql.Append(@"WHERE ""OffenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
+        void SumDoublePreendorsing(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region accuser
+            sql.Append(@"SUM(""AccuserReward"") as ""Change"" ");
+            sql.Append(@"FROM ""DoublePreendorsingOps"" ");
+            sql.Append(@"WHERE ""AccuserId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region offender
+            sql.Append(@"SUM(-""OffenderLoss"") as ""Change"" ");
+            sql.Append(@"FROM ""DoublePreendorsingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
 
             if (from > 0)
@@ -592,6 +661,22 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void SumSetDepositsLimits(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""SetDepositsLimitOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
         void SumRevelationPenalties(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -640,14 +725,17 @@ namespace Tzkt.Api.Repositories
             {
                 if (user.Activated == true) UnionActivations(union);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstants(union);
+                if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(union);
             }
 
             if (account is RawDelegate delegat)
             {
+                if (delegat.EndorsingRewardsCount > 0) UnionEndorsingRewards(union);
                 if (delegat.BlocksCount > 0) UnionBaking(union);
                 if (delegat.EndorsementsCount > 0) UnionEndorsements(union);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(union);
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(union);
+                if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(union);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(union);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(union);
             }
@@ -655,17 +743,44 @@ namespace Tzkt.Api.Repositories
             return union.ToString();
         }
 
-        void UnionBaking(StringBuilder sql)
+        void UnionEndorsingRewards(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(""Reward"" + ""Fees"") as ""Change"" ");
+            sql.Append(@"(""Received"") as ""Change"" ");
 
-            sql.Append(@"FROM ""Blocks"" ");
+            sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
             sql.AppendLine();
+        }
+
+        void UnionBaking(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region proposer
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(""Reward"" + ""Fees"") as ""Change"" ");
+
+            sql.Append(@"FROM ""Blocks"" ");
+            sql.Append(@"WHERE ""ProposerId"" = @account ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region producer
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""Bonus"" as ""Change"" ");
+
+            sql.Append(@"FROM ""Blocks"" ");
+            sql.Append(@"WHERE ""ProducerId"" = @account ");
+
+            sql.AppendLine();
+            #endregion
         }
 
         void UnionEndorsements(StringBuilder sql)
@@ -742,6 +857,33 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"(-""OffenderLoss"") as ""Change"" ");
 
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
+            sql.Append(@"WHERE ""OffenderId"" = @account ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
+        void UnionDoublePreendorsing(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region accuser
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""AccuserReward"" as ""Change"" ");
+
+            sql.Append(@"FROM ""DoublePreendorsingOps"" ");
+            sql.Append(@"WHERE ""AccuserId"" = @account ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region offender
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""OffenderLoss"") as ""Change"" ");
+
+            sql.Append(@"FROM ""DoublePreendorsingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
 
             sql.AppendLine();
@@ -904,6 +1046,19 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
 
             sql.Append(@"FROM ""RegisterConstantOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSetDepositsLimits(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""SetDepositsLimitOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
 
             sql.AppendLine();

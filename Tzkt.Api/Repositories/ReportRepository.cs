@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
-
-using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
@@ -41,14 +37,17 @@ namespace Tzkt.Api.Repositories
             {
                 if (user.Activated == true) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
+                if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
             }
 
             if (account is RawDelegate delegat)
             {
+                if (delegat.EndorsingRewardsCount > 0) UnionEndorsingRewards(sql);
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
+                if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
             }
@@ -151,14 +150,17 @@ namespace Tzkt.Api.Repositories
             {
                 if (user.Activated == true) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
+                if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
             }
 
             if (account is RawDelegate delegat)
             {
+                if (delegat.EndorsingRewardsCount > 0) UnionEndorsingRewards(sql);
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
+                if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
             }
@@ -295,14 +297,17 @@ namespace Tzkt.Api.Repositories
             {
                 if (user.Activated == true) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
+                if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
             }
 
             if (account is RawDelegate delegat)
             {
+                if (delegat.EndorsingRewardsCount > 0) UnionEndorsingRewards(sql);
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
+                if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
             }
@@ -423,10 +428,38 @@ namespace Tzkt.Api.Repositories
             csv.Flush();
         }
 
+        void UnionEndorsingRewards(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"19 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"null::character(51) as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"""Received"" as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""EndorsingRewardOps"" ");
+            sql.Append(@"WHERE ""BakerId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Received"" > 0 ");
+
+            sql.AppendLine();
+        }
+
         void UnionBaking(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
+            #region proposer
             sql.Append(@"0 as ""Type"", ");
             sql.Append(@"""Id"" as ""Id"", ");
             sql.Append(@"""Level"" as ""Level"", ");
@@ -443,11 +476,38 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""Blocks"" ");
-            sql.Append(@"WHERE ""BakerId"" = @account ");
+            sql.Append(@"WHERE ""ProposerId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
             sql.Append(@"AND (""Reward"" > 0 OR ""Fees"" > 0) ");
 
             sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region offender
+            sql.Append(@"0 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""Hash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"""Bonus"" as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""Blocks"" ");
+            sql.Append(@"WHERE ""ProducerId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Bonus"" > 0 ");
+
+            sql.AppendLine();
+            #endregion
         }
 
         void UnionEndorsements(StringBuilder sql)
@@ -542,7 +602,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"(""OffenderLoss"") as ""Loss"", ");
+            sql.Append(@"""OffenderLoss"" as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");
@@ -595,7 +655,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"(""OffenderLoss"") as ""Loss"", ");
+            sql.Append(@"""OffenderLoss"" as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");
@@ -603,6 +663,59 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
+            sql.Append(@"WHERE ""OffenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
+        void UnionDoublePreendorsing(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region accuser
+            sql.Append(@"20 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"""AccuserReward"" as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""DoublePreendorsingOps"" ");
+            sql.Append(@"WHERE ""AccuserId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region offender
+            sql.Append(@"20 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"""OffenderLoss"" as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""DoublePreendorsingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
 
@@ -938,6 +1051,33 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void UnionSetDepositsLimits(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"21 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"""BakerFee"" as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""SetDepositsLimitOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""BakerFee"" > 0 ");
+
+            sql.AppendLine();
+        }
+
         void UnionRevelationPenalties(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1015,6 +1155,10 @@ namespace Tzkt.Api.Repositories
             "implicit origination", // 16
             "subsidy",              // 17
             "register constant",    // 18
+            
+            "endorsing reward",     // 19
+            "double preendorsing",  // 20
+            "set deposits limit",   // 21
         };
     }
 }
