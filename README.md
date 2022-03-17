@@ -89,7 +89,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -294,9 +294,12 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 ## Install Tzkt Indexer and API for testnets
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
- - Hangzhou2net:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_hangzhou2net.backup
+ - Hangzhounet:
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_hangzhou2net.backup
    - RPC node: https://rpc.tzkt.io/hangzhou2net/
+ - Ithacanet:
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_ithacanet.backup
+   - RPC node: https://rpc.tzkt.io/ithacanet/
 
 ### Testnet installation using docker containers
 
