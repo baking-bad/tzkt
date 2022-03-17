@@ -86,6 +86,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetEndorsements(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsementOperation>());
 
+                var preendorsements = TypesSubs.TryGetValue(Operations.Preendorsements, out var preendorsementsSub)
+                    ? Repo.GetPreendorsements(null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.PreendorsementOperation>());
+
                 var proposals = TypesSubs.TryGetValue(Operations.Proposals, out var proposalsSub)
                     ? Repo.GetProposals(null, level, null, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ProposalOperation>());
@@ -105,6 +109,10 @@ namespace Tzkt.Api.Websocket.Processors
                 var doubleEndorsing = TypesSubs.TryGetValue(Operations.DoubleEndorsings, out var doubleEndorsingSub)
                     ? Repo.GetDoubleEndorsings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleEndorsingOperation>());
+
+                var doublePreendorsing = TypesSubs.TryGetValue(Operations.DoublePreendorsings, out var doublePreendorsingSub)
+                    ? Repo.GetDoublePreendorsings(null, null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DoublePreendorsingOperation>());
 
                 var revelations = TypesSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
                     ? Repo.GetNonceRevelations(null, null, null, level, null, null, null, null, limit, symbols)
@@ -130,6 +138,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetRegisterConstants(null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RegisterConstantOperation>());
 
+                var setDepositsLimits = TypesSubs.TryGetValue(Operations.SetDepositsLimits, out var setDepositsLimitsSub)
+                    ? Repo.GetSetDepositsLimits(null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SetDepositsLimitOperation>());
+
                 var migrations = TypesSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -142,22 +154,30 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetBakings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
+                var endorsingRewards = TypesSubs.TryGetValue(Operations.EndorsingRewards, out var endorsingRewardsSub)
+                    ? Repo.GetEndorsingRewards(null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.EndorsingRewardOperation>());
+
                 await Task.WhenAll(
                     endorsements,
+                    preendorsements,
                     proposals,
                     ballots,
                     activations,
                     doubleBaking,
                     doubleEndorsing,
+                    doublePreendorsing,
                     revelations,
                     delegations,
                     originations,
                     transactions,
                     reveals,
                     registerConstants,
+                    setDepositsLimits,
                     migrations,
                     penalties,
-                    baking);
+                    baking,
+                    endorsingRewards);
                 #endregion
 
                 #region prepare to send
@@ -197,6 +217,17 @@ namespace Tzkt.Api.Websocket.Processors
                     if (endorsementsSub.Addresses != null)
                         foreach (var op in endorsements.Result)
                             if (endorsementsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs, op);
+                }
+
+                if (preendorsements.Result.Any())
+                {
+                    if (preendorsementsSub.All != null)
+                        AddRange(preendorsementsSub.All, preendorsements.Result);
+
+                    if (preendorsementsSub.Addresses != null)
+                        foreach (var op in preendorsements.Result)
+                            if (preendorsementsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
                                 Add(delegateSubs, op);
                 }
 
@@ -261,6 +292,22 @@ namespace Tzkt.Api.Websocket.Processors
                                 Add(accuserSubs, op);
 
                             if (doubleEndorsingSub.Addresses.TryGetValue(op.Offender.Address, out var offenderSubs))
+                                Add(offenderSubs, op);
+                        }
+                }
+
+                if (doublePreendorsing.Result.Any())
+                {
+                    if (doublePreendorsingSub.All != null)
+                        AddRange(doublePreendorsingSub.All, doublePreendorsing.Result);
+
+                    if (doublePreendorsingSub.Addresses != null)
+                        foreach (var op in doublePreendorsing.Result)
+                        {
+                            if (doublePreendorsingSub.Addresses.TryGetValue(op.Accuser.Address, out var accuserSubs))
+                                Add(accuserSubs, op);
+
+                            if (doublePreendorsingSub.Addresses.TryGetValue(op.Offender.Address, out var offenderSubs))
                                 Add(offenderSubs, op);
                         }
                 }
@@ -366,6 +413,17 @@ namespace Tzkt.Api.Websocket.Processors
                                 Add(senderSubs, op);
                 }
 
+                if (setDepositsLimits.Result.Any())
+                {
+                    if (setDepositsLimitsSub.All != null)
+                        AddRange(setDepositsLimitsSub.All, setDepositsLimits.Result);
+
+                    if (setDepositsLimitsSub.Addresses != null)
+                        foreach (var op in setDepositsLimits.Result)
+                            if (setDepositsLimitsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+                }
+
                 if (migrations.Result.Any())
                 {
                     if (migrationsSub.All != null)
@@ -395,7 +453,23 @@ namespace Tzkt.Api.Websocket.Processors
 
                     if (bakingSub.Addresses != null)
                         foreach (var op in baking.Result)
-                            if (bakingSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
+                        {
+                            if (bakingSub.Addresses.TryGetValue(op.Proposer.Address, out var proposerSubs))
+                                Add(proposerSubs, op);
+
+                            if (bakingSub.Addresses.TryGetValue(op.Producer.Address, out var producerSubs))
+                                Add(producerSubs, op);
+                        }
+                }
+
+                if (endorsingRewards.Result.Any())
+                {
+                    if (endorsingRewardsSub.All != null)
+                        AddRange(endorsingRewardsSub.All, endorsingRewards.Result);
+
+                    if (endorsingRewardsSub.Addresses != null)
+                        foreach (var op in endorsingRewards.Result)
+                            if (endorsingRewardsSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
                                 Add(bakerSubs, op);
                 }
                 #endregion
