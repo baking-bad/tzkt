@@ -5,7 +5,7 @@ init:
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
 	docker-compose exec -T db apt update
 	docker-compose exec -T db apt install -y wget
-	docker-compose exec -T db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_mainnet.backup" -O tzkt_db.backup
+	docker-compose exec -T db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_mainnet.backup" -O tzkt_db.backup
 	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose exec -T db rm tzkt_db.backup
 	docker-compose exec -T db apt autoremove --purge -y wget
@@ -45,28 +45,6 @@ api-image:
 sync-image:
 	docker build -t bakingbad/tzkt-sync:latest -f ./Tzkt.Sync/Dockerfile .
 	
-granada-init:
-	docker-compose -f docker-compose.granada.yml up   -d granada-db
-	docker-compose -f docker-compose.granada.yml exec -T granada-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.granada.yml exec -T granada-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.granada.yml exec -T granada-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.granada.yml exec -T granada-db apt update
-	docker-compose -f docker-compose.granada.yml exec -T granada-db apt install -y wget
-	docker-compose -f docker-compose.granada.yml exec -T granada-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_granadanet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.granada.yml exec -T granada-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.granada.yml exec -T granada-db rm tzkt_db.backup
-	docker-compose -f docker-compose.granada.yml exec -T granada-db apt autoremove --purge -y wget
-	docker-compose pull	
-	
-granada-start:
-	docker-compose -f docker-compose.granada.yml up -d
-
-granada-stop:
-	docker-compose -f docker-compose.granada.yml down
-
-granada-db-start:
-	docker-compose -f docker-compose.granada.yml up -d granada-db
-	
 hangzhou-init:
 	docker-compose -f docker-compose.hangzhou.yml up   -d hangzhou-db
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db psql -U tzkt postgres -c '\l'
@@ -74,7 +52,7 @@ hangzhou-init:
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt update
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt install -y wget
-	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.7_hangzhou2net.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_hangzhou2net.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db rm tzkt_db.backup
 	docker-compose -f docker-compose.hangzhou.yml exec -T hangzhou-db apt autoremove --purge -y wget
@@ -88,3 +66,25 @@ hangzhou-stop:
 
 hangzhou-db-start:
 	docker-compose -f docker-compose.hangzhou.yml up -d hangzhou-db
+	
+ithaca-init:
+	docker-compose -f docker-compose.ithaca.yml up   -d ithaca-db
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt update
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt install -y wget
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_ithaca.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db rm tzkt_db.backup
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt autoremove --purge -y wget
+	docker-compose pull	
+	
+ithaca-start:
+	docker-compose -f docker-compose.ithaca.yml up -d
+
+ithaca-stop:
+	docker-compose -f docker-compose.ithaca.yml down
+
+ithaca-db-start:
+	docker-compose -f docker-compose.ithaca.yml up -d ithaca-db
