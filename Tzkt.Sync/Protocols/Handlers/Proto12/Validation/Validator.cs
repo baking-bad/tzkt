@@ -112,7 +112,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 1)
                     throw new ValidationException("invalid block bonus");
                 
-                if (balanceUpdates.Count() > 5 && !Protocol.IsCycleEnd(Level))
+                if (balanceUpdates.Count(x => x.RequiredString("origin") == "block") > 5 && !Protocol.IsCycleEnd(Level))
                     throw new ValidationException("unexpected cycle rewards");
             }
             #endregion
