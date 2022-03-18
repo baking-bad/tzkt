@@ -42,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                 if (maxExistedRound < block.BlockRound)
                 {
-                    var bakingRights = await Proto.Rpc.GetLevelBakingRightsAsync(block.Level, block.Level, block.BlockRound);
+                    var bakingRights = await Proto.Rpc.GetLevelBakingRightsAsync(block.Level - 1, block.Level, block.BlockRound);
                     //bakingRights = bakingRights.OrderBy(x => x.Round);
 
                     var sqlInsert = @"
