@@ -18,14 +18,11 @@ namespace Tzkt.Sync.Services
 {
     public class TokenMetadata : BackgroundService
     {
-        const string TDAddress = "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS";
-
         readonly string ConnectionString;
         readonly TokenMetadataConfig Config;
         readonly ILogger Logger;
 
         TokenMetadataState State;
-        int TDBigMap;
 
         public TokenMetadata(IConfiguration config, ILogger<TokenMetadata> logger)
         {
@@ -42,8 +39,8 @@ namespace Tzkt.Sync.Services
 
                 await InitState();
 
-                Logger.LogDebug("Token metadata initialized with ({dipDupId}, {tokenId}, {tdId}, {tdBigMap})",
-                    State.LastDipDupId, State.LastTokenId, State.LastTDId, TDBigMap);
+                Logger.LogDebug("Token metadata initialized with ({dipDupCount} dipdup states, {tokenId})",
+                    State.DipDup.Count(), State.LastTokenId);
 
                 if (Config.OverriddenMetadata?.Count > 0)
                 {
@@ -65,23 +62,25 @@ namespace Tzkt.Sync.Services
                 {
                     try
                     {
-                        #region sync tezos domains
-                        if (TDBigMap != 0)
+                        #region fetch latest DipDup metadata and enrich existing TzKT tokens only
+                        foreach (var config in Config.DipDup)
                         {
+                            DipDupState state = State.DipDup.GetValueOrDefault(config.Url);
                             while (!stoppingToken.IsCancellationRequested)
                             {
-                                Logger.LogDebug("Fetch tezos domains updates since #{id}", State.LastTDId);
-                                updates = await GetTDMetadata(State.LastTDId);
+                                Logger.LogDebug("Fetch dipdup updates since {url}@{id}", config.Url, state.LastUpdateId);
+                                updates = await GetDipDupMetadata(state.LastUpdateId, config);
                                 Logger.LogDebug("{cnt} updates received", updates.Count);
                                 if (updates.Count == 0) break;
 
                                 cnt = await SaveTokenMetadata(updates);
                                 Logger.LogDebug("{cnt} tokens updated", cnt);
 
-                                State.LastTDId = updates[^1].UpdateId;
+                                state.LastUpdateId = updates[^1].UpdateId;
+                                State.DipDup[config.Url] = state;
                                 await SaveState();
-                                Logger.LogDebug("State: ({dipDupId}, {tokenId}, {tdId})",
-                                    State.LastDipDupId, State.LastTokenId, State.LastTDId);
+                                Logger.LogDebug("State: ({url}@{lastUpdateId}, {lastTokenId})",
+                                    config.Url, state.LastUpdateId, State.LastTokenId);
 
                                 if (updates.Count < Config.BatchSize) break;
                             }
@@ -91,30 +90,7 @@ namespace Tzkt.Sync.Services
                         if (stoppingToken.IsCancellationRequested)
                             break;
 
-                        #region sync dipdup
-                        while (!stoppingToken.IsCancellationRequested)
-                        {
-                            Logger.LogDebug("Fetch dipdup updates since #{id}", State.LastDipDupId);
-                            updates = await GetDipDupMetadata(State.LastDipDupId);
-                            Logger.LogDebug("{cnt} updates received", updates.Count);
-                            if (updates.Count == 0) break;
-
-                            cnt = await SaveTokenMetadata(updates);
-                            Logger.LogDebug("{cnt} tokens updated", cnt);
-
-                            State.LastDipDupId = updates[^1].UpdateId;
-                            await SaveState();
-                            Logger.LogDebug("State: ({dipDupId}, {tokenId}, {tdId})",
-                                State.LastDipDupId, State.LastTokenId, State.LastTDId);
-
-                            if (updates.Count < Config.BatchSize) break;
-                        }
-                        #endregion
-
-                        if (stoppingToken.IsCancellationRequested)
-                            break;
-
-                        #region sync new tokens
+                        #region try to fetch DipDup metadata for new TzKT tokens (in case we missed it earlier)                        
                         while (!stoppingToken.IsCancellationRequested)
                         {
                             Logger.LogDebug("Sync tokens since #{id}", State.LastTokenId);
@@ -122,19 +98,21 @@ namespace Tzkt.Sync.Services
                             Logger.LogDebug("{cnt} new tokens found", tokens.Count);
                             if (tokens.Count == 0) break;
 
-                            Logger.LogDebug("Fetch token metadata");
-                            updates = await GetDipDupMetadata(tokens);
-                            Logger.LogDebug("{cnt} updates received", updates.Count);
-                            if (updates.Count > 0)
+                            foreach (var config in Config.DipDup)
                             {
-                                cnt = await SaveTokenMetadata(updates);
-                                Logger.LogDebug("{cnt} tokens updated", cnt);
+                                Logger.LogDebug("Fetch token metadata");
+                                updates = await GetDipDupMetadata(tokens, config);
+                                Logger.LogDebug("{cnt} updates received", updates.Count);
+                                if (updates.Count > 0)
+                                {
+                                    cnt = await SaveTokenMetadata(updates);
+                                    Logger.LogDebug("{cnt} tokens updated", cnt);
+                                }
                             }
 
                             State.LastTokenId = tokens.Values.Max();
                             await SaveState();
-                            Logger.LogDebug("State: ({dipDupId}, {tokenId}, {tdId})",
-                                State.LastDipDupId, State.LastTokenId, State.LastTDId);
+                            Logger.LogDebug("State: ({lastTokenId})", State.LastTokenId);
 
                             if (tokens.Count < Config.BatchSize) break;
                         }
@@ -167,26 +145,10 @@ namespace Tzkt.Sync.Services
                 LIMIT 1");
             
             try { State = row.state is string json ? JsonSerializer.Deserialize<TokenMetadataState>(json) : new(); }
-            catch { State = new(); }
+            catch { State = new(); }  // will catch parse errors and reset the state (handle State model changes)
 
-            if (State.LastDipDupId == 0)
-                State.LastTokenId = row.TokenCounter;
-
-            var tdContractId = await conn.QueryFirstOrDefaultAsync<int>($@"
-                SELECT ""Id""
-                FROM ""Accounts""
-                WHERE ""Address"" = '{TDAddress}'
-                LIMIT 1");
-
-            if (tdContractId != 0)
-            {
-                TDBigMap = await conn.QueryFirstOrDefaultAsync<int>($@"
-                    SELECT ""Ptr""
-                    FROM ""BigMaps""
-                    WHERE ""ContractId"" = {tdContractId}
-                    AND ""StoragePath"" = 'store.tzip12_tokens'
-                    LIMIT 1");
-            }
+            if (State.LastTokenId == 0)
+                State.LastTokenId = row.TokenCounter;  // Internal TzKT token Id
         }
 
         async Task SaveState()
@@ -222,12 +184,14 @@ namespace Tzkt.Sync.Services
                 .ToDictionary(x => ((string)x.Address, (string)x.TokenId), x => (int)x.Id);
         }
 
-        async Task<List<DipDupItem>> GetDipDupMetadata(int lastUpdateId)
+        async Task<List<DipDupItem>> GetDipDupMetadata(int lastUpdateId, DipDupConfig dipDupConfig)
         {
             using var client = new HttpClient();
-            using var res = (await client.PostAsync(Config.DipDupUrl, new StringContent(
-                $"{{\"query\":\"query{{token_metadata(where:{{network:{{_eq:\\\"{Config.Network}\\\"}},metadata:{{_is_null:false}},"
-                + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}}}},order_by:{{update_id:asc}},limit:{Config.BatchSize})"
+            using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
+                $"{{\"query\":\"query{{items:\\\"{dipDupConfig.TableName}\\\"("
+                + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},metadata:{{_is_null:false}},"
+                + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}}}},"
+                + $"order_by:{{update_id:asc}},limit:{Config.BatchSize})"
                 + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
                 Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
@@ -241,7 +205,7 @@ namespace Tzkt.Sync.Services
                 await res.Content.ReadAsStreamAsync(), options)).Data.Items;
         }
 
-        async Task<List<DipDupItem>> GetDipDupMetadata(Dictionary<(string, string), int> tokens)
+        async Task<List<DipDupItem>> GetDipDupMetadata(Dictionary<(string, string), int> tokens, DipDupConfig dipDupConfig)
         {
             var contracts = string.Join(',', tokens.Keys.Select(x => $"\\\"{x.Item1}\\\"").Distinct());
             var tokenIds = string.Join(',', tokens.Keys.Select(x => $"\\\"{x.Item2}\\\"").Distinct());
@@ -256,10 +220,12 @@ namespace Tzkt.Sync.Services
             var lastUpdateId = 0;
             while (true)
             {
-                using var res = (await client.PostAsync(Config.DipDupUrl, new StringContent(
-                    $"{{\"query\":\"query{{token_metadata(where:{{network:{{_eq:\\\"{Config.Network}\\\"}},metadata:{{_is_null:false}},"
+                using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
+                    $"{{\"query\":\"query{{items:\\\"{dipDupConfig.TableName}\\\"("
+                    + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},metadata:{{_is_null:false}},"
                     + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}},contract:{{_in:[{contracts}]}},token_id:{{_in:[{tokenIds}]}}}},"
-                    + $"order_by:{{update_id:asc}},limit:{Config.BatchSize}){{update_id contract token_id metadata}}}}\",\"variables\":null}}",
+                    + $"order_by:{{update_id:asc}},limit:{Config.BatchSize})"
+                    + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
                     Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
                 var _items = (await JsonSerializer.DeserializeAsync<DipDupResponse>(
@@ -270,33 +236,6 @@ namespace Tzkt.Sync.Services
                 lastUpdateId = _items[^1].UpdateId;
             }
             return items;
-        }
-
-        async Task<List<DipDupItem>> GetTDMetadata(int lastId)
-        {
-            using var conn = new NpgsqlConnection(ConnectionString);
-            return (await conn.QueryAsync($@"
-                SELECT u.""Id"", k.""JsonKey"", u.""JsonValue""
-                FROM ""BigMapUpdates"" as u
-                LEFT JOIN ""BigMapKeys"" as k ON k.""Id"" = u.""BigMapKeyId""
-                WHERE u.""BigMapPtr"" = {TDBigMap}
-                AND u.""Id"" > {lastId}
-                AND u.""Action"" IN (1, 2)
-                ORDER BY u.""Id""
-                LIMIT {Config.BatchSize}"))
-                .Select(x =>
-                {
-                    var domain = Utf8.Convert(Hex.Parse(((string)x.JsonValue)[1..^1]));
-                    return new DipDupItem
-                    {
-                        UpdateId = (int)x.Id,
-                        Contract = TDAddress,
-                        TokenId = ((string)x.JsonKey)[1..^1],
-                        Metadata = JsonSerializer.Deserialize<JsonElement>(
-                            $@"{{""name"":""{domain}"",""symbol"":""TD"",""decimals"":""0"",""isBooleanAmount"":true}}")
-                    };
-                })
-                .ToList();
         }
 
         async Task<int> SaveTokenMetadata(List<DipDupItem> items)
@@ -342,7 +281,7 @@ namespace Tzkt.Sync.Services
 
         class DipDupQuery
         {
-            [JsonPropertyName("token_metadata")]
+            [JsonPropertyName("items")]
             public List<DipDupItem> Items { get; set; } = new();
         }
 

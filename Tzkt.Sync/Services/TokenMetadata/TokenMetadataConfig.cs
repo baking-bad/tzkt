@@ -4,14 +4,19 @@ using Microsoft.Extensions.Configuration;
 
 namespace Tzkt.Sync.Services
 {
+    public class DipDupConfig
+    {
+        public string Url { get; set; } = "https://metadata.dipdup.net/v1/graphql";
+        public string TableName { get; set; } = "token_metadata";
+        public string Network { get; set; } = "mainnet";
+    }
+
     public class TokenMetadataConfig
     {
-        public bool Enabled { get; set; } = false;
-        public string DipDupUrl { get; set; } = "https://metadata.dipdup.net/v1/graphql";
-        public string Network { get; set; } = "mainnet";
+        public bool Enabled { get; set; } = false;       
         public int BatchSize { get; set; } = 100;
         public int PeriodSec { get; set; } = 60;
-
+        public List<DipDupConfig> DipDup { get; set; }
         public List<TokenMetadataItem> OverriddenMetadata { get; set; } = new()
         {
             new("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn", @"{""name"":""tzBTC"",""symbol"":""tzBTC"",""decimals"":""8""}"),
