@@ -1960,7 +1960,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("set_deposits_limit")]
+        [HttpGet("set_deposits_limits")]
         public async Task<ActionResult<IEnumerable<SetDepositsLimitOperation>>> GetSetDepositsLimits(
             AccountParameter sender,
             Int32Parameter level,
@@ -2023,7 +2023,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Operation hash</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("set_deposits_limit/{hash}")]
+        [HttpGet("set_deposits_limits/{hash}")]
         public Task<IEnumerable<SetDepositsLimitOperation>> GetSetDepositsLimitByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
@@ -2040,7 +2040,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("set_deposits_limit/count")]
+        [HttpGet("set_deposits_limits/count")]
         public Task<int> GetSetDepositsLimitsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
