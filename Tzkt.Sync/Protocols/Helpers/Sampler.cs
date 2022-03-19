@@ -90,7 +90,10 @@ namespace Tzkt.Sync.Protocols
         public static async Task<Sampler> CreateAsync(ProtocolHandler proto, int cycle)
         {
             var block = proto.Cache.AppState.GetLevel();
-            var result = (await proto.Rpc.GetStakeDistribution(block, cycle)).EnumerateArray();
+            var result = (await proto.Rpc.GetStakeDistribution(block, cycle))
+                .EnumerateArray()
+                .Where(x => x.RequiredInt64("active_stake") > 0);
+
             return new Sampler
             (
                 result.Select(x => proto.Cache.Accounts.GetDelegate(x.RequiredString("baker")).Id).ToArray(),

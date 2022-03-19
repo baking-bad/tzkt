@@ -39,6 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (level % protocol.BlocksPerSnapshot == 0)
                 events |= BlockEvents.BalanceSnapshot;
 
+            var payloadRound = header.RequiredInt32("payload_round");
             var balanceUpdates = metadata.RequiredArray("balance_updates").EnumerateArray();
             var rewardUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards");
             var bonusUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses");
@@ -52,7 +53,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 ProtoCode = protocol.Code,
                 Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
-                PayloadRound = header.RequiredInt32("payload_round"),
+                PayloadRound = payloadRound,
+                BlockRound = payloadRound,
                 Proposer = proposer,
                 ProposerId = proposer.Id,
                 ProducerId = producer.Id,
@@ -64,24 +66,27 @@ namespace Tzkt.Sync.Protocols.Proto12
             };
 
             #region determine block round
-            var blockRound = (await Cache.BakingRights.GetAsync(Block.Cycle, Block.Level))
-                .Where(x => x.Type == BakingRightType.Baking)
-                .OrderBy(x => x.Round)
-                .SkipWhile(x => x.Round < Block.PayloadRound)
-                .FirstOrDefault(x => x.BakerId == Block.ProducerId)?
-                .Round ?? -1;
-
-            if (blockRound == -1)
+            if (Block.ProposerId != Block.ProducerId)
             {
-                var cycle = await Db.Cycles.FirstAsync(x => x.Index == Block.Cycle);
-                var sampler = await Sampler.CreateAsync(Proto, Block.Cycle);
-                blockRound = RightsGenerator.EnumerateBakingRights(sampler, cycle, Block.Level, 9_999_999)
+                var blockRound = (await Cache.BakingRights.GetAsync(Block.Cycle, Block.Level))
+                    .Where(x => x.Type == BakingRightType.Baking)
+                    .OrderBy(x => x.Round)
                     .SkipWhile(x => x.Round < Block.PayloadRound)
-                    .First(x => x.Baker == Block.ProducerId)
-                    .Round;
-            }
+                    .FirstOrDefault(x => x.BakerId == Block.ProducerId)?
+                    .Round ?? -1;
 
-            Block.BlockRound = blockRound;
+                if (blockRound == -1)
+                {
+                    var cycle = await Db.Cycles.FirstAsync(x => x.Index == Block.Cycle);
+                    var sampler = await Sampler.CreateAsync(Proto, Block.Cycle);
+                    blockRound = RightsGenerator.EnumerateBakingRights(sampler, cycle, Block.Level, 9_999_999)
+                        .SkipWhile(x => x.Round < Block.PayloadRound)
+                        .First(x => x.Baker == Block.ProducerId)
+                        .Round;
+                }
+
+                Block.BlockRound = blockRound;
+            }
             #endregion
 
             Db.TryAttach(proposer);
