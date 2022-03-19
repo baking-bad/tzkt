@@ -78,7 +78,8 @@ namespace Tzkt.Sync.Services
             
             if (tokens.Count > 0)
             {
-                Logger.LogDebug("Fetch token metadata from {url}", config.Url);
+                Logger.LogDebug("Fetch token metadata from {url} @ {lastTokenId}",
+                    config.Url, state.LastTokenId);
                 var updates = await GetDipDupMetadata(tokens, config);
                 Logger.LogDebug("{cnt} updates received", updates.Count);
                 if (updates.Count > 0)
@@ -165,14 +166,16 @@ namespace Tzkt.Sync.Services
             try { State = row.state is string json ? JsonSerializer.Deserialize<TokenMetadataState>(json) : new(); }
             catch { State = new(); }  // will catch parse errors and reset the state (handle State model changes)
 
-            foreach (var state in State.DipDup)
+            foreach (var config in Config.DipDup)
             {
-                if (state.Value.LastUpdateId == 0)
-                    state.Value.LastUpdateId = row.TokenCounter;
-            }
+                var state = State.DipDup.GetValueOrDefault(config.Url, new());
+                if (state.LastUpdateId == 0)
+                    state.LastUpdateId = row.TokenCounter;
 
-            Logger.LogDebug("Token metadata initialized with ({dipDupCount} dipdup states",
-                State.DipDup.Count());
+                State.DipDup[config.Url] = state;
+                Logger.LogDebug("DipDup state ({url}): LastUpdateId={updateId}, LastTokenId={tokenId}",
+                    config.Url, state.LastUpdateId, state.LastTokenId);
+            }
         }
 
         async Task<DipDupState> GetDipDupState(DipDupConfig config)
@@ -181,7 +184,7 @@ namespace Tzkt.Sync.Services
             DipDupState state = State.DipDup.GetValueOrDefault(config.Url, new());          
             if (state.Sentinel != Sentinel)
             {
-                Logger.LogDebug("Sentinel changed {old} -> {new}, resetting DipDup source {url}",
+                Logger.LogDebug("Sentinel changed {old} -> {new}, resetting DipDup state {url}",
                     state.Sentinel, Sentinel, config.Url);
                 state.LastUpdateId = -1;
                 state.Sentinel = Sentinel;
