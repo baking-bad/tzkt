@@ -60,10 +60,10 @@ namespace Tzkt.Sync.Services
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    try
+                    #region fetch latest DipDup metadata and enrich existing TzKT tokens only
+                    foreach (var config in Config.DipDup)
                     {
-                        #region fetch latest DipDup metadata and enrich existing TzKT tokens only
-                        foreach (var config in Config.DipDup)
+                        try
                         {
                             DipDupState state = State.DipDup.GetValueOrDefault(config.Url, new());
                             while (!stoppingToken.IsCancellationRequested)
@@ -87,12 +87,19 @@ namespace Tzkt.Sync.Services
                                 if (updates.Count < Config.BatchSize) break;
                             }
                         }
-                        #endregion
+                        catch (Exception ex)
+                        {
+                            Logger.LogTrace(ex, "Failed to sync token metadata");
+                        }
+                    }
+                    #endregion
 
-                        if (stoppingToken.IsCancellationRequested)
-                            break;
+                    if (stoppingToken.IsCancellationRequested)
+                        break;
 
-                        #region try to fetch DipDup metadata for new TzKT tokens (in case we missed it earlier)                        
+                    #region try to fetch DipDup metadata for new TzKT tokens (in case we missed it earlier)
+                    try
+                    {                    
                         while (!stoppingToken.IsCancellationRequested)
                         {
                             Logger.LogDebug("Sync tokens since #{id}", State.LastTokenId);
@@ -102,7 +109,7 @@ namespace Tzkt.Sync.Services
 
                             foreach (var config in Config.DipDup)
                             {
-                                Logger.LogDebug("Fetch token metadata");
+                                Logger.LogDebug("Fetch token metadata from {url}", config.Url);
                                 updates = await GetDipDupMetadata(tokens, config);
                                 Logger.LogDebug("{cnt} updates received", updates.Count);
                                 if (updates.Count > 0)
@@ -114,16 +121,17 @@ namespace Tzkt.Sync.Services
 
                             State.LastTokenId = tokens.Values.Max();
                             await SaveState();
-                            Logger.LogDebug("State: ({lastTokenId})", State.LastTokenId);
+                            Logger.LogDebug("State: internal token id -> {lastTokenId}", State.LastTokenId);
 
                             if (tokens.Count < Config.BatchSize) break;
                         }
-                        #endregion
                     }
                     catch (Exception ex)
                     {
                         Logger.LogTrace(ex, "Failed to sync token metadata");
                     }
+                    #endregion
+
                     await Task.Delay(Config.PeriodSec * 1000, stoppingToken);
                 }
             }
