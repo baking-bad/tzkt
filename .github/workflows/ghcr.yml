@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build docker images
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true

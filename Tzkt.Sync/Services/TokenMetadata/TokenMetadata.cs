@@ -120,14 +120,14 @@ namespace Tzkt.Sync.Services
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError("Failed to sync token metadata: {msg}", ex.Message);
+                        Logger.LogTrace(ex, "Failed to sync token metadata");
                     }
                     await Task.Delay(Config.PeriodSec * 1000, stoppingToken);
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError("Token metadata crashed: {msg}", ex.Message);
+                Logger.LogTrace(ex, "Token metadata crashed");
             }
             finally
             {
