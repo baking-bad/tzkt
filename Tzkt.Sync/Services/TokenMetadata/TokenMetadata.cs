@@ -39,7 +39,7 @@ namespace Tzkt.Sync.Services
 
                 await InitState();
 
-                Logger.LogDebug("Token metadata initialized with ({dipDupCount} dipdup states, {tokenId})",
+                Logger.LogDebug("Token metadata initialized with ({dipDupCount} dipdup states, internal token id -> {tokenId})",
                     State.DipDup.Count(), State.LastTokenId);
 
                 if (Config.OverriddenMetadata?.Count > 0)
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Services
                         #region fetch latest DipDup metadata and enrich existing TzKT tokens only
                         foreach (var config in Config.DipDup)
                         {
-                            DipDupState state = State.DipDup.GetValueOrDefault(config.Url);
+                            DipDupState state = State.DipDup.GetValueOrDefault(config.Url, new());
                             while (!stoppingToken.IsCancellationRequested)
                             {
                                 Logger.LogDebug("Fetch dipdup updates since {url}@{id}", config.Url, state.LastUpdateId);

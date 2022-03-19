@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build docker images
+    name: Docker images for ghcr.io
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
