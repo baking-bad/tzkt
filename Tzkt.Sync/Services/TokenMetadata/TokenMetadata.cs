@@ -170,6 +170,7 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug("Sentinel changed {old} -> {new}, resetting DipDup source {url}",
                     state.Sentinel, Sentinel, config.Url);
                 state.LastUpdateId = -1;
+                state.Sentinel = Sentinel;
             }
             return state;
         }
