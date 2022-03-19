@@ -7,7 +7,8 @@ namespace Tzkt.Sync.Services
     public class DipDupConfig
     {
         public string Url { get; set; }
-        public string TableName { get; set; }
+        public string MetadataTable { get; set; }
+        public string HeadStatusTable { get; set; }
         public string Network { get; set; }
     }
 

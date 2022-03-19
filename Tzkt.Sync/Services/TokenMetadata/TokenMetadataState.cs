@@ -5,6 +5,7 @@ namespace Tzkt.Sync.Services
     public class DipDupState
     {
         public int LastUpdateId { get; set; } = 0;
+        public string Sentinel { get; set; } = "";
     }
 
     public class TokenMetadataState
