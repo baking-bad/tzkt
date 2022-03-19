@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Services
 
     public class TokenMetadataState
     {
-        public Dictionary<string, DipDupState> DipDup { get; set; }
+        public Dictionary<string, DipDupState> DipDup { get; set; } = new();
         public int LastTokenId { get; set; } = 0;
     }
 }
