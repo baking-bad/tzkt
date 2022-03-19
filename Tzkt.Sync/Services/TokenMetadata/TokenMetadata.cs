@@ -211,7 +211,7 @@ namespace Tzkt.Sync.Services
         {
             using var client = new HttpClient();
             using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
-                $"{{\"query\":\"query{{status:{dipDupConfig.HeadStatusTable}(limit:1)"
+                $"{{\"query\":\"query{{items:{dipDupConfig.HeadStatusTable}(limit:1)"
                 + $"{{created_at}}}}\",\"variables\":null}}",
                 Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
