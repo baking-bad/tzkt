@@ -68,7 +68,9 @@ namespace Tzkt.Sync.Services
                             DipDupState state = State.DipDup.GetValueOrDefault(config.Url, new());
                             while (!stoppingToken.IsCancellationRequested)
                             {
-                                Logger.LogDebug("Fetch dipdup updates since {url}@{id}", config.Url, state.LastUpdateId);
+                                Logger.LogDebug("Fetch dipdup updates from {url} @ {lastUpdateId}",
+                                    config.Url, state.LastUpdateId);
+
                                 updates = await GetDipDupMetadata(state.LastUpdateId, config);
                                 Logger.LogDebug("{cnt} updates received", updates.Count);
                                 if (updates.Count == 0) break;
@@ -79,8 +81,8 @@ namespace Tzkt.Sync.Services
                                 state.LastUpdateId = updates[^1].UpdateId;
                                 State.DipDup[config.Url] = state;
                                 await SaveState();
-                                Logger.LogDebug("State: ({url}@{lastUpdateId}, {lastTokenId})",
-                                    config.Url, state.LastUpdateId, State.LastTokenId);
+                                Logger.LogDebug("State: {url} @ {lastUpdateId}",
+                                    config.Url, state.LastUpdateId);
 
                                 if (updates.Count < Config.BatchSize) break;
                             }
@@ -188,7 +190,7 @@ namespace Tzkt.Sync.Services
         {
             using var client = new HttpClient();
             using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
-                $"{{\"query\":\"query{{items:\\\"{dipDupConfig.TableName}\\\"("
+                $"{{\"query\":\"query{{items:{dipDupConfig.TableName}("
                 + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},metadata:{{_is_null:false}},"
                 + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}}}},"
                 + $"order_by:{{update_id:asc}},limit:{Config.BatchSize})"
@@ -221,7 +223,7 @@ namespace Tzkt.Sync.Services
             while (true)
             {
                 using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
-                    $"{{\"query\":\"query{{items:\\\"{dipDupConfig.TableName}\\\"("
+                    $"{{\"query\":\"query{{items:{dipDupConfig.TableName}("
                     + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},metadata:{{_is_null:false}},"
                     + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}},contract:{{_in:[{contracts}]}},token_id:{{_in:[{tokenIds}]}}}},"
                     + $"order_by:{{update_id:asc}},limit:{Config.BatchSize})"
