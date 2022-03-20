@@ -214,7 +214,7 @@ namespace Tzkt.Api.Services
                 new Int32NullParameter { Eq = 0 },
                 null,
                 new SortParameter { Desc = "level" },
-                null, 5, BlockFields);
+                null, 5, new string[] { "timestamp", "level", "baker", "baker", "round", "round", "validations", "reward", "bonus", "fees", "hash" });
 
             var blocks = await BlocksRepo.Get(null, null, null, null, null, null, 
                 new SortParameter { Desc = "level" }, null, 7, BlockFields, Symbols.None);
