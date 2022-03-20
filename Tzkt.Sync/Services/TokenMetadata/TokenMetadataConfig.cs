@@ -7,9 +7,10 @@ namespace Tzkt.Sync.Services
     public class DipDupConfig
     {
         public string Url { get; set; }
-        public string MetadataTable { get; set; }
-        public string HeadStatusTable { get; set; }
+        public string MetadataTable { get; set; } = "dipdup_token_metadata";
+        public string HeadStatusTable { get; set; } = "dipdup_head";
         public string Network { get; set; }
+        public int SelectLimit { get; set; } = 10000;
     }
 
     public class TokenMetadataConfig

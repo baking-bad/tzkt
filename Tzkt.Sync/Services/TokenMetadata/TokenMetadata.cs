@@ -118,7 +118,7 @@ namespace Tzkt.Sync.Services
                             while (!stoppingToken.IsCancellationRequested)
                             {
                                 var updatesCount = await SyncByUpdateId(config, state);
-                                if (updatesCount < Config.BatchSize)
+                                if (updatesCount < config.SelectLimit)
                                     break;
                             }
 
@@ -169,13 +169,15 @@ namespace Tzkt.Sync.Services
             foreach (var config in Config.DipDup)
             {
                 var state = State.DipDup.GetValueOrDefault(config.Url, new());
-                if (state.LastUpdateId == 0)
-                    state.LastUpdateId = row.TokenCounter;
+                if (state.LastUpdateId == 0)  // If we are syncing from scratch, we can safely assume there will be no races
+                    state.LastTokenId = row.TokenCounter;
 
                 State.DipDup[config.Url] = state;
                 Logger.LogDebug("DipDup state ({url}): LastUpdateId={updateId}, LastTokenId={tokenId}",
                     config.Url, state.LastUpdateId, state.LastTokenId);
             }
+
+            await SaveState();
         }
 
         async Task<DipDupState> GetDipDupState(DipDupConfig config)
@@ -256,7 +258,7 @@ namespace Tzkt.Sync.Services
                 $"{{\"query\":\"query{{items:{dipDupConfig.MetadataTable}("
                 + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},metadata:{{_is_null:false}},"
                 + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}}}},"
-                + $"order_by:{{update_id:asc}},limit:{Config.BatchSize})"
+                + $"order_by:{{update_id:asc}},limit:{dipDupConfig.SelectLimit})"
                 + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
                 Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
@@ -289,7 +291,7 @@ namespace Tzkt.Sync.Services
                     $"{{\"query\":\"query{{items:{dipDupConfig.MetadataTable}("
                     + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},metadata:{{_is_null:false}},"
                     + $"update_id:{{_gt:\\\"{lastUpdateId}\\\"}},contract:{{_in:[{contracts}]}},token_id:{{_in:[{tokenIds}]}}}},"
-                    + $"order_by:{{update_id:asc}},limit:{Config.BatchSize})"
+                    + $"order_by:{{update_id:asc}},limit:{dipDupConfig.SelectLimit})"
                     + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
                     Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
@@ -297,7 +299,7 @@ namespace Tzkt.Sync.Services
                     await res.Content.ReadAsStreamAsync(), options)).Data.Items;
 
                 items.AddRange(_items.Where(x => tokens.ContainsKey((x.Contract, x.TokenId))));
-                if (_items.Count < Config.BatchSize) break;
+                if (_items.Count < dipDupConfig.SelectLimit) break;
                 lastUpdateId = _items[^1].UpdateId;
             }
             return items;
