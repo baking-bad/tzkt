@@ -1,0 +1,70 @@
+name: Build
+on:
+  push:
+    branches:
+      - 'master'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    name: Docker images for ghcr.io
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      DOCKER_REGISTRY: ghcr.io
+      DOCKER_IMAGE_BASE: ${{ github.repository }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to the registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # API
+
+      - name: API image tags & labels
+        id: meta-api
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}-api
+
+      - name: API image build & push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Tzkt.Api/Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+
+      # Sync
+
+      - name: Sync image tags & labels
+        id: meta-sync
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}-sync
+
+      - name: Sync image build & push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Tzkt.Sync/Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta-sync.outputs.tags }}
+          labels: ${{ steps.meta-syn.coutputs.labels }}
