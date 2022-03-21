@@ -4,6 +4,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(TokenStandardBinder))]
+    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "fa1.2,fa2")]
     public class TokenStandardParameter
     {
         /// <summary>

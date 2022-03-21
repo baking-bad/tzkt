@@ -61,6 +61,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
             AccountParameter baker,
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "proposer,producer")]
             AnyOfParameter anyof,
             AccountParameter proposer,
             AccountParameter producer,

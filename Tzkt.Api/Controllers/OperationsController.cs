@@ -1549,7 +1549,6 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
-            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter parameter,
             BoolParameter hasInternals,
             OperationStatusParameter status,
@@ -2298,6 +2297,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
             AccountParameter baker,
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "proposer,producer")]
             AnyOfParameter anyof,
             AccountParameter proposer,
             AccountParameter producer,
