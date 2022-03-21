@@ -12,7 +12,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
-using Netezos.Encoding;
 
 namespace Tzkt.Sync.Services
 {
@@ -60,10 +59,8 @@ namespace Tzkt.Sync.Services
                 Logger.LogDebug("{cnt} tokens updated", cnt);
 
                 state.LastUpdateId = updates[^1].UpdateId;
-                State.DipDup[config.Url] = state;
                 await SaveState();
-                Logger.LogDebug("Last update ID ({url}): {lastUpdateId}",
-                    config.Url, state.LastUpdateId);
+                Logger.LogDebug("Last update ID ({url}): {lastUpdateId}", config.Url, state.LastUpdateId);
             }
 
             return updates.Count;
@@ -75,11 +72,10 @@ namespace Tzkt.Sync.Services
 
             var tokens = await GetTokenIds(state.LastTokenId);
             Logger.LogDebug("{cnt} new tokens found", tokens.Count);
-            
+
             if (tokens.Count > 0)
             {
-                Logger.LogDebug("Fetch token metadata from {url} @ {lastTokenId}",
-                    config.Url, state.LastTokenId);
+                Logger.LogDebug("Fetch token metadata from {url} @ {lastTokenId}", config.Url, state.LastTokenId);
                 var updates = await GetDipDupMetadata(tokens, config);
                 Logger.LogDebug("{cnt} updates received", updates.Count);
                 if (updates.Count > 0)
@@ -89,10 +85,8 @@ namespace Tzkt.Sync.Services
                 }
 
                 state.LastTokenId = tokens.Values.Max();
-                State.DipDup[config.Url] = state;
                 await SaveState();
-                Logger.LogDebug("Last token ID ({url}): {lastTokenId}", 
-                    config.Url, state.LastTokenId);
+                Logger.LogDebug("Last token ID ({url}): {lastTokenId}", config.Url, state.LastTokenId);
             }
 
             return tokens.Count;
@@ -113,7 +107,7 @@ namespace Tzkt.Sync.Services
                     {
                         try
                         {
-                            DipDupState state = await GetDipDupState(config);
+                            var state = await GetDipDupState(config);
 
                             while (!stoppingToken.IsCancellationRequested)
                             {
@@ -131,22 +125,19 @@ namespace Tzkt.Sync.Services
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogTrace(ex, "Failed to sync token metadata");
+                            Logger.LogError(ex, "Failed to sync token metadata for {url}", config.Url);
                         }
 
                         if (stoppingToken.IsCancellationRequested)
                             break;
                     }
 
-                    if (stoppingToken.IsCancellationRequested)
-                        break;
-
                     await Task.Delay(Config.PeriodSec * 1000, stoppingToken);
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogTrace(ex, "Token metadata crashed");
+                Logger.LogError(ex, "Token metadata crashed");
             }
             finally
             {
@@ -168,11 +159,15 @@ namespace Tzkt.Sync.Services
 
             foreach (var config in Config.DipDup)
             {
-                var state = State.DipDup.GetValueOrDefault(config.Url, new());
+                if (!State.DipDup.TryGetValue(config.Url, out var state))
+                {
+                    state = new();
+                    State.DipDup.Add(config.Url, state);
+                }
+
                 if (state.LastUpdateId == 0)  // If we are syncing from scratch, we can safely assume there will be no races
                     state.LastTokenId = row.TokenCounter;
 
-                State.DipDup[config.Url] = state;
                 Logger.LogDebug("DipDup state ({url}): LastUpdateId={updateId}, LastTokenId={tokenId}",
                     config.Url, state.LastUpdateId, state.LastTokenId);
             }
@@ -182,14 +177,23 @@ namespace Tzkt.Sync.Services
 
         async Task<DipDupState> GetDipDupState(DipDupConfig config)
         {
-            string Sentinel = await GetDipDupSentinel(config);
-            DipDupState state = State.DipDup.GetValueOrDefault(config.Url, new());          
-            if (state.Sentinel != Sentinel)
+            var sentinel = await GetDipDupSentinel(config);
+            var state = State.DipDup[config.Url];
+            if (state.Sentinel != sentinel)
             {
                 Logger.LogDebug("Sentinel changed {old} -> {new}, resetting DipDup state {url}",
-                    state.Sentinel, Sentinel, config.Url);
-                state.LastUpdateId = -1;
-                state.Sentinel = Sentinel;
+                    state.Sentinel, sentinel, config.Url);
+
+                using var conn = new NpgsqlConnection(ConnectionString);
+                var row = await conn.QueryFirstAsync(@"
+                    SELECT ""TokenCounter""
+                    FROM ""AppState""
+                    WHERE ""Id"" = -1
+                    LIMIT 1");
+
+                state.LastUpdateId = 0;
+                state.LastTokenId = row.TokenCounter;
+                state.Sentinel = sentinel;
             }
             return state;
         }
@@ -235,14 +239,8 @@ namespace Tzkt.Sync.Services
                 + $"{{created_at}}}}\",\"variables\":null}}",
                 Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
-            var options = new JsonSerializerOptions
-            {
-                NumberHandling = JsonNumberHandling.AllowReadingFromString,
-                MaxDepth = 10240
-            };
-
             var items = (await JsonSerializer.DeserializeAsync<DipDupResponse<DipDupStatus>>(
-                await res.Content.ReadAsStreamAsync(), options)).Data.Items;
+                await res.Content.ReadAsStreamAsync())).Data.Items;
 
             // There can be actually multiple status items (per each network), but it's ok:
             // 1. If new network is added there's no need to reindex from scratch

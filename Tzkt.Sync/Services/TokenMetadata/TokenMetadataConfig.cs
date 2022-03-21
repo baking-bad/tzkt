@@ -4,15 +4,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace Tzkt.Sync.Services
 {
-    public class DipDupConfig
-    {
-        public string Url { get; set; }
-        public string MetadataTable { get; set; } = "dipdup_token_metadata";
-        public string HeadStatusTable { get; set; } = "dipdup_head";
-        public string Network { get; set; }
-        public int SelectLimit { get; set; } = 10000;
-    }
-
     public class TokenMetadataConfig
     {
         public bool Enabled { get; set; } = false;       
@@ -20,6 +11,15 @@ namespace Tzkt.Sync.Services
         public int PeriodSec { get; set; } = 60;
         public List<DipDupConfig> DipDup { get; set; }
         public List<TokenMetadataItem> OverriddenMetadata { get; set; }
+    }
+
+    public class DipDupConfig
+    {
+        public string Url { get; set; }
+        public string MetadataTable { get; set; } = "dipdup_token_metadata";
+        public string HeadStatusTable { get; set; } = "dipdup_head";
+        public string Network { get; set; } = "mainnet";
+        public int SelectLimit { get; set; } = 10_000;
     }
 
     public class TokenMetadataItem
