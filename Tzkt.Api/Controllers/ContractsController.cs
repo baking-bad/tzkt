@@ -6,7 +6,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using NSwag.Annotations;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -669,9 +668,7 @@ namespace Tzkt.Api.Controllers
             [Required][KTAddress] string address,
             [Required] string name,
             bool? active,
-            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
-            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             Int32Parameter lastLevel,
             SelectParameter select,
@@ -851,9 +848,7 @@ namespace Tzkt.Api.Controllers
             [Required] string name,
             [Min(0)] int level,
             bool? active,
-            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter key,
-            [OpenApiExtensionData("x-tzkt-extension", "json-parameter")]
             JsonParameter value,
             SelectParameter select,
             SortParameter sort,
