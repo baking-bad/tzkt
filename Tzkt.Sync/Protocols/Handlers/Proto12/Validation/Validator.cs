@@ -317,11 +317,12 @@ namespace Tzkt.Sync.Protocols.Proto12
             var delegat = content.OptionalString("delegate");
             var metadata = content.Required("metadata");
             var result = metadata.Required("operation_result");
+            var applied = result.RequiredString("status") == "applied";
 
             if (!await Cache.Accounts.ExistsAsync(source))
                 throw new ValidationException("unknown source account");
 
-            if (result.RequiredString("status") == "applied" && delegat != null)
+            if (applied && delegat != null)
                 if (!Cache.Accounts.DelegateExists(delegat))
                     throw new ValidationException("unknown delegate account");
 
@@ -330,7 +331,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 source,
                 content.RequiredInt64("fee"));
 
-            if (result.TryGetProperty("balance_updates", out var resultUpdates))
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
                     resultUpdates.EnumerateArray(),
                     source,
@@ -344,12 +345,13 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             var delegat = content.OptionalString("delegate");
             var result = content.Required("result");
+            var applied = result.RequiredString("status") == "applied";
 
-            if (result.RequiredString("status") == "applied" && delegat != null)
+            if (applied && delegat != null)
                 if (!Cache.Accounts.DelegateExists(delegat))
                     throw new ValidationException("unknown delegate account");
 
-            if (result.TryGetProperty("balance_updates", out var resultUpdates))
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
                     resultUpdates.RequiredArray().EnumerateArray(),
                     content.RequiredString("source"),
@@ -375,8 +377,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 content.RequiredInt64("fee"));
 
             var result = metadata.Required("operation_result");
+            var applied = result.RequiredString("status") == "applied";
 
-            if (result.TryGetProperty("balance_updates", out var resultUpdates))
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
                     resultUpdates.RequiredArray().EnumerateArray(),
                     source,
@@ -404,8 +407,9 @@ namespace Tzkt.Sync.Protocols.Proto12
         protected virtual void ValidateInternalTransaction(JsonElement content, string initiator)
         {
             var result = content.Required("result");
+            var applied = result.RequiredString("status") == "applied";
 
-            if (result.TryGetProperty("balance_updates", out var resultUpdates))
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
                     resultUpdates.RequiredArray().EnumerateArray(),
                     content.RequiredString("source"),
