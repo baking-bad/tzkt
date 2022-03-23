@@ -74,7 +74,7 @@ ithaca-init:
 	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt update
 	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt install -y wget
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_ithaca.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_ithacanet.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db rm tzkt_db.backup
 	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt autoremove --purge -y wget
