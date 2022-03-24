@@ -8,10 +8,12 @@ namespace Tzkt.Api.Tests.Api
 {
     public class TestAccountsQueries : IClassFixture<SettingsFixture>
     {
+        readonly SettingsFixture Settings;
         readonly HttpClient Client;
 
         public TestAccountsQueries(SettingsFixture settings)
         {
+            Settings = settings;
             Client = settings.Client;
         }
 
@@ -66,7 +68,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestAccountByAddress()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Baker}");
 
             Assert.True(res is DJsonObject);
         }
@@ -74,7 +76,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestAccountContracts()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj/contracts");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Originator}/contracts");
 
             Assert.True(res is DJsonArray);
         }
@@ -82,7 +84,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestAccountDelegators()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj/delegators");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Baker}/delegators");
 
             Assert.True(res is DJsonArray);
         }
@@ -90,7 +92,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestAccountOperations()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj/operations");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Baker}/operations");
 
             Assert.True(res is DJsonArray);
         }
@@ -98,7 +100,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestCounter()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj/counter");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Baker}/counter");
 
             Assert.True(res is DJsonValue);
         }
@@ -106,7 +108,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestBalance()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj/balance");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Baker}/balance");
 
             Assert.True(res is DJsonValue);
         }
@@ -114,7 +116,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestBalanceAtLevel()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj/balance_history/10");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Baker}/balance_history/10");
 
             Assert.True(res is DJsonValue);
         }
@@ -122,7 +124,7 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestBalanceHistory()
         {
-            var res = await Client.GetJsonAsync("/v1/accounts/tz1gxXv1PCMMLAvDd6mRkq712m9BxV8w7Wqj/balance_history");
+            var res = await Client.GetJsonAsync($"/v1/accounts/{Settings.Baker}/balance_history");
 
             Assert.True(res is DJsonArray);
         }

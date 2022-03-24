@@ -10,6 +10,10 @@ namespace Tzkt.Api.Tests.Api
         static readonly object Crit = new object();
 
         public HttpClient Client { get; }
+        public string Baker { get; }
+        public string Delegator { get; }
+        public string Originator { get; }
+        public int Cycle { get; }
 
         public SettingsFixture()
         {
@@ -21,6 +25,11 @@ namespace Tzkt.Api.Tests.Api
                 {
                     BaseAddress = new Uri(settings.Url) 
                 };
+
+                Baker = settings.Baker;
+                Delegator = settings.Delegator;
+                Originator = settings.Originator;
+                Cycle = settings.Cycle;
             }
         }
 

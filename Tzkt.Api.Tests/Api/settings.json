@@ -1,3 +1,7 @@
 {
-  "url": "http://localhost:5000"
+  "url": "https://staging.api.tzkt.io/",
+  "baker": "tz1S7GgVV4FPEGUVzepKBwx22DyNikdpa4X6",
+  "originator": "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM",
+  "delegator": "KT1QuofAgnsWffHzLA7D78rxytJruGHDe7XG",
+  "cycle": 10
 }
