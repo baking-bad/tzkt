@@ -364,18 +364,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region apply result
             if (origination.Status == OperationStatus.Applied)
             {
-                await Spend(sender, origination.Balance);
-
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= origination.Balance;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance -= origination.Balance;
-                }
-
-                await Spend(parentSender,
-                    (origination.StorageFee ?? 0) +
-                    (origination.AllocationFee ?? 0));
+                parentSender.Balance -= (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
 
                 if (parentDelegate != null)
                 {
@@ -386,6 +375,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                         parentDelegate.DelegatedBalance -= origination.StorageFee ?? 0;
                         parentDelegate.DelegatedBalance -= origination.AllocationFee ?? 0;
                     }
+                }
+
+                sender.Balance -= origination.Balance;
+
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance -= origination.Balance;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance -= origination.Balance;
                 }
 
                 if (contractDelegate != null)
@@ -573,7 +571,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (origination.Status == OperationStatus.Applied)
             {
-                await Return(sender, origination.Balance);
+                sender.Balance += origination.Balance;
 
                 if (senderDelegate != null)
                 {
@@ -582,9 +580,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance += origination.Balance;
                 }
 
-                await Return(parentSender,
-                    (origination.StorageFee ?? 0) +
-                    (origination.AllocationFee ?? 0));
+                parentSender.Balance += (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
 
                 if (parentDelegate != null)
                 {

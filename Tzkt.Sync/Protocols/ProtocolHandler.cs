@@ -221,6 +221,23 @@ namespace Tzkt.Sync
 
         public abstract Task Revert();
 
+        protected void ResetIfEmpty(Account account)
+        {
+            if (account.Balance <= 0 && account is User user && user.Revealed)
+            {
+                user.Counter = Cache.AppState.GetManagerCounter();
+                user.Revealed = false;
+            }
+        }
+
+        protected void RestoreIfEmpty(Account account)
+        {
+            if (account is User user && !user.Revealed && user.Balance > 0)
+            {
+                user.Revealed = true;
+            }
+        }
+
         void TouchAccounts()
         {
             var state = Cache.AppState.Get();

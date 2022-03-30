@@ -150,6 +150,7 @@ namespace Tzkt.Sync.Protocols
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
                                     }
                                 }
+                                ResetIfEmpty(parent.Transaction.Sender);
                             }
                             break;
                         default:
@@ -285,7 +286,12 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case TransactionOperation transaction:
                         if (transaction.InitiatorId == null)
+                        {
+                            if (transaction.InternalOperations != null)
+                                RestoreIfEmpty(transaction.Sender);
+
                             await new TransactionsCommit(this).Revert(currBlock, transaction);
+                        }
                         else
                             await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
                         break;

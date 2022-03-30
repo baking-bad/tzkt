@@ -249,9 +249,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region apply result
             if (transaction.Status == OperationStatus.Applied)
             {
-                await Spend(parentSender,
-                    (transaction.StorageFee ?? 0) +
-                    (transaction.AllocationFee ?? 0));
+                parentSender.Balance -= (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
 
                 if (parentDelegate != null)
                 {
@@ -468,9 +466,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance += transaction.Amount;
                 }
 
-                await Return(parentSender,
-                    (transaction.StorageFee ?? 0) +
-                    (transaction.AllocationFee ?? 0));
+                parentSender.Balance += (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
 
                 if (parentDelegate != null)
                 {
