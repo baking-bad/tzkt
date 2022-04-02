@@ -472,9 +472,9 @@ namespace Tzkt.Api.Repositories
                     case "numActivations": columns.Add(@"""Activated"""); break;
                     case "numBallots": columns.Add(@"""BallotsCount"""); break;
                     case "numContracts": columns.Add(@"""ContractsCount"""); break;
-                    case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
-                    case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
-                    case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
+                    case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
+                    case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
+                    case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
                     case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                     case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                     case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
@@ -812,9 +812,9 @@ namespace Tzkt.Api.Repositories
                 case "numActivations": columns.Add(@"""Activated"""); break;
                 case "numBallots": columns.Add(@"""BallotsCount"""); break;
                 case "numContracts": columns.Add(@"""ContractsCount"""); break;
-                case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
-                case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
-                case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
+                case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
+                case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
+                case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
                 case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                 case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                 case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
