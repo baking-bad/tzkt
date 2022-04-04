@@ -49,6 +49,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 1);
                     snapshotIndex = Seed.GetSnapshotIndex(futureSeed, true);
+                    #region WTF?!
+                    if (Cache.AppState.Get().Chain == "mainnet" && block.Cycle == 469)
+                        snapshotIndex = 15;
+                    #endregion
                     snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 1) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
                 }
             }
@@ -63,7 +67,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Select(x =>
                 {
                     var baker = Cache.Accounts.GetDelegate(x.AccountId);
-                    var depositCap = Math.Min(baker.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
+                    var depositCap = Math.Min(x.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
                     return Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
                 });
 

@@ -193,7 +193,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (snapshot.StakingBalance >= block.Protocol.TokensPerRoll)
                     {
                         var baker = Cache.Accounts.GetDelegate(snapshot.AccountId);
-                        var depositCap = Math.Min(baker.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
+                        var depositCap = Math.Min(snapshot.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
                         var activeStake = Math.Min((long)snapshot.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
                         var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * activeStake / futureCycle.SelectedStake);
                         bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * activeStake / futureCycle.SelectedStake;
