@@ -14,7 +14,7 @@ The indexer fetches raw data from the Tezos node, then processes it and stores i
 - **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly. In addition to basic data access TzKT API has a lot of cool features such as deep filtering, sorting, data selection, exporting .csv statements, calculating historical data (at any block) such as balances or BigMap keys, injecting historical quotes and metadata, optimized caching and much more. See the complete [API documentation](https://api.tzkt.io).
 - **WebSocket API.** TzKT allows to subscribe to real-time blockchain data, such as new blocks or new operations, etc. via WebSocket. TzKT uses SignalR, which is very easy to use and for which there are many client libraries for different languages.
 - **Low resource consumption.** TzKT is fairly lightweight. The indexer consumes up to 256MB of RAM, and the API up to 256MB-1024MB, depending on the network and configured cache size.
-- **No local node needed.** TzKT indexer works well even with remote RPC node. By default it uses [tezos.giganode.io](https://tezos.giganode.io/), the most performant public RPC node in Tezos, which is more than enough for most cases.
+- **No local node needed.** TzKT indexer works well even with remote RPC node. By default it uses public [rpc.tzkt.io](https://rpc.tzkt.io/mainnet/chains/main/blocks/head/header).
 - **Quick start.** Indexer bootstrap takes ~15 minutes by using snapshots publicly available for all supported networks. Of course, you can run full synchronization from scratch as well.
 - **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data. Also, the indexer performs self-diagnostics after each block, which guarantees the correct commiting.
 - **Flexibility and scalability.** There is no requirement to run all TzKT components (database, indexer, API) together and on the same machine. This allows flexible optimization, because you can optimize each component separately and according to your needs. Or you can run all the components on the same machine as well, which is much cheaper.
@@ -133,7 +133,7 @@ Like this:
   },
 
   "TezosNode": {
-    "Endpoint": "https://mainnet-tezos.giganode.io/",
+    "Endpoint": "https://rpc.tzkt.io/mainnet/",
     "Timeout": 60
   },
 
@@ -145,7 +145,7 @@ Like this:
   },
 
   "ConnectionStrings": {
-    "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;command timeout=600;"
   },
 
   "HealthChecks": {
@@ -154,14 +154,28 @@ Like this:
     "Period": 10,
     "FilePath": "sync.health"
   },
-
+  
   "TokenMetadata": {
     "Enabled": false,
-    "DipDupUrl": "https://metadata.dipdup.net/v1/graphql",
-    "Network": "mainnet",
-    "BatchSize": 10000,
+    "BatchSize": 100,
     "PeriodSec": 30,
-    "OverriddenMetadata": []
+    "OverriddenMetadata": [],
+    "DipDup": [
+      {
+        "Url": "https://metadata.dipdup.net/v1/graphql",
+        "MetadataTable": "token_metadata",
+        "HeadStatusTable": "dipdup_head_status",
+        "Network": "mainnet"
+      },
+      {
+        "Url": "https://domains.dipdup.net/v1/graphql",
+        "Network": "mainnet"
+      },
+      {
+        "Url": "https://quartz.dipdup.net/v1/graphql",
+        "Network": "mainnet"
+      }
+    ]
   },
 
   "Logging": {
@@ -231,7 +245,7 @@ Like this:
   },
 
   "ConnectionStrings": {
-    "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;"
+    "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;command timeout=600;"
   },
 
   "Home": {
