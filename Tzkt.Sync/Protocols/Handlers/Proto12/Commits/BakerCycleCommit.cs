@@ -18,6 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             IEnumerable<RightsGenerator.BR> futureBakingRights,
             IEnumerable<RightsGenerator.ER> futureEndorsingRights,
             List<SnapshotBalance> snapshots,
+            Dictionary<int, long> selectedStakes,
             List<BakingRight> currentRights)
         {
             #region current rights
@@ -190,11 +191,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                         ActiveStake = 0,
                         SelectedStake = futureCycle.SelectedStake
                     };
-                    if (snapshot.StakingBalance >= block.Protocol.TokensPerRoll)
+                    if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var activeStake))
                     {
-                        var baker = Cache.Accounts.GetDelegate(snapshot.AccountId);
-                        var depositCap = Math.Min(snapshot.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
-                        var activeStake = Math.Min((long)snapshot.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
                         var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * activeStake / futureCycle.SelectedStake);
                         bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * activeStake / futureCycle.SelectedStake;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;

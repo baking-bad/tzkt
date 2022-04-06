@@ -39,6 +39,9 @@ namespace Tzkt.Sync.Protocols
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
+            var cycleCommit = new CycleCommit(this);
+            await cycleCommit.Apply(blockCommit.Block);
+
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
 
@@ -195,9 +198,6 @@ namespace Tzkt.Sync.Protocols
             await bigMapCommit.Apply();
             await new TokensCommit(this).Apply(blockCommit.Block, bigMapCommit.Updates);
 
-            var cycleCommit = new CycleCommit(this);
-            await cycleCommit.Apply(blockCommit.Block);
-
             var brCommit = new BakingRightsCommit(this);
             await brCommit.Apply(blockCommit.Block, cycleCommit.FutureCycle);
 
@@ -209,6 +209,7 @@ namespace Tzkt.Sync.Protocols
                 brCommit.FutureBakingRights,
                 brCommit.FutureEndorsingRights,
                 cycleCommit.Snapshots,
+                cycleCommit.SelectedStakes,
                 brCommit.CurrentRights);
 
             var freezerCommit = new FreezerCommit(this);
@@ -309,7 +310,6 @@ namespace Tzkt.Sync.Protocols
 
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);
-            await new CycleCommit(this).Revert(currBlock);
             await new BakingRightsCommit(this).Revert(currBlock);
             await new TokensCommit(this).Revert(currBlock);
             await new BigMapCommit(this).Revert(currBlock);
@@ -386,6 +386,7 @@ namespace Tzkt.Sync.Protocols
 
             await new DeactivationCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
+            await new CycleCommit(this).Revert(currBlock);
             await new BlockCommit(this).Revert(currBlock);
 
             await new StateCommit(this).Revert(currBlock);

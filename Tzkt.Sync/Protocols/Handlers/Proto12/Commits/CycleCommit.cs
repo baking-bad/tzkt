@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto12
     {
         public Cycle FutureCycle { get; protected set; }
         public List<SnapshotBalance> Snapshots { get; protected set; }
+        public Dictionary<int, long> SelectedStakes { get; protected set; }
 
         public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -49,7 +50,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 1);
                     snapshotIndex = Seed.GetSnapshotIndex(futureSeed, true);
-                    #region WTF?!
+                    #region ithaca activation quirk
+                    // on the mainnet the snapshot index after the first Ithaca cycle was calculated differently
                     if (Cache.AppState.Get().Chain == "mainnet" && block.Cycle == 469)
                         snapshotIndex = 15;
                     #endregion
@@ -62,12 +64,26 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Where(x => x.Level == snapshotLevel && x.DelegateId == null)
                 .ToListAsync();
 
-            var selectedStakes = Snapshots
+            var endorsingRewards = await Db.BakerCycles
+                .AsNoTracking()
+                .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewards > 0)
+                .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewards);
+
+            SelectedStakes = Snapshots
                 .Where(x => x.StakingBalance >= block.Protocol.TokensPerRoll)
-                .Select(x =>
+                .ToDictionary(x => x.AccountId, x =>
                 {
                     var baker = Cache.Accounts.GetDelegate(x.AccountId);
-                    var depositCap = Math.Min(x.Balance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
+
+                    var lastBalance = baker.Balance;
+                    if (endorsingRewards.TryGetValue(baker.Id, out var reward))
+                        lastBalance -= reward;
+                    if (block.ProposerId == baker.Id)
+                        lastBalance -= block.Reward;
+                    if (block.ProducerId == baker.Id)
+                        lastBalance -= block.Bonus;
+
+                    var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
                     return Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
                 });
 
@@ -81,8 +97,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 TotalStaking = Snapshots.Sum(x => (long)x.StakingBalance),
                 TotalDelegated = Snapshots.Sum(x => (long)x.DelegatedBalance),
                 TotalDelegators = Snapshots.Sum(x => (int)x.DelegatorsCount),
-                SelectedBakers = selectedStakes.Count(),
-                SelectedStake = selectedStakes.Sum(),
+                SelectedBakers = SelectedStakes.Count,
+                SelectedStake = SelectedStakes.Values.Sum(),
                 TotalBakers = Snapshots.Count,
                 Seed = futureSeed
             };
