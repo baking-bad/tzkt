@@ -648,6 +648,45 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetContractTags(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = (int)Data.Models.ContractTags.None;
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!ContractTags.TryParse(rawValue, out var tag))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "Invalid contract tags.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result |= tag;
+                    }
+
+
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetBigMapTags(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

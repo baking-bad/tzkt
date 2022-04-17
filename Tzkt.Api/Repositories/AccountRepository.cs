@@ -156,7 +156,7 @@ namespace Tzkt.Api.Repositories
                         Alias = contract.Alias,
                         Address = contract.Address,
                         Kind = ContractKinds.ToString(contract.Kind),
-                        Tzips = GetTzips(contract.Tags),
+                        Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags),
                         Balance = contract.Balance,
                         Creator = creator == null ? null : new CreatorInfo
                         {
@@ -371,7 +371,7 @@ namespace Tzkt.Api.Repositories
                             Alias = row.Alias,
                             Address = row.Address,
                             Kind = ContractKinds.ToString(row.Kind),
-                            Tzips = GetTzips(row.Tags),
+                            Tzips = ContractTags.ToList((Data.Models.ContractTags)row.Tags),
                             Balance = row.Balance,
                             Creator = creator == null ? null : new CreatorInfo
                             {
@@ -743,7 +743,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "tzips":
                         foreach (var row in rows)
-                            result[j++][i] = GetTzips(row.Tags);
+                            result[j++][i] = ContractTags.ToList((Data.Models.ContractTags)row.Tags);
                         break;
                     case "creator":
                         foreach (var row in rows)
@@ -1079,7 +1079,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "tzips":
                     foreach (var row in rows)
-                        result[j++] = GetTzips(row.Tags);
+                        result[j++] = ContractTags.ToList((Data.Models.ContractTags)row.Tags);
                     break;
                 case "creator":
                     foreach (var row in rows)
