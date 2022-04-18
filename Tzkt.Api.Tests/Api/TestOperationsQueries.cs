@@ -200,6 +200,22 @@ namespace Tzkt.Api.Tests.Api
         }
 
         [Fact]
+        public async Task TestSetDepositsLimitsCount()
+        {
+            var res = await Client.GetJsonAsync("/v1/operations/set_deposits_limits/count");
+
+            Assert.True(res is DJsonValue);
+        }
+
+        [Fact]
+        public async Task TestSetDepositsLimits()
+        {
+            var res = await Client.GetJsonAsync("/v1/operations/set_deposits_limits");
+
+            Assert.True(res is DJsonArray);
+        }
+
+        [Fact]
         public async Task TestRegisterConstantsCount()
         {
             var res = await Client.GetJsonAsync("/v1/operations/register_constants/count");

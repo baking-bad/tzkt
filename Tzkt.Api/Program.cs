@@ -1,8 +1,6 @@
 using System;
-using System;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -19,14 +17,7 @@ namespace Tzkt.Api
     {
         public static void Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
-                
-            if (host.Check())
-            {
-                host.Init().Run();
-            }
-            
-            return;
+            CreateHostBuilder(args).Build().Check().Init().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -103,29 +94,12 @@ namespace Tzkt.Api
             }
         }
         
-        public static bool Check(this IHost host)
+        public static IHost Check(this IHost host)
         {
             using var scope = host.Services.CreateScope();
             var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-            try
-            {
-                config.ValidateAuthConfig(logger);
-            }
-            catch (ConfigurationException ex)
-            {
-                logger.LogError($"Configuration validation failed {ex}");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.LogCritical($"Configuration validation failed {ex}");
-                return false;
-            }
-
-                
-            return true;
+            config.ValidateAuthConfig();
+            return host;
         }
     }
 }

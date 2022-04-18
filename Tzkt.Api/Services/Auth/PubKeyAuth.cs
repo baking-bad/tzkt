@@ -1,5 +1,4 @@
 using System;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
@@ -21,21 +20,18 @@ namespace Tzkt.Api.Services.Auth
             var cfg = config.GetAuthConfig();
             Config = cfg;
             Nonces = cfg.Users.ToDictionary(x => x.Name, _ => long.MinValue );
-
             Rights = cfg.Users.ToDictionary(x => x.Name, x => x.Rights?
-                .GroupBy(y => y.Table)
-                .ToDictionary(z => z.Key, z => (z
-                    .FirstOrDefault(k => k.Section == null)?.Access ?? Access.None , z
-                    .Where(p => p.Section != null)
-                    .ToDictionary(q => q.Section, q => q.Access))));
-            
+                .GroupBy(g => g.Table)
+                .ToDictionary(g => g.Key, g =>
+                (
+                    g.FirstOrDefault(r => r.Section == null)?.Access ?? Access.None,
+                    g.Where(r => r.Section != null).ToDictionary(r => r.Section, r => r.Access)
+                )));
             PubKeys = cfg.Users.ToDictionary(x => x.Name, x => PubKey.FromBase58(x.PubKey));
         }
 
         public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error)
         {
-            error = null;
-
             if (!TryAuthenticateBase(headers, requestedRights, out error, out var pubKey))
             {
                 return false;
@@ -53,8 +49,6 @@ namespace Tzkt.Api.Services.Auth
 
         public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string json, out string error)
         {
-            error = null;
-
             if (!TryAuthenticateBase(headers, requestedRights, out error, out var pubKey))
             {
                 return false;
@@ -62,7 +56,7 @@ namespace Tzkt.Api.Services.Auth
             
             if (string.IsNullOrEmpty(json))
             {
-                error = $"The body is empty";
+                error = $"Request body is empty";
                 return false;
             }
 
@@ -122,24 +116,24 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!Rights.TryGetValue(headers.User, out var user))
+            if (!Rights.TryGetValue(headers.User, out var rights))
             {
                 error = $"User {headers.User} doesn't exist";
                 return false;
             }
 
-            if (user == null)
+            if (rights == null)
             {
                 return true;
             }
             
-            if (!user.TryGetValue(requestedRights.Table, out var sections))
+            if (!rights.TryGetValue(requestedRights.Table, out var tableRights))
             {
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
                 return false;
             }
 
-            if (sections.access >= requestedRights.Access)
+            if (tableRights.access >= requestedRights.Access)
             {
                 return true;
             }
@@ -150,15 +144,15 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!sections.sections.TryGetValue(requestedRights.Section, out var access))
+            if (!tableRights.sections.TryGetValue(requestedRights.Section, out var sectionAccess))
             {
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Section} required.";
                 return false;
             }
             
-            if (access < requestedRights.Access)
+            if (sectionAccess < requestedRights.Access)
             {
-                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required for section {requestedRights.Section}. {access} granted";
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required for section {requestedRights.Section}. {sectionAccess} granted";
                 return false;
             }
 

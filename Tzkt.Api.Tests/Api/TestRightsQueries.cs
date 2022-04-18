@@ -38,5 +38,13 @@ namespace Tzkt.Api.Tests.Api
 
             Assert.True(res is DJsonArray);
         }
+
+        [Fact]
+        public async Task TestEndorsingRights()
+        {
+            var res = await Client.GetJsonAsync("/v1/rights?type=endorsing");
+
+            Assert.True(res is DJsonArray);
+        }
     }
 }

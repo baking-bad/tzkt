@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Netezos.Keys;
 
 namespace Tzkt.Api.Services.Auth
@@ -17,32 +15,41 @@ namespace Tzkt.Api.Services.Auth
     {
         public static AuthConfig GetAuthConfig(this IConfiguration config)
         {
-            return config.GetSection("Authentication")?.Get<AuthConfig>();
+            return config.GetSection("Authentication")?.Get<AuthConfig>() ?? new();
         }
 
-        public static void ValidateAuthConfig(this IConfiguration config, ILogger<Program> logger)
+        public static void ValidateAuthConfig(this IConfiguration config)
         {
-            try
+            var authConfig = config.GetAuthConfig();
+
+            if (authConfig.Method < AuthMethod.None || authConfig.Method > AuthMethod.PubKey)
+                throw new ConfigurationException("Invalid auth method");
+
+            foreach (var user in authConfig.Users)
             {
-                var authConfig = config.GetAuthConfig();
-                if (authConfig == null)
-                    return;
-                
-                foreach (var user in authConfig.Users)
+                if (user.Name == null)
+                    throw new ConfigurationException("Invalid user name");
+
+                if (authConfig.Method == AuthMethod.PubKey)
                 {
-                    var key = PubKey.FromBase58(user.PubKey);
+                    try { _ = PubKey.FromBase58(user.PubKey); }
+                    catch { throw new ConfigurationException("Invalid user pubkey"); }
+                }
+                else if (authConfig.Method == AuthMethod.Password)
+                {
+                    if (user.Password == null)
+                        throw new ConfigurationException("Invalid user password");
+                }
+
+                if (user.Rights != null)
+                {
+                    foreach (var right in user.Rights)
+                    {
+                        if (right.Access < Access.None || right.Access > Access.Write)
+                            throw new ConfigurationException("Invalid user access type");
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-                throw new ConfigurationException(ex.Message);
-            }
         }
-    }
-
-    public class ConfigurationException : Exception
-    {
-        public ConfigurationException(string message)
-            : base($"Bad configuration: {message}") { }
     }
 }

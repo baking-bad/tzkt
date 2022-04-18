@@ -13,11 +13,13 @@ namespace Tzkt.Api.Services.Auth
         {
             var cfg = config.GetAuthConfig();
             Rights = cfg.Users.ToDictionary(x => x.Name, x => x.Rights?
-                                      .GroupBy(y => y.Table)
-                                 .ToDictionary(z => z.Key, z => (z.FirstOrDefault(k => k.Section == null)?.Access ?? Access.None , z
-                                 .Where(p => p.Section != null)
-                                 .ToDictionary(q => q.Section, q => q.Access))));
-            Users = cfg.Users.ToDictionary(x => x.Name, x => x);
+                .GroupBy(r => r.Table)
+                .ToDictionary(g => g.Key, g => 
+                (
+                    g.FirstOrDefault(r => r.Section == null)?.Access ?? Access.None,
+                    g.Where(r => r.Section != null).ToDictionary(r => r.Section, r => r.Access)
+                )));
+            Users = cfg.Users.ToDictionary(x => x.Name);
         }
 
         public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error)
@@ -36,36 +38,36 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!Users.TryGetValue(headers.User, out var credentials))
+            if (!Users.TryGetValue(headers.User, out var user))
             {
                 error = $"User {headers.User} doesn't exist";
                 return false;
             }
             
-            if (headers.Password != credentials.Password)
+            if (headers.Password != user.Password)
             {
                 error = $"Invalid password";
                 return false;
             }
 
-            if (!Rights.TryGetValue(headers.User, out var user))
+            if (!Rights.TryGetValue(headers.User, out var rights))
             {
                 error = $"User {headers.User} doesn't exist";
                 return false;
             }
 
-            if (user == null)
+            if (rights == null)
             {
                 return true;
             }
             
-            if (!user.TryGetValue(requestedRights.Table, out var sections))
+            if (!rights.TryGetValue(requestedRights.Table, out var tableRights))
             {
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Table} required.";
                 return false;
             }
 
-            if (sections.access >= requestedRights.Access)
+            if (tableRights.access >= requestedRights.Access)
             {
                 return true;
             }
@@ -76,15 +78,15 @@ namespace Tzkt.Api.Services.Auth
                 return false;
             }
 
-            if (!sections.sections.TryGetValue(requestedRights.Section, out var access))
+            if (!tableRights.sections.TryGetValue(requestedRights.Section, out var sectionAccess))
             {
                 error = $"User {headers.User} doesn't have required permissions. {requestedRights.Section} required.";
                 return false;
             }
             
-            if (access < requestedRights.Access)
+            if (sectionAccess < requestedRights.Access)
             {
-                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required. {access} granted";
+                error = $"User {headers.User} doesn't have required permissions. {requestedRights.Access} required. {sectionAccess} granted";
                 return false;
             }
 
@@ -93,11 +95,13 @@ namespace Tzkt.Api.Services.Auth
 
         public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string json, out string error)
         {
-            if (!string.IsNullOrEmpty(json)) return TryAuthenticate(headers, requestedRights, out error);
-            
-            error = $"The body is empty";
-            return false;
+            if (string.IsNullOrEmpty(json))
+            {
+                error = "Request body is empty";
+                return false;
+            }
 
+            return TryAuthenticate(headers, requestedRights, out error);
         }
     }
 }

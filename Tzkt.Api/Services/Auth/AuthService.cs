@@ -13,7 +13,7 @@ namespace Tzkt.Api.Services.Auth
     {
         public static void AddAuthService(this IServiceCollection services, IConfiguration config)
         {
-            switch (config.GetAuthConfig()?.Method)
+            switch (config.GetAuthConfig().Method)
             {
                 case AuthMethod.Password:
                     services.AddSingleton<IAuthService, PasswordAuth>();

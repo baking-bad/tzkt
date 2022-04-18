@@ -31,8 +31,6 @@ namespace Tzkt.Api.Tests.Api
             Assert.True(res is DJsonArray);
         }
         
-        //TODO Consider adding block by hash
-        
         [Fact]
         public async Task TestBlockByLevel()
         {

@@ -15,8 +15,9 @@ public class AuthServiceTests
     [Fact]
     public void PubKeyAuthTest()
     {
-        string expectedError = null;
-        string error = null;
+        string? error;
+        string? expectedError;
+
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("Auth/Samples/PubKeyAuthSample.json")
             .Build();
@@ -67,7 +68,7 @@ public class AuthServiceTests
                 expectedError = $"User {headers.User} doesn't have required permissions. {rights.Table} required.";
                 Assert.StartsWith(expectedError, error);
 
-                rights.Table = credentials.Rights.FirstOrDefault(x => x.Section == null).Table;
+                rights.Table = credentials.Rights.FirstOrDefault(x => x.Section == null)?.Table;
                 Assert.False(auth.TryAuthenticate(headers, rights, out error));
                 expectedError = $"User {headers.User} doesn't have required permissions. {Access.Write} required.";
                 Assert.StartsWith(expectedError, error);
@@ -77,7 +78,7 @@ public class AuthServiceTests
                 expectedError = $"User {headers.User} doesn't have required permissions. {rights.Section} required.";
                 Assert.StartsWith(expectedError, error);
                 
-                rights.Section = credentials.Rights.FirstOrDefault(x => x.Section != null).Section;
+                rights.Section = credentials.Rights.FirstOrDefault(x => x.Section != null)?.Section;
                 rights.Access = Access.Write;
                 Assert.False(auth.TryAuthenticate(headers, rights, out error));
                 expectedError = $"User {headers.User} doesn't have required permissions. {rights.Access} required for section {rights.Section}.";
@@ -99,10 +100,10 @@ public class AuthServiceTests
             Assert.Equal(expectedError, error);
 
             Task.Delay(10);
-            string json = null;
+            string? json = null;
             headers.Nonce = (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
             Assert.False(auth.TryAuthenticate(headers, rights, json, out error));
-            expectedError = "The body is empty";
+            expectedError = "Request body is empty";
             Assert.Equal(expectedError, error);
 
             json = "{\"test\": \"test\"}";
@@ -115,12 +116,12 @@ public class AuthServiceTests
     [Fact]
     public void PasswordAuthTest()
     {
-        string expectedError = null;
-        string error = null;
+        string? error;
+        string? expectedError;
+
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("Auth/Samples/PasswordAuthSample.json")
             .Build();
-
 
         var auth = new PasswordAuth(configuration);
         var config = configuration.GetAuthConfig();
@@ -163,7 +164,7 @@ public class AuthServiceTests
                 expectedError = $"User {headers.User} doesn't have required permissions. {rights.Table} required.";
                 Assert.StartsWith(expectedError, error);
 
-                rights.Table = credentials.Rights.FirstOrDefault().Table;
+                rights.Table = credentials.Rights.FirstOrDefault()?.Table;
                 Assert.False(auth.TryAuthenticate(headers, rights, out error));
                 expectedError = $"User {headers.User} doesn't have required permissions. {rights.Section} required.";
                 Assert.StartsWith(expectedError, error);   
@@ -177,9 +178,9 @@ public class AuthServiceTests
             rights.Access = Access.Read;
             Assert.True(auth.TryAuthenticate(headers, rights, out error));
         
-            string json = null;
+            string? json = null;
             Assert.False(auth.TryAuthenticate(headers, rights, json, out error));
-            expectedError = "The body is empty";
+            expectedError = "Request body is empty";
             Assert.Equal(expectedError, error);
 
             json = "{\"test\": \"test\"}";

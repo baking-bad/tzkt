@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Net.Http;
 using Dynamic.Json;
-using Netezos.Rpc;
 
 namespace Tzkt.Api.Tests.Api
 {
     public class SettingsFixture : IDisposable
     {
-        static readonly object Crit = new object();
+        static readonly object Crit = new();
 
         public HttpClient Client { get; }
         public string Baker { get; }
@@ -23,7 +22,7 @@ namespace Tzkt.Api.Tests.Api
 
                 Client = new HttpClient()
                 {
-                    BaseAddress = new Uri(settings.Url) 
+                    BaseAddress = new Uri(settings.Url)
                 };
 
                 Baker = settings.Baker;
@@ -33,6 +32,10 @@ namespace Tzkt.Api.Tests.Api
             }
         }
 
-        public void Dispose() => Client.Dispose();
+        public void Dispose()
+        {
+            Client.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }
