@@ -1,0 +1,38 @@
+{
+  "Authentication": {
+    "Method": "PubKey",
+    "NonceLifetime": 1000,
+    "Users": [
+      {
+        "Name": "full",
+        "PubKey": "edpkvJbQThvxUT9L4EuF9SQtAnsF6wLXTJ2J435Jvds6aaK5Yw725N"
+      },
+      {
+        "Name": "alexey",
+        "PubKey": "edpkvJbQThvxUT9L4EuF9SQtAnsF6wLXTJ2J435Jvds6aaK5Yw725N",
+        "Rights": [
+          {
+            "Table": "Accounts",
+            "Access": "Read"
+          },
+          {
+            "Table": "Accounts",
+            "Section": "AccountsSectionTwo",
+            "Access": "Read"
+          },
+          {
+            "Table": "Operations",
+            "Section": "OperationsSectionOne",
+            "Access": "Read"
+          },
+          {
+            "Table": "Operations",
+            "Section": "AccountsSectionTwo",
+            "Access": "Write"
+          }
+        ]
+      }
+      ]
+  },
+  "PrivKey": "edsk2zaL631nxAfvG7xHAGf6ne1atpKuKY9qh3iv6DburheLovKuTW"
+}

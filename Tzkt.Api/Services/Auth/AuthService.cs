@@ -5,15 +5,15 @@ namespace Tzkt.Api.Services.Auth
 {
     public interface IAuthService
     {
-        public bool TryAuthenticate(AuthHeaders headers, out string error);
-        public bool TryAuthenticate(AuthHeaders headers, string json, out string error);
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error);
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string json, out string error);
     }
     
     public static class AuthServiceExt
     {
         public static void AddAuthService(this IServiceCollection services, IConfiguration config)
         {
-            switch (config.GetAuthConfig()?.Method)
+            switch (config.GetAuthConfig().Method)
             {
                 case AuthMethod.Password:
                     services.AddSingleton<IAuthService, PasswordAuth>();
