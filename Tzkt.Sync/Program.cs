@@ -48,6 +48,8 @@ namespace Tzkt.Sync
                     services.AddQuotes(hostContext.Configuration);
                     services.AddHostedService<Observer>();
 
+                    
+                    
                     #region healh checks
                     var healthChecks = hostContext.Configuration.GetHealthChecksConfig();
                     if (healthChecks.Enabled)
@@ -83,6 +85,12 @@ namespace Tzkt.Sync
             logger.LogInformation("Version {verion}",
                 Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
+            var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+            if(            config.GetTezosProtocolsConfig().Diagnostics
+              )
+                logger.LogInformation("!!!!!!!Diagnostics enabled!!!!!");
+            
             try
             {
                 logger.LogInformation("Initialize database");

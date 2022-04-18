@@ -83,8 +83,17 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 await TestAccount(level, account);
             }
+
+            var a = Cache.Blocks.Current().Events;
+            
+            if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
+            {
+                await TestRights(state, state.Cycle);
+            }
         }
 
+        protected virtual Task TestRights(AppState state, int cycle) => Task.CompletedTask;
+        
         protected virtual async Task TestGlobalCounter(int level, AppState state)
         {
             if ((await Rpc.GetGlobalCounterAsync(level)).RequiredInt32() != state.ManagerCounter)
