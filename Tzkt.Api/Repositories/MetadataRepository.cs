@@ -132,58 +132,55 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => new MetadataUpdate<T>
             {
                 Key = row.key,
-                Section = section,
                 Metadata = row.metadata
             });
         }
         #endregion
 
         #region update
-        public async Task<MetadataUpdate> UpdateStateMetadata(MetadataUpdate metadata)
+        public async Task<MetadataUpdate> UpdateStateMetadata(MetadataUpdate metadata, string section)
             => (await Update("AppState", "Id", "integer", new List<MetadataUpdate<int>>
             {
                 new()
                 {
                     Key = -1,
-                    Section = metadata.Section,
                     Metadata = metadata.Metadata
                 }
-            }))
+            }, section))
             .Select(x => new MetadataUpdate
             {
-                Section = x.Section,
                 Metadata = x.Metadata
             })
             .FirstOrDefault();
 
-        public Task<List<MetadataUpdate<string>>> UpdateAccountMetadata(List<MetadataUpdate<string>> metadata)
-            => Update("Accounts", "Address", "character(36)", metadata);
+        public Task<List<MetadataUpdate<string>>> UpdateAccountMetadata(List<MetadataUpdate<string>> metadata, string section)
+            => Update("Accounts", "Address", "character(36)", metadata, section);
 
-        public Task<List<MetadataUpdate<string>>> UpdatProposalMetadata(List<MetadataUpdate<string>> metadata)
-            => Update("Proposals", "Hash", "character(51)", metadata);
+        public Task<List<MetadataUpdate<string>>> UpdatProposalMetadata(List<MetadataUpdate<string>> metadata, string section)
+            => Update("Proposals", "Hash", "character(51)", metadata, section);
 
-        public Task<List<MetadataUpdate<string>>> UpdatProtocolMetadata(List<MetadataUpdate<string>> metadata)
-            => Update("Protocols", "Hash", "character(51)", metadata);
+        public Task<List<MetadataUpdate<string>>> UpdatProtocolMetadata(List<MetadataUpdate<string>> metadata, string section)
+            => Update("Protocols", "Hash", "character(51)", metadata, section);
 
-        public Task<List<MetadataUpdate<string>>> UpdateSoftwareMetadata(List<MetadataUpdate<string>> metadata)
-            => Update("Software", "ShortHash", "character(8)", metadata);
+        public Task<List<MetadataUpdate<string>>> UpdateSoftwareMetadata(List<MetadataUpdate<string>> metadata, string section)
+            => Update("Software", "ShortHash", "character(8)", metadata, section);
 
-        public Task<List<MetadataUpdate<string>>> UpdateConstantMetadata(List<MetadataUpdate<string>> metadata)
-            => Update("RegisterConstantOps", "Address", "character(54)", metadata);
+        public Task<List<MetadataUpdate<string>>> UpdateConstantMetadata(List<MetadataUpdate<string>> metadata, string section)
+            => Update("RegisterConstantOps", "Address", "character(54)", metadata, section);
 
-        public Task<List<MetadataUpdate<int>>> UpdateBlockMetadata(List<MetadataUpdate<int>> metadata)
-            => Update("Blocks", "Level", "integer", metadata);
+        public Task<List<MetadataUpdate<int>>> UpdateBlockMetadata(List<MetadataUpdate<int>> metadata, string section)
+            => Update("Blocks", "Level", "integer", metadata, section);
 
-        public Task<List<MetadataUpdate<int>>> UpdateTokenMetadata(List<MetadataUpdate<int>> metadata)
-            => Update("Tokens", "Id", "integer", metadata);
+        public Task<List<MetadataUpdate<int>>> UpdateTokenMetadata(List<MetadataUpdate<int>> metadata, string section)
+            => Update("Tokens", "Id", "integer", metadata, section);
 
-        async Task<List<MetadataUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<MetadataUpdate<T>> metadata)
+        async Task<List<MetadataUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<MetadataUpdate<T>> metadata, string section)
         {
             var res = new List<MetadataUpdate<T>>(metadata.Count);
             using var db = GetConnection();
             foreach (var meta in metadata)
             {
-                var value = (meta.Section == null, meta.Metadata == null) switch
+                var value = (section == null, meta.Metadata == null) switch
                 {
                     (false, false) => @"jsonb_set(COALESCE(""Metadata"", '{}'), @section::text[], @metadata::jsonb)", // set section
                     (false, true) => @"NULLIF(COALESCE(""Metadata"", '{}') #- @section::text[], '{}')", // remove section
@@ -195,7 +192,7 @@ namespace Tzkt.Api.Repositories
                     UPDATE ""{table}""
                     SET ""Metadata"" = {value}
                     WHERE ""{keyColumn}"" = @key::{keyType}",
-                    new { key = meta.Key, metadata = (string)meta.Metadata, section = new[] { meta.Section } });
+                    new { key = meta.Key, metadata = (string)meta.Metadata, section = new[] { section } });
 
                 if (rows > 0)
                     res.Add(meta);

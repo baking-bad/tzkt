@@ -77,6 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                             AND ""EndorsementRewards"" != 0
                         ) as bc
                         WHERE sb.""Level"" = {block.Level}
+                        AND sb.""DelegateId"" IS NULL
                         AND sb.""AccountId"" = bc.""BakerId""");
                 }
                 #endregion

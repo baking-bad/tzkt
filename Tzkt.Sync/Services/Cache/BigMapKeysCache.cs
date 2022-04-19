@@ -58,7 +58,7 @@ namespace Tzkt.Sync.Services.Cache
                         .ToListAsync();
 
                     foreach (var item in loaded)
-                        Cached.Add((item.BigMapPtr, item.KeyHash), item);
+                        Cached.TryAdd((item.BigMapPtr, item.KeyHash), item);
                 }
             }
         }

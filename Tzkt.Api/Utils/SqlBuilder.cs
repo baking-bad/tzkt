@@ -186,6 +186,22 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, ContractTagsParameter tags)
+        {
+            if (tags == null) return this;
+
+            if (tags.Eq != null)
+                AppendFilter($@"""{column}"" = {tags.Eq}");
+
+            if (tags.Any != null)
+                AppendFilter($@"""{column}"" & {tags.Any} > 0");
+
+            if (tags.All != null)
+                AppendFilter($@"""{column}"" & {tags.All} = {tags.All}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, BigMapTagsParameter tags)
         {
             if (tags == null) return this;

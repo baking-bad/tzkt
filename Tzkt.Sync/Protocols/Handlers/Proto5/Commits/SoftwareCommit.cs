@@ -26,7 +26,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             software.LastLevel = block.Level;
 
             block.Software = software;
-            block.Proposer.Software = software;
+
+            var blockProducer = Cache.Accounts.GetDelegate(block.ProducerId);
+            //Db.TryAttach(blockProducer);
+            blockProducer.Software = software;
         }
 
         public virtual async Task Revert(Block block)

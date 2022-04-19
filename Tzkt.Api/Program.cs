@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
+using Tzkt.Api.Services.Auth;
 using Tzkt.Data;
 
 namespace Tzkt.Api
@@ -17,7 +17,7 @@ namespace Tzkt.Api
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Init().Run();
+            CreateHostBuilder(args).Build().Check().Init().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -92,6 +92,14 @@ namespace Tzkt.Api
 
                 return host.Init(++attempt);
             }
+        }
+        
+        public static IHost Check(this IHost host)
+        {
+            using var scope = host.Services.CreateScope();
+            var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            config.ValidateAuthConfig();
+            return host;
         }
     }
 }

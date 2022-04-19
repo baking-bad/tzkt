@@ -35,7 +35,7 @@ namespace Tzkt.Api.Repositories
                 Alias = contract.Alias,
                 Address = contract.Address,
                 Kind = ContractKinds.ToString(contract.Kind),
-                Tzips = GetTzips(contract.Tags),
+                Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags),
                 Balance = contract.Balance,
                 Creator = creator == null ? null : new CreatorInfo
                 {
@@ -86,6 +86,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Contract>> GetContracts(
             ContractKindParameter kind,
+            ContractTagsParameter tags,
             AccountParameter creator,
             AccountParameter manager,
             AccountParameter @delegate,
@@ -113,6 +114,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
+                .Filter("Tags", tags)
                 .Filter("Balance", balance)
                 .Filter("LastLevel", lastActivity)
                 .Filter("TypeHash", typeHash)
@@ -145,7 +147,7 @@ namespace Tzkt.Api.Repositories
                     Alias = row.Alias,
                     Address = row.Address,
                     Kind = ContractKinds.ToString(row.Kind),
-                    Tzips = GetTzips(row.Tags),
+                    Tzips = ContractTags.ToList((Data.Models.ContractTags)row.Tags),
                     Balance = row.Balance,
                     Creator = creator == null ? null : new CreatorInfo
                     {
@@ -188,6 +190,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetContracts(
             ContractKindParameter kind,
+            ContractTagsParameter tags,
             AccountParameter creator,
             AccountParameter manager,
             AccountParameter @delegate,
@@ -252,6 +255,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
+                .Filter("Tags", tags)
                 .Filter("Balance", balance)
                 .Filter("LastLevel", lastActivity)
                 .Filter("TypeHash", typeHash)
@@ -290,7 +294,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "tzips":
                         foreach (var row in rows)
-                            result[j++][i] = GetTzips(row.Tags);
+                            result[j++][i] = ContractTags.ToList((Data.Models.ContractTags)row.Tags);
                         break;
                     case "address":
                         foreach (var row in rows)
@@ -425,6 +429,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> GetContracts(
             ContractKindParameter kind,
+            ContractTagsParameter tags,
             AccountParameter creator,
             AccountParameter manager,
             AccountParameter @delegate,
@@ -486,6 +491,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
                 .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
                 .Filter("Kind", kind)
+                .Filter("Tags", tags)
                 .Filter("Balance", balance)
                 .Filter("LastLevel", lastActivity)
                 .Filter("TypeHash", typeHash)
@@ -521,7 +527,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "tzips":
                     foreach (var row in rows)
-                        result[j++] = GetTzips(row.Tags);
+                        result[j++] = ContractTags.ToList((Data.Models.ContractTags)row.Tags);
                     break;
                 case "address":
                     foreach (var row in rows)
@@ -1429,21 +1435,6 @@ namespace Tzkt.Api.Repositories
                     _ => throw new Exception("Invalid MichelineFormat value")
                 })
                 : null;
-        }
-
-        IEnumerable<string> GetTzips(int tags)
-        {
-            if (tags == 0) return null;
-            var res = new List<string>(1);
-
-            if ((tags & (int)Data.Models.ContractTags.FA2) == (int)Data.Models.ContractTags.FA2)
-                res.Add("fa2");
-            else if ((tags & (int)Data.Models.ContractTags.FA12) == (int)Data.Models.ContractTags.FA12)
-                res.Add("fa12");
-            else if ((tags & (int)Data.Models.ContractTags.FA1) == (int)Data.Models.ContractTags.FA1)
-                res.Add("fa1");
-
-            return res;
         }
     }
 }
