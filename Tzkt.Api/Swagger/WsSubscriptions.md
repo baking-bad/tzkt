@@ -64,7 +64,7 @@ await connection.invoke("SubscribeToBlocks");
 
 ---
 
-## SubscribeToAccount
+## SubscribeToAccounts
 
 Sends touched accounts (affected by any operation in any way).
 
@@ -88,7 +88,7 @@ Sends touched accounts (affected by any operation in any way).
 
 ### Data model
 
-Same as in [/accounts/{address}](#operation/Accounts_GetByAddress).
+`data` is an array of items described in response sectioin of [/accounts/{address}](#operation/Accounts_GetByAddress) request.
 
 ### State
 
