@@ -235,14 +235,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var baker = await Cache.Accounts.GetAsync(kv.Key); // WTF: rights were given to non-baker accounts
                     var snapshot = snapshots[kv.Key];
 
-                    var share = (double)snapshot.StakingBalance / futureCycle.TotalStaking;
+                    var activeStake = snapshot.StakingBalance - snapshot.StakingBalance % block.Protocol.TokensPerRoll;
+                    var share = (double)activeStake / futureCycle.SelectedStake;
 
                     var bakerCycle = new BakerCycle
                     {
                         Cycle = futureCycle.Index,
                         BakerId = kv.Key,
                         StakingBalance = snapshot.StakingBalance,
-                        ActiveStake = snapshot.StakingBalance,
+                        ActiveStake = activeStake,
                         SelectedStake = futureCycle.SelectedStake,
                         DelegatedBalance = snapshot.DelegatedBalance,
                         DelegatorsCount = snapshot.DelegatorsCount,
@@ -314,14 +315,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (snapshotedBaker.RequiredInt32("grace_period") != block.Cycle - 3)
                             throw new Exception("Deactivated baker got baking rights");
 
-                        var share = (double)snapshotedBaker.RequiredInt64("staking_balance") / futureCycle.TotalStaking;
+                        var stakingBalance = snapshotedBaker.RequiredInt64("staking_balance");
+                        var activeStake = stakingBalance - stakingBalance % block.Protocol.TokensPerRoll;
+                        var share = (double)activeStake / futureCycle.SelectedStake;
 
                         bakerCycle = new BakerCycle
                         {
                             Cycle = futureCycle.Index,
                             BakerId = baker.Id,
-                            StakingBalance = snapshotedBaker.RequiredInt64("staking_balance"),
-                            ActiveStake = snapshotedBaker.RequiredInt64("staking_balance"),
+                            StakingBalance = stakingBalance,
+                            ActiveStake = activeStake,
                             SelectedStake = futureCycle.SelectedStake,
                             DelegatedBalance = snapshotedBaker.RequiredInt64("delegated_balance"),
                             DelegatorsCount = delegators.Count(),

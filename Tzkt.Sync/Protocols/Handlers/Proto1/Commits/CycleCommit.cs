@@ -37,10 +37,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var futureSeed = Seed.GetNextSeed(lastSeed, nonces);
                 var snapshotIndex = 0;
                 var snapshotLevel = 1;
+                var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
 
                 if (block.Cycle >= 2)
                 {
-                    var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
                     snapshotIndex = Seed.GetSnapshotIndex(futureSeed);
                     snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
                 }
@@ -88,8 +88,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     TotalDelegated = Snapshots.Values.Sum(x => x.DelegatedBalance),
                     TotalDelegators = Snapshots.Values.Sum(x => x.DelegatorsCount),
                     TotalBakers = Snapshots.Count,
-                    SelectedStake = Snapshots.Values.Sum(x => x.StakingBalance),
-                    SelectedBakers = Snapshots.Count,
+                    SelectedStake = Snapshots.Values.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.TokensPerRoll),
+                    SelectedBakers = Snapshots.Values.Count(x => x.StakingBalance >= snapshotProto.TokensPerRoll),
                     Seed = futureSeed
                 };
 

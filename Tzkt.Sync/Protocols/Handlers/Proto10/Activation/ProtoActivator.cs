@@ -392,14 +392,16 @@ namespace Tzkt.Sync.Protocols.Proto10
                         .Select(x => x.RequiredString())
                         .Where(x => x != baker.Address);
 
-                    var share = (double)snapshotedBaker.RequiredInt64("staking_balance") / cycle.TotalStaking;
+                    var stakingBalance = snapshotedBaker.RequiredInt64("staking_balance");
+                    var activeStake = stakingBalance - stakingBalance % protocol.TokensPerRoll;
+                    var share = (double)activeStake / cycle.SelectedStake;
 
                     bakerCycle = new BakerCycle
                     {
                         Cycle = cycle.Index,
                         BakerId = baker.Id,
-                        StakingBalance = snapshotedBaker.RequiredInt64("staking_balance"),
-                        ActiveStake = snapshotedBaker.RequiredInt64("staking_balance"),
+                        StakingBalance = stakingBalance,
+                        ActiveStake = activeStake,
                         SelectedStake = cycle.SelectedStake,
                         DelegatedBalance = snapshotedBaker.RequiredInt64("delegated_balance"),
                         DelegatorsCount = delegators.Count(),
