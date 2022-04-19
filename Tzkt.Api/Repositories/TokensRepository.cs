@@ -603,7 +603,7 @@ namespace Tzkt.Api.Repositories
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"tr.""Id""", @"tr.""Id"""),
-                    "level" => (@"tr.""Id""", @"tr.""Level"""),
+                    "level" => (@"tr.""Level""", @"tr.""Level"""),
                     "amount" => (@"tr.""Amount""::numeric", @"tr.""Amount""::numeric"),
                     "token.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
                     _ => TryMetaSort(x)
