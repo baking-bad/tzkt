@@ -14,11 +14,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => x.Type == AccountType.Delegate)
                 .Select(x => x as Delegate);
 
-            var totalRolls = delegates.Sum(x => (int)(x.StakingBalance / protocol.TokensPerRoll));
             var totalStake = delegates.Sum(x => x.StakingBalance);
             var totalDelegated = delegates.Sum(x => x.DelegatedBalance);
             var totalDelegators = delegates.Sum(x => x.DelegatorsCount);
             var totalBakers = delegates.Count();
+            var selectedStake = delegates.Sum(x => x.StakingBalance - x.StakingBalance % protocol.TokensPerRoll);
+            var selectedBakers = delegates.Count(x => x.StakingBalance >= protocol.TokensPerRoll);
 
             var seeds = Seed.GetInitialSeeds(protocol.PreservedCycles + 1);
             for (int index = 0; index <= protocol.PreservedCycles; index++)
@@ -34,8 +35,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     TotalDelegated = totalDelegated,
                     TotalDelegators = totalDelegators,
                     TotalBakers = totalBakers,
-                    SelectedStake = totalStake,
-                    SelectedBakers = totalBakers,
+                    SelectedStake = selectedStake,
+                    SelectedBakers = selectedBakers,
                     Seed = seeds[index]
                 });
             }
