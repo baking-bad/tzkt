@@ -86,13 +86,15 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var a = Cache.Blocks.Current().Events;
             
+            if (level == 8190)
+                Console.WriteLine($"Got here");
             if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
             {
-                await TestRights(state, state.Cycle);
+                await TestParticipation(state);
             }
         }
 
-        protected virtual Task TestRights(AppState state, int cycle) => Task.CompletedTask;
+        protected virtual Task TestParticipation(AppState state) => Task.CompletedTask;
         
         protected virtual async Task TestGlobalCounter(int level, AppState state)
         {

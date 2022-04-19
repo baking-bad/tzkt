@@ -88,6 +88,15 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Invalid int {name}");
         }
 
+        public static long? OptionalInt64(this JsonElement el, string name)
+        {
+            if (!el.TryGetProperty(name, out var prop))
+                return null;
+
+            return prop.TryParseInt64(out var res) ? res
+                : throw new SerializationException($"Invalid int {name}");
+        }
+
         public static int RequiredInt32(this JsonElement el)
         {
             return el.TryParseInt32(out var res) ? res

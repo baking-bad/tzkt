@@ -36,6 +36,9 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual Task<JsonElement> GetDelegateAsync(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates/{address}");
 
+        public virtual Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/delegates/{address}/participation");
+
         public virtual Task<JsonElement> GetStakeDistribution(int block, int cycle)
             => throw new InvalidOperationException();
         #endregion

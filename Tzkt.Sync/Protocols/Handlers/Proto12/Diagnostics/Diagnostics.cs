@@ -8,7 +8,12 @@ namespace Tzkt.Sync.Protocols.Proto12
 {
     class Diagnostics : Proto5.Diagnostics
     {
-        public Diagnostics(ProtocolHandler handler) : base(handler) { }
+        protected readonly IRpc Rpc;
+
+        public Diagnostics(ProtocolHandler handler) : base(handler)
+        {
+            Rpc = handler.Rpc;
+        }
 
         protected override async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
         {
@@ -36,84 +41,60 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong grace period {delegat.Address}");
 
+            if(delegat.FrozenDepositLimit != null)
+                Console.WriteLine("check");
+
+            var a = remote.OptionalInt64("frozen_deposits_limit");
+            if (remote.OptionalInt64("frozen_deposits_limit") != delegat.FrozenDepositLimit)
+                throw new Exception($"Diagnostics failed: wrong frozen deposits limit {delegat.Address}");
+            
             TestDelegatorsCount(remote, delegat);
         }
 
-        protected override async Task TestRights(AppState state, int cycle)
+        protected override async Task TestParticipation(AppState state)
         {
-                if (state.Chain == "mainnet" && cycle < 13)
-                    return;
+            Console.WriteLine($"{nameof(TestParticipation)}:");
 
-                var itha = await Db.Protocols.Where(x => x.Hash == "Psithaca2MLRFYargivpo7YvUr7wUDqyxrdhC5CQq78mRvimz6A").FirstOrDefaultAsync();
-                var migration = (itha?.FirstCycle ?? 0) - 1;
-                
-                var protocols = await Db.Protocols.OrderByDescending(x => x.Code).ToListAsync();
-                var proto = protocols.First(x => x.FirstCycle <= cycle);
+            var ind = 0;
+            var bakers = await Db.Delegates.ToListAsync();
+            var bakerCycles = await Db.BakerCycles.Where(x => x.Cycle == state.Cycle).ToDictionaryAsync(x => x.BakerId);
+            var cycle = await Db.Cycles.SingleAsync(x => x.Index == state.Cycle);
+            foreach (var baker in bakers)
+            {
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"{++ind} / {bakers.Count}");
 
-                var fBr = await Db.BakingRights.CountAsync(x =>
-                    x.Cycle == cycle &&
-                    x.Type == BakingRightType.Baking &&
-                    x.Status == BakingRightStatus.Future);
-
-                if (fBr > 0)
-                    throw new Exception($"There are {fBr} future baking rights for cycle {cycle}");
-
-                var sBr = await Db.BakingRights.CountAsync(x =>
-                    x.Cycle == cycle &&
-                    x.Type == BakingRightType.Baking &&
-                    x.Status == BakingRightStatus.Realized);
-
-                var reproposedBlocks = await Db.Blocks.CountAsync(x =>
-                    x.Cycle == cycle &&
-                    x.ProposerId != x.ProducerId);
-
-                if (sBr != proto.BlocksPerCycle + reproposedBlocks && cycle > 0 ||
-                    cycle == 0 && sBr != proto.BlocksPerCycle + reproposedBlocks - 1)
-                    throw new Exception($"Wrong successfull baking rights {sBr} for cycle {cycle}, should be {proto.BlocksPerCycle + reproposedBlocks} (or -1)");
-
-                var allBr = await Db.BakingRights.CountAsync(x =>
-                    x.Cycle == cycle &&
-                    x.Type == BakingRightType.Baking);
-
-                var allPr = await Db.Blocks
-                    .Where(x => x.Cycle == cycle)
-                    .SumAsync(x => x.BlockRound + 1);
-
-                if (allBr != allPr && cycle > 0 || cycle == 0 && allBr != allPr - 1)
-                    throw new Exception($"Wrong total number of baking rights {allBr} for cycle {cycle}, should be {allPr} (or -1)");
-
-                var fEr = await Db.BakingRights.CountAsync(x =>
-                    x.Cycle == cycle &&
-                    x.Type == BakingRightType.Endorsing &&
-                    x.Status == BakingRightStatus.Future);
-
-                if (fEr > 0)
-                    throw new Exception($"There are {fEr} future endorsing rights for cycle {cycle}");
-
-                var sEr = await Db.BakingRights.Where(x =>
-                    x.Cycle == cycle &&
-                    x.Type == BakingRightType.Endorsing &&
-                    x.Status == BakingRightStatus.Realized).SumAsync(x => x.Slots);
-
-                var allVal = await Db.Blocks
-                    .Where(x => x.Cycle == cycle)
-                    .SumAsync(x => x.Validations);
-
-                if (sEr != allVal)
-                    throw new Exception($"Wrong successfull slots {sEr} for cycle {cycle}, should be {allVal}");
-
-                if (cycle != migration && !(state.Chain == "mainnet" && cycle == 387))
+                var remote = await Rpc.GetDelegateParticipationAsync(state.Level, baker.Address);
+                if (bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
                 {
-                    var mEr = await Db.BakingRights.Where(x =>
-                        x.Cycle == cycle &&
-                        x.Type == BakingRightType.Endorsing &&
-                        x.Status == BakingRightStatus.Missed)
-                        .SumAsync(x => x.Slots);
+                    if ((long)bakerCycle.ExpectedEndorsements != remote.RequiredInt64("expected_cycle_activity"))
+                        throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
 
-                    var totalSlots = (proto.BlocksPerCycle - (cycle == 0 ? 1 : 0)) * proto.EndorsersPerBlock;
-                    if (mEr != totalSlots - sEr)
-                        throw new Exception($"Wrong missed slots {mEr} for cycle {cycle}, should be {totalSlots - sEr}");
+                    if (bakerCycle.FutureEndorsementRewards != remote.RequiredInt64("expected_endorsing_rewards"))
+                    {
+                        var cycleStart = await Rpc.GetDelegateParticipationAsync(cycle.FirstLevel, baker.Address);
+                        if (bakerCycle.FutureEndorsementRewards != cycleStart.RequiredInt64("expected_endorsing_rewards"))
+                            throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
+                    }
+
+                    if (bakerCycle.MissedEndorsements != remote.RequiredInt64("missed_slots"))
+                        throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
                 }
+                else
+                {
+                    if (0 != remote.RequiredInt64("expected_cycle_activity"))
+                        throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
+
+                    if (0L != remote.RequiredInt64("expected_endorsing_rewards"))
+                        throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
+
+                    if (0 != remote.RequiredInt64("missed_slots"))
+                        throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
+                }
+            }
+
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.WriteLine("done");
         }
     }
 }

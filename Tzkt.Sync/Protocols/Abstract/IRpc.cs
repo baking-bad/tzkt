@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetLevelEndorsingRightsAsync(int block, int level);
         Task<JsonElement> GetContractAsync(int level, string address);
         Task<JsonElement> GetDelegateAsync(int level, string address);
+        Task<JsonElement> GetDelegateParticipationAsync(int level, string address);
         Task<JsonElement> GetStakeDistribution(int block, int cycle);
         #endregion
         
