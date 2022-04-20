@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
+        protected virtual async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
         {
             var bootstrapAccounts = parameters["bootstrap_accounts"]?
                 .Select(x => (x[0].Value<string>(), x[1].Value<long>()))

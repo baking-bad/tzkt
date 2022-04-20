@@ -37,11 +37,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var futureSeed = Seed.GetNextSeed(lastSeed, nonces);
                 var snapshotIndex = 0;
                 var snapshotLevel = 1;
-                var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 2);
+                var snapshotProto = await Cache.Protocols.FindByCycleAsync(Math.Max(block.Cycle - 2, 0));
 
                 if (block.Cycle >= 2)
                 {
-                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed);
+                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed, snapshotProto.SnapshotsPerCycle);
                     snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 2) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
                 }
 

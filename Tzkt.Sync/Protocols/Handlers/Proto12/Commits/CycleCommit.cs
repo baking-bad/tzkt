@@ -40,7 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             var snapshotIndex = 0;
             var snapshotLevel = 1;
 
-            if (block.Cycle >= 2)
+            if (block.Cycle >= 1)
             {
                 if (block.Cycle == block.Protocol.FirstCycle)
                 {
@@ -49,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 else
                 {
                     var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 1);
-                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed, true);
+                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed, snapshotProto.SnapshotsPerCycle, true);
                     #region ithaca activation quirk
                     // on the mainnet the snapshot index after the first Ithaca cycle was calculated differently
                     if (Cache.AppState.Get().Chain == "mainnet" && block.Cycle == 469)

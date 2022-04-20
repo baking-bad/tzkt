@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
@@ -10,11 +9,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        public void BootstrapBakerCycles(
+        public virtual void BootstrapBakerCycles(
             Protocol protocol,
             List<Account> accounts,
-            List<JsonElement> bakingRights,
-            List<JsonElement> endorsingRights)
+            List<Cycle> cycles,
+            List<IEnumerable<RightsGenerator.BR>> bakingRights,
+            List<IEnumerable<RightsGenerator.ER>> endorsingRights)
         {
             var bakers = accounts
                 .Where(x => x.Type == AccountType.Delegate)
@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             for (int cycle = 0; cycle <= protocol.PreservedCycles; cycle++)
             {
-                var bakerCycles = bakers.ToDictionary(x => x.Address, x =>
+                var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
                 {
                     var activeStake = x.StakingBalance - x.StakingBalance % protocol.TokensPerRoll;
                     var share = (double)activeStake / selectedStake;
@@ -43,13 +43,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 });
 
                 #region future baking rights
-                var skipLevel = bakingRights[cycle][0].RequiredInt32("level"); // skip bootstrap block rights
-                foreach (var br in bakingRights[cycle].EnumerateArray().SkipWhile(x => cycle == 0 && x.RequiredInt32("level") == skipLevel))
+                foreach (var br in bakingRights[cycle].SkipWhile(x => x.Level == 1)) // skip bootstrap block rights
                 {
-                    if (br.RequiredInt32("priority") > 0)
+                    if (br.Round > 0)
                         continue;
 
-                    if (!bakerCycles.TryGetValue(br.RequiredString("delegate"), out var bakerCycle))
+                    if (!bakerCycles.TryGetValue(br.Baker, out var bakerCycle))
                         throw new Exception("Unknown baking right recipient");
 
                     bakerCycle.FutureBlocks++;
@@ -58,32 +57,28 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #endregion
 
                 #region future endorsing rights
-                skipLevel = endorsingRights[cycle].EnumerateArray().Last().RequiredInt32("level"); // skip shifted rights
-                foreach (var er in endorsingRights[cycle].EnumerateArray().TakeWhile(x => x.RequiredInt32("level") < skipLevel))
+                var skipLevel = endorsingRights[cycle].Last().Level; // skip shifted rights
+                foreach (var er in endorsingRights[cycle].TakeWhile(x => x.Level < skipLevel))
                 {
-                    if (!bakerCycles.TryGetValue(er.RequiredString("delegate"), out var bakerCycle))
+                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
                         throw new Exception("Unknown endorsing right recipient");
 
-                    var slots = er.RequiredArray("slots").Count();
-
-                    bakerCycle.FutureEndorsements += slots;
-                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle, slots);
+                    bakerCycle.FutureEndorsements += er.Slots;
+                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle, er.Slots);
                 }
                 #endregion
 
                 #region shifted future endirsing rights
                 if (cycle > 0)
                 {
-                    var shiftedLevel = endorsingRights[cycle - 1].EnumerateArray().Last().RequiredInt32("level");
-                    foreach (var er in endorsingRights[cycle - 1].EnumerateArray().Reverse().TakeWhile(x => x.RequiredInt32("level") == shiftedLevel))
+                    var shiftedLevel = endorsingRights[cycle - 1].Last().Level;
+                    foreach (var er in endorsingRights[cycle - 1].Reverse().TakeWhile(x => x.Level == shiftedLevel))
                     {
-                        if (!bakerCycles.TryGetValue(er.RequiredString("delegate"), out var bakerCycle))
+                        if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
                             throw new Exception("Unknown endorsing right recipient");
 
-                        var slots = er.RequiredArray("slots").Count();
-
-                        bakerCycle.FutureEndorsements += slots;
-                        bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle, slots);
+                        bakerCycle.FutureEndorsements += er.Slots;
+                        bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle, er.Slots);
                     }
                 }
                 #endregion

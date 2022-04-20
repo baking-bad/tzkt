@@ -57,16 +57,20 @@ namespace Tzkt.Sync.Protocols
                 }
                 else if (small.Count > 0)
                 {
-                    var l = small[^1];
-                    p[l.Index] = total;
-                    alias[l.Index] = -1;
+                    foreach (var l in small)
+                    {
+                        p[l.Index] = total;
+                        alias[l.Index] = -1;
+                    }
                     break;
                 }
                 else if (large.Count > 0)
                 {
-                    var g = large[^1];
-                    p[g.Index] = total;
-                    alias[g.Index] = -1;
+                    foreach (var g in large)
+                    {
+                        p[g.Index] = total;
+                        alias[g.Index] = -1;
+                    }
                     break;
                 }
                 else

@@ -8,8 +8,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        public void BootstrapCycles(Protocol protocol, List<Account> accounts)
+        public virtual List<Cycle> BootstrapCycles(Protocol protocol, List<Account> accounts)
         {
+            var cycles = new List<Cycle>(protocol.PreservedCycles + 1);
             var delegates = accounts
                 .Where(x => x.Type == AccountType.Delegate)
                 .Select(x => x as Delegate);
@@ -24,7 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var seeds = Seed.GetInitialSeeds(protocol.PreservedCycles + 1);
             for (int index = 0; index <= protocol.PreservedCycles; index++)
             {
-                Db.Cycles.Add(new Cycle
+                var cycle = new Cycle
                 {
                     Index = index,
                     FirstLevel = protocol.GetCycleStart(index),
@@ -38,11 +39,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     SelectedStake = selectedStake,
                     SelectedBakers = selectedBakers,
                     Seed = seeds[index]
-                });
+                };
+                Db.Cycles.Add(cycle);
+                cycles.Add(cycle);
             }
 
             var state = Cache.AppState.Get();
             state.CyclesCount += protocol.PreservedCycles + 1;
+
+            return cycles;
         }
 
         public async Task ClearCycles()

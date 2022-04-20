@@ -1,14 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
-namespace Tzkt.Sync.Protocols.Proto1
+namespace Tzkt.Sync.Protocols.Proto12
 {
-    partial class ProtoActivator : ProtocolCommit
+    partial class ProtoActivator : Proto11.ProtoActivator
     {
-        public virtual void BootstrapSnapshotBalances(List<Account> accounts)
+        public override void BootstrapSnapshotBalances(List<Account> accounts)
         {
             Db.SnapshotBalances.AddRange(accounts.Where(x => x.Staked)
                 .Select(x => new SnapshotBalance
@@ -16,13 +14,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     AccountId = x.Id, 
                     Balance = x.Balance,
                     DelegateId = x.DelegateId,
+                    DelegatedBalance = (x as Delegate)?.DelegatedBalance,
+                    DelegatorsCount = (x as Delegate)?.DelegatorsCount,
+                    StakingBalance = (x as Delegate)?.StakingBalance,
                     Level = 1
                 }));
-        }
-
-        public async Task ClearSnapshotBalances()
-        {
-            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""SnapshotBalances""");
         }
     }
 }

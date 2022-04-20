@@ -10,7 +10,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class ProtoActivator : Proto11.ProtoActivator
+    partial class ProtoActivator : Proto11.ProtoActivator
     {
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
@@ -92,6 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         public async Task PostActivation(AppState state)
         {
+            if (state.Level == 1) return;
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 

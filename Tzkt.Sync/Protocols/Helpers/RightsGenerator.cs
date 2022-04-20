@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Protocols
         {
             var rounds = BakingRight.MaxRound + 1;
             var res = new List<BR>(protocol.BlocksPerCycle * rounds);
-            var step = protocol.BlocksPerCycle / Environment.ProcessorCount;
+            var step = (int)Math.Ceiling((double)protocol.BlocksPerCycle / Environment.ProcessorCount);
             var tasks = new List<Task>();
             for (int i = 0; i < protocol.BlocksPerCycle; i += step)
             {
@@ -96,7 +96,7 @@ namespace Tzkt.Sync.Protocols
         public static async Task<IEnumerable<ER>> GetEndorsingRightsAsync(Sampler sampler, Protocol protocol, Cycle cycle)
         {
             var res = new List<ER>(protocol.BlocksPerCycle * sampler.Length);
-            var step = protocol.BlocksPerCycle / Environment.ProcessorCount;
+            var step = (int)Math.Ceiling((double)protocol.BlocksPerCycle / Environment.ProcessorCount);
             var tasks = new List<Task>();
             for (int i = 0; i < protocol.BlocksPerCycle; i += step)
             {

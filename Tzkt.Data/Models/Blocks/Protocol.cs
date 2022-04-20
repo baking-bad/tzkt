@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
@@ -113,6 +114,9 @@ namespace Tzkt.Data.Models
 
             return (level + 1 - FirstCycleLevel) % BlocksPerCycle == 0;
         }
+
+        [NotMapped]
+        public int SnapshotsPerCycle => BlocksPerCycle / BlocksPerSnapshot;
         #endregion
     }
 
