@@ -49,7 +49,8 @@ namespace Tzkt.Sync.Protocols
             while (--tries > 0)
             {
                 state = Blake2b.ComputeHash(32, state);
-                var r = Math.Abs(state.ReadInt32(0));
+                var r = state.ReadInt32(0);
+                r = r == int.MinValue ? 0 : Math.Abs(r);
                 if (r < max) return r % snapshots;
             }
             throw new Exception("You are lucky :D");

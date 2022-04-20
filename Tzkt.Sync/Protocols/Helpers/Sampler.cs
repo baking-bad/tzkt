@@ -110,7 +110,8 @@ namespace Tzkt.Sync.Protocols
             if (pos > state.Length - 8)
                 return TakeInt64(Blake2Fast.Blake2b.ComputeHash(32, state), 0, bound, out nextState, out nextPos);
 
-            var r = Math.Abs(state.ReadInt64(pos));
+            var r = state.ReadInt64(pos);
+            r = r == long.MinValue ? 0L : Math.Abs(r);
             if (r >= long.MaxValue - long.MaxValue % bound)
                 return TakeInt64(state, pos + 8, bound, out nextState, out nextPos);
 
