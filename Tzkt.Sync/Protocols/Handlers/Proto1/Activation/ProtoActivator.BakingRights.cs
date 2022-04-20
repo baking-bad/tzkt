@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -10,49 +9,46 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        public async Task<(List<JsonElement>, List<JsonElement>)> BootstrapBakingRights(Protocol protocol, List<Account> accounts)
+        public async Task<(List<IEnumerable<RightsGenerator.BR>>, List<IEnumerable<RightsGenerator.ER>>)> BootstrapBakingRights(
+            Protocol protocol,
+            List<Cycle> cycles)
         {
-            var bakingRights = new List<JsonElement>(protocol.PreservedCycles + 1);
-            var endorsingRights = new List<JsonElement>(protocol.PreservedCycles + 1);
+            var bakingRights = new List<IEnumerable<RightsGenerator.BR>>(protocol.PreservedCycles + 1);
+            var endorsingRights = new List<IEnumerable<RightsGenerator.ER>>(protocol.PreservedCycles + 1);
 
-            var delegates = accounts
-                .Where(x => x.Type == AccountType.Delegate)
-                .ToDictionary(k => k.Address, v => v.Id);
-
-            for (int cycle = 0; cycle <= protocol.PreservedCycles; cycle++)
+            foreach (var cycle in cycles)
             {
-                var rawBakingRights = await Proto.Rpc.GetBakingRightsAsync(1, cycle);
-                var rawEndorsingRights = await Proto.Rpc.GetEndorsingRightsAsync(1, cycle);
+                var (futureBakingRights, futureEndorsingRights) = await GetRights(protocol, cycle);
 
-                bakingRights.Add(rawBakingRights);
-                endorsingRights.Add(rawEndorsingRights);
+                bakingRights.Add(futureBakingRights);
+                endorsingRights.Add(futureEndorsingRights);
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-                using var writer = conn.BeginBinaryImport(
-                    @"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
+                using var writer = conn.BeginBinaryImport(@"
+                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
+                    FROM STDIN (FORMAT BINARY)");
 
-                foreach (var er in rawEndorsingRights.EnumerateArray())
+                foreach (var er in futureEndorsingRights)
                 {
                     writer.StartRow();
-                    writer.Write(protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
-                    writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                    // level + 1 (shifted)
-                    writer.Write(delegates[er.RequiredString("delegate")], NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(protocol.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                    writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);                    // level + 1 (shifted)
+                    writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.WriteNull();
-                    writer.Write(er.RequiredArray("slots").Count(), NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                 }
 
-                var skipLevel = endorsingRights[cycle][0].RequiredInt32("level"); // skip bootstrap block rights
-                foreach (var br in rawBakingRights.EnumerateArray().SkipWhile(x => cycle == 0 && x.RequiredInt32("level") == skipLevel))
+                foreach (var br in futureBakingRights.SkipWhile(x => x.Level == 1)) // skip bootstrap block rights
                 {
                     writer.StartRow();
-                    writer.Write(cycle, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(br.RequiredInt32("level"), NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(delegates[br.RequiredString("delegate")], NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write(br.RequiredInt32("priority"), NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.WriteNull();
                 }
 
@@ -65,6 +61,29 @@ namespace Tzkt.Sync.Protocols.Proto1
         public async Task ClearBakingRights()
         {
             await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""BakingRights""");
+        }
+
+        protected virtual async Task<(IEnumerable<RightsGenerator.BR>, IEnumerable<RightsGenerator.ER>)> GetRights(Protocol protocol, Cycle cycle)
+        {
+            var bakingRights = (await Proto.Rpc.GetBakingRightsAsync(1, cycle.Index))
+                .EnumerateArray()
+                .Select(x => new RightsGenerator.BR
+                {
+                    Baker = Cache.Accounts.GetDelegate(x.RequiredString("delegate")).Id,
+                    Level = x.RequiredInt32("level"),
+                    Round = x.RequiredInt32("priority")
+                });
+
+            var endorsingRights = (await Proto.Rpc.GetEndorsingRightsAsync(1, cycle.Index))
+                .EnumerateArray()
+                .Select(x => new RightsGenerator.ER
+                {
+                    Baker = Cache.Accounts.GetDelegate(x.RequiredString("delegate")).Id,
+                    Level = x.RequiredInt32("level"),
+                    Slots = x.RequiredArray("slots").Count()
+                });
+
+            return (bakingRights, endorsingRights);
         }
     }
 }

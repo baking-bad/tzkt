@@ -15,10 +15,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var (protocol, parameters) = BootstrapProtocol(rawBlock);
 
                 var accounts = await BootstrapAccounts(protocol, parameters);
-                var (bakingRights, endorsingRights) = await BootstrapBakingRights(protocol, accounts);
-                BootstrapCycles(protocol, accounts);
+                var cycles = BootstrapCycles(protocol, accounts);
+                var (bakingRights, endorsingRights) = await BootstrapBakingRights(protocol, cycles);
                 BootstrapDelegatorCycles(protocol, accounts);
-                BootstrapBakerCycles(protocol, accounts, bakingRights, endorsingRights);
+                BootstrapBakerCycles(protocol, accounts, cycles, bakingRights, endorsingRights);
                 BootstrapSnapshotBalances(accounts);
                 BootstrapVoting(protocol, accounts);
                 await BootstrapCommitments(parameters);
