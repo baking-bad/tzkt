@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Sync.Services;
@@ -36,6 +37,15 @@ namespace Tzkt.Sync.Protocols.Genesis
         public Task<JsonElement> GetDelegateAsync(int level, string address)
             => throw new InvalidOperationException();
 
+        public Task<HashSet<string>> GetDelegatesAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<HashSet<string>> GetActiveDelegatesAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetRawCycleAsync(int level, int cycle)
+            => throw new InvalidOperationException();
+        
         public Task<JsonElement> GetDelegateParticipationAsync(int level, string address) 
             => throw new InvalidOperationException();
 

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
+using Tzkt.Sync.Utils;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
@@ -56,8 +57,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             Console.WriteLine($"{nameof(TestParticipation)}:");
 
             var ind = 0;
-            var bakers = await Db.Delegates.ToListAsync();
-            var bakerCycles = await Db.BakerCycles.Where(x => x.Cycle == state.Cycle).ToDictionaryAsync(x => x.BakerId);
+            var bakers = Cache.Accounts.GetDelegates().ToList();
+            var bakerCycles = await Cache.BakerCycles.GetAsync(state.Cycle);
+
+            //TODO Add cycles cache or hardcode
             var cycle = await Db.Cycles.SingleAsync(x => x.Index == state.Cycle);
             foreach (var baker in bakers)
             {
@@ -95,6 +98,26 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Console.SetCursorPosition(0, Console.CursorTop);
             Console.WriteLine("done");
+        }
+        
+        protected override async Task TestCycles(AppState state)
+        {
+            //TODO Add cycles cache, perhaps
+            var cycle = await Db.Cycles.SingleAsync(x => x.Index == state.Cycle);
+
+            var level = Math.Min(state.Level, cycle.FirstLevel);
+            var remote = await Rpc.GetRawCycleAsync(level, cycle.Index);
+                
+            if (remote.RequiredString("random_seed") != Hex.Convert(cycle.Seed))
+                throw new Exception($"Invalid cycle {cycle.Index} seed {Hex.Convert(cycle.Seed)}");
+
+            if (cycle.Index == 1) return;
+
+            if (remote.RequiredInt64("total_active_stake") != cycle.SelectedStake)
+                throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.SelectedStake}");
+
+            if (remote.RequiredArray("selected_stake_distribution").Count() != cycle.SelectedBakers)
+                throw new Exception($"Invalid cycle {cycle.Index} selected bakers {cycle.SelectedBakers}");
         }
     }
 }

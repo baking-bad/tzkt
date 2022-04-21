@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Sync.Services;
@@ -36,6 +37,15 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual Task<JsonElement> GetDelegateAsync(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates/{address}");
 
+        public virtual Task<HashSet<string>> GetDelegatesAsync(int level)
+            => Node.GetAsync<HashSet<string>>($"chains/main/blocks/{level}/context/delegates?active=true&inactive=true");
+
+        public virtual Task<HashSet<string>> GetActiveDelegatesAsync(int level)
+            => Node.GetAsync<HashSet<string>>($"chains/main/blocks/{level}/context/delegates?active=true");
+
+        public virtual Task<JsonElement> GetRawCycleAsync(int level, int cycle)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/cycle/{cycle}");
+        
         public virtual Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates/{address}/participation");
 

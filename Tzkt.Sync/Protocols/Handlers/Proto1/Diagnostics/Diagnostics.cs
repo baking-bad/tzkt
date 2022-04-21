@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -62,6 +63,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual async Task RunDiagnostics(int level, int ops = -1)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var entries = Db.ChangeTracker.Entries();
 
             if (ops != -1 && ops != entries.Count(x => x.Entity is BaseOperation && x.State == EntityState.Added))
@@ -83,19 +86,52 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 await TestAccount(level, account);
             }
-
-            var a = Cache.Blocks.Current().Events;
             
             if (level == 8190)
                 Console.WriteLine($"Got here");
             if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
             {
+                await TestBakersTotalList(state);
+                await TestActiveBakersTotalList(state);
+                await TestCycles(state);
                 await TestParticipation(state);
             }
+            stopwatch.Stop();
+            Console.WriteLine($"Diagnostics took {stopwatch.ElapsedMilliseconds}");
         }
 
         protected virtual Task TestParticipation(AppState state) => Task.CompletedTask;
         
+        protected virtual Task TestCycles(AppState state) => Task.CompletedTask;
+
+        protected virtual async Task TestBakersTotalList(AppState state)
+        {
+            var local = Cache.Accounts.GetDelegates().ToList();
+            var remote = await Rpc.GetDelegatesAsync(state.Level);
+
+            if (local.Count != remote.Count)
+                throw new Exception("Invalid total bakers count");
+
+            foreach (var baker in local)
+                if (!remote.Contains(baker.Address))
+                    throw new Exception($"Invalid total baker {baker.Address}");
+        }
+        
+        protected virtual async Task TestActiveBakersTotalList(AppState state)
+        {
+            var local = Cache.Accounts.GetDelegates().Where(x => x.Staked).ToList();
+            var remote = await Rpc.GetActiveDelegatesAsync(state.Level);
+
+            if (local.Count != remote.Count)
+                throw new Exception("Invalid active bakers count");
+
+            foreach (var baker in local)
+                if (!remote.Contains(baker.Address))
+                    throw new Exception($"Invalid active baker {baker.Address}");
+
+            Console.WriteLine("done");
+        }
+
         protected virtual async Task TestGlobalCounter(int level, AppState state)
         {
             if ((await Rpc.GetGlobalCounterAsync(level)).RequiredInt32() != state.ManagerCounter)
