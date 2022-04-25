@@ -42,10 +42,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong grace period {delegat.Address}");
 
-            if(delegat.FrozenDepositLimit != null)
-                Console.WriteLine("check");
-
-            var a = remote.OptionalInt64("frozen_deposits_limit");
             if (remote.OptionalInt64("frozen_deposits_limit") != delegat.FrozenDepositLimit)
                 throw new Exception($"Diagnostics failed: wrong frozen deposits limit {delegat.Address}");
             
@@ -54,31 +50,20 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected override async Task TestParticipation(AppState state)
         {
-            Console.WriteLine($"{nameof(TestParticipation)}:");
-
-            var ind = 0;
             var bakers = Cache.Accounts.GetDelegates().ToList();
             var bakerCycles = await Cache.BakerCycles.GetAsync(state.Cycle);
 
-            //TODO Add cycles cache or hardcode
-            var cycle = await Db.Cycles.SingleAsync(x => x.Index == state.Cycle);
             foreach (var baker in bakers)
             {
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write($"{++ind} / {bakers.Count}");
-
                 var remote = await Rpc.GetDelegateParticipationAsync(state.Level, baker.Address);
+                
                 if (bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
                 {
                     if ((long)bakerCycle.ExpectedEndorsements != remote.RequiredInt64("expected_cycle_activity"))
                         throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
 
                     if (bakerCycle.FutureEndorsementRewards != remote.RequiredInt64("expected_endorsing_rewards"))
-                    {
-                        var cycleStart = await Rpc.GetDelegateParticipationAsync(cycle.FirstLevel, baker.Address);
-                        if (bakerCycle.FutureEndorsementRewards != cycleStart.RequiredInt64("expected_endorsing_rewards"))
-                            throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
-                    }
+                        throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
 
                     if (bakerCycle.MissedEndorsements != remote.RequiredInt64("missed_slots"))
                         throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
@@ -95,16 +80,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                         throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
                 }
             }
-
-            Console.SetCursorPosition(0, Console.CursorTop);
-            Console.WriteLine("done");
         }
         
-        protected override async Task TestCycles(AppState state)
+        protected override async Task TestCycles(AppState state, Cycle cycle)
         {
-            //TODO Add cycles cache, perhaps
-            var cycle = await Db.Cycles.SingleAsync(x => x.Index == state.Cycle);
-
             var level = Math.Min(state.Level, cycle.FirstLevel);
             var remote = await Rpc.GetRawCycleAsync(level, cycle.Index);
                 

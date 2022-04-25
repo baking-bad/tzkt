@@ -63,8 +63,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual async Task RunDiagnostics(int level, int ops = -1)
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
             var entries = Db.ChangeTracker.Entries();
 
             if (ops != -1 && ops != entries.Count(x => x.Entity is BaseOperation && x.State == EntityState.Added))
@@ -73,6 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var state = Cache.AppState.Get();
             var proto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
+            
             var accounts = entries.Where(x =>
                 x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
                 .Select(x => x.Entity as Account);
@@ -87,22 +86,20 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await TestAccount(level, account);
             }
             
-            if (level == 8190)
-                Console.WriteLine($"Got here");
             if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
             {
+                var cycle = entries.Where(x => x.Entity is Cycle).Select(x => x.Entity as Cycle).FirstOrDefault();
+                
+                await TestParticipation(state);
+                await TestCycles(state, cycle);
                 await TestBakersTotalList(state);
                 await TestActiveBakersTotalList(state);
-                await TestCycles(state);
-                await TestParticipation(state);
             }
-            stopwatch.Stop();
-            Console.WriteLine($"Diagnostics took {stopwatch.ElapsedMilliseconds}");
         }
 
         protected virtual Task TestParticipation(AppState state) => Task.CompletedTask;
         
-        protected virtual Task TestCycles(AppState state) => Task.CompletedTask;
+        protected virtual Task TestCycles(AppState state, Cycle cycle) => Task.CompletedTask;
 
         protected virtual async Task TestBakersTotalList(AppState state)
         {
