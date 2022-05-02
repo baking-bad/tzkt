@@ -152,6 +152,7 @@ namespace Tzkt.Api
                 .SetIsOriginAllowed(_ => true)
                 .AllowCredentials()
                 .WithExposedHeaders(
+                    StateHeadersMiddleware.TZKT_VERSION,
                     StateHeadersMiddleware.TZKT_LEVEL,
                     StateHeadersMiddleware.TZKT_KNOWN_LEVEL,
                     StateHeadersMiddleware.TZKT_SYNCED_AT));
