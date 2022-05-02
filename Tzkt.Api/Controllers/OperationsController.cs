@@ -313,6 +313,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="epoch">Filters ballots by voting epoch.</param>
         /// <param name="period">Filters ballots by voting period.</param>
         /// <param name="proposal">Filters ballots by proposal hash.</param>
+        /// <param name="vote">Filters ballots by vote (`yay`, `nay`, `pass`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts ballots by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -327,6 +328,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
+            VoteParameter vote,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -351,25 +353,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, quote));
+                return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Values, quote));
+                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

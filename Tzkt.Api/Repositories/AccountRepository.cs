@@ -1238,7 +1238,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<PreendorsementOperation>());
 
                     var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
-                        ? Operations.GetBallots(_delegat, level, timestamp, null, null, null, sort, offset, limit, quote)
+                        ? Operations.GetBallots(_delegat, level, timestamp, null, null, null, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BallotOperation>());
 
                     var proposals = delegat.ProposalsCount > 0 && types.Contains(OpTypes.Proposal)

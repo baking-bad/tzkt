@@ -95,7 +95,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.ProposalOperation>());
 
                 var ballots = TypesSubs.TryGetValue(Operations.Ballots, out var ballotsSub)
-                    ? Repo.GetBallots(null, level, null, null, null, null, null, null, limit, symbols)
+                    ? Repo.GetBallots(null, level, null, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BallotOperation>());
 
                 var activations = TypesSubs.TryGetValue(Operations.Activations, out var activationsSub)

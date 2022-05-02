@@ -237,6 +237,25 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, VoteParameter vote)
+        {
+            if (vote == null) return this;
+
+            if (vote.Eq != null)
+                AppendFilter($"{column} = {vote.Eq}");
+
+            if (vote.Ne != null)
+                AppendFilter($"{column} != {vote.Ne}");
+
+            if (vote.In != null)
+                AppendFilter($"{column} = ANY ({Param(vote.In)})");
+
+            if (vote.Ni != null && vote.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(vote.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, VoterStatusParameter status)
         {
             if (status == null) return this;

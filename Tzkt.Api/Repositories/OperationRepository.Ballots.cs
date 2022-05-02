@@ -119,6 +119,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
+            VoteParameter vote,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -139,6 +140,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Epoch""", epoch)
                 .FilterA(@"o.""Period""", period)
+                .FilterA(@"o.""Vote""", vote)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -179,6 +181,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
+            VoteParameter vote,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -235,6 +238,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Epoch""", epoch)
                 .FilterA(@"o.""Period""", period)
+                .FilterA(@"o.""Vote""", vote)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
@@ -317,6 +321,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter epoch,
             Int32Parameter period,
             ProtocolParameter proposal,
+            VoteParameter vote,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -370,6 +375,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""Epoch""", epoch)
                 .FilterA(@"o.""Period""", period)
+                .FilterA(@"o.""Vote""", vote)
                 .FilterA(@"proposal.""Hash""", proposal)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
