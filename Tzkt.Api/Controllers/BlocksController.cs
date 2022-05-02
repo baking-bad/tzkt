@@ -18,11 +18,13 @@ namespace Tzkt.Api.Controllers
     {
         private readonly BlockRepository Blocks;
         private readonly StateCache State;
+        private readonly TimeCache Time;
 
-        public BlocksController(BlockRepository blocks, StateCache state)
+        public BlocksController(BlockRepository blocks, StateCache state, TimeCache time)
         {
             Blocks = blocks;
             State = state;
+            Time = time;
         }
 
         /// <summary>
@@ -182,6 +184,56 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Blocks.Get(level, operations, micheline, quote);
+        }
+
+        /// <summary>
+        /// Get timestamp by level
+        /// </summary>
+        /// <remarks>
+        /// Returns a timestamp of the block at the specified level.
+        /// </remarks>
+        /// <param name="level">Block level</param>
+        /// <returns></returns>
+        [HttpGet("{level:int}/timestamp")]
+        public DateTime GetByLevel([Min(0)] int level)
+        {
+            return Time[level];
+        }
+
+        /// <summary>
+        /// Get block by timestamp
+        /// </summary>
+        /// <remarks>
+        /// Returns a block closest to the specified timestamp.
+        /// </remarks>
+        /// <param name="timestamp">Timestamp, e.g. `2020-01-01T00:00:00Z`</param>
+        /// <param name="operations">Flag indicating whether to include block operations into returned object or not</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("{timestamp:DateTime}")]
+        public Task<Block> GetByDate(
+            DateTimeOffset timestamp,
+            bool operations = false,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            var level = Time.FindLevel(timestamp.DateTime, SearchMode.ExactOrLower);
+            return Blocks.Get(level, operations, micheline, quote);
+        }
+
+        /// <summary>
+        /// Get level by timestamp
+        /// </summary>
+        /// <remarks>
+        /// Returns a level of the block closest to the specified timestamp.
+        /// </remarks>
+        /// <param name="timestamp">Timestamp, e.g. `2020-01-01T00:00:00Z`</param>
+        /// <returns></returns>
+        [HttpGet("{timestamp:DateTime}/level")]
+        public int GetByDate(DateTimeOffset timestamp)
+        {
+            return Time.FindLevel(timestamp.DateTime, SearchMode.ExactOrLower);
         }
 
         // BCD bootstrap
