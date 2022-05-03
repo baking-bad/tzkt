@@ -45,7 +45,7 @@ public class AuthServiceTests
             expectedError = "The X-TZKT-NONCE header is required";
             Assert.Equal(expectedError, error);
 
-            headers.Nonce = (long)(DateTime.UtcNow.AddSeconds(-config.NonceLifetime - 1) - DateTime.UnixEpoch).TotalMilliseconds;
+            headers.Nonce = 253402300800000;
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
             expectedError = "The X-TZKT-SIGNATURE header is required";
             Assert.Equal(expectedError, error);
@@ -54,8 +54,13 @@ public class AuthServiceTests
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
             expectedError = $"User {headers.User} doesn't exist";
             Assert.Equal(expectedError, error);
-        
+            
             headers.User = credentials.Name;
+            Assert.False(auth.TryAuthenticate(headers, rights, out error));
+            expectedError = "Nonce out of range.";
+            Assert.Equal(expectedError, error);
+        
+            headers.Nonce = (long)(DateTime.UtcNow.AddSeconds(-config.NonceLifetime - 1) - DateTime.UnixEpoch).TotalMilliseconds;
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
             expectedError = "Nonce too old.";
             Assert.StartsWith(expectedError, error);
