@@ -103,11 +103,9 @@ namespace Tzkt.Api.Services.Auth
             
             var nonce = (long)headers.Nonce;
             
-            var millisDouble = nonce + (nonce >= 0 ? 0.5 : -0.5);
-            const long maxMillis = 12622780800000;
-            if (millisDouble is <= -maxMillis or >= maxMillis)
+            if (nonce is < 0 or >= 253402300800000)
             {
-                error = $"Nonce out of range. Should be milliseconds.";
+                error = $"Nonce out of range.";
                 return false;
             }
             
