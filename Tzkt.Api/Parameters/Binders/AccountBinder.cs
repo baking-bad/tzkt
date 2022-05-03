@@ -56,6 +56,8 @@ namespace Tzkt.Api
             int? _ne = null;
             List<int> _listIn = null;
             List<int> _listNi = null;
+            var inHasNull = false;
+            var niHasNull = false;
 
             if ((value ?? eq) != null)
                 _eq = (await Accounts.GetAsync(value ?? eq))?.Id ?? -1;
@@ -68,8 +70,15 @@ namespace Tzkt.Api
                 _listIn = new List<int>(@in.Count);
                 foreach (var addr in @in)
                 {
-                    var acc = await Accounts.GetAsync(addr);
-                    if (acc != null) _listIn.Add(acc.Id);
+                    if (addr != null)
+                    {
+                        var acc = await Accounts.GetAsync(addr);
+                        if (acc != null) _listIn.Add(acc.Id);
+                    }
+                    else
+                    {
+                        inHasNull = true;
+                    }
                 }
             }
 
@@ -78,8 +87,15 @@ namespace Tzkt.Api
                 _listNi = new List<int>(ni.Count);
                 foreach (var addr in ni)
                 {
-                    var acc = await Accounts.GetAsync(addr);
-                    if (acc != null) _listNi.Add(acc.Id);
+                    if (addr != null)
+                    {
+                        var acc = await Accounts.GetAsync(addr);
+                        if (acc != null) _listNi.Add(acc.Id);
+                    }
+                    else
+                    {
+                        niHasNull = true;
+                    }
                 }
             }
 
@@ -91,7 +107,9 @@ namespace Tzkt.Api
                 Ni = _listNi,
                 Eqx = eqx,
                 Nex = nex,
-                Null = isNull
+                Null = isNull,
+                InHasNull = inHasNull,
+                NiHasNull = niHasNull,
             });
         }
     }

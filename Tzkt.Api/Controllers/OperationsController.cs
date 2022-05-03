@@ -232,7 +232,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
 
                 if (@delegate.Eq == -1 || @delegate.In?.Count == 0 || @delegate.Null == true)
-                    return Ok(Enumerable.Empty<EndorsementOperation>());
+                    return Ok(Enumerable.Empty<PreendorsementOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level"))
@@ -935,7 +935,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
                 if (anyof.Value == -1)
-                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+                    return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
             }
 
             if (accuser != null)
@@ -947,7 +947,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
 
                 if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
-                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+                    return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
             }
 
             if (offender != null)
@@ -959,7 +959,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
 
                 if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
-                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+                    return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
@@ -1218,7 +1218,7 @@ namespace Tzkt.Api.Controllers
                 if (initiator.Nex != null && initiator.Nex != "prevDelegate" && initiator.Nex != "newDelegate")
                     return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'prevDelegate' or 'newDelegate' field only.");
 
-                if (initiator.Eq == -1 || initiator.In?.Count == 0)
+                if (initiator.Eq == -1 || initiator.In?.Count == 0 && !initiator.InHasNull)
                     return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
@@ -1242,7 +1242,7 @@ namespace Tzkt.Api.Controllers
                 if (prevDelegate.Nex != null && prevDelegate.Nex != "initiator" && prevDelegate.Nex != "sender" && prevDelegate.Nex != "newDelegate")
                     return new BadRequest($"{nameof(prevDelegate)}.nex", "The 'prevDelegate' field can be compared with the 'initiator', 'sender' or 'newDelegate' field only.");
 
-                if (prevDelegate.Eq == -1 || prevDelegate.In?.Count == 0)
+                if (prevDelegate.Eq == -1 || prevDelegate.In?.Count == 0 && !prevDelegate.InHasNull)
                     return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
@@ -1254,7 +1254,7 @@ namespace Tzkt.Api.Controllers
                 if (newDelegate.Nex != null && newDelegate.Nex != "initiator" && newDelegate.Nex != "sender" && newDelegate.Nex != "prevDelegate")
                     return new BadRequest($"{nameof(newDelegate)}.nex", "The 'newDelegate' field can be compared with the 'initiator', 'sender' or 'prevDelegate' fields only.");
 
-                if (newDelegate.Eq == -1 || newDelegate.In?.Count == 0)
+                if (newDelegate.Eq == -1 || newDelegate.In?.Count == 0 && !newDelegate.InHasNull)
                     return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
@@ -1390,7 +1390,7 @@ namespace Tzkt.Api.Controllers
                 if (initiator.Nex != null && initiator.Nex != "contractManager" && initiator.Nex != "contractDelegate")
                     return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
 
-                if (initiator.Eq == -1 || initiator.In?.Count == 0)
+                if (initiator.Eq == -1 || initiator.In?.Count == 0 && !initiator.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
@@ -1414,7 +1414,7 @@ namespace Tzkt.Api.Controllers
                 if (contractManager.Nex != null && contractManager.Nex != "initiator" && contractManager.Nex != "sender" && contractManager.Nex != "contractDelegate")
                     return new BadRequest($"{nameof(contractManager)}.nex", "The 'contractManager' field can be compared with the 'initiator', 'sender' or 'contractDelegate' field only.");
 
-                if (contractManager.Eq == -1 || contractManager.In?.Count == 0)
+                if (contractManager.Eq == -1 || contractManager.In?.Count == 0 && !contractManager.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
@@ -1426,7 +1426,7 @@ namespace Tzkt.Api.Controllers
                 if (contractDelegate.Nex != null && contractDelegate.Nex != "initiator" && contractDelegate.Nex != "sender" && contractDelegate.Nex != "contractManager")
                     return new BadRequest($"{nameof(contractDelegate)}.nex", "The 'contractDelegate' field can be compared with the 'initiator', 'sender' or 'contractManager' field only.");
 
-                if (contractDelegate.Eq == -1 || contractDelegate.In?.Count == 0)
+                if (contractDelegate.Eq == -1 || contractDelegate.In?.Count == 0 && !contractDelegate.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
@@ -1438,7 +1438,7 @@ namespace Tzkt.Api.Controllers
                 if (originatedContract.Nex != null)
                     return new BadRequest($"{nameof(originatedContract)}.nex", "This parameter doesn't support .nex mode.");
 
-                if (originatedContract.Eq == -1 || originatedContract.In?.Count == 0)
+                if (originatedContract.Eq == -1 || originatedContract.In?.Count == 0 && !originatedContract.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
@@ -1579,7 +1579,7 @@ namespace Tzkt.Api.Controllers
                 if (initiator.Nex != null && initiator.Nex != "target")
                     return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'target' field only.");
 
-                if (initiator.Eq == -1 || initiator.In?.Count == 0)
+                if (initiator.Eq == -1 || initiator.In?.Count == 0 && !initiator.InHasNull)
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
@@ -1603,7 +1603,7 @@ namespace Tzkt.Api.Controllers
                 if (target.Nex != null && target.Nex != "sender" && target.Eqx != "initiator")
                     return new BadRequest($"{nameof(target)}.nex", "The 'target' field can be compared with the 'sender' or 'initiator' fields only.");
 
-                if (target.Eq == -1 || target.In?.Count == 0)
+                if (target.Eq == -1 || target.In?.Count == 0 && !target.InHasNull)
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
@@ -2333,7 +2333,7 @@ namespace Tzkt.Api.Controllers
                 if (proposer.Nex != null)
                     return new BadRequest($"{nameof(proposer)}.nex", "This parameter doesn't support .nex mode.");
 
-                if (proposer.Eq == -1 || proposer.In?.Count == 0)
+                if (proposer.Eq == -1 || proposer.In?.Count == 0 && !proposer.InHasNull)
                     return Ok(Enumerable.Empty<BakingOperation>());
             }
             if (producer != null)
@@ -2344,7 +2344,7 @@ namespace Tzkt.Api.Controllers
                 if (producer.Nex != null)
                     return new BadRequest($"{nameof(producer)}.nex", "This parameter doesn't support .nex mode.");
 
-                if (producer.Eq == -1 || producer.In?.Count == 0)
+                if (producer.Eq == -1 || producer.In?.Count == 0 && !producer.InHasNull)
                     return Ok(Enumerable.Empty<BakingOperation>());
             }
 

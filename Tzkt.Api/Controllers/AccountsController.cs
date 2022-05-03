@@ -68,7 +68,7 @@ namespace Tzkt.Api.Controllers
                 if (@delegate.Nex != null)
                     return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
 
-                if (@delegate.Eq == -1 || @delegate.In?.Count == 0)
+                if (@delegate.Eq == -1 || @delegate.In?.Count == 0 && !@delegate.InHasNull)
                     return Ok(Enumerable.Empty<Account>());
             }
 
