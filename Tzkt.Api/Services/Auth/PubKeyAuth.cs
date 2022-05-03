@@ -102,6 +102,13 @@ namespace Tzkt.Api.Services.Auth
             }
             
             var nonce = (long)headers.Nonce;
+            
+            if (nonce is < 0 or >= 253402300800000)
+            {
+                error = $"Nonce out of range.";
+                return false;
+            }
+            
             var nonceTime = DateTime.UnixEpoch.AddMilliseconds(nonce);
 
             if (nonceTime < DateTime.UtcNow.AddSeconds(-Config.NonceLifetime))
