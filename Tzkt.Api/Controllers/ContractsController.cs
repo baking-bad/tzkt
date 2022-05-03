@@ -73,7 +73,7 @@ namespace Tzkt.Api.Controllers
                 if (creator.Nex != null && creator.Nex != "manager" && creator.Nex != "delegate")
                     return new BadRequest($"{nameof(creator)}.nex", "The 'creator' field can be compared with the 'manager' or 'delegate' field only.");
 
-                if (creator.Eq == -1 || creator.In?.Count == 0)
+                if (creator.Eq == -1 || creator.In?.Count == 0 && !creator.InHasNull)
                     return Ok(Enumerable.Empty<Contract>());
             }
 
@@ -85,7 +85,7 @@ namespace Tzkt.Api.Controllers
                 if (manager.Nex != null && manager.Nex != "creator" && manager.Nex != "delegate")
                     return new BadRequest($"{nameof(manager)}.nex", "The 'manager' field can be compared with the 'creator' or 'delegate' field only.");
 
-                if (manager.Eq == -1 || manager.In?.Count == 0)
+                if (manager.Eq == -1 || manager.In?.Count == 0 && !manager.InHasNull)
                     return Ok(Enumerable.Empty<Contract>());
             }
 
@@ -97,7 +97,7 @@ namespace Tzkt.Api.Controllers
                 if (@delegate.Nex != null && @delegate.Nex != "creator" && @delegate.Nex != "manager")
                     return new BadRequest($"{nameof(@delegate)}.nex", "The 'delegate' field can be compared with the 'creator' or 'manager' field only.");
 
-                if (@delegate.Eq == -1 || @delegate.In?.Count == 0)
+                if (@delegate.Eq == -1 || @delegate.In?.Count == 0 && !@delegate.InHasNull)
                     return Ok(Enumerable.Empty<Contract>());
             }
 

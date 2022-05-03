@@ -100,7 +100,7 @@ namespace Tzkt.Api.Controllers
                 if (proposer.Nex != null)
                     return new BadRequest($"{nameof(proposer)}.nex", "This parameter doesn't support .nex mode.");
 
-                if (proposer.Eq == -1 || proposer.In?.Count == 0)
+                if (proposer.Eq == -1 || proposer.In?.Count == 0 && !proposer.InHasNull)
                     return Ok(Enumerable.Empty<Block>());
             }
             if (producer != null)
@@ -111,7 +111,7 @@ namespace Tzkt.Api.Controllers
                 if (producer.Nex != null)
                     return new BadRequest($"{nameof(producer)}.nex", "This parameter doesn't support .nex mode.");
 
-                if (producer.Eq == -1 || producer.In?.Count == 0)
+                if (producer.Eq == -1 || producer.In?.Count == 0 && !producer.InHasNull)
                     return Ok(Enumerable.Empty<Block>());
             }
 

@@ -356,10 +356,24 @@ namespace Tzkt.Api
                 AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {account.Ne})");
 
             if (account.In != null)
-                AppendFilter($@"""{column}"" = ANY ({Param(account.In)})");
+            {
+                if (!account.InHasNull)
+                    AppendFilter($@"""{column}"" = ANY ({Param(account.In)})");
+                else if (account.In.Count == 0)
+                    AppendFilter($@"""{column}"" IS NULL");
+                else 
+                    AppendFilter($@"(""{column}"" = ANY ({Param(account.In)}) OR ""{column}"" IS NULL)");
+            }
 
-            if (account.Ni != null && account.Ni.Count > 0)
-                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY ({Param(account.Ni)})))");
+            if (account.Ni != null)
+            {
+                if (!account.NiHasNull)
+                    AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY ({Param(account.Ni)})))");
+                else if (account.Ni.Count == 0)
+                    AppendFilter($@"""{column}"" IS NOT NULL");
+                else
+                    AppendFilter($@"(""{column}"" IS NOT NULL AND NOT (""{column}"" = ANY ({Param(account.Ni)})))");
+            }
 
             if (account.Eqx != null && map != null)
                 AppendFilter($@"""{column}"" = ""{map(account.Eqx)}""");
@@ -388,10 +402,24 @@ namespace Tzkt.Api
                 AppendFilter($"({column} IS NULL OR {column} != {account.Ne})");
 
             if (account.In != null)
-                AppendFilter($"{column} = ANY ({Param(account.In)})");
+            {
+                if (!account.InHasNull)
+                    AppendFilter($"{column} = ANY ({Param(account.In)})");
+                else if (account.In.Count == 0)
+                    AppendFilter($"{column} IS NULL");
+                else
+                    AppendFilter($"({column} = ANY ({Param(account.In)}) OR {column} IS NULL)");
+            }
 
-            if (account.Ni != null && account.Ni.Count > 0)
-                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(account.Ni)})))");
+            if (account.Ni != null)
+            {
+                if (!account.NiHasNull)
+                    AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(account.Ni)})))");
+                else if (account.Ni.Count == 0)
+                    AppendFilter($"{column} IS NOT NULL");
+                else
+                    AppendFilter($"({column} IS NOT NULL AND NOT ({column} = ANY ({Param(account.Ni)})))");
+            }
 
             if (account.Eqx != null && map != null)
                 AppendFilter($"{column} = {map(account.Eqx)}");

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
@@ -67,5 +68,11 @@ namespace Tzkt.Api
         /// Example: `?initiator.null` or `?initiator.null=false`.
         /// </summary>
         public bool? Null { get; set; }
+
+        [JsonIgnore]
+        public bool InHasNull { get; set; }
+
+        [JsonIgnore]
+        public bool NiHasNull { get; set; }
     }
 }

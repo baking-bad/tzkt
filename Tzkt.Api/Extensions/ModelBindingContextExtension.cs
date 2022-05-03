@@ -298,11 +298,20 @@ namespace Tzkt.Api
                     {
                         if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36}$"))
                         {
-                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid account address.");
-                            return false;
+                            if (rawValue != "null")
+                            {
+                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid account address.");
+                                return false;
+                            }
+                            else
+                            {
+                                result.Add(null);
+                            }
                         }
-
-                        result.Add(rawValue);
+                        else
+                        {
+                            result.Add(rawValue);
+                        }
                     }
                 }
             }
