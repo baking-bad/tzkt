@@ -15,9 +15,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual Task<JsonElement> GetBlockAsync(int level)
             => Node.GetAsync($"chains/main/blocks/{level}");
 
-        public virtual Task<JsonElement> GetCycleAsync(int level, int cycle)
-            => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/cycle/{cycle}");
-
         public virtual Task<JsonElement> GetBakingRightsAsync(int block, int cycle)
             => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?cycle={cycle}&max_priority=8&all=true");
 
@@ -43,6 +40,18 @@ namespace Tzkt.Sync.Protocols.Proto1
         #region diagnostics
         public virtual Task<JsonElement> GetGlobalCounterAsync(int level)
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/contracts/global_counter");
+
+        public virtual Task<JsonElement> GetDelegatesAsync(int level)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/delegates");
+
+        public virtual Task<JsonElement> GetActiveDelegatesAsync(int level)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/delegates?active=true");
+
+        public virtual Task<JsonElement> GetCycleAsync(int level, int cycle)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/cycle/{cycle}");
+
+        public virtual Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
+            => throw new InvalidOperationException();
         #endregion
     }
 }

@@ -15,9 +15,6 @@ namespace Tzkt.Sync.Protocols.Genesis
         public Task<JsonElement> GetBlockAsync(int level)
             => Node.GetAsync($"chains/main/blocks/{level}");
 
-        public Task<JsonElement> GetCycleAsync(int level, int cycle)
-            => throw new InvalidOperationException();
-
         public Task<JsonElement> GetBakingRightsAsync(int block, int cycle)
             => throw new InvalidOperationException();
 
@@ -42,6 +39,18 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         #region diagnostics
         public Task<JsonElement> GetGlobalCounterAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetDelegatesAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetActiveDelegatesAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetCycleAsync(int level, int cycle)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
             => throw new InvalidOperationException();
         #endregion
     }

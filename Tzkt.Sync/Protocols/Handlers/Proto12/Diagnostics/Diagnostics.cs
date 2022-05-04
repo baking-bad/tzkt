@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
+using Tzkt.Sync.Utils;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
@@ -34,7 +36,59 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong grace period {delegat.Address}");
 
+            if (remote.OptionalInt64("frozen_deposits_limit") != delegat.FrozenDepositLimit)
+                throw new Exception($"Diagnostics failed: wrong frozen deposits limit {delegat.Address}");
+            
             TestDelegatorsCount(remote, delegat);
+        }
+
+        protected override async Task TestParticipation(AppState state)
+        {
+            var bakers = Cache.Accounts.GetDelegates().ToList();
+            var bakerCycles = await Cache.BakerCycles.GetAsync(state.Cycle);
+
+            foreach (var baker in bakers)
+            {
+                var remote = await Rpc.GetDelegateParticipationAsync(state.Level, baker.Address);
+                
+                if (bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
+                {
+                    if ((long)bakerCycle.ExpectedEndorsements != remote.RequiredInt64("expected_cycle_activity"))
+                        throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
+
+                    if (bakerCycle.FutureEndorsementRewards != remote.RequiredInt64("expected_endorsing_rewards"))
+                        throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
+
+                    if (bakerCycle.MissedEndorsements != remote.RequiredInt64("missed_slots"))
+                        throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
+                }
+                else
+                {
+                    if (remote.RequiredInt64("expected_cycle_activity") != 0)
+                        throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
+
+                    if (remote.RequiredInt64("expected_endorsing_rewards") != 0)
+                        throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
+
+                    if (remote.RequiredInt64("missed_slots") != 0)
+                        throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
+                }
+            }
+        }
+        
+        protected override async Task TestCycle(AppState state, Cycle cycle)
+        {
+            var level = Math.Min(state.Level, cycle.FirstLevel);
+            var remote = await Rpc.GetCycleAsync(level, cycle.Index);
+                
+            if (remote.RequiredString("random_seed") != Hex.Convert(cycle.Seed))
+                throw new Exception($"Invalid cycle {cycle.Index} seed {Hex.Convert(cycle.Seed)}");
+
+            if (remote.RequiredInt64("total_active_stake") != cycle.SelectedStake)
+                throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.SelectedStake}");
+
+            if (remote.RequiredArray("selected_stake_distribution").Count() != cycle.SelectedBakers)
+                throw new Exception($"Invalid cycle {cycle.Index} selected bakers {cycle.SelectedBakers}");
         }
     }
 }

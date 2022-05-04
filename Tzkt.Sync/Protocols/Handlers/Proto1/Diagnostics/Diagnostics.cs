@@ -83,6 +83,50 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 await TestAccount(level, account);
             }
+            
+            if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
+            {
+                foreach (var cycle in entries.Where(x => x.Entity is Cycle).Select(x => x.Entity as Cycle))
+                    await TestCycle(state, cycle);
+                
+                await TestParticipation(state);
+                await TestBakersList(state);
+                await TestActiveBakersList(state);
+            }
+        }
+
+        protected virtual Task TestParticipation(AppState state) => Task.CompletedTask;
+        
+        protected virtual Task TestCycle(AppState state, Cycle cycle) => Task.CompletedTask;
+
+        protected virtual async Task TestBakersList(AppState state)
+        {
+            var local = Cache.Accounts.GetDelegates().ToList();
+            var remote = (await Rpc.GetDelegatesAsync(state.Level)).EnumerateArray()
+                .Select(x => x.GetString())
+                .ToHashSet();
+
+            if (local.Count != remote.Count)
+                throw new Exception("Invalid bakers count");
+
+            foreach (var baker in local)
+                if (!remote.Contains(baker.Address))
+                    throw new Exception($"Invalid baker {baker.Address}");
+        }
+        
+        protected virtual async Task TestActiveBakersList(AppState state)
+        {
+            var local = Cache.Accounts.GetDelegates().Where(x => x.Staked).ToList();
+            var remote = (await Rpc.GetActiveDelegatesAsync(state.Level)).EnumerateArray()
+                .Select(x => x.GetString())
+                .ToHashSet();
+
+            if (local.Count != remote.Count)
+                throw new Exception("Invalid active bakers count");
+
+            foreach (var baker in local)
+                if (!remote.Contains(baker.Address))
+                    throw new Exception($"Invalid active baker {baker.Address}");
         }
 
         protected virtual async Task TestGlobalCounter(int level, AppState state)
