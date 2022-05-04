@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
@@ -15,14 +14,12 @@ namespace Tzkt.Sync.Services
 
         private readonly TezosNode Node;
         private readonly IServiceScopeFactory Services;
-        private readonly ObserverConfig Config;
         private readonly ILogger Logger;
 
-        public Observer(TezosNode node, IServiceScopeFactory services, IConfiguration config, ILogger<Observer> logger)
+        public Observer(TezosNode node, IServiceScopeFactory services, ILogger<Observer> logger)
         {
             Node = node;
             Services = services;
-            Config = config.GetObserverConfig();
             Logger = logger;
         }
 
@@ -50,7 +47,7 @@ namespace Tzkt.Sync.Services
                     try
                     {
                         if (!await WaitForUpdatesAsync(cancelToken)) break;
-                        var head = await Node.GetLatestHeaderAsync(Config.Lag);
+                        var head = await Node.GetHeaderAsync();
                         Logger.LogDebug($"New head is found [{head.Level}:{head.Hash}]");
                     }
                     catch (Exception ex)
@@ -136,7 +133,7 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
         {
-            while (!await Node.HasUpdatesAsync(AppState.Level, Config.Lag))
+            while (!await Node.HasUpdatesAsync(AppState.Level))
             {
                 if (cancelToken.IsCancellationRequested)
                     return false;
@@ -169,7 +166,7 @@ namespace Tzkt.Sync.Services
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                var header = await Node.GetLatestHeaderAsync(Config.Lag);
+                var header = await Node.GetHeaderAsync();
                 if (AppState.Level == header.Level) break;
 
                 //if (AppState.Level >= 0)

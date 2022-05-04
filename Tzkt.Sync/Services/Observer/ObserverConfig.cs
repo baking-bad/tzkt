@@ -4,7 +4,6 @@ namespace Tzkt.Sync.Services
 {
     public class ObserverConfig
     {
-        public int Lag { get; set; } = 0;  // in blocks
     }
 
     public static class ObserverConfigExt

@@ -13,6 +13,7 @@ namespace Tzkt.Sync.Services
     public sealed class TezosNode : IDisposable
     {
         public string BaseUrl { get; }
+        readonly TezosNodeConfig Config;
         readonly TzktClient Rpc;
         readonly IServiceScopeFactory Services;
         readonly ILogger Logger;
@@ -24,9 +25,9 @@ namespace Tzkt.Sync.Services
 
         public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger)
         {
-            var nodeConf = config.GetTezosNodeConfig();
-            BaseUrl = $"{nodeConf.Endpoint.TrimEnd('/')}/";
-            Rpc = new TzktClient(BaseUrl, nodeConf.Timeout);
+            Config = config.GetTezosNodeConfig();
+            BaseUrl = $"{Config.Endpoint.TrimEnd('/')}/";
+            Rpc = new TzktClient(BaseUrl, Config.Timeout);
             Services = services;
             Logger = logger;
         }
@@ -38,18 +39,19 @@ namespace Tzkt.Sync.Services
             return doc.RootElement.Clone();
         }
 
-        public async Task<Header> GetLatestHeaderAsync(int offset = 0)
+        public async Task<Header> GetHeaderAsync()
         {
             if (DateTime.UtcNow >= NextBlock)
             {
-                var headerUrl = offset > 0 ? $"chains/main/blocks/head~{offset}/header" : "chains/main/blocks/head/header";
-                var header = await Rpc.GetObjectAsync<Header>(headerUrl);
+                var header = await Rpc.GetObjectAsync<Header>(Config.Lag > 0
+                    ? $"chains/main/blocks/head~{Config.Lag}/header"
+                    : "chains/main/blocks/head/header");
 
                 if (header.Protocol != Header?.Protocol)
                     Constants = await Rpc.GetObjectAsync<Constants>($"chains/main/blocks/{header.Level}/context/constants");
 
                 NextBlock = header.Level != Header?.Level
-                    ? header.Timestamp.AddSeconds((Constants.MinBlockDelay ?? Constants.BlockIntervals[0]) * (offset + 1))
+                    ? header.Timestamp.AddSeconds((Constants.MinBlockDelay ?? Constants.BlockIntervals[0]) * (Config.Lag + 1))
                     : DateTime.UtcNow.AddSeconds(1);
 
                 #region update last sync
@@ -89,9 +91,9 @@ namespace Tzkt.Sync.Services
             return Rpc.GetObjectAsync<Header>($"chains/main/blocks/{level}/header");
         }
 
-        public async Task<bool> HasUpdatesAsync(int level, int offset = 0)
+        public async Task<bool> HasUpdatesAsync(int level)
         {
-            var header = await GetLatestHeaderAsync(offset);
+            var header = await GetHeaderAsync();
             return header.Level != level;
         }
 

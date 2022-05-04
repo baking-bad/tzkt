@@ -188,13 +188,13 @@ Like this:
 }
 ````
 
-##### Observer lag
+##### Indexing lag
 
 In order to deal with chain reorgs you can set the indexer lag (in blocks):
 
 ````json
 {
-  "Observer": {
+  "TezosNode": {
     "Lag": 1
   }
 }
