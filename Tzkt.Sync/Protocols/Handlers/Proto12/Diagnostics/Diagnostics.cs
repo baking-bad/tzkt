@@ -79,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         protected override async Task TestCycle(AppState state, Cycle cycle)
         {
             var level = Math.Min(state.Level, cycle.FirstLevel);
-            var remote = await Rpc.GetRawCycleAsync(level, cycle.Index);
+            var remote = await Rpc.GetCycleAsync(level, cycle.Index);
                 
             if (remote.RequiredString("random_seed") != Hex.Convert(cycle.Seed))
                 throw new Exception($"Invalid cycle {cycle.Index} seed {Hex.Convert(cycle.Seed)}");

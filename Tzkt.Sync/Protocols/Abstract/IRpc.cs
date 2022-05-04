@@ -7,7 +7,6 @@ namespace Tzkt.Sync.Protocols
     {
         #region indexer
         Task<JsonElement> GetBlockAsync(int level);
-        Task<JsonElement> GetCycleAsync(int level, int cycle);
         Task<JsonElement> GetBakingRightsAsync(int block, int cycle);
         Task<JsonElement> GetEndorsingRightsAsync(int block, int cycle);
         Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxRound);
@@ -22,7 +21,7 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetDelegatesAsync(int level);
         Task<JsonElement> GetActiveDelegatesAsync(int level);
         Task<JsonElement> GetDelegateParticipationAsync(int level, string address);
-        Task<JsonElement> GetRawCycleAsync(int level, int cycle);
+        Task<JsonElement> GetCycleAsync(int level, int cycle);
         #endregion
     }
 }
