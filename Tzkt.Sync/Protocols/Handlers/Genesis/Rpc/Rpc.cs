@@ -37,24 +37,24 @@ namespace Tzkt.Sync.Protocols.Genesis
         public Task<JsonElement> GetDelegateAsync(int level, string address)
             => throw new InvalidOperationException();
 
-        public Task<HashSet<string>> GetDelegatesAsync(int level)
-            => throw new InvalidOperationException();
-
-        public Task<HashSet<string>> GetActiveDelegatesAsync(int level)
-            => throw new InvalidOperationException();
-
-        public Task<JsonElement> GetRawCycleAsync(int level, int cycle)
-            => throw new InvalidOperationException();
-        
-        public Task<JsonElement> GetDelegateParticipationAsync(int level, string address) 
-            => throw new InvalidOperationException();
-
         public Task<JsonElement> GetStakeDistribution(int block, int cycle)
             => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics
         public Task<JsonElement> GetGlobalCounterAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetDelegatesAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetActiveDelegatesAsync(int level)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetRawCycleAsync(int level, int cycle)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
             => throw new InvalidOperationException();
         #endregion
     }

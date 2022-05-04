@@ -94,7 +94,7 @@ namespace Tzkt.Sync
                 return null;
 
             return prop.TryParseInt64(out var res) ? res
-                : throw new SerializationException($"Invalid int {name}");
+                : throw new SerializationException($"Invalid long {name}");
         }
 
         public static int RequiredInt32(this JsonElement el)

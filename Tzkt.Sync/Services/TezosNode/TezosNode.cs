@@ -38,11 +38,6 @@ namespace Tzkt.Sync.Services
             return doc.RootElement.Clone();
         }
 
-        public async Task<T> GetAsync<T>(string url)
-        {
-            return await Rpc.GetObjectAsync<T>(url);
-        }
-
         public async Task<Header> GetHeaderAsync()
         {
             if (DateTime.UtcNow >= NextBlock)

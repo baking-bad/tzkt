@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Utils;
 
@@ -9,12 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 {
     class Diagnostics : Proto5.Diagnostics
     {
-        protected readonly IRpc Rpc;
-
-        public Diagnostics(ProtocolHandler handler) : base(handler)
-        {
-            Rpc = handler.Rpc;
-        }
+        public Diagnostics(ProtocolHandler handler) : base(handler) { }
 
         protected override async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
         {
@@ -70,27 +64,25 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
                 else
                 {
-                    if (0 != remote.RequiredInt64("expected_cycle_activity"))
+                    if (remote.RequiredInt64("expected_cycle_activity") != 0)
                         throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
 
-                    if (0L != remote.RequiredInt64("expected_endorsing_rewards"))
+                    if (remote.RequiredInt64("expected_endorsing_rewards") != 0)
                         throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
 
-                    if (0 != remote.RequiredInt64("missed_slots"))
+                    if (remote.RequiredInt64("missed_slots") != 0)
                         throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
                 }
             }
         }
         
-        protected override async Task TestCycles(AppState state, Cycle cycle)
+        protected override async Task TestCycle(AppState state, Cycle cycle)
         {
             var level = Math.Min(state.Level, cycle.FirstLevel);
             var remote = await Rpc.GetRawCycleAsync(level, cycle.Index);
                 
             if (remote.RequiredString("random_seed") != Hex.Convert(cycle.Seed))
                 throw new Exception($"Invalid cycle {cycle.Index} seed {Hex.Convert(cycle.Seed)}");
-
-            if (cycle.Index == 1) return;
 
             if (remote.RequiredInt64("total_active_stake") != cycle.SelectedStake)
                 throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.SelectedStake}");
