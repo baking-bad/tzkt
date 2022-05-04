@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var state = Cache.AppState.Get();
             var proto = await Cache.Protocols.GetAsync(state.NextProtocol);
-            
+
             var accounts = entries.Where(x =>
                 x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
                 .Select(x => x.Entity as Account);
