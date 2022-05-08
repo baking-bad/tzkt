@@ -11,17 +11,17 @@ using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 using Tzkt.Sync.Services;
-using Tzkt.Sync.Protocols.Proto8;
+using Tzkt.Sync.Protocols.Proto13;
 
 namespace Tzkt.Sync.Protocols
 {
-    class Proto8Handler : ProtocolHandler
+    class Proto13Handler : ProtocolHandler
     {
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public Proto8Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto8Handler> logger)
+        public Proto13Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto13Handler> logger)
             : base(node, db, cache, quotes, services, config, logger)
         {
             Rpc = new Rpc(node);
@@ -30,6 +30,8 @@ namespace Tzkt.Sync.Protocols
         }
 
         public override Task Activate(AppState state, JsonElement block) => new ProtoActivator(this).Activate(state, block);
+        public override Task PostActivation(AppState state) => Task.CompletedTask;
+        public override Task PreDeactivation(AppState state) => Task.CompletedTask;
         public override Task Deactivate(AppState state) => new ProtoActivator(this).Deactivate(state);
 
         public override async Task Commit(JsonElement block)
@@ -37,13 +39,20 @@ namespace Tzkt.Sync.Protocols
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
+            var cycleCommit = new CycleCommit(this);
+            await cycleCommit.Apply(blockCommit.Block);
+
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
-
-            var freezerCommit = new FreezerCommit(this);
-            await freezerCommit.Apply(blockCommit.Block, block);
-
-            await new RevelationPenaltyCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
+
+            #region implicit operations
+            foreach (var op in block
+                .Required("metadata")
+                .RequiredArray("implicit_operations_results")
+                .EnumerateArray()
+                .Where(x => x.RequiredString("kind") == "transaction"))
+                await new SubsidyCommit(this).Apply(blockCommit.Block, op);
+            #endregion
 
             var operations = block.RequiredArray("operations", 4);
 
@@ -56,6 +65,9 @@ namespace Tzkt.Sync.Protocols
                     {
                         case "endorsement":
                             await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "preendorsement":
+                            new PreendorsementsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[0]");
@@ -95,10 +107,13 @@ namespace Tzkt.Sync.Protocols
                             await new ActivationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_baking_evidence":
-                            await new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
+                            new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_endorsement_evidence":
-                            await new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "double_preendorsement_evidence":
+                            new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -121,8 +136,14 @@ namespace Tzkt.Sync.Protocols
                 {
                     switch (content.RequiredString("kind"))
                     {
+                        case "set_deposits_limit":
+                            await new SetDepositsLimitCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         case "reveal":
                             await new RevealsCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "register_global_constant":
+                            await new RegisterConstantsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "delegation":
                             await new DelegationsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -178,10 +199,7 @@ namespace Tzkt.Sync.Protocols
             await new TokensCommit(this).Apply(blockCommit.Block, bigMapCommit.Updates);
 
             var brCommit = new BakingRightsCommit(this);
-            await brCommit.Apply(blockCommit.Block);
-
-            var cycleCommit = new CycleCommit(this);
-            await cycleCommit.Apply(blockCommit.Block);
+            await brCommit.Apply(blockCommit.Block, cycleCommit.FutureCycle);
 
             await new DelegatorCycleCommit(this).Apply(blockCommit.Block, cycleCommit.FutureCycle);
 
@@ -191,9 +209,16 @@ namespace Tzkt.Sync.Protocols
                 brCommit.FutureBakingRights,
                 brCommit.FutureEndorsingRights,
                 cycleCommit.Snapshots,
+                cycleCommit.SelectedStakes,
                 brCommit.CurrentRights);
 
-            await new StatisticsCommit(this).Apply(blockCommit.Block, freezerCommit.FreezerUpdates);
+            var freezerCommit = new FreezerCommit(this);
+            freezerCommit.Apply(blockCommit.Block, block);
+
+            var endorsingRewardCommit = new EndorsingRewardCommit(this);
+            await endorsingRewardCommit.Apply(blockCommit.Block, block);
+
+            await new StatisticsCommit(this).Apply(blockCommit.Block, endorsingRewardCommit.Ops, freezerCommit.FreezerChange);
             await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
@@ -227,11 +252,20 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Endorsements))
                 operations.AddRange(await Db.EndorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.Preendorsements))
+                operations.AddRange(await Db.PreendorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Originations))
                 operations.AddRange(await Db.OriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.Reveals))
                 operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SetDepositsLimits))
+                operations.AddRange(await Db.SetDepositsLimitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
+                operations.AddRange(await Db.RegisterConstantOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.Revelations))
                 operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
@@ -245,6 +279,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.DoubleEndorsings))
                 operations.AddRange(await Db.DoubleEndorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.DoublePreendorsings))
+                operations.AddRange(await Db.DoublePreendorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Ballots))
                 operations.AddRange(await Db.BallotOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -253,6 +290,9 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.Operations.HasFlag(Operations.RevelationPenalty))
                 await Db.Entry(currBlock).Collection(x => x.RevelationPenalties).LoadAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Migrations))
+                await Db.Entry(currBlock).Collection(x => x.Migrations).LoadAsync();
 
             if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
             {
@@ -265,9 +305,11 @@ namespace Tzkt.Sync.Protocols
             await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
 
+            await new EndorsingRewardCommit(this).Revert(currBlock);
+            await new FreezerCommit(this).Revert(currBlock);
+
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);
-            await new CycleCommit(this).Revert(currBlock);
             await new BakingRightsCommit(this).Revert(currBlock);
             await new TokensCommit(this).Revert(currBlock);
             await new BigMapCommit(this).Revert(currBlock);
@@ -279,6 +321,9 @@ namespace Tzkt.Sync.Protocols
                     case EndorsementOperation endorsement:
                         await new EndorsementsCommit(this).Revert(currBlock, endorsement);
                         break;
+                    case PreendorsementOperation preendorsement:
+                        await new PreendorsementsCommit(this).Revert(currBlock, preendorsement);
+                        break;
                     case ProposalOperation proposal:
                         await new ProposalsCommit(this).Revert(currBlock, proposal);
                         break;
@@ -289,16 +334,25 @@ namespace Tzkt.Sync.Protocols
                         await new ActivationsCommit(this).Revert(currBlock, activation);
                         break;
                     case DoubleBakingOperation doubleBaking:
-                        await new DoubleBakingCommit(this).Revert(currBlock, doubleBaking);
+                        new DoubleBakingCommit(this).Revert(currBlock, doubleBaking);
                         break;
                     case DoubleEndorsingOperation doubleEndorsing:
-                        await new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
+                        new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
+                        break;
+                    case DoublePreendorsingOperation doublePreendorsing:
+                        new DoublePreendorsingCommit(this).Revert(currBlock, doublePreendorsing);
                         break;
                     case NonceRevelationOperation revelation:
                         await new NonceRevelationsCommit(this).Revert(currBlock, revelation);
                         break;
                     case RevealOperation reveal:
                         await new RevealsCommit(this).Revert(currBlock, reveal);
+                        break;
+                    case RegisterConstantOperation registerConstant:
+                        await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
+                        break;
+                    case SetDepositsLimitOperation setDepositsLimit:
+                        await new SetDepositsLimitCommit(this).Revert(currBlock, setDepositsLimit);
                         break;
                     case DelegationOperation delegation:
                         if (delegation.InitiatorId == null)
@@ -328,10 +382,11 @@ namespace Tzkt.Sync.Protocols
                 }
             }
 
+            await new SubsidyCommit(this).Revert(currBlock);
+
             await new DeactivationCommit(this).Revert(currBlock);
-            await new RevelationPenaltyCommit(this).Revert(currBlock);
-            await new FreezerCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
+            await new CycleCommit(this).Revert(currBlock);
             await new BlockCommit(this).Revert(currBlock);
 
             await new StateCommit(this).Revert(currBlock);
