@@ -11,6 +11,7 @@
             "NetXuXoGoLxNK6o" => "hangzhounet",
             "NetXZSsxBpMQeAT" => "hangzhou2net",
             "NetXnHfVqm9iesp" => "ithacanet",
+            "NetXLH1uAxK7CCh" => "jakartanet",
             _ => "private"
         };
     }
