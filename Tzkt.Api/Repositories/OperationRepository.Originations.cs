@@ -102,7 +102,8 @@ namespace Tzkt.Api.Repositories
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
-                            CodeHash = contract.CodeHash
+                            CodeHash = contract.CodeHash,
+                            Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -190,7 +191,8 @@ namespace Tzkt.Api.Repositories
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
-                            CodeHash = contract.CodeHash
+                            CodeHash = contract.CodeHash,
+                            Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -278,7 +280,8 @@ namespace Tzkt.Api.Repositories
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
-                            CodeHash = contract.CodeHash
+                            CodeHash = contract.CodeHash,
+                            Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -332,7 +335,8 @@ namespace Tzkt.Api.Repositories
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
-                            CodeHash = contract.CodeHash
+                            CodeHash = contract.CodeHash,
+                            Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -455,7 +459,8 @@ namespace Tzkt.Api.Repositories
                         Address = contract.Address,
                         Kind = contract.KindString,
                         TypeHash = contract.TypeHash,
-                        CodeHash = contract.CodeHash
+                        CodeHash = contract.CodeHash,
+                        Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                     },
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
                     Diffs = diffs?.GetValueOrDefault((int)row.Id),
@@ -706,7 +711,8 @@ namespace Tzkt.Api.Repositories
                                 Address = contract.Address,
                                 Kind = contract.KindString,
                                 TypeHash = contract.TypeHash,
-                                CodeHash = contract.CodeHash
+                                CodeHash = contract.CodeHash,
+                                Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                             };
                         }
                         break;
@@ -963,7 +969,8 @@ namespace Tzkt.Api.Repositories
                             Address = contract.Address,
                             Kind = contract.KindString,
                             TypeHash = contract.TypeHash,
-                            CodeHash = contract.CodeHash
+                            CodeHash = contract.CodeHash,
+                            Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         };
                     }
                     break;

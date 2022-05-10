@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Collections.Generic;
+
+namespace Tzkt.Api.Models
 {
     public class OriginatedContract
     {
@@ -29,5 +31,10 @@
         /// This field can be used for searching same contracts (which have the same script).
         /// </summary>
         public int CodeHash { get; set; }
+
+        /// <summary>
+        /// List of implemented standards (TZIPs)
+        /// </summary>
+        public IEnumerable<string> Tzips { get; set; }
     }
 }
