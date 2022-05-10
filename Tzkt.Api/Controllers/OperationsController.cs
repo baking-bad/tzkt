@@ -1705,20 +1705,39 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns the total number of transaction operations.
         /// </remarks>
+        /// <param name="anyof">Filters transactions by any of the specified fields. Example: `anyof.sender.target=tz1...` will return operations where `sender` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all transactions associated with a specified account.</param>
+        /// <param name="initiator">Filters transactions by initiator. Allowed fields for `.eqx` mode: `target`.</param>
+        /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
+        /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
+        /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <returns></returns>
         [HttpGet("transactions/count")]
         public Task<int> GetTransactionsCount(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,target,initiator")]
+            AnyOfParameter anyof,
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter target,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            StringParameter entrypoint,
             OperationStatusParameter status)
         {
-            if (level == null && timestamp == null && status == null)
+            if (anyof == null &&
+                initiator == null &&
+                sender == null &&
+                target == null &&
+                level == null &&
+                timestamp == null &&
+                entrypoint == null &&
+                status == null)
                 return Task.FromResult(State.Current.TransactionOpsCount);
 
-            return Operations.GetTransactionsCount(level, timestamp, status);
+            return Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, status);
         }
         #endregion
 

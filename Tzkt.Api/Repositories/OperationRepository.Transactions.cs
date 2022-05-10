@@ -11,13 +11,23 @@ namespace Tzkt.Api.Repositories
     public partial class OperationRepository : DbConnection
     {
         public async Task<int> GetTransactionsCount(
+            AnyOfParameter anyof,
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter target,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            StringParameter entrypoint,
             OperationStatusParameter status)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""TransactionOps""")
+                .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
+                .Filter("InitiatorId", initiator, x => "TargetId")
+                .Filter("SenderId", sender, x => "TargetId")
+                .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
+                .Filter("Entrypoint", entrypoint)
                 .Filter("Status", status);
 
             using var db = GetConnection();
