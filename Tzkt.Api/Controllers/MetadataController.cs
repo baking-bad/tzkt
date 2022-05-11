@@ -211,7 +211,7 @@ namespace Tzkt.Api.Controllers
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
                     return BadRequest("Invalid proposal hash");
 
-                return Ok(await Metadata.UpdatProposalMetadata(metadata, section));
+                return Ok(await Metadata.UpdateProposalMetadata(metadata, section));
             }
             catch (JsonException)
             {
@@ -284,7 +284,7 @@ namespace Tzkt.Api.Controllers
                 if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
                     return BadRequest("Invalid protocol hash");
 
-                return Ok(await Metadata.UpdatProtocolMetadata(metadata, section));
+                return Ok(await Metadata.UpdateProtocolMetadata(metadata, section));
             }
             catch (JsonException)
             {

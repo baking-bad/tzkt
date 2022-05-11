@@ -305,17 +305,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {
                         #region shifting hack
                         //shifting is actually a bad idea, but this is the lesser of two evils while Tezos protocol has bugs in the freezer.
-                        var snapshotedBaker = await Proto.Rpc.GetDelegateAsync(futureCycle.SnapshotLevel, baker.Address);
-                        var delegators = snapshotedBaker
+                        var snapshottedBaker = await Proto.Rpc.GetDelegateAsync(futureCycle.SnapshotLevel, baker.Address);
+                        var delegators = snapshottedBaker
                             .RequiredArray("delegated_contracts")
                             .EnumerateArray()
                             .Select(x => x.RequiredString())
                             .Where(x => x != baker.Address);
 
-                        if (snapshotedBaker.RequiredInt32("grace_period") != block.Cycle - 3)
+                        if (snapshottedBaker.RequiredInt32("grace_period") != block.Cycle - 3)
                             throw new Exception("Deactivated baker got baking rights");
 
-                        var stakingBalance = snapshotedBaker.RequiredInt64("staking_balance");
+                        var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
                         var activeStake = stakingBalance - stakingBalance % block.Protocol.TokensPerRoll;
                         var share = (double)activeStake / futureCycle.SelectedStake;
 
@@ -326,7 +326,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             StakingBalance = stakingBalance,
                             ActiveStake = activeStake,
                             SelectedStake = futureCycle.SelectedStake,
-                            DelegatedBalance = snapshotedBaker.RequiredInt64("delegated_balance"),
+                            DelegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance"),
                             DelegatorsCount = delegators.Count(),
                             ExpectedBlocks = block.Protocol.BlocksPerCycle * share,
                             ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * share
@@ -335,11 +335,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                         foreach (var delegatorAddress in delegators)
                         {
-                            var snapshotedDelegator = await Proto.Rpc.GetContractAsync(futureCycle.SnapshotLevel, delegatorAddress);
+                            var snapshottedDelegator = await Proto.Rpc.GetContractAsync(futureCycle.SnapshotLevel, delegatorAddress);
                             Db.DelegatorCycles.Add(new DelegatorCycle
                             {
                                 BakerId = baker.Id,
-                                Balance = snapshotedDelegator.RequiredInt64("balance"),
+                                Balance = snapshottedDelegator.RequiredInt64("balance"),
                                 Cycle = futureCycle.Index,
                                 DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id
                             });

@@ -31,7 +31,7 @@ namespace Tzkt.Api
         /// **In list** (any of) filter mode. \
         /// Specify a comma-separated list of addresses to get items where the specified field is equal to one of the specified values.
         /// 
-        /// Example: `?sender.in=tz1WnfXMPaNTB,tz1SiPXX4MYGNJND`.
+        /// Example: `?sender.in=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<int> In { get; set; }
@@ -40,7 +40,7 @@ namespace Tzkt.Api
         /// **Not in list** (none of) filter mode. \
         /// Specify a comma-separated list of addresses to get items where the specified field is not equal to all the specified values.
         /// 
-        /// Example: `?sender.ni=tz1WnfXMPaNTB,tz1SiPXX4MYGNJND`.
+        /// Example: `?sender.ni=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<int> Ni { get; set; }

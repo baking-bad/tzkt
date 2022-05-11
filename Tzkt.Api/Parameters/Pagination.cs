@@ -6,7 +6,7 @@ namespace Tzkt.Api
     {
         /// <summary>
         /// Sorts items (asc or desc) by the specified field.
-        /// You can see what fileds can be used for sorting in the response description, below.  
+        /// You can see what fields can be used for sorting in the response description, below.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public SortParameter sort { get; set; }

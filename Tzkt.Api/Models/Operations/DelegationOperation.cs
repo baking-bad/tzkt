@@ -84,7 +84,7 @@ namespace Tzkt.Api.Models
         public Alias PrevDelegate { get; set; }
 
         /// <summary>
-        /// Information about the delegate to which the operation was sent. `null` if there is no new delegate (an undelegation operation)
+        /// Information about the delegate to which the operation was sent. `null` if there is no new delegate (an un-delegation operation)
         /// </summary>
         public Alias NewDelegate { get; set; }
         

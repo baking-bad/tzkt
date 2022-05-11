@@ -61,12 +61,12 @@ namespace Tzkt.Api.Repositories
             #region very unlikely
             var endorsements = GetEndorsements(hash, quote);
             var preendorsements = GetPreendorsements(hash, quote);
-            var dobleBaking = GetDoubleBakings(hash, quote);
+            var doubleBaking = GetDoubleBakings(hash, quote);
             var doubleEndorsing = GetDoubleEndorsings(hash, quote);
             var doublePreendorsing = GetDoublePreendorsings(hash, quote);
             var nonceRevelation = GetNonceRevelations(hash, quote);
 
-            await Task.WhenAll(endorsements, preendorsements, dobleBaking, doubleEndorsing, doublePreendorsing, nonceRevelation);
+            await Task.WhenAll(endorsements, preendorsements, doubleBaking, doubleEndorsing, doublePreendorsing, nonceRevelation);
 
             if (endorsements.Result.Any())
                 return endorsements.Result;
@@ -74,8 +74,8 @@ namespace Tzkt.Api.Repositories
             if (preendorsements.Result.Any())
                 return preendorsements.Result;
 
-            if (dobleBaking.Result.Any())
-                return dobleBaking.Result;
+            if (doubleBaking.Result.Any())
+                return doubleBaking.Result;
 
             if (doubleEndorsing.Result.Any())
                 return doubleEndorsing.Result;

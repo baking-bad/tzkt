@@ -316,7 +316,7 @@ namespace Tzkt.Api.Websocket.Processors
                     ContractSubs.Remove(contract);
 
                 if (Limits[connectionId] != 0)
-                    Logger.LogCritical("Failed to unsibscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
+                    Logger.LogCritical("Failed to unsubscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
                 Limits.Remove(connectionId);
 
                 Logger.LogDebug("Client {0} unsubscribed", connectionId);

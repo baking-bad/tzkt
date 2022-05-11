@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Services
             Logger = logger;
         }
 
-        protected async Task SyncOverridenMetadata()
+        protected async Task SyncOverriddenMetadata()
         {
             if (Config.OverriddenMetadata?.Count > 0)
             {
@@ -99,7 +99,7 @@ namespace Tzkt.Sync.Services
                 Logger.LogInformation("Token metadata started");
 
                 await InitState();
-                await SyncOverridenMetadata();
+                await SyncOverriddenMetadata();
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -243,7 +243,7 @@ namespace Tzkt.Sync.Services
                 await res.Content.ReadAsStreamAsync())).Data.Items;
 
             // There can be actually multiple status items (per each network), but it's ok:
-            // 1. If new network is added there's no need to reindex from scratch
+            // 1. If new network is added there's no need to re-index from scratch
             // 2. If the oldest network is reset it means we need to re-fetch all the data (e.g. parsing issues fixed)
             // 3. Eventually we will reach the state when a single dipdup instance will be responsible for a single network
             return items[0].CreatedAt;

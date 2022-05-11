@@ -16,7 +16,7 @@ The indexer fetches raw data from the Tezos node, then processes it and stores i
 - **Low resource consumption.** TzKT is fairly lightweight. To run TzKT on Tezos mainnet it is recommended to have at least 4 GB of RAM, depending on the configured cache size.
 - **No local node needed.** TzKT indexer works well even with remote RPC node. By default it uses public [rpc.tzkt.io](https://rpc.tzkt.io/mainnet/chains/main/blocks/head/header).
 - **Quick start.** Indexer bootstrap takes ~15 minutes by using snapshots publicly available for all supported networks. Of course, you can run full synchronization from scratch as well.
-- **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data. Also, the indexer performs self-diagnostics after each block, which guarantees the correct commiting.
+- **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data. Also, the indexer performs self-diagnostics after each block, which guarantees the correct committing.
 - **Flexibility and scalability.** There is no requirement to run all TzKT components (database, indexer, API) together and on the same machine. This allows flexible optimization, because you can optimize each component separately and according to your needs. Or you can run all the components on the same machine as well, which is much cheaper.
 - **PostgreSQL.** TzKT uses the world's most advanced open source database, that gives a lot of possibilities such as removing unused indexes to reduce storage usage or adding specific indexes to increase performance of specific queries. You can configure replication, clustering, partitioning and much more. You can use a lot of plugins to enable cool features like GraphQL. This is a really powerful database.
 - **Friendly support.** We are always happy to help everyone and are open to discussions and feature requests. Feel free to [contact us](https://baking-bad.org/docs#contacts).
@@ -301,7 +301,7 @@ dotnet Tzkt.Api.dll
 // info: Tzkt.Api.Services.Sync.SyncWorker[0]
 //       Sync worker initialized with level 776917 and blocks time 60s
 // info: Tzkt.Api.Services.Sync.SyncWorker[0]
-//       Syncronization started
+//       Synchronization started
 // info: Microsoft.Hosting.Lifetime[0]
 //       Now listening on: http://localhost:5000
 // info: Microsoft.Hosting.Lifetime[0]
