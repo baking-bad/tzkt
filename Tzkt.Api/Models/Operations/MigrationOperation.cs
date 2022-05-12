@@ -66,6 +66,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public List<BigMapDiff> Diffs { get; set; }
 
+        /// <summary>
+        /// Number of token transfers produced by the operation, or `null` if there are no transfers
+        /// </summary>
+        public int? TokenTransfersCount { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation

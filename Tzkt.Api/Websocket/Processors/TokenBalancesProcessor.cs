@@ -106,26 +106,26 @@ namespace Tzkt.Api.Websocket.Processors
                     account = new(),
                     token = new()
                 };
+                var params2 = new TokenBalanceFilter
+                {
+                    id = new Int32Parameter
+                    {
+                        Gt = LastId,
+                        Le = State.Current.TokenCounter
+                    },
+                    lastLevel = new Int32Parameter
+                    {
+                        Le = State.ValidLevel
+                    },
+                    account = new(),
+                    token = new()
+                };
                 var limit = 1_000_000;
 
                 var balances = await Repo.GetTokenBalances(params1, new() { limit = limit });
                 if (LastId != State.Current.TokenCounter)
                 {
                     // we do the second requests because there may be new tokens added retroactively
-                    var params2 = new TokenBalanceFilter
-                    {
-                        id = new Int32Parameter
-                        {
-                            Gt = LastId,
-                            Le = State.Current.TokenCounter
-                        },
-                        lastLevel = new Int32Parameter
-                        {
-                            Le = State.ValidLevel
-                        },
-                        account = new(),
-                        token = new()
-                    };
                     balances = balances.Concat(await Repo.GetTokenBalances(params2, new() { limit = limit }));
                 }
                 var count = balances.Count();

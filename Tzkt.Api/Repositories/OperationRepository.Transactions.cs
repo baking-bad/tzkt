@@ -101,6 +101,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
+                TokenTransfersCount = row.TokenTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -172,6 +173,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
+                TokenTransfersCount = row.TokenTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -243,6 +245,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
+                TokenTransfersCount = row.TokenTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -293,6 +296,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
+                TokenTransfersCount = row.TokenTransfers,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -412,6 +416,7 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
+                TokenTransfersCount = row.TokenTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -479,6 +484,7 @@ namespace Tzkt.Api.Repositories
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
+                    case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -654,6 +660,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.InternalOperations > 0;
                         break;
+                    case "tokenTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenTransfers;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -730,6 +740,7 @@ namespace Tzkt.Api.Repositories
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
+                case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -901,6 +912,10 @@ namespace Tzkt.Api.Repositories
                 case "hasInternals":
                     foreach (var row in rows)
                         result[j++] = row.InternalOperations > 0;
+                    break;
+                case "tokenTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokenTransfers;
                     break;
                 case "quote":
                     foreach (var row in rows)

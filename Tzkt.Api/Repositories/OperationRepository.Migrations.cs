@@ -64,6 +64,7 @@ namespace Tzkt.Api.Repositories
                 BalanceChange = row.BalanceChange,
                 Storage = row.StorageId == null ? null : storages?[row.StorageId],
                 Diffs = row.BigMapUpdates == null ? null : diffs?[row.Id],
+                TokenTransfersCount = row.TokenTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             }).FirstOrDefault();
         }
@@ -127,6 +128,7 @@ namespace Tzkt.Api.Repositories
                 BalanceChange = row.BalanceChange,
                 Storage = row.StorageId == null ? null : storages?[row.StorageId],
                 Diffs = row.BigMapUpdates == null ? null : diffs?[row.Id],
+                TokenTransfersCount = row.TokenTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -167,6 +169,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"o.""Id""");
                         columns.Add(@"o.""BigMapUpdates""");
                         break;
+                    case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
@@ -243,6 +246,10 @@ namespace Tzkt.Api.Repositories
                             foreach (var row in rows)
                                 result[j++][i] = row.BigMapUpdates == null ? null : diffs[row.Id];
                         break;
+                    case "tokenTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenTransfers;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -287,6 +294,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"o.""Id""");
                     columns.Add(@"o.""BigMapUpdates""");
                     break;
+                case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
                 case "quote": columns.Add(@"o.""Level"""); break;
             }
 
@@ -359,6 +367,10 @@ namespace Tzkt.Api.Repositories
                     if (diffs != null)
                         foreach (var row in rows)
                             result[j++] = row.BigMapUpdates == null ? null : diffs[row.Id];
+                    break;
+                case "tokenTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokenTransfers;
                     break;
                 case "quote":
                     foreach (var row in rows)

@@ -107,6 +107,7 @@ namespace Tzkt.Api.Repositories
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
                 };
             });
@@ -196,6 +197,7 @@ namespace Tzkt.Api.Repositories
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
                 };
             });
@@ -285,6 +287,7 @@ namespace Tzkt.Api.Repositories
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
                 };
             });
@@ -340,6 +343,7 @@ namespace Tzkt.Api.Repositories
                         },
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, block.Level)
                 };
             });
@@ -466,6 +470,7 @@ namespace Tzkt.Api.Repositories
                     Diffs = diffs?.GetValueOrDefault((int)row.Id),
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
                 };
             });
@@ -535,6 +540,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"o.""Id""");
                         columns.Add(@"o.""BigMapUpdates""");
                         break;
+                    case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
@@ -724,6 +730,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                         break;
+                    case "tokenTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenTransfers;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -796,6 +806,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"o.""Id""");
                     columns.Add(@"o.""BigMapUpdates""");
                     break;
+                case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
                 case "quote": columns.Add(@"o.""Level"""); break;
             }
 
@@ -981,6 +992,10 @@ namespace Tzkt.Api.Repositories
                 case "errors":
                     foreach (var row in rows)
                         result[j++] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
+                    break;
+                case "tokenTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokenTransfers;
                     break;
                 case "quote":
                     foreach (var row in rows)
