@@ -156,10 +156,10 @@ namespace Tzkt.Api.Repositories
         public Task<List<MetadataUpdate<string>>> UpdateAccountMetadata(List<MetadataUpdate<string>> metadata, string section)
             => Update("Accounts", "Address", "character(36)", metadata, section);
 
-        public Task<List<MetadataUpdate<string>>> UpdatProposalMetadata(List<MetadataUpdate<string>> metadata, string section)
+        public Task<List<MetadataUpdate<string>>> UpdateProposalMetadata(List<MetadataUpdate<string>> metadata, string section)
             => Update("Proposals", "Hash", "character(51)", metadata, section);
 
-        public Task<List<MetadataUpdate<string>>> UpdatProtocolMetadata(List<MetadataUpdate<string>> metadata, string section)
+        public Task<List<MetadataUpdate<string>>> UpdateProtocolMetadata(List<MetadataUpdate<string>> metadata, string section)
             => Update("Protocols", "Hash", "character(51)", metadata, section);
 
         public Task<List<MetadataUpdate<string>>> UpdateSoftwareMetadata(List<MetadataUpdate<string>> metadata, string section)

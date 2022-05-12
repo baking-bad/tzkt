@@ -89,12 +89,12 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Revert(Block block)
         {
             #region init
-            List<RevelationPenaltyOperation> revelationPanlties = null;
+            List<RevelationPenaltyOperation> revelationPenalties = null;
 
             if (block.RevelationPenalties?.Count > 0)
             {
-                revelationPanlties = block.RevelationPenalties;
-                foreach (var penalty in revelationPanlties)
+                revelationPenalties = block.RevelationPenalties;
+                foreach (var penalty in revelationPenalties)
                 {
                     penalty.Block ??= block;
                     penalty.Baker ??= Cache.Accounts.GetDelegate(penalty.BakerId);
@@ -102,9 +102,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             }
             #endregion
 
-            if (revelationPanlties == null) return;
+            if (revelationPenalties == null) return;
 
-            foreach (var penalty in revelationPanlties)
+            foreach (var penalty in revelationPenalties)
             {
                 #region entities
                 //var block = penalty.Block;

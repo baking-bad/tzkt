@@ -48,7 +48,7 @@ namespace Tzkt.Sync
                     services.AddQuotes(hostContext.Configuration);
                     services.AddHostedService<Observer>();
 
-                    #region healh checks
+                    #region health checks
                     var healthChecks = hostContext.Configuration.GetHealthChecksConfig();
                     if (healthChecks.Enabled)
                     {
@@ -80,7 +80,7 @@ namespace Tzkt.Sync
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
 
-            logger.LogInformation("Version {verion}",
+            logger.LogInformation("Version {version}",
                 Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
             try

@@ -133,7 +133,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                         throw new ValidationException("invalid subsidy origin");
 
                     if (subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.CpmmContract))
-                        throw new ValidationException("invalid subsidy recepient");
+                        throw new ValidationException("invalid subsidy recipient");
                 }
                 else if (kind == "origination" && Level == Protocol.FirstLevel)
                 {

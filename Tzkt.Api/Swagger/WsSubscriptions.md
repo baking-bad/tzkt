@@ -88,7 +88,7 @@ Sends touched accounts (affected by any operation in any way).
 
 ### Data model
 
-`data` is an array of items described in response sectioin of [/accounts/{address}](#operation/Accounts_GetByAddress) request.
+`data` is an array of items described in response section of [/accounts/{address}](#operation/Accounts_GetByAddress) request.
 
 ### State
 
@@ -173,7 +173,7 @@ This method accepts the following parameters:
 	ptr: 0,         // ptr of the bigmap you want to subscribe to
 	tags: [],       // array of bigmap tags ('metadata' or 'token_metadata')
 	contract: '',   // contract address
-	path: ''        // path to the bigmap in the contract strage
+	path: ''        // path to the bigmap in the contract storage
 }
 ````
 

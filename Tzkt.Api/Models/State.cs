@@ -10,7 +10,7 @@ namespace Tzkt.Api.Models
         public string Chain { get; set; }
 
         /// <summary>
-        /// Unique identificator of the chain
+        /// Unique identifier of the chain
         /// </summary>
         public string ChainId { get; set; }
 
@@ -45,7 +45,7 @@ namespace Tzkt.Api.Models
         public DateTime Timestamp { get; set; }
 
         /// <summary>
-        /// Current voring epoch index, starting from zero
+        /// Current voting epoch index, starting from zero
         /// </summary>
         public int VotingEpoch { get; set; }
 

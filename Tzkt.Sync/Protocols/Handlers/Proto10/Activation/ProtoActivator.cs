@@ -385,14 +385,14 @@ namespace Tzkt.Sync.Protocols.Proto10
                 if (!bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
                 {
                     #region shifting hack
-                    var snapshotedBaker = await Proto.Rpc.GetDelegateAsync(cycle.SnapshotLevel, baker.Address);
-                    var delegators = snapshotedBaker
+                    var snapshottedBaker = await Proto.Rpc.GetDelegateAsync(cycle.SnapshotLevel, baker.Address);
+                    var delegators = snapshottedBaker
                         .RequiredArray("delegated_contracts")
                         .EnumerateArray()
                         .Select(x => x.RequiredString())
                         .Where(x => x != baker.Address);
 
-                    var stakingBalance = snapshotedBaker.RequiredInt64("staking_balance");
+                    var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
                     var activeStake = stakingBalance - stakingBalance % protocol.TokensPerRoll;
                     var share = (double)activeStake / cycle.SelectedStake;
 
@@ -403,7 +403,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         StakingBalance = stakingBalance,
                         ActiveStake = activeStake,
                         SelectedStake = cycle.SelectedStake,
-                        DelegatedBalance = snapshotedBaker.RequiredInt64("delegated_balance"),
+                        DelegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance"),
                         DelegatorsCount = delegators.Count(),
                         ExpectedBlocks = protocol.BlocksPerCycle * share,
                         ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * share
@@ -413,11 +413,11 @@ namespace Tzkt.Sync.Protocols.Proto10
 
                     foreach (var delegatorAddress in delegators)
                     {
-                        var snapshotedDelegator = await Proto.Rpc.GetContractAsync(cycle.SnapshotLevel, delegatorAddress);
+                        var snapshottedDelegator = await Proto.Rpc.GetContractAsync(cycle.SnapshotLevel, delegatorAddress);
                         Db.DelegatorCycles.Add(new DelegatorCycle
                         {
                             BakerId = baker.Id,
-                            Balance = snapshotedDelegator.RequiredInt64("balance"),
+                            Balance = snapshottedDelegator.RequiredInt64("balance"),
                             Cycle = cycle.Index,
                             DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id
                         });
