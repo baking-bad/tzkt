@@ -234,6 +234,87 @@ await connection.invoke("SubscribeToBigMaps", { ptr: 123 });
 
 ---			
 
+## SubscribeToTokenBalances
+														  
+Sends token balances when they are updated
+		
+### Method 
+
+`SubscribeToTokenBalances`
+
+### Channel 
+
+`token_balances`
+
+### Parameters
+
+This method accepts the following parameters:
+
+````js
+{
+	account: '',    // address of the account that holds tokens
+	contract: '',   // address of the contract that manages tokens
+	tokenId: ''     // id of the token within the specified contract
+}
+````
+
+You can set various combinations of these fields to configure what you want to subscribe to. For example:
+
+````js
+// subscribe to all token balance updates
+{
+}
+
+// subscribe to balance updates of all tokens within the contract
+{
+	contract: 'KT1...'
+}
+
+// subscribe to balance updates of a particular token
+{
+	contract: 'KT1...',
+	tokenId: '0'
+} 	 
+
+// subscribe to token balance updates for the account
+{		
+	account: 'tz1...'
+} 	 
+
+// subscribe to balance updates of all tokens within the contract for the account
+{		
+	account: 'tz1...',
+	contract: 'KT1...'
+} 
+
+// subscribe to a particular token balance updates for the account
+{		
+	account: 'tz1...',
+	contract: 'KT1...',
+	tokenId: '0'
+}
+````
+
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
+
+### Data model
+
+Same as in [/tokens/balances](#operation/Tokens_GetTokenBalances).
+
+### State
+
+State contains level (`int`) of the last processed block.
+
+### Example
+
+````js
+connection.on("token_balances", (msg) => { console.log(msg); });
+// subscribe to all token balances of the 'tz123...' account
+await connection.invoke("SubscribeToTokenBalances", { account: 'tz123...' });
+````
+
+---			
+
 ## SubscribeToTokenTransfers
 														  
 Sends token transfers
@@ -252,9 +333,9 @@ This method accepts the following parameters:
 
 ````js
 {
-	account: '',	// address of the account that sends/receives tokens
-	contract: '',	// address of the contract that manages tokens
-	tokenId: ''		// id of the token within the specified contract
+	account: '',    // address of the account that sends/receives tokens
+	contract: '',   // address of the contract that manages tokens
+	tokenId: ''     // id of the token within the specified contract
 }
 ````
 
@@ -309,7 +390,7 @@ State contains level (`int`) of the last processed block.
 
 ````js
 connection.on("transfers", (msg) => { console.log(msg); });
-// subscribe to all transfers of the 'tz123...' contract
+// subscribe to all transfers of the 'tz123...' account
 await connection.invoke("SubscribeToTokenTransfers", { account: 'tz123...' });
 ````
 

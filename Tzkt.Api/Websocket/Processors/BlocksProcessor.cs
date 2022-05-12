@@ -59,11 +59,16 @@ namespace Tzkt.Api.Websocket.Processors
                 #region load blocks
                 Logger.LogDebug("Fetching blocks from {0} to {1}", State.ValidLevel, State.Current.Level);
 
-                var level = new Int32Parameter
-                {
-                    Gt = State.ValidLevel,
-                    Le = State.Current.Level
-                };
+                var level = State.Current.Level == State.ValidLevel + 1
+                    ? new Int32Parameter
+                    {
+                        Eq = State.Current.Level
+                    }
+                    : new Int32Parameter
+                    {
+                        Gt = State.ValidLevel,
+                        Le = State.Current.Level
+                    };
                 var limit = State.Current.Level - State.ValidLevel;
                 var symbols = Symbols.None;
 

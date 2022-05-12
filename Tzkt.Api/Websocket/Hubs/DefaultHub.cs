@@ -12,6 +12,7 @@ namespace Tzkt.Api.Websocket.Hubs
         readonly BlocksProcessor<DefaultHub> Blocks;
         readonly OperationsProcessor<DefaultHub> Operations;
         readonly BigMapsProcessor<DefaultHub> BigMaps;
+        readonly TokenBalancesProcessor<DefaultHub> Balances;
         readonly TokenTransfersProcessor<DefaultHub> Transfers;
         readonly AccountsProcessor<DefaultHub> Accounts;
 
@@ -20,6 +21,7 @@ namespace Tzkt.Api.Websocket.Hubs
             BlocksProcessor<DefaultHub> blocks,
             OperationsProcessor<DefaultHub> operations,
             BigMapsProcessor<DefaultHub> bigMaps,
+            TokenBalancesProcessor<DefaultHub> balances,
             TokenTransfersProcessor<DefaultHub> transfers,
             AccountsProcessor<DefaultHub> accounts,
             ILogger<DefaultHub> logger,
@@ -29,6 +31,7 @@ namespace Tzkt.Api.Websocket.Hubs
             Blocks = blocks;
             Operations = operations;
             BigMaps = bigMaps;
+            Balances = balances;
             Transfers = transfers;
             Accounts = accounts;
         }
@@ -57,6 +60,13 @@ namespace Tzkt.Api.Websocket.Hubs
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
+        public Task<int> SubscribeToTokenBalances(TokenTransfersParameter parameters)
+        {
+            parameters ??= new();
+            parameters.EnsureValid();
+            return Balances.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+        }
+
         public Task<int> SubscribeToTokenTransfers(TokenTransfersParameter parameters)
         {
             parameters ??= new();
@@ -75,6 +85,7 @@ namespace Tzkt.Api.Websocket.Hubs
         {
             Operations.Unsubscribe(Context.ConnectionId);
             BigMaps.Unsubscribe(Context.ConnectionId);
+            Balances.Unsubscribe(Context.ConnectionId);
             Transfers.Unsubscribe(Context.ConnectionId);
             Accounts.Unsubscribe(Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);

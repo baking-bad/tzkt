@@ -85,11 +85,16 @@ namespace Tzkt.Api.Websocket.Processors
                 #region load updates
                 Logger.LogDebug("Fetching bigmap updates from {0} to {1}", State.ValidLevel, State.Current.Level);
 
-                var level = new Int32Parameter
-                {
-                    Gt = State.ValidLevel,
-                    Le = State.Current.Level
-                };
+                var level = State.Current.Level == State.ValidLevel + 1
+                    ? new Int32Parameter
+                    {
+                        Eq = State.Current.Level
+                    }
+                    : new Int32Parameter
+                    {
+                        Gt = State.ValidLevel,
+                        Le = State.Current.Level
+                    };
                 var limit = 1_000_000;
                 var format = MichelineFormat.Json;
 

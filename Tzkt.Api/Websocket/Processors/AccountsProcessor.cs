@@ -70,11 +70,16 @@ namespace Tzkt.Api.Websocket.Processors
                 #region load updates
                 Logger.LogDebug("Fetching account updates from {0} to {1}", State.ValidLevel, State.Current.Level);
 
-                var level = new Int32Parameter
-                {
-                    Gt = State.ValidLevel,
-                    Le = State.Current.Level
-                };
+                var level = State.Current.Level == State.ValidLevel + 1
+                    ? new Int32Parameter
+                    {
+                        Eq = State.Current.Level
+                    }
+                    : new Int32Parameter
+                    {
+                        Gt = State.ValidLevel,
+                        Le = State.Current.Level
+                    };
                 const int limit = 1_000_000;
 
                 var accounts = (await Repo.Get(null, null, null, null, null, level, null, null, limit)).ToList();
