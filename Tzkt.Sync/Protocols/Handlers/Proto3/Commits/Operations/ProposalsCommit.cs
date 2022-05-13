@@ -46,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     Timestamp = block.Timestamp,
                     OpHash = op.RequiredString("hash"),
                     Sender = sender,
-                    Rolls = snapshot.Rolls,
+                    VotingPower = snapshot.VotingPower,
                     Duplicated = duplicated,
                     Epoch = period.Epoch,
                     Period = period.Index,
@@ -74,12 +74,12 @@ namespace Tzkt.Sync.Protocols.Proto3
                         period.ProposalsCount++;
 
                     proposal.Upvotes++;
-                    proposal.Rolls += proposalOp.Rolls;
+                    proposal.VotingPower += proposalOp.VotingPower;
 
-                    if (proposal.Rolls > period.TopRolls)
+                    if (proposal.VotingPower > period.TopVotingPower)
                     {
                         period.TopUpvotes = proposal.Upvotes;
-                        period.TopRolls = proposal.Rolls;
+                        period.TopVotingPower = proposal.VotingPower;
                     }
 
                     snapshot.Status = VoterStatus.Upvoted;
@@ -122,7 +122,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             if (!proposalOp.Duplicated)
             {
                 proposal.Upvotes--;
-                proposal.Rolls -= proposalOp.Rolls;
+                proposal.VotingPower -= proposalOp.VotingPower;
 
                 if (period.ProposalsCount > 1)
                 {
@@ -132,20 +132,20 @@ namespace Tzkt.Sync.Protocols.Proto3
                         .ToListAsync();
 
                     var curr = proposals.First(x => x.Id == proposal.Id);
-                    curr.Rolls -= proposalOp.Rolls;
+                    curr.VotingPower -= proposalOp.VotingPower;
                     curr.Upvotes--;
 
                     var prevMax = proposals
-                        .OrderByDescending(x => x.Rolls)
+                        .OrderByDescending(x => x.VotingPower)
                         .First();
 
                     period.TopUpvotes = prevMax.Upvotes;
-                    period.TopRolls = prevMax.Rolls;
+                    period.TopVotingPower = prevMax.VotingPower;
                 }
                 else
                 {
                     period.TopUpvotes = proposal.Upvotes;
-                    period.TopRolls = proposal.Rolls;
+                    period.TopVotingPower = proposal.VotingPower;
                 }
 
                 if (proposal.Upvotes == 0)

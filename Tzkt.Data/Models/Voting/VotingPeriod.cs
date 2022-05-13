@@ -14,14 +14,14 @@ namespace Tzkt.Data.Models
         public PeriodStatus Status { get; set; }
 
         public int? TotalBakers { get; set; }
-        public int? TotalRolls { get; set; }
+        public long? TotalVotingPower { get; set; }
 
         #region proposal
         public int? UpvotesQuorum { get; set; }
 
         public int? ProposalsCount { get; set; }
         public int? TopUpvotes { get; set; }
-        public int? TopRolls { get; set; }
+        public long? TopVotingPower { get; set; }
         #endregion
 
         #region ballot
@@ -30,11 +30,11 @@ namespace Tzkt.Data.Models
         public int? Supermajority { get; set; }
         
         public int? YayBallots { get; set; }
-        public int? YayRolls { get; set; }
         public int? NayBallots { get; set; }
-        public int? NayRolls { get; set; }
         public int? PassBallots { get; set; }
-        public int? PassRolls { get; set; }
+        public long? YayVotingPower { get; set; }
+        public long? NayVotingPower { get; set; }
+        public long? PassVotingPower { get; set; }
         #endregion
     }
 

@@ -29,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Sender = sender,
-                Rolls = snapshot.Rolls,
+                VotingPower = snapshot.VotingPower,
                 Epoch = period.Epoch,
                 Period = period.Index,
                 Proposal = proposal,
@@ -55,19 +55,19 @@ namespace Tzkt.Sync.Protocols.Proto3
             if (ballot.Vote == Vote.Yay)
             {
                 period.YayBallots++;
-                period.YayRolls += ballot.Rolls;
+                period.YayVotingPower += ballot.VotingPower;
                 snapshot.Status = VoterStatus.VotedYay;
             }
             else if (ballot.Vote == Vote.Nay)
             {
                 period.NayBallots++;
-                period.NayRolls += ballot.Rolls;
+                period.NayVotingPower += ballot.VotingPower;
                 snapshot.Status = VoterStatus.VotedNay;
             }
             else
             {
                 period.PassBallots++;
-                period.PassRolls += ballot.Rolls;
+                period.PassVotingPower += ballot.VotingPower;
                 snapshot.Status = VoterStatus.VotedPass;
             }
 
@@ -105,19 +105,19 @@ namespace Tzkt.Sync.Protocols.Proto3
             if (ballot.Vote == Vote.Yay)
             {
                 period.YayBallots--;
-                period.YayRolls -= ballot.Rolls;
+                period.YayVotingPower -= ballot.VotingPower;
                 snapshot.Status = VoterStatus.None;
             }
             else if (ballot.Vote == Vote.Nay)
             {
                 period.NayBallots--;
-                period.NayRolls -= ballot.Rolls;
+                period.NayVotingPower -= ballot.VotingPower;
                 snapshot.Status = VoterStatus.None;
             }
             else
             {
                 period.PassBallots--;
-                period.PassRolls -= ballot.Rolls;
+                period.PassVotingPower -= ballot.VotingPower;
                 snapshot.Status = VoterStatus.None;
             }
 

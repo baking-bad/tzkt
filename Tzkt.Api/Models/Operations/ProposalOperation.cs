@@ -54,9 +54,9 @@ namespace Tzkt.Api.Models
         public Alias Delegate { get; set; }
 
         /// <summary>
-        /// Number of baker's rolls (baker's voting power)
+        /// Baker's voting power
         /// </summary>
-        public int Rolls { get; set; }
+        public long VotingPower { get; set; }
 
         /// <summary>
         /// Indicates whether proposal upvote has already been pushed. Duplicated proposal operations are not counted when selecting proposal-winner.
@@ -68,6 +68,10 @@ namespace Tzkt.Api.Models
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        public int Rolls => (int)(VotingPower / 6_000_000_000);
         #endregion
     }
 }

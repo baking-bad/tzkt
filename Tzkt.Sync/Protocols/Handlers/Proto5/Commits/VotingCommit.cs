@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayRolls + prev.NayRolls + prev.PassRolls) / prev.TotalRolls;
+                var participation = 10000 * (prev.YayVotingPower + prev.NayVotingPower + prev.PassVotingPower) / prev.TotalVotingPower;
                 return ((int)prev.ParticipationEma * 8000 + (int)participation * 2000) / 10000;
             }
 

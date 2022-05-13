@@ -18,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Level = 1,
                     Period = 0,
                     BakerId = x.Id,
-                    Rolls = (int)(x.StakingBalance / protocol.TokensPerRoll),
+                    VotingPower = GetVotingPower(x, protocol),
                     Status = VoterStatus.None
                 });
 
@@ -31,11 +31,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Kind = PeriodKind.Proposal,
                 Status = PeriodStatus.Active,
                 TotalBakers = snapshots.Count(),
-                TotalRolls = snapshots.Sum(x => x.Rolls),
+                TotalVotingPower = snapshots.Sum(x => x.VotingPower),
                 UpvotesQuorum = protocol.ProposalQuorum,
                 ProposalsCount = 0,
                 TopUpvotes = 0,
-                TopRolls = 0
+                TopVotingPower = 0
             };
 
             Db.VotingSnapshots.AddRange(snapshots);
@@ -49,6 +49,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 DELETE FROM ""VotingPeriods"";
                 DELETE FROM ""VotingSnapshots"";");
             Cache.Periods.Reset();
+        }
+
+        protected virtual long GetVotingPower(Delegate baker, Protocol protocol)
+        {
+            return baker.StakingBalance - baker.StakingBalance % protocol.TokensPerRoll;
         }
     }
 }

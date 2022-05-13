@@ -8,7 +8,7 @@ namespace Tzkt.Data.Models
         public int Level { get; set; }
         public int Period { get; set; }
         public int BakerId { get; set; }
-        public int Rolls { get; set; }
+        public long VotingPower { get; set; }
 
         public VoterStatus Status { get; set; }
     }

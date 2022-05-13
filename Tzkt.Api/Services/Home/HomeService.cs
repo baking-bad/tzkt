@@ -460,7 +460,7 @@ namespace Tzkt.Api.Services
         {
             var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);
             var period = epoch.Periods.Last();
-            var proposals = epoch.Proposals.OrderByDescending(x => x.Rolls).ToList();
+            var proposals = epoch.Proposals.OrderByDescending(x => x.VotingPower).ToList();
             var proposal = proposals.FirstOrDefault();
             var proposalMeta = proposal?.Metadata == null ? null : DJson.Parse(proposal.Metadata);
             
@@ -475,8 +475,8 @@ namespace Tzkt.Api.Services
                     {
                         Hash = x.Hash,
                         Metadata = x.Metadata,
-                        Rolls = x.Rolls,
-                        RollsPercentage = Math.Round(100.0 * x.Rolls / (int)period.TotalRolls!, 2)
+                        VotingPower = x.VotingPower,
+                        VotingPowerPercentage = Math.Round(100.0 * x.VotingPower / (int)period.TotalVotingPower!, 2)
                     }).ToList(),
                     UpvotesQuorum = period.UpvotesQuorum,
                     PeriodEndTime = period.EndTime,
@@ -498,15 +498,15 @@ namespace Tzkt.Api.Services
 
             if (period.Kind is PeriodKinds.Exploration or PeriodKinds.Promotion)
             {
-                var yayNaySum = (int)period.YayRolls! + (int)period.NayRolls!;
-                var totalVoted = yayNaySum + (int)period.PassRolls!;
+                var yayNaySum = (int)period.YayVotingPower! + (int)period.NayVotingPower!;
+                var totalVoted = yayNaySum + (int)period.PassVotingPower!;
 
                 result.YayVotes = yayNaySum > 0
-                    ? Math.Round(100.0 * (int)period.YayRolls / yayNaySum, 2)
+                    ? Math.Round(100.0 * (int)period.YayVotingPower / yayNaySum, 2)
                     : 0;
 
-                result.Participation = period.TotalRolls > 0
-                    ? Math.Round(100.0 * totalVoted / (int)period.TotalRolls, 2)
+                result.Participation = period.TotalVotingPower > 0
+                    ? Math.Round(100.0 * totalVoted / (int)period.TotalVotingPower, 2)
                     : 0;
 
                 result.BallotsQuorum = Math.Round((double)period.BallotsQuorum!, 2);

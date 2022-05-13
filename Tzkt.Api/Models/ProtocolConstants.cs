@@ -30,7 +30,7 @@ namespace Tzkt.Api.Models
         public int BlocksPerCommitment { get; set; }
         
         /// <summary>
-        /// A number of blocks that indicates how often a snapshot (snapshots are records of the state of rolls distributions) is taken
+        /// A number of blocks that indicates how often a snapshot (snapshots are records of the state of stake distributions) is taken
         /// </summary>
         public int BlocksPerSnapshot { get; set; }
         
@@ -106,7 +106,7 @@ namespace Tzkt.Api.Models
         public int ByteCost { get; set; }
 
         /// <summary>
-        /// Percentage of the total number of rolls required to select a proposal on the proposal period
+        /// Percentage of the total number of voting power required to select a proposal on the proposal period
         /// </summary>
         public double ProposalQuorum { get; set; }
         

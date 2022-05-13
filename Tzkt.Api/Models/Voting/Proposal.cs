@@ -35,9 +35,9 @@ namespace Tzkt.Api.Models
         public int Upvotes { get; set; }
 
         /// <summary>
-        /// The total number of rolls, upvoted the proposal
+        /// The total voting power of bakers, upvoted the proposal
         /// </summary>
-        public int Rolls { get; set; }
+        public long VotingPower { get; set; }
 
         /// <summary>
         /// Status of the proposal
@@ -53,5 +53,9 @@ namespace Tzkt.Api.Models
         /// </summary>
         [JsonSchemaType(typeof(ProposalMetadata), IsNullable = true)]
         public RawJson Metadata { get; set; }
+
+        #region deprecated
+        public int Rolls => (int)(VotingPower / 6_000_000_000);
+        #endregion
     }
 }
