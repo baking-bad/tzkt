@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -24,7 +26,34 @@ namespace Tzkt.Sync.Protocols.Proto13
             return baker.StakingBalance;
         }
 
-        protected override Task MigrateContext(AppState state) => Task.CompletedTask;
+        protected override async Task MigrateContext(AppState state)
+        {
+            var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
+
+            #region voting snapshots
+            await Db.Database.ExecuteSqlRawAsync($@"
+                DELETE FROM ""VotingSnapshots"" WHERE ""Period"" = {state.VotingPeriod}");
+
+            var snapshots = Cache.Accounts.GetDelegates()
+                .Where(x => x.Staked && x.StakingBalance >= nextProto.TokensPerRoll)
+                .Select(x => new VotingSnapshot
+                {
+                    Level = state.Level,
+                    Period = state.VotingPeriod,
+                    BakerId = x.Id,
+                    VotingPower = x.StakingBalance,
+                    Status = VoterStatus.None
+                });
+
+            var period = await Cache.Periods.GetAsync(state.VotingPeriod);
+            Db.TryAttach(period);
+
+            period.TotalBakers = snapshots.Count();
+            period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
+
+            Db.VotingSnapshots.AddRange(snapshots);
+            #endregion
+        }
         protected override Task RevertContext(AppState state) => Task.CompletedTask;
     }
 }
