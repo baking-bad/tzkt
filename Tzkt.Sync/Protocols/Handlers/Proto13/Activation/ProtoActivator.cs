@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto13
         {
             base.SetParameters(protocol, parameters);
             protocol.LBToggleThreshold = parameters["liquidity_baking_toggle_ema_threshold"]?.Value<int>() ?? 1_000_000_000;
+            protocol.BlocksPerVoting = (parameters["cycles_per_voting_period"]?.Value<int>() ?? 5) * protocol.BlocksPerCycle;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
