@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
     partial class ProtoActivator : Proto11.ProtoActivator
     {
-        public override List<Cycle> BootstrapCycles(Protocol protocol, List<Account> accounts)
+        public override List<Cycle> BootstrapCycles(Protocol protocol, List<Account> accounts, JToken parameters)
         {
-            var cycles = base.BootstrapCycles(protocol, accounts);
+            var cycles = base.BootstrapCycles(protocol, accounts, parameters);
             
             var delegates = accounts
                 .Where(x => x is Data.Models.Delegate d && d.StakingBalance >= protocol.TokensPerRoll)

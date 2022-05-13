@@ -6,11 +6,11 @@ namespace Tzkt.Sync.Protocols
 {
     static class Seed
     {
-        public static List<byte[]> GetInitialSeeds(int count)
+        public static List<byte[]> GetInitialSeeds(int count, byte[] initialSeed)
         {
             var list = new List<byte[]>(count)
             {
-                Blake2b.ComputeHash(32, Array.Empty<byte>())
+                Blake2b.ComputeHash(32, initialSeed)
             };
             for (int i = 1; i < count; i++)
             {
