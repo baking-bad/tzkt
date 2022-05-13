@@ -131,9 +131,9 @@ namespace Tzkt.Api.Models
         public int LBSunsetLevel { get; set; }
 
         /// <summary>
-        /// 1/2 window size of 2000 blocks with precision of 1000 for integer computation
+        /// 1/2 window size of 2000 blocks with precision of 1000000 for integer computation
         /// </summary>
-        public int LBEscapeThreshold { get; set; }
+        public int LBToggleThreshold { get; set; }
 
         /// <summary>
         /// Endorsement quorum
@@ -174,5 +174,12 @@ namespace Tzkt.Api.Models
         /// How much is burned from baker's frozen deposits, in case of double (pre)endorsing
         /// </summary>
         public int DoubleEndorsingPunishmentDenominator { get; set; }
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int LBEscapeThreshold => LBToggleThreshold;
+        #endregion
     }
 }

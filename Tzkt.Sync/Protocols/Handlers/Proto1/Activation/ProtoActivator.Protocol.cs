@@ -109,7 +109,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ProposalQuorum = prev.ProposalQuorum,
                 LBSubsidy = prev.LBSubsidy,
                 LBSunsetLevel = prev.LBSunsetLevel,
-                LBEscapeThreshold = prev.LBEscapeThreshold
+                LBToggleThreshold = prev.LBToggleThreshold
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);

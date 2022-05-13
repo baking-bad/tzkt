@@ -61,8 +61,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Events = events,
                 Reward = rewardUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -rewardUpdate.RequiredInt64("change"),
                 Bonus = bonusUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -bonusUpdate.RequiredInt64("change"),
-                LBEscapeVote = header.RequiredBool("liquidity_baking_escape_vote"),
-                LBEscapeEma = metadata.RequiredInt32("liquidity_baking_escape_ema")
+                LBToggle = GetLBToggleVote(rawBlock),
+                LBToggleEma = GetLBToggleEma(rawBlock)
             };
 
             #region determine block round
@@ -177,5 +177,11 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Db.Blocks.Remove(Block);
         }
+
+        protected virtual bool? GetLBToggleVote(JsonElement block)
+            => !block.Required("header").RequiredBool("liquidity_baking_escape_vote");
+
+        protected virtual int GetLBToggleEma(JsonElement block)
+            => block.Required("metadata").RequiredInt32("liquidity_baking_escape_ema") * 1000;
     }
 }

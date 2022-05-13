@@ -71,6 +71,9 @@ namespace Tzkt.Api.Models
         #endregion
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
         public int Rolls => (int)(VotingPower / 6_000_000_000);
         #endregion
     }

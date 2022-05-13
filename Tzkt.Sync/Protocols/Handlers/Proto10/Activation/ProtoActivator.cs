@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             protocol.LBSubsidy = parameters["liquidity_baking_subsidy"]?.Value<int>() ?? 2_500_000;
             protocol.LBSunsetLevel = parameters["liquidity_baking_sunset_level"]?.Value<int>() ?? 2_032_928;
-            protocol.LBEscapeThreshold = parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 1_000_000;
+            protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 1_000_000) * 1000;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
@@ -83,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             protocol.LBSubsidy = 2_500_000;
             protocol.LBSunsetLevel = 2_032_928;
-            protocol.LBEscapeThreshold = 1_000_000;
+            protocol.LBToggleThreshold = 1_000_000_000;
         }
 
         protected override async Task ActivateContext(AppState state)

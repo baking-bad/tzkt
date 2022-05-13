@@ -6,10 +6,10 @@ namespace Tzkt.Sync.Protocols.Proto10
     {
         public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override bool GetLBEscapeVote(JsonElement block)
-            => block.Required("header").RequiredBool("liquidity_baking_escape_vote");
+        protected override bool? GetLBToggleVote(JsonElement block)
+            => !block.Required("header").RequiredBool("liquidity_baking_escape_vote");
 
-        protected override int GetLBEscapeEma(JsonElement block)
-            => block.Required("metadata").RequiredInt32("liquidity_baking_escape_ema");
+        protected override int GetLBToggleEma(JsonElement block)
+            => block.Required("metadata").RequiredInt32("liquidity_baking_escape_ema") * 1000;
     }
 }

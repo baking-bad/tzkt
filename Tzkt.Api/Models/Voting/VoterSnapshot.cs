@@ -28,6 +28,9 @@ namespace Tzkt.Api.Models
         public string Status { get; set; }
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
         public int Rolls => (int)(VotingPower / 6_000_000_000);
         #endregion
     }
