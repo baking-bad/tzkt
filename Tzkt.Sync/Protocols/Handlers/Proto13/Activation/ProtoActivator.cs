@@ -11,10 +11,12 @@ namespace Tzkt.Sync.Protocols.Proto13
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
+            protocol.LBToggleThreshold = parameters["liquidity_baking_toggle_ema_threshold"]?.Value<int>() ?? 1_000_000_000;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
+            protocol.LBToggleThreshold = 1_000_000_000;
         }
 
         protected override long GetVotingPower(Delegate baker, Protocol protocol)

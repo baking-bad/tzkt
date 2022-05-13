@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.EndorsementReward1 = 0;
 
             protocol.LBSunsetLevel = parameters["liquidity_baking_sunset_level"]?.Value<int>() ?? 3_063_809;
-            protocol.LBEscapeThreshold = parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 666_667;
+            protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 666_667) * 1000;
 
             protocol.ConsensusThreshold = parameters["consensus_threshold"]?.Value<int>() ?? 4667;
             protocol.MinParticipationNumerator = parameters["minimal_participation_ratio"]?["numerator"]?.Value<int>() ?? 2;
@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             if (protocol.LBSunsetLevel == 2_244_609)
                 protocol.LBSunsetLevel = 3_063_809;
-            protocol.LBEscapeThreshold = 666_667;
+            protocol.LBToggleThreshold = 666_667_000;
 
             protocol.ConsensusThreshold = 4667;
             protocol.MinParticipationNumerator = 2;

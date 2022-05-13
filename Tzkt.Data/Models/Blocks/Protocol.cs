@@ -59,9 +59,9 @@ namespace Tzkt.Data.Models
         /// </summary>
         public int LBSunsetLevel { get; set; }
         /// <summary>
-        /// 1/2 window size of 2000 blocks with precision of 1000 for integer computation
+        /// 1/2 window size of 2000 blocks with precision of 1000000 for integer computation
         /// </summary>
-        public int LBEscapeThreshold { get; set; }
+        public int LBToggleThreshold { get; set; }
 
         public int ConsensusThreshold { get; set; }
         public int MinParticipationNumerator { get; set; }

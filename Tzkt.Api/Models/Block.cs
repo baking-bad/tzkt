@@ -88,14 +88,14 @@ namespace Tzkt.Api.Models
         public SoftwareAlias Software { get; set; }
 
         /// <summary>
-        /// Flag indicating that the baker has voted for disabling liquidity baking
+        /// Liquidity baking toggle (`true` if enabled, `false` if disabled, or `null` if the baker says 'pass')
         /// </summary>
-        public bool LBEscapeVote { get; set; }
+        public bool? LBToggle { get; set; }
 
         /// <summary>
-        /// Liquidity baking escape EMA value with precision of 1000 for integer computation
+        /// Liquidity baking escape EMA value with precision of 1000000 for integer computation
         /// </summary>
-        public int LBEscapeEma { get; set; }
+        public int LBToggleEma { get; set; }
 
         #region operations
         /// <summary>
@@ -213,6 +213,16 @@ namespace Tzkt.Api.Models
         /// [DEPRECATED]
         /// </summary>
         public Alias Baker => Producer;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public bool LBEscapeVote => LBToggle == false;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int LBEscapeEma => LBToggleEma;
         #endregion
     }
 }

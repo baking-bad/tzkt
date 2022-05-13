@@ -32,8 +32,8 @@ namespace Tzkt.Data.Models
         public int? ResetBakerDeactivation { get; set; }
         public int? ResetProposerDeactivation { get; set; }
 
-        public bool LBEscapeVote { get; set; }
-        public int LBEscapeEma { get; set; }
+        public bool? LBToggle { get; set; }
+        public int LBToggleEma { get; set; }
 
         #region relations
         [ForeignKey(nameof(ProtoCode))]

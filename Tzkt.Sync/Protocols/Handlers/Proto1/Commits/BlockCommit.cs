@@ -54,8 +54,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Events = events,
                 Reward = reward,
                 Deposit = deposit,
-                LBEscapeVote = GetLBEscapeVote(rawBlock),
-                LBEscapeEma = GetLBEscapeEma(rawBlock)
+                LBToggle = GetLBToggleVote(rawBlock),
+                LBToggleEma = GetLBToggleEma(rawBlock)
             };
 
             #region entities
@@ -134,8 +134,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             return (deposit, reward);
         }
 
-        protected virtual bool GetLBEscapeVote(JsonElement block) => false;
+        protected virtual bool? GetLBToggleVote(JsonElement block) => null;
 
-        protected virtual int GetLBEscapeEma(JsonElement block) => 0;
+        protected virtual int GetLBToggleEma(JsonElement block) => 0;
     }
 }

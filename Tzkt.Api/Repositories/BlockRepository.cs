@@ -62,8 +62,8 @@ namespace Tzkt.Api.Repositories
                 Proposer = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null,
                 Producer = row.ProducerId != null ? await Accounts.GetAliasAsync(row.ProducerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
-                LBEscapeVote = row.LBEscapeVote,
-                LBEscapeEma = row.LBEscapeEma,
+                LBToggle = row.LBToggle,
+                LBToggleEma = row.LBToggleEma,
                 Quote = Quotes.Get(quote, level)
             };
 
@@ -103,8 +103,8 @@ namespace Tzkt.Api.Repositories
                 Proposer = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null,
                 Producer = row.ProducerId != null ? await Accounts.GetAliasAsync(row.ProducerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
-                LBEscapeVote = row.LBEscapeVote,
-                LBEscapeEma = row.LBEscapeEma,
+                LBToggle = row.LBToggle,
+                LBToggleEma = row.LBToggleEma,
                 Quote = Quotes.Get(quote, row.Level)
             };
 
@@ -166,8 +166,8 @@ namespace Tzkt.Api.Repositories
                 Proposer = row.ProposerId != null ? Accounts.GetAlias(row.ProposerId) : null,
                 Producer = row.ProducerId != null ? Accounts.GetAlias(row.ProducerId) : null,
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
-                LBEscapeVote = row.LBEscapeVote,
-                LBEscapeEma = row.LBEscapeEma,
+                LBToggle = row.LBToggle,
+                LBToggleEma = row.LBToggleEma,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -207,8 +207,8 @@ namespace Tzkt.Api.Repositories
                     case "producer": columns.Add(@"""ProducerId"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
-                    case "lbEscapeVote": columns.Add(@"""LBEscapeVote"""); break; 
-                    case "lbEscapeEma": columns.Add(@"""LBEscapeEma"""); break; 
+                    case "lbToggle": columns.Add(@"""LBToggle"""); break; 
+                    case "lbToggleEma": columns.Add(@"""LBToggleEma"""); break; 
                 }
             }
 
@@ -309,13 +309,13 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                         break;
-                    case "lbEscapeVote":
+                    case "lbToggle":
                         foreach (var row in rows)
-                            result[j++][i] = row.LBEscapeVote;
+                            result[j++][i] = row.LBToggle;
                         break;
-                    case "lbEscapeEma":
+                    case "lbToggleEma":
                         foreach (var row in rows)
-                            result[j++][i] = row.LBEscapeEma;
+                            result[j++][i] = row.LBToggleEma;
                         break;
                     case "quote":
                         foreach (var row in rows)
@@ -360,8 +360,8 @@ namespace Tzkt.Api.Repositories
                 case "producer": columns.Add(@"""ProducerId"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
                 case "quote": columns.Add(@"""Level"""); break;
-                case "lbEscapeVote": columns.Add(@"""LBEscapeVote"""); break;
-                case "lbEscapeEma": columns.Add(@"""LBEscapeEma"""); break;
+                case "lbToggle": columns.Add(@"""LBToggle"""); break;
+                case "lbToggleEma": columns.Add(@"""LBToggleEma"""); break;
             }
 
             if (columns.Count == 0)
@@ -455,13 +455,13 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                     break;
-                case "lbEscapeVote":
+                case "lbToggle":
                     foreach (var row in rows)
-                        result[j++] = row.LBEscapeVote;
+                        result[j++] = row.LBToggle;
                     break;
-                case "lbEscapeEma":
+                case "lbToggleEma":
                     foreach (var row in rows)
-                        result[j++] = row.LBEscapeEma;
+                        result[j++] = row.LBToggleEma;
                     break;
                 case "quote":
                     foreach (var row in rows)
