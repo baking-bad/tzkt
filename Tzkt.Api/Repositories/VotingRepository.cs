@@ -55,7 +55,7 @@ namespace Tzkt.Api.Repositories
                 LastPeriod = row.LastPeriod,
                 Epoch = row.Epoch,
                 Upvotes = row.Upvotes,
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Status = ProposalStatuses.ToString(row.Status),
                 Metadata = row.Metadata
             };
@@ -74,7 +74,7 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => x switch
                 {
                     "upvotes" => ("Upvotes", "Upvotes"),
-                    "rolls" => ("Rolls", "Rolls"),
+                    "votingPower" => ("VotingPower", "VotingPower"),
                     _ => ("Id", "Id")
                 });
 
@@ -89,7 +89,7 @@ namespace Tzkt.Api.Repositories
                 LastPeriod = row.LastPeriod,
                 Epoch = row.Epoch,
                 Upvotes = row.Upvotes,
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Status = ProposalStatuses.ToString(row.Status),
                 Metadata = row.Metadata
             });
@@ -115,7 +115,7 @@ namespace Tzkt.Api.Repositories
                     case "lastPeriod": columns.Add(@"""LastPeriod"""); break;
                     case "epoch": columns.Add(@"""Epoch"""); break;
                     case "upvotes": columns.Add(@"""Upvotes"""); break;
-                    case "rolls": columns.Add(@"""Rolls"""); break;
+                    case "votingPower": columns.Add(@"""VotingPower"""); break;
                     case "status": columns.Add(@"""Status"""); break;
                     case "metadata": columns.Add(@"""Metadata"""); break;
                 }
@@ -130,7 +130,7 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => x switch
                 {
                     "upvotes" => ("Upvotes", "Upvotes"),
-                    "rolls" => ("Rolls", "Rolls"),
+                    "votingPower" => ("VotingPower", "VotingPower"),
                     _ => ("Id", "Id")
                 });
 
@@ -169,9 +169,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Upvotes;
                         break;
-                    case "rolls":
+                    case "votingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.Rolls;
+                            result[j++][i] = row.VotingPower;
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -205,7 +205,7 @@ namespace Tzkt.Api.Repositories
                 case "lastPeriod": columns.Add(@"""LastPeriod"""); break;
                 case "epoch": columns.Add(@"""Epoch"""); break;
                 case "upvotes": columns.Add(@"""Upvotes"""); break;
-                case "rolls": columns.Add(@"""Rolls"""); break;
+                case "votingPower": columns.Add(@"""VotingPower"""); break;
                 case "status": columns.Add(@"""Status"""); break;
                 case "metadata": columns.Add(@"""Metadata"""); break;
             }
@@ -219,7 +219,7 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => x switch
                 {
                     "upvotes" => ("Upvotes", "Upvotes"),
-                    "rolls" => ("Rolls", "Rolls"),
+                    "votingPower" => ("VotingPower", "VotingPower"),
                     _ => ("Id", "Id")
                 });
 
@@ -252,9 +252,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Upvotes;
                     break;
-                case "rolls":
+                case "votingPower":
                     foreach (var row in rows)
-                        result[j++] = row.Rolls;
+                        result[j++] = row.VotingPower;
                     break;
                 case "status":
                     foreach (var row in rows)
@@ -294,19 +294,19 @@ namespace Tzkt.Api.Repositories
                 Kind = PeriodKinds.ToString(row.Kind),
                 Status = PeriodStatuses.ToString(row.Status),
                 TotalBakers = row.TotalBakers,
-                TotalRolls = row.TotalRolls,
+                TotalVotingPower = row.TotalVotingPower,
                 UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
                 ProposalsCount = row.ProposalsCount,
                 TopUpvotes = row.TopUpvotes,
-                TopRolls = row.TopRolls,
+                TopVotingPower = row.TopVotingPower,
                 BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
                 Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
                 YayBallots = row.YayBallots,
-                YayRolls = row.YayRolls,
+                YayVotingPower = row.YayVotingPower,
                 NayBallots = row.NayBallots,
-                NayRolls = row.NayRolls,
+                NayVotingPower = row.NayVotingPower,
                 PassBallots = row.PassBallots,
-                PassRolls = row.PassRolls
+                PassVotingPower = row.PassVotingPower
             };
         }
 
@@ -329,19 +329,19 @@ namespace Tzkt.Api.Repositories
                 Kind = PeriodKinds.ToString(row.Kind),
                 Status = PeriodStatuses.ToString(row.Status),
                 TotalBakers = row.TotalBakers,
-                TotalRolls = row.TotalRolls,
+                TotalVotingPower = row.TotalVotingPower,
                 UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
                 ProposalsCount = row.ProposalsCount,
                 TopUpvotes = row.TopUpvotes,
-                TopRolls = row.TopRolls,
+                TopVotingPower = row.TopVotingPower,
                 BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
                 Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
                 YayBallots = row.YayBallots,
-                YayRolls = row.YayRolls,
+                YayVotingPower = row.YayVotingPower,
                 NayBallots = row.NayBallots,
-                NayRolls = row.NayRolls,
+                NayVotingPower = row.NayVotingPower,
                 PassBallots = row.PassBallots,
-                PassRolls = row.PassRolls
+                PassVotingPower = row.PassVotingPower
             });
         }
 
@@ -362,19 +362,19 @@ namespace Tzkt.Api.Repositories
                     case "kind": columns.Add(@"""Kind"""); break;
                     case "status": columns.Add(@"""Status"""); break;
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
-                    case "totalRolls": columns.Add(@"""TotalRolls"""); break;
+                    case "totalVotingPower": columns.Add(@"""TotalVotingPower"""); break;
                     case "upvotesQuorum": columns.Add(@"""UpvotesQuorum"""); break;
                     case "proposalsCount": columns.Add(@"""ProposalsCount"""); break;
                     case "topUpvotes": columns.Add(@"""TopUpvotes"""); break;
-                    case "topRolls": columns.Add(@"""TopRolls"""); break;
+                    case "topVotingPower": columns.Add(@"""TopVotingPower"""); break;
                     case "ballotsQuorum": columns.Add(@"""BallotsQuorum"""); break;
                     case "supermajority": columns.Add(@"""Supermajority"""); break;
                     case "yayBallots": columns.Add(@"""YayBallots"""); break;
-                    case "yayRolls": columns.Add(@"""YayRolls"""); break;
+                    case "yayVotingPower": columns.Add(@"""YayVotingPower"""); break;
                     case "nayBallots": columns.Add(@"""NayBallots"""); break;
-                    case "nayRolls": columns.Add(@"""NayRolls"""); break;
+                    case "nayVotingPower": columns.Add(@"""NayVotingPower"""); break;
                     case "passBallots": columns.Add(@"""PassBallots"""); break;
-                    case "passRolls": columns.Add(@"""PassRolls"""); break;
+                    case "passVotingPower": columns.Add(@"""PassVotingPower"""); break;
                 }
             }
 
@@ -431,9 +431,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalBakers;
                         break;
-                    case "totalRolls":
+                    case "totalVotingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalRolls;
+                            result[j++][i] = row.TotalVotingPower;
                         break;
                     case "upvotesQuorum":
                         foreach (var row in rows)
@@ -447,9 +447,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TopUpvotes;
                         break;
-                    case "topRolls":
+                    case "topVotingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.TopRolls;
+                            result[j++][i] = row.TopVotingPower;
                         break;
                     case "ballotsQuorum":
                         foreach (var row in rows)
@@ -463,25 +463,25 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.YayBallots;
                         break;
-                    case "yayRolls":
+                    case "yayVotingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.YayRolls;
+                            result[j++][i] = row.YayVotingPower;
                         break;
                     case "nayBallots":
                         foreach (var row in rows)
                             result[j++][i] = row.NayBallots;
                         break;
-                    case "nayRolls":
+                    case "nayVotingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.NayRolls;
+                            result[j++][i] = row.NayVotingPower;
                         break;
                     case "passBallots":
                         foreach (var row in rows)
                             result[j++][i] = row.PassBallots;
                         break;
-                    case "passRolls":
+                    case "passVotingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.PassRolls;
+                            result[j++][i] = row.PassVotingPower;
                         break;
                 }
             }
@@ -504,19 +504,19 @@ namespace Tzkt.Api.Repositories
                 case "kind": columns.Add(@"""Kind"""); break;
                 case "status": columns.Add(@"""Status"""); break;
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
-                case "totalRolls": columns.Add(@"""TotalRolls"""); break;
+                case "totalVotingPower": columns.Add(@"""TotalVotingPower"""); break;
                 case "upvotesQuorum": columns.Add(@"""UpvotesQuorum"""); break;
                 case "proposalsCount": columns.Add(@"""ProposalsCount"""); break;
                 case "topUpvotes": columns.Add(@"""TopUpvotes"""); break;
-                case "topRolls": columns.Add(@"""TopRolls"""); break;
+                case "topVotingPower": columns.Add(@"""TopVotingPower"""); break;
                 case "ballotsQuorum": columns.Add(@"""BallotsQuorum"""); break;
                 case "supermajority": columns.Add(@"""Supermajority"""); break;
                 case "yayBallots": columns.Add(@"""YayBallots"""); break;
-                case "yayRolls": columns.Add(@"""YayRolls"""); break;
+                case "yayVotingPower": columns.Add(@"""YayVotingPower"""); break;
                 case "nayBallots": columns.Add(@"""NayBallots"""); break;
-                case "nayRolls": columns.Add(@"""NayRolls"""); break;
+                case "nayVotingPower": columns.Add(@"""NayVotingPower"""); break;
                 case "passBallots": columns.Add(@"""PassBallots"""); break;
-                case "passRolls": columns.Add(@"""PassRolls"""); break;
+                case "passVotingPower": columns.Add(@"""PassVotingPower"""); break;
             }
 
             if (columns.Count == 0)
@@ -570,9 +570,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TotalBakers;
                     break;
-                case "totalRolls":
+                case "totalVotingPower":
                     foreach (var row in rows)
-                        result[j++] = row.TotalRolls;
+                        result[j++] = row.TotalVotingPower;
                     break;
                 case "upvotesQuorum":
                     foreach (var row in rows)
@@ -586,9 +586,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TopUpvotes;
                     break;
-                case "topRolls":
+                case "topVotingPower":
                     foreach (var row in rows)
-                        result[j++] = row.TopRolls;
+                        result[j++] = row.TopVotingPower;
                     break;
                 case "ballotsQuorum":
                     foreach (var row in rows)
@@ -602,25 +602,25 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.YayBallots;
                     break;
-                case "yayRolls":
+                case "yayVotingPower":
                     foreach (var row in rows)
-                        result[j++] = row.YayRolls;
+                        result[j++] = row.YayVotingPower;
                     break;
                 case "nayBallots":
                     foreach (var row in rows)
                         result[j++] = row.NayBallots;
                     break;
-                case "nayRolls":
+                case "nayVotingPower":
                     foreach (var row in rows)
-                        result[j++] = row.NayRolls;
+                        result[j++] = row.NayVotingPower;
                     break;
                 case "passBallots":
                     foreach (var row in rows)
                         result[j++] = row.PassBallots;
                     break;
-                case "passRolls":
+                case "passVotingPower":
                     foreach (var row in rows)
-                        result[j++] = row.PassRolls;
+                        result[j++] = row.PassVotingPower;
                     break;
             }
 
@@ -646,7 +646,7 @@ namespace Tzkt.Api.Repositories
             return new VoterSnapshot
             {
                 Delegate = Accounts.GetAlias(row.BakerId),
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Status = VoterStatuses.ToString(row.Status)
             };
         }
@@ -661,7 +661,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT * FROM ""VotingSnapshots""")
                 .Filter("Period", period)
                 .Filter("Status", status)
-                .Take(sort, offset, limit, x => x == "rolls" ? ("Rolls", "Rolls") : ("Id", "Id"));
+                .Take(sort, offset, limit, x => x == "votingPower" ? ("VotingPower", "VotingPower") : ("Id", "Id"));
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -669,7 +669,7 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => new VoterSnapshot
             {
                 Delegate = Accounts.GetAlias(row.BakerId),
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Status = VoterStatuses.ToString(row.Status)
             });
         }
@@ -691,7 +691,7 @@ namespace Tzkt.Api.Repositories
             var proposals = await GetProposals(
                 hash: null,
                 new Int32Parameter { Eq = index },
-                new SortParameter { Desc = "rolls" },
+                new SortParameter { Desc = "votingPower" },
                 null, 1000);
 
             return new VotingEpoch
@@ -713,19 +713,19 @@ namespace Tzkt.Api.Repositories
                     Kind = PeriodKinds.ToString(row.Kind),
                     Status = PeriodStatuses.ToString(row.Status),
                     TotalBakers = row.TotalBakers,
-                    TotalRolls = row.TotalRolls,
+                    TotalVotingPower = row.TotalVotingPower,
                     UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
                     ProposalsCount = row.ProposalsCount,
                     TopUpvotes = row.TopUpvotes,
-                    TopRolls = row.TopRolls,
+                    TopVotingPower = row.TopVotingPower,
                     BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
                     Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
                     YayBallots = row.YayBallots,
-                    YayRolls = row.YayRolls,
+                    YayVotingPower = row.YayVotingPower,
                     NayBallots = row.NayBallots,
-                    NayRolls = row.NayRolls,
+                    NayVotingPower = row.NayVotingPower,
                     PassBallots = row.PassBallots,
-                    PassRolls = row.PassRolls
+                    PassVotingPower = row.PassVotingPower
                 }),
                 Proposals = proposals
             };
@@ -757,7 +757,7 @@ namespace Tzkt.Api.Repositories
             var proposals = (await GetProposals(
                 hash: null,
                 new Int32Parameter { In = epochs.ToList() },
-                new SortParameter { Desc = "rolls" },
+                new SortParameter { Desc = "votingPower" },
                 null, limit * 10))
                 .GroupBy(x => x.Epoch)
                 .ToDictionary(k => k.Key, v => v.ToList());
@@ -786,19 +786,19 @@ namespace Tzkt.Api.Repositories
                             Kind = PeriodKinds.ToString(row.Kind),
                             Status = PeriodStatuses.ToString(row.Status),
                             TotalBakers = row.TotalBakers,
-                            TotalRolls = row.TotalRolls,
+                            TotalVotingPower = row.TotalVotingPower,
                             UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
                             ProposalsCount = row.ProposalsCount,
                             TopUpvotes = row.TopUpvotes,
-                            TopRolls = row.TopRolls,
+                            TopVotingPower = row.TopVotingPower,
                             BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
                             Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
                             YayBallots = row.YayBallots,
-                            YayRolls = row.YayRolls,
+                            YayVotingPower = row.YayVotingPower,
                             NayBallots = row.NayBallots,
-                            NayRolls = row.NayRolls,
+                            NayVotingPower = row.NayVotingPower,
                             PassBallots = row.PassBallots,
-                            PassRolls = row.PassRolls,
+                            PassVotingPower = row.PassVotingPower,
                         }),
                         Proposals = proposals.GetValueOrDefault((int)group.Key) ?? Enumerable.Empty<Proposal>()
                     };
@@ -826,7 +826,7 @@ namespace Tzkt.Api.Repositories
             var proposals = await GetProposals(
                 hash: null,
                 new Int32Parameter { Eq = epoch },
-                new SortParameter { Desc = "rolls" },
+                new SortParameter { Desc = "votingPower" },
                 null, 10);
 
             return new VotingEpoch
@@ -848,19 +848,19 @@ namespace Tzkt.Api.Repositories
                     Kind = PeriodKinds.ToString(row.Kind),
                     Status = PeriodStatuses.ToString(row.Status),
                     TotalBakers = row.TotalBakers,
-                    TotalRolls = row.TotalRolls,
+                    TotalVotingPower = row.TotalVotingPower,
                     UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
                     ProposalsCount = row.ProposalsCount,
                     TopUpvotes = row.TopUpvotes,
-                    TopRolls = row.TopRolls,
+                    TopVotingPower = row.TopVotingPower,
                     BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
                     Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
                     YayBallots = row.YayBallots,
-                    YayRolls = row.YayRolls,
+                    YayVotingPower = row.YayVotingPower,
                     NayBallots = row.NayBallots,
-                    NayRolls = row.NayRolls,
+                    NayVotingPower = row.NayVotingPower,
                     PassBallots = row.PassBallots,
-                    PassRolls = row.PassRolls
+                    PassVotingPower = row.PassVotingPower
                 }),
                 Proposals = proposals
             };

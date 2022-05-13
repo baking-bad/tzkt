@@ -54,9 +54,9 @@ namespace Tzkt.Api.Models
         public Alias Delegate { get; set; }
 
         /// <summary>
-        /// Number of baker's rolls (baker's voting power)
+        /// Baker's voting power
         /// </summary>
-        public int Rolls { get; set; }
+        public long VotingPower { get; set; }
 
         /// <summary>
         /// Vote, given in the ballot (`yay`, `nay`, or `pass`)
@@ -68,6 +68,10 @@ namespace Tzkt.Api.Models
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        public int Rolls => (int)(VotingPower / 6_000_000_000);
         #endregion
     }
 }

@@ -12,7 +12,7 @@ namespace Tzkt.Data.Models
         public int Epoch { get; set; }
         
         public int Upvotes { get; set; }
-        public int Rolls { get; set; }
+        public long VotingPower { get; set; }
         public ProposalStatus Status { get; set; }
     }
 

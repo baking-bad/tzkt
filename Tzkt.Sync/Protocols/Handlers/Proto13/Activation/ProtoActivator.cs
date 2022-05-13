@@ -17,6 +17,11 @@ namespace Tzkt.Sync.Protocols.Proto13
         {
         }
 
+        protected override long GetVotingPower(Delegate baker, Protocol protocol)
+        {
+            return baker.StakingBalance;
+        }
+
         protected override Task MigrateContext(AppState state) => Task.CompletedTask;
         protected override Task RevertContext(AppState state) => Task.CompletedTask;
     }

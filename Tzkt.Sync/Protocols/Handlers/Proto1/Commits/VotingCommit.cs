@@ -72,15 +72,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (p.ProposalsCount == 0)
                     return PeriodStatus.NoProposals;
 
-                if (p.TopRolls < p.TotalRolls * p.UpvotesQuorum / 10000)
+                if (p.TopVotingPower < p.TotalVotingPower * p.UpvotesQuorum / 10000)
                     return PeriodStatus.NoQuorum;
             }
             else if (p.Kind == PeriodKind.Exploration || p.Kind == PeriodKind.Promotion)
             {
-                if (p.YayRolls + p.NayRolls + p.PassRolls < p.TotalRolls * p.BallotsQuorum / 10000)
+                if (p.YayVotingPower + p.NayVotingPower + p.PassVotingPower < p.TotalVotingPower * p.BallotsQuorum / 10000)
                     return PeriodStatus.NoQuorum;
 
-                if (p.YayRolls < (p.YayRolls + p.NayRolls) * p.Supermajority / 10000)
+                if (p.YayVotingPower < (p.YayVotingPower + p.NayVotingPower) * p.Supermajority / 10000)
                     return PeriodStatus.NoSupermajority;
             }
 
@@ -102,7 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (p.Status == PeriodStatus.Success)
                 {
-                    var winner = proposals.First(x => x.Rolls == p.TopRolls);
+                    var winner = proposals.First(x => x.VotingPower == p.TopVotingPower);
                     winner.Status = GetProposalStatus(winner, p);
                     if (winner.Status == ProposalStatus.Active)
                         winner.LastPeriod = p.Index + 1;
@@ -163,19 +163,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    Rolls = (int)(x.StakingBalance / proto.TokensPerRoll),
+                    VotingPower = GetVotingPower(x, proto),
                     Status = VoterStatus.None
                 });
 
             period.TotalBakers = snapshots.Count();
-            period.TotalRolls = snapshots.Sum(x => x.Rolls);
+            period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
             #endregion
 
             #region quorum
             period.UpvotesQuorum = proto.ProposalQuorum;
             period.ProposalsCount = 0;
             period.TopUpvotes = 0;
-            period.TopRolls = 0;
+            period.TopVotingPower = 0;
             #endregion
 
             Db.VotingSnapshots.AddRange(snapshots);
@@ -205,12 +205,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    Rolls = (int)(x.StakingBalance / proto.TokensPerRoll),
+                    VotingPower = GetVotingPower(x, proto),
                     Status = VoterStatus.None
                 });
 
             period.TotalBakers = snapshots.Count();
-            period.TotalRolls = snapshots.Sum(x => x.Rolls);
+            period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
             #endregion
 
             #region quorum
@@ -219,11 +219,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             period.Supermajority = 8000;
 
             period.YayBallots = 0;
-            period.YayRolls = 0;
+            period.YayVotingPower = 0;
             period.NayBallots = 0;
-            period.NayRolls = 0;
+            period.NayVotingPower = 0;
             period.PassBallots = 0;
-            period.PassRolls = 0;
+            period.PassVotingPower = 0;
             #endregion
 
             Db.VotingSnapshots.AddRange(snapshots);
@@ -259,7 +259,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayRolls + prev.NayRolls + prev.PassRolls) / prev.TotalRolls;
+                var participation = 10000 * (prev.YayVotingPower + prev.NayVotingPower + prev.PassVotingPower) / prev.TotalVotingPower;
                 return ((int)prev.ParticipationEma * 8000 + (int)participation * 2000) / 10000;
             }
 
@@ -275,11 +275,16 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayRolls + prev.NayRolls + prev.PassRolls) / prev.TotalRolls;
+                var participation = 10000 * (prev.YayVotingPower + prev.NayVotingPower + prev.PassVotingPower) / prev.TotalVotingPower;
                 return ((int)prev.BallotsQuorum * 8000 + (int)participation * 2000) / 10000;
             }
 
             return 8000;
+        }
+
+        protected virtual long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
+        {
+            return baker.StakingBalance - baker.StakingBalance % protocol.TokensPerRoll;
         }
     }
 }

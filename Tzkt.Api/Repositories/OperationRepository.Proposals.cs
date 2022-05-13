@@ -24,7 +24,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""VotingPower"", o.""Duplicated"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
                             proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
@@ -48,7 +48,7 @@ namespace Tzkt.Api.Repositories
                 Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = hash,
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
@@ -71,7 +71,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ProposalOperation>> GetProposals(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
+                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""VotingPower"", o.""Duplicated"", o.""Epoch"", o.""Period"",
                             proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""ProposalOps"" as o
@@ -92,7 +92,7 @@ namespace Tzkt.Api.Repositories
                 Block = block.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
@@ -126,7 +126,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Duplicated"", o.""Epoch"", o.""Period"",
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""VotingPower"", o.""Duplicated"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
                             proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
@@ -154,7 +154,7 @@ namespace Tzkt.Api.Repositories
                 Block = row.Hash,
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Duplicated = row.Duplicated,
                 Period = new PeriodInfo
                 {
@@ -200,7 +200,7 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "delegate": columns.Add(@"o.""SenderId"""); break;
-                    case "rolls": columns.Add(@"o.""Rolls"""); break;
+                    case "votingPower": columns.Add(@"o.""VotingPower"""); break;
                     case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                     case "proposal":
                         columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
@@ -273,9 +273,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.OpHash;
                         break;
-                    case "rolls":
+                    case "votingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.Rolls;
+                            result[j++][i] = row.VotingPower;
                         break;
                     case "duplicated":
                         foreach (var row in rows)
@@ -338,7 +338,7 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "delegate": columns.Add(@"o.""SenderId"""); break;
-                case "rolls": columns.Add(@"o.""Rolls"""); break;
+                case "votingPower": columns.Add(@"o.""VotingPower"""); break;
                 case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                 case "proposal":
                     columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
@@ -408,9 +408,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.OpHash;
                     break;
-                case "rolls":
+                case "votingPower":
                     foreach (var row in rows)
-                        result[j++] = row.Rolls;
+                        result[j++] = row.VotingPower;
                     break;
                 case "duplicated":
                     foreach (var row in rows)

@@ -10,7 +10,7 @@ namespace Tzkt.Data.Models
         public int Period { get; set; }
         public int ProposalId { get; set; }
         public int SenderId { get; set; }
-        public int Rolls { get; set; }
+        public long VotingPower { get; set; }
 
         public bool Duplicated { get; set; }
 

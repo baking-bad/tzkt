@@ -13,9 +13,9 @@ namespace Tzkt.Api.Models
         public Alias Delegate { get; set; }
 
         /// <summary>
-        /// Voter's rolls snapshot (aka voting power)
+        /// Baker's voting power
         /// </summary>
-        public int Rolls { get; set; }
+        public long VotingPower { get; set; }
 
         /// <summary>
         /// Voter's status:
@@ -26,5 +26,9 @@ namespace Tzkt.Api.Models
         /// `voted_pass` - the voter voted "pass"
         /// </summary>
         public string Status { get; set; }
+
+        #region deprecated
+        public int Rolls => (int)(VotingPower / 6_000_000_000);
+        #endregion
     }
 }

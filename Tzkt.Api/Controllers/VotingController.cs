@@ -47,7 +47,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Filters proposals by hash</param>
         /// <param name="epoch">Filters proposals by voting epoch</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts proposals by specified field. Supported fields: `id` (default), `upvotes`, `rolls`.</param>
+        /// <param name="sort">Sorts proposals by specified field. Supported fields: `id` (default), `upvotes`, `votingPower`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -61,7 +61,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "upvotes", "rolls"))
+            if (sort != null && !sort.Validate("id", "upvotes", "votingPower"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -189,7 +189,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="index">Voting period index starting from zero</param>
         /// <param name="status">Filters voters by status (`none`, `upvoted`, `voted_yay`, `voted_nay`, `voted_pass`)</param>
-        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `rolls`.</param>
+        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `VvtingPower`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -202,7 +202,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "rolls"))
+            if (sort != null && !sort.Validate("id", "votingPower"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -231,7 +231,7 @@ namespace Tzkt.Api.Controllers
         /// Returns voters from the current period.
         /// </remarks>
         /// <param name="status">Filters voters by status (`none`, `upvoted`, `voted_yay`, `voted_nay`, `voted_pass`)</param>
-        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `rolls`.</param>
+        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `votingPower`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -243,7 +243,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "rolls"))
+            if (sort != null && !sort.Validate("id", "votingPower"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

@@ -64,9 +64,9 @@ namespace Tzkt.Api.Models
         public int? TotalBakers { get; set; }
 
         /// <summary>
-        /// The number of rolls of bakers on the voters list
+        /// Total voting power of bakers on the voters list
         /// </summary>
-        public int? TotalRolls { get; set; }
+        public long? TotalVotingPower { get; set; }
 
         #region proposal
         /// <summary>
@@ -85,9 +85,9 @@ namespace Tzkt.Api.Models
         public int? TopUpvotes { get; set; }
 
         /// <summary>
-        /// This is how many rolls the most upvoted proposal has (only for proposal period)
+        /// This is how much voting power the most upvoted proposal has (only for proposal period)
         /// </summary>
-        public int? TopRolls { get; set; }
+        public long? TopVotingPower { get; set; }
         #endregion
 
         #region ballot
@@ -107,9 +107,9 @@ namespace Tzkt.Api.Models
         public int? YayBallots { get; set; }
 
         /// <summary>
-        /// Total rolls of the ballots with "yay" vote (only for exploration and promotion periods)
+        /// Total voting power of the ballots with "yay" vote (only for exploration and promotion periods)
         /// </summary>
-        public int? YayRolls { get; set; }
+        public long? YayVotingPower { get; set; }
 
         /// <summary>
         /// The number of the ballots with "nay" vote (only for exploration and promotion periods)
@@ -117,9 +117,9 @@ namespace Tzkt.Api.Models
         public int? NayBallots { get; set; }
 
         /// <summary>
-        /// Total rolls of the ballots with "nay" vote (only for exploration and promotion periods)
+        /// Total voting power of the ballots with "nay" vote (only for exploration and promotion periods)
         /// </summary>
-        public int? NayRolls { get; set; }
+        public long? NayVotingPower { get; set; }
 
         /// <summary>
         /// The number of the ballots with "pass" vote (only for exploration and promotion periods)
@@ -127,9 +127,17 @@ namespace Tzkt.Api.Models
         public int? PassBallots { get; set; }
 
         /// <summary>
-        /// Total rolls of the ballots with "pass" vote (only for exploration and promotion periods)
+        /// Total voting power of the ballots with "pass" vote (only for exploration and promotion periods)
         /// </summary>
-        public int? PassRolls { get; set; }
+        public long? PassVotingPower { get; set; }
+        #endregion
+
+        #region deprecated
+        public int? TotalRolls => TotalVotingPower == null ? null : (int)(TotalVotingPower / 6_000_000_000);
+        public int? TopRolls => TopVotingPower == null ? null : (int)(TopVotingPower / 6_000_000_000);
+        public int? YayRolls => YayVotingPower == null ? null : (int)(YayVotingPower / 6_000_000_000);
+        public int? NayRolls => NayVotingPower == null ? null : (int)(NayVotingPower / 6_000_000_000);
+        public int? PassRolls => PassVotingPower == null ? null : (int)(PassVotingPower / 6_000_000_000);
         #endregion
     }
 }

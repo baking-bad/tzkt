@@ -24,7 +24,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""VotingPower"", o.""Vote"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
                             proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
@@ -62,7 +62,7 @@ namespace Tzkt.Api.Repositories
                     Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Vote = Votes.ToString(row.Vote),
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -71,7 +71,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BallotOperation>> GetBallots(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
+                SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""VotingPower"", o.""Vote"", o.""Epoch"", o.""Period"",
                             proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""BallotOps"" as o
@@ -106,7 +106,7 @@ namespace Tzkt.Api.Repositories
                     Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Vote = Votes.ToString(row.Vote),
                 Quote = Quotes.Get(quote, block.Level)
             });
@@ -126,7 +126,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""Rolls"", o.""Vote"", o.""Epoch"", o.""Period"",
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""VotingPower"", o.""Vote"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
                             proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
@@ -168,7 +168,7 @@ namespace Tzkt.Api.Repositories
                     Alias = row.ProposalAlias
                 },
                 Delegate = Accounts.GetAlias(row.SenderId),
-                Rolls = row.Rolls,
+                VotingPower = row.VotingPower,
                 Vote = Votes.ToString(row.Vote),
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -200,7 +200,7 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "delegate": columns.Add(@"o.""SenderId"""); break;
-                    case "rolls": columns.Add(@"o.""Rolls"""); break;
+                    case "votingPower": columns.Add(@"o.""VotingPower"""); break;
                     case "vote": columns.Add(@"o.""Vote"""); break;
                     case "proposal":
                         columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
@@ -296,9 +296,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.SenderId);
                         break;
-                    case "rolls":
+                    case "votingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.Rolls;
+                            result[j++][i] = row.VotingPower;
                         break;
                     case "vote":
                         foreach (var row in rows)
@@ -338,7 +338,7 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "delegate": columns.Add(@"o.""SenderId"""); break;
-                case "rolls": columns.Add(@"o.""Rolls"""); break;
+                case "votingPower": columns.Add(@"o.""VotingPower"""); break;
                 case "vote": columns.Add(@"o.""Vote"""); break;
                 case "proposal":
                     columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
@@ -431,9 +431,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.SenderId);
                     break;
-                case "rolls":
+                case "votingPower":
                     foreach (var row in rows)
-                        result[j++] = row.Rolls;
+                        result[j++] = row.VotingPower;
                     break;
                 case "vote":
                     foreach (var row in rows)
