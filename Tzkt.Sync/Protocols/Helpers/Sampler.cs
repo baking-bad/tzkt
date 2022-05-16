@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Dynamic.Json;
+using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols
 {
@@ -91,18 +93,27 @@ namespace Tzkt.Sync.Protocols
             return el < P[i] ? Bakers[i] : Bakers[Alias[i]];
         }
 
-        public static async Task<Sampler> CreateAsync(ProtocolHandler proto, int cycle)
+        public async Task Validate(TezosNode node, int block, int cycle)
         {
-            var block = proto.Cache.AppState.GetLevel();
-            var result = (await proto.Rpc.GetStakeDistribution(block, cycle))
-                .EnumerateArray()
-                .Where(x => x.RequiredInt64("active_stake") > 0);
+            dynamic raw = DJson.Create(await node.GetAsync($"chains/main/blocks/{block}/context/raw/json/cycle/{cycle}"));
+            var state = raw.delegate_sampler_state;
 
-            return new Sampler
-            (
-                result.Select(x => proto.Cache.Accounts.GetDelegate(x.RequiredString("baker")).Id).ToArray(),
-                result.Select(x => x.RequiredInt64("active_stake")).ToArray()
-            );
+            if (state.total != Total)
+                throw new Exception("Invalid sampler 'total'");
+
+            if (state.p.elements.length != P.Length)
+                throw new Exception("Invalid sampler 'p'");
+
+            for (int i = 0; i < P.Length; i++)
+                if (state.p.elements[i] != P[i])
+                    throw new Exception("Invalid sampler 'p' element");
+
+            if (state.alias.elements.length != Alias.Length)
+                throw new Exception("Invalid sampler 'alias'");
+
+            for (int i = 0; i < Alias.Length; i++)
+                if (state.alias.elements[i] != Alias[i])
+                    throw new Exception("Invalid sampler 'alias' element");
         }
 
         static long TakeInt64(byte[] state, int pos, long bound, out byte[] nextState, out int nextPos)

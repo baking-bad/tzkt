@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         public BakingRightsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual async Task Apply(Block block, Cycle futureCycle)
+        public virtual async Task Apply(Block block, Cycle futureCycle, Dictionary<int, long> selectedStakes)
         {
             #region current rights
             CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
@@ -47,7 +47,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (maxExistedRound < block.BlockRound)
                 {
                     var cycle = await Db.Cycles.FirstAsync(x => x.Index == block.Cycle);
-                    var sampler = await Sampler.CreateAsync(Proto, block.Cycle);
+                    var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
+                    var sampler = GetSampler(bakerCycles.Values.Where(x => x.ActiveStake > 0).Select(x => (x.BakerId, x.ActiveStake)));
+                    #region temporary diagnostics
+                    await sampler.Validate(Proto.Node, block.Level, block.Cycle);
+                    #endregion
                     var bakingRights = RightsGenerator.GetBakingRights(sampler, cycle, block.Level, block.BlockRound + 1);
 
                     var sqlInsert = @"
@@ -118,7 +122,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region new cycle
             if (futureCycle != null)
             {
-                var sampler = await Sampler.CreateAsync(Proto, futureCycle.Index);
+                var sampler = GetSampler(selectedStakes.Where(x => x.Value > 0).Select(x => (x.Key, x.Value)));
+                #region temporary diagnostics
+                await sampler.Validate(Proto.Node, block.Level, futureCycle.Index);
+                #endregion
                 FutureBakingRights = await RightsGenerator.GetBakingRightsAsync(sampler, block.Protocol, futureCycle);
                 FutureEndorsingRights = await RightsGenerator.GetEndorsingRightsAsync(sampler, block.Protocol, futureCycle);
 
@@ -181,6 +188,12 @@ namespace Tzkt.Sync.Protocols.Proto12
                     OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.PreservedCycles)}");
             }
             #endregion
+        }
+
+        protected virtual Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
+        {
+            var sorted = selection.OrderByDescending(x => x.stake);
+            return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
         }
     }
 }
