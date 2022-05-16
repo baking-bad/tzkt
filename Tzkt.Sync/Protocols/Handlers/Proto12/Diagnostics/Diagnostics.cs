@@ -45,7 +45,10 @@ namespace Tzkt.Sync.Protocols.Proto12
         protected override async Task TestParticipation(AppState state)
         {
             var bakers = Cache.Accounts.GetDelegates().ToList();
-            var bakerCycles = await Cache.BakerCycles.GetAsync(state.Cycle);
+            var bakerCycles = Db.ChangeTracker.Entries()
+                .Where(x => x.Entity is BakerCycle bc && bc.Cycle == state.Cycle)
+                .Select(x => x.Entity as BakerCycle)
+                .ToDictionary(x => x.BakerId);
 
             foreach (var baker in bakers)
             {

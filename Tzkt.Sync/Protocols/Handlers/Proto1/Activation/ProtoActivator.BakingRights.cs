@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         public async Task<(List<IEnumerable<RightsGenerator.BR>>, List<IEnumerable<RightsGenerator.ER>>)> BootstrapBakingRights(
             Protocol protocol,
+            List<Account> accounts,
             List<Cycle> cycles)
         {
             var bakingRights = new List<IEnumerable<RightsGenerator.BR>>(protocol.PreservedCycles + 1);
@@ -18,7 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             foreach (var cycle in cycles)
             {
-                var (futureBakingRights, futureEndorsingRights) = await GetRights(protocol, cycle);
+                var (futureBakingRights, futureEndorsingRights) = await GetRights(protocol, accounts, cycle);
 
                 bakingRights.Add(futureBakingRights);
                 endorsingRights.Add(futureEndorsingRights);
@@ -63,7 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""BakingRights""");
         }
 
-        protected virtual async Task<(IEnumerable<RightsGenerator.BR>, IEnumerable<RightsGenerator.ER>)> GetRights(Protocol protocol, Cycle cycle)
+        protected virtual async Task<(IEnumerable<RightsGenerator.BR>, IEnumerable<RightsGenerator.ER>)> GetRights(Protocol protocol, List<Account> accounts, Cycle cycle)
         {
             var bakingRights = (await Proto.Rpc.GetBakingRightsAsync(1, cycle.Index))
                 .EnumerateArray()

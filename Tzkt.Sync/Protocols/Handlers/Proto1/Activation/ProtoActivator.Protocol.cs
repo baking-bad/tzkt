@@ -109,7 +109,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ProposalQuorum = prev.ProposalQuorum,
                 LBSubsidy = prev.LBSubsidy,
                 LBSunsetLevel = prev.LBSunsetLevel,
-                LBToggleThreshold = prev.LBToggleThreshold
+                LBToggleThreshold = prev.LBToggleThreshold,
+                ConsensusThreshold = prev.ConsensusThreshold,
+                DoubleBakingPunishment = prev.DoubleBakingPunishment,
+                DoubleEndorsingPunishmentDenominator = prev.DoubleEndorsingPunishmentDenominator,
+                DoubleEndorsingPunishmentNumerator = prev.DoubleEndorsingPunishmentNumerator,
+                FrozenDepositsPercentage = prev.FrozenDepositsPercentage,
+                MaxBakingReward = prev.MaxBakingReward,
+                MaxEndorsingReward = prev.MaxEndorsingReward,
+                MaxSlashingPeriod = prev.MaxSlashingPeriod,
+                MinParticipationDenominator = prev.MinParticipationDenominator,
+                MinParticipationNumerator = prev.MinParticipationNumerator
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);

@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -27,6 +29,14 @@ namespace Tzkt.Sync.Protocols.Proto13
             return baker.StakingBalance;
         }
 
+        protected override Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
+        {
+            var sorted = selection.OrderByDescending(x =>
+                Base58.Parse(Cache.Accounts.GetDelegate(x.id).Address), new BytesComparer());
+
+            return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
+        }
+
         protected override async Task MigrateContext(AppState state)
         {
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
@@ -34,6 +44,10 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region voting snapshots
             await Db.Database.ExecuteSqlRawAsync($@"
                 DELETE FROM ""VotingSnapshots"" WHERE ""Period"" = {state.VotingPeriod}");
+
+            Db.VotingSnapshots.RemoveRange(Db.ChangeTracker.Entries()
+                .Where(x => x.Entity is VotingSnapshot)
+                .Select(x => x.Entity as VotingSnapshot));
 
             var snapshots = Cache.Accounts.GetDelegates()
                 .Where(x => x.Staked && x.StakingBalance >= nextProto.TokensPerRoll)

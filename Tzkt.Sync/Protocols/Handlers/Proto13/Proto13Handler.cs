@@ -199,7 +199,7 @@ namespace Tzkt.Sync.Protocols
             await new TokensCommit(this).Apply(blockCommit.Block, bigMapCommit.Updates);
 
             var brCommit = new BakingRightsCommit(this);
-            await brCommit.Apply(blockCommit.Block, cycleCommit.FutureCycle);
+            await brCommit.Apply(blockCommit.Block, cycleCommit.FutureCycle, cycleCommit.SelectedStakes);
 
             await new DelegatorCycleCommit(this).Apply(blockCommit.Block, cycleCommit.FutureCycle);
 

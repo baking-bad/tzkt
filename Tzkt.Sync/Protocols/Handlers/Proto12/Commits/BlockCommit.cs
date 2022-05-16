@@ -40,6 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 events |= BlockEvents.BalanceSnapshot;
 
             var payloadRound = header.RequiredInt32("payload_round");
+            var blockRound = header.RequiredArray("fitness", 5)[4].RequiredInt32();
             var balanceUpdates = metadata.RequiredArray("balance_updates").EnumerateArray();
             var rewardUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards");
             var bonusUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses");
@@ -54,7 +55,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
                 PayloadRound = payloadRound,
-                BlockRound = payloadRound,
+                BlockRound = blockRound,
                 Proposer = proposer,
                 ProposerId = proposer.Id,
                 ProducerId = producer.Id,
@@ -64,30 +65,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 LBToggle = GetLBToggleVote(rawBlock),
                 LBToggleEma = GetLBToggleEma(rawBlock)
             };
-
-            #region determine block round
-            if (Block.ProposerId != Block.ProducerId)
-            {
-                var blockRound = (await Cache.BakingRights.GetAsync(Block.Cycle, Block.Level))
-                    .Where(x => x.Type == BakingRightType.Baking)
-                    .OrderBy(x => x.Round)
-                    .SkipWhile(x => x.Round < Block.PayloadRound)
-                    .FirstOrDefault(x => x.BakerId == Block.ProducerId)?
-                    .Round ?? -1;
-
-                if (blockRound == -1)
-                {
-                    var cycle = await Db.Cycles.FirstAsync(x => x.Index == Block.Cycle);
-                    var sampler = await Sampler.CreateAsync(Proto, Block.Cycle);
-                    blockRound = RightsGenerator.EnumerateBakingRights(sampler, cycle, Block.Level, 9_999_999)
-                        .SkipWhile(x => x.Round < Block.PayloadRound)
-                        .First(x => x.Baker == Block.ProducerId)
-                        .Round;
-                }
-
-                Block.BlockRound = blockRound;
-            }
-            #endregion
 
             Db.TryAttach(proposer);
             proposer.Balance += Block.Reward;
