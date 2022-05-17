@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 (x.Id, Math.Min(x.StakingBalance, x.Balance * 100 / protocol.FrozenDepositsPercentage))));
 
             #region temporary diagnostics
-            await sampler.Validate(Proto.Node, 1, cycle.Index);
+            await sampler.Validate(Proto, 1, cycle.Index);
             #endregion
 
             var bakingRights = await RightsGenerator.GetBakingRightsAsync(sampler, protocol, cycle);

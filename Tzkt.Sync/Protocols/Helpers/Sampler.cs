@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dynamic.Json;
-using Tzkt.Sync.Services;
+using Netezos.Keys;
 
 namespace Tzkt.Sync.Protocols
 {
@@ -93,13 +93,20 @@ namespace Tzkt.Sync.Protocols
             return el < P[i] ? Bakers[i] : Bakers[Alias[i]];
         }
 
-        public async Task Validate(TezosNode node, int block, int cycle)
+        public async Task Validate(ProtocolHandler proto, int block, int cycle)
         {
-            dynamic raw = DJson.Create(await node.GetAsync($"chains/main/blocks/{block}/context/raw/json/cycle/{cycle}"));
+            dynamic raw = DJson.Create(await proto.Node.GetAsync($"chains/main/blocks/{block}/context/raw/json/cycle/{cycle}"));
             var state = raw.delegate_sampler_state;
 
             if (state.total != Total)
                 throw new Exception("Invalid sampler 'total'");
+
+            if (state.support.elements.length != Bakers.Length)
+                throw new Exception("Invalid sampler 'support'");
+
+            for (int i = 0; i < Bakers.Length; i++)
+                if (PubKey.FromBase58(state.support.elements[i]).Address != proto.Cache.Accounts.GetDelegate(Bakers[i]).Address)
+                    throw new Exception("Invalid sampler 'support' element");
 
             if (state.p.elements.length != P.Length)
                 throw new Exception("Invalid sampler 'p'");

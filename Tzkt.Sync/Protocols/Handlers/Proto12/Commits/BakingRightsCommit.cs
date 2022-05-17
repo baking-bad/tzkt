@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Encoding;
 using Npgsql;
 using Tzkt.Data.Models;
 
@@ -48,9 +49,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     var cycle = await Db.Cycles.FirstAsync(x => x.Index == block.Cycle);
                     var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
-                    var sampler = GetSampler(bakerCycles.Values.Where(x => x.ActiveStake > 0).Select(x => (x.BakerId, x.ActiveStake)));
+                    var sampler = GetSampler(
+                        bakerCycles.Values.Where(x => x.ActiveStake > 0).Select(x => (x.BakerId, x.ActiveStake)),
+                        block.Cycle == block.Protocol.FirstCycle + block.Protocol.PreservedCycles); //TODO: remove this crutch after ithaca is gone
                     #region temporary diagnostics
-                    await sampler.Validate(Proto.Node, block.Level, block.Cycle);
+                    await sampler.Validate(Proto, block.Level, block.Cycle);
                     #endregion
                     var bakingRights = RightsGenerator.GetBakingRights(sampler, cycle, block.Level, block.BlockRound + 1);
 
@@ -122,9 +125,11 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region new cycle
             if (futureCycle != null)
             {
-                var sampler = GetSampler(selectedStakes.Where(x => x.Value > 0).Select(x => (x.Key, x.Value)));
+                var sampler = GetSampler(
+                    selectedStakes.Where(x => x.Value > 0).Select(x => (x.Key, x.Value)),
+                    block.Level == block.Protocol.FirstCycleLevel);
                 #region temporary diagnostics
-                await sampler.Validate(Proto.Node, block.Level, futureCycle.Index);
+                await sampler.Validate(Proto, block.Level, futureCycle.Index);
                 #endregion
                 FutureBakingRights = await RightsGenerator.GetBakingRightsAsync(sampler, block.Protocol, futureCycle);
                 FutureEndorsingRights = await RightsGenerator.GetEndorsingRightsAsync(sampler, block.Protocol, futureCycle);
@@ -190,9 +195,12 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
         }
 
-        protected virtual Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
+        protected virtual Sampler GetSampler(IEnumerable<(int id, long stake)> selection, bool forceBase)
         {
-            var sorted = selection.OrderByDescending(x => x.stake);
+            var sorted = selection
+                .OrderByDescending(x => x.stake)
+                .ThenByDescending(x => Base58.Parse(Cache.Accounts.GetDelegate(x.id).Address), new BytesComparer());
+
             return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
         }
     }

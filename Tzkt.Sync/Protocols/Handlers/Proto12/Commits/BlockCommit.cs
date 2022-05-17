@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+using Netezos.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -40,7 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 events |= BlockEvents.BalanceSnapshot;
 
             var payloadRound = header.RequiredInt32("payload_round");
-            var blockRound = header.RequiredArray("fitness", 5)[4].RequiredInt32();
+            var blockRound = Hex.Parse(header.RequiredArray("fitness", 5)[4].RequiredString()).ToInt32();
             var balanceUpdates = metadata.RequiredArray("balance_updates").EnumerateArray();
             var rewardUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards");
             var bonusUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses");

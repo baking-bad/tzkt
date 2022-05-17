@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using Tzkt.Data.Models;
@@ -264,7 +265,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage))));
 
             #region temporary diagnostics
-            await sampler.Validate(Proto.Node, state.Level, cycle.Index);
+            await sampler.Validate(Proto, state.Level, cycle.Index);
             #endregion
 
             var brs = new List<RightsGenerator.BR>();
@@ -336,7 +337,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage))));
 
             #region temporary diagnostics
-            await sampler.Validate(Proto.Node, state.Level, state.Cycle);
+            await sampler.Validate(Proto, state.Level, state.Cycle);
             #endregion
 
             var cycles = await Db.Cycles.AsNoTracking().Where(x => x.Index >= state.Cycle).OrderBy(x => x.Index).ToListAsync();
@@ -475,7 +476,10 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected virtual Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
         {
-            var sorted = selection.OrderByDescending(x => x.stake);
+            var sorted = selection
+                .OrderByDescending(x => x.stake)
+                .ThenByDescending(x => Base58.Parse(Cache.Accounts.GetDelegate(x.id).Address), new BytesComparer());
+
             return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
         }
     }
