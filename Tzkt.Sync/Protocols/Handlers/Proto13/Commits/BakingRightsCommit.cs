@@ -8,8 +8,11 @@ namespace Tzkt.Sync.Protocols.Proto13
     {
         public BakingRightsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
+        protected override Sampler GetSampler(IEnumerable<(int id, long stake)> selection, bool forceBase)
         {
+            if (forceBase)
+                return base.GetSampler(selection, false);
+
             var sorted = selection.OrderByDescending(x =>
                 Base58.Parse(Cache.Accounts.GetDelegate(x.id).Address), new BytesComparer());
 

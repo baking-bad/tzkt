@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
             
-            var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+          var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
             var lastSeed = await Db.Cycles
                 .AsNoTracking()
@@ -46,15 +46,16 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     snapshotLevel = block.Protocol.FirstLevel - 1;
                 }
+                else if (block.Cycle == block.Protocol.FirstCycle + 1 && block.Protocol.FirstLevel >= block.Protocol.FirstCycleLevel)
+                {
+                    var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 1);
+                    snapshotIndex = Seed.GetSnapshotIndex(futureSeed, snapshotProto.SnapshotsPerCycle + 1, true) - 1;
+                    snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 1) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
+                }
                 else
                 {
                     var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 1);
                     snapshotIndex = Seed.GetSnapshotIndex(futureSeed, snapshotProto.SnapshotsPerCycle, true);
-                    #region ithaca activation quirk
-                    // on the mainnet the snapshot index after the first Ithaca cycle was calculated differently
-                    if (Cache.AppState.Get().Chain == "mainnet" && block.Cycle == 469)
-                        snapshotIndex = 15;
-                    #endregion
                     snapshotLevel = snapshotProto.GetCycleStart(block.Cycle - 1) - 1 + (snapshotIndex + 1) * snapshotProto.BlocksPerSnapshot;
                 }
             }

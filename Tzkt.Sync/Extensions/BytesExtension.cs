@@ -67,6 +67,20 @@ namespace Tzkt.Sync
             return true;
         }
 
+        public static int ToInt32(this byte[] bytes)
+        {
+            if (bytes.Length > 4)
+                throw new Exception("Failed to read Int32 from bytes");
+
+            var res = 0;
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                res <<= 8;
+                res += bytes[i];
+            }
+            return res;
+        }
+
         public static int ReadInt32(this byte[] bytes, int pos)
         {
             var res = 0;
