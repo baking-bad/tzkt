@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Services
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError($"Failed to check updates. {ex.Message}");
+                        Logger.LogError(ex, $"Failed to check updates. {ex.Message}");
                         await Task.Delay(3000, CancellationToken.None);
                         continue;
                     }
@@ -75,7 +75,7 @@ namespace Tzkt.Sync.Services
                         }
                         catch (Exception exx)
                         {
-                            Logger.LogError($"Failed to rebase branch. {exx.Message}");
+                            Logger.LogError(exx, $"Failed to rebase branch. {exx.Message}");
                             await Task.Delay(3000, CancellationToken.None);
                             if (!await ResetState(cancelToken)) break;
                             continue;
@@ -83,7 +83,7 @@ namespace Tzkt.Sync.Services
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError($"Failed to apply updates. {ex.Message}");
+                        Logger.LogError(ex, $"Failed to apply updates. {ex.Message}");
                         await Task.Delay(3000, CancellationToken.None);
                         if (!await ResetState(cancelToken)) break;
                         continue;
