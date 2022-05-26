@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -117,6 +122,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("updates")]
         public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetBigMapUpdates(
+            [FromHeader(Name = "accept-encoding")] StringValues encodingHeaders,
             Int32Parameter bigmap,
             StringParameter path,
             AccountParameter contract,
@@ -128,17 +134,70 @@ namespace Tzkt.Api.Controllers
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
-            MichelineFormat micheline = MichelineFormat.Json)
+            MichelineFormat micheline = MichelineFormat.Json
+            )
         {
             #region validate
             if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
+            //TODO Null check
+            if (encodingHeaders.Contains("gzip"))
+            {
+                Console.WriteLine($"we can use gzipped cache then");
+            }
+            
             if (path == null && contract == null && tags == null)
-                return Ok(await BigMaps.GetUpdates(bigmap, action, value, level, timestamp, sort, offset, limit, micheline));
+            {
+                var res1 = await BigMaps.GetUpdates(bigmap, action, value, level, timestamp, sort, offset, limit, micheline);
+                HttpContext.Response.Headers.Add("Content-encoding", "gzip");
 
-            return Ok(await BigMaps.GetUpdates(bigmap, path, contract, action, value, tags, level, timestamp, sort, offset, limit, micheline));
+                using(var memStream = new MemoryStream())
+                {
+                    using (var zipStream = new GZipStream(memStream, CompressionMode.Compress, true))
+                    using (var jsonWriter = new Utf8JsonWriter(zipStream))
+                    {
+                        JsonSerializer.Serialize(jsonWriter, res1);
+                    }
+                    return File(memStream.ToArray(), "application/json");
+                }
+            }
+
+            /*if (path == null && contract == null && tags == null)
+            {
+                var res1 = await BigMaps.GetUpdates(bigmap, action, value, level, timestamp, sort, offset, limit, micheline);
+                HttpContext.Response.Headers.Add("Content-encoding", "gzip");
+
+                var jsosn = JsonSerializer.Serialize(res1);
+                var dd = Utf8.Parse(jsosn);
+
+                var refs = new byte[]{};
+                using (var outputStream = new MemoryStream())
+                {
+                    using (var gZipStream = new GZipStream(outputStream, CompressionMode.Compress))
+                    {
+                        gZipStream.Write(dd, 0, dd.Length);
+                        gZipStream.Flush();
+                    }
+ 
+                    // TODO do something with the outputStream
+                    refs = outputStream.ToArray();
+                    var outputbase64 = Convert.ToBase64String(refs);
+                    return File(outputStream.ToArray(), "application/json");
+                }
+            }*/
+            
+
+            var res = await BigMaps.GetUpdates(bigmap, path, contract, action, value, tags, level, timestamp, sort,
+                offset, limit, micheline);
+
+            var json = JsonSerializer.Serialize(res);
+            var d = Utf8.Parse(json);
+            
+            HttpContext.Response.Headers.Add("content-encoding", "gzip");
+            
+            return Ok(d);
         }
 
         /// <summary>
