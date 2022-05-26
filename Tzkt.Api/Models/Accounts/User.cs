@@ -4,6 +4,11 @@ namespace Tzkt.Api.Models
 {
     public class User : Account
     {
+        /// <summary>
+        /// Internal TzKT id
+        /// </summary>
+        public int Id { get; set; }
+
         /// Type of the account, `user` - simple wallet account
         public override string Type => AccountTypes.User;
 

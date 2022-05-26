@@ -32,6 +32,7 @@ namespace Tzkt.Api.Repositories
 
             return new Contract
             {
+                Id = contract.Id,
                 Alias = contract.Alias,
                 Address = contract.Address,
                 Kind = ContractKinds.ToString(contract.Kind),
@@ -144,6 +145,7 @@ namespace Tzkt.Api.Repositories
 
                 return new Contract
                 {
+                    Id = row.Id,
                     Alias = row.Alias,
                     Address = row.Address,
                     Kind = ContractKinds.ToString(row.Kind),
@@ -211,6 +213,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
+                    case "id": columns.Add(@"acc.""Id"""); break;
                     case "alias": columns.Add(AliasQuery); break;
                     case "type": columns.Add(@"acc.""Type"""); break;
                     case "kind": columns.Add(@"acc.""Kind"""); break;
@@ -280,6 +283,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
                     case "alias":
                         foreach (var row in rows)
                             result[j++][i] = row.Alias;
@@ -448,6 +455,7 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "id": columns.Add(@"acc.""Id"""); break;
                 case "alias": columns.Add(AliasQuery); break;
                 case "type": columns.Add(@"acc.""Type"""); break;
                 case "kind": columns.Add(@"acc.""Kind"""); break;
@@ -513,6 +521,10 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "id":
+                    foreach (var row in rows)
+                        result[j++] = row.Id;
+                    break;
                 case "alias":
                     foreach (var row in rows)
                         result[j++] = row.Alias;

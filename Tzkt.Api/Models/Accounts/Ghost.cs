@@ -5,6 +5,11 @@ namespace Tzkt.Api.Models
     public class Ghost : Account
     {
         /// <summary>
+        /// Internal TzKT id
+        /// </summary>
+        public int Id { get; set; }
+
+        /// <summary>
         /// Type of the account, `ghost` - contract that has been met among token holders, but hasn't been originated
         /// </summary>
         public override string Type => AccountTypes.Ghost;

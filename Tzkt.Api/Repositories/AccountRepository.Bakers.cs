@@ -18,6 +18,7 @@ namespace Tzkt.Api.Repositories
 
             return new Models.Delegate
             {
+                Id = delegat.Id,
                 Alias = delegat.Alias,
                 Active = delegat.Staked,
                 Address = delegat.Address,
@@ -103,6 +104,7 @@ namespace Tzkt.Api.Repositories
             {
                 return new Models.Delegate
                 {
+                    Id = row.Id,
                     Alias = row.Alias,
                     Active = row.Staked,
                     Address = row.Address,
@@ -164,6 +166,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
+                    case "id": columns.Add(@"""Id"""); break;
                     case "alias": columns.Add(AliasQuery); break;
                     case "type": columns.Add(@"""Type"""); break;
                     case "active": columns.Add(@"""Staked"""); break;
@@ -240,6 +243,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
                     case "alias":
                         foreach (var row in rows)
                             result[j++][i] = row.Alias;
@@ -437,6 +444,7 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(3);
             switch (field)
             {
+                case "id": columns.Add(@"""Id"""); break;
                 case "alias": columns.Add(AliasQuery); break;
                 case "type": columns.Add(@"""Type"""); break;
                 case "active": columns.Add(@"""Staked"""); break;
@@ -509,6 +517,10 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "id":
+                    foreach (var row in rows)
+                        result[j++] = row.Id;
+                    break;
                 case "alias":
                     foreach (var row in rows)
                         result[j++] = row.Alias;

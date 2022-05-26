@@ -5,6 +5,11 @@ namespace Tzkt.Api.Models
     public class Delegate : Account
     {
         /// <summary>
+        /// Internal TzKT id
+        /// </summary>
+        public int Id { get; set; }
+
+        /// <summary>
         /// Type of the account, `delegate` - account, registered as a delegate (baker)
         /// </summary>
         public override string Type => AccountTypes.Delegate;

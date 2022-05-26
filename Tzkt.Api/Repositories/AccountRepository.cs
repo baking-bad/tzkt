@@ -53,6 +53,7 @@ namespace Tzkt.Api.Repositories
                     #region build delegate
                     return new Models.Delegate
                     {
+                        Id = delegat.Id,
                         Alias = delegat.Alias,
                         Active = delegat.Staked,
                         Address = delegat.Address,
@@ -107,6 +108,7 @@ namespace Tzkt.Api.Repositories
 
                     return new User
                     {
+                        Id = user.Id,
                         Alias = user.Alias,
                         Address = user.Address,
                         Balance = user.Balance,
@@ -153,6 +155,7 @@ namespace Tzkt.Api.Repositories
 
                     return new Contract
                     {
+                        Id = contract.Id,
                         Alias = contract.Alias,
                         Address = contract.Address,
                         Kind = ContractKinds.ToString(contract.Kind),
@@ -199,6 +202,7 @@ namespace Tzkt.Api.Repositories
                     #region build ghost
                     return new Ghost
                     {
+                        Id = ghost.Id,
                         Alias = ghost.Alias,
                         Address = ghost.Address,
                         ActiveTokensCount = ghost.ActiveTokensCount,
@@ -229,6 +233,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Account>> Get(
+            Int32Parameter id,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -240,6 +245,7 @@ namespace Tzkt.Api.Repositories
             int limit)
         {
             var sql = new SqlBuilder($@"SELECT *, {AliasQuery} FROM ""Accounts""")
+                .Filter("Id", id)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -271,6 +277,7 @@ namespace Tzkt.Api.Repositories
 
                         accounts.Add(new User
                         {
+                            Id = row.Id,
                             Alias = row.Alias,
                             Address = row.Address,
                             Balance = row.Balance,
@@ -308,6 +315,7 @@ namespace Tzkt.Api.Repositories
                         #region build delegate
                         accounts.Add(new Models.Delegate
                         {
+                            Id = row.Id,
                             Alias = row.Alias,
                             Active = row.Staked,
                             Address = row.Address,
@@ -368,6 +376,7 @@ namespace Tzkt.Api.Repositories
 
                         accounts.Add(new Contract
                         {
+                            Id = row.Id,
                             Alias = row.Alias,
                             Address = row.Address,
                             Kind = ContractKinds.ToString(row.Kind),
@@ -414,6 +423,7 @@ namespace Tzkt.Api.Repositories
                         #region build ghost
                         accounts.Add(new Ghost
                         {
+                            Id = row.Id,
                             Alias = row.Alias,
                             Address = row.Address,
                             ActiveTokensCount = row.ActiveTokensCount,
@@ -433,6 +443,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> Get(
+            Int32Parameter id,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -449,6 +460,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
+                    case "id": columns.Add(@"""Id"""); break;
                     case "alias": columns.Add(AliasQuery); break;
                     case "type": columns.Add(@"""Type"""); break;
                     case "active": columns.Add(@"""Staked"""); break;
@@ -510,6 +522,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
+                .Filter("Id", id)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -537,6 +550,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i])
                 {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
                     case "alias":
                         foreach (var row in rows)
                             result[j++][i] = row.Alias;
@@ -775,6 +792,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> Get(
+            Int32Parameter id,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -789,6 +807,7 @@ namespace Tzkt.Api.Repositories
             var columns = new HashSet<string>(3);
             switch (field)
             {
+                case "id": columns.Add(@"""Id"""); break;
                 case "alias": columns.Add(AliasQuery); break;
                 case "type": columns.Add(@"""Type"""); break;
                 case "active": columns.Add(@"""Staked"""); break;
@@ -849,6 +868,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
+                .Filter("Id", id)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -873,6 +893,10 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
+                case "id":
+                    foreach (var row in rows)
+                        result[j++] = row.Id;
+                    break;
                 case "alias":
                     foreach (var row in rows)
                         result[j++] = row.Alias;
