@@ -13,6 +13,7 @@ using Microsoft.Extensions.Primitives;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services.Output;
 
 namespace Tzkt.Api.Controllers
 {
@@ -122,7 +123,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("updates")]
         public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetBigMapUpdates(
-            [FromHeader(Name = "accept-encoding")] StringValues encodingHeaders,
+            [FromHeader(Name = "accept-encoding")] string encodingHeaders,
             Int32Parameter bigmap,
             StringParameter path,
             AccountParameter contract,
@@ -143,13 +144,10 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             //TODO Null check
-            if (encodingHeaders.Contains("gzip"))
+            if (!string.IsNullOrEmpty(encodingHeaders) && encodingHeaders.Contains("gzip"))
             {
-                Console.WriteLine($"we can use gzipped cache then");
-            }
-            
-            if (path == null && contract == null && tags == null)
-            {
+                //TODO Check if cached
+                
                 var res1 = await BigMaps.GetUpdates(bigmap, action, value, level, timestamp, sort, offset, limit, micheline);
                 HttpContext.Response.Headers.Add("Content-encoding", "gzip");
 
@@ -159,9 +157,26 @@ namespace Tzkt.Api.Controllers
                     using (var jsonWriter = new Utf8JsonWriter(zipStream))
                     {
                         JsonSerializer.Serialize(jsonWriter, res1);
+                        //TODO Flush
                     }
+                    
+                    //TODO Add to cache
                     return File(memStream.ToArray(), "application/json");
                 }
+            }
+            
+            if (path == null && contract == null && tags == null)
+            {
+                var res1 = await BigMaps.GetUpdates(bigmap, action, value, level, timestamp, sort, offset, limit, micheline);
+                HttpContext.Response.Headers.Add("Content-encoding", "gzip");
+
+                using var memStream = new MemoryStream();
+                await using (var zipStream = new GZipStream(memStream, CompressionMode.Compress, true))
+                await using (var jsonWriter = new Utf8JsonWriter(zipStream))
+                {
+                    JsonSerializer.Serialize(jsonWriter, res1);
+                }
+                return File(memStream.ToArray(), "application/json");
             }
 
             /*if (path == null && contract == null && tags == null)
@@ -268,29 +283,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
             #endregion
 
+            var queryString = OutputCacheKeysProvider.BuildQuery(id, active, key, value, lastLevel, select, sort, offset, limit,
+                micheline);
+            // var queryString = OutputCacheKeysProvider.BuildQuery(("id", id), ("key", key), ());
+
+            // if cached, return cached
+            // if gzip , return gzip, if not returned decompressed gzip
+            object res = new List<BigMapKey>();
+            
             if (select == null)
-                return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, micheline));
+                res = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, micheline);
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Values[0], micheline));
+                    res = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Values[0], micheline);
                 else
-                    return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Values, micheline));
+                    res = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Values, micheline);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Fields[0], micheline));
+                    res = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Fields[0], micheline);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Fields, micheline)
-                    });
+                    };
                 }
             }
+            
+            // cache res
+            return Ok(res);
         }
 
         /// <summary>

@@ -5,7 +5,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(SelectBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class SelectParameter
+    public class SelectParameter : INormalized
     {
         /// <summary>
         /// **Fields** selection mode (optional, i.e. `select.fields=balance` is the same as `select=balance`). \
@@ -22,5 +22,11 @@ namespace Tzkt.Api
         /// Example: `?select.values=address,balance` => `[ [ "asd", 10 ] ]`.
         /// </summary>
         public string[] Values { get; set; }
+
+        public string Normalize(string name)
+        {
+            //TODO Get query here
+            return $"{{name}}={Fields}";
+        }
     }
 }
