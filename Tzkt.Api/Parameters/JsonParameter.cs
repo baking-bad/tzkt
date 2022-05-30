@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -8,7 +10,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(JsonBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-    public class JsonParameter
+    public class JsonParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -134,5 +136,149 @@ namespace Tzkt.Api
         [JsonSchemaType(typeof(bool))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
         public List<(JsonPath[], bool)> Null { get; set; }
+
+        public string Normalize(string name)
+        {
+            if (!Eq.Any() && !Ne.Any() && !Gt.Any() && !Ge.Any() && !Le.Any() && !Lt.Any() && !As.Any() && !Un.Any() &&
+                !In.Any() && !Ni.Any() && !Null.Any())
+                return "";
+
+            var sb = new StringBuilder();
+            
+            if (Eq != null)
+            {
+                foreach (var (path, value) in Eq)
+                {
+                    sb.Append($"{name}.eq={JsonPath.Merge(path, value)}");
+                    if (path.Any(x => x.Type == JsonPathType.Index))
+                        sb.Append($"${name}.eq={JsonPath.Select(path)}={value}");
+                }
+            }
+
+            if (Ne != null)
+            {
+                foreach (var (path, value) in Ne)
+                {
+                    sb.Append(path.Any(x => x.Type == JsonPathType.Any)
+                        ? $@"NOT (""{column}"" @> {Param(JsonPath.Merge(path, value))}::jsonb)"
+                        : $@"NOT (""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb)");
+                }
+            }
+
+            if (Gt != null)
+            {
+                foreach (var (path, value) in Gt)
+                {
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $@"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
+                        : $@"{fld} > {val}");
+                }
+            }
+
+            if (Ge != null)
+            {
+                foreach (var (path, value) in Ge)
+                {
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $@"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
+                        : $@"{fld} >= {val}");
+                }
+            }
+
+            if (Lt != null)
+            {
+                foreach (var (path, value) in Lt)
+                {
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $@"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
+                        : $@"{fld} < {val}");
+                }
+            }
+
+            if (Le != null)
+            {
+                foreach (var (path, value) in Le)
+                {
+                    var val = Param(value);
+                    var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
+                    var len = $"greatest(length({fld}), length({val}))";
+                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                        ? $@"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
+                        : $@"{fld} <= {val}");
+                }
+            }
+
+            if (As != null)
+            {
+                foreach (var (path, value) in As)
+                {
+                    AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)}");
+                }
+            }
+
+            if (Un != null)
+            {
+                foreach (var (path, value) in Un)
+                {
+                    AppendFilter($@"NOT (""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)})");
+                }
+            }
+
+            if (In != null)
+            {
+                foreach (var (path, values) in In)
+                {
+                    var sqls = new List<string>(values.Length);
+                    foreach (var value in values)
+                    {
+                        var sql = $@"""{column}"" @> {Param(JsonPath.Merge(path, value))}::jsonb";
+                        if (path.Any(x => x.Type == JsonPathType.Index))
+                            sql += $@" AND ""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb";
+                        sqls.Add(sql);
+                    }
+                    AppendFilter($"({string.Join(" OR ", sqls)})");
+                }
+            }
+
+            if (Ni != null)
+            {
+                foreach (var (path, values) in Ni)
+                {
+                    foreach (var value in values)
+                    {
+                        AppendFilter(path.Any(x => x.Type == JsonPathType.Any)
+                            ? $@"NOT (""{column}"" @> {Param(JsonPath.Merge(path, value))}::jsonb)"
+                            : $@"NOT (""{column}"" #> {Param(JsonPath.Select(path))} = {Param(value)}::jsonb)");
+                    }
+                }
+            }
+
+            if (Null != null)
+            {
+                foreach (var (path, value) in Null)
+                {
+                    if (path.Length == 0)
+                    {
+                        AppendFilter($@"""{column}"" IS {(value ? "" : "NOT ")}NULL");
+                    }
+                    else
+                    {
+                        if (value)
+                            AppendFilter($@"""{column}"" IS NOT NULL");
+
+                        AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} IS {(value ? "" : "NOT ")}NULL");
+                    }
+                }
+            }
+        }
     }
 }

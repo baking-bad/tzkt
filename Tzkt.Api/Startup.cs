@@ -12,6 +12,7 @@ using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Api.Services.Output;
 using Tzkt.Api.Services.Sync;
 using Tzkt.Api.Swagger;
 using Tzkt.Api.Websocket;
@@ -64,6 +65,7 @@ namespace Tzkt.Api
             services.AddTransient<ConstantsRepository>();
 
             services.AddAuthService(Configuration);
+            services.AddOutputCaching();
 
             services.AddHomeService();
             services.AddStateListener();

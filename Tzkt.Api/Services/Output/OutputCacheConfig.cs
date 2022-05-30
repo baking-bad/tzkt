@@ -4,7 +4,7 @@ namespace Tzkt.Api.Services
 {
     public class OutputCacheConfig
     {
-        public int CacheSize { get; set; } = 500_000_000;
+        public int CacheSize { get; set; } = 1;
     }
 
     public static class OutputCacheConfigExt

@@ -21,11 +21,13 @@ namespace Tzkt.Api.Controllers
     [Route("v1/bigmaps")]
     public class BigMapsController : ControllerBase
     {
-        private readonly BigMapsRepository BigMaps;
+        readonly BigMapsRepository BigMaps;
+        readonly OutputCachingService OutputCache;
 
-        public BigMapsController(BigMapsRepository bigMaps)
+        public BigMapsController(BigMapsRepository bigMaps, OutputCachingService outputCache)
         {
             BigMaps = bigMaps;
+            OutputCache = outputCache;
         }
 
         /// <summary>
@@ -154,7 +156,7 @@ namespace Tzkt.Api.Controllers
                 using(var memStream = new MemoryStream())
                 {
                     using (var zipStream = new GZipStream(memStream, CompressionMode.Compress, true))
-                    using (var jsonWriter = new Utf8JsonWriter(zipStream))
+                    await using (var jsonWriter = new Utf8JsonWriter(zipStream))
                     {
                         JsonSerializer.Serialize(jsonWriter, res1);
                         //TODO Flush
@@ -283,11 +285,15 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
             #endregion
 
-            var queryString = OutputCacheKeysProvider.BuildQuery(id, active, key, value, lastLevel, select, sort, offset, limit,
-                micheline);
+            var queryString = OutputCacheKeysProvider.BuildQuery(("id", id), ("active", active), ("key", key),
+                ("value", value), ("lastLevel", lastLevel), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
             // var queryString = OutputCacheKeysProvider.BuildQuery(("id", id), ("key", key), ());
 
             // if cached, return cached
+            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            {
+                return File(cachedResponse.Cache, "application/json");
+            }
             // if gzip , return gzip, if not returned decompressed gzip
             object res = new List<BigMapKey>();
             
@@ -315,7 +321,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            // cache res
+            OutputCache.Set(queryString, res);
             return Ok(res);
         }
 

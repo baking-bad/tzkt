@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Linq;
+using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
@@ -23,10 +26,21 @@ namespace Tzkt.Api
         /// </summary>
         public string[] Values { get; set; }
 
-        public string Normalize(string name)
+        public string Normalize()
         {
-            //TODO Get query here
-            return $"{{name}}={Fields}";
+            if (!Fields.Any() && !Values.Any())
+                return "";
+
+            var sb = new StringBuilder();
+
+            if (Values.Any())
+            {
+                return $"select.values={string.Join(",", Values)}&";
+            }
+            else
+            {
+                return $"select.fields={string.Join(",", Fields)}&";
+            }
         }
     }
 }
