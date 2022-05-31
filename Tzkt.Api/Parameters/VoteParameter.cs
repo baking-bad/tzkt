@@ -7,7 +7,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(VoteBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "yay,nay,pass")]
-    public class VoteParameter
+    public class VoteParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -44,5 +44,10 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<int> Ni { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

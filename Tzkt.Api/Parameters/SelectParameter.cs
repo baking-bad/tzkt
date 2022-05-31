@@ -26,21 +26,12 @@ namespace Tzkt.Api
         /// </summary>
         public string[] Values { get; set; }
 
-        public string Normalize()
+        public string Normalize(string name)
         {
-            if (!Fields.Any() && !Values.Any())
-                return "";
+            // if (Fields == null && Values == null)
+                // return "";
 
-            var sb = new StringBuilder();
-
-            if (Values.Any())
-            {
-                return $"select.values={string.Join(",", Values)}&";
-            }
-            else
-            {
-                return $"select.fields={string.Join(",", Fields)}&";
-            }
+            return Values != null ? $"select.values={string.Join(",", Values)}&" : $"select.fields={string.Join(",", Fields)}&";
         }
     }
 }

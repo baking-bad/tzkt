@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class TokenFilter
+    public class TokenFilter : INormalized
     {
         /// <summary>
         /// Filter by internal TzKT id. Note, this is not the same as `tokenId` nat value.  
@@ -57,5 +57,10 @@
         /// Click on the parameter to expand more details.
         /// </summary>
         public JsonParameter metadata { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

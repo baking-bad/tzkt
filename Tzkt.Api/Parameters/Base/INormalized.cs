@@ -2,6 +2,6 @@ namespace Tzkt.Api
 {
     public interface INormalized
     {
-        public string Normalize();
+        public string Normalize(string name);
     }
 }

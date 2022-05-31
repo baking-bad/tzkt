@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(ExpressionBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class ExpressionParameter
+    public class ExpressionParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -43,5 +43,10 @@ namespace Tzkt.Api
         #region operators
         public static implicit operator ExpressionParameter(string value) => new() { Eq = value };
         #endregion
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

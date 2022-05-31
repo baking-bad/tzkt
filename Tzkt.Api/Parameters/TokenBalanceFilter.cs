@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class TokenBalanceFilter
+    public class TokenBalanceFilter : INormalized
     {
         /// <summary>
         /// Filter by internal TzKT id.  
@@ -49,5 +49,10 @@
         /// Click on the parameter to expand more details.
         /// </summary>
         public TimestampParameter lastTime { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

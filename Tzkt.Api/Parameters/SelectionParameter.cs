@@ -8,7 +8,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(SelectionBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class SelectionParameter
+    public class SelectionParameter : INormalized
     {
         /// <summary>
         /// **Fields** selection mode (optional, i.e. `select.fields=balance` is the same as `select=balance`). \
@@ -31,6 +31,11 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<SelectionField> Values { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 
     public class SelectionField

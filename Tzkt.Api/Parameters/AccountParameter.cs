@@ -1,13 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NJsonSchema.Annotations;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(AccountBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class AccountParameter
+    public class AccountParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -74,5 +78,51 @@ namespace Tzkt.Api
 
         [JsonIgnore]
         public bool NiHasNull { get; set; }
+        
+        
+        public string Normalize(string name)
+        {
+            var sb = new StringBuilder();
+            
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+            
+            if (Ne != null)
+            {
+                sb.Append($"{name}.ne={Ne}&");
+            }
+
+            if (In.Any())
+            {
+                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
+            }
+            
+            if (Ni.Any())
+            {
+                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
+            }
+            
+            if (Eqx != null)
+            {
+                sb.Append($"{name}.eqx={Eqx}&");
+            }
+            
+            if (Nex != null)
+            {
+                sb.Append($"{name}.nex={Nex}&");
+            }
+
+            if (Null != null)
+            {
+                sb.Append($"{name}.null={Null}");
+            }
+            
+            sb.Append($"{name}.NiHasNull={NiHasNull}");
+            sb.Append($"{name}.InHasNull={InHasNull}");
+
+            return sb.ToString();
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class Selection
+    public class Selection : INormalized
     {
         /// <summary>
         /// Specify a comma-separated list of fields to include into response or leave it undefined to get default set of fields.
@@ -10,5 +10,10 @@
         /// Click on the parameter to expand the details.
         /// </summary>
         public SelectionParameter select { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

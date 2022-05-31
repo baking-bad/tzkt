@@ -7,7 +7,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(ContractTagsBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "fa1,fa12,fa2")]
-    public class ContractTagsParameter
+    public class ContractTagsParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -36,5 +36,10 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public int? All { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

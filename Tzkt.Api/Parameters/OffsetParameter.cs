@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(OffsetBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class OffsetParameter
+    public class OffsetParameter : INormalized
     {
         /// <summary>
         /// **Elements** offset mode (optional, i.e. `offset.el=123` is the same as `offset=123`). \
@@ -33,5 +34,25 @@ namespace Tzkt.Api
         public long? Cr { get; set; }
 
         public static implicit operator OffsetParameter(int offset) => new() { El = offset };
+        public string Normalize(string name)
+        {
+            var sb = new StringBuilder();
+            if (El != null)
+            {
+                sb.Append($"offset.el={El}&");
+            }
+
+            if (Pg != null)
+            {
+                sb.Append($"offset.pg={Pg}&");
+            }
+
+            if (Cr != null)
+            {
+                sb.Append($"offset.cr={Cr}");
+            }
+
+            return sb.ToString();
+        }
     }
 }

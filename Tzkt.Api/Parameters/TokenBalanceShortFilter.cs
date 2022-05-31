@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class TokenBalanceShortFilter
+    public class TokenBalanceShortFilter : INormalized
     {
         /// <summary>
         /// Filter by account address.  
@@ -19,5 +19,10 @@
         /// Click on the parameter to expand more details.
         /// </summary>
         public NatParameter balance { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

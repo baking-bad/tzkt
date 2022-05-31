@@ -18,12 +18,13 @@ namespace Tzkt.Api.Services.Output
 
         //TODO Check the Cache size
         readonly OutputCacheConfig Configuration;
-        readonly Dictionary<string, OutputCacheEntity> Cache = new();
+        readonly Dictionary<string, OutputCacheEntity> Cache;
 
         public OutputCachingService(IConfiguration configuration, ILogger<OutputCachingService> logger)
         {
             Logger = logger;
             Configuration = configuration.GetOutputCacheConfig();
+            Cache = new Dictionary<string, OutputCacheEntity>();
         }
 
         //TODO Add method to decompress if the gzip header is missing
@@ -69,16 +70,19 @@ namespace Tzkt.Api.Services.Output
                     var a = Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key;
                     Cache.Remove(Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key);
                 }
-                
-                Cache[key].Cache = bytesToBeCached;
-                Cache[key].LastAccess = DateTime.UtcNow;
+
+                Cache[key] = new OutputCacheEntity
+                {
+                    Cache = bytesToBeCached,
+                    LastAccess = DateTime.UtcNow
+                };
             }
         }
 
         public void Invalidate()
         {
             //TODO Invalidate every block
-            Cache.Clear();
+            // Cache.Clear();
         }
     }
 }

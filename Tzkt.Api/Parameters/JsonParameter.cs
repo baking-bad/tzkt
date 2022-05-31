@@ -154,8 +154,8 @@ namespace Tzkt.Api
                         sb.Append($"${name}.eq={JsonPath.Select(path)}={value}");
                 }
             }
-
-            if (Ne != null)
+//TODO Fix that
+            /*if (Ne != null)
             {
                 foreach (var (path, value) in Ne)
                 {
@@ -278,7 +278,9 @@ namespace Tzkt.Api
                         AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} IS {(value ? "" : "NOT ")}NULL");
                     }
                 }
-            }
+            }*/
+
+            return sb.ToString();
         }
     }
 }

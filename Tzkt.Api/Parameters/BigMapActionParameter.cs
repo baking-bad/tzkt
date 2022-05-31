@@ -7,7 +7,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(BigMapActionBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "allocate,add_key,update_key,remove_key,remove")]
-    public class BigMapActionParameter
+    public class BigMapActionParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -44,5 +44,10 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<int> Ni { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

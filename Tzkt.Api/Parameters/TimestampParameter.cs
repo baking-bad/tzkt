@@ -8,7 +8,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(TimestampBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class TimestampParameter
+    public class TimestampParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -104,5 +104,10 @@ namespace Tzkt.Api
             return res;
         }
         #endregion
+
+        public string Normalize(string name)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

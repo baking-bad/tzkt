@@ -43,6 +43,7 @@ namespace Tzkt.Api
             services.AddSingleton<SoftwareCache>();
             services.AddSingleton<StateCache>();
             services.AddSingleton<TimeCache>();
+            services.AddSingleton<OutputCachingService>();
 
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();
@@ -65,7 +66,7 @@ namespace Tzkt.Api
             services.AddTransient<ConstantsRepository>();
 
             services.AddAuthService(Configuration);
-            services.AddOutputCaching();
+            // services.AddOutputCaching();
 
             services.AddHomeService();
             services.AddStateListener();

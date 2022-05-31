@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(ProtocolBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class ProtocolParameter
+    public class ProtocolParameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -39,5 +39,10 @@ namespace Tzkt.Api
         /// Example: `?sender.ni=PsCARTHAGaz,PsBabyM1eUX`.
         /// </summary>
         public List<string> Ni { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

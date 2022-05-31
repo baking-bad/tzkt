@@ -299,8 +299,7 @@ namespace Tzkt.Api.Controllers
             
             if (select == null)
                 res = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, micheline);
-
-            if (select.Values != null)
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
                     res = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Values[0], micheline);

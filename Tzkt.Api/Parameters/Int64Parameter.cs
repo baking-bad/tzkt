@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(Int64Binder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class Int64Parameter
+    public class Int64Parameter : INormalized
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -71,5 +71,10 @@ namespace Tzkt.Api
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
         public List<long> Ni { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

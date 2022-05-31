@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class TokenTransferFilter
+    public class TokenTransferFilter : INormalized
     {
         /// <summary>
         /// Filter by internal TzKT id.  
@@ -69,5 +69,10 @@
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32NullParameter migrationId { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
