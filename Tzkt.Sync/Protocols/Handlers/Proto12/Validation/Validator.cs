@@ -304,11 +304,11 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected virtual void ValidateInternalDelegation(JsonElement content, string initiator)
         {
-            var delegat = content.OptionalString("delegate");
+            //var delegat = content.OptionalString("delegate");
 
-            if (content.Required("result").RequiredString("status") == "applied" && delegat != null)
-                if (!Cache.Accounts.DelegateExists(delegat))
-                    throw new ValidationException("unknown delegate account");
+            //if (content.Required("result").RequiredString("status") == "applied" && delegat != null)
+            //    if (!Cache.Accounts.DelegateExists(delegat))
+            //        throw new ValidationException("unknown delegate account");
         }
 
         protected virtual async Task ValidateOrigination(JsonElement content)
