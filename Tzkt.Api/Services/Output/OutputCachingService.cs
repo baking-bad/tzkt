@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -16,42 +14,57 @@ namespace Tzkt.Api.Services.Output
     {
         readonly ILogger<OutputCachingService> Logger;
 
-        //TODO Check the Cache size
-        readonly OutputCacheConfig Configuration;
+        readonly long CacheSizeLimit;
         readonly Dictionary<string, OutputCacheEntity> Cache;
 
         public OutputCachingService(IConfiguration configuration, ILogger<OutputCachingService> logger)
         {
             Logger = logger;
-            Configuration = configuration.GetOutputCacheConfig();
+            CacheSizeLimit = configuration.GetOutputCacheConfig().CacheSize * 1_000_000;
             Cache = new Dictionary<string, OutputCacheEntity>();
         }
 
         //TODO Add method to decompress if the gzip header is missing
         public bool TryGetFromCache(HttpContext context, string key, out OutputCacheEntity response)
         {
-            if (!Cache.TryGetValue(key, out response)) return false;
+            if (!Cache.TryGetValue(key, out var cacheEntity))
+            {
+                response = null;
+                return false;
+            }
+            
+            //TODO Use CompressionLimit. There's no need to decompress small objects (if it's not compressed)
 
-            response.LastAccess = DateTime.UtcNow;
+            cacheEntity.LastAccess = DateTime.UtcNow;
             
-            var a = context.Request.Headers["accept-encoding"].ToString();
-            var b = a.Contains("gzip");
+            var acceptEncodingHeaders = context.Request.Headers["accept-encoding"].ToString();
             
-            if (!string.IsNullOrEmpty(a) &&
-                a.Contains("gzip"))
+            if (!string.IsNullOrEmpty(acceptEncodingHeaders) && acceptEncodingHeaders.Contains("gzip"))
             {
                 context.Response.Headers.Add("Content-encoding", "gzip");
+                response = cacheEntity;
                 return true;
             }
 
-            // TODO Decompress and send
-            Console.WriteLine($"Decompressing");
+            using (var memoryStream = new MemoryStream(cacheEntity.Cache))
+            using (var gZipStream = new GZipStream(memoryStream, CompressionMode.Decompress))
+            using (var memoryStreamOutput = new MemoryStream())
+            {
+                gZipStream.CopyTo(memoryStreamOutput);
+                response = new OutputCacheEntity
+                {
+                    Cache = memoryStreamOutput.ToArray(),
+                    LastAccess = DateTime.UtcNow
+                };
+            }
+
             return true;
 
         }
 
         public void Set(string key, object res)
         {
+            //TODO Use CompressionLimit. There's no need to compress small objects
             using(var memStream = new MemoryStream())
             {
                 using (var zipStream = new GZipStream(memStream, CompressionMode.Compress, true))
@@ -64,10 +77,14 @@ namespace Tzkt.Api.Services.Output
 
                 var bytesToBeCached = memStream.ToArray();
 
-                var cacheSize = Cache.Sum(x => x.Value.Cache.Length);
-                while (cacheSize + bytesToBeCached.Length >= Configuration.CacheSize * 1_000_000)
+                if (bytesToBeCached.Length > CacheSizeLimit)
                 {
-                    var a = Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key;
+                    Logger.LogWarning($"{key} too big to be cached. Cache size: {CacheSizeLimit} bytes. Response size: {bytesToBeCached.Length} bytes");
+                    return;
+                }
+                
+                while (Cache.Any() && Cache.Sum(x => x.Value.Cache.Length) + bytesToBeCached.Length >= CacheSizeLimit)
+                {
                     Cache.Remove(Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key);
                 }
 
@@ -81,8 +98,7 @@ namespace Tzkt.Api.Services.Output
 
         public void Invalidate()
         {
-            //TODO Invalidate every block
-            // Cache.Clear();
+            Cache.Clear();
         }
     }
 }

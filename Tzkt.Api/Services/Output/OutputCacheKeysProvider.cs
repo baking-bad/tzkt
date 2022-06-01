@@ -6,9 +6,9 @@ namespace Tzkt.Api.Services.Output
 {
     public class OutputCacheKeysProvider
     {
-        public static string BuildQuery(params (string, object)[] args)
+        public static string BuildQuery(string requestPath, params (string, object)[] args)
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(requestPath);
             sb.Append('?');
             foreach (var (name, value) in args)
             {
