@@ -12,7 +12,7 @@ namespace Tzkt.Api.Services.Output
             sb.Append('?');
             foreach (var (name, value) in args)
             {
-                sb.Append(value is INormalized normalizable ? normalizable.Normalize("") : $"{name}={value}&");
+                sb.Append(value is INormalized normalizable ? normalizable.Normalize(name) : $"{name}={value}&");
             }
 
             return sb.ToString();

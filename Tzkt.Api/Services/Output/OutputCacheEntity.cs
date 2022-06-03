@@ -6,5 +6,6 @@ namespace Tzkt.Api.Services.Output
     {
         public DateTime LastAccess { get; set; }
         public byte[] Cache { get; set; }
+        public bool Compressed { get; set; }
     }
 }

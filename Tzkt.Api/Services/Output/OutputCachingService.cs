@@ -15,16 +15,17 @@ namespace Tzkt.Api.Services.Output
         readonly ILogger<OutputCachingService> Logger;
 
         readonly long CacheSizeLimit;
+        readonly long CompressionLimit;
         readonly Dictionary<string, OutputCacheEntity> Cache;
 
         public OutputCachingService(IConfiguration configuration, ILogger<OutputCachingService> logger)
         {
             Logger = logger;
             CacheSizeLimit = configuration.GetOutputCacheConfig().CacheSize * 1_000_000;
+            CompressionLimit = configuration.GetOutputCacheConfig().CompressionLimit;
             Cache = new Dictionary<string, OutputCacheEntity>();
         }
 
-        //TODO Add method to decompress if the gzip header is missing
         public bool TryGetFromCache(HttpContext context, string key, out OutputCacheEntity response)
         {
             if (!Cache.TryGetValue(key, out var cacheEntity))
@@ -33,9 +34,13 @@ namespace Tzkt.Api.Services.Output
                 return false;
             }
             
-            //TODO Use CompressionLimit. There's no need to decompress small objects (if it's not compressed)
-
             cacheEntity.LastAccess = DateTime.UtcNow;
+
+            if (!cacheEntity.Compressed)
+            {
+                response = cacheEntity;
+                return true;
+            }
             
             var acceptEncodingHeaders = context.Request.Headers["accept-encoding"].ToString();
             
@@ -54,7 +59,8 @@ namespace Tzkt.Api.Services.Output
                 response = new OutputCacheEntity
                 {
                     Cache = memoryStreamOutput.ToArray(),
-                    LastAccess = DateTime.UtcNow
+                    LastAccess = DateTime.UtcNow,
+                    Compressed = false
                 };
             }
 
@@ -64,36 +70,44 @@ namespace Tzkt.Api.Services.Output
 
         public void Set(string key, object res)
         {
-            //TODO Use CompressionLimit. There's no need to compress small objects
-            using(var memStream = new MemoryStream())
+            var buffer = JsonSerializer.SerializeToUtf8Bytes(res);
+            byte[] bytesToBeCached;
+            var compressed = false;
+            if (buffer.Length < CompressionLimit)
             {
-                using (var zipStream = new GZipStream(memStream, CompressionMode.Compress, true))
-                {
-                    using (var jsonWriter = new Utf8JsonWriter(zipStream))
-                    {
-                        JsonSerializer.Serialize(jsonWriter, res);
-                    }
-                }
-
-                var bytesToBeCached = memStream.ToArray();
-
-                if (bytesToBeCached.Length > CacheSizeLimit)
-                {
-                    Logger.LogWarning($"{key} too big to be cached. Cache size: {CacheSizeLimit} bytes. Response size: {bytesToBeCached.Length} bytes");
-                    return;
-                }
-                
-                while (Cache.Any() && Cache.Sum(x => x.Value.Cache.Length) + bytesToBeCached.Length >= CacheSizeLimit)
-                {
-                    Cache.Remove(Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key);
-                }
-
-                Cache[key] = new OutputCacheEntity
-                {
-                    Cache = bytesToBeCached,
-                    LastAccess = DateTime.UtcNow
-                };
+                bytesToBeCached = buffer;
             }
+            else
+            {
+                using (var outStream = new MemoryStream())
+                {
+                    using (var zipStream = new GZipStream(outStream, CompressionMode.Compress))
+                    using (var mStream = new MemoryStream(buffer))
+                        mStream.CopyTo(zipStream);
+
+                    bytesToBeCached = outStream.ToArray();
+                    compressed = true;
+                }
+
+            }
+            
+            if (bytesToBeCached.Length > CacheSizeLimit)
+            {
+                Logger.LogWarning($"{key} too big to be cached. Cache size: {CacheSizeLimit} bytes. Response size: {bytesToBeCached.Length} bytes");
+                return;
+            }
+                
+            while (Cache.Any() && Cache.Sum(x => x.Value.Cache.Length) + bytesToBeCached.Length >= CacheSizeLimit)
+            {
+                Cache.Remove(Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key);
+            }
+            
+            Cache[key] = new OutputCacheEntity
+            {
+                Cache = bytesToBeCached,
+                LastAccess = DateTime.UtcNow,
+                Compressed = compressed
+            };
         }
 
         public void Invalidate()

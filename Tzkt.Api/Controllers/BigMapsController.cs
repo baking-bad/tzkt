@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -47,7 +41,7 @@ namespace Tzkt.Api.Controllers
                 return File(cachedResponse.Cache, "application/json");
             }
             
-            var res =  BigMaps.GetCount();
+            var res = await BigMaps.GetCount();
             
             OutputCache.Set(queryString, res);
             return Ok(res);
@@ -88,29 +82,44 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, micheline));
+            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("contract", contract), ("path", path), ("tags", tags),
+                ("active", active), ("lastLevel", lastLevel), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (select.Values != null)
+            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                if (select.Values.Length == 1)
-                    return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Values[0], micheline));
-                else
-                    return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Values, micheline));
+                return File(cachedResponse.Cache, "application/json");
             }
+            
+            object res;
+
+            if (select == null)
+                res = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, micheline);
             else
             {
-                if (select.Fields.Length == 1)
-                    return Ok(await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Fields[0], micheline));
+                if (select.Values != null)
+                {
+                    if (select.Values.Length == 1)
+                        res = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Values[0], micheline);
+                    else
+                        res = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Values, micheline);
+                }
                 else
                 {
-                    return Ok(new SelectionResponse
+                    if (select.Fields.Length == 1)
+                        res = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Fields[0], micheline);
+                    else
                     {
-                        Cols = select.Fields,
-                        Rows = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Fields, micheline)
-                    });
+                        res = new SelectionResponse
+                        {
+                            Cols = select.Fields,
+                            Rows = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Fields, micheline)
+                        };
+                    }
                 }
             }
+
+            OutputCache.Set(queryString, res);
+            return Ok(res);
         }
 
         /// <summary>
@@ -153,11 +162,26 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("id", "level"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
+            
+            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("bigmap", bigmap), ("path", path), ("contract", contract), ("tags", tags),
+                ("action", action), ("value", value), ("level", level), ("timestamp", timestamp), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
+
+            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            {
+                return File(cachedResponse.Cache, "application/json");
+            }
+            
+            object res;
 
             if (path == null && contract == null && tags == null)
-                return Ok(await BigMaps.GetUpdates(bigmap, action, value, level, timestamp, sort, offset, limit, micheline));
-
-            return Ok(await BigMaps.GetUpdates(bigmap, path, contract, action, value, tags, level, timestamp, sort, offset, limit, micheline));
+                res = await BigMaps.GetUpdates(bigmap, action, value, level, timestamp, sort, offset, limit, micheline);
+            else
+            {
+                res = await BigMaps.GetUpdates(bigmap, path, contract, action, value, tags, level, timestamp, sort, offset, limit, micheline);
+            }
+            
+            OutputCache.Set(queryString, res);
+            return Ok(res);
         }
 
         /// <summary>
@@ -170,11 +194,21 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - Micheline</param>
         /// <returns></returns>
         [HttpGet("{id:int}")]
-        public Task<BigMap> GetBigMapById(
+        public async Task<ActionResult<BigMap>> GetBigMapById(
             [Min(0)] int id,
             MichelineFormat micheline = MichelineFormat.Json)
         {
-            return BigMaps.Get(id, micheline);
+            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("micheline", micheline));
+
+            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            {
+                return File(cachedResponse.Cache, "application/json");
+            }
+            
+            var res = await BigMaps.Get(id, micheline);
+            
+            OutputCache.Set(queryString, res);
+            return Ok(res);
         }
 
         /// <summary>
@@ -186,9 +220,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Bigmap Id</param>
         /// <returns></returns>
         [HttpGet("{id:int}/type")]
-        public Task<MichelinePrim> GetBigMapType([Min(0)] int id)
+        public async Task<ActionResult<MichelinePrim>> GetBigMapType([Min(0)] int id)
         {
-            return BigMaps.GetMicheType(id);
+            var queryString = Request.Path.Value;
+
+            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            {
+                return File(cachedResponse.Cache, "application/json");
+            }
+            
+            var res = await BigMaps.GetMicheType(id);
+            
+            OutputCache.Set(queryString, res);
+            return Ok(res);
         }
 
         /// <summary>
@@ -227,7 +271,6 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("id", "firstLevel", "lastLevel", "updates"))
                 return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
             #endregion
-
             
             var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("active", active), ("key", key),
                 ("value", value), ("lastLevel", lastLevel), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
