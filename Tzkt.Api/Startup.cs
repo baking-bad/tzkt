@@ -66,7 +66,6 @@ namespace Tzkt.Api
             services.AddTransient<ConstantsRepository>();
 
             services.AddAuthService(Configuration);
-            // services.AddOutputCaching();
 
             services.AddHomeService();
             services.AddStateListener();

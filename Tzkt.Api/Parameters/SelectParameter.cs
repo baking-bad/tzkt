@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
@@ -28,9 +25,7 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            // if (Fields == null && Values == null)
-                // return "";
-
+            //We can't order values, but perhaps we can order fields.
             return Values != null ? $"select.values={string.Join(",", Values)}&" : $"select.fields={string.Join(",", Fields)}&";
         }
     }

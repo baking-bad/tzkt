@@ -42,6 +42,4 @@ namespace Tzkt.Api
             throw new System.NotImplementedException();
         }
     }
-    
-    
 }

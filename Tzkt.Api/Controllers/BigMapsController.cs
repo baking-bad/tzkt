@@ -144,7 +144,6 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("updates")]
         public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetBigMapUpdates(
-            [FromHeader(Name = "accept-encoding")] string encodingHeaders,
             Int32Parameter bigmap,
             StringParameter path,
             AccountParameter contract,
@@ -392,6 +391,7 @@ namespace Tzkt.Api.Controllers
                 }
             
                 object res;
+                
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
                    res = await BigMaps.GetKeyByHashUpdates(id, key, sort, offset, limit, micheline);
                 else

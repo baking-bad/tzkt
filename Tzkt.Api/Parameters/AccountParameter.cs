@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NJsonSchema.Annotations;
-using Tzkt.Api.Utils;
 
 namespace Tzkt.Api
 {

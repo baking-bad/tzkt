@@ -65,7 +65,6 @@ namespace Tzkt.Api.Services.Output
             }
 
             return true;
-
         }
 
         public void Set(string key, object res)
@@ -88,12 +87,11 @@ namespace Tzkt.Api.Services.Output
                     bytesToBeCached = outStream.ToArray();
                     compressed = true;
                 }
-
             }
             
             if (bytesToBeCached.Length > CacheSizeLimit)
             {
-                Logger.LogWarning($"{key} too big to be cached. Cache size: {CacheSizeLimit} bytes. Response size: {bytesToBeCached.Length} bytes");
+                Logger.LogWarning("{Key} too big to be cached. Cache size: {CacheSizeLimit} bytes. Response size: {BytesToBeCached} bytes", key, CacheSizeLimit, bytesToBeCached.Length);
                 return;
             }
                 

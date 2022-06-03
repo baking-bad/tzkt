@@ -48,7 +48,6 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            
             //TODO Check if it's correct
             return Asc != null ? $"sort.asc={Asc}" : $"sort.desc={Desc}";
         }

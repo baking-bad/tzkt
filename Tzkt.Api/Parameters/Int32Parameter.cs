@@ -117,17 +117,7 @@ namespace Tzkt.Api
             {
                 sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
             }
-
-            if (In.Any())
-            {
-                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
-            }
             
-            if (Ni.Any())
-            {
-                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
-            }
-
             return sb.ToString();
         }
     }
