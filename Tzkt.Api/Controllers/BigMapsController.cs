@@ -38,7 +38,7 @@ namespace Tzkt.Api.Controllers
 
             if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Cache, "application/json");
+                return File(cachedResponse.Bytes, "application/json");
             }
             
             var res = await BigMaps.GetCount();
@@ -87,7 +87,7 @@ namespace Tzkt.Api.Controllers
 
             if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Cache, "application/json");
+                return File(cachedResponse.Bytes, "application/json");
             }
             
             object res;
@@ -167,7 +167,7 @@ namespace Tzkt.Api.Controllers
 
             if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Cache, "application/json");
+                return File(cachedResponse.Bytes, "application/json");
             }
             
             object res;
@@ -201,7 +201,7 @@ namespace Tzkt.Api.Controllers
 
             if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Cache, "application/json");
+                return File(cachedResponse.Bytes, "application/json");
             }
             
             var res = await BigMaps.Get(id, micheline);
@@ -225,7 +225,7 @@ namespace Tzkt.Api.Controllers
 
             if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Cache, "application/json");
+                return File(cachedResponse.Bytes, "application/json");
             }
             
             var res = await BigMaps.GetMicheType(id);
@@ -276,7 +276,7 @@ namespace Tzkt.Api.Controllers
 
             if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Cache, "application/json");
+                return File(cachedResponse.Bytes, "application/json");
             }
             
             object res;
@@ -331,7 +331,7 @@ namespace Tzkt.Api.Controllers
 
                 if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
                 {
-                    return File(cachedResponse.Cache, "application/json");
+                    return File(cachedResponse.Bytes, "application/json");
                 }
             
                 object res;
@@ -387,7 +387,7 @@ namespace Tzkt.Api.Controllers
 
                 if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
                 {
-                    return File(cachedResponse.Cache, "application/json");
+                    return File(cachedResponse.Bytes, "application/json");
                 }
             
                 object res;
@@ -451,7 +451,7 @@ namespace Tzkt.Api.Controllers
 
             if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Cache, "application/json");
+                return File(cachedResponse.Bytes, "application/json");
             }
             
             object res;
@@ -511,7 +511,7 @@ namespace Tzkt.Api.Controllers
 
                 if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
                 {
-                    return File(cachedResponse.Cache, "application/json");
+                    return File(cachedResponse.Bytes, "application/json");
                 }
             
                 object res;

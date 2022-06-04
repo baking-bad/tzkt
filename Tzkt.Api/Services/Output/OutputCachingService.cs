@@ -36,7 +36,7 @@ namespace Tzkt.Api.Services.Output
             
             cacheEntity.LastAccess = DateTime.UtcNow;
 
-            if (!cacheEntity.Compressed)
+            if (!cacheEntity.IsCompressed)
             {
                 response = cacheEntity;
                 return true;
@@ -51,16 +51,16 @@ namespace Tzkt.Api.Services.Output
                 return true;
             }
 
-            using (var memoryStream = new MemoryStream(cacheEntity.Cache))
+            using (var memoryStream = new MemoryStream(cacheEntity.Bytes))
             using (var gZipStream = new GZipStream(memoryStream, CompressionMode.Decompress))
             using (var memoryStreamOutput = new MemoryStream())
             {
                 gZipStream.CopyTo(memoryStreamOutput);
                 response = new OutputCacheEntity
                 {
-                    Cache = memoryStreamOutput.ToArray(),
+                    Bytes = memoryStreamOutput.ToArray(),
                     LastAccess = DateTime.UtcNow,
-                    Compressed = false
+                    IsCompressed = false
                 };
             }
 
@@ -95,16 +95,16 @@ namespace Tzkt.Api.Services.Output
                 return;
             }
                 
-            while (Cache.Any() && Cache.Sum(x => x.Value.Cache.Length) + bytesToBeCached.Length >= CacheSizeLimit)
+            while (Cache.Any() && Cache.Sum(x => x.Value.Bytes.Length) + bytesToBeCached.Length >= CacheSizeLimit)
             {
                 Cache.Remove(Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key);
             }
             
             Cache[key] = new OutputCacheEntity
             {
-                Cache = bytesToBeCached,
+                Bytes = bytesToBeCached,
                 LastAccess = DateTime.UtcNow,
-                Compressed = compressed
+                IsCompressed = compressed
             };
         }
 
