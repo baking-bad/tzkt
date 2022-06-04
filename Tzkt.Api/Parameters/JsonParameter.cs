@@ -145,15 +145,15 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Eq)
                 {
-                    sb.Append($"{name}.eq={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.eq={value}&");
                 }
             }
-//TODO Carefully test each case
+            
             if (Ne != null)
             {
                 foreach (var (path, value) in Ne)
                 {
-                    sb.Append($"{name}.ne={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.ne={value}&");
                 }
             }
 
@@ -161,7 +161,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Gt)
                 {
-                    sb.Append($"{name}.gt={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.gt={value}&");
                 }
             }
 
@@ -169,7 +169,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Ge)
                 {
-                    sb.Append($"{name}.ge={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.ge={value}&");
                 }
             }
 
@@ -177,7 +177,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Lt)
                 {
-                    sb.Append($"{name}.lt={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.lt={value}&");
 
                 }
             }
@@ -186,7 +186,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Le)
                 {
-                    sb.Append($"{name}.le={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.le={value}&");
 
                 }
             }
@@ -195,7 +195,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in As)
                 {
-                    sb.Append($"{name}.as={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.as={value}&");
                 }
             }
 
@@ -203,7 +203,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Un)
                 {
-                    sb.Append($"{name}.un={JsonPath.Merge(path, value)}&");
+                    sb.Append($"{name}.{Normalize(path)}.un={value}&");
 
                 }
             }
@@ -212,7 +212,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, values) in In)
                 {
-                    sb.Append($"{name}.in={JsonPath.Merge(path, string.Join(",",values.OrderBy(x => x)))}&");
+                    sb.Append($"{name}.{Normalize(path)}.in={string.Join(",",values.OrderBy(x => x))}&");
                 }
             }
 
@@ -220,7 +220,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, values) in Ni)
                 {
-                    sb.Append($"{name}.ni={JsonPath.Merge(path, string.Join(",",values.OrderBy(x => x)))}&");
+                    sb.Append($"{name}.{Normalize(path)}.ni={string.Join(",",values.OrderBy(x => x))}&");
                 }
             }
 
@@ -228,11 +228,16 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Null)
                 {
-                    sb.Append($"{name}.null={JsonPath.Merge(path, value.ToString())}&");
+                    sb.Append($"{name}.{Normalize(path)}.null={value}&");
                 }
             }
 
             return sb.ToString();
+        }
+        
+        static string Normalize(JsonPath[] jsonPaths)
+        {
+            return string.Join(".", jsonPaths.Select(x => x.Type > JsonPathType.Key ? $"[{x.Value ?? "*"}]" : x.Value));
         }
     }
 }
