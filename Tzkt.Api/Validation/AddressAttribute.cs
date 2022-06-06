@@ -6,7 +6,7 @@ namespace System.ComponentModel.DataAnnotations
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^[0-9A-Za-z]{36}$")
+            return value != null && !Regex.IsMatch((string)value, "^[0-9A-Za-z]{36,37}$")
                 ? new ValidationResult("Invalid account address.")
                 : ValidationResult.Success;
         }

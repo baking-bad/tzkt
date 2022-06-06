@@ -189,13 +189,13 @@ namespace Tzkt.Api.Services.Cache
 
         RawAccount LoadRawAccount(string address)
         {
-            var sql = $@"{SelectQuery} WHERE ""Address"" = @address::character(36) LIMIT 1";
+            var sql = $@"{SelectQuery} WHERE ""Address"" = @address::varchar(37) LIMIT 1";
             return LoadRawAccount(sql, new { address });
         }
 
         Task<RawAccount> LoadRawAccountAsync(string address)
         {
-            var sql = $@"{SelectQuery} WHERE ""Address"" = @address::character(36) LIMIT 1";
+            var sql = $@"{SelectQuery} WHERE ""Address"" = @address::varchar(37) LIMIT 1";
             return LoadRawAccountAsync(sql, new { address });
         }
 

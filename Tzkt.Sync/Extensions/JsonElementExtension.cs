@@ -29,6 +29,15 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Missed required array {name}");
         }
 
+        public static JsonElement? OptionalArray(this JsonElement el, string name)
+        {
+            if (!el.TryGetProperty(name, out var res))
+                return null;
+
+            return res.ValueKind == JsonValueKind.Array ? res
+                : throw new SerializationException($"Expected array but got {res.ValueKind}");
+        }
+
         public static JsonElement RequiredArray(this JsonElement el, string name, int count)
         {
             return el.TryGetProperty(name, out var res) && res.ValueKind == JsonValueKind.Array

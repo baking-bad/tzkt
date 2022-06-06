@@ -174,7 +174,7 @@ namespace Tzkt.Sync
             foreach (var op in operations[2].RequiredArray().EnumerateArray())
             {
                 var content = op.RequiredArray("contents", 1)[0];
-                if (content.RequiredString("kind")[0] == 'a') // activate_account
+                if (content.RequiredString("kind") == "activate_account")
                     accounts.Add(content.RequiredString("pkh"));
             }
 
@@ -183,7 +183,7 @@ namespace Tzkt.Sync
                 foreach (var content in op.RequiredArray("contents").EnumerateArray())
                 {
                     accounts.Add(content.RequiredString("source"));
-                    if (content.RequiredString("kind")[0] == 't') // transaction
+                    if (content.RequiredString("kind") == "transaction")
                     {
                         if (content.TryGetProperty("destination", out var dest))
                             accounts.Add(dest.GetString());
@@ -192,7 +192,7 @@ namespace Tzkt.Sync
                             foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
                             {
                                 accounts.Add(internalContent.RequiredString("source"));
-                                if (internalContent.RequiredString("kind")[0] == 't') // transaction
+                                if (internalContent.RequiredString("kind") == "transaction")
                                 {
                                     if (internalContent.TryGetProperty("destination", out var internalDest))
                                         accounts.Add(internalDest.GetString());
@@ -304,6 +304,14 @@ namespace Tzkt.Sync
                         contract.Creator = null;
                         contract.FirstBlock = null;
                         break;
+                    case Rollup rollup:
+                        rollup.Delegate = null;
+                        rollup.FirstBlock = null;
+                        break;
+                    case Account account:
+                        account.Delegate = null;
+                        account.FirstBlock = null;
+                        break;
                     case Block b:
                         b.Activations = null;
                         b.Proposer = null;
@@ -327,6 +335,15 @@ namespace Tzkt.Sync
                         b.Migrations = null;
                         b.RevelationPenalties = null;
                         b.Software = null;
+                        b.TxRollupOriginationOps = null;
+                        b.TxRollupSubmitBatchOps = null;
+                        b.TxRollupCommitOps = null;
+                        b.TxRollupFinalizeCommitmentOps = null;
+                        b.TxRollupRemoveCommitmentOps = null;
+                        b.TxRollupReturnBondOps = null;
+                        b.TxRollupRejectionOps = null;
+                        b.TxRollupDispatchTicketsOps = null;
+                        b.TransferTicketOps = null;
                         break;
                 }
             }

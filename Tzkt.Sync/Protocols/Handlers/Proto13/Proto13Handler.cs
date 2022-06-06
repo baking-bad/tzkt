@@ -188,6 +188,50 @@ namespace Tzkt.Sync.Protocols
                                 ResetIfEmpty(parent.Transaction.Sender);
                             }
                             break;
+                        case "tx_rollup_origination":
+                            await new TxRollupOriginationCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "tx_rollup_submit_batch":
+                            await new TxRollupSubmitBatchCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "tx_rollup_commit":
+                            await new TxRollupCommitCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "tx_rollup_finalize_commitment":
+                            await new TxRollupFinalizeCommitmentCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "tx_rollup_remove_commitment":
+                            await new TxRollupRemoveCommitmentCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "tx_rollup_return_bond":
+                            await new TxRollupReturnBondCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "tx_rollup_rejection":
+                            await new TxRollupRejectionCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "tx_rollup_dispatch_tickets":
+                            await new TxRollupDispatchTicketsCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "transfer_ticket":
+                            var parent1 = new TransferTicketCommit(this);
+                            await parent1.Apply(blockCommit.Block, operation, content);
+                            if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult1))
+                            {
+                                foreach (var internalContent in internalResult1.EnumerateArray())
+                                {
+                                    switch (internalContent.RequiredString("kind"))
+                                    {
+                                        case "transaction":
+                                            var internalTx = new TransactionsCommit(this);
+                                            await internalTx.ApplyInternal(blockCommit.Block, parent1.Operation, internalContent);
+                                            break;
+                                        default:
+                                            throw new NotImplementedException($"internal '{content.RequiredString("kind")}' inside 'transfer_ticket' is not expected");
+                                    }
+                                }
+                                ResetIfEmpty(parent1.Operation.Sender);
+                            }
+                            break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not expected in operations[3]");
                     }
@@ -272,6 +316,33 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.Operations.HasFlag(Operations.Transactions))
                 operations.AddRange(await Db.TransactionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupOrigination))
+                operations.AddRange(await Db.TxRollupOriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupSubmitBatch))
+                operations.AddRange(await Db.TxRollupSubmitBatchOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupCommit))
+                operations.AddRange(await Db.TxRollupCommitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupFinalizeCommitment))
+                operations.AddRange(await Db.TxRollupFinalizeCommitmentOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupRemoveCommitment))
+                operations.AddRange(await Db.TxRollupRemoveCommitmentOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupReturnBond))
+                operations.AddRange(await Db.TxRollupReturnBondOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupRejection))
+                operations.AddRange(await Db.TxRollupRejectionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupDispatchTickets))
+                operations.AddRange(await Db.TxRollupDispatchTicketsOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.TransferTicket))
+                operations.AddRange(await Db.TransferTicketOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
                 operations.AddRange(await Db.DoubleBakingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
@@ -376,6 +447,34 @@ namespace Tzkt.Sync.Protocols
                         }
                         else
                             await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
+                        break;
+                    case TxRollupOriginationOperation rollupOrigination:
+                        await new TxRollupOriginationCommit(this).Revert(currBlock, rollupOrigination);
+                        break;
+                    case TxRollupSubmitBatchOperation submitBatch:
+                        await new TxRollupSubmitBatchCommit(this).Revert(currBlock, submitBatch);
+                        break;
+                    case TxRollupCommitOperation rollupCommit:
+                        await new TxRollupCommitCommit(this).Revert(currBlock, rollupCommit);
+                        break;
+                    case TxRollupFinalizeCommitmentOperation finalizeCommitment:
+                        await new TxRollupFinalizeCommitmentCommit(this).Revert(currBlock, finalizeCommitment);
+                        break;
+                    case TxRollupRemoveCommitmentOperation removeCommitment:
+                        await new TxRollupRemoveCommitmentCommit(this).Revert(currBlock, removeCommitment);
+                        break;
+                    case TxRollupReturnBondOperation returnBond:
+                        await new TxRollupReturnBondCommit(this).Revert(currBlock, returnBond);
+                        break;
+                    case TxRollupRejectionOperation rejection:
+                        await new TxRollupRejectionCommit(this).Revert(currBlock, rejection);
+                        break;
+                    case TxRollupDispatchTicketsOperation dispatchTickets:
+                        await new TxRollupDispatchTicketsCommit(this).Revert(currBlock, dispatchTickets);
+                        break;
+                    case TransferTicketOperation transferTicket:
+                        RestoreIfEmpty(transferTicket.Sender);
+                        await new TransferTicketCommit(this).Revert(currBlock, transferTicket);
                         break;
                     default:
                         throw new NotImplementedException($"'{operation.GetType()}' is not implemented");

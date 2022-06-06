@@ -89,7 +89,7 @@ namespace Tzkt.Sync.Services.Cache
 
                 if (accounts.Count < missed.Count)
                 {
-                    foreach (var address in missed.Where(x => !CachedByAddress.ContainsKey(x) && x[0] == 't'))
+                    foreach (var address in missed.Where(x => !CachedByAddress.ContainsKey(x) && x[0] == 't' && x[1] == 'z'))
                     {
                         var account = CreateUser(address);
                         CachedById[account.Id] = account;
@@ -133,6 +133,7 @@ namespace Tzkt.Sync.Services.Cache
                     AccountType.User => await Db.Users.FirstOrDefaultAsync(x => x.Address == address),
                     AccountType.Delegate => await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address),
                     AccountType.Contract => await Db.Contracts.FirstOrDefaultAsync(x => x.Address == address),
+                    AccountType.Rollup => await Db.Rollups.FirstOrDefaultAsync(x => x.Address == address),
                     _ => await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
                 };
 
@@ -180,9 +181,9 @@ namespace Tzkt.Sync.Services.Cache
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
                 account = await Db.Accounts
-                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::character(36)", address)
+                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
                     .FirstOrDefaultAsync()
-                    ?? (address[0] == 't' ? CreateUser(address) : null);
+                    ?? (address[0] == 't' && address[1] == 'z' ? CreateUser(address) : null);
 
                 if (account != null) Add(account);
             }

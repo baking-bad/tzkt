@@ -17,7 +17,7 @@ namespace Tzkt.Api.Repositories
             => Get("AppState", "Id", "integer", -1, section);
 
         public Task<RawJson> GetAccountMetadata(string address, string section = null)
-            => Get("Accounts", "Address", "character(36)", address, section);
+            => Get("Accounts", "Address", "varchar(37)", address, section);
 
         public Task<RawJson> GetProposalMetadata(string hash, string section = null)
             => Get("Proposals", "Hash", "character(51)", hash, section);
@@ -154,7 +154,7 @@ namespace Tzkt.Api.Repositories
             .FirstOrDefault();
 
         public Task<List<MetadataUpdate<string>>> UpdateAccountMetadata(List<MetadataUpdate<string>> metadata, string section)
-            => Update("Accounts", "Address", "character(36)", metadata, section);
+            => Update("Accounts", "Address", "varchar(37)", metadata, section);
 
         public Task<List<MetadataUpdate<string>>> UpdateProposalMetadata(List<MetadataUpdate<string>> metadata, string section)
             => Update("Proposals", "Hash", "character(51)", metadata, section);

@@ -51,6 +51,68 @@ namespace Tzkt.Sync.Protocols.Proto5
                         Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
                 }
             }
+            else if (transaction.Target is Rollup)
+            {
+                transaction.Entrypoint = rawEp;
+                transaction.RawParameters = rawParam.ToBytes();
+                try
+                { 
+                    var ticketValue = (rawParam as MichelineArray)[0];
+                    var ticketType = (rawParam as MichelineArray)[1] as MichelinePrim;
+
+                    if (ticketType.Annots == null)
+                        ticketType.Annots = new List<IAnnotation>(1);
+
+                    if (ticketType.Annots.Count == 0)
+                        ticketType.Annots.Add(new FieldAnnotation("data"));
+
+                    var schema = Netezos.Contracts.Schema.Create(new MichelinePrim
+                    {
+                        Prim = PrimType.pair,
+                        Args = new List<IMicheline>(2)
+                        {
+                            new MichelinePrim
+                            {
+                                Prim = PrimType.pair,
+                                Args = new List<IMicheline>(2)
+                                {
+                                    new MichelinePrim
+                                    {
+                                        Prim = PrimType.address,
+                                        Annots = new List<IAnnotation>(1) { new FieldAnnotation("address") }
+                                    },
+                                    new MichelinePrim
+                                    {
+                                        Prim = PrimType.pair,
+                                        Args = new List<IMicheline>(2)
+                                        {
+                                            ticketType,
+                                            new MichelinePrim
+                                            {
+                                                Prim = PrimType.nat,
+                                                Annots = new List<IAnnotation>(1) { new FieldAnnotation("amount") }
+                                            }
+                                        }
+                                    }
+                                },
+                                Annots = new List<IAnnotation> { new FieldAnnotation("ticket") }
+                            },
+                            new MichelinePrim
+                            {
+                                Prim = PrimType.tx_rollup_l2_address,
+                                Annots = new List<IAnnotation> { new FieldAnnotation("address") }
+                            }
+                        }
+                    });
+
+                    transaction.JsonParameters = schema.Humanize(ticketValue);
+                }
+                catch (Exception ex)
+                {
+                    if (transaction.Status == OperationStatus.Applied)
+                        Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                }
+            }
             else
             {
                 transaction.Entrypoint = rawEp;

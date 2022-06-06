@@ -157,7 +157,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Transaction = transaction;
         }
 
-        public virtual async Task ApplyInternal(Block block, TransactionOperation parent, JsonElement content)
+        public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
             var id = Cache.AppState.NextOperationId();
@@ -216,8 +216,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region entities
             //var block = transaction.Block;
-            var parentTx = parent;
-            var parentSender = parentTx.Sender;
+            var parentSender = parent.Sender;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
             //var sender = transaction.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
@@ -235,8 +234,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
-            parentTx.InternalTransactions = (short?)((parentTx.InternalTransactions ?? 0) + 1);
+            if (parent is TransactionOperation parentTx)
+            {
+                parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+                parentTx.InternalTransactions = (short?)((parentTx.InternalTransactions ?? 0) + 1);
+            }
 
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;

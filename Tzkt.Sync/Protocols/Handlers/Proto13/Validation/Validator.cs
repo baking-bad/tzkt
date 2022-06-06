@@ -174,6 +174,15 @@ namespace Tzkt.Sync.Protocols.Proto13
                             case "reveal": await ValidateReveal(content); break;
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
                             case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
+                            case "tx_rollup_origination": await ValidateTxRollupOrigination(content); break;
+                            case "tx_rollup_submit_batch": await ValidateTxRollupSubmitBatch(content); break; 
+                            case "tx_rollup_commit": await ValidateTxRollupCommit(content); break; 
+                            case "tx_rollup_finalize_commitment": await ValidateTxRollupFinalizeCommitment(content); break; 
+                            case "tx_rollup_remove_commitment": await ValidateTxRollupRemoveCommitment(content); break; 
+                            case "tx_rollup_return_bond": await ValidateTxRollupReturnBond(content); break; 
+                            case "tx_rollup_rejection": await ValidateTxRollupRejection(content); break; 
+                            case "tx_rollup_dispatch_tickets": await ValidateTxRollupDispatchTickets(content); break; 
+                            case "transfer_ticket": await ValidateTransferTicket(content); break; 
                             default:
                                 throw new ValidationException("invalid operation content kind");
                         }
@@ -297,7 +306,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -327,7 +336,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                metadata.RequiredArray("balance_updates").EnumerateArray(),
+                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
                 source,
                 content.RequiredInt64("fee"));
 
@@ -372,7 +381,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             var metadata = content.Required("metadata");
 
             ValidateFeeBalanceUpdates(
-                metadata.RequiredArray("balance_updates").EnumerateArray(),
+                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
                 source,
                 content.RequiredInt64("fee"));
 
@@ -428,7 +437,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -441,7 +450,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -454,7 +463,190 @@ namespace Tzkt.Sync.Protocols.Proto13
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").RequiredArray("balance_updates").EnumerateArray(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+        }
+
+        protected virtual async Task ValidateTxRollupOrigination(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            var applied = result.RequiredString("status") == "applied";
+
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
+                ValidateTransferBalanceUpdates(
+                    resultUpdates.EnumerateArray(),
+                    source,
+                    null,
+                    0,
+                    0,
+                    Protocol.TxRollupOriginationSize * Protocol.ByteCost);
+        }
+
+        protected virtual async Task ValidateTxRollupSubmitBatch(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            if (result.TryGetProperty("balance_updates", out var updates) && updates.Count() != 0)
+                throw new ValidationException("unexpected balance updates");
+        }
+
+        protected virtual async Task ValidateTxRollupCommit(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            if (result.TryGetProperty("balance_updates", out var updates) && updates.Count() != 0)
+            {
+                if (updates.Count() != 2)
+                    throw new ValidationException("unexpected number of rollup bonds balance updates");
+
+                if (!updates.EnumerateArray().Any(x =>
+                    x.RequiredString("kind") == "contract" &&
+                    x.RequiredString("contract") == source))
+                    throw new ValidationException("invalid transfer balance updates");
+
+                if (!updates.EnumerateArray().Any(x =>
+                    x.RequiredString("kind") == "freezer" &&
+                    x.RequiredString("category") == "bonds" &&
+                    x.RequiredString("contract") == source))
+                    throw new ValidationException("invalid transfer balance updates");
+
+                if (updates[0].RequiredInt64("change") != -updates[1].RequiredInt64("change"))
+                    throw new ValidationException("inconsistent change of rollup bonds balance updates");
+            }
+        }
+
+        protected virtual async Task ValidateTxRollupFinalizeCommitment(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            if (result.TryGetProperty("balance_updates", out var updates) && updates.Count() != 0)
+                throw new ValidationException("unexpected balance updates");
+        }
+
+        protected virtual async Task ValidateTxRollupRemoveCommitment(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            if (result.TryGetProperty("balance_updates", out var updates) && updates.Count() != 0)
+                throw new ValidationException("unexpected balance updates");
+        }
+
+        protected virtual async Task ValidateTxRollupReturnBond(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            if (result.TryGetProperty("balance_updates", out var updates) && updates.Count() != 0)
+            {
+                if (updates.Count() != 2)
+                    throw new ValidationException("unexpected number of rollup bonds balance updates");
+
+                if (!updates.EnumerateArray().Any(x =>
+                    x.RequiredString("kind") == "contract" &&
+                    x.RequiredString("contract") == source))
+                    throw new ValidationException("invalid transfer balance updates");
+
+                if (!updates.EnumerateArray().Any(x =>
+                    x.RequiredString("kind") == "freezer" &&
+                    x.RequiredString("category") == "bonds" &&
+                    x.RequiredString("contract") == source))
+                    throw new ValidationException("invalid transfer balance updates");
+
+                if (updates[0].RequiredInt64("change") != -updates[1].RequiredInt64("change"))
+                    throw new ValidationException("inconsistent change of rollup bonds balance updates");
+            }
+        }
+
+        protected virtual async Task ValidateTxRollupRejection(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+        }
+
+        protected virtual async Task ValidateTxRollupDispatchTickets(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+        }
+
+        protected virtual async Task ValidateTransferTicket(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
                 source,
                 content.RequiredInt64("fee"));
         }

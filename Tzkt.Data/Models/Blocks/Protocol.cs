@@ -75,6 +75,9 @@ namespace Tzkt.Data.Models
         public long MaxBakingReward { get; set; }
         public long MaxEndorsingReward { get; set; }
 
+        public int TxRollupOriginationSize { get; set; }
+        public long TxRollupCommitmentBond { get; set; }
+
         #region helpers
         public int GetCycleStart(int cycle)
         {

@@ -71,6 +71,16 @@ namespace Tzkt.Data.Models
         public List<RegisterConstantOperation> RegisterConstants { get; set; }
         public List<SetDepositsLimitOperation> SetDepositsLimits { get; set; }
 
+        public List<TxRollupOriginationOperation> TxRollupOriginationOps { get; set; }
+        public List<TxRollupSubmitBatchOperation> TxRollupSubmitBatchOps { get; set; }
+        public List<TxRollupCommitOperation> TxRollupCommitOps { get; set; }
+        public List<TxRollupFinalizeCommitmentOperation> TxRollupFinalizeCommitmentOps { get; set; }
+        public List<TxRollupRemoveCommitmentOperation> TxRollupRemoveCommitmentOps { get; set; }
+        public List<TxRollupReturnBondOperation> TxRollupReturnBondOps { get; set; }
+        public List<TxRollupRejectionOperation> TxRollupRejectionOps { get; set; }
+        public List<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
+        public List<TransferTicketOperation> TransferTicketOps { get; set; }
+
         public List<MigrationOperation> Migrations { get; set; }
         public List<RevelationPenaltyOperation> RevelationPenalties { get; set; }
         #endregion

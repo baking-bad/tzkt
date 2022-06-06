@@ -20,6 +20,7 @@ namespace Tzkt.Data.Models
         public long TotalBanished { get; set; }
 
         public long TotalFrozen { get; set; }
+        public long TotalRollupBonds { get; set; }
         #endregion
     }
 

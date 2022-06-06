@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap users
-            foreach (var (pkh, balance) in bootstrapAccounts.Where(x => x.Item1[0] == 't'))
+            foreach (var (pkh, balance) in bootstrapAccounts.Where(x => x.Item1[0] == 't' && x.Item1[1] == 'z'))
             {
                 var user = new User
                 {
