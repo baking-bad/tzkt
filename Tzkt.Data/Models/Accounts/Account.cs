@@ -13,9 +13,11 @@ namespace Tzkt.Data.Models
         public int LastLevel { get; set; }
 
         public long Balance { get; set; }
+        public long RollupBonds { get; set; }
         public int Counter { get; set; }
 
         public int ContractsCount { get; set; }
+        public int RollupsCount { get; set; }
         public int ActiveTokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
@@ -24,6 +26,16 @@ namespace Tzkt.Data.Models
         public int OriginationsCount { get; set; }
         public int TransactionsCount { get; set; }
         public int RevealsCount { get; set; }
+
+        public int TxRollupOriginationCount { get; set; }
+        public int TxRollupSubmitBatchCount { get; set; }
+        public int TxRollupCommitCount { get; set; }
+        public int TxRollupReturnBondCount { get; set; }
+        public int TxRollupFinalizeCommitmentCount { get; set; }
+        public int TxRollupRemoveCommitmentCount { get; set; }
+        public int TxRollupRejectionCount { get; set; }
+        public int TxRollupDispatchTicketsCount { get; set; }
+        public int TransferTicketCount { get; set; }
 
         public int MigrationsCount { get; set; }
 
@@ -47,7 +59,8 @@ namespace Tzkt.Data.Models
         User,
         Delegate,
         Contract,
-        Ghost
+        Ghost,
+        Rollup
     }
 
     public static class AccountModel
@@ -65,7 +78,8 @@ namespace Tzkt.Data.Models
                 .HasValue<User>(AccountType.User)
                 .HasValue<Delegate>(AccountType.Delegate)
                 .HasValue<Contract>(AccountType.Contract)
-                .HasValue<Account>(AccountType.Ghost);
+                .HasValue<Account>(AccountType.Ghost)
+                .HasValue<Rollup>(AccountType.Rollup);
 
             modelBuilder.Entity<Account>()
                 .Property(x => x.Type)
@@ -73,8 +87,7 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Account>()
                 .Property(x => x.Address)
-                .IsFixedLength(true)
-                .HasMaxLength(36)
+                .HasMaxLength(37)
                 .IsRequired();
 
             // shadow property

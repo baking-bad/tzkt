@@ -11,7 +11,7 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (Account != null && !Regex.IsMatch(Account, "^[0-9A-Za-z]{36}$"))
+            if (Account != null && !Regex.IsMatch(Account, "^[0-9A-Za-z]{36,37}$"))
                 throw new HubException("Invalid account address");
 
             if (Contract != null && !Regex.IsMatch(Contract, "^KT1[0-9A-Za-z]{33}$"))

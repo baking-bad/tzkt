@@ -10,11 +10,20 @@ namespace Tzkt.Sync
         static readonly byte[] tz2 = new byte[] { 6, 161, 161 };
         static readonly byte[] tz3 = new byte[] { 6, 161, 164 };
         static readonly byte[] KT1 = new byte[] { 2, 90, 121 };
+        static readonly byte[] txr1 = new byte[] { 1, 128, 120, 31 };
 
         public static string ParseAddress(this IMicheline micheline)
         {
             if (micheline is MichelineString s)
-                return s.Value.Length == 36 ? s.Value : s.Value[..36];
+            {
+                if (s.Value.Length == 36)
+                    return s.Value;
+
+                if (s.Value.StartsWith("txr1"))
+                    return s.Value.Length == 37 ? s.Value : s.Value[..37];
+
+                return s.Value[..36];
+            }
 
             var value = (micheline as MichelineBytes).Value;
             byte[] prefix;
@@ -26,7 +35,7 @@ namespace Tzkt.Sync
             }
             else
             {
-                prefix = KT1;
+                prefix = value[0] == 1 ? KT1 : txr1;
                 bytes = value.GetBytes(1, 20);
             }
             return Base58.Convert(bytes, prefix);
@@ -36,7 +45,13 @@ namespace Tzkt.Sync
         {
             if (micheline is MichelineString s && s.Value.Length >= 36)
             {
-                res = s.Value.Length == 36 ? s.Value : s.Value[..36];
+                if (s.Value.Length == 36)
+                    res = s.Value;
+                else if (s.Value.StartsWith("txr1"))
+                    res = s.Value.Length == 37 ? s.Value : s.Value[..37];
+                else
+                    res = s.Value[..36];
+
                 return true;
             }
 
@@ -64,6 +79,11 @@ namespace Tzkt.Sync
                 else if (value[0] == 1 && value[21] == 0)
                 {
                     res = Base58.Convert(value.GetBytes(1, 20), KT1);
+                    return true;
+                }
+                else if (value[0] == 2 && value[21] == 0)
+                {
+                    res = Base58.Convert(value.GetBytes(1, 20), txr1);
                     return true;
                 }
             }

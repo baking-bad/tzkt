@@ -45,8 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     foreach (var content in op.Required("contents").EnumerateArray())
                     {
                         opsCount++;
-                        if (content.RequiredString("kind")[0] == 't' &&
-                            content.Required("metadata").TryGetProperty("internal_operation_results", out var internalContents))
+                        if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalContents))
                             opsCount += internalContents.Count();
                     }
                 }
@@ -81,7 +80,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (account is Data.Models.Delegate delegat)
                     await TestDelegate(level, delegat, proto);
 
-                await TestAccount(level, account);
+                if (account is not Rollup)
+                    await TestAccount(level, account);
             }
             
             if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))

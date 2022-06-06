@@ -59,6 +59,16 @@ namespace Tzkt.Data.Models
         public int EndorsingRewardOpsCount { get; set; }
         public int SetDepositsLimitOpsCount { get; set; }
 
+        public int TxRollupOriginationOpsCount { get; set; }
+        public int TxRollupSubmitBatchOpsCount { get; set; }
+        public int TxRollupCommitOpsCount { get; set; }
+        public int TxRollupFinalizeCommitmentOpsCount { get; set; }
+        public int TxRollupRemoveCommitmentOpsCount { get; set; }
+        public int TxRollupReturnBondOpsCount { get; set; }
+        public int TxRollupRejectionOpsCount { get; set; }
+        public int TxRollupDispatchTicketsOpsCount { get; set; }
+        public int TransferTicketOpsCount { get; set; }
+
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
 

@@ -259,7 +259,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^[0-9A-Za-z]{36}$"))
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^[0-9A-Za-z]{36,37}$"))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid account address.");
                         return false;
@@ -296,7 +296,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36}$"))
+                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36,37}$"))
                         {
                             if (rawValue != "null")
                             {

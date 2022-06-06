@@ -16,6 +16,7 @@ namespace Tzkt.Data
         public DbSet<Contract> Contracts { get; set; }
         public DbSet<Delegate> Delegates { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Rollup> Rollups { get; set; }
         #endregion
 
         #region blocks
@@ -40,6 +41,16 @@ namespace Tzkt.Data
         public DbSet<TransactionOperation> TransactionOps { get; set; }
         public DbSet<RegisterConstantOperation> RegisterConstantOps { get; set; }
         public DbSet<SetDepositsLimitOperation> SetDepositsLimitOps { get; set; }
+
+        public DbSet<TxRollupOriginationOperation> TxRollupOriginationOps { get; set; }
+        public DbSet<TxRollupSubmitBatchOperation> TxRollupSubmitBatchOps { get; set; }
+        public DbSet<TxRollupCommitOperation> TxRollupCommitOps { get; set; }
+        public DbSet<TxRollupFinalizeCommitmentOperation> TxRollupFinalizeCommitmentOps { get; set; }
+        public DbSet<TxRollupRemoveCommitmentOperation> TxRollupRemoveCommitmentOps { get; set; }
+        public DbSet<TxRollupReturnBondOperation> TxRollupReturnBondOps { get; set; }
+        public DbSet<TxRollupRejectionOperation> TxRollupRejectionOps { get; set; }
+        public DbSet<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
+        public DbSet<TransferTicketOperation> TransferTicketOps { get; set; }
 
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
@@ -100,6 +111,7 @@ namespace Tzkt.Data
             modelBuilder.BuildContractModel();
             modelBuilder.BuildDelegateModel();
             modelBuilder.BuildUserModel();
+            modelBuilder.BuildRollupModel();
             #endregion
 
             #region block
@@ -124,6 +136,16 @@ namespace Tzkt.Data
             modelBuilder.BuildTransactionOperationModel();
             modelBuilder.BuildRegisterConstantOperationModel();
             modelBuilder.BuildSetDepositsLimitOperationModel();
+
+            modelBuilder.BuildTxRollupOriginationOperationModel();
+            modelBuilder.BuildTxRollupSubmitBatchOperationModel();
+            modelBuilder.BuildTxRollupCommitOperationModel();
+            modelBuilder.BuildTxRollupFinalizeCommitmentOperationModel();
+            modelBuilder.BuildTxRollupRemoveCommitmentOperationModel();
+            modelBuilder.BuildTxRollupReturnBondOperationModel();
+            modelBuilder.BuildTxRollupRejectionOperationModel();
+            modelBuilder.BuildTxRollupDispatchTicketsOperationModel();
+            modelBuilder.BuildTransferTicketOperationModel();
 
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();

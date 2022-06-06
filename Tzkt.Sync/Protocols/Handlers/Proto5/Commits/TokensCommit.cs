@@ -584,7 +584,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             if (!Cache.Accounts.TryGetCached(address, out var account))
             {
-                account = address[0] == 't'
+                account = address[0] == 't' && address[1] == 'z'
                     ? new User
                     {
                         Id = Cache.AppState.NextAccountId(),

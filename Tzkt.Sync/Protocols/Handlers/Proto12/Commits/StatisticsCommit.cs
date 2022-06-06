@@ -23,7 +23,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 TotalBanished = prev.TotalBanished,
                 TotalCommitments = prev.TotalCommitments,
                 TotalCreated = prev.TotalCreated,
-                TotalFrozen = prev.TotalFrozen
+                TotalFrozen = prev.TotalFrozen,
+                TotalRollupBonds = prev.TotalRollupBonds
             };
 
             statistics.TotalFrozen += freezerChange;
@@ -90,6 +91,79 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 var subsidy = block.Migrations.Where(x => x.Kind == MigrationKind.Subsidy).Sum(x => x.BalanceChange);
                 statistics.TotalCreated += subsidy;
+            }
+
+            if (block.TransferTicketOps != null)
+            {
+                var ops = block.TransferTicketOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+            }
+
+            if (block.TxRollupCommitOps != null)
+            {
+                var ops = block.TxRollupCommitOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                {
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+                    statistics.TotalRollupBonds += ops.Sum(x => x.Bond);
+                }
+            }
+
+            if (block.TxRollupDispatchTicketsOps != null)
+            {
+                var ops = block.TxRollupDispatchTicketsOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+            }
+
+            if (block.TxRollupFinalizeCommitmentOps != null)
+            {
+                var ops = block.TxRollupFinalizeCommitmentOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+            }
+
+            if (block.TxRollupOriginationOps != null)
+            {
+                var ops = block.TxRollupOriginationOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.AllocationFee ?? 0);
+            }
+
+            if (block.TxRollupRejectionOps != null)
+            {
+                var ops = block.TxRollupRejectionOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                {
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+                    statistics.TotalBurned += block.TxRollupRejectionOps.Sum(x => x.Loss - x.Reward);
+                    statistics.TotalRollupBonds -= block.TxRollupRejectionOps.Sum(x => x.Loss);
+                }
+            }
+
+            if (block.TxRollupRemoveCommitmentOps != null)
+            {
+                var ops = block.TxRollupRemoveCommitmentOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+            }
+
+            if (block.TxRollupReturnBondOps != null)
+            {
+                var ops = block.TxRollupReturnBondOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                {
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+                    statistics.TotalRollupBonds -= ops.Sum(x => x.Bond);
+                }
+            }
+
+            if (block.TxRollupSubmitBatchOps != null)
+            {
+                var ops = block.TxRollupSubmitBatchOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
             }
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))

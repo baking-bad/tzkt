@@ -212,7 +212,7 @@ namespace Tzkt.Sync.Services
             return (await conn.QueryAsync(@"
                 SELECT ""Id"", ""Address""
                 FROM ""Accounts""
-                WHERE ""Address"" = ANY(@addresses::character(36)[])",
+                WHERE ""Address"" = ANY(@addresses::varchar(37)[])",
                 new { addresses }))
                 .ToDictionary(x => (string)x.Address, x => (int)x.Id);
         }
