@@ -7,7 +7,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(AnyOfBinder))]
     [JsonSchemaType(typeof(string))]
     [JsonSchemaExtensionData("x-tzkt-extension", "anyof-parameter")]
-    public class AnyOfParameter : INormalized
+    public class AnyOfParameter : INormalizable
     {
         public IEnumerable<string> Fields { get; set; }
 

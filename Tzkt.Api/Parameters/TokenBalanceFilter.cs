@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class TokenBalanceFilter : INormalized
+    public class TokenBalanceFilter : INormalizable
     {
         /// <summary>
         /// Filter by internal TzKT id.  

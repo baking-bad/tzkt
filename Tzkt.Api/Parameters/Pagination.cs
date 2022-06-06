@@ -2,7 +2,7 @@
 
 namespace Tzkt.Api
 {
-    public class Pagination : INormalized
+    public class Pagination : INormalizable
     {
         /// <summary>
         /// Sorts items (asc or desc) by the specified field.

@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class Selection : INormalized
+    public class Selection : INormalizable
     {
         /// <summary>
         /// Specify a comma-separated list of fields to include into response or leave it undefined to get default set of fields.

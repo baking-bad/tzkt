@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(OffsetBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class OffsetParameter : INormalized
+    public class OffsetParameter : INormalizable
     {
         /// <summary>
         /// **Elements** offset mode (optional, i.e. `offset.el=123` is the same as `offset=123`). \

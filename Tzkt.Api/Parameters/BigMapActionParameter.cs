@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -7,7 +9,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(BigMapActionBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "allocate,add_key,update_key,remove_key,remove")]
-    public class BigMapActionParameter : INormalized
+    public class BigMapActionParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -47,7 +49,29 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            var sb = new StringBuilder();
+            
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+            
+            if (Ne != null)
+            {
+                sb.Append($"{name}.ne={Ne}&");
+            }
+
+            if (In != null && In.Any())
+            {
+                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
+            }
+            
+            if (Ni != null && Ni.Any())
+            {
+                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
+            }
+            
+            return sb.ToString();
         }
     }
 }

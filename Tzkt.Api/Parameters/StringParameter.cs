@@ -8,7 +8,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(StringBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class StringParameter : INormalized
+    public class StringParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -95,19 +95,19 @@ namespace Tzkt.Api
                 sb.Append($"{name}.un={Un}&");
             }
 
-            if (In.Any())
+            if (In != null && In.Any())
             {
                 sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
             }
             
-            if (Ni.Any())
+            if (Ni != null && Ni.Any())
             {
                 sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
             }
 
             if (Null != null)
             {
-                sb.Append($"{name}.null={Null}");
+                sb.Append($"{name}.null={Null}&");
             }
 
             return sb.ToString();

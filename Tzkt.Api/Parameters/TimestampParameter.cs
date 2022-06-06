@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 using Tzkt.Api.Services.Cache;
@@ -8,7 +10,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(TimestampBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class TimestampParameter : INormalized
+    public class TimestampParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -107,7 +109,49 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new NotImplementedException();
+            var sb = new StringBuilder();
+            
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+            
+            if (Ne != null)
+            {
+                sb.Append($"{name}.ne={Ne}&");
+            }
+            
+            if (Gt != null)
+            {
+                sb.Append($"{name}.gt={Gt}&");
+            }
+            
+            if (Ge != null)
+            {
+                sb.Append($"{name}.ge={Ge}&");
+            }
+            
+            if (Lt != null)
+            {
+                sb.Append($"{name}.lt={Lt}&");
+            }
+            
+            if (Le != null)
+            {
+                sb.Append($"{name}.le={Le}&");
+            }
+
+            if (In != null && In.Any())
+            {
+                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
+            }
+            
+            if (Ni != null && Ni.Any())
+            {
+                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
+            }
+            
+            return sb.ToString();
         }
     }
 }

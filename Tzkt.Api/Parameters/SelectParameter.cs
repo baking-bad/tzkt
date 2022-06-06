@@ -5,7 +5,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(SelectBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class SelectParameter : INormalized
+    public class SelectParameter : INormalizable
     {
         /// <summary>
         /// **Fields** selection mode (optional, i.e. `select.fields=balance` is the same as `select=balance`). \

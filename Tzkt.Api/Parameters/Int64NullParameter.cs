@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(Int64NullBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class Int64NullParameter : INormalized
+    public class Int64NullParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \

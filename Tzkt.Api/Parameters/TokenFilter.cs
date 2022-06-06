@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class TokenFilter : INormalized
+    public class TokenFilter : INormalizable
     {
         /// <summary>
         /// Filter by internal TzKT id. Note, this is not the same as `tokenId` nat value.  

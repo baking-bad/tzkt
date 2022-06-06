@@ -16,7 +16,7 @@ namespace Tzkt.Api.Services.Output
                 if (value == null)
                     continue;
                 
-                sb.Append(value is INormalized normalizable ? normalizable.Normalize(name) : $"{name}={value}&");
+                sb.Append(value is INormalizable normalizable ? normalizable.Normalize(name) : $"{name}={value}&");
             }
 
             return sb.ToString();

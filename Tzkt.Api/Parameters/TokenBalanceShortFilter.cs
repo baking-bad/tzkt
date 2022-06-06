@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    public class TokenBalanceShortFilter : INormalized
+    public class TokenBalanceShortFilter : INormalizable
     {
         /// <summary>
         /// Filter by account address.  

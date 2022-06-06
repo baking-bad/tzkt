@@ -2,7 +2,7 @@
 
 namespace Tzkt.Api
 {
-    public class TokenInfoFilter : INormalized
+    public class TokenInfoFilter : INormalizable
     {
         /// <summary>
         /// Filter by internal TzKT id. Note, this is not the same as `tokenId`.  

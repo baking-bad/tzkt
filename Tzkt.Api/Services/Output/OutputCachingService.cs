@@ -17,6 +17,8 @@ namespace Tzkt.Api.Services.Output
         readonly long CacheSizeLimit;
         readonly long CompressionLimit;
         readonly Dictionary<string, OutputCacheEntity> Cache;
+        
+        long CacheUsed = 0;
 
         public OutputCachingService(IConfiguration configuration, ILogger<OutputCachingService> logger)
         {
@@ -28,43 +30,50 @@ namespace Tzkt.Api.Services.Output
 
         public bool TryGetFromCache(HttpContext context, string key, out OutputCacheEntity response)
         {
-            if (!Cache.TryGetValue(key, out var cacheEntity))
+            OutputCacheEntity cacheEntity;
+            lock (Cache)
             {
-                response = null;
-                return false;
-            }
-            
-            cacheEntity.LastAccess = DateTime.UtcNow;
-
-            if (!cacheEntity.IsCompressed)
-            {
-                response = cacheEntity;
-                return true;
-            }
-            
-            var acceptEncodingHeaders = context.Request.Headers["accept-encoding"].ToString();
-            
-            if (!string.IsNullOrEmpty(acceptEncodingHeaders) && acceptEncodingHeaders.Contains("gzip"))
-            {
-                context.Response.Headers.Add("Content-encoding", "gzip");
-                response = cacheEntity;
-                return true;
-            }
-
-            using (var memoryStream = new MemoryStream(cacheEntity.Bytes))
-            using (var gZipStream = new GZipStream(memoryStream, CompressionMode.Decompress))
-            using (var memoryStreamOutput = new MemoryStream())
-            {
-                gZipStream.CopyTo(memoryStreamOutput);
-                response = new OutputCacheEntity
+                if (!Cache.TryGetValue(key, out cacheEntity))
                 {
-                    Bytes = memoryStreamOutput.ToArray(),
-                    LastAccess = DateTime.UtcNow,
-                    IsCompressed = false
-                };
+                    response = null;
+                    return false;
+                }
             }
 
-            return true;
+            lock (cacheEntity)
+            {
+                cacheEntity.LastAccess = DateTime.UtcNow;
+
+                if (!cacheEntity.IsCompressed)
+                {
+                    response = cacheEntity;
+                    return true;
+                }
+            
+                var acceptEncodingHeaders = context.Request.Headers["accept-encoding"].ToString();
+            
+                if (!string.IsNullOrEmpty(acceptEncodingHeaders) && acceptEncodingHeaders.Contains("gzip"))
+                {
+                    context.Response.Headers.Add("Content-encoding", "gzip");
+                    response = cacheEntity;
+                    return true;
+                }
+
+                using (var memoryStream = new MemoryStream(cacheEntity.Bytes))
+                using (var gZipStream = new GZipStream(memoryStream, CompressionMode.Decompress))
+                using (var memoryStreamOutput = new MemoryStream())
+                {
+                    gZipStream.CopyTo(memoryStreamOutput);
+                    response = new OutputCacheEntity
+                    {
+                        Bytes = memoryStreamOutput.ToArray(),
+                        LastAccess = DateTime.UtcNow,
+                        IsCompressed = false
+                    };
+                }
+
+                return true;
+            }
         }
 
         public void Set(string key, object res)
@@ -94,23 +103,39 @@ namespace Tzkt.Api.Services.Output
                 Logger.LogWarning("{Key} too big to be cached. Cache size: {CacheSizeLimit} bytes. Response size: {BytesToBeCached} bytes", key, CacheSizeLimit, bytesToBeCached.Length);
                 return;
             }
+
+            lock (Cache)
+            {
+                if (Cache.Any() && CacheUsed + bytesToBeCached.Length >= CacheSizeLimit)
+                {
+                    var toDelete = Cache.OrderBy(x => x.Value.LastAccess).Select(x => x.Key).ToList();
                 
-            while (Cache.Any() && Cache.Sum(x => x.Value.Bytes.Length) + bytesToBeCached.Length >= CacheSizeLimit)
-            {
-                Cache.Remove(Cache.FirstOrDefault(x => x.Value.LastAccess == Cache.Min(y => y.Value.LastAccess)).Key);
+                    while (Cache.Any() && CacheUsed + bytesToBeCached.Length >= CacheSizeLimit)
+                    {
+                        var keyToDelete = toDelete.FirstOrDefault();
+                        CacheUsed -= Cache[keyToDelete].Bytes.Length;
+                        Cache.Remove(keyToDelete);
+                        toDelete.RemoveAt(0);
+                    }
+                }
+                
+                CacheUsed += bytesToBeCached.Length;
+                Cache[key] = new OutputCacheEntity
+                {
+                    Bytes = bytesToBeCached,
+                    LastAccess = DateTime.UtcNow,
+                    IsCompressed = compressed
+                };
             }
-            
-            Cache[key] = new OutputCacheEntity
-            {
-                Bytes = bytesToBeCached,
-                LastAccess = DateTime.UtcNow,
-                IsCompressed = compressed
-            };
         }
 
         public void Invalidate()
         {
-            Cache.Clear();
+            lock (Cache)
+            {
+                Cache.Clear();
+                CacheUsed = 0;
+            }
         }
     }
 }
