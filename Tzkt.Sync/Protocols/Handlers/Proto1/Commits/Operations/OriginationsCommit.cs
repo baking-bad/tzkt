@@ -208,6 +208,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
                     await ProcessScript(origination, content, code, storage);
+
+                    origination.ContractCodeHash = contract.CodeHash;
                 }
             }
             #endregion
@@ -305,6 +307,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Nonce = content.RequiredInt32("nonce"),
                 Balance = content.RequiredInt64("balance"),
                 Sender = sender,
+                SenderCodeHash = (sender as Contract)?.CodeHash,
                 Manager = manager,
                 Delegate = delegat,
                 Contract = contract,
@@ -405,6 +408,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
                     await ProcessScript(origination, content, code, storage);
+
+                    origination.ContractCodeHash = contract.CodeHash;
                 }
             }
             #endregion

@@ -682,6 +682,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         FirstLevel = migration.Level,
                         LastLevel = migration.Level,
                         TokenId = token.Id,
+                        ContractId = token.ContractId,
                         TransfersCount = 1
                     };
                     var tokenTransfer = new TokenTransfer
@@ -691,7 +692,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                         Level = migration.Level,
                         MigrationId = migration.Id,
                         ToId = NullAddress.Id,
-                        TokenId = token.Id
+                        TokenId = token.Id,
+                        ContractId = token.ContractId
                     };
 
                     Db.Tokens.Add(token);

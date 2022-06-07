@@ -655,6 +655,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Id = Cache.AppState.NextTokenBalanceId(),
                     AccountId = account.Id,
                     TokenId = token.Id,
+                    ContractId = token.ContractId,
                     FirstLevel = op.Level,
                     LastLevel = op.Level,
                     Balance = BigInteger.Zero
@@ -732,6 +733,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 ToId = to.Id,
                 Level = op.Level,
                 TokenId = token.Id,
+                ContractId = token.ContractId,
                 TransactionId = (op as TransactionOperation)?.Id,
                 OriginationId = (op as OriginationOperation)?.Id
             });
@@ -784,6 +786,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 ToId = diff > BigInteger.Zero ? account.Id : null,
                 Level = op.Level,
                 TokenId = token.Id,
+                ContractId = token.ContractId,
                 TransactionId = (op as TransactionOperation)?.Id,
                 OriginationId = (op as OriginationOperation)?.Id
             });

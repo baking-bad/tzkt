@@ -160,6 +160,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Counter = parent.Counter,
                 Nonce = content.RequiredInt32("nonce"),
                 Sender = sender,
+                SenderCodeHash = (sender as Contract)?.CodeHash,
                 Delegate = newDelegate,
                 PrevDelegate = prevDelegate,
                 Amount = sender.Balance,
