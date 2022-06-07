@@ -6,7 +6,9 @@ namespace Tzkt.Data.Models
 {
     public class TransactionOperation : ContractOperation
     {
+        public int? SenderCodeHash { get; set; }
         public int? TargetId { get; set; }
+        public int? TargetCodeHash { get; set; }
         public int? ResetDeactivation { get; set; }
 
         public long Amount { get; set; }
@@ -61,10 +63,18 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<TransactionOperation>()
+                .HasIndex(x => x.SenderCodeHash)
+                .HasFilter($@"""{nameof(TransactionOperation.SenderCodeHash)}"" IS NOT NULL");
+
+            modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.InitiatorId);
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.TargetId);
+
+            modelBuilder.Entity<TransactionOperation>()
+                .HasIndex(x => x.TargetCodeHash)
+                .HasFilter($@"""{nameof(TransactionOperation.TargetCodeHash)}"" IS NOT NULL");
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.JsonParameters)

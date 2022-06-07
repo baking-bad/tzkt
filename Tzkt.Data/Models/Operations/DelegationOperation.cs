@@ -7,6 +7,7 @@ namespace Tzkt.Data.Models
     //TODO: add delegation amount
     public class DelegationOperation : InternalOperation
     {
+        public int? SenderCodeHash { get; set; }
         public int? DelegateId { get; set; }
         public int? PrevDelegateId { get; set; }
         public int? ResetDeactivation { get; set; }
@@ -48,6 +49,10 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.SenderId);
+
+            modelBuilder.Entity<DelegationOperation>()
+                .HasIndex(x => x.SenderCodeHash)
+                .HasFilter($@"""{nameof(DelegationOperation.SenderCodeHash)}"" IS NOT NULL");
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.InitiatorId);

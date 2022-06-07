@@ -6,9 +6,11 @@ namespace Tzkt.Data.Models
 {
     public class OriginationOperation : ContractOperation
     {
+        public int? SenderCodeHash { get; set; }
         public int? ManagerId { get; set; }
         public int? DelegateId { get; set; }
         public int? ContractId { get; set; }
+        public int? ContractCodeHash { get; set; }
         public int? ScriptId { get; set; }
 
         public long Balance { get; set; }
@@ -59,6 +61,10 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<OriginationOperation>()
+                .HasIndex(x => x.SenderCodeHash)
+                .HasFilter($@"""{nameof(OriginationOperation.SenderCodeHash)}"" IS NOT NULL");
+
+            modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.InitiatorId);
 
             modelBuilder.Entity<OriginationOperation>()
@@ -69,6 +75,10 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.ContractId);
+
+            modelBuilder.Entity<OriginationOperation>()
+                .HasIndex(x => x.ContractCodeHash)
+                .HasFilter($@"""{nameof(OriginationOperation.ContractCodeHash)}"" IS NOT NULL");
             #endregion
 
             #region relations

@@ -7,6 +7,7 @@ namespace Tzkt.Data.Models
     public class TokenBalance
     {
         public int Id { get; set; }
+        public int ContractId { get; set; }
         public int TokenId { get; set; }
         public int AccountId { get; set; }
         public int FirstLevel { get; set; }
@@ -41,6 +42,13 @@ namespace Tzkt.Data.Models
                 .IsUnique();
 
             modelBuilder.Entity<TokenBalance>()
+                .HasIndex(x => x.ContractId);
+
+            modelBuilder.Entity<TokenBalance>()
+                .HasIndex(x => x.ContractId)
+                .HasFilter($@"""{nameof(TokenBalance.Balance)}"" != '0'");
+
+            modelBuilder.Entity<TokenBalance>()
                 .HasIndex(x => x.TokenId);
 
             modelBuilder.Entity<TokenBalance>()
@@ -53,6 +61,9 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TokenBalance>()
                 .HasIndex(x => x.AccountId)
                 .HasFilter($@"""{nameof(TokenBalance.Balance)}"" != '0'");
+
+            modelBuilder.Entity<TokenBalance>()
+                .HasIndex(x => new { x.AccountId, x.ContractId });
 
             modelBuilder.Entity<TokenBalance>()
                 .HasIndex(x => new { x.AccountId, x.TokenId })

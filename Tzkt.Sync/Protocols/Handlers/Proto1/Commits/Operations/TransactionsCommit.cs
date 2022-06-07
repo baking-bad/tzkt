@@ -48,6 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 Sender = sender,
                 Target = target,
+                TargetCodeHash = (target as Contract)?.CodeHash,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -187,8 +188,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Counter = parent.Counter,
                 Amount = content.RequiredInt64("amount"),
                 Nonce = content.RequiredInt32("nonce"),
-                Sender = sender, 
+                Sender = sender,
+                SenderCodeHash = (sender as Contract)?.CodeHash,
                 Target = target,
+                TargetCodeHash = (target as Contract)?.CodeHash,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,

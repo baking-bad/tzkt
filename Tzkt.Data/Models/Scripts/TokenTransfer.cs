@@ -8,6 +8,7 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public int Level { get; set; }
+        public int ContractId { get; set; }
         public int TokenId { get; set; }
         public BigInteger Amount { get; set; }
 
@@ -43,6 +44,9 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.Id)
                 .IsUnique();
+
+            modelBuilder.Entity<TokenTransfer>()
+                .HasIndex(x => x.ContractId);
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.TokenId);
