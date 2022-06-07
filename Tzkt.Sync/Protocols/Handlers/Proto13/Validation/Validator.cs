@@ -313,11 +313,11 @@ namespace Tzkt.Sync.Protocols.Proto13
 
         protected virtual void ValidateInternalDelegation(JsonElement content, string initiator)
         {
-            var delegat = content.OptionalString("delegate");
+            //var delegat = content.OptionalString("delegate");
 
-            if (content.Required("result").RequiredString("status") == "applied" && delegat != null)
-                if (!Cache.Accounts.DelegateExists(delegat))
-                    throw new ValidationException("unknown delegate account");
+            //if (content.Required("result").RequiredString("status") == "applied" && delegat != null)
+            //    if (!Cache.Accounts.DelegateExists(delegat))
+            //        throw new ValidationException("unknown delegate account");
         }
 
         protected virtual async Task ValidateOrigination(JsonElement content)
@@ -352,13 +352,13 @@ namespace Tzkt.Sync.Protocols.Proto13
 
         protected virtual void ValidateInternalOrigination(JsonElement content, string initiator)
         {
-            var delegat = content.OptionalString("delegate");
+            //var delegat = content.OptionalString("delegate");
             var result = content.Required("result");
             var applied = result.RequiredString("status") == "applied";
 
-            if (applied && delegat != null)
-                if (!Cache.Accounts.DelegateExists(delegat))
-                    throw new ValidationException("unknown delegate account");
+            //if (applied && delegat != null)
+            //    if (!Cache.Accounts.DelegateExists(delegat))
+            //        throw new ValidationException("unknown delegate account");
 
             if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
                 ValidateTransferBalanceUpdates(
