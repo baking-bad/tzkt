@@ -25,14 +25,13 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(RevelationPenaltyOperation))]
     [KnownType(typeof(BakingOperation))]
     [KnownType(typeof(EndorsingRewardOperation))]
-    [KnownType(typeof(TokenTransfer))]
     public abstract class Operation
     {
         /// <summary>
         /// Type of the operation (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`,
         /// `double_baking`, `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `delegation`,
         /// `origination`, `transaction`, `reveal`, `register_constant`, `set_deposits_limit`, `migration`,
-        /// `revelation_penalty`, `baking`, `endorsing_reward`, `token_transfer`)
+        /// `revelation_penalty`, `baking`, `endorsing_reward`)
         /// </summary>
         public abstract string Type { get; }
 
@@ -104,9 +103,6 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(EndorsingRewardOperation))
                 return OpTypes.EndorsingReward;
-
-            if (type == typeof(TokenTransfer))
-                return OpTypes.TokenTransfer;
 
             return base.GetDiscriminatorValue(type);
         }

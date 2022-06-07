@@ -28,7 +28,6 @@ namespace Tzkt.Api
         public const string RevelationPenalty = "revelation_penalty";
         public const string Baking = "baking";
         public const string EndorsingReward = "endorsing_reward";
-        public const string TokenTransfer = "token_transfer";
 
         public static bool TryParse(string type, out Operations res)
         {

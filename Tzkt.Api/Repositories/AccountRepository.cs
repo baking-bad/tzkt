@@ -1329,10 +1329,6 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetEndorsingRewards(_delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
-                    var tokenTransferOps = delegat.TokenTransfersCount > 0 && types.Contains(OpTypes.TokenTransfer)
-                        ? Operations.GetTokenTransfers(new AnyOfParameter { Fields = new[] { "from", "to" }, Value = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TokenTransferOperation>());
-
                     await Task.WhenAll(
                         endorsements,
                         preendorsements,
@@ -1352,8 +1348,7 @@ namespace Tzkt.Api.Repositories
                         migrations,
                         revelationPenalties,
                         bakingOps,
-                        endorsingRewards,
-                        tokenTransferOps);
+                        endorsingRewards);
 
                     result.AddRange(endorsements.Result);
                     result.AddRange(preendorsements.Result);
@@ -1374,7 +1369,6 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
                     result.AddRange(endorsingRewards.Result);
-                    result.AddRange(tokenTransferOps.Result);
 
                     break;
                 case RawUser user:
@@ -1412,10 +1406,6 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
-                    var userTokenTransfers= user.TokenTransfersCount > 0 && types.Contains(OpTypes.TokenTransfer)
-                        ? Operations.GetTokenTransfers(new AnyOfParameter { Fields = new[] { "from", "to" }, Value = user.Id }, null, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TokenTransferOperation>());
-
                     await Task.WhenAll(
                         userActivations,
                         userDelegations,
@@ -1424,8 +1414,7 @@ namespace Tzkt.Api.Repositories
                         userReveals,
                         userRegisterConstants,
                         userSetDepositsLimit,
-                        userMigrations,
-                        userTokenTransfers);
+                        userMigrations);
 
                     result.AddRange(userActivations.Result);
                     result.AddRange(userDelegations.Result);
@@ -1435,7 +1424,6 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userRegisterConstants.Result);
                     result.AddRange(userSetDepositsLimit.Result);
                     result.AddRange(userMigrations.Result);
-                    result.AddRange(userTokenTransfers.Result);
 
                     break;
                 case RawContract contract:
@@ -1461,36 +1449,22 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetMigrations(_contract, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
-                    var contractTokenTransfers = contract.TokenTransfersCount > 0 && types.Contains(OpTypes.TokenTransfer)
-                        ? Operations.GetTokenTransfers(new AnyOfParameter { Fields = new[] { "from", "to" }, Value = contract.Id }, null, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TokenTransferOperation>());
-
                     await Task.WhenAll(
                         contractDelegations,
                         contractOriginations,
                         contractTransactions,
                         contractReveals,
-                        contractMigrations,
-                        contractTokenTransfers);
+                        contractMigrations);
 
                     result.AddRange(contractDelegations.Result);
                     result.AddRange(contractOriginations.Result);
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
                     result.AddRange(contractMigrations.Result);
-                    result.AddRange(contractTokenTransfers.Result);
 
                     break;
 
                 case RawAccount ghost:
-                    var ghostTokenTransfers = ghost.TokenTransfersCount > 0 && types.Contains(OpTypes.TokenTransfer)
-                        ? Operations.GetTokenTransfers(new AnyOfParameter { Fields = new[] { "from", "to" }, Value = ghost.Id }, null, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TokenTransferOperation>());
-
-                    await Task.WhenAll(
-                        ghostTokenTransfers);
-
-                    result.AddRange(ghostTokenTransfers.Result);
                     break;
             }
 

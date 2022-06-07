@@ -11,13 +11,11 @@ namespace Tzkt.Api.Repositories
     {
         readonly AccountsCache Accounts;
         readonly QuotesCache Quotes;
-        readonly TimeCache Times;
 
-        public OperationRepository(AccountsCache accounts, QuotesCache quotes, TimeCache times, IConfiguration config) : base(config)
+        public OperationRepository(AccountsCache accounts, QuotesCache quotes, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Quotes = quotes;
-            Times = times;
         }
 
         public async Task<IEnumerable<Operation>> Get(string hash, MichelineFormat format, Symbols quote)
