@@ -26,4 +26,10 @@
     <Reference Include="../libs/System.Text.Json/net5.0/System.Text.Json.dll" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Protocols\Handlers\Proto13\Activation\patched.contracts">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

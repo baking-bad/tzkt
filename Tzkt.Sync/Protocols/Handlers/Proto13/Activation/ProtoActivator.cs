@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Netezos.Contracts;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
@@ -28,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             protocol.TxRollupCommitmentBond = 10_000_000_000;
         }
 
-        protected override long GetVotingPower(Delegate baker, Protocol protocol)
+        protected override long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
         {
             return baker.StakingBalance;
         }
@@ -43,6 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
         protected override async Task MigrateContext(AppState state)
         {
+            var block = await Cache.Blocks.CurrentAsync();
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             #region voting snapshots
@@ -71,6 +75,102 @@ namespace Tzkt.Sync.Protocols.Proto13
             period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
 
             Db.VotingSnapshots.AddRange(snapshots);
+            #endregion
+
+            #region patch contracts
+            var patched = File.ReadAllLines("./Protocols/Handlers/Proto13/Activation/patched.contracts");
+            foreach (var address in patched)
+            {
+                if (await Cache.Accounts.GetAsync(address) is Contract contract)
+                {
+                    Db.TryAttach(contract);
+
+                    var oldScript = await Db.Scripts.FirstAsync(x => x.ContractId == contract.Id && x.Current);
+                    var oldStorage = await Cache.Storages.GetAsync(contract);
+
+                    var rawContract = await Proto.Rpc.GetContractAsync(state.Level, contract.Address);
+
+                    var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                    var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
+                    var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
+                    var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+                    var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
+
+                    var newSchema = new ContractScript(code);
+                    var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                    var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
+
+                    if (oldScript.ParameterSchema.IsEqual(micheParameter) &&
+                        oldScript.StorageSchema.IsEqual(micheStorage) &&
+                        oldScript.CodeSchema.IsEqual(micheCode) &&
+                        oldStorage.RawValue.IsEqual(newRawStorageValue))
+                        continue;
+
+                    Db.TryAttach(oldScript);
+                    oldScript.Current = false;
+
+                    Db.TryAttach(oldStorage);
+                    oldStorage.Current = false;
+
+                    var migration = new MigrationOperation
+                    {
+                        Id = Cache.AppState.NextOperationId(),
+                        Block = block,
+                        Level = block.Level,
+                        Timestamp = block.Timestamp,
+                        Account = contract,
+                        Kind = MigrationKind.CodeChange
+                    };
+                    var newScript = new Script
+                    {
+                        Id = Cache.AppState.NextScriptId(),
+                        Level = migration.Level,
+                        ContractId = contract.Id,
+                        MigrationId = migration.Id,
+                        ParameterSchema = micheParameter,
+                        StorageSchema = micheStorage,
+                        CodeSchema = micheCode,
+                        Views = micheViews.Any()
+                            ? micheViews.Select(x => x.ToBytes()).ToArray()
+                            : null,
+                        Current = true
+                    };
+                    var newStorage = new Storage
+                    {
+                        Id = Cache.AppState.NextStorageId(),
+                        Level = migration.Level,
+                        ContractId = contract.Id,
+                        MigrationId = migration.Id,
+                        RawValue = newRawStorageValue,
+                        JsonValue = newScript.Schema.HumanizeStorage(newStorageValue),
+                        Current = true
+                    };
+
+                    var viewsBytes = newScript.Views?
+                        .OrderBy(x => x, new BytesComparer())
+                        .SelectMany(x => x)
+                        .ToArray()
+                        ?? Array.Empty<byte>();
+                    var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
+                    var fullSchema = typeSchema.Concat(newScript.CodeSchema);
+                    contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
+                    contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
+
+                    migration.Script = newScript;
+                    migration.Storage = newStorage;
+
+                    contract.MigrationsCount++;
+                    state.MigrationOpsCount++;
+
+                    Db.MigrationOps.Add(migration);
+
+                    Db.Scripts.Add(newScript);
+                    Cache.Schemas.Add(contract, newScript.Schema);
+
+                    Db.Storages.Add(newStorage);
+                    Cache.Storages.Add(contract, newStorage);
+                }
+            }
             #endregion
         }
         protected override Task RevertContext(AppState state) => Task.CompletedTask;
