@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
       POSTGRES_DB: ${POSTGRES_DB:-tzkt_db}
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - ithaca_postgres:/var/lib/postgresql/data
     ports:
       - 127.0.0.1:5433:5432
 
@@ -37,4 +37,4 @@ services:
       - ithaca-db
 
 volumes:
-  postgres:
+  ithaca_postgres:

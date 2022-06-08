@@ -7,7 +7,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(DateTimeBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class DateTimeParameter
+    public class DateTimeParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=2020-01-01` is the same as `param=2020-01-01`). \
@@ -72,5 +72,10 @@ namespace Tzkt.Api
         /// Example: `?timestamp.ni=2020-02-20,2020-02-21`.
         /// </summary>
         public List<DateTime> Ni { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

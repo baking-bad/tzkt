@@ -5,7 +5,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(BoolBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class BoolParameter
+    public class BoolParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=true` is the same as `param=true`). \
@@ -22,5 +22,10 @@ namespace Tzkt.Api
         /// Example: `?active.null` or `?active.null=false`.
         /// </summary>
         public bool? Null { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

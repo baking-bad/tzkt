@@ -2,7 +2,7 @@
 
 namespace Tzkt.Api
 {
-    public class Pagination
+    public class Pagination : INormalizable
     {
         /// <summary>
         /// Sorts items (asc or desc) by the specified field.
@@ -22,5 +22,10 @@ namespace Tzkt.Api
         /// </summary>
         [Range(0, 10000)]
         public int limit { get; set; } = 100;
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

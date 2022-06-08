@@ -2,7 +2,7 @@
 
 namespace Tzkt.Api
 {
-    public class TokenInfoFilter
+    public class TokenInfoFilter : INormalizable
     {
         /// <summary>
         /// Filter by internal TzKT id. Note, this is not the same as `tokenId`.  
@@ -37,5 +37,10 @@ namespace Tzkt.Api
 
         [JsonIgnore]
         public bool HasFilters => contract != null || tokenId != null || standard != null;
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

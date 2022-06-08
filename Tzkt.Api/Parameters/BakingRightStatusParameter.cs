@@ -6,7 +6,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(BakingRightStatusBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "future,realized,uncovered,missed")]
-    public class BakingRightStatusParameter
+    public class BakingRightStatusParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -25,5 +25,10 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Ne { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
