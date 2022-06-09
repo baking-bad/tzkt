@@ -221,7 +221,7 @@ namespace Tzkt.Api.Services.Sync
                 await Protocols.UpdateAsync();
                 await Quotes.UpdateAsync();
                 await Times.UpdateAsync();
-                OutputCache.Invalidate();
+                OutputCache.Clear();
                 #endregion
 
                 #region send events

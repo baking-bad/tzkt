@@ -36,9 +36,9 @@ namespace Tzkt.Api.Controllers
         {
             var queryString = Request.Path.Value;
 
-            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Bytes, "application/json");
+                return File(cachedResponse, "application/json");
             }
             
             var res = await BigMaps.GetCount();
@@ -85,9 +85,9 @@ namespace Tzkt.Api.Controllers
             var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("contract", contract), ("path", path), ("tags", tags),
                 ("active", active), ("lastLevel", lastLevel), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Bytes, "application/json");
+                return File(cachedResponse, "application/json");
             }
             
             object res;
@@ -165,9 +165,9 @@ namespace Tzkt.Api.Controllers
             var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("bigmap", bigmap), ("path", path), ("contract", contract), ("tags", tags),
                 ("action", action), ("value", value), ("level", level), ("timestamp", timestamp), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Bytes, "application/json");
+                return File(cachedResponse, "application/json");
             }
             
             object res;
@@ -199,9 +199,9 @@ namespace Tzkt.Api.Controllers
         {
             var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Bytes, "application/json");
+                return File(cachedResponse, "application/json");
             }
             
             var res = await BigMaps.Get(id, micheline);
@@ -223,9 +223,9 @@ namespace Tzkt.Api.Controllers
         {
             var queryString = Request.Path.Value;
 
-            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Bytes, "application/json");
+                return File(cachedResponse, "application/json");
             }
             
             var res = await BigMaps.GetMicheType(id);
@@ -274,9 +274,9 @@ namespace Tzkt.Api.Controllers
             var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("active", active), ("key", key),
                 ("value", value), ("lastLevel", lastLevel), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Bytes, "application/json");
+                return File(cachedResponse, "application/json");
             }
             
             object res;
@@ -329,9 +329,9 @@ namespace Tzkt.Api.Controllers
             {
                 var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("micheline", micheline));
 
-                if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
                 {
-                    return File(cachedResponse.Bytes, "application/json");
+                    return File(cachedResponse, "application/json");
                 }
             
                 object res;
@@ -385,9 +385,9 @@ namespace Tzkt.Api.Controllers
             {
                 var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-                if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
                 {
-                    return File(cachedResponse.Bytes, "application/json");
+                    return File(cachedResponse, "application/json");
                 }
             
                 object res;
@@ -449,9 +449,9 @@ namespace Tzkt.Api.Controllers
             var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("active", active), ("key", key),
                 ("value", value), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
             {
-                return File(cachedResponse.Bytes, "application/json");
+                return File(cachedResponse, "application/json");
             }
             
             object res;
@@ -509,9 +509,9 @@ namespace Tzkt.Api.Controllers
             {
                 var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("level", level), ("key", key), ("micheline", micheline));
 
-                if (OutputCache.TryGetFromCache(HttpContext, queryString, out var cachedResponse))
+                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
                 {
-                    return File(cachedResponse.Bytes, "application/json");
+                    return File(cachedResponse, "application/json");
                 }
             
                 object res;
