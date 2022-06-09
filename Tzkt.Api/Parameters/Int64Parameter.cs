@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -74,7 +76,49 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            var sb = new StringBuilder();
+            
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+            
+            if (Ne != null)
+            {
+                sb.Append($"{name}.ne={Ne}&");
+            }
+            
+            if (Gt != null)
+            {
+                sb.Append($"{name}.gt={Gt}&");
+            }
+            
+            if (Ge != null)
+            {
+                sb.Append($"{name}.ge={Ge}&");
+            }
+            
+            if (Lt != null)
+            {
+                sb.Append($"{name}.lt={Lt}&");
+            }
+            
+            if (Le != null)
+            {
+                sb.Append($"{name}.le={Le}&");
+            }
+
+            if (In != null && In.Any())
+            {
+                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
+            }
+            
+            if (Ni != null && Ni.Any())
+            {
+                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
+            }
+            
+            return sb.ToString();
         }
     }
 }

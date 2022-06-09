@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -39,7 +40,24 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            var sb = new StringBuilder();
+            
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+            
+            if (Any != null)
+            {
+                sb.Append($"{name}.any={Any}&");
+            }
+            
+            if (All != null)
+            {
+                sb.Append($"{name}.all={All}&");
+            }
+            
+            return sb.ToString();
         }
     }
 }
