@@ -30,14 +30,14 @@ namespace Tzkt.Api.Services.Output
             }
         }
 
-        public void Set(string key, object res)
+        public byte[] Set(string key, object res)
         {
             var bytesToBeCached = JsonSerializer.SerializeToUtf8Bytes(res);
             
             if (bytesToBeCached.Length > CacheSizeLimit)
             {
                 Logger.LogWarning("{Key} too big to be cached. Cache size: {CacheSizeLimit} bytes. Response size: {BytesToBeCached} bytes", key, CacheSizeLimit, bytesToBeCached.Length);
-                return;
+                return bytesToBeCached;
             }
             
             lock (Cache)
@@ -50,6 +50,8 @@ namespace Tzkt.Api.Services.Output
                 CacheUsed += bytesToBeCached.Length;
                 Cache[key] = bytesToBeCached;
             }
+
+            return bytesToBeCached;
         }
 
         public void Clear()

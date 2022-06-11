@@ -43,8 +43,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await BigMaps.GetCount();
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -118,8 +118,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
 
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -179,8 +179,8 @@ namespace Tzkt.Api.Controllers
                 res = await BigMaps.GetUpdates(bigmap, path, contract, action, value, tags, level, timestamp, sort, offset, limit, micheline);
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -206,8 +206,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await BigMaps.Get(id, micheline);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -230,8 +230,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await BigMaps.GetMicheType(id);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -304,8 +304,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -482,8 +482,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>

@@ -147,8 +147,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -171,8 +171,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetContractsCount(kind);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -195,8 +195,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetContract(address);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -268,8 +268,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -342,8 +342,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -383,8 +383,8 @@ namespace Tzkt.Api.Controllers
                     _ => await Accounts.GetByteCode(address, level)
                 };
 
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -407,8 +407,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetContractInterface(address);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -443,8 +443,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetEntrypoints(address, all, json, micheline, michelson);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -475,8 +475,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetEntrypoint(address, name, json, micheline, michelson);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -506,8 +506,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetViews(address, json, micheline, michelson);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -534,8 +534,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetView(address, name, json, micheline, michelson);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -644,8 +644,8 @@ namespace Tzkt.Api.Controllers
                 ? this.Json(await Accounts.GetStorageValue(address, jsonPath)) 
                 : this.Json(await Accounts.GetStorageValue(address, jsonPath, level));
                             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -671,8 +671,8 @@ namespace Tzkt.Api.Controllers
                 ? this.Json(await Accounts.GetStorageSchema(address)) 
                 : this.Json(await Accounts.GetStorageSchema(address, level));    
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -697,8 +697,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetStorageHistory(address, lastId, limit);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -724,8 +724,8 @@ namespace Tzkt.Api.Controllers
                 ? await Accounts.GetRawStorageValue(address) 
                 : await Accounts.GetRawStorageValue(address, level);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -751,8 +751,8 @@ namespace Tzkt.Api.Controllers
                 ? await Accounts.GetRawStorageSchema(address) 
                 : await Accounts.GetRawStorageSchema(address, level);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -777,8 +777,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await Accounts.GetRawStorageHistory(address, lastId, limit);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -852,8 +852,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -887,8 +887,8 @@ namespace Tzkt.Api.Controllers
             
             var res = await BigMaps.Get(contract.Id, name, micheline);
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -976,8 +976,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
@@ -1189,8 +1189,8 @@ namespace Tzkt.Api.Controllers
                 }
             }
             
-            OutputCache.Set(queryString, res);
-            return Ok(res);
+            var bytes = OutputCache.Set(queryString, res);
+            return File(bytes, "application/json");
         }
 
         /// <summary>
