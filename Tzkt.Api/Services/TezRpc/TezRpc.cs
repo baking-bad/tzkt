@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Netezos.Encoding;
+using Netezos.Forging;
 using Netezos.Rpc;
 using Tzkt.Api.Models.Send;
 using Tzkt.Api.Services.Cache;
@@ -45,6 +47,10 @@ namespace Tzkt.Api.Services
         {
             //TODO Handle too low fees
             //TODO All required checks for the content data
+            var forge = new LocalForge();
+            var bytes = Hex.Parse(content[32..]);
+            var body = await forge.UnforgeOperationAsync(bytes);
+            
             var response = await Rpc.Blocks.Head.Helpers.Preapply.Operations.PostAsync<List<PreapplyResponse>>(content);
 
             var a = response.FirstOrDefault().Contents.Where(x => x.Metadata.OperationResult.Errors != null)

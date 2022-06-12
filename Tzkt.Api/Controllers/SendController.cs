@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Tzkt.Api.Models;
 using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
 
@@ -14,6 +15,21 @@ namespace Tzkt.Api.Controllers
         public SendController(TezRpc rpc)
         {
             Rpc = rpc;
+        }
+        
+        
+
+        [HttpGet("{signedTx}")]
+        public async Task<ActionResult<string>> Send(string signedTx, bool force = false)
+        {
+
+            //TODO Handle broken body
+            /*if (string.IsNullOrEmpty(body))
+            {
+                return new BadRequest($"{nameof(@body)}", "Body is null");
+
+            }*/
+            return Ok(await Rpc.Send(signedTx));
         }
 
         [HttpPost]
