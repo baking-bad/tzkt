@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services;
@@ -20,7 +22,7 @@ namespace Tzkt.Api.Controllers
         
 
         [HttpGet("{signedTx}")]
-        public async Task<ActionResult<string>> Send(string signedTx, bool force = false)
+        public async Task<ActionResult<string>> Send([Required] string signedTx, bool force = false)
         {
 
             //TODO Handle broken body
@@ -29,7 +31,15 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(@body)}", "Body is null");
 
             }*/
-            return Ok(await Rpc.Send(signedTx));
+            try
+            {
+                return Ok(await Rpc.Send(signedTx));
+            }
+            catch (Exception ex)
+            {
+                return new BadRequest(nameof(signedTx), ex.Message);
+            }
+            
         }
 
         [HttpPost]

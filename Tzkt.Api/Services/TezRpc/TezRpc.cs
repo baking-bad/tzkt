@@ -48,19 +48,13 @@ namespace Tzkt.Api.Services
             //TODO Handle too low fees
             //TODO All required checks for the content data
             var forge = new LocalForge();
-            var bytes = Hex.Parse(content[32..]);
+            var delimiter = content.Length - 128;
+            var bytes = Hex.Parse(content[..delimiter]);
             var body = await forge.UnforgeOperationAsync(bytes);
-            
-            var response = await Rpc.Blocks.Head.Helpers.Preapply.Operations.PostAsync<List<PreapplyResponse>>(content);
-
-            var a = response.FirstOrDefault().Contents.Where(x => x.Metadata.OperationResult.Errors != null)
-                .SelectMany(x => x.Metadata.OperationResult.Errors.Select(error => error.Id));
-            //TODO To enum
-            if (response.FirstOrDefault().Contents.Any(x => x.Metadata.OperationResult.Status != "applied"))
-            {
-                Logger.LogError($"Preapply returned {string.Join(", ", a)}");
-            }
-            return await Rpc.Blocks.Head.Helpers.Scripts.RunOperation.PostAsync(content);
+            var protocol = (string)(await Rpc.Blocks.Head.Header.ProtocolData.GetAsync()).protocol;
+            var signature = Base58.Convert(Hex.Parse(content[delimiter..]));
+            var contents = body.Item2.ToList();
+            return await Rpc.Inject.Operation.PostAsync<string>(content);
         }
         
         public void Dispose() => Rpc.Dispose();
