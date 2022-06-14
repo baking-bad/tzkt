@@ -50,7 +50,7 @@ namespace Tzkt.Api
             using var scope = host.Services.CreateScope();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-            var tet = scope.ServiceProvider.GetRequiredService<TezRpc>();
+            var rpc = scope.ServiceProvider.GetRequiredService<TezRpc>();
 
             logger.LogInformation("Version {version}",
                 Assembly.GetExecutingAssembly().GetName().Version.ToString());

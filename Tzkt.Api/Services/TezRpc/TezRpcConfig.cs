@@ -4,7 +4,7 @@ namespace Tzkt.Api.Services
 {
     public class TezRpcConfig
     {
-        public string Endpoint { get; set; } = "https://rpc.tzkt.io/ithacanet";
+        public string Endpoint { get; set; } = "https://rpc.tzkt.io/mainnet";
         public int Timeout { get; set; } = 60;
     }
 
