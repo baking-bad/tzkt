@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
-using Tzkt.Api.Services.Output;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api.Controllers
 {

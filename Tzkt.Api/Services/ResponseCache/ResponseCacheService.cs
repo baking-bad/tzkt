@@ -4,7 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Tzkt.Api.Services.Output
+namespace Tzkt.Api.Services
 {
     public class ResponseCacheService
     {
@@ -12,6 +12,8 @@ namespace Tzkt.Api.Services.Output
         readonly Dictionary<string, byte[]> Cache;
         readonly long CacheSize;
         long Used = 0;
+        int Hits = 0;
+        int Misses = 0;
 
         public ResponseCacheService(IConfiguration configuration, ILogger<ResponseCacheService> logger)
         {
@@ -24,7 +26,16 @@ namespace Tzkt.Api.Services.Output
         {
             lock (Cache)
             {
-                return Cache.TryGetValue(key, out response);
+                if (Cache.TryGetValue(key, out response))
+                {
+                    Hits++;
+                    return true;
+                }
+                else
+                {
+                    Misses++;
+                    return false;
+                }
             }
         }
 
@@ -35,14 +46,18 @@ namespace Tzkt.Api.Services.Output
 
             if (size > CacheSize)
             {
-                Logger.LogWarning("Response size {response} exceeds cache size {cache}", size, CacheSize);
+                if (CacheSize != 0)
+                    Logger.LogWarning("Response size {response} exceeds cache size {cache}", size, CacheSize);
                 return bytes;
             }
             
             lock (Cache)
             {
                 if (Used + size >= CacheSize)
+                {
+                    Logger.LogInformation("Cache size limit reached");
                     Clear(); // TODO: do not clear everything, but the oldest entries
+                }
 
                 Used += size;
                 Cache[key] = bytes;
@@ -55,8 +70,11 @@ namespace Tzkt.Api.Services.Output
         {
             lock (Cache)
             {
+                Logger.LogDebug("Cache hits/misses: {hits}/{misses}", Hits, Misses);
                 Cache.Clear();
                 Used = 0;
+                Hits = 0;
+                Misses = 0;
             }
         }
 

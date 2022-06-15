@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
 using Tzkt.Api.Services.Cache;
-using Tzkt.Api.Services.Output;
 using Tzkt.Api.Websocket;
 
 namespace Tzkt.Api.Services.Sync
