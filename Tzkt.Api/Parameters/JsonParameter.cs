@@ -140,7 +140,7 @@ namespace Tzkt.Api
         public string Normalize(string name)
         {
             var sb = new StringBuilder();
-            
+
             if (Eq != null)
             {
                 foreach (var (path, value) in Eq)
@@ -148,7 +148,7 @@ namespace Tzkt.Api
                     sb.Append($"{name}.{Normalize(path)}.eq={value}&");
                 }
             }
-            
+
             if (Ne != null)
             {
                 foreach (var (path, value) in Ne)
@@ -212,7 +212,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, values) in In)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.in={string.Join(",",values.OrderBy(x => x))}&");
+                    sb.Append($"{name}.{Normalize(path)}.in={string.Join(",", values.OrderBy(x => x))}&");
                 }
             }
 
@@ -220,7 +220,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, values) in Ni)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.ni={string.Join(",",values.OrderBy(x => x))}&");
+                    sb.Append($"{name}.{Normalize(path)}.ni={string.Join(",", values.OrderBy(x => x))}&");
                 }
             }
 
@@ -234,7 +234,7 @@ namespace Tzkt.Api
 
             return sb.ToString();
         }
-        
+
         static string Normalize(JsonPath[] jsonPaths)
         {
             return string.Join(".", jsonPaths.Select(x => x.Type > JsonPathType.Key ? $"[{x.Value ?? "*"}]" : x.Value));

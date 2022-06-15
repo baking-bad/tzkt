@@ -25,7 +25,7 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            //We can't order values, but perhaps we can order fields.
+            //TODO: we can't order values, but perhaps we can order fields.
             return Values != null ? $"select.values={string.Join(",", Values)}&" : $"select.fields={string.Join(",", Fields)}&";
         }
     }

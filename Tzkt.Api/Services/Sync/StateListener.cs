@@ -40,7 +40,7 @@ namespace Tzkt.Api.Services.Sync
         readonly SoftwareCache Software;
         readonly QuotesCache Quotes;
         readonly TimeCache Times;
-        readonly OutputCachingService OutputCache;
+        readonly ResponseCacheService OutputCache;
         readonly HomeService Home;
         readonly IEnumerable<IHubProcessor> Processors;
         readonly ILogger Logger;
@@ -57,7 +57,7 @@ namespace Tzkt.Api.Services.Sync
             ProtocolsCache protocols,
             QuotesCache quotes,
             TimeCache times,
-            OutputCachingService outputCache,
+            ResponseCacheService outputCache,
             HomeService home,
             IEnumerable<IHubProcessor> processors,
             IConfiguration config,

@@ -21,14 +21,14 @@ namespace Tzkt.Api.Controllers
     {
         readonly AccountRepository Accounts;
         readonly BigMapsRepository BigMaps;
-        readonly OutputCachingService OutputCache;
+        readonly ResponseCacheService ResponseCache;
 
 
-        public ContractsController(AccountRepository accounts, BigMapsRepository bigMaps, OutputCachingService outputCache)
+        public ContractsController(AccountRepository accounts, BigMapsRepository bigMaps, ResponseCacheService responseCache)
         {
             Accounts = accounts;
             BigMaps = bigMaps;
-            OutputCache = outputCache;
+            ResponseCache = responseCache;
         }
 
         /// <summary>
@@ -110,19 +110,19 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("kind", kind), ("tzips", tzips), ("creator", creator),
-                ("manager", manager), ("@delegate", @delegate), ("balance", balance), ("lastActivity", lastActivity), ("typeHash", typeHash),
-                ("codeHash", codeHash), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("kind", kind), ("tzips", tzips), ("creator", creator), ("manager", manager), ("@delegate", @delegate),
+                ("balance", balance), ("lastActivity", lastActivity), ("typeHash", typeHash), ("codeHash", codeHash),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             object res;
-            
             if (select == null)
+            {
                 res = await Accounts.GetContracts(kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, includeStorage);
+            }
             else
             {
                 if (select.Values != null)
@@ -146,9 +146,8 @@ namespace Tzkt.Api.Controllers
                     }
                 }
             }
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -162,17 +161,14 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount(ContractKindParameter kind)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("kind", kind));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("kind", kind));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetContractsCount(kind);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -185,18 +181,15 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}")]
         public async Task<ActionResult<Contract>> GetByAddress([Required][KTAddress] string address)
-        {            
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value);
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetContract(address);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -232,18 +225,18 @@ namespace Tzkt.Api.Controllers
                 return Ok(Enumerable.Empty<Contract>());
 
             var codeHash = new Int32Parameter { Eq = contract.CodeHash };
-            
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             object res;
-
             if (select == null)
+            {
                 res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, includeStorage);
+            }
             else
             {
                 if (select.Values != null)
@@ -267,9 +260,8 @@ namespace Tzkt.Api.Controllers
                     }
                 }
             }
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -305,18 +297,18 @@ namespace Tzkt.Api.Controllers
                 return Ok(Enumerable.Empty<Contract>());
 
             var typeHash = new Int32Parameter { Eq = contract.TypeHash };
-            
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             object res;
-
             if (select == null)
+            {
                 res = await Accounts.GetContracts(null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, includeStorage);
+            }
             else
             {
                 if (select.Values != null)
@@ -341,9 +333,8 @@ namespace Tzkt.Api.Controllers
                     }
                 }
             }
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -362,12 +353,10 @@ namespace Tzkt.Api.Controllers
             [Min(0)] int level = 0,
             [Range(0, 2)] int format = 0)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("level", level), ("format", format));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level), ("format", format));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
 
             object res = level == 0
                 ? format switch
@@ -383,8 +372,8 @@ namespace Tzkt.Api.Controllers
                     _ => await Accounts.GetByteCode(address, level)
                 };
 
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -398,17 +387,14 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/interface")]
         public async Task<ActionResult<ContractInterface>> GetInterface([Required][KTAddress] string address)
         {
-            var queryString = Request.Path.Value;
+            var query = Request.Path.Value;
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetContractInterface(address);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -434,17 +420,15 @@ namespace Tzkt.Api.Controllers
             bool micheline = false,
             bool michelson = false)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("all", all), ("json", json), ("micheline", micheline), ("michelson", michelson));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("all", all), ("json", json), ("micheline", micheline), ("michelson", michelson));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetEntrypoints(address, all, json, micheline, michelson);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -466,17 +450,15 @@ namespace Tzkt.Api.Controllers
             bool micheline = false,
             bool michelson = false)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("json", json), ("micheline", micheline), ("michelson", michelson));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("json", json), ("micheline", micheline), ("michelson", michelson));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetEntrypoint(address, name, json, micheline, michelson);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -497,17 +479,15 @@ namespace Tzkt.Api.Controllers
             bool micheline = false,
             bool michelson = false)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("json", json), ("micheline", micheline), ("michelson", michelson));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("json", json), ("micheline", micheline), ("michelson", michelson));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetViews(address, json, micheline, michelson);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -523,19 +503,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="michelson">Include parameter and return types in michelson format</param>
         /// <returns></returns>
         [HttpGet("{address}/views/{name}")]
-        public async Task<ActionResult<ContractView>> GetContractViewByName([Required][KTAddress] string address, [Required] string name, bool json = true, bool micheline = false, bool michelson = false)
+        public async Task<ActionResult<ContractView>> GetContractViewByName(
+            [Required][KTAddress] string address,
+            [Required] string name,
+            bool json = true,
+            bool micheline = false,
+            bool michelson = false)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("json", json), ("micheline", micheline), ("michelson", michelson));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("json", json), ("micheline", micheline), ("michelson", michelson));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetView(address, name, json, micheline, michelson);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -553,18 +536,16 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("value", value));
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", value));
 
-                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-                {
-                    return File(cachedResponse, "application/json");
-                }
-                
+                if (ResponseCache.TryGet(query, out var cached))
+                    return File(cached, "application/json");
+
                 using var doc = JsonDocument.Parse(value);
                 var res = await Accounts.BuildEntrypointParameters(address, name, doc.RootElement);
-                
-                OutputCache.Set(queryString, res);
-                return Ok(res);
+
+                cached = ResponseCache.Set(query, res);
+                return File(cached, "application/json");
             }
             catch (Exception ex)
             {
@@ -587,18 +568,15 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                var json = JsonSerializer.Serialize(value);
-                var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("value", json));
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value)));
 
-                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-                {
-                    return File(cachedResponse, "application/json");
-                }
-                
+                if (ResponseCache.TryGet(query, out var cached))
+                    return File(cached, "application/json");
+
                 var res = await Accounts.BuildEntrypointParameters(address, name, value);
-                                
-                OutputCache.Set(queryString, res);
-                return Ok(res);
+
+                cached = ResponseCache.Set(query, res);
+                return File(cached, "application/json");
             }
             catch (Exception ex)
             {
@@ -632,20 +610,18 @@ namespace Tzkt.Api.Controllers
                         "Path contains invalid item: [*]");
             }
             #endregion
-            
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("level", level), ("path", path));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level), ("path", path));
 
-            var res = level == 0 
-                ? this.Json(await Accounts.GetStorageValue(address, jsonPath)) 
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
+            var res = level == 0
+                ? this.Json(await Accounts.GetStorageValue(address, jsonPath))
                 : this.Json(await Accounts.GetStorageValue(address, jsonPath, level));
-                            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -660,19 +636,17 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/storage/schema")]
         public async Task<ActionResult> GetStorageSchema([Required][KTAddress] string address, [Min(0)] int level = 0)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("level", level));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
-            var res = level == 0 
-                ? this.Json(await Accounts.GetStorageSchema(address)) 
-                : this.Json(await Accounts.GetStorageSchema(address, level));    
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
+            var res = level == 0
+                ? this.Json(await Accounts.GetStorageSchema(address))
+                : this.Json(await Accounts.GetStorageSchema(address, level));
+
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -688,17 +662,15 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/storage/history")]
         public async Task<ActionResult<IEnumerable<StorageRecord>>> GetStorageHistory([Required][KTAddress] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("lastId", lastId), ("limit", limit));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("lastId", lastId), ("limit", limit));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetStorageHistory(address, lastId, limit);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -713,19 +685,17 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/storage/raw")]
         public async Task<ActionResult<IMicheline>> GetRawStorage([Required][KTAddress] string address, [Min(0)] int level = 0)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("level", level));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
-            var res = level == 0 
-                ? await Accounts.GetRawStorageValue(address) 
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
+            var res = level == 0
+                ? await Accounts.GetRawStorageValue(address)
                 : await Accounts.GetRawStorageValue(address, level);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -740,19 +710,17 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/storage/raw/schema")]
         public async Task<ActionResult<IMicheline>> GetRawStorageSchema([Required][KTAddress] string address, [Min(0)] int level = 0)
         {
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("level", level));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
-            var res = level == 0 
-                ? await Accounts.GetRawStorageSchema(address) 
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
+            var res = level == 0
+                ? await Accounts.GetRawStorageSchema(address)
                 : await Accounts.GetRawStorageSchema(address, level);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -767,18 +735,15 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/history")]
         public async Task<ActionResult<IEnumerable<StorageRecord>>> GetRawStorageHistory([Required][KTAddress] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
-        {    
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("lastId", lastId), ("limit", limit));
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("lastId", lastId), ("limit", limit));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await Accounts.GetRawStorageHistory(address, lastId, limit);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -812,22 +777,22 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var acc = await Accounts.GetRawAsync(address);
-            if (acc is not Services.Cache.RawContract rawContract)
+            if (acc is not RawContract rawContract)
                 return Ok(Enumerable.Empty<BigMap>());
 
             var contract = new AccountParameter { Eq = rawContract.Id };
-            
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value,("tags", tags), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("tags", tags), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             object res;
-
             if (select == null)
+            {
                 res = await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, micheline);
+            }
             else
             {
                 if (select.Values != null)
@@ -851,9 +816,8 @@ namespace Tzkt.Api.Controllers
                     }
                 }
             }
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -878,17 +842,14 @@ namespace Tzkt.Api.Controllers
             if (acc is not RawContract contract)
                 return Ok(null);
 
-            var queryString = OutputCacheKeysProvider.BuildQuery(Request.Path.Value, ("micheline", micheline));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             var res = await BigMaps.Get(contract.Id, name, micheline);
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -928,7 +889,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);
-            if (acc is not Services.Cache.RawContract contract)
+            if (acc is not RawContract contract)
                 return Ok(Enumerable.Empty<BigMapKey>());
 
             var ptr = await BigMaps.GetPtr(contract.Id, name);
@@ -939,19 +900,19 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("id", "firstLevel", "lastLevel", "updates"))
                 return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
             #endregion
-            
-            var queryString = OutputCacheKeysProvider.BuildQuery($"/v1/bigmaps/{ptr}/keys",("active", active), ("key", key),
-                ("value", value), ("lastLevel", lastLevel), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            var query = ResponseCacheService.BuildKey($"/v1/bigmaps/{ptr}/keys",
+                ("active", active), ("key", key), ("value", value), ("lastLevel", lastLevel),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             object res;
-
             if (select == null)
+            {
                 res = await BigMaps.GetKeys((int)ptr, active, key, value, lastLevel, sort, offset, limit, micheline);
+            }
             else
             {
                 if (select.Values != null)
@@ -975,9 +936,8 @@ namespace Tzkt.Api.Controllers
                     }
                 }
             }
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -1002,7 +962,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);
-            if (acc is not Services.Cache.RawContract contract)
+            if (acc is not RawContract contract)
                 return Ok(null);
 
             var ptr = await BigMaps.GetPtr(contract.Id, name);
@@ -1011,25 +971,23 @@ namespace Tzkt.Api.Controllers
 
             try
             {
-                var queryString = OutputCacheKeysProvider.BuildQuery($"/v1/bigmaps/{ptr}/keys/{key}", ("micheline", micheline));
+                var query = ResponseCacheService.BuildKey($"/v1/bigmaps/{ptr}/keys/{key}", ("micheline", micheline));
 
-                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-                {
-                    return File(cachedResponse, "application/json");
-                }
-            
+                if (ResponseCache.TryGet(query, out var cached))
+                    return File(cached, "application/json");
+
                 object res;
-                
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                {
                     res = await BigMaps.GetKeyByHash((int)ptr, key, micheline);
+                }
                 else
                 {
                     using var doc = JsonDocument.Parse(WrapKey(key));
                     res = await BigMaps.GetKey((int)ptr, doc.RootElement.GetRawText(), micheline);
                 }
-
-                OutputCache.Set(queryString, res);
-                return Ok(res);
+                cached = ResponseCache.Set(query, res);
+                return File(cached, "application/json");
             }
             catch (JsonException)
             {
@@ -1065,7 +1023,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);
-            if (acc is not Services.Cache.RawContract contract)
+            if (acc is not RawContract contract)
                 return Ok(Enumerable.Empty<BigMapKeyUpdate>());
 
             var ptr = await BigMaps.GetPtr(contract.Id, name);
@@ -1078,25 +1036,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             try
-            {  
-                var queryString = OutputCacheKeysProvider.BuildQuery($"/v1/bigmaps/{ptr}/keys/{key}/updates",("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
+            {
+                var query = ResponseCacheService.BuildKey($"/v1/bigmaps/{ptr}/keys/{key}/updates",
+                    ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-                {
-                    return File(cachedResponse, "application/json");
-                }
-            
+                if (ResponseCache.TryGet(query, out var cached))
+                    return File(cached, "application/json");
+
                 object res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                {
                     res = await BigMaps.GetKeyByHashUpdates((int)ptr, key, sort, offset, limit, micheline);
+                }
                 else
                 {
                     using var doc = JsonDocument.Parse(WrapKey(key));
                     res = await BigMaps.GetKeyUpdates((int)ptr, doc.RootElement.GetRawText(), sort, offset, limit, micheline);
                 }
-                                
-                OutputCache.Set(queryString, res);
-                return Ok(res);
+                cached = ResponseCache.Set(query, res);
+                return File(cached, "application/json");
             }
             catch (JsonException)
             {
@@ -1141,7 +1099,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);
-            if (acc is not Services.Cache.RawContract contract)
+            if (acc is not RawContract contract)
                 return Ok(Enumerable.Empty<BigMapKeyHistorical>());
 
             var ptr = await BigMaps.GetPtr(contract.Id, name);
@@ -1152,19 +1110,19 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("id"))
                 return new BadRequest(nameof(sort), "Sorting by the specified field is not allowed.");
             #endregion
-            
-            var queryString = OutputCacheKeysProvider.BuildQuery($"/v1/bigmaps/{ptr}/historical_keys/{level}",("active", active), ("key", key),
-                ("value", value), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
-            if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-            {
-                return File(cachedResponse, "application/json");
-            }
-            
+            var query = ResponseCacheService.BuildKey($"/v1/bigmaps/{ptr}/historical_keys/{level}",
+                ("active", active), ("key", key), ("value", value),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return File(cached, "application/json");
+
             object res;
-
             if (select == null)
+            {
                 res = await BigMaps.GetHistoricalKeys((int)ptr, level, active, key, value, sort, offset, limit, micheline);
+            }
             else
             {
                 if (select.Values != null)
@@ -1188,9 +1146,8 @@ namespace Tzkt.Api.Controllers
                     }
                 }
             }
-            
-            var bytes = OutputCache.Set(queryString, res);
-            return File(bytes, "application/json");
+            cached = ResponseCache.Set(query, res);
+            return File(cached, "application/json");
         }
 
         /// <summary>
@@ -1217,7 +1174,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json)
         {
             var acc = await Accounts.GetRawAsync(address);
-            if (acc is not Services.Cache.RawContract contract)
+            if (acc is not RawContract contract)
                 return Ok(null);
 
             var ptr = await BigMaps.GetPtr(contract.Id, name);
@@ -1225,26 +1182,24 @@ namespace Tzkt.Api.Controllers
                 return Ok(null);
 
             try
-            { 
-                var queryString = OutputCacheKeysProvider.BuildQuery($"/v1/bigmaps/{ptr}/historical_keys/{level}/{key}",("level", level), ("key", key), ("micheline", micheline));
+            {
+                var query = ResponseCacheService.BuildKey($"/v1/bigmaps/{ptr}/historical_keys/{level}/{key}", ("micheline", micheline));
 
-                if (OutputCache.TryGetFromCache(queryString, out var cachedResponse))
-                {
-                    return File(cachedResponse, "application/json");
-                }
-            
+                if (ResponseCache.TryGet(query, out var cached))
+                    return File(cached, "application/json");
+
                 object res;
-                
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                {
                     res = await BigMaps.GetHistoricalKeyByHash((int)ptr, level, key, micheline);
+                }
                 else
                 {
                     using var doc = JsonDocument.Parse(WrapKey(key));
-                    res = await BigMaps.GetHistoricalKey((int)ptr, level, doc.RootElement.GetRawText(), micheline);  
+                    res = await BigMaps.GetHistoricalKey((int)ptr, level, doc.RootElement.GetRawText(), micheline);
                 }
-                
-                OutputCache.Set(queryString, res);
-                return Ok(res);
+                cached = ResponseCache.Set(query, res);
+                return File(cached, "application/json");
             }
             catch (JsonException)
             {

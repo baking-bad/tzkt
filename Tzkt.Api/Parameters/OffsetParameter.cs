@@ -34,9 +34,11 @@ namespace Tzkt.Api
         public long? Cr { get; set; }
 
         public static implicit operator OffsetParameter(int offset) => new() { El = offset };
+
         public string Normalize(string name)
         {
             var sb = new StringBuilder();
+
             if (El != null)
             {
                 sb.Append($"offset.el={El}&");
