@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Netezos.Encoding;
+using Tzkt.Api.Extensions;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -568,7 +569,7 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value)));
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value, options: new JsonOptions().ConfigureJsonOptions().JsonSerializerOptions)));
 
                 if (ResponseCache.TryGet(query, out var cached))
                     return File(cached, "application/json");

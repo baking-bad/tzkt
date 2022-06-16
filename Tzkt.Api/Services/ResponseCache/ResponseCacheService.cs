@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Tzkt.Api.Extensions;
 
 namespace Tzkt.Api.Services
 {
@@ -41,7 +43,7 @@ namespace Tzkt.Api.Services
 
         public byte[] Set(string key, object obj)
         {
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(obj);
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(obj, options: new JsonOptions().ConfigureJsonOptions().JsonSerializerOptions);
             var size = bytes.Length + key.Length + 20; // up to 4 bytes str len, 8 bytes key ptr, 8 bytes value ptr
 
             if (size > CacheSize)
