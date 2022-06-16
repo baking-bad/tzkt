@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Dapper;
-
+using Tzkt.Api.Extensions;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
@@ -70,15 +70,7 @@ namespace Tzkt.Api
             services.AddStateListener();
 
             services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.MaxDepth = 100_000;
-                    options.JsonSerializerOptions.IgnoreNullValues = true;
-                    options.JsonSerializerOptions.Converters.Add(new AccountConverter());
-                    options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
-                    options.JsonSerializerOptions.Converters.Add(new OperationConverter());
-                    options.JsonSerializerOptions.Converters.Add(new OperationErrorConverter());
-                })
+                .AddJsonOptions(options => options.ConfigureJsonOptions())
                 .ConfigureApiBehaviorOptions(options =>
                 {
                     options.InvalidModelStateResponseFactory = context => new BadRequest(context);

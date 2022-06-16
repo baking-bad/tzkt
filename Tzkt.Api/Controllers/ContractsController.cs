@@ -569,7 +569,7 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value, options: new JsonOptions().ConfigureJsonOptions().JsonSerializerOptions)));
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value, new JsonOptions().ConfigureJsonOptions().JsonSerializerOptions)));
 
                 if (ResponseCache.TryGet(query, out var cached))
                     return File(cached, "application/json");
