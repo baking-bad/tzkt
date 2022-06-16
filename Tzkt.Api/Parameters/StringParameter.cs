@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -6,7 +8,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(StringBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class StringParameter
+    public class StringParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -67,5 +69,48 @@ namespace Tzkt.Api
         /// Example: `?parameters.null` or `?parameters.null=false`.
         /// </summary>
         public bool? Null { get; set; }
+
+
+        public string Normalize(string name)
+        {
+            var sb = new StringBuilder();
+
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+
+            if (Ne != null)
+            {
+                sb.Append($"{name}.ne={Ne}&");
+            }
+
+            if (As != null)
+            {
+                sb.Append($"{name}.as={As}&");
+            }
+
+            if (Un != null)
+            {
+                sb.Append($"{name}.un={Un}&");
+            }
+
+            if (In?.Count > 0)
+            {
+                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
+            }
+
+            if (Ni?.Count > 0)
+            {
+                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
+            }
+
+            if (Null != null)
+            {
+                sb.Append($"{name}.null={Null}&");
+            }
+
+            return sb.ToString();
+        }
     }
 }

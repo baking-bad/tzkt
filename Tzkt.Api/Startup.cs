@@ -42,6 +42,7 @@ namespace Tzkt.Api
             services.AddSingleton<SoftwareCache>();
             services.AddSingleton<StateCache>();
             services.AddSingleton<TimeCache>();
+            services.AddSingleton<ResponseCacheService>();
 
             services.AddTransient<StateRepository>();
             services.AddTransient<AccountRepository>();

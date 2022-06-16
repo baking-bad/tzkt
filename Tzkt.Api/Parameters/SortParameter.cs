@@ -5,7 +5,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(SortBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class SortParameter
+    public class SortParameter : INormalizable
     {
         /// <summary>
         /// **Ascending** sort mode (optional, i.e. `sort.asc=id` is the same as `sort=id`). \
@@ -44,6 +44,11 @@ namespace Tzkt.Api
             }
 
             return true;
+        }
+
+        public string Normalize(string name)
+        {
+            return Asc != null ? $"sort.asc={Asc}&" : $"sort.desc={Desc}&";
         }
     }
 }

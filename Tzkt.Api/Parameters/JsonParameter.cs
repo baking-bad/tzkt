@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -8,7 +10,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(JsonBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-    public class JsonParameter
+    public class JsonParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -134,5 +136,108 @@ namespace Tzkt.Api
         [JsonSchemaType(typeof(bool))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
         public List<(JsonPath[], bool)> Null { get; set; }
+
+        public string Normalize(string name)
+        {
+            var sb = new StringBuilder();
+
+            if (Eq != null)
+            {
+                foreach (var (path, value) in Eq)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.eq={value}&");
+                }
+            }
+
+            if (Ne != null)
+            {
+                foreach (var (path, value) in Ne)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.ne={value}&");
+                }
+            }
+
+            if (Gt != null)
+            {
+                foreach (var (path, value) in Gt)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.gt={value}&");
+                }
+            }
+
+            if (Ge != null)
+            {
+                foreach (var (path, value) in Ge)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.ge={value}&");
+                }
+            }
+
+            if (Lt != null)
+            {
+                foreach (var (path, value) in Lt)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.lt={value}&");
+
+                }
+            }
+
+            if (Le != null)
+            {
+                foreach (var (path, value) in Le)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.le={value}&");
+
+                }
+            }
+
+            if (As != null)
+            {
+                foreach (var (path, value) in As)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.as={value}&");
+                }
+            }
+
+            if (Un != null)
+            {
+                foreach (var (path, value) in Un)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.un={value}&");
+
+                }
+            }
+
+            if (In != null)
+            {
+                foreach (var (path, values) in In)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.in={string.Join(",", values.OrderBy(x => x))}&");
+                }
+            }
+
+            if (Ni != null)
+            {
+                foreach (var (path, values) in Ni)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.ni={string.Join(",", values.OrderBy(x => x))}&");
+                }
+            }
+
+            if (Null != null)
+            {
+                foreach (var (path, value) in Null)
+                {
+                    sb.Append($"{name}.{Normalize(path)}.null={value}&");
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        static string Normalize(JsonPath[] jsonPaths)
+        {
+            return string.Join(".", jsonPaths.Select(x => x.Type > JsonPathType.Key ? $"[{x.Value ?? "*"}]" : x.Value));
+        }
     }
 }

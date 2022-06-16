@@ -39,6 +39,7 @@ namespace Tzkt.Api.Services.Sync
         readonly SoftwareCache Software;
         readonly QuotesCache Quotes;
         readonly TimeCache Times;
+        readonly ResponseCacheService OutputCache;
         readonly HomeService Home;
         readonly IEnumerable<IHubProcessor> Processors;
         readonly ILogger Logger;
@@ -55,6 +56,7 @@ namespace Tzkt.Api.Services.Sync
             ProtocolsCache protocols,
             QuotesCache quotes,
             TimeCache times,
+            ResponseCacheService outputCache,
             HomeService home,
             IEnumerable<IHubProcessor> processors,
             IConfiguration config,
@@ -70,6 +72,7 @@ namespace Tzkt.Api.Services.Sync
             Software = software;
             Quotes = quotes;
             Times = times;
+            OutputCache = outputCache;
             Home = home;
             Processors = processors;
             Logger = logger;
@@ -217,6 +220,7 @@ namespace Tzkt.Api.Services.Sync
                 await Protocols.UpdateAsync();
                 await Quotes.UpdateAsync();
                 await Times.UpdateAsync();
+                OutputCache.Clear();
                 #endregion
 
                 #region send events

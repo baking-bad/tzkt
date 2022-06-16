@@ -6,7 +6,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(OperationStatusBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "applied,failed,backtracked,skipped")]
-    public class OperationStatusParameter
+    public class OperationStatusParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=applied` is the same as `param=applied`). \
@@ -25,5 +25,10 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Ne { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

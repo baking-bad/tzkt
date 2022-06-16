@@ -6,7 +6,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(TokenStandardBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "fa1.2,fa2")]
-    public class TokenStandardParameter
+    public class TokenStandardParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -25,5 +25,10 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Ne { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

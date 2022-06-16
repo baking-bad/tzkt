@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -7,7 +8,7 @@ namespace Tzkt.Api
     [ModelBinder(BinderType = typeof(ContractTagsBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
     [JsonSchemaExtensionData("x-tzkt-query-parameter", "fa1,fa12,fa2")]
-    public class ContractTagsParameter
+    public class ContractTagsParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -36,5 +37,27 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public int? All { get; set; }
+
+        public string Normalize(string name)
+        {
+            var sb = new StringBuilder();
+            
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+            
+            if (Any != null)
+            {
+                sb.Append($"{name}.any={Any}&");
+            }
+            
+            if (All != null)
+            {
+                sb.Append($"{name}.all={All}&");
+            }
+            
+            return sb.ToString();
+        }
     }
 }

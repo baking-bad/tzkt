@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(Int32ExBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class Int32ExParameter
+    public class Int32ExParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
@@ -95,5 +95,10 @@ namespace Tzkt.Api
         /// Example: `?nonce.null` or `?nonce.null=false`.
         /// </summary>
         public bool? Null { get; set; }
+
+        public string Normalize(string name)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
