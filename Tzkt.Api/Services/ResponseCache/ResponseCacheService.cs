@@ -43,11 +43,13 @@ namespace Tzkt.Api.Services
             }
         }
 
-        public byte[] Set(string key, object obj)
+        public byte[] Set(string key, object obj, bool isSerialized = false)
         {
             var bytes = obj == null 
                 ? null
-                : JsonSerializer.SerializeToUtf8Bytes(obj, Options.Value.JsonSerializerOptions);
+                : isSerialized 
+                    ? Encoding.UTF8.GetBytes((obj as string)!)
+                    : JsonSerializer.SerializeToUtf8Bytes(obj, Options.Value.JsonSerializerOptions);
             var size = (bytes?.Length ?? 0) + key.Length + 20; // up to 4 bytes str len, 8 bytes key ptr, 8 bytes value ptr
 
             if (size > CacheSize)

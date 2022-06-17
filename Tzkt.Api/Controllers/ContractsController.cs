@@ -632,7 +632,7 @@ namespace Tzkt.Api.Controllers
                 ? await Accounts.GetStorageValue(address, jsonPath)
                 : await Accounts.GetStorageValue(address, jsonPath, level);
 
-            cached = ResponseCache.Set(query, res);
+            cached = ResponseCache.Set(query, res, true);
             return this.Bytes(cached);
         }
 
@@ -659,7 +659,7 @@ namespace Tzkt.Api.Controllers
                 ? await Accounts.GetStorageSchema(address)
                 : await Accounts.GetStorageSchema(address, level);
 
-            cached = ResponseCache.Set(query, res);
+            cached = ResponseCache.Set(query, res, true);
             return this.Bytes(cached);
         }
 
@@ -1228,10 +1228,6 @@ namespace Tzkt.Api.Controllers
             catch (JsonException)
             {
                 return new BadRequest(nameof(key), "invalid json value");
-            }
-            catch
-            {
-                throw;
             }
         }
 
