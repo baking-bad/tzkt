@@ -506,8 +506,16 @@ namespace Tzkt.Sync.Protocols.Proto13
                 content.RequiredInt64("fee"));
 
             var result = content.Required("metadata").Required("operation_result");
-            if (result.TryGetProperty("balance_updates", out var updates) && updates.Count() != 0)
-                throw new ValidationException("unexpected balance updates");
+            var applied = result.RequiredString("status") == "applied";
+
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
+                ValidateTransferBalanceUpdates(
+                    resultUpdates.EnumerateArray(),
+                    source,
+                    null,
+                    0,
+                    (result.OptionalInt32("paid_storage_size_diff") ?? 0) * Protocol.ByteCost,
+                    0);
         }
 
         protected virtual async Task ValidateTxRollupCommit(JsonElement content)

@@ -175,6 +175,16 @@ namespace Tzkt.Api.Models
         /// </summary>
         public int DoubleEndorsingPunishmentDenominator { get; set; }
 
+        /// <summary>
+        /// Initial storage size of an originated (created) tx rollup (bytes)
+        /// </summary>
+        public int TxRollupOriginationSize { get; set; }
+
+        /// <summary>
+        /// Tx rollup commitment bond (mutez)
+        /// </summary>
+        public long TxRollupCommitmentBond { get; set; }
+
         #region deprecated
         /// <summary>
         /// [DEPRECATED]

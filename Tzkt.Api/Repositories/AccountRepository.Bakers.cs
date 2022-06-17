@@ -25,6 +25,17 @@ namespace Tzkt.Api.Repositories
                 PublicKey = delegat.PublicKey,
                 Revealed = delegat.Revealed,
                 Balance = delegat.Balance,
+                RollupBonds = delegat.RollupBonds,
+                RollupsCount = delegat.RollupsCount,
+                TransferTicketCount = delegat.TransferTicketCount,
+                TxRollupCommitCount = delegat.TxRollupCommitCount,
+                TxRollupDispatchTicketsCount = delegat.TxRollupDispatchTicketsCount,
+                TxRollupFinalizeCommitmentCount = delegat.TxRollupFinalizeCommitmentCount,
+                TxRollupOriginationCount = delegat.TxRollupOriginationCount,
+                TxRollupRejectionCount = delegat.TxRollupRejectionCount,
+                TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
+                TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
+                TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
                 FrozenDeposit = delegat.FrozenDeposit,
                 FrozenDepositLimit = delegat.FrozenDepositLimit,
                 DelegatedBalance = delegat.DelegatedBalance,
@@ -111,6 +122,17 @@ namespace Tzkt.Api.Repositories
                     PublicKey = row.PublicKey,
                     Revealed = row.Revealed,
                     Balance = row.Balance,
+                    RollupBonds = row.RollupBonds,
+                    RollupsCount = row.RollupsCount,
+                    TransferTicketCount = row.TransferTicketCount,
+                    TxRollupCommitCount = row.TxRollupCommitCount,
+                    TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
+                    TxRollupFinalizeCommitmentCount = row.TxRollupFinalizeCommitmentCount,
+                    TxRollupOriginationCount = row.TxRollupOriginationCount,
+                    TxRollupRejectionCount = row.TxRollupRejectionCount,
+                    TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
+                    TxRollupReturnBondCount = row.TxRollupReturnBondCount,
+                    TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
                     FrozenDeposit = row.FrozenDeposit,
                     FrozenDepositLimit = row.FrozenDepositLimit,
                     DelegatedBalance = row.DelegatedBalance,
@@ -212,6 +234,17 @@ namespace Tzkt.Api.Repositories
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
+                    case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
+                    case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
+                    case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
+                    case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
+                    case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
+                    case "txRollupFinalizeCommitmentCount": columns.Add(@"""TxRollupFinalizeCommitmentCount"""); break;
+                    case "txRollupOriginationCount": columns.Add(@"""TxRollupOriginationCount"""); break;
+                    case "txRollupRejectionCount": columns.Add(@"""TxRollupRejectionCount"""); break;
+                    case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
+                    case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
+                    case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
                 }
             }
 
@@ -427,6 +460,50 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                         break;
+                    case "rollupBonds":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RollupBonds;
+                        break;
+                    case "rollupsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RollupsCount;
+                        break;
+                    case "transferTicketCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TransferTicketCount;
+                        break;
+                    case "txRollupCommitCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupCommitCount;
+                        break;
+                    case "txRollupDispatchTicketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupDispatchTicketsCount;
+                        break;
+                    case "txRollupFinalizeCommitmentCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupFinalizeCommitmentCount;
+                        break;
+                    case "txRollupOriginationCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupOriginationCount;
+                        break;
+                    case "txRollupRejectionCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupRejectionCount;
+                        break;
+                    case "txRollupRemoveCommitmentCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupRemoveCommitmentCount;
+                        break;
+                    case "txRollupReturnBondCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupReturnBondCount;
+                        break;
+                    case "txRollupSubmitBatchCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupSubmitBatchCount;
+                        break;
                 }
             }
 
@@ -490,6 +567,17 @@ namespace Tzkt.Api.Repositories
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
+                case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
+                case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
+                case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
+                case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
+                case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
+                case "txRollupFinalizeCommitmentCount": columns.Add(@"""TxRollupFinalizeCommitmentCount"""); break;
+                case "txRollupOriginationCount": columns.Add(@"""TxRollupOriginationCount"""); break;
+                case "txRollupRejectionCount": columns.Add(@"""TxRollupRejectionCount"""); break;
+                case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
+                case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
+                case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
             }
 
             if (columns.Count == 0)
@@ -700,6 +788,50 @@ namespace Tzkt.Api.Repositories
                 case "software":
                     foreach (var row in rows)
                         result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                    break;
+                case "rollupBonds":
+                    foreach (var row in rows)
+                        result[j++] = row.RollupBonds;
+                    break;
+                case "rollupsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.RollupsCount;
+                    break;
+                case "transferTicketCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TransferTicketCount;
+                    break;
+                case "txRollupCommitCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupCommitCount;
+                    break;
+                case "txRollupDispatchTicketsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupDispatchTicketsCount;
+                    break;
+                case "txRollupFinalizeCommitmentCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupFinalizeCommitmentCount;
+                    break;
+                case "txRollupOriginationCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupOriginationCount;
+                    break;
+                case "txRollupRejectionCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupRejectionCount;
+                    break;
+                case "txRollupRemoveCommitmentCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupRemoveCommitmentCount;
+                    break;
+                case "txRollupReturnBondCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupReturnBondCount;
+                    break;
+                case "txRollupSubmitBatchCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupSubmitBatchCount;
                     break;
             }
 

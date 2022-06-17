@@ -60,6 +60,17 @@ namespace Tzkt.Api.Repositories
                         PublicKey = delegat.PublicKey,
                         Revealed = delegat.Revealed,
                         Balance = delegat.Balance,
+                        RollupBonds = delegat.RollupBonds,
+                        RollupsCount = delegat.RollupsCount,
+                        TransferTicketCount = delegat.TransferTicketCount,
+                        TxRollupCommitCount = delegat.TxRollupCommitCount,
+                        TxRollupDispatchTicketsCount = delegat.TxRollupDispatchTicketsCount,
+                        TxRollupFinalizeCommitmentCount = delegat.TxRollupFinalizeCommitmentCount,
+                        TxRollupOriginationCount = delegat.TxRollupOriginationCount,
+                        TxRollupRejectionCount = delegat.TxRollupRejectionCount,
+                        TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
+                        TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
+                        TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
                         FrozenDeposit = delegat.FrozenDeposit,
                         FrozenDepositLimit = delegat.FrozenDepositLimit,
                         DelegatedBalance = delegat.DelegatedBalance,
@@ -112,6 +123,17 @@ namespace Tzkt.Api.Repositories
                         Alias = user.Alias,
                         Address = user.Address,
                         Balance = user.Balance,
+                        RollupBonds = user.RollupBonds,
+                        RollupsCount = user.RollupsCount,
+                        TransferTicketCount = user.TransferTicketCount,
+                        TxRollupCommitCount = user.TxRollupCommitCount,
+                        TxRollupDispatchTicketsCount = user.TxRollupDispatchTicketsCount,
+                        TxRollupFinalizeCommitmentCount = user.TxRollupFinalizeCommitmentCount,
+                        TxRollupOriginationCount = user.TxRollupOriginationCount,
+                        TxRollupRejectionCount = user.TxRollupRejectionCount,
+                        TxRollupRemoveCommitmentCount = user.TxRollupRemoveCommitmentCount,
+                        TxRollupReturnBondCount = user.TxRollupReturnBondCount,
+                        TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
                         Counter = user.Balance > 0 ? user.Counter : State.Current.ManagerCounter,
                         FirstActivity = user.FirstLevel,
                         FirstActivityTime = Time[user.FirstLevel],
@@ -161,6 +183,7 @@ namespace Tzkt.Api.Repositories
                         Kind = ContractKinds.ToString(contract.Kind),
                         Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags),
                         Balance = contract.Balance,
+                        TransferTicketCount = contract.TransferTicketCount,
                         Creator = creator == null ? null : new CreatorInfo
                         {
                             Alias = creator.Alias,
@@ -196,6 +219,35 @@ namespace Tzkt.Api.Repositories
                         TypeHash = contract.TypeHash,
                         CodeHash = contract.CodeHash,
                         Metadata = metadata ? contract.Metadata : null
+                    };
+                #endregion
+                case RawRollup rollup:
+                    #region build rollup
+                    return new Rollup
+                    {
+                        Id = rollup.Id,
+                        Alias = rollup.Alias,
+                        Address = rollup.Address,
+                        Creator = await Accounts.GetAliasAsync(rollup.CreatorId),
+                        RollupBonds = rollup.RollupBonds,
+                        TransferTicketCount = rollup.TransferTicketCount,
+                        TxRollupCommitCount = rollup.TxRollupCommitCount,
+                        TxRollupDispatchTicketsCount = rollup.TxRollupDispatchTicketsCount,
+                        TxRollupFinalizeCommitmentCount = rollup.TxRollupFinalizeCommitmentCount,
+                        TxRollupOriginationCount = rollup.TxRollupOriginationCount,
+                        TxRollupRejectionCount = rollup.TxRollupRejectionCount,
+                        TxRollupRemoveCommitmentCount = rollup.TxRollupRemoveCommitmentCount,
+                        TxRollupReturnBondCount = rollup.TxRollupReturnBondCount,
+                        TxRollupSubmitBatchCount = rollup.TxRollupSubmitBatchCount,
+                        FirstActivity = rollup.FirstLevel,
+                        FirstActivityTime = Time[rollup.FirstLevel],
+                        LastActivity = rollup.LastLevel,
+                        LastActivityTime = Time[rollup.LastLevel],
+                        ActiveTokensCount = rollup.ActiveTokensCount,
+                        TokenBalancesCount = rollup.TokenBalancesCount,
+                        TokenTransfersCount = rollup.TokenTransfersCount,
+                        NumTransactions = rollup.TransactionsCount,
+                        Metadata = metadata ? rollup.Metadata : null
                     };
                 #endregion
                 case RawAccount ghost:
@@ -281,6 +333,17 @@ namespace Tzkt.Api.Repositories
                             Alias = row.Alias,
                             Address = row.Address,
                             Balance = row.Balance,
+                            RollupBonds = row.RollupBonds,
+                            RollupsCount = row.RollupsCount,
+                            TransferTicketCount = row.TransferTicketCount,
+                            TxRollupCommitCount = row.TxRollupCommitCount,
+                            TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
+                            TxRollupFinalizeCommitmentCount = row.TxRollupFinalizeCommitmentCount,
+                            TxRollupOriginationCount = row.TxRollupOriginationCount,
+                            TxRollupRejectionCount = row.TxRollupRejectionCount,
+                            TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
+                            TxRollupReturnBondCount = row.TxRollupReturnBondCount,
+                            TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
                             Counter = row.Balance > 0 ? row.Counter : State.Current.ManagerCounter,
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
@@ -322,6 +385,17 @@ namespace Tzkt.Api.Repositories
                             PublicKey = row.PublicKey,
                             Revealed = row.Revealed,
                             Balance = row.Balance,
+                            RollupBonds = row.RollupBonds,
+                            RollupsCount = row.RollupsCount,
+                            TransferTicketCount = row.TransferTicketCount,
+                            TxRollupCommitCount = row.TxRollupCommitCount,
+                            TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
+                            TxRollupFinalizeCommitmentCount = row.TxRollupFinalizeCommitmentCount,
+                            TxRollupOriginationCount = row.TxRollupOriginationCount,
+                            TxRollupRejectionCount = row.TxRollupRejectionCount,
+                            TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
+                            TxRollupReturnBondCount = row.TxRollupReturnBondCount,
+                            TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
                             FrozenDeposit = row.FrozenDeposit,
                             FrozenDepositLimit = row.FrozenDepositLimit,
                             DelegatedBalance = row.DelegatedBalance,
@@ -382,6 +456,7 @@ namespace Tzkt.Api.Repositories
                             Kind = ContractKinds.ToString(row.Kind),
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)row.Tags),
                             Balance = row.Balance,
+                            TransferTicketCount = row.TransferTicketCount,
                             Creator = creator == null ? null : new CreatorInfo
                             {
                                 Alias = creator.Alias,
@@ -436,6 +511,35 @@ namespace Tzkt.Api.Repositories
                         });
                         #endregion
                         break;
+                    case 4:
+                        #region build rollup
+                        accounts.Add(new Rollup
+                        {
+                            Id = row.Id,
+                            Alias = row.Alias,
+                            Address = row.Address,
+                            Creator = await Accounts.GetAliasAsync(row.CreatorId),
+                            RollupBonds = row.RollupBonds,
+                            TransferTicketCount = row.TransferTicketCount,
+                            TxRollupCommitCount = row.TxRollupCommitCount,
+                            TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
+                            TxRollupFinalizeCommitmentCount = row.TxRollupFinalizeCommitmentCount,
+                            TxRollupOriginationCount = row.TxRollupOriginationCount,
+                            TxRollupRejectionCount = row.TxRollupRejectionCount,
+                            TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
+                            TxRollupReturnBondCount = row.TxRollupReturnBondCount,
+                            TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
+                            FirstActivity = row.FirstLevel,
+                            FirstActivityTime = Time[row.FirstLevel],
+                            LastActivity = row.LastLevel,
+                            LastActivityTime = Time[row.LastLevel],
+                            ActiveTokensCount = row.ActiveTokensCount,
+                            TokenBalancesCount = row.TokenBalancesCount,
+                            TokenTransfersCount = row.TokenTransfersCount,
+                            NumTransactions = row.TransactionsCount
+                        });
+                        break;
+                        #endregion
                 }
             }
 
@@ -506,6 +610,17 @@ namespace Tzkt.Api.Repositories
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
+                    case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
+                    case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
+                    case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
+                    case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
+                    case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
+                    case "txRollupFinalizeCommitmentCount": columns.Add(@"""TxRollupFinalizeCommitmentCount"""); break;
+                    case "txRollupOriginationCount": columns.Add(@"""TxRollupOriginationCount"""); break;
+                    case "txRollupRejectionCount": columns.Add(@"""TxRollupRejectionCount"""); break;
+                    case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
+                    case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
+                    case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
 
                     case "delegate": columns.Add(@"""DelegateId"""); break;
                     case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -734,6 +849,50 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                         break;
+                    case "rollupBonds":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RollupBonds;
+                        break;
+                    case "rollupsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RollupsCount;
+                        break;
+                    case "transferTicketCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TransferTicketCount;
+                        break;
+                    case "txRollupCommitCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupCommitCount;
+                        break;
+                    case "txRollupDispatchTicketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupDispatchTicketsCount;
+                        break;
+                    case "txRollupFinalizeCommitmentCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupFinalizeCommitmentCount;
+                        break;
+                    case "txRollupOriginationCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupOriginationCount;
+                        break;
+                    case "txRollupRejectionCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupRejectionCount;
+                        break;
+                    case "txRollupRemoveCommitmentCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupRemoveCommitmentCount;
+                        break;
+                    case "txRollupReturnBondCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupReturnBondCount;
+                        break;
+                    case "txRollupSubmitBatchCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TxRollupSubmitBatchCount;
+                        break;
                     case "delegate":
                         foreach (var row in rows)
                         {
@@ -853,6 +1012,17 @@ namespace Tzkt.Api.Repositories
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
+                case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
+                case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
+                case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
+                case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
+                case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
+                case "txRollupFinalizeCommitmentCount": columns.Add(@"""TxRollupFinalizeCommitmentCount"""); break;
+                case "txRollupOriginationCount": columns.Add(@"""TxRollupOriginationCount"""); break;
+                case "txRollupRejectionCount": columns.Add(@"""TxRollupRejectionCount"""); break;
+                case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
+                case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
+                case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
 
                 case "delegate": columns.Add(@"""DelegateId"""); break;
                 case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -1076,6 +1246,50 @@ namespace Tzkt.Api.Repositories
                 case "software":
                     foreach (var row in rows)
                         result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                    break;
+                case "rollupBonds":
+                    foreach (var row in rows)
+                        result[j++] = row.RollupBonds;
+                    break;
+                case "rollupsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.RollupsCount;
+                    break;
+                case "transferTicketCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TransferTicketCount;
+                    break;
+                case "txRollupCommitCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupCommitCount;
+                    break;
+                case "txRollupDispatchTicketsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupDispatchTicketsCount;
+                    break;
+                case "txRollupFinalizeCommitmentCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupFinalizeCommitmentCount;
+                    break;
+                case "txRollupOriginationCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupOriginationCount;
+                    break;
+                case "txRollupRejectionCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupRejectionCount;
+                    break;
+                case "txRollupRemoveCommitmentCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupRemoveCommitmentCount;
+                    break;
+                case "txRollupReturnBondCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupReturnBondCount;
+                    break;
+                case "txRollupSubmitBatchCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TxRollupSubmitBatchCount;
                     break;
                 case "delegate":
                     foreach (var row in rows)
