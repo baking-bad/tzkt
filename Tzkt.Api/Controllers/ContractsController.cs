@@ -23,7 +23,7 @@ namespace Tzkt.Api.Controllers
         readonly AccountRepository Accounts;
         readonly BigMapsRepository BigMaps;
         readonly ResponseCacheService ResponseCache;
-        readonly IOptions<JsonOptions> Options;
+        readonly JsonSerializerOptions Options;
 
 
         public ContractsController(AccountRepository accounts, BigMapsRepository bigMaps, ResponseCacheService responseCache, IOptions<JsonOptions> options)
@@ -31,7 +31,7 @@ namespace Tzkt.Api.Controllers
             Accounts = accounts;
             BigMaps = bigMaps;
             ResponseCache = responseCache;
-            Options = options;
+            Options = options.Value.JsonSerializerOptions;
         }
 
         /// <summary>
@@ -577,7 +577,7 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value, Options.Value.JsonSerializerOptions)));
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value, Options)));
 
                 if (ResponseCache.TryGet(query, out var cached))
                     return this.Bytes(cached);
