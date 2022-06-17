@@ -67,6 +67,7 @@ namespace Tzkt.Api.Repositories
                 TotalBanished = row.TotalBanished,
                 TotalActivated = row.TotalActivated,
                 TotalFrozen = row.TotalFrozen,
+                TotalRollupBonds = row.TotalRollupBonds,
                 TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalFrozen,
                 Quote = Quotes.Get(quote, row.Level),
@@ -101,6 +102,7 @@ namespace Tzkt.Api.Repositories
                     case "totalBanished": columns.Add(@"""TotalBanished"""); break;
                     case "totalActivated": columns.Add(@"""TotalActivated"""); break;
                     case "totalFrozen": columns.Add(@"""TotalFrozen"""); break;
+                    case "totalRollupBonds": columns.Add(@"""TotalRollupBonds"""); break;
                     case "totalSupply":
                         columns.Add(@"""TotalBootstrapped""");
                         columns.Add(@"""TotalCommitments""");
@@ -197,6 +199,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalFrozen;
                         break;
+                    case "totalRollupBonds":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalRollupBonds;
+                        break;
                     case "totalSupply":
                         foreach (var row in rows)
                             result[j++][i] = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished;
@@ -241,6 +247,7 @@ namespace Tzkt.Api.Repositories
                 case "totalBanished": columns.Add(@"""TotalBanished"""); break;
                 case "totalActivated": columns.Add(@"""TotalActivated"""); break;
                 case "totalFrozen": columns.Add(@"""TotalFrozen"""); break;
+                case "totalRollupBonds": columns.Add(@"""TotalRollupBonds"""); break;
                 case "totalSupply":
                     columns.Add(@"""TotalBootstrapped""");
                     columns.Add(@"""TotalCommitments""");
@@ -332,6 +339,10 @@ namespace Tzkt.Api.Repositories
                 case "totalFrozen":
                     foreach (var row in rows)
                         result[j++] = row.TotalFrozen;
+                    break;
+                case "totalRollupBonds":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalRollupBonds;
                     break;
                 case "totalSupply":
                     foreach (var row in rows)

@@ -45,6 +45,11 @@ namespace Tzkt.Api.Models
         public long Balance { get; set; }
 
         /// <summary>
+        /// Amount of rollup commitment bonds (micro tez)
+        /// </summary>
+        public long RollupBonds { get; set; }
+
+        /// <summary>
         /// Amount of security deposit, currently locked for baked (produced) blocks and (or) given endorsements (micro tez)
         /// </summary>
         public long FrozenDeposit { get; set; }
@@ -93,6 +98,11 @@ namespace Tzkt.Api.Models
         /// Number of contracts, created (originated) and/or managed by the delegate (baker)
         /// </summary>
         public int NumContracts { get; set; }
+
+        /// <summary>
+        /// Number of tx rollups, created (originated) by the account
+        /// </summary>
+        public int RollupsCount { get; set; }
 
         /// <summary>
         /// Number of account tokens with non-zero balances
@@ -214,6 +224,51 @@ namespace Tzkt.Api.Models
         /// related to the delegate (synthetic type) 
         /// </summary>
         public int NumMigrations { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup origination operations sent by the account
+        /// </summary>
+        public int TxRollupOriginationCount { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup submit batch operations sent by the account
+        /// </summary>
+        public int TxRollupSubmitBatchCount { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup commit operations sent by the account
+        /// </summary>
+        public int TxRollupCommitCount { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup return bond operations sent by the account
+        /// </summary>
+        public int TxRollupReturnBondCount { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup finalize commitment operations sent by the account
+        /// </summary>
+        public int TxRollupFinalizeCommitmentCount { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup remove commitment operations sent by the account
+        /// </summary>
+        public int TxRollupRemoveCommitmentCount { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup rejection operations sent by the account
+        /// </summary>
+        public int TxRollupRejectionCount { get; set; }
+
+        /// <summary>
+        /// Number of tx rollup dispatch tickets operations sent by the account
+        /// </summary>
+        public int TxRollupDispatchTicketsCount { get; set; }
+
+        /// <summary>
+        /// Number of transfer ticket operations sent by the account
+        /// </summary>
+        public int TransferTicketCount { get; set; }
 
         /// <summary>
         /// Block height of the first operation, related to the delegate (baker)

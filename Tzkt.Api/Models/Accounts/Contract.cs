@@ -113,6 +113,11 @@ namespace Tzkt.Api.Models
         public int NumMigrations { get; set; }
 
         /// <summary>
+        /// Number of transfer ticket operations related to the account
+        /// </summary>
+        public int TransferTicketCount { get; set; }
+
+        /// <summary>
         /// Block height of the contract creation
         /// </summary>
         public int FirstActivity { get; set; }

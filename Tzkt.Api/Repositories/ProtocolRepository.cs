@@ -81,7 +81,9 @@ namespace Tzkt.Api.Repositories
                     FrozenDepositsPercentage = row.FrozenDepositsPercentage,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
-                    MinParticipationNumerator = row.MinParticipationNumerator
+                    MinParticipationNumerator = row.MinParticipationNumerator,
+                    TxRollupOriginationSize = row.TxRollupOriginationSize,
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
                 },
                 Metadata = row.Metadata
             };
@@ -146,7 +148,9 @@ namespace Tzkt.Api.Repositories
                     FrozenDepositsPercentage = row.FrozenDepositsPercentage,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
-                    MinParticipationNumerator = row.MinParticipationNumerator
+                    MinParticipationNumerator = row.MinParticipationNumerator,
+                    TxRollupOriginationSize = row.TxRollupOriginationSize,
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
                 },
                 Metadata = row.Metadata
             };
@@ -211,7 +215,9 @@ namespace Tzkt.Api.Repositories
                     FrozenDepositsPercentage = row.FrozenDepositsPercentage,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
-                    MinParticipationNumerator = row.MinParticipationNumerator
+                    MinParticipationNumerator = row.MinParticipationNumerator,
+                    TxRollupOriginationSize = row.TxRollupOriginationSize,
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
                 },
                 Metadata = row.Metadata
             };
@@ -277,7 +283,9 @@ namespace Tzkt.Api.Repositories
                     FrozenDepositsPercentage = row.FrozenDepositsPercentage,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
-                    MinParticipationNumerator = row.MinParticipationNumerator
+                    MinParticipationNumerator = row.MinParticipationNumerator,
+                    TxRollupOriginationSize = row.TxRollupOriginationSize,
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
                 },
                 Metadata = row.Metadata
             });

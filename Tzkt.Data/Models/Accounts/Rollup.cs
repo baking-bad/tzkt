@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
     public class Rollup : Account
     {
+        [Column("CreatorId")]
         public int CreatorId { get; set; }
     }
 

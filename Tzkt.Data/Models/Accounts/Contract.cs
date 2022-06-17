@@ -14,6 +14,7 @@ namespace Tzkt.Data.Models
 
         public bool? Spendable { get; set; }
 
+        [Column("CreatorId")]
         public int? CreatorId { get; set; }
         public int? ManagerId { get; set; }
         public int? WeirdDelegateId { get; set; }
