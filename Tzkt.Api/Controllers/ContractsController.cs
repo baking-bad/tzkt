@@ -538,7 +538,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult> BuildEntrypointParameters(
             [Required][KTAddress] string address,
             [Required] string name,
-            string value)
+            [Required] string value)
         {
             try
             {
