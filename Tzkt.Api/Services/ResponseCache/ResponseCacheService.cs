@@ -4,12 +4,13 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Tzkt.Api.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Tzkt.Api.Services
 {
     public class ResponseCacheService
     {
+        readonly IOptions<JsonOptions> Options;
         readonly ILogger Logger;
         readonly Dictionary<string, byte[]> Cache;
         readonly long CacheSize;
@@ -17,8 +18,9 @@ namespace Tzkt.Api.Services
         int Hits = 0;
         int Misses = 0;
 
-        public ResponseCacheService(IConfiguration configuration, ILogger<ResponseCacheService> logger)
+        public ResponseCacheService(IConfiguration configuration, IOptions<JsonOptions> options, ILogger<ResponseCacheService> logger)
         {
+            Options = options;
             Logger = logger;
             CacheSize = configuration.GetOutputCacheConfig().CacheSize * 1024 * 1024;
             Cache = new Dictionary<string, byte[]>(4096);
@@ -43,8 +45,10 @@ namespace Tzkt.Api.Services
 
         public byte[] Set(string key, object obj)
         {
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(obj, new JsonOptions().ConfigureJsonOptions().JsonSerializerOptions);
-            var size = bytes.Length + key.Length + 20; // up to 4 bytes str len, 8 bytes key ptr, 8 bytes value ptr
+            var bytes = obj == null 
+                ? null
+                : JsonSerializer.SerializeToUtf8Bytes(obj, Options.Value.JsonSerializerOptions);
+            var size = (bytes?.Length ?? 0) + key.Length + 20; // up to 4 bytes str len, 8 bytes key ptr, 8 bytes value ptr
 
             if (size > CacheSize)
             {

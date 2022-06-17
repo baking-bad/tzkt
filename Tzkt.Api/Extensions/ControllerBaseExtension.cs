@@ -2,10 +2,10 @@
 {
     static class ControllerBaseExtension
     {
-        public static ActionResult Json(this ControllerBase controller, string json)
+        public static ActionResult Bytes(this ControllerBase controller, byte[] bytes)
         {
-            return json != null 
-                ? controller.Content(json, "application/json")
+            return bytes != null
+                ? controller.File(bytes, "application/json")
                 : controller.NoContent();
         }
     }

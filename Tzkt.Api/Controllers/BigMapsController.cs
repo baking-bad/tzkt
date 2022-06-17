@@ -37,11 +37,11 @@ namespace Tzkt.Api.Controllers
             var query = Request.Path.Value;
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await BigMaps.GetCount();
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -115,7 +115,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -164,7 +164,7 @@ namespace Tzkt.Api.Controllers
                 ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (path == null && contract == null && tags == null)
@@ -176,7 +176,7 @@ namespace Tzkt.Api.Controllers
                 res = await BigMaps.GetUpdates(bigmap, path, contract, action, value, tags, level, timestamp, sort, offset, limit, micheline);
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -196,11 +196,11 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await BigMaps.Get(id, micheline);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -217,11 +217,11 @@ namespace Tzkt.Api.Controllers
             var query = Request.Path.Value;
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await BigMaps.GetMicheType(id);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -294,7 +294,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -319,7 +319,7 @@ namespace Tzkt.Api.Controllers
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("micheline", micheline));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 object res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
@@ -332,7 +332,7 @@ namespace Tzkt.Api.Controllers
                     res = await BigMaps.GetKey(id, doc.RootElement.GetRawText(), micheline);
                 }
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (JsonException)
             {
@@ -374,7 +374,7 @@ namespace Tzkt.Api.Controllers
                     ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 object res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
@@ -387,7 +387,7 @@ namespace Tzkt.Api.Controllers
                     res = await BigMaps.GetKeyUpdates(id, doc.RootElement.GetRawText(), sort, offset, limit, micheline);
                 }
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (JsonException)
             {
@@ -437,7 +437,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -468,7 +468,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -495,7 +495,7 @@ namespace Tzkt.Api.Controllers
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("micheline", micheline));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 object res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
@@ -508,7 +508,7 @@ namespace Tzkt.Api.Controllers
                     res = await BigMaps.GetHistoricalKey(id, level, doc.RootElement.GetRawText(), micheline);
                 }
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (JsonException)
             {

@@ -6,8 +6,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Netezos.Encoding;
-using Tzkt.Api.Extensions;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -23,13 +23,15 @@ namespace Tzkt.Api.Controllers
         readonly AccountRepository Accounts;
         readonly BigMapsRepository BigMaps;
         readonly ResponseCacheService ResponseCache;
+        readonly IOptions<JsonOptions> Options;
 
 
-        public ContractsController(AccountRepository accounts, BigMapsRepository bigMaps, ResponseCacheService responseCache)
+        public ContractsController(AccountRepository accounts, BigMapsRepository bigMaps, ResponseCacheService responseCache, IOptions<JsonOptions> options)
         {
             Accounts = accounts;
             BigMaps = bigMaps;
             ResponseCache = responseCache;
+            Options = options;
         }
 
         /// <summary>
@@ -117,7 +119,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -148,7 +150,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -165,11 +167,11 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("kind", kind));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetContractsCount(kind);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -186,11 +188,11 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetContract(address);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -231,7 +233,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -262,7 +264,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -303,7 +305,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -335,7 +337,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -357,7 +359,7 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level), ("format", format));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res = level == 0
                 ? format switch
@@ -374,7 +376,7 @@ namespace Tzkt.Api.Controllers
                 };
 
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -391,11 +393,11 @@ namespace Tzkt.Api.Controllers
             var query = Request.Path.Value;
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetContractInterface(address);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -425,11 +427,11 @@ namespace Tzkt.Api.Controllers
                 ("all", all), ("json", json), ("micheline", micheline), ("michelson", michelson));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetEntrypoints(address, all, json, micheline, michelson);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -455,11 +457,11 @@ namespace Tzkt.Api.Controllers
                 ("json", json), ("micheline", micheline), ("michelson", michelson));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetEntrypoint(address, name, json, micheline, michelson);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -484,11 +486,11 @@ namespace Tzkt.Api.Controllers
                 ("json", json), ("micheline", micheline), ("michelson", michelson));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetViews(address, json, micheline, michelson);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -515,11 +517,11 @@ namespace Tzkt.Api.Controllers
                 ("json", json), ("micheline", micheline), ("michelson", michelson));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetView(address, name, json, micheline, michelson);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -533,20 +535,23 @@ namespace Tzkt.Api.Controllers
         /// <param name="value">Json parameters</param>
         /// <returns></returns>
         [HttpGet("{address}/entrypoints/{name}/build")]
-        public async Task<ActionResult> BuildEntrypointParameters([Required][KTAddress] string address, [Required] string name, string value)
+        public async Task<ActionResult> BuildEntrypointParameters(
+            [Required][KTAddress] string address,
+            [Required] string name,
+            string value)
         {
             try
             {
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", value));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 using var doc = JsonDocument.Parse(value);
                 var res = await Accounts.BuildEntrypointParameters(address, name, doc.RootElement);
 
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (Exception ex)
             {
@@ -565,19 +570,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="value">Json parameters</param>
         /// <returns></returns>
         [HttpPost("{address}/entrypoints/{name}/build")]
-        public async Task<ActionResult> BuildEntrypointParameters([Required][KTAddress] string address, [Required] string name, [FromBody] object value)
+        public async Task<ActionResult> BuildEntrypointParameters(
+            [Required][KTAddress] string address,
+            [Required] string name,
+            [FromBody] object value)
         {
             try
             {
-                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value, new JsonOptions().ConfigureJsonOptions().JsonSerializerOptions)));
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("value", JsonSerializer.Serialize(value, Options.Value.JsonSerializerOptions)));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 var res = await Accounts.BuildEntrypointParameters(address, name, value);
 
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (Exception ex)
             {
@@ -596,7 +604,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="path">Path in the JSON value (point-separated list of field names, e.g. `path=settings.refund_time` to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage")]
-        public async Task<ActionResult> GetStorage([Required][KTAddress] string address, [Min(0)] int level = 0, string path = null)
+        public async Task<ActionResult> GetStorage(
+            [Required][KTAddress] string address,
+            [Min(0)] int level = 0,
+            string path = null)
         {
             #region safe path
             JsonPath[] jsonPath = null;
@@ -615,14 +626,14 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level), ("path", path));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = level == 0
-                ? this.Json(await Accounts.GetStorageValue(address, jsonPath))
-                : this.Json(await Accounts.GetStorageValue(address, jsonPath, level));
+                ? await Accounts.GetStorageValue(address, jsonPath)
+                : await Accounts.GetStorageValue(address, jsonPath, level);
 
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -635,19 +646,21 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage schema should be taken. If `0` or not specified, the current schema will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/schema")]
-        public async Task<ActionResult> GetStorageSchema([Required][KTAddress] string address, [Min(0)] int level = 0)
+        public async Task<ActionResult> GetStorageSchema(
+            [Required][KTAddress] string address,
+            [Min(0)] int level = 0)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = level == 0
-                ? this.Json(await Accounts.GetStorageSchema(address))
-                : this.Json(await Accounts.GetStorageSchema(address, level));
+                ? await Accounts.GetStorageSchema(address)
+                : await Accounts.GetStorageSchema(address, level);
 
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -661,17 +674,20 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/history")]
-        public async Task<ActionResult<IEnumerable<StorageRecord>>> GetStorageHistory([Required][KTAddress] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public async Task<ActionResult<IEnumerable<StorageRecord>>> GetStorageHistory(
+            [Required][KTAddress] string address,
+            [Min(0)] int lastId = 0,
+            [Range(0, 1000)] int limit = 10)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("lastId", lastId), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetStorageHistory(address, lastId, limit);
 
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -684,19 +700,21 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage value should be taken. If `0` or not specified, the current value will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw")]
-        public async Task<ActionResult<IMicheline>> GetRawStorage([Required][KTAddress] string address, [Min(0)] int level = 0)
+        public async Task<ActionResult<IMicheline>> GetRawStorage(
+            [Required][KTAddress] string address,
+            [Min(0)] int level = 0)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = level == 0
                 ? await Accounts.GetRawStorageValue(address)
                 : await Accounts.GetRawStorageValue(address, level);
 
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -709,19 +727,21 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage schema should be taken. If `0` or not specified, the current schema will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/schema")]
-        public async Task<ActionResult<IMicheline>> GetRawStorageSchema([Required][KTAddress] string address, [Min(0)] int level = 0)
+        public async Task<ActionResult<IMicheline>> GetRawStorageSchema(
+            [Required][KTAddress] string address,
+            [Min(0)] int level = 0)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("level", level));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = level == 0
                 ? await Accounts.GetRawStorageSchema(address)
                 : await Accounts.GetRawStorageSchema(address, level);
 
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -735,16 +755,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/history")]
-        public async Task<ActionResult<IEnumerable<StorageRecord>>> GetRawStorageHistory([Required][KTAddress] string address, [Min(0)] int lastId = 0, [Range(0, 1000)] int limit = 10)
+        public async Task<ActionResult<IEnumerable<StorageRecord>>> GetRawStorageHistory(
+            [Required][KTAddress] string address,
+            [Min(0)] int lastId = 0,
+            [Range(0, 1000)] int limit = 10)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("lastId", lastId), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await Accounts.GetRawStorageHistory(address, lastId, limit);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -787,7 +810,7 @@ namespace Tzkt.Api.Controllers
                 ("tags", tags), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -818,7 +841,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -846,11 +869,11 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             var res = await BigMaps.Get(contract.Id, name, micheline);
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -907,7 +930,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -938,7 +961,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -975,7 +998,7 @@ namespace Tzkt.Api.Controllers
                 var query = ResponseCacheService.BuildKey($"/v1/bigmaps/{ptr}/keys/{key}", ("micheline", micheline));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 object res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
@@ -988,7 +1011,7 @@ namespace Tzkt.Api.Controllers
                     res = await BigMaps.GetKey((int)ptr, doc.RootElement.GetRawText(), micheline);
                 }
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (JsonException)
             {
@@ -1042,7 +1065,7 @@ namespace Tzkt.Api.Controllers
                     ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 object res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
@@ -1055,7 +1078,7 @@ namespace Tzkt.Api.Controllers
                     res = await BigMaps.GetKeyUpdates((int)ptr, doc.RootElement.GetRawText(), sort, offset, limit, micheline);
                 }
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (JsonException)
             {
@@ -1117,7 +1140,7 @@ namespace Tzkt.Api.Controllers
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
-                return File(cached, "application/json");
+                return this.Bytes(cached);
 
             object res;
             if (select == null)
@@ -1148,7 +1171,7 @@ namespace Tzkt.Api.Controllers
                 }
             }
             cached = ResponseCache.Set(query, res);
-            return File(cached, "application/json");
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1187,7 +1210,7 @@ namespace Tzkt.Api.Controllers
                 var query = ResponseCacheService.BuildKey($"/v1/bigmaps/{ptr}/historical_keys/{level}/{key}", ("micheline", micheline));
 
                 if (ResponseCache.TryGet(query, out var cached))
-                    return File(cached, "application/json");
+                    return this.Bytes(cached);
 
                 object res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
@@ -1200,7 +1223,7 @@ namespace Tzkt.Api.Controllers
                     res = await BigMaps.GetHistoricalKey((int)ptr, level, doc.RootElement.GetRawText(), micheline);
                 }
                 cached = ResponseCache.Set(query, res);
-                return File(cached, "application/json");
+                return this.Bytes(cached);
             }
             catch (JsonException)
             {
