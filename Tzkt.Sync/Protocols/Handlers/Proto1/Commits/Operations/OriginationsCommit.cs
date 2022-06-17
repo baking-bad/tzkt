@@ -203,7 +203,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (contract.Kind > ContractKind.DelegatorContract)
                 {
-                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
+                    var code = await ProcessCode(origination, Micheline.FromJson(content.Required("script").Required("code")));
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
@@ -400,7 +400,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (contract.Kind > ContractKind.DelegatorContract)
                 {
-                    var code = Micheline.FromJson(content.Required("script").Required("code")) as MichelineArray;
+                    var code = await ProcessCode(origination, Micheline.FromJson(content.Required("script").Required("code")));
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
@@ -672,6 +672,32 @@ namespace Tzkt.Sync.Protocols.Proto1
             return contract.Kind == ContractKind.SmartContract
                 ? BlockEvents.SmartContracts
                 : BlockEvents.None;
+        }
+
+        protected async Task<MichelineArray> ProcessCode(OriginationOperation origination, IMicheline code)
+        {
+            if (code is not MichelineArray array)
+            {
+                var contract = origination.Contract;
+                var constants = await Constants.Find(Db, new[] { code });
+                if (constants.Count > 0)
+                {
+                    contract.Tags |= ContractTags.Constants;
+                    foreach (var constant in constants)
+                    {
+                        Db.TryAttach(constant);
+                        constant.Refs++;
+                    }
+                    var dict = constants.ToDictionary(x => x.Address, x => Micheline.FromBytes(x.Value));
+                    array = Constants.Expand(code, dict) as MichelineArray
+                        ?? throw new Exception("Contract code should be an array or constant");
+                }
+                else
+                {
+                    throw new Exception("Contract code should be an array or constant");
+                }
+            }
+            return array;
         }
 
         protected async Task ProcessScript(OriginationOperation origination, JsonElement content, MichelineArray code, IMicheline storageValue)
