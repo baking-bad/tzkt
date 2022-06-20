@@ -78,6 +78,7 @@ namespace Tzkt.Api.Services
         {
             lock (Cache)
             {
+                Logger.LogDebug("Cache used: {used} of {limit}", Used, CacheSize);
                 Logger.LogDebug("Cache hits/misses: {hits}/{misses}", Hits, Misses);
                 Cache.Clear();
                 Used = 0;
