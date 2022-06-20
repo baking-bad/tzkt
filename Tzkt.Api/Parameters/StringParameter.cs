@@ -70,7 +70,6 @@ namespace Tzkt.Api
         /// </summary>
         public bool? Null { get; set; }
 
-
         public string Normalize(string name)
         {
             var sb = new StringBuilder();

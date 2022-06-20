@@ -15,7 +15,7 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return $"{name}.{string.Join(".", Fields)}={Value}&";
         }
     }
 }
