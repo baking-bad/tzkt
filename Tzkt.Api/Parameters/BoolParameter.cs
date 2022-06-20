@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
@@ -25,7 +26,19 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            var sb = new StringBuilder();
+
+            if (Eq != null)
+            {
+                sb.Append($"{name}.eq={Eq}&");
+            }
+
+            if (Null != null)
+            {
+                sb.Append($"{name}.null={Null}&");
+            }
+            
+            return sb.ToString();
         }
     }
 }
