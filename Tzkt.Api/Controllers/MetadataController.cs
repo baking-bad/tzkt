@@ -135,7 +135,7 @@ namespace Tzkt.Api.Controllers
                     return Unauthorized(error);
 
                 var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
-                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$")))
+                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1|txr1)[0-9A-Za-z]{33}$")))
                     return new BadRequest("body", "Invalid account address");
 
                 return Ok(await Metadata.UpdateAccountMetadata(metadata, section));

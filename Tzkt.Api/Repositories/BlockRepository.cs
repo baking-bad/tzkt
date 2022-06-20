@@ -557,6 +557,42 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetSetDepositsLimits(block, quote)
                 : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
 
+            var transferTicketOps = operations.HasFlag(Data.Models.Operations.TransferTicket)
+                ? Operations.GetTransferTicketOps(block, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
+            var txRollupCommitOps = operations.HasFlag(Data.Models.Operations.TxRollupCommit)
+                ? Operations.GetTxRollupCommitOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
+            
+            var txRollupDispatchTicketsOps = operations.HasFlag(Data.Models.Operations.TxRollupDispatchTickets)
+                ? Operations.GetTxRollupDispatchTicketsOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+
+            var txRollupFinalizeCommitmentOps = operations.HasFlag(Data.Models.Operations.TxRollupFinalizeCommitment)
+                ? Operations.GetTxRollupFinalizeCommitmentOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+
+            var txRollupOriginationOps = operations.HasFlag(Data.Models.Operations.TxRollupOrigination)
+                ? Operations.GetTxRollupOriginationOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
+
+            var txRollupRejectionOps = operations.HasFlag(Data.Models.Operations.TxRollupRejection)
+                ? Operations.GetTxRollupRejectionOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
+
+            var txRollupRemoveCommitmentOps = operations.HasFlag(Data.Models.Operations.TxRollupRemoveCommitment)
+                ? Operations.GetTxRollupRemoveCommitmentOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+
+            var txRollupReturnBondOps = operations.HasFlag(Data.Models.Operations.TxRollupReturnBond)
+                ? Operations.GetTxRollupReturnBondOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
+
+            var txRollupSubmitBatchOps = operations.HasFlag(Data.Models.Operations.TxRollupSubmitBatch)
+                ? Operations.GetTxRollupSubmitBatchOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -585,6 +621,15 @@ namespace Tzkt.Api.Repositories
                 reveals,
                 registerConstants,
                 setDepositsLimits,
+                transferTicketOps,
+                txRollupCommitOps,
+                txRollupDispatchTicketsOps,
+                txRollupFinalizeCommitmentOps,
+                txRollupOriginationOps,
+                txRollupRejectionOps,
+                txRollupRemoveCommitmentOps,
+                txRollupReturnBondOps,
+                txRollupSubmitBatchOps,
                 migrations,
                 penalties,
                 endorsingRewards);
@@ -604,6 +649,15 @@ namespace Tzkt.Api.Repositories
             block.Reveals = reveals.Result;
             block.RegisterConstants = registerConstants.Result;
             block.SetDepositsLimits = setDepositsLimits.Result;
+            block.TransferTicketOps = transferTicketOps.Result;
+            block.TxRollupCommitOps = txRollupCommitOps.Result;
+            block.TxRollupDispatchTicketsOps = txRollupDispatchTicketsOps.Result;
+            block.TxRollupFinalizeCommitmentOps = txRollupFinalizeCommitmentOps.Result;
+            block.TxRollupOriginationOps = txRollupOriginationOps.Result;
+            block.TxRollupRejectionOps = txRollupRejectionOps.Result;
+            block.TxRollupRemoveCommitmentOps = txRollupRemoveCommitmentOps.Result;
+            block.TxRollupReturnBondOps = txRollupReturnBondOps.Result;
+            block.TxRollupSubmitBatchOps = txRollupSubmitBatchOps.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;

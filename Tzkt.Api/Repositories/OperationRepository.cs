@@ -27,15 +27,48 @@ namespace Tzkt.Api.Repositories
             var reveals = GetReveals(hash, quote);
             var registerConstants = GetRegisterConstants(hash, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, quote);
+            var transferTicketOps = GetTransferTicketOps(hash, format, quote);
+            var txRollupCommitOps = GetTxRollupCommitOps(hash, quote);
+            var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, quote);
+            var txRollupFinalizeCommitmentOps = GetTxRollupFinalizeCommitmentOps(hash, quote);
+            var txRollupOriginationOps = GetTxRollupOriginationOps(hash, quote);
+            var txRollupRejectionOps = GetTxRollupRejectionOps(hash, quote);
+            var txRollupRemoveCommitmentOps = GetTxRollupRemoveCommitmentOps(hash, quote);
+            var txRollupReturnBondOps = GetTxRollupReturnBondOps(hash, quote);
+            var txRollupSubmitBatchOps = GetTxRollupSubmitBatchOps(hash, quote);
 
-            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants, setDepositsLimits);
+            await Task.WhenAll(
+                delegations,
+                originations,
+                transactions,
+                reveals,
+                registerConstants,
+                setDepositsLimits,
+                transferTicketOps,
+                txRollupCommitOps,
+                txRollupDispatchTicketsOps,
+                txRollupFinalizeCommitmentOps,
+                txRollupOriginationOps,
+                txRollupRejectionOps,
+                txRollupRemoveCommitmentOps,
+                txRollupReturnBondOps,
+                txRollupSubmitBatchOps);
 
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
                 .Concat(transactions.Result)
                 .Concat(reveals.Result)
                 .Concat(registerConstants.Result)
-                .Concat(setDepositsLimits.Result);
+                .Concat(setDepositsLimits.Result)
+                .Concat(transferTicketOps.Result)
+                .Concat(txRollupCommitOps.Result)
+                .Concat(txRollupDispatchTicketsOps.Result)
+                .Concat(txRollupFinalizeCommitmentOps.Result)
+                .Concat(txRollupOriginationOps.Result)
+                .Concat(txRollupRejectionOps.Result)
+                .Concat(txRollupRemoveCommitmentOps.Result)
+                .Concat(txRollupReturnBondOps.Result)
+                .Concat(txRollupSubmitBatchOps.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
@@ -98,8 +131,56 @@ namespace Tzkt.Api.Repositories
             var reveals = GetReveals(hash, counter, quote);
             var registerConstants = GetRegisterConstants(hash, counter, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, counter, quote);
+            var transferTicketOps = GetTransferTicketOps(hash, counter, format, quote);
+            var txRollupCommitOps = GetTxRollupCommitOps(hash, counter, quote);
+            var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, counter, quote);
+            var txRollupFinalizeCommitmentOps = GetTxRollupFinalizeCommitmentOps(hash, counter, quote);
+            var txRollupOriginationOps = GetTxRollupOriginationOps(hash, counter, quote);
+            var txRollupRejectionOps = GetTxRollupRejectionOps(hash, counter, quote);
+            var txRollupRemoveCommitmentOps = GetTxRollupRemoveCommitmentOps(hash, counter, quote);
+            var txRollupReturnBondOps = GetTxRollupReturnBondOps(hash, counter, quote);
+            var txRollupSubmitBatchOps = GetTxRollupSubmitBatchOps(hash, counter, quote);
 
-            await Task.WhenAll(delegations, originations, transactions, reveals, registerConstants, setDepositsLimits);
+            await Task.WhenAll(
+                delegations,
+                originations,
+                transactions,
+                reveals,
+                registerConstants,
+                setDepositsLimits,
+                transferTicketOps,
+                txRollupCommitOps,
+                txRollupDispatchTicketsOps,
+                txRollupFinalizeCommitmentOps,
+                txRollupOriginationOps,
+                txRollupRejectionOps,
+                txRollupRemoveCommitmentOps,
+                txRollupReturnBondOps,
+                txRollupSubmitBatchOps);
+
+            if (txRollupSubmitBatchOps.Result.Any())
+                return txRollupSubmitBatchOps.Result;
+
+            if (txRollupReturnBondOps.Result.Any())
+                return txRollupReturnBondOps.Result;
+
+            if (txRollupRemoveCommitmentOps.Result.Any())
+                return txRollupRemoveCommitmentOps.Result;
+
+            if (txRollupRejectionOps.Result.Any())
+                return txRollupRejectionOps.Result;
+
+            if (txRollupOriginationOps.Result.Any())
+                return txRollupOriginationOps.Result;
+
+            if (txRollupFinalizeCommitmentOps.Result.Any())
+                return txRollupFinalizeCommitmentOps.Result;
+
+            if (txRollupDispatchTicketsOps.Result.Any())
+                return txRollupDispatchTicketsOps.Result;
+
+            if (txRollupCommitOps.Result.Any())
+                return txRollupCommitOps.Result;
 
             if (setDepositsLimits.Result.Any())
                 return setDepositsLimits.Result;
@@ -112,7 +193,8 @@ namespace Tzkt.Api.Repositories
 
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
-                .Concat(transactions.Result);
+                .Concat(transactions.Result)
+                .Concat(transferTicketOps.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);

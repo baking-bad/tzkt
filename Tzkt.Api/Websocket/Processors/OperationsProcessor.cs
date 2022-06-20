@@ -147,6 +147,42 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetSetDepositsLimits(null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.SetDepositsLimitOperation>());
 
+                var transferTicketOps = TypesSubs.TryGetValue(Operations.TransferTicket, out var transferTicketSub)
+                    ? Repo.GetTransferTicketOps(null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TransferTicketOperation>());
+
+                var txRollupCommitOps = TypesSubs.TryGetValue(Operations.TxRollupCommit, out var txRollupCommitSub)
+                    ? Repo.GetTxRollupCommitOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupCommitOperation>());
+
+                var txRollupDispatchTicketsOps = TypesSubs.TryGetValue(Operations.TxRollupDispatchTickets, out var txRollupDispatchTicketsSub)
+                    ? Repo.GetTxRollupDispatchTicketsOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupDispatchTicketsOperation>());
+
+                var txRollupFinalizeCommitmentOps = TypesSubs.TryGetValue(Operations.TxRollupFinalizeCommitment, out var txRollupFinalizeCommitmentSub)
+                    ? Repo.GetTxRollupFinalizeCommitmentOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupFinalizeCommitmentOperation>());
+
+                var txRollupOriginationOps = TypesSubs.TryGetValue(Operations.TxRollupOrigination, out var txRollupOriginationSub)
+                    ? Repo.GetTxRollupOriginationOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupOriginationOperation>());
+
+                var txRollupRejectionOps = TypesSubs.TryGetValue(Operations.TxRollupRejection, out var txRollupRejectionSub)
+                    ? Repo.GetTxRollupRejectionOps(null, null, null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupRejectionOperation>());
+
+                var txRollupRemoveCommitmentOps = TypesSubs.TryGetValue(Operations.TxRollupRemoveCommitment, out var txRollupRemoveCommitmentSub)
+                    ? Repo.GetTxRollupRemoveCommitmentOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupRemoveCommitmentOperation>());
+
+                var txRollupReturnBondOps = TypesSubs.TryGetValue(Operations.TxRollupReturnBond, out var txRollupReturnBondSub)
+                    ? Repo.GetTxRollupReturnBondOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupReturnBondOperation>());
+
+                var txRollupSubmitBatchOps = TypesSubs.TryGetValue(Operations.TxRollupSubmitBatch, out var txRollupSubmitBatchSub)
+                    ? Repo.GetTxRollupSubmitBatchOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.TxRollupSubmitBatchOperation>());
+
                 var migrations = TypesSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -179,6 +215,15 @@ namespace Tzkt.Api.Websocket.Processors
                     reveals,
                     registerConstants,
                     setDepositsLimits,
+                    transferTicketOps,
+                    txRollupCommitOps,
+                    txRollupDispatchTicketsOps,
+                    txRollupFinalizeCommitmentOps,
+                    txRollupOriginationOps,
+                    txRollupRejectionOps,
+                    txRollupRemoveCommitmentOps,
+                    txRollupReturnBondOps,
+                    txRollupSubmitBatchOps,
                     migrations,
                     penalties,
                     baking,
@@ -427,6 +472,156 @@ namespace Tzkt.Api.Websocket.Processors
                         foreach (var op in setDepositsLimits.Result)
                             if (setDepositsLimitsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs, op);
+                }
+
+                if (transferTicketOps.Result.Any())
+                {
+                    if (transferTicketSub.All != null)
+                        AddRange(transferTicketSub.All, transferTicketOps.Result);
+
+                    if (transferTicketSub.Addresses != null)
+                        foreach (var op in transferTicketOps.Result)
+                        {
+                            if (transferTicketSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (transferTicketSub.Addresses.TryGetValue(op.Target.Address, out var targetSubs))
+                                Add(targetSubs, op);
+
+                            if (transferTicketSub.Addresses.TryGetValue(op.Ticketer.Address, out var ticketerSubs))
+                                Add(ticketerSubs, op);
+                        }
+                }
+
+                if (txRollupCommitOps.Result.Any())
+                {
+                    if (txRollupCommitSub.All != null)
+                        AddRange(txRollupCommitSub.All, txRollupCommitOps.Result);
+
+                    if (txRollupCommitSub.Addresses != null)
+                        foreach (var op in txRollupCommitOps.Result)
+                        {
+                            if (txRollupCommitSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupCommitSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
+                }
+
+                if (txRollupDispatchTicketsOps.Result.Any())
+                {
+                    if (txRollupDispatchTicketsSub.All != null)
+                        AddRange(txRollupDispatchTicketsSub.All, txRollupDispatchTicketsOps.Result);
+
+                    if (txRollupDispatchTicketsSub.Addresses != null)
+                        foreach (var op in txRollupDispatchTicketsOps.Result)
+                        {
+                            if (txRollupDispatchTicketsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupDispatchTicketsSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
+                }
+
+                if (txRollupFinalizeCommitmentOps.Result.Any())
+                {
+                    if (txRollupFinalizeCommitmentSub.All != null)
+                        AddRange(txRollupFinalizeCommitmentSub.All, txRollupFinalizeCommitmentOps.Result);
+
+                    if (txRollupFinalizeCommitmentSub.Addresses != null)
+                        foreach (var op in txRollupFinalizeCommitmentOps.Result)
+                        {
+                            if (txRollupFinalizeCommitmentSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupFinalizeCommitmentSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
+                }
+
+                if (txRollupOriginationOps.Result.Any())
+                {
+                    if (txRollupOriginationSub.All != null)
+                        AddRange(txRollupOriginationSub.All, txRollupOriginationOps.Result);
+
+                    if (txRollupOriginationSub.Addresses != null)
+                        foreach (var op in txRollupOriginationOps.Result)
+                        {
+                            if (txRollupOriginationSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupOriginationSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
+                }
+
+                if (txRollupRejectionOps.Result.Any())
+                {
+                    if (txRollupRejectionSub.All != null)
+                        AddRange(txRollupRejectionSub.All, txRollupRejectionOps.Result);
+
+                    if (txRollupRejectionSub.Addresses != null)
+                        foreach (var op in txRollupRejectionOps.Result)
+                        {
+                            if (txRollupRejectionSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupRejectionSub.Addresses.TryGetValue(op.Committer.Address, out var committerSubs))
+                                Add(committerSubs, op);
+
+                            if (txRollupRejectionSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
+                }
+
+                if (txRollupRemoveCommitmentOps.Result.Any())
+                {
+                    if (txRollupRemoveCommitmentSub.All != null)
+                        AddRange(txRollupRemoveCommitmentSub.All, txRollupRemoveCommitmentOps.Result);
+
+                    if (txRollupRemoveCommitmentSub.Addresses != null)
+                        foreach (var op in txRollupRemoveCommitmentOps.Result)
+                        {
+                            if (txRollupRemoveCommitmentSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupRemoveCommitmentSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
+                }
+
+                if (txRollupReturnBondOps.Result.Any())
+                {
+                    if (txRollupReturnBondSub.All != null)
+                        AddRange(txRollupReturnBondSub.All, txRollupReturnBondOps.Result);
+
+                    if (txRollupReturnBondSub.Addresses != null)
+                        foreach (var op in txRollupReturnBondOps.Result)
+                        {
+                            if (txRollupReturnBondSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupReturnBondSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
+                }
+
+                if (txRollupSubmitBatchOps.Result.Any())
+                {
+                    if (txRollupSubmitBatchSub.All != null)
+                        AddRange(txRollupSubmitBatchSub.All, txRollupSubmitBatchOps.Result);
+
+                    if (txRollupSubmitBatchSub.Addresses != null)
+                        foreach (var op in txRollupSubmitBatchOps.Result)
+                        {
+                            if (txRollupSubmitBatchSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs, op);
+
+                            if (txRollupSubmitBatchSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs, op);
+                        }
                 }
 
                 if (migrations.Result.Any())
