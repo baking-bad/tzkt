@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
             
-          var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+            var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
 
             var lastSeed = await Db.Cycles
                 .AsNoTracking()
@@ -39,12 +39,14 @@ namespace Tzkt.Sync.Protocols.Proto12
             var futureSeed = Seed.GetNextSeed(lastSeed, nonces);
             var snapshotIndex = 0;
             var snapshotLevel = 1;
+            var activation = false;
 
             if (block.Cycle >= 1)
             {
                 if (block.Cycle == block.Protocol.FirstCycle)
                 {
                     snapshotLevel = block.Protocol.FirstLevel - 1;
+                    activation = true;
                 }
                 else if (block.Cycle == block.Protocol.FirstCycle + 1 && block.Protocol.FirstLevel >= block.Protocol.FirstCycleLevel)
                 {
@@ -65,7 +67,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Where(x => x.Level == snapshotLevel && x.DelegateId == null)
                 .ToListAsync();
 
-            var endorsingRewards = await Db.BakerCycles
+            var endorsingRewards = activation ? new() : await Db.BakerCycles
                 .AsNoTracking()
                 .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewards > 0)
                 .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewards);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -25,7 +26,7 @@ namespace Tzkt.Sync
                     if (DateTime.UtcNow > _Expiration)
                     {
                         _HttpClient?.Dispose();
-                        _HttpClient = new HttpClient();
+                        _HttpClient = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip });
 
                         _HttpClient.BaseAddress = BaseAddress;
                         _HttpClient.DefaultRequestHeaders.Accept.Add(

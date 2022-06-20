@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -23,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             {
                 Logger.LogInformation("Trying to load by cycle with 30 minutes timeout...");
                 #region try aggressive
-                using var client = new HttpClient
+                using var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
                 {
                     BaseAddress = new Uri(Proto.Node.BaseUrl),
                     Timeout = Timeout.InfiniteTimeSpan
@@ -43,7 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             {
                 Logger.LogInformation("Failed to load by cycle. Loading by level for {0} blocks with 10 seconds timeout...", block.Protocol.BlocksPerCycle);
                 #region throttle
-                using var client = new HttpClient
+                using var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
                 {
                     BaseAddress = new Uri(Proto.Node.BaseUrl),
                     Timeout = Timeout.InfiniteTimeSpan
