@@ -1527,6 +1527,42 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetSetDepositsLimits(_delegat, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
 
+                    var transferTicketOps = delegat.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
+                        ? Operations.GetTransferTicketOps(null, _delegat, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
+                    var txRollupCommitOps = delegat.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
+                        ? Operations.GetTxRollupCommitOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
+
+                    var txRollupDispatchTicketsOps = delegat.TxRollupDispatchTicketsCount > 0 && types.Contains(OpTypes.TxRollupDispatchTickets)
+                        ? Operations.GetTxRollupDispatchTicketsOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+
+                    var txRollupFinalizeCommitmentOps = delegat.TxRollupFinalizeCommitmentCount > 0 && types.Contains(OpTypes.TxRollupFinalizeCommitment)
+                        ? Operations.GetTxRollupFinalizeCommitmentOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+
+                    var txRollupOriginationOps = delegat.TxRollupOriginationCount > 0 && types.Contains(OpTypes.TxRollupOrigination)
+                        ? Operations.GetTxRollupOriginationOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
+
+                    var txRollupRejectionOps = delegat.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
+                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Value = delegat.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
+
+                    var txRollupRemoveCommitmentOps = delegat.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
+                        ? Operations.GetTxRollupRemoveCommitmentOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+
+                    var txRollupReturnBondOps = delegat.TxRollupReturnBondCount > 0 && types.Contains(OpTypes.TxRollupReturnBond)
+                        ? Operations.GetTxRollupReturnBondOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
+
+                    var txRollupSubmitBatchOps = delegat.TxRollupSubmitBatchCount > 0 && types.Contains(OpTypes.TxRollupSubmitBatch)
+                        ? Operations.GetTxRollupSubmitBatchOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1559,6 +1595,15 @@ namespace Tzkt.Api.Repositories
                         reveals,
                         registerConstants,
                         setDepositsLimits,
+                        transferTicketOps,
+                        txRollupCommitOps,
+                        txRollupDispatchTicketsOps,
+                        txRollupFinalizeCommitmentOps,
+                        txRollupOriginationOps,
+                        txRollupRejectionOps,
+                        txRollupRemoveCommitmentOps,
+                        txRollupReturnBondOps,
+                        txRollupSubmitBatchOps,
                         migrations,
                         revelationPenalties,
                         bakingOps,
@@ -1579,6 +1624,15 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(reveals.Result);
                     result.AddRange(registerConstants.Result);
                     result.AddRange(setDepositsLimits.Result);
+                    result.AddRange(transferTicketOps.Result);
+                    result.AddRange(txRollupCommitOps.Result);
+                    result.AddRange(txRollupDispatchTicketsOps.Result);
+                    result.AddRange(txRollupFinalizeCommitmentOps.Result);
+                    result.AddRange(txRollupOriginationOps.Result);
+                    result.AddRange(txRollupRejectionOps.Result);
+                    result.AddRange(txRollupRemoveCommitmentOps.Result);
+                    result.AddRange(txRollupReturnBondOps.Result);
+                    result.AddRange(txRollupSubmitBatchOps.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
@@ -1616,6 +1670,42 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetSetDepositsLimits(_user, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
 
+                    var userTransferTicketOps = user.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
+                        ? Operations.GetTransferTicketOps(null, _user, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+                    
+                    var userTxRollupCommitOps = user.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
+                        ? Operations.GetTxRollupCommitOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
+                    
+                    var userTxRollupDispatchTicketsOps = user.TxRollupDispatchTicketsCount > 0 && types.Contains(OpTypes.TxRollupDispatchTickets)
+                        ? Operations.GetTxRollupDispatchTicketsOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+
+                    var userTxRollupFinalizeCommitmentOps = user.TxRollupFinalizeCommitmentCount > 0 && types.Contains(OpTypes.TxRollupFinalizeCommitment)
+                        ? Operations.GetTxRollupFinalizeCommitmentOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+
+                    var userTxRollupOriginationOps = user.TxRollupOriginationCount > 0 && types.Contains(OpTypes.TxRollupOrigination)
+                        ? Operations.GetTxRollupOriginationOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
+
+                    var userTxRollupRejectionOps = user.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
+                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Value = user.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
+
+                    var userTxRollupRemoveCommitmentOps = user.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
+                        ? Operations.GetTxRollupRemoveCommitmentOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+
+                    var userTxRollupReturnBondOps = user.TxRollupReturnBondCount > 0 && types.Contains(OpTypes.TxRollupReturnBond)
+                        ? Operations.GetTxRollupReturnBondOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
+
+                    var userTxRollupSubmitBatchOps = user.TxRollupSubmitBatchCount > 0 && types.Contains(OpTypes.TxRollupSubmitBatch)
+                        ? Operations.GetTxRollupSubmitBatchOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1628,6 +1718,15 @@ namespace Tzkt.Api.Repositories
                         userReveals,
                         userRegisterConstants,
                         userSetDepositsLimit,
+                        userTransferTicketOps,
+                        userTxRollupCommitOps,
+                        userTxRollupDispatchTicketsOps,
+                        userTxRollupFinalizeCommitmentOps,
+                        userTxRollupOriginationOps,
+                        userTxRollupRejectionOps,
+                        userTxRollupRemoveCommitmentOps,
+                        userTxRollupReturnBondOps,
+                        userTxRollupSubmitBatchOps,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -1637,6 +1736,15 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userReveals.Result);
                     result.AddRange(userRegisterConstants.Result);
                     result.AddRange(userSetDepositsLimit.Result);
+                    result.AddRange(userTransferTicketOps.Result);
+                    result.AddRange(userTxRollupCommitOps.Result);
+                    result.AddRange(userTxRollupDispatchTicketsOps.Result);
+                    result.AddRange(userTxRollupFinalizeCommitmentOps.Result);
+                    result.AddRange(userTxRollupOriginationOps.Result);
+                    result.AddRange(userTxRollupRejectionOps.Result);
+                    result.AddRange(userTxRollupRemoveCommitmentOps.Result);
+                    result.AddRange(userTxRollupReturnBondOps.Result);
+                    result.AddRange(userTxRollupSubmitBatchOps.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;
@@ -1659,6 +1767,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetReveals(_contract, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
+                    var contractTransferTicketOps = contract.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
+                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Value = contract.Id }, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
                     var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_contract, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1668,13 +1780,71 @@ namespace Tzkt.Api.Repositories
                         contractOriginations,
                         contractTransactions,
                         contractReveals,
+                        contractTransferTicketOps,
                         contractMigrations);
 
                     result.AddRange(contractDelegations.Result);
                     result.AddRange(contractOriginations.Result);
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
+                    result.AddRange(contractTransferTicketOps.Result);
                     result.AddRange(contractMigrations.Result);
+
+                    break;
+
+                case RawRollup rollup:
+                    var _rollup = new AccountParameter { Eq = rollup.Id };
+
+                    var rollupTxRollupCommitOps = rollup.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
+                        ? Operations.GetTxRollupCommitOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
+
+                    var rollupTxRollupDispatchTicketsOps = rollup.TxRollupDispatchTicketsCount > 0 && types.Contains(OpTypes.TxRollupDispatchTickets)
+                        ? Operations.GetTxRollupDispatchTicketsOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+
+                    var rollupTxRollupFinalizeCommitmentOps = rollup.TxRollupFinalizeCommitmentCount > 0 && types.Contains(OpTypes.TxRollupFinalizeCommitment)
+                        ? Operations.GetTxRollupFinalizeCommitmentOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+
+                    var rollupTxRollupOriginationOps = rollup.TxRollupOriginationCount > 0 && types.Contains(OpTypes.TxRollupOrigination)
+                        ? Operations.GetTxRollupOriginationOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
+
+                    var rollupTxRollupRejectionOps = rollup.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
+                        ? Operations.GetTxRollupRejectionOps(null, null, null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
+
+                    var rollupTxRollupRemoveCommitmentOps = rollup.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
+                        ? Operations.GetTxRollupRemoveCommitmentOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+
+                    var rollupTxRollupReturnBondOps = rollup.TxRollupReturnBondCount > 0 && types.Contains(OpTypes.TxRollupReturnBond)
+                        ? Operations.GetTxRollupReturnBondOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
+
+                    var rollupTxRollupSubmitBatchOps = rollup.TxRollupSubmitBatchCount > 0 && types.Contains(OpTypes.TxRollupSubmitBatch)
+                        ? Operations.GetTxRollupSubmitBatchOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
+                    await Task.WhenAll(
+                        rollupTxRollupCommitOps,
+                        rollupTxRollupDispatchTicketsOps,
+                        rollupTxRollupFinalizeCommitmentOps,
+                        rollupTxRollupOriginationOps,
+                        rollupTxRollupRejectionOps,
+                        rollupTxRollupRemoveCommitmentOps,
+                        rollupTxRollupReturnBondOps,
+                        rollupTxRollupSubmitBatchOps);
+
+                    result.AddRange(rollupTxRollupCommitOps.Result);
+                    result.AddRange(rollupTxRollupDispatchTicketsOps.Result);
+                    result.AddRange(rollupTxRollupFinalizeCommitmentOps.Result);
+                    result.AddRange(rollupTxRollupOriginationOps.Result);
+                    result.AddRange(rollupTxRollupRejectionOps.Result);
+                    result.AddRange(rollupTxRollupRemoveCommitmentOps.Result);
+                    result.AddRange(rollupTxRollupReturnBondOps.Result);
+                    result.AddRange(rollupTxRollupSubmitBatchOps.Result);
 
                     break;
 

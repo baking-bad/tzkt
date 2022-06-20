@@ -39,7 +39,7 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (Address != null && !Regex.IsMatch(Address, "^(tz1|tz2|tz3|KT1)[0-9A-Za-z]{33}$"))
+            if (Address != null && !Regex.IsMatch(Address, "^(tz1|tz2|tz3|KT1|txr1)[0-9A-Za-z]{33}$"))
                 throw new HubException("Invalid address");
 
             if (TypesList.Count == 0)

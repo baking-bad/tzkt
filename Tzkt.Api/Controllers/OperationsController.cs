@@ -2072,6 +2072,1153 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region transfer ticket
+        /// <summary>
+        /// Get transfer ticket
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of transfer ticket operations.
+        /// </remarks>
+        /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.sender.target=tz1...` will return operations where `sender` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="target">Filters by target. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="ticketer">Filters by ticketer. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="micheline">Format of the content value: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("transfer_ticket")]
+        public async Task<ActionResult<IEnumerable<TransferTicketOperation>>> GetTransferTicketOps(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,target,ticketer")]
+            AnyOfParameter anyof,
+            AccountParameter sender,
+            AccountParameter target,
+            AccountParameter ticketer,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TransferTicketOperation>());
+            }
+
+            if (target != null)
+            {
+                if (target.Eqx != null)
+                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (target.Nex != null)
+                    return new BadRequest($"{nameof(target)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (target.Eq == -1 || target.In?.Count == 0 || target.Null == true)
+                    return Ok(Enumerable.Empty<TransferTicketOperation>());
+            }
+
+            if (ticketer != null)
+            {
+                if (ticketer.Eqx != null)
+                    return new BadRequest($"{nameof(ticketer)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (ticketer.Nex != null)
+                    return new BadRequest($"{nameof(ticketer)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (ticketer.Eq == -1 || ticketer.In?.Count == 0 || ticketer.Null == true)
+                    return Ok(Enumerable.Empty<TransferTicketOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, micheline, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
+                else
+                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get transfer ticket by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns transfer ticket operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="micheline">Format of the content value: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("transfer_ticket/{hash}")]
+        public Task<IEnumerable<TransferTicketOperation>> GetTransferTicketOpsByHash(
+            [Required][OpHash] string hash,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTransferTicketOps(hash, micheline, quote);
+        }
+
+        /// <summary>
+        /// Get transfer ticket count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of transfer ticket operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("transfer_ticket/count")]
+        public Task<int> GetTransferTicketOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TransferTicketOpsCount);
+
+            return Operations.GetTransferTicketOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup commit
+        /// <summary>
+        /// Get tx rollup commit
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup commit operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_commit")]
+        public async Task<ActionResult<IEnumerable<TxRollupCommitOperation>>> GetTxRollupCommitOps(
+            AccountParameter sender,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupCommitOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupCommitOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupCommitOps(sender, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupCommitOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupCommitOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupCommitOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupCommitOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup commit by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup commit operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_commit/{hash}")]
+        public Task<IEnumerable<TxRollupCommitOperation>> GetTxRollupCommitOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupCommitOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup commit count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup commit operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_commit/count")]
+        public Task<int> GetTxRollupCommitOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupCommitOpsCount);
+
+            return Operations.GetTxRollupCommitOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup dispatch tickets
+        /// <summary>
+        /// Get tx rollup dispatch tickets
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup dispatch tickets operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_dispatch_tickets")]
+        public async Task<ActionResult<IEnumerable<TxRollupDispatchTicketsOperation>>> GetTxRollupDispatchTicketsOps(
+            AccountParameter sender,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupDispatchTicketsOps(sender, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupDispatchTicketsOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupDispatchTicketsOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupDispatchTicketsOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupDispatchTicketsOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup dispatch tickets by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup dispatch tickets operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_dispatch_tickets/{hash}")]
+        public Task<IEnumerable<TxRollupDispatchTicketsOperation>> GetTxRollupDispatchTicketsOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupDispatchTicketsOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup dispatch tickets count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup dispatch tickets operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_dispatch_tickets/count")]
+        public Task<int> GetTxRollupDispatchTicketsOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupDispatchTicketsOpsCount);
+
+            return Operations.GetTxRollupDispatchTicketsOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup finalize commitment
+        /// <summary>
+        /// Get tx rollup finalize commitment
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup finalize commitment operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_finalize_commitment")]
+        public async Task<ActionResult<IEnumerable<TxRollupFinalizeCommitmentOperation>>> GetTxRollupFinalizeCommitmentOps(
+            AccountParameter sender,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupFinalizeCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupFinalizeCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupFinalizeCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupFinalizeCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupFinalizeCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup finalize commitment by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup finalize commitment operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_finalize_commitment/{hash}")]
+        public Task<IEnumerable<TxRollupFinalizeCommitmentOperation>> GetTxRollupFinalizeCommitmentOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupFinalizeCommitmentOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup finalize commitment count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup finalize commitment operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_finalize_commitment/count")]
+        public Task<int> GetTxRollupFinalizeCommitmentOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupFinalizeCommitmentOpsCount);
+
+            return Operations.GetTxRollupFinalizeCommitmentOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup origination
+        /// <summary>
+        /// Get tx rollup origination
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup origination operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_origination")]
+        public async Task<ActionResult<IEnumerable<TxRollupOriginationOperation>>> GetTxRollupOriginationOps(
+            AccountParameter sender,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupOriginationOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupOriginationOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupOriginationOps(sender, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupOriginationOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupOriginationOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupOriginationOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupOriginationOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup origination by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup origination operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_origination/{hash}")]
+        public Task<IEnumerable<TxRollupOriginationOperation>> GetTxRollupOriginationOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupOriginationOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup origination count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup origination operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_origination/count")]
+        public Task<int> GetTxRollupOriginationOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupOriginationOpsCount);
+
+            return Operations.GetTxRollupOriginationOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup rejection
+        /// <summary>
+        /// Get tx rollup rejection
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup rejection operations.
+        /// </remarks>
+        /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.sender.committer=tz1...` will return operations where `sender` OR `committer` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="committer">Filters by committer. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_rejection")]
+        public async Task<ActionResult<IEnumerable<TxRollupRejectionOperation>>> GetTxRollupRejectionOps(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,committer")]
+            AnyOfParameter anyof,
+            AccountParameter sender,
+            AccountParameter committer,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupRejectionOperation>());
+            }
+
+            if (committer != null)
+            {
+                if (committer.Eqx != null)
+                    return new BadRequest($"{nameof(committer)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (committer.Nex != null)
+                    return new BadRequest($"{nameof(committer)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (committer.Eq == -1 || committer.In?.Count == 0 || committer.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupRejectionOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupRejectionOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupRejectionOps(anyof, sender, committer, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupRejectionOps(anyof, sender, committer, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupRejectionOps(anyof, sender, committer, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupRejectionOps(anyof, sender, committer, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupRejectionOps(anyof, sender, committer, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup rejection by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup rejection operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_rejection/{hash}")]
+        public Task<IEnumerable<TxRollupRejectionOperation>> GetTxRollupRejectionOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupRejectionOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup rejection count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup rejection operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_rejection/count")]
+        public Task<int> GetTxRollupRejectionOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupRejectionOpsCount);
+
+            return Operations.GetTxRollupRejectionOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup remove commitment
+        /// <summary>
+        /// Get tx rollup remove commitment
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup remove commitment operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_remove_commitment")]
+        public async Task<ActionResult<IEnumerable<TxRollupRemoveCommitmentOperation>>> GetTxRollupRemoveCommitmentOps(
+            AccountParameter sender,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupRemoveCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupRemoveCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupRemoveCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupRemoveCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupRemoveCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup remove commitment by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup remove commitment operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_remove_commitment/{hash}")]
+        public Task<IEnumerable<TxRollupRemoveCommitmentOperation>> GetTxRollupRemoveCommitmentOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupRemoveCommitmentOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup remove commitment count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup remove commitment operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_remove_commitment/count")]
+        public Task<int> GetTxRollupRemoveCommitmentOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupRemoveCommitmentOpsCount);
+
+            return Operations.GetTxRollupRemoveCommitmentOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup return bond
+        /// <summary>
+        /// Get tx rollup return bond
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup return bond operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_return_bond")]
+        public async Task<ActionResult<IEnumerable<TxRollupReturnBondOperation>>> GetTxRollupReturnBondOps(
+            AccountParameter sender,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupReturnBondOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupReturnBondOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupReturnBondOps(sender, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupReturnBondOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupReturnBondOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupReturnBondOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupReturnBondOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup return bond by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup return bond operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_return_bond/{hash}")]
+        public Task<IEnumerable<TxRollupReturnBondOperation>> GetTxRollupReturnBondOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupReturnBondOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup return bond count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup return bond operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_return_bond/count")]
+        public Task<int> GetTxRollupReturnBondOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupReturnBondOpsCount);
+
+            return Operations.GetTxRollupReturnBondOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region tx rollup submit batch
+        /// <summary>
+        /// Get tx rollup submit batch
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tx rollup submit batch operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="rollup">Filters by rollup. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_submit_batch")]
+        public async Task<ActionResult<IEnumerable<TxRollupSubmitBatchOperation>>> GetTxRollupSubmitBatchOps(
+            AccountParameter sender,
+            AccountParameter rollup,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+            }
+
+            if (rollup != null)
+            {
+                if (rollup.Eqx != null)
+                    return new BadRequest($"{nameof(rollup)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (rollup.Nex != null)
+                    return new BadRequest($"{nameof(rollup)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (rollup.Eq == -1 || rollup.In?.Count == 0 || rollup.Null == true)
+                    return Ok(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "bakerFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Operations.GetTxRollupSubmitBatchOps(sender, rollup, level, timestamp, status, sort, offset, limit, quote));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Operations.GetTxRollupSubmitBatchOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                else
+                    return Ok(await Operations.GetTxRollupSubmitBatchOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Values, quote));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Operations.GetTxRollupSubmitBatchOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetTxRollupSubmitBatchOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get tx rollup submit batch by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns tx rollup submit batch operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_submit_batch/{hash}")]
+        public Task<IEnumerable<TxRollupSubmitBatchOperation>> GetTxRollupSubmitBatchOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return Operations.GetTxRollupSubmitBatchOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup submit batch count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of tx rollup submit batch operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_submit_batch/count")]
+        public Task<int> GetTxRollupSubmitBatchOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Task.FromResult(State.Current.TxRollupSubmitBatchOpsCount);
+
+            return Operations.GetTxRollupSubmitBatchOpsCount(level, timestamp);
+        }
+        #endregion
+
         #region migrations
         /// <summary>
         /// Get migrations

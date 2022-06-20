@@ -181,6 +181,51 @@ namespace Tzkt.Api.Models
         public IEnumerable<SetDepositsLimitOperation> SetDepositsLimits { get; set; }
 
         /// <summary>
+        /// List of transfer ticket operations, included in the block
+        /// </summary>
+        public IEnumerable<TransferTicketOperation> TransferTicketOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup commit operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupCommitOperation> TxRollupCommitOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup dispatch tickets operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup finalize commitment operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupFinalizeCommitmentOperation> TxRollupFinalizeCommitmentOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup origination operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupOriginationOperation> TxRollupOriginationOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup rejection operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupRejectionOperation> TxRollupRejectionOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup remove commitment operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupRemoveCommitmentOperation> TxRollupRemoveCommitmentOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup return bond operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupReturnBondOperation> TxRollupReturnBondOps { get; set; }
+
+        /// <summary>
+        /// List of tx rollup submit batch operations, included in the block
+        /// </summary>
+        public IEnumerable<TxRollupSubmitBatchOperation> TxRollupSubmitBatchOps { get; set; }
+
+        /// <summary>
         /// List of migration operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<MigrationOperation> Migrations { get; set; }

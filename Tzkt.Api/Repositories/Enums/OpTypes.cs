@@ -24,6 +24,16 @@ namespace Tzkt.Api
         public const string RegisterConstant = "register_constant";
         public const string SetDepositsLimit = "set_deposits_limit";
 
+        public const string TxRollupOrigination = "tx_rollup_origination";
+        public const string TxRollupSubmitBatch = "tx_rollup_submit_batch";
+        public const string TxRollupCommit = "tx_rollup_commit";
+        public const string TxRollupReturnBond = "tx_rollup_return_bond";
+        public const string TxRollupFinalizeCommitment = "tx_rollup_finalize_commitment";
+        public const string TxRollupRemoveCommitment = "tx_rollup_remove_commitment";
+        public const string TxRollupRejection = "tx_rollup_rejection";
+        public const string TxRollupDispatchTickets = "tx_rollup_dispatch_tickets";
+        public const string TransferTicket = "transfer_ticket";
+
         public const string Migration = "migration";
         public const string RevelationPenalty = "revelation_penalty";
         public const string Baking = "baking";
@@ -53,6 +63,15 @@ namespace Tzkt.Api
                 case RevelationPenalty: res = Operations.RevelationPenalty; break;
                 case Baking: res = Operations.Baking; break;
                 case EndorsingReward: res = Operations.EndorsingRewards; break;
+                case TxRollupOrigination: res = Operations.TxRollupOrigination; break;
+                case TxRollupSubmitBatch: res = Operations.TxRollupSubmitBatch; break;
+                case TxRollupCommit: res = Operations.TxRollupCommit; break;
+                case TxRollupReturnBond: res = Operations.TxRollupReturnBond; break;
+                case TxRollupFinalizeCommitment: res = Operations.TxRollupFinalizeCommitment; break;
+                case TxRollupRemoveCommitment: res = Operations.TxRollupRemoveCommitment; break;
+                case TxRollupRejection: res = Operations.TxRollupRejection; break;
+                case TxRollupDispatchTickets: res = Operations.TxRollupDispatchTickets; break;
+                case TransferTicket: res = Operations.TransferTicket; break;
                 default: return false;
             }
             return true;
@@ -73,7 +92,16 @@ namespace Tzkt.Api
             RegisterConstant,
             SetDepositsLimit,
             Migration,
-            RevelationPenalty
+            RevelationPenalty,
+            TransferTicket,
+            TxRollupCommit,
+            TxRollupDispatchTickets,
+            TxRollupFinalizeCommitment,
+            TxRollupOrigination,
+            TxRollupRejection,
+            TxRollupRemoveCommitment,
+            TxRollupReturnBond,
+            TxRollupSubmitBatch
         };
     }
 }
