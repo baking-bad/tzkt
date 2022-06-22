@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -19,6 +20,8 @@ namespace Tzkt.Api
 
         public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var model = bindingContext.ModelName;
             var hasValue = false;
 
@@ -73,6 +76,8 @@ namespace Tzkt.Api
                     if (addr != null)
                     {
                         var acc = await Accounts.GetAsync(addr);
+                        if (acc == null)
+                            Console.WriteLine($"NULL_ADDRESS {addr}");
                         if (acc != null) _listIn.Add(acc.Id);
                     }
                     else
@@ -99,6 +104,9 @@ namespace Tzkt.Api
                 }
             }
 
+            stopwatch.Stop();
+            Console.WriteLine($"BINDER_OF_ACCOUNTS TOOK {stopwatch.ElapsedMilliseconds}");
+            stopwatch.Reset();
             bindingContext.Result = ModelBindingResult.Success(new AccountParameter
             {
                 Eq = _eq,
