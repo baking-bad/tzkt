@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -1904,8 +1905,10 @@ namespace Tzkt.Api.Controllers
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
-            Symbols quote = Symbols.None) 
+            Symbols quote = Symbols.None)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             #region validate
             if (anyof != null)
             {
@@ -1951,6 +1954,11 @@ namespace Tzkt.Api.Controllers
                 if (target.Eq == -1 || target.In?.Count == 0 && !target.InHasNull)
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
+            
+            stopwatch.Stop();
+            Console.WriteLine($"{stopwatch.ElapsedMilliseconds}");
+            stopwatch.Reset();
+            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
             if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "amount"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
