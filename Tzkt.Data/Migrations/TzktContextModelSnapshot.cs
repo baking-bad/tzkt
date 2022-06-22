@@ -31,9 +31,8 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasMaxLength(36)
-                        .HasColumnType("character(36)")
-                        .IsFixedLength(true);
+                        .HasMaxLength(37)
+                        .HasColumnType("character varying(37)");
 
                     b.Property<long>("Balance")
                         .HasColumnType("bigint");
@@ -71,6 +70,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("RevealsCount")
                         .HasColumnType("integer");
 
+                    b.Property<long>("RollupBonds")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RollupsCount")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Staked")
                         .HasColumnType("boolean");
 
@@ -81,6 +86,33 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("TransactionsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TransferTicketCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupCommitCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupDispatchTicketsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupFinalizeCommitmentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupOriginationCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupRejectionCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupRemoveCommitmentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupReturnBondCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupSubmitBatchCount")
                         .HasColumnType("integer");
 
                     b.Property<byte>("Type")
@@ -329,6 +361,33 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("TransactionOpsCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("TransferTicketOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupCommitOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupDispatchTicketsOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupFinalizeCommitmentOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupOriginationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupRejectionOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupRemoveCommitmentOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupReturnBondOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TxRollupSubmitBatchOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("VotingEpoch")
                         .HasColumnType("integer");
 
@@ -398,6 +457,15 @@ namespace Tzkt.Data.Migrations
                             TokenTransfersCount = 0,
                             TokensCount = 0,
                             TransactionOpsCount = 0,
+                            TransferTicketOpsCount = 0,
+                            TxRollupCommitOpsCount = 0,
+                            TxRollupDispatchTicketsOpsCount = 0,
+                            TxRollupFinalizeCommitmentOpsCount = 0,
+                            TxRollupOriginationOpsCount = 0,
+                            TxRollupRejectionOpsCount = 0,
+                            TxRollupRemoveCommitmentOpsCount = 0,
+                            TxRollupReturnBondOpsCount = 0,
+                            TxRollupSubmitBatchOpsCount = 0,
                             VotingEpoch = -1,
                             VotingPeriod = -1
                         });
@@ -582,9 +650,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ProposalId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Rolls")
-                        .HasColumnType("integer");
-
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
@@ -593,6 +658,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("Vote")
                         .HasColumnType("integer");
+
+                    b.Property<long>("VotingPower")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -821,11 +889,11 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("character(51)")
                         .IsFixedLength(true);
 
-                    b.Property<int>("LBEscapeEma")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("LBEscapeVote")
+                    b.Property<bool?>("LBToggle")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("LBToggleEma")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
@@ -1032,6 +1100,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ResetDeactivation")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SenderCodeHash")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
@@ -1061,6 +1132,9 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("OpHash");
 
                     b.HasIndex("PrevDelegateId");
+
+                    b.HasIndex("SenderCodeHash")
+                        .HasFilter("\"SenderCodeHash\" IS NOT NULL");
 
                     b.HasIndex("SenderId");
 
@@ -1461,6 +1535,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("BigMapUpdates")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ContractCodeHash")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("ContractId")
                         .HasColumnType("integer");
 
@@ -1500,6 +1577,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ScriptId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SenderCodeHash")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
@@ -1526,6 +1606,9 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContractCodeHash")
+                        .HasFilter("\"ContractCodeHash\" IS NOT NULL");
+
                     b.HasIndex("ContractId");
 
                     b.HasIndex("DelegateId");
@@ -1539,6 +1622,9 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("OpHash");
 
                     b.HasIndex("ScriptId");
+
+                    b.HasIndex("SenderCodeHash")
+                        .HasFilter("\"SenderCodeHash\" IS NOT NULL");
 
                     b.HasIndex("SenderId");
 
@@ -1613,14 +1699,14 @@ namespace Tzkt.Data.Migrations
                     b.Property<string>("Metadata")
                         .HasColumnType("jsonb");
 
-                    b.Property<int>("Rolls")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<int>("Upvotes")
                         .HasColumnType("integer");
+
+                    b.Property<long>("VotingPower")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -1659,14 +1745,14 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ProposalId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Rolls")
-                        .HasColumnType("integer");
-
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<long>("VotingPower")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -1776,13 +1862,13 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("character(51)")
                         .IsFixedLength(true);
 
-                    b.Property<int>("LBEscapeThreshold")
-                        .HasColumnType("integer");
-
                     b.Property<int>("LBSubsidy")
                         .HasColumnType("integer");
 
                     b.Property<int>("LBSunsetLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LBToggleThreshold")
                         .HasColumnType("integer");
 
                     b.Property<int>("LastLevel")
@@ -1829,6 +1915,12 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("TokensPerRoll")
                         .HasColumnType("bigint");
+
+                    b.Property<long>("TxRollupCommitmentBond")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TxRollupOriginationSize")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2268,6 +2360,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("TotalFrozen")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("TotalRollupBonds")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Cycle")
@@ -2413,6 +2508,9 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("ContractId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("FirstLevel")
                         .HasColumnType("integer");
 
@@ -2430,6 +2528,9 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("AccountId")
                         .HasFilter("\"Balance\" != '0'");
 
+                    b.HasIndex("ContractId")
+                        .HasFilter("\"Balance\" != '0'");
+
                     b.HasIndex("Id")
                         .IsUnique();
 
@@ -2437,6 +2538,8 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("TokenId")
                         .HasFilter("\"Balance\" != '0'");
+
+                    b.HasIndex("AccountId", "ContractId");
 
                     b.HasIndex("AccountId", "TokenId")
                         .IsUnique();
@@ -2454,6 +2557,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<string>("Amount")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("FromId")
                         .HasColumnType("integer");
@@ -2477,6 +2583,8 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContractId");
 
                     b.HasIndex("FromId")
                         .HasFilter("\"FromId\" is not null");
@@ -2573,6 +2681,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("ResetDeactivation")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SenderCodeHash")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
@@ -2589,6 +2700,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetCodeHash")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TargetId")
@@ -2612,13 +2726,669 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
+                    b.HasIndex("SenderCodeHash")
+                        .HasFilter("\"SenderCodeHash\" IS NOT NULL");
+
                     b.HasIndex("SenderId");
 
                     b.HasIndex("StorageId");
 
+                    b.HasIndex("TargetCodeHash")
+                        .HasFilter("\"TargetCodeHash\" IS NOT NULL");
+
                     b.HasIndex("TargetId");
 
                     b.ToTable("TransactionOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TransferTicketOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Amount")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Entrypoint")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("JsonContent")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<byte[]>("RawContent")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("RawType")
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TicketerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("TargetId");
+
+                    b.HasIndex("TicketerId");
+
+                    b.ToTable("TransferTicketOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupCommitOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Bond")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupCommitOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupDispatchTicketsOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupDispatchTicketsOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupFinalizeCommitmentOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupFinalizeCommitmentOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupOriginationOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupOriginationOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupRejectionOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("CommitterId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Loss")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<long>("Reward")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommitterId");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupRejectionOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupRemoveCommitmentOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupRemoveCommitmentOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupReturnBondOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Bond")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupReturnBondOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupSubmitBatchOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<long?>("AllocationFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BakerFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Counter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Errors")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GasLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GasUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength(true);
+
+                    b.Property<int?>("RollupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("StorageFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StorageLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StorageUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OpHash");
+
+                    b.HasIndex("RollupId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("TxRollupSubmitBatchOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.VotingPeriod", b =>
@@ -2649,8 +3419,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("NayBallots")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("NayRolls")
-                        .HasColumnType("integer");
+                    b.Property<long?>("NayVotingPower")
+                        .HasColumnType("bigint");
 
                     b.Property<int?>("ParticipationEma")
                         .HasColumnType("integer");
@@ -2658,8 +3428,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("PassBallots")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("PassRolls")
-                        .HasColumnType("integer");
+                    b.Property<long?>("PassVotingPower")
+                        .HasColumnType("bigint");
 
                     b.Property<int?>("ProposalsCount")
                         .HasColumnType("integer");
@@ -2670,17 +3440,17 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("Supermajority")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TopRolls")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("TopUpvotes")
                         .HasColumnType("integer");
+
+                    b.Property<long?>("TopVotingPower")
+                        .HasColumnType("bigint");
 
                     b.Property<int?>("TotalBakers")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TotalRolls")
-                        .HasColumnType("integer");
+                    b.Property<long?>("TotalVotingPower")
+                        .HasColumnType("bigint");
 
                     b.Property<int?>("UpvotesQuorum")
                         .HasColumnType("integer");
@@ -2688,8 +3458,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("YayBallots")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("YayRolls")
-                        .HasColumnType("integer");
+                    b.Property<long?>("YayVotingPower")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -2722,11 +3492,11 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Period")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Rolls")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<long>("VotingPower")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -2746,7 +3516,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("CreatorId")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasColumnType("integer")
+                        .HasColumnName("CreatorId");
 
                     b.Property<byte>("Kind")
                         .HasColumnType("smallint");
@@ -2783,6 +3555,20 @@ namespace Tzkt.Data.Migrations
                         .HasFilter("\"Type\" = 2");
 
                     b.HasDiscriminator().HasValue((byte)2);
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.Rollup", b =>
+                {
+                    b.HasBaseType("Tzkt.Data.Models.Account");
+
+                    b.Property<int>("CreatorId")
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasColumnType("integer")
+                        .HasColumnName("CreatorId");
+
+                    b.HasIndex("CreatorId");
+
+                    b.HasDiscriminator().HasValue((byte)4);
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.User", b =>
@@ -3398,6 +4184,186 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Target");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.TransferTicketOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TransferTicketOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupCommitOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupCommitOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupDispatchTicketsOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupDispatchTicketsOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupFinalizeCommitmentOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupFinalizeCommitmentOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupOriginationOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupOriginationOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupRejectionOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupRejectionOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupRemoveCommitmentOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupRemoveCommitmentOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupReturnBondOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupReturnBondOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TxRollupSubmitBatchOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("TxRollupSubmitBatchOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Account", "Creator")
@@ -3465,6 +4431,24 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("SetDepositsLimits");
 
                     b.Navigation("Transactions");
+
+                    b.Navigation("TransferTicketOps");
+
+                    b.Navigation("TxRollupCommitOps");
+
+                    b.Navigation("TxRollupDispatchTicketsOps");
+
+                    b.Navigation("TxRollupFinalizeCommitmentOps");
+
+                    b.Navigation("TxRollupOriginationOps");
+
+                    b.Navigation("TxRollupRejectionOps");
+
+                    b.Navigation("TxRollupRemoveCommitmentOps");
+
+                    b.Navigation("TxRollupReturnBondOps");
+
+                    b.Navigation("TxRollupSubmitBatchOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
