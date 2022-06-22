@@ -89,7 +89,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -320,12 +320,12 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 ## Install Tzkt Indexer and API for testnets
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
- - Hangzhounet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_hangzhou2net.backup
-   - RPC node: https://rpc.tzkt.io/hangzhou2net/
  - Ithacanet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.8_ithacanet.backup
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_ithacanet.backup
    - RPC node: https://rpc.tzkt.io/ithacanet/
+ - Jakartanet:
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_jakartanet.backup
+   - RPC node: https://rpc.tzkt.io/jakartanet/
 
 ### Testnet installation using docker containers
 
@@ -335,12 +335,12 @@ First of all, install `git`, `make`, `docker`, `docker-compose`, then run the fo
 git clone https://github.com/baking-bad/tzkt.git
 cd tzkt/
 
-make hangzhou-init #run this command if you want to restore the DB from the latest snapshot
-make hangzhou-start
+make jakarta-init #run this command if you want to restore the DB from the latest snapshot
+make jakarta-start
 
 curl http://127.0.0.1:5020/v1/head 
 
-make hangzhou-stop
+make jakarta-stop
 ````
 
 ## Have a question?

@@ -189,7 +189,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="index">Voting period index starting from zero</param>
         /// <param name="status">Filters voters by status (`none`, `upvoted`, `voted_yay`, `voted_nay`, `voted_pass`)</param>
-        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `VvtingPower`.</param>
+        /// <param name="sort">Sorts voters by specified field. Supported fields: `id` (default), `votingPower`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>

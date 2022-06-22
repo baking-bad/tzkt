@@ -119,7 +119,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 MaxEndorsingReward = prev.MaxEndorsingReward,
                 MaxSlashingPeriod = prev.MaxSlashingPeriod,
                 MinParticipationDenominator = prev.MinParticipationDenominator,
-                MinParticipationNumerator = prev.MinParticipationNumerator
+                MinParticipationNumerator = prev.MinParticipationNumerator,
+                TxRollupCommitmentBond = prev.TxRollupCommitmentBond,
+                TxRollupOriginationSize = prev.TxRollupOriginationSize
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
