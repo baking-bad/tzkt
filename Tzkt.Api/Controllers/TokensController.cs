@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
@@ -14,11 +15,13 @@ namespace Tzkt.Api.Controllers
     {
         readonly TokensRepository Tokens;
         readonly StateCache State;
+        readonly ResponseCacheService ResponseCache;
 
-        public TokensController(TokensRepository tokens, StateCache state)
+        public TokensController(TokensRepository tokens, StateCache state, ResponseCacheService responseCache)
         {
             Tokens = tokens;
             State = state;
+            ResponseCache = responseCache;
         }
 
         #region tokens
@@ -84,8 +87,13 @@ namespace Tzkt.Api.Controllers
         /// <param name="filter">Filter</param>
         /// <returns></returns>
         [HttpGet("balances/count")]
-        public Task<int> GetTokenBalancesCount([FromQuery] TokenBalanceFilter filter)
+        public async Task<ActionResult<int>> GetTokenBalancesCount([FromQuery] TokenBalanceFilter filter)
         {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
             if (filter.account != null ||
                 filter.balance != null ||
                 filter.firstTime != null ||
@@ -98,9 +106,13 @@ namespace Tzkt.Api.Controllers
                 filter.token.tokenId != null ||
                 filter.token.standard != null ||
                 filter.token.metadata != null)
-                return Tokens.GetTokenBalancesCount(filter);
+            {
+                var res = await Tokens.GetTokenBalancesCount(filter);
+                cached = ResponseCache.Set(query, res);
+                return this.Bytes(cached);
+            }
 
-            return Task.FromResult(State.Current.TokenBalancesCount);
+            return Ok(State.Current.TokenBalancesCount);
         }
 
         /// <summary>
@@ -119,14 +131,27 @@ namespace Tzkt.Api.Controllers
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection)
         {
-            if (selection.select == null)
-                return Ok(await Tokens.GetTokenBalances(filter, pagination));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, 
+                ("filter", filter), ("pagination", pagination), ("selection", selection));
 
-            return Ok(new SelectionResponse
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+            
+            object res;
+            if (selection.select == null)
             {
-                Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                Rows = await Tokens.GetTokenBalances(filter, pagination, selection.select.Fields ?? selection.select.Values)
-            });
+                res = await Tokens.GetTokenBalances(filter, pagination);
+            }
+            else
+            {
+                res = new SelectionResponse
+                {
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await Tokens.GetTokenBalances(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                };
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 

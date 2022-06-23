@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
@@ -16,17 +17,20 @@ namespace Tzkt.Api.Controllers
     [Route("v1/accounts")]
     public class AccountsController : ControllerBase
     {
-        private readonly AccountRepository Accounts;
-        private readonly BalanceHistoryRepository History;
-        private readonly ReportRepository Reports;
-        private readonly StateCache State;
+        readonly AccountRepository Accounts;
+        readonly BalanceHistoryRepository History;
+        readonly ReportRepository Reports;
+        readonly StateCache State;
+        readonly ResponseCacheService ResponseCache;
 
-        public AccountsController(AccountRepository accounts, BalanceHistoryRepository history, ReportRepository reports, StateCache state)
+
+        public AccountsController(AccountRepository accounts, BalanceHistoryRepository history, ReportRepository reports, StateCache state, ResponseCacheService responseCache)
         {
             Accounts = accounts;
             History = history;
             Reports = reports;
             State = state;
+            ResponseCache = responseCache;
         }
 
         /// <summary>
@@ -83,29 +87,40 @@ namespace Tzkt.Api.Controllers
                 type = new AccountTypeParameter { Eq = 2 };
             #endregion
             
-            if (select == null)
-                return Ok(await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("id", id),  ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
+                ("lastActivity", lastActivity), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]));
+                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]);
                 else
-                    return Ok(await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values));
+                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]));
+                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -120,7 +135,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="staked">Filters accounts by participation in staking</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetCount(
+        public async Task<ActionResult<int>> GetCount(
             AccountTypeParameter type,
             ContractKindParameter kind,
             Int64Parameter balance,
@@ -128,13 +143,20 @@ namespace Tzkt.Api.Controllers
         {
             #region optimize
             if (type == null && kind == null && balance == null && staked == null)
-                return Task.FromResult(State.Current.AccountsCount);
+                return Ok(State.Current.AccountsCount);
 
             if (kind?.Eq != null && type == null)
                 type = new AccountTypeParameter { Eq = 2 };
             #endregion
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("type", type), ("kind", kind), ("balance", balance), ("staked", staked));  
 
-            return Accounts.GetCount(type, kind, balance, staked);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetCount(type, kind, balance, staked);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -147,9 +169,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="metadata">Include or not account metadata</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Account> GetByAddress([Required][Address] string address, bool metadata = false)
+        public async Task<ActionResult<Account>> GetByAddress(
+            [Required][Address] string address,
+            bool metadata = false)
         {
-            return Accounts.Get(address, metadata);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("metadata", metadata));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.Get(address, metadata);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -174,8 +206,16 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("id", "balance", "creationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sort", sort), ("offset", offset), ("limit", limit));  
 
-            return Ok(await Accounts.GetRelatedContracts(address, sort, offset, limit));
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetRelatedContracts(address, sort, offset, limit);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -206,8 +246,17 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("balance", "delegationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("type", type), ("balance", balance), ("delegationLevel", delegationLevel),
+                ("sort", sort), ("offset", offset), ("limit", limit));  
 
-            return Ok(await Accounts.GetDelegators(address, type, balance, delegationLevel, sort, offset, limit));
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetDelegators(address, type, balance, delegationLevel, sort, offset, limit);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -383,8 +432,20 @@ namespace Tzkt.Api.Controllers
             var _offset = lastId != null
                 ? new OffsetParameter { Cr = lastId }
                 : null;
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
+                ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
+                ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
+                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("hasInternals", hasInternals),
+                ("status", status), ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));  
 
-            return Ok(await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote));
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -396,9 +457,16 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <returns></returns>
         [HttpGet("{address}/metadata")]
-        public Task<ProfileMetadata> GetMetadata([Required][Address] string address)
+        public async Task<ActionResult<ProfileMetadata>> GetMetadata([Required][Address] string address)
         {
-            return Accounts.GetMetadata(address);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetMetadata(address);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -410,12 +478,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <returns></returns>
         [HttpGet("{address}/counter")]
-        public async Task<int> GetCounter([Required][Address] string address)
+        public async Task<ActionResult<int>> GetCounter([Required][Address] string address)
         {
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+            
             var rawAccount = await Accounts.GetRawAsync(address);
-            return rawAccount == null || rawAccount is RawUser && rawAccount.Balance == 0
+            var res = rawAccount == null || rawAccount is RawUser && rawAccount.Balance == 0
                 ? State.Current.ManagerCounter
                 : rawAccount.Counter;
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+            
+
         }
 
         /// <summary>
@@ -427,9 +505,16 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <returns></returns>
         [HttpGet("{address}/balance")]
-        public async Task<long> GetBalance([Required][Address] string address)
-        {
-            return (await Accounts.GetRawAsync(address))?.Balance ?? 0;
+        public async Task<ActionResult<long>> GetBalance([Required][Address] string address)
+        {            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = (await Accounts.GetRawAsync(address))?.Balance ?? 0;
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -442,9 +527,18 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Block height at which you want to know account balance</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{level:int}")]
-        public Task<long> GetBalanceAtLevel([Required][Address] string address, [Min(0)] int level)
-        {
-            return History.Get(address, level);
+        public async Task<ActionResult<long>> GetBalanceAtLevel(
+            [Required][Address] string address,
+            [Min(0)] int level)
+        {            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await History.Get(address, level);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -457,9 +551,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="datetime">Datetime at which you want to know account balance (e.g. `2020-01-01`, or `2019-12-30T23:42:59Z`)</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{datetime:DateTime}")]
-        public Task<long> GetBalanceAtDate([Required][Address] string address, DateTimeOffset datetime)
-        {
-            return History.Get(address, datetime.DateTime);
+        public async Task<ActionResult<long>> GetBalanceAtDate(
+            [Required][Address] string address,
+            DateTimeOffset datetime)
+        {            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+            ("datetime", datetime));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await History.Get(address, datetime.DateTime);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -491,29 +595,39 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await History.Get(address, step ?? 1, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("step", step), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await History.Get(address, step ?? 1, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values[0], quote));
+                    res = await History.Get(address, step ?? 1, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Values, quote));
+                    res = await History.Get(address, step ?? 1, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await History.Get(address, step ?? 1, sort, offset, limit, select.Fields[0], quote));
+                    res = await History.Get(address, step ?? 1, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await History.Get(address, step ?? 1, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>

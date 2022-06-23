@@ -34,7 +34,9 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return Fields != null
+                ? $"{name}={string.Join(",", Fields.Select(x => $"{x.Full} as {x.Alias}"))}"
+                : $"{name}={string.Join(",", Values.Select(x => $"{x.Full} as {x.Alias}"))}";
         }
     }
 

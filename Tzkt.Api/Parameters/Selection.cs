@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api
+﻿using Tzkt.Api.Services;
+
+namespace Tzkt.Api
 {
     public class Selection : INormalizable
     {
@@ -13,7 +15,7 @@
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return ResponseCacheService.BuildKey("", ("select", select));
         }
     }
 }

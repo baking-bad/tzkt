@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api
+﻿using Tzkt.Api.Services;
+
+namespace Tzkt.Api
 {
     public class TokenFilter : INormalizable
     {
@@ -60,7 +62,9 @@
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return ResponseCacheService.BuildKey("",
+                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("firstLevel", firstLevel), 
+                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("metadata", metadata));
         }
     }
 }

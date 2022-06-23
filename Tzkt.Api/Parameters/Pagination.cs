@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -25,7 +26,7 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return ResponseCacheService.BuildKey("", ("sort", sort), ("offset", offset), ("limit", limit));
         }
     }
 }
