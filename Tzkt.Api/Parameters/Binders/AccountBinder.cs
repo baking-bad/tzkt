@@ -76,8 +76,6 @@ namespace Tzkt.Api
                     if (addr != null)
                     {
                         var acc = await Accounts.GetAsync(addr);
-                        if (acc == null)
-                            Console.WriteLine($"NULL_ADDRESS {addr}");
                         if (acc != null) _listIn.Add(acc.Id);
                     }
                     else
