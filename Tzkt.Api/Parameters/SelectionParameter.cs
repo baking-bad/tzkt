@@ -34,9 +34,7 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            return Fields != null
-                ? $"{name}={string.Join(",", Fields.Select(x => $"{x.Full} as {x.Alias}"))}"
-                : $"{name}={string.Join(",", Values.Select(x => $"{x.Full} as {x.Alias}"))}";
+            return $"{name}={string.Join(",", (Fields ?? Values).Select(x => $"{x.Full} as {x.Alias}"))}";
         }
     }
 

@@ -57,7 +57,6 @@ namespace Tzkt.Api
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("account", account), ("token", token), ("balance", balance),
                 ("firstLevel", firstLevel), ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime));
-
         }
     }
 }

@@ -89,11 +89,6 @@ namespace Tzkt.Api.Controllers
         [HttpGet("balances/count")]
         public async Task<ActionResult<int>> GetTokenBalancesCount([FromQuery] TokenBalanceFilter filter)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
             if (filter.account != null ||
                 filter.balance != null ||
                 filter.firstTime != null ||
@@ -107,6 +102,11 @@ namespace Tzkt.Api.Controllers
                 filter.token.standard != null ||
                 filter.token.metadata != null)
             {
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+                if (ResponseCache.TryGet(query, out var cached))
+                    return this.Bytes(cached);
+                
                 var res = await Tokens.GetTokenBalancesCount(filter);
                 cached = ResponseCache.Set(query, res);
                 return this.Bytes(cached);

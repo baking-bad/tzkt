@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -20,8 +19,6 @@ namespace Tzkt.Api
 
         public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
             var model = bindingContext.ModelName;
             var hasValue = false;
 
@@ -102,9 +99,6 @@ namespace Tzkt.Api
                 }
             }
 
-            stopwatch.Stop();
-            Console.WriteLine($"BINDER_OF_ACCOUNTS TOOK {stopwatch.ElapsedMilliseconds}");
-            stopwatch.Reset();
             bindingContext.Result = ModelBindingResult.Success(new AccountParameter
             {
                 Eq = _eq,

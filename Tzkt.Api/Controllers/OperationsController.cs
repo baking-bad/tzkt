@@ -1084,7 +1084,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_endorsing/{hash}")]
-        public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsingByHash(
+            [Required][OpHash] string hash, 
+            Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("quote", quote));  
@@ -1905,10 +1907,8 @@ namespace Tzkt.Api.Controllers
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
-            Symbols quote = Symbols.None)
+            Symbols quote = Symbols.None) 
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
             #region validate
             if (anyof != null)
             {
@@ -1954,11 +1954,6 @@ namespace Tzkt.Api.Controllers
                 if (target.Eq == -1 || target.In?.Count == 0 && !target.InHasNull)
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
-            
-            stopwatch.Stop();
-            Console.WriteLine($"{stopwatch.ElapsedMilliseconds}");
-            stopwatch.Reset();
-            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
             if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee", "allocationFee", "amount"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");

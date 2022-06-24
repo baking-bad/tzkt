@@ -74,7 +74,6 @@ namespace Tzkt.Api
         /// </summary>
         public List<string> Ni { get; set; }
 
-
         public string Normalize(string name)
         {
             var sb = new StringBuilder();

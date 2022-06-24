@@ -23,7 +23,6 @@ namespace Tzkt.Api.Controllers
         readonly StateCache State;
         readonly ResponseCacheService ResponseCache;
 
-
         public AccountsController(AccountRepository accounts, BalanceHistoryRepository history, ReportRepository reports, StateCache state, ResponseCacheService responseCache)
         {
             Accounts = accounts;
@@ -492,8 +491,6 @@ namespace Tzkt.Api.Controllers
                 : rawAccount.Counter;
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
-            
-
         }
 
         /// <summary>
@@ -556,7 +553,7 @@ namespace Tzkt.Api.Controllers
             DateTimeOffset datetime)
         {            
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-            ("datetime", datetime));  
+                ("datetime", datetime));  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
