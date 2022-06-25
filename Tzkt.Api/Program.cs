@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api
@@ -100,7 +101,9 @@ namespace Tzkt.Api
         {
             using var scope = host.Services.CreateScope();
             var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var state = scope.ServiceProvider.GetRequiredService<StateCache>();
             config.ValidateAuthConfig();
+            config.ValidateTezRpcConfig(state);
             return host;
         }
     }
