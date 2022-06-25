@@ -21,8 +21,13 @@ namespace Tzkt.Api.Services
             State = state;
             Logger = logger;
             var nodeConf = config.GetTezRpcConfig();
-            Rpc = new TezosRpc($"{nodeConf.Endpoint.TrimEnd('/')}/", nodeConf.Timeout);
-            var chainId = Rpc.Blocks.Head.Header.GetAsync().Result.chain_id.ToString();
+            Rpc = new TezosRpc($"{nodeConf.Endpoint}", nodeConf.Timeout);
+            InitializeAsync();
+        }
+
+        async Task InitializeAsync()
+        {
+            var chainId = (await Rpc.Blocks.Head.Header.GetAsync()).chain_id.ToString();
             if (chainId != State.Current.ChainId)
             {
                 throw new ArgumentException($"The API chain ID {chainId.ToString()} doesn't match the indexer chain ID {State.Current.ChainId}." +

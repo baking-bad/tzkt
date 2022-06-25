@@ -49,8 +49,4 @@
     <Reference Include="../libs/System.Text.Json/net5.0/System.Text.Json.dll" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\Send" />
-  </ItemGroup>
-
 </Project>
