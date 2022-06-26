@@ -25,13 +25,19 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(RevelationPenaltyOperation))]
     [KnownType(typeof(BakingOperation))]
     [KnownType(typeof(EndorsingRewardOperation))]
+    [KnownType(typeof(TransferTicketOperation))]
+    [KnownType(typeof(TxRollupCommitOperation))]
+    [KnownType(typeof(TxRollupDispatchTicketsOperation))]
+    [KnownType(typeof(TxRollupFinalizeCommitmentOperation))]
+    [KnownType(typeof(TxRollupOriginationOperation))]
+    [KnownType(typeof(TxRollupRejectionOperation))]
+    [KnownType(typeof(TxRollupRemoveCommitmentOperation))]
+    [KnownType(typeof(TxRollupReturnBondOperation))]
+    [KnownType(typeof(TxRollupSubmitBatchOperation))]
     public abstract class Operation
     {
         /// <summary>
-        /// Type of the operation (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`,
-        /// `double_baking`, `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `delegation`,
-        /// `origination`, `transaction`, `reveal`, `register_constant`, `set_deposits_limit`, `migration`,
-        /// `revelation_penalty`, `baking`, `endorsing_reward`)
+        /// Type of the operation
         /// </summary>
         public abstract string Type { get; }
 
@@ -103,6 +109,33 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(EndorsingRewardOperation))
                 return OpTypes.EndorsingReward;
+
+            if (type == typeof(TransferTicketOperation))
+                return OpTypes.TransferTicket;
+
+            if (type == typeof(TxRollupCommitOperation))
+                return OpTypes.TxRollupCommit;
+
+            if (type == typeof(TxRollupDispatchTicketsOperation))
+                return OpTypes.TxRollupDispatchTickets;
+
+            if (type == typeof(TxRollupFinalizeCommitmentOperation))
+                return OpTypes.TxRollupFinalizeCommitment;
+
+            if (type == typeof(TxRollupOriginationOperation))
+                return OpTypes.TxRollupOrigination;
+
+            if (type == typeof(TxRollupRejectionOperation))
+                return OpTypes.TxRollupRejection;
+
+            if (type == typeof(TxRollupRemoveCommitmentOperation))
+                return OpTypes.TxRollupRemoveCommitment;
+
+            if (type == typeof(TxRollupReturnBondOperation))
+                return OpTypes.TxRollupReturnBond;
+
+            if (type == typeof(TxRollupSubmitBatchOperation))
+                return OpTypes.TxRollupSubmitBatch;
 
             return base.GetDiscriminatorValue(type);
         }

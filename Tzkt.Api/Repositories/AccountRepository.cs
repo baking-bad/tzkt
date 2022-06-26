@@ -307,6 +307,7 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
+                    "rollupBonds" => ("RollupBonds", "RollupBonds"),
                     "firstActivity" => ("FirstLevel", "FirstLevel"),
                     "lastActivity" => ("LastLevel", "LastLevel"),
                     "numTransactions" => ("TransactionsCount", "TransactionsCount"),
@@ -647,6 +648,7 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
+                    "rollupBonds" => ("RollupBonds", "RollupBonds"),
                     "firstActivity" => ("FirstLevel", "FirstLevel"),
                     "lastActivity" => ("LastLevel", "LastLevel"),
                     "numTransactions" => ("TransactionsCount", "TransactionsCount"),
@@ -1048,6 +1050,7 @@ namespace Tzkt.Api.Repositories
                 .Take(sort, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
+                    "rollupBonds" => ("RollupBonds", "RollupBonds"),
                     "firstActivity" => ("FirstLevel", "FirstLevel"),
                     "lastActivity" => ("LastLevel", "LastLevel"),
                     "numTransactions" => ("TransactionsCount", "TransactionsCount"),

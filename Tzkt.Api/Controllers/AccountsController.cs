@@ -43,7 +43,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="staked">Filters accounts by participation in staking</param>
         /// <param name="lastActivity">Filters accounts by last activity level (where the account was updated)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`, `numContracts`.</param>
+        /// <param name="sort">Sorts delegators by specified field. Supported fields: `id` (default), `balance`, `rollupBonds`, `firstActivity`, `lastActivity`, `numTransactions`, `numContracts`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -74,7 +74,7 @@ namespace Tzkt.Api.Controllers
                     return Ok(Enumerable.Empty<Account>());
             }
 
-            if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions", "numContracts"))
+            if (sort != null && !sort.Validate("id", "balance", "rollupBonds", "firstActivity", "lastActivity", "numTransactions", "numContracts"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
