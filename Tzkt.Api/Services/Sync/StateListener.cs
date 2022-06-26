@@ -211,6 +211,7 @@ namespace Tzkt.Api.Services.Sync
                     }
                 }
 
+                OutputCache.Clear();
                 State.Update(newState, changes);
                 #endregion
 
