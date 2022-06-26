@@ -38,7 +38,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         diff.Ptr = TempPtrs[diff.Ptr];
                     }
                 }
-                else if (diff is CopyDiff copy && copy.SourcePtr < 0)
+                if (diff is CopyDiff copy && copy.SourcePtr < 0)
                 {
                     copy.SourcePtr = TempPtrs[copy.SourcePtr];
                 }
