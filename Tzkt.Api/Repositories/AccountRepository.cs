@@ -1798,6 +1798,10 @@ namespace Tzkt.Api.Repositories
                 case RawRollup rollup:
                     var _rollup = new AccountParameter { Eq = rollup.Id };
 
+                    var rollupTransactionOps = rollup.TransactionsCount> 0 && types.Contains(OpTypes.Transaction)
+                        ? Operations.GetTransactions(null, null, null, _rollup, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
                     var rollupTxRollupCommitOps = rollup.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
                         ? Operations.GetTxRollupCommitOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
@@ -1831,6 +1835,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
 
                     await Task.WhenAll(
+                        rollupTransactionOps,
                         rollupTxRollupCommitOps,
                         rollupTxRollupDispatchTicketsOps,
                         rollupTxRollupFinalizeCommitmentOps,
@@ -1840,6 +1845,7 @@ namespace Tzkt.Api.Repositories
                         rollupTxRollupReturnBondOps,
                         rollupTxRollupSubmitBatchOps);
 
+                    result.AddRange(rollupTransactionOps.Result);
                     result.AddRange(rollupTxRollupCommitOps.Result);
                     result.AddRange(rollupTxRollupDispatchTicketsOps.Result);
                     result.AddRange(rollupTxRollupFinalizeCommitmentOps.Result);
