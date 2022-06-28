@@ -32,6 +32,15 @@ namespace Tzkt.Api.Repositories
             if (account.TransactionsCount > 0) UnionTransactions(sql);
             if (account.RevealsCount > 0) UnionReveals(sql);
             if (account.MigrationsCount > 0) UnionMigrations(sql);
+            if (account.TxRollupCommitCount > 0) UnionTxRollupCommitOps(sql);
+            if (account.TxRollupDispatchTicketsCount > 0) UnionTxRollupDispatchTicketsOps(sql);
+            if (account.TxRollupFinalizeCommitmentCount > 0) UnionTxRollupFinalizeCommitmentOps(sql);
+            if (account.TxRollupOriginationCount > 0) UnionTxRollupOriginationOps(sql);
+            if (account.TxRollupRejectionCount > 0) UnionTxRollupRejectionOps(sql);
+            if (account.TxRollupRemoveCommitmentCount > 0) UnionTxRollupRemoveCommitmentOps(sql);
+            if (account.TxRollupReturnBondCount > 0) UnionTxRollupReturnBondOps(sql);
+            if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(sql);
+            if (account.TransferTicketCount > 0) UnionTransferTicketOps(sql);
 
             if (account is RawUser user)
             {
@@ -145,6 +154,15 @@ namespace Tzkt.Api.Repositories
             if (account.TransactionsCount > 0) UnionTransactions(sql);
             if (account.RevealsCount > 0) UnionReveals(sql);
             if (account.MigrationsCount > 0) UnionMigrations(sql);
+            if (account.TxRollupCommitCount > 0) UnionTxRollupCommitOps(sql);
+            if (account.TxRollupDispatchTicketsCount > 0) UnionTxRollupDispatchTicketsOps(sql);
+            if (account.TxRollupFinalizeCommitmentCount > 0) UnionTxRollupFinalizeCommitmentOps(sql);
+            if (account.TxRollupOriginationCount > 0) UnionTxRollupOriginationOps(sql);
+            if (account.TxRollupRejectionCount > 0) UnionTxRollupRejectionOps(sql);
+            if (account.TxRollupRemoveCommitmentCount > 0) UnionTxRollupRemoveCommitmentOps(sql);
+            if (account.TxRollupReturnBondCount > 0) UnionTxRollupReturnBondOps(sql);
+            if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(sql);
+            if (account.TransferTicketCount > 0) UnionTransferTicketOps(sql);
 
             if (account is RawUser user)
             {
@@ -292,6 +310,15 @@ namespace Tzkt.Api.Repositories
             if (account.TransactionsCount > 0) UnionTransactions(sql);
             if (account.RevealsCount > 0) UnionReveals(sql);
             if (account.MigrationsCount > 0) UnionMigrations(sql);
+            if (account.TxRollupCommitCount > 0) UnionTxRollupCommitOps(sql);
+            if (account.TxRollupDispatchTicketsCount > 0) UnionTxRollupDispatchTicketsOps(sql);
+            if (account.TxRollupFinalizeCommitmentCount > 0) UnionTxRollupFinalizeCommitmentOps(sql);
+            if (account.TxRollupOriginationCount > 0) UnionTxRollupOriginationOps(sql);
+            if (account.TxRollupRejectionCount > 0) UnionTxRollupRejectionOps(sql);
+            if (account.TxRollupRemoveCommitmentCount > 0) UnionTxRollupRemoveCommitmentOps(sql);
+            if (account.TxRollupReturnBondCount > 0) UnionTxRollupReturnBondOps(sql);
+            if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(sql);
+            if (account.TransferTicketCount > 0) UnionTransferTicketOps(sql);
 
             if (account is RawUser user)
             {
@@ -1078,6 +1105,275 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void UnionTxRollupOriginationOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"22 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""AllocationFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupOriginationOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""AllocationFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionTxRollupSubmitBatchOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"23 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupSubmitBatchOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionTxRollupCommitOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"24 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupCommitOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionTxRollupFinalizeCommitmentOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"25 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupFinalizeCommitmentOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionTxRollupRemoveCommitmentOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"26 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupRemoveCommitmentOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionTxRollupReturnBondOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"27 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupReturnBondOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionTxRollupRejectionOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region sender
+            sql.Append(@"28 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"""Reward"" as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupRejectionOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region committer
+            sql.Append(@"28 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"""Loss"" as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupRejectionOps"" ");
+            sql.Append(@"WHERE ""CommitterId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
+        void UnionTxRollupDispatchTicketsOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"29 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TxRollupDispatchTicketsOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionTransferTicketOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"30 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""TransferTicketOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
         void UnionRevelationPenalties(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1159,6 +1455,16 @@ namespace Tzkt.Api.Repositories
             "endorsing reward",     // 19
             "double preendorsing",  // 20
             "set deposits limit",   // 21
+            
+            "tx rollup origination",            // 22
+            "tx rollup submit batch",           // 23
+            "tx rollup commit",                 // 24
+            "tx rollup return bond",            // 25
+            "tx rollup finalize commitment",    // 26
+            "tx rollup remove commitment",      // 27
+            "tx rollup rejection",              // 28
+            "tx rollup dispatch tickets",       // 29
+            "transfer ticket",                  // 30
         };
     }
 }

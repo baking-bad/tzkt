@@ -10,8 +10,8 @@
             "NetXz969SFaFn8k" => "granadanet",
             "NetXuXoGoLxNK6o" => "hangzhounet",
             "NetXZSsxBpMQeAT" => "hangzhou2net",
-            "NetXnHfVqm9iesp" => "ithacanet",
             "NetXLH1uAxK7CCh" => "jakartanet",
+            "NetXnHfVqm9iesp" => "ghostnet",
             _ => "private"
         };
     }
