@@ -320,9 +320,9 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 ## Install Tzkt Indexer and API for testnets
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
- - Ithacanet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_ithacanet.backup
-   - RPC node: https://rpc.tzkt.io/ithacanet/
+ - Ghostnet:
+   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_ghostnet.backup
+   - RPC node: https://rpc.tzkt.io/ghostnet/
  - Jakartanet:
    - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_jakartanet.backup
    - RPC node: https://rpc.tzkt.io/jakartanet/
@@ -335,12 +335,12 @@ First of all, install `git`, `make`, `docker`, `docker-compose`, then run the fo
 git clone https://github.com/baking-bad/tzkt.git
 cd tzkt/
 
-make jakarta-init #run this command if you want to restore the DB from the latest snapshot
-make jakarta-start
+make ghost-init #run this command if you want to restore the DB from the latest snapshot
+make ghost-start
 
-curl http://127.0.0.1:5020/v1/head 
+curl http://127.0.0.1:5010/v1/head 
 
-make jakarta-stop
+make ghost-stop
 ````
 
 ## Have a question?
