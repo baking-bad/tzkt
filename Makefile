@@ -44,7 +44,29 @@ api-image:
 
 sync-image:
 	docker build -t bakingbad/tzkt-sync:latest -f ./Tzkt.Sync/Dockerfile .
+
+ghost-init:
+	docker-compose -f docker-compose.ghost.yml up   -d ghost-db
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt update
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt install -y wget
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_ghostnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db rm tzkt_db.backup
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt autoremove --purge -y wget
+	docker-compose pull	
 	
+ghost-start:
+	docker-compose -f docker-compose.ghost.yml up -d
+
+ghost-stop:
+	docker-compose -f docker-compose.ghost.yml down
+
+ghost-db-start:
+	docker-compose -f docker-compose.ghost.yml up -d ghost-db
+
 jakarta-init:
 	docker-compose -f docker-compose.jakarta.yml up   -d jakarta-db
 	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db psql -U tzkt postgres -c '\l'
@@ -66,25 +88,3 @@ jakarta-stop:
 
 jakarta-db-start:
 	docker-compose -f docker-compose.jakarta.yml up -d jakarta-db
-	
-ithaca-init:
-	docker-compose -f docker-compose.ithaca.yml up   -d ithaca-db
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt update
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt install -y wget
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_ithacanet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db rm tzkt_db.backup
-	docker-compose -f docker-compose.ithaca.yml exec -T ithaca-db apt autoremove --purge -y wget
-	docker-compose pull	
-	
-ithaca-start:
-	docker-compose -f docker-compose.ithaca.yml up -d
-
-ithaca-stop:
-	docker-compose -f docker-compose.ithaca.yml down
-
-ithaca-db-start:
-	docker-compose -f docker-compose.ithaca.yml up -d ithaca-db
