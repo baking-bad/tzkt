@@ -14,7 +14,10 @@ namespace Tzkt.Sync.Protocols.Proto13
                 return base.GetSampler(selection, false);
 
             var sorted = selection.OrderByDescending(x =>
-                Base58.Parse(Cache.Accounts.GetDelegate(x.id).Address), new BytesComparer());
+            {
+                var baker = Cache.Accounts.GetDelegate(x.id);
+                return new byte[] { (byte)baker.PublicKey[0] }.Concat(Base58.Parse(baker.Address));
+            }, new BytesComparer());
 
             return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
         }
