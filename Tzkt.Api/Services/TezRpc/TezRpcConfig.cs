@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Netezos.Rpc;
 using Tzkt.Api.Services.Cache;
 
@@ -17,11 +18,11 @@ namespace Tzkt.Api.Services
             return config.GetSection("TezRpc")?.Get<TezRpcConfig>() ?? new TezRpcConfig();
         }
 
-        public static void ValidateTezRpcConfig(this IConfiguration config, StateCache state)
+        public static async Task  ValidateTezRpcConfig(this IConfiguration config, StateCache state)
         {
             var nodeConf = config.GetTezRpcConfig();
             var rpc = new TezosRpc($"{nodeConf.Endpoint}", nodeConf.Timeout);
-            var chainId = (rpc.Blocks.Head.Header.GetAsync().Result).chain_id.ToString();
+            var chainId = (await rpc.Blocks.Head.Header.GetAsync()).chain_id.ToString();
             if (chainId != state.Current.ChainId)
             {
                 throw new ConfigurationException($"The API chain ID {chainId.ToString()} doesn't match the indexer chain ID {state.Current.ChainId}." +

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,9 +18,9 @@ namespace Tzkt.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Check().Init().Run();
+           (await CreateHostBuilder(args).Build().Check()).Init().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -97,13 +98,13 @@ namespace Tzkt.Api
             }
         }
         
-        public static IHost Check(this IHost host)
+        public static async Task<IHost> Check(this IHost host)
         {
             using var scope = host.Services.CreateScope();
             var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
             var state = scope.ServiceProvider.GetRequiredService<StateCache>();
             config.ValidateAuthConfig();
-            config.ValidateTezRpcConfig(state);
+            await config.ValidateTezRpcConfig(state);
             return host;
         }
     }
