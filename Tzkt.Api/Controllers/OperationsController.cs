@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using NSwag.Annotations;
 
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
@@ -16,13 +18,15 @@ namespace Tzkt.Api.Controllers
     [Route("v1/operations")]
     public class OperationsController : ControllerBase
     {
-        private readonly OperationRepository Operations;
-        private readonly StateCache State;
+        readonly OperationRepository Operations;
+        readonly StateCache State;
+        readonly ResponseCacheService ResponseCache;
 
-        public OperationsController(OperationRepository operations, StateCache state)
+        public OperationsController(OperationRepository operations, StateCache state, ResponseCacheService responseCache)
         {
             Operations = operations;
             State = state;
+            ResponseCache = responseCache;
         }
 
         #region operations
@@ -37,12 +41,20 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<IEnumerable<Operation>> GetByHash(
+        public async Task<ActionResult<IEnumerable<Operation>>> GetByHash(
             [Required][OpHash] string hash,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.Get(hash, micheline, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.Get(hash, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -57,13 +69,21 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}")]
-        public Task<IEnumerable<Operation>> GetByHashCounter(
+        public async Task<ActionResult<IEnumerable<Operation>>> GetByHashCounter(
             [Required][OpHash] string hash,
             [Min(0)] int counter,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.Get(hash, counter, micheline, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.Get(hash, counter, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -79,14 +99,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}/{counter}/{nonce}")]
-        public Task<IEnumerable<Operation>> GetByHashCounterNonce(
+        public async Task<ActionResult<IEnumerable<Operation>>> GetByHashCounterNonce(
             [Required][OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.Get(hash, counter, nonce, micheline, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.Get(hash, counter, nonce, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -134,29 +162,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("delegate", @delegate), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -169,9 +208,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("endorsements/{hash}")]
-        public Task<IEnumerable<EndorsementOperation>> GetEndorsementByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsementByHash(
+            [Required][OpHash] string hash, 
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetEndorsements(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetEndorsements(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -184,14 +233,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters endorsements by timestamp.</param>
         /// <returns></returns>
         [HttpGet("endorsements/count")]
-        public Task<int> GetEndorsementsCount(
+        public async Task<ActionResult<int>> GetEndorsementsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.EndorsementOpsCount);
+                return Ok(State.Current.EndorsementOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetEndorsementsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetEndorsementsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -239,29 +296,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("delegate", @delegate), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -274,9 +342,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("preendorsements/{hash}")]
-        public Task<IEnumerable<PreendorsementOperation>> GetPreendorsementByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<PreendorsementOperation>>> GetPreendorsementByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetPreendorsements(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetPreendorsements(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -289,14 +367,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
         [HttpGet("preendorsements/count")]
-        public Task<int> GetPreendorsementsCount(
+        public async Task<ActionResult<int>> GetPreendorsementsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.PreendorsementOpsCount);
+                return Ok(State.Current.PreendorsementOpsCount);
 
-            return Operations.GetPreendorsementsCount(level, timestamp);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetPreendorsementsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -352,29 +438,41 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("delegate", @delegate), ("level", level), ("timestamp", timestamp), ("epoch", epoch),
+                ("period", period), ("proposal", proposal), ("vote", vote), ("select", select),
+                ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -387,9 +485,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("ballots/{hash}")]
-        public Task<IEnumerable<BallotOperation>> GetBallotByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallotByHash(
+            [Required][OpHash] string hash, 
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetBallots(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetBallots(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -402,14 +510,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters ballot operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("ballots/count")]
-        public Task<int> GetBallotsCount(
+        public async Task<ActionResult<int>> GetBallotsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.BallotOpsCount);
+                return Ok(State.Current.BallotOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetBallotsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetBallotsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -465,29 +581,41 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("delegate", @delegate), ("level", level), ("timestamp", timestamp), ("epoch", epoch),
+                ("period", period), ("proposal", proposal), ("duplicated", duplicated), ("select", select),
+                ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -500,9 +628,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("proposals/{hash}")]
-        public Task<IEnumerable<ProposalOperation>> GetProposalByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposalByHash(
+            [Required][OpHash] string hash, 
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetProposals(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetProposals(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -515,14 +653,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters proposal operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("proposals/count")]
-        public Task<int> GetProposalsCount(
+        public  async Task<ActionResult<int>> GetProposalsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.ProposalOpsCount);
+                return Ok(State.Current.ProposalOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetProposalsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetProposalsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -570,29 +716,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetActivations(account, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("account", account), ("level", level), ("timestamp", timestamp), ("select", select),
+                ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetActivations(account, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -605,9 +762,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("activations/{hash}")]
-        public Task<IEnumerable<ActivationOperation>> GetActivationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
-        {
-            return Operations.GetActivations(hash, quote);
+        public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivationByHash(
+            [Required][OpHash] string hash, 
+            Symbols quote = Symbols.None)
+        {           
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetActivations(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -620,14 +787,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters activations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("activations/count")]
-        public Task<int> GetActivationsCount(
+        public async Task<ActionResult<int>> GetActivationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.ActivationOpsCount);
+                return Ok(State.Current.ActivationOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetActivationsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetActivationsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -702,29 +877,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -737,9 +923,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_baking/{hash}")]
-        public Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBakingByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetDoubleBakings(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDoubleBakings(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -752,14 +948,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters double baking operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("double_baking/count")]
-        public Task<int> GetDoubleBakingCount(
+        public async Task<ActionResult<int>> GetDoubleBakingCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.DoubleBakingOpsCount);
+                return Ok(State.Current.DoubleBakingOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetDoubleBakingsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDoubleBakingsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -834,29 +1038,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -869,9 +1084,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_endorsing/{hash}")]
-        public Task<IEnumerable<DoubleEndorsingOperation>> GetDoubleEndorsingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsingByHash(
+            [Required][OpHash] string hash, 
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetDoubleEndorsings(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDoubleEndorsings(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -884,14 +1109,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters double endorsing operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("double_endorsing/count")]
-        public Task<int> GetDoubleEndorsingCount(
+        public async Task<ActionResult<int>> GetDoubleEndorsingCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.DoubleEndorsingOpsCount);
+                return Ok(State.Current.DoubleEndorsingOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetDoubleEndorsingsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDoubleEndorsingsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -966,29 +1199,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1001,9 +1245,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("double_preendorsing/{hash}")]
-        public Task<IEnumerable<DoublePreendorsingOperation>> GetDoublePreendorsingByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<DoublePreendorsingOperation>>> GetDoublePreendorsingByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetDoublePreendorsings(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDoublePreendorsings(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1016,14 +1270,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
         [HttpGet("double_preendorsing/count")]
-        public Task<int> GetDoublePreendorsingCount(
+        public async Task<ActionResult<int>> GetDoublePreendorsingCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.DoublePreendorsingOpsCount);
+                return Ok(State.Current.DoublePreendorsingOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetDoublePreendorsingsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDoublePreendorsingsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -1100,29 +1362,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("baker", baker), ("sender", sender), ("level", level), ("revealedCycle", revealedCycle),
+                ("timestamp", timestamp), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1135,9 +1408,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations/{hash}")]
-        public Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelationByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetNonceRevelations(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetNonceRevelations(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1150,14 +1433,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters seed nonce revelation operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("nonce_revelations/count")]
-        public Task<int> GetNonceRevelationsCount(
+        public async Task<ActionResult<int>> GetNonceRevelationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.NonceRevelationOpsCount);
+                return Ok(State.Current.NonceRevelationOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetNonceRevelationsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetNonceRevelationsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -1262,29 +1553,41 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("prevDelegate", prevDelegate), 
+                ("newDelegate", newDelegate), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1297,9 +1600,17 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("delegations/{hash}")]
-        public Task<IEnumerable<DelegationOperation>> GetDelegationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegationByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
         {
-            return Operations.GetDelegations(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDelegations(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1312,14 +1623,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters delegations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("delegations/count")]
-        public Task<int> GetDelegationsCount(
+        public async Task<ActionResult<int>> GetDelegationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.DelegationOpsCount);
+                return Ok(State.Current.DelegationOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetDelegationsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDelegationsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -1446,29 +1765,42 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, micheline, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("contractManager", contractManager), 
+                ("contractDelegate", contractDelegate), ("originatedContract", originatedContract), ("id", id),  ("typeHash", typeHash),
+                ("codeHash", codeHash), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, micheline, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1482,12 +1814,20 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("originations/{hash}")]
-        public Task<IEnumerable<OriginationOperation>> GetOriginationByHash(
+        public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginationByHash(
             [Required][OpHash] string hash,
             MichelineFormat micheline,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetOriginations(hash, micheline, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetOriginations(hash, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1500,14 +1840,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters originations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("originations/count")]
-        public Task<int> GetOriginationsCount(
+        public async Task<ActionResult<int>> GetOriginationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.OriginationOpsCount);
+                return Ok(State.Current.OriginationOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetOriginationsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetOriginationsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -1611,29 +1959,42 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), 
+                ("amount", amount), ("id", id),  ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint),
+                ("parameter", parameter), ("hasInternals", hasInternals), ("status", status), ("select", select),
+                ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp,entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote));
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote));
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1647,12 +2008,20 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHash(
+        public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactionByHash(
             [Required][OpHash] string hash,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetTransactions(hash, micheline, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransactions(hash, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1667,13 +2036,21 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounter(
+        public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactionByHashCounter(
             [Required][OpHash] string hash,
             [Min(0)] int counter,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
-        {
-            return Operations.GetTransactions(hash, counter, micheline, quote);
+        {            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransactions(hash, counter, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1689,14 +2066,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("transactions/{hash}/{counter}/{nonce}")]
-        public Task<IEnumerable<TransactionOperation>> GetTransactionByHashCounterNonce(
+        public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactionByHashCounterNonce(
             [Required][OpHash] string hash,
             [Min(0)] int counter,
             [Min(0)] int nonce,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
-        {
-            return Operations.GetTransactions(hash, counter, nonce, micheline, quote);
+        {          
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransactions(hash, counter, nonce, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1715,7 +2100,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <returns></returns>
         [HttpGet("transactions/count")]
-        public Task<int> GetTransactionsCount(
+        public async Task<ActionResult<int>> GetTransactionsCount(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,target,initiator")]
             AnyOfParameter anyof,
@@ -1735,9 +2120,18 @@ namespace Tzkt.Api.Controllers
                 timestamp == null &&
                 entrypoint == null &&
                 status == null)
-                return Task.FromResult(State.Current.TransactionOpsCount);
+                return Ok(State.Current.TransactionOpsCount);
+        
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), 
+                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("status", status));
 
-            return Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, status);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, status);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -1787,29 +2181,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sender", sender), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1822,9 +2227,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("reveals/{hash}")]
-        public Task<IEnumerable<RevealOperation>> GetRevealByHash([Required][OpHash] string hash, Symbols quote = Symbols.None)
+        public async Task<ActionResult<IEnumerable<RevealOperation>>> GetRevealByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
         {
-            return Operations.GetReveals(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetReveals(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1837,14 +2252,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters reveals by timestamp.</param>
         /// <returns></returns>
         [HttpGet("reveals/count")]
-        public Task<int> GetRevealsCount(
+        public async Task<ActionResult<int>> GetRevealsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.RevealOpsCount);
+                return Ok(State.Current.RevealOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetRevealsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRevealsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -1898,29 +2321,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, micheline, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sender", sender), ("address", address), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, micheline, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
+                    res = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
+                    res = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                    res = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1934,12 +2368,20 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("register_constants/{hash}")]
-        public Task<IEnumerable<RegisterConstantOperation>> GetRegisterConstantByHash(
+        public async Task<ActionResult<IEnumerable<RegisterConstantOperation>>> GetRegisterConstantByHash(
             [Required][OpHash] string hash,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetRegisterConstants(hash, micheline, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRegisterConstants(hash, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -1952,14 +2394,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("register_constants/count")]
-        public Task<int> GetRegisterConstantsCount(
+        public async Task<ActionResult<int>> GetRegisterConstantsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.RegisterConstantOpsCount);
+                return Ok(State.Current.RegisterConstantOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetRegisterConstantsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRegisterConstantsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -2009,29 +2459,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sender", sender), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -2044,11 +2505,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("set_deposits_limits/{hash}")]
-        public Task<IEnumerable<SetDepositsLimitOperation>> GetSetDepositsLimitByHash(
+        public async Task<ActionResult<IEnumerable<SetDepositsLimitOperation>>> GetSetDepositsLimitByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetSetDepositsLimits(hash, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetSetDepositsLimits(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -2061,14 +2530,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
         [HttpGet("set_deposits_limits/count")]
-        public Task<int> GetSetDepositsLimitsCount(
+        public async Task<ActionResult<int>> GetSetDepositsLimitsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.SetDepositsLimitOpsCount);
+                return Ok(State.Current.SetDepositsLimitOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetSetDepositsLimitsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetSetDepositsLimitsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -3236,8 +3713,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
@@ -3271,29 +3748,41 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, micheline, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("account", account), ("kind", kind), ("balanceChange", balanceChange), ("id", id),
+                ("level", level), ("timestamp", timestamp), ("select", select), ("sort", sort), ("offset", offset),
+                ("limit", limit), ("micheline", micheline), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, micheline, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Values[0], micheline, quote));
+                    res = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Values, micheline, quote));
+                    res = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Fields[0], micheline, quote));
+                    res = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Fields, micheline, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3307,12 +3796,20 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("migrations/{id:int}")]
-        public Task<MigrationOperation> GetMigrationById(
+        public async Task<ActionResult<MigrationOperation>> GetMigrationById(
             [Required][Min(0)] int id,
             MichelineFormat micheline = MichelineFormat.Json, 
             Symbols quote = Symbols.None)
         {
-            return Operations.GetMigration(id, micheline, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("micheline", micheline), ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetMigration(id, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3325,14 +3822,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters migrations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("migrations/count")]
-        public Task<int> GetMigrationsCount(
+        public async Task<ActionResult<int>> GetMigrationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.MigrationOpsCount);
+                return Ok(State.Current.MigrationOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetMigrationsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetMigrationsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -3380,29 +3885,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("baker", baker), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3415,11 +3931,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("revelation_penalties/{id:int}")]
-        public Task<RevelationPenaltyOperation> GetRevelationPenaltyById(
+        public async Task<ActionResult<RevelationPenaltyOperation>> GetRevelationPenaltyById(
             [Required][Min(0)] int id,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetRevelationPenalty(id, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRevelationPenalty(id, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3432,14 +3956,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters revelation penalty operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("revelation_penalties/count")]
-        public Task<int> GetRevelationPenaltiesCount(
+        public async Task<ActionResult<int>> GetRevelationPenaltiesCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.RevelationPenaltyOpsCount);
+                return Ok(State.Current.RevelationPenaltyOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetRevelationPenaltiesCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRevelationPenaltiesCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -3518,29 +4050,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("baker", baker), ("anyof", anyof), ("proposer", proposer), ("producer", producer), ("level", level),
+                ("timestamp", timestamp), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3553,11 +4096,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("baking/{id:int}")]
-        public Task<BakingOperation> GetBakingById(
+        public async Task<ActionResult<BakingOperation>> GetBakingById(
             [Required][Min(0)] int id,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetBaking(id, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetBaking(id, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3570,14 +4121,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters baking operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("baking/count")]
-        public Task<int> GetBakingCount(
+        public async Task<ActionResult<int>> GetBakingCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.BlocksCount - 2);
+                return Ok(State.Current.BlocksCount - 2);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetBakingsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetBakingsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -3625,29 +4184,40 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            if (select == null)
-                return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, quote));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("baker", baker), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
-            if (select.Values != null)
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values[0], quote));
+                    res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values, quote));
+                    res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote));
+                    res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
-                    return Ok(new SelectionResponse
+                    res = new SelectionResponse
                     {
                         Cols = select.Fields,
                         Rows = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    });
+                    };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3660,11 +4230,19 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("endorsing_rewards/{id:int}")]
-        public Task<EndorsingRewardOperation> GetEndorsingRewardById(
+        public async Task<ActionResult<EndorsingRewardOperation>> GetEndorsingRewardById(
             [Required][Min(0)] int id,
             Symbols quote = Symbols.None)
         {
-            return Operations.GetEndorsingReward(id, quote);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));  
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetEndorsingReward(id, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3677,14 +4255,22 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
         [HttpGet("endorsing_rewards/count")]
-        public Task<int> GetEndorsingRewardsCount(
+        public async Task<ActionResult<int>> GetEndorsingRewardsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
         {
             if (level == null && timestamp == null)
-                return Task.FromResult(State.Current.EndorsingRewardOpsCount);
+                return Ok(State.Current.EndorsingRewardOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));  
 
-            return Operations.GetEndorsingRewardsCount(level, timestamp);
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetEndorsingRewardsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
     }

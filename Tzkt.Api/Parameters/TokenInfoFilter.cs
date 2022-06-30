@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -40,7 +41,8 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return ResponseCacheService.BuildKey("",
+                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("metadata", metadata));
         }
     }
 }
