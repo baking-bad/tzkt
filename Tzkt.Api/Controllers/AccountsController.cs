@@ -147,6 +147,7 @@ namespace Tzkt.Api.Controllers
             if (kind?.Eq != null && type == null)
                 type = new AccountTypeParameter { Eq = 2 };
             #endregion
+
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("type", type), ("kind", kind), ("balance", balance), ("staked", staked));  
 
@@ -479,7 +480,6 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/counter")]
         public async Task<ActionResult<int>> GetCounter([Required][Address] string address)
         {
-            
             var query = ResponseCacheService.BuildKey(Request.Path.Value);  
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -503,7 +503,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("{address}/balance")]
         public async Task<ActionResult<long>> GetBalance([Required][Address] string address)
-        {            
+        {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);  
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -527,7 +527,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<long>> GetBalanceAtLevel(
             [Required][Address] string address,
             [Min(0)] int level)
-        {            
+        {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);  
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -551,9 +551,8 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<long>> GetBalanceAtDate(
             [Required][Address] string address,
             DateTimeOffset datetime)
-        {            
-            var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("datetime", datetime));  
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);

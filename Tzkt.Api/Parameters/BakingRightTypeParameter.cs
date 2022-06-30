@@ -26,7 +26,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Ne { get; set; }
-        
+
         public string Normalize(string name)
         {
             var sb = new StringBuilder();

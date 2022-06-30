@@ -380,7 +380,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = Operations.GetPreendorsementsCount(level, timestamp);
+            var res = await Operations.GetPreendorsementsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -3713,8 +3713,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="sort">Sorts migrations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
