@@ -80,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (account is Data.Models.Delegate delegat)
                     await TestDelegate(level, delegat, proto);
 
-                if (account is not Rollup)
+                if (account.Type <= AccountType.Contract)
                     await TestAccount(level, account);
             }
             
