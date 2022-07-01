@@ -247,7 +247,7 @@ namespace Tzkt.Api.Repositories
                 tb.""LastLevel"",
                 tb.""TransfersCount"",
                 tb.""TokenId"" as ""tId"",
-                t.""ContractId"" as ""tContractId"",
+                tb.""ContractId"" as ""tContractId"",
                 t.""TokenId"" as ""tTokenId"",
                 t.""Tags"" as ""tTags"",
                 t.""Metadata"" as ""tMetadata""";
@@ -271,7 +271,7 @@ namespace Tzkt.Api.Repositories
                             if (field.Path == null)
                             {
                                 columns.Add(@"tb.""TokenId"" as ""tId""");
-                                columns.Add(@"t.""ContractId"" as ""tContractId""");
+                                columns.Add(@"tb.""ContractId"" as ""tContractId""");
                                 columns.Add(@"t.""TokenId"" as ""tTokenId""");
                                 columns.Add(@"t.""Tags"" as ""tTags""");
                                 columns.Add(@"t.""Metadata"" as ""tMetadata""");
@@ -282,7 +282,7 @@ namespace Tzkt.Api.Repositories
                                 switch (subField.Field)
                                 {
                                     case "id": columns.Add(@"tb.""TokenId"" as ""tId"""); break;
-                                    case "contract": columns.Add(@"t.""ContractId"" as ""tContractId"""); break;
+                                    case "contract": columns.Add(@"tb.""ContractId"" as ""tContractId"""); break;
                                     case "tokenId": columns.Add(@"t.""TokenId"" as ""tTokenId"""); break;
                                     case "standard": columns.Add(@"t.""Tags"" as ""tTags"""); break;
                                     case "metadata":
@@ -329,7 +329,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TokenId""", filter.token.id)
-                .FilterA(@"t.""ContractId""", filter.token.contract)
+                .FilterA(@"tb.""ContractId""", filter.token.contract)
                 .FilterA(@"t.""TokenId""", filter.token.tokenId)
                 .FilterA(@"t.""Tags""", filter.token.standard)
                 .FilterA(@"t.""Metadata""", filter.token.metadata)
@@ -361,7 +361,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TokenId""", filter.token.id)
-                .FilterA(@"t.""ContractId""", filter.token.contract)
+                .FilterA(@"tb.""ContractId""", filter.token.contract)
                 .FilterA(@"t.""TokenId""", filter.token.tokenId)
                 .FilterA(@"t.""Tags""", filter.token.standard)
                 .FilterA(@"t.""Metadata""", filter.token.metadata);
@@ -510,7 +510,7 @@ namespace Tzkt.Api.Repositories
                 tr.""OriginationId"",
                 tr.""MigrationId"",
                 tr.""TokenId"" as ""tId"",
-                t.""ContractId"" as ""tContractId"",
+                tr.""ContractId"" as ""tContractId"",
                 t.""TokenId"" as ""tTokenId"",
                 t.""Tags"" as ""tTags"",
                 t.""Metadata"" as ""tMetadata""";
@@ -535,7 +535,7 @@ namespace Tzkt.Api.Repositories
                             if (field.Path == null)
                             {
                                 columns.Add(@"tr.""TokenId"" as ""tId""");
-                                columns.Add(@"t.""ContractId"" as ""tContractId""");
+                                columns.Add(@"tr.""ContractId"" as ""tContractId""");
                                 columns.Add(@"t.""TokenId"" as ""tTokenId""");
                                 columns.Add(@"t.""Tags"" as ""tTags""");
                                 columns.Add(@"t.""Metadata"" as ""tMetadata""");
@@ -546,7 +546,7 @@ namespace Tzkt.Api.Repositories
                                 switch (subField.Field)
                                 {
                                     case "id": columns.Add(@"tr.""TokenId"" as ""tId"""); break;
-                                    case "contract": columns.Add(@"t.""ContractId"" as ""tContractId"""); break;
+                                    case "contract": columns.Add(@"tr.""ContractId"" as ""tContractId"""); break;
                                     case "tokenId": columns.Add(@"t.""TokenId"" as ""tTokenId"""); break;
                                     case "standard": columns.Add(@"t.""Tags"" as ""tTags"""); break;
                                     case "metadata":
@@ -596,7 +596,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""OriginationId""", filter.originationId)
                 .FilterA(@"tr.""MigrationId""", filter.migrationId)
                 .FilterA(@"tr.""TokenId""", filter.token.id)
-                .FilterA(@"t.""ContractId""", filter.token.contract)
+                .FilterA(@"tr.""ContractId""", filter.token.contract)
                 .FilterA(@"t.""TokenId""", filter.token.tokenId)
                 .FilterA(@"t.""Tags""", filter.token.standard)
                 .FilterA(@"t.""Metadata""", filter.token.metadata)
@@ -629,7 +629,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""OriginationId""", filter.originationId)
                 .FilterA(@"tr.""MigrationId""", filter.migrationId)
                 .FilterA(@"tr.""TokenId""", filter.token.id)
-                .FilterA(@"t.""ContractId""", filter.token.contract)
+                .FilterA(@"tr.""ContractId""", filter.token.contract)
                 .FilterA(@"t.""TokenId""", filter.token.tokenId)
                 .FilterA(@"t.""Tags""", filter.token.standard)
                 .FilterA(@"t.""Metadata""", filter.token.metadata);
