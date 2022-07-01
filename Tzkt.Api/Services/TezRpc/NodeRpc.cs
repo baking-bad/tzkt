@@ -7,17 +7,15 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Services
 {
-    public sealed class TezRpc : IDisposable
+    public sealed class NodeRpc : IDisposable
     {
         readonly StateCache State;
         readonly ILogger Logger;
 
-        //TODO Consider changing the class name to `SenderRpc` or `ApiRpc`
         readonly TezosRpc Rpc;
 
-        public TezRpc(IConfiguration config, StateCache state, ILogger<TezRpc> logger)
+        public NodeRpc(IConfiguration config, StateCache state, ILogger<NodeRpc> logger)
         {
-            logger.LogDebug("Initializing TezRpc...");
             State = state;
             Logger = logger;
             var nodeConf = config.GetTezRpcConfig();
@@ -30,5 +28,10 @@ namespace Tzkt.Api.Services
         }
         
         public void Dispose() => Rpc.Dispose();
+
+        public async Task<string> GetChainIdAsync()
+        {
+            return (await Rpc.Blocks.Head.Header.GetAsync()).chain_id;
+        }
     }
 }

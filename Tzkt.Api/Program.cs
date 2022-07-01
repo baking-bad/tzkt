@@ -52,7 +52,6 @@ namespace Tzkt.Api
             using var scope = host.Services.CreateScope();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-            var rpc = scope.ServiceProvider.GetRequiredService<TezRpc>();
 
             logger.LogInformation("Version {version}",
                 Assembly.GetExecutingAssembly().GetName().Version.ToString());
@@ -103,8 +102,9 @@ namespace Tzkt.Api
             using var scope = host.Services.CreateScope();
             var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
             var state = scope.ServiceProvider.GetRequiredService<StateCache>();
+            var rpc = scope.ServiceProvider.GetRequiredService<NodeRpc>();
             config.ValidateAuthConfig();
-            await config.ValidateTezRpcConfig(state);
+            await config.ValidateTezRpcConfig(state, rpc);
             return host;
         }
     }

@@ -18,14 +18,12 @@ namespace Tzkt.Api.Services
             return config.GetSection("TezRpc")?.Get<TezRpcConfig>() ?? new TezRpcConfig();
         }
 
-        public static async Task  ValidateTezRpcConfig(this IConfiguration config, StateCache state)
+        public static async Task ValidateTezRpcConfig(this IConfiguration config, StateCache state, NodeRpc rpc)
         {
-            var nodeConf = config.GetTezRpcConfig();
-            var rpc = new TezosRpc($"{nodeConf.Endpoint}", nodeConf.Timeout);
-            var chainId = (await rpc.Blocks.Head.Header.GetAsync()).chain_id.ToString();
+            var chainId = await rpc.GetChainIdAsync();
             if (chainId != state.Current.ChainId)
             {
-                throw new ConfigurationException($"The API chain ID {chainId.ToString()} doesn't match the indexer chain ID {state.Current.ChainId}." +
+                throw new ConfigurationException($"The API chain ID {chainId} doesn't match the indexer chain ID {state.Current.ChainId}." +
                                             $" Please, check that the indexer and API use the same network");
             }
         }

@@ -10,9 +10,9 @@ namespace Tzkt.Api.Controllers
     [Route("v1/send")]
     public class SendController : ControllerBase
     {
-        readonly TezRpc Rpc;
+        readonly NodeRpc Rpc;
 
-        public SendController(TezRpc rpc)
+        public SendController(NodeRpc rpc)
         {
             Rpc = rpc;
         }
