@@ -51,7 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
                     var sampler = GetSampler(
                         bakerCycles.Values.Where(x => x.ActiveStake > 0).Select(x => (x.BakerId, x.ActiveStake)),
-                        block.Cycle < block.Protocol.FirstCycle + block.Protocol.PreservedCycles); //TODO: remove this crutch after ithaca is gone
+                        block.Cycle <= block.Protocol.FirstCycle + block.Protocol.PreservedCycles); //TODO: remove this crutch after ithaca is gone
                     #region temporary diagnostics
                     await sampler.Validate(Proto, block.Level, block.Cycle);
                     #endregion
