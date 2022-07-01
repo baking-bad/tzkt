@@ -21,7 +21,7 @@ namespace Tzkt.Api.Services
             State = state;
             Logger = logger;
             var nodeConf = config.GetTezRpcConfig();
-            Rpc = new TezosRpc($"{nodeConf.Endpoint}", nodeConf.Timeout);
+            Rpc = new TezosRpc(nodeConf.Endpoint, nodeConf.Timeout);
         }
 
         public async Task<string> Send(string content, bool async)
