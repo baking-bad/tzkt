@@ -815,6 +815,37 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterOrA(string[] columns, Int32Parameter value)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} = {value.Eq}"))})");
+
+            if (value.Ne != null)
+                AppendFilter($@"({string.Join(" AND ", columns.Select(col => $@"{col} != {value.Ne}"))})");
+
+            if (value.Gt != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} > {value.Gt}"))})");
+
+            if (value.Ge != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} >= {value.Ge}"))})");
+
+            if (value.Lt != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} < {value.Lt}"))})");
+
+            if (value.Le != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} <= {value.Le}"))})");
+
+            if (value.In != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} = ANY ({Param(value.In)})"))})");
+
+            if (value.Ni != null)
+                AppendFilter($@"({string.Join(" AND ", columns.Select(col => $@"NOT ({col} = ANY ({Param(value.Ni)}))"))})");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, Int32Parameter value, Func<string, string> map = null)
         {
             if (value == null) return this;

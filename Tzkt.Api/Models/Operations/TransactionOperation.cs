@@ -51,6 +51,11 @@ namespace Tzkt.Api.Models
         public Alias Sender { get; set; }
 
         /// <summary>
+        /// Hash of the sender contract code, or `null` is the sender is not a contract
+        /// </summary>
+        public int? SenderCodeHash { get; set; }
+
+        /// <summary>
         /// An account nonce which is used to prevent internal operation replay
         /// </summary>
         public int? Nonce { get; set; }
@@ -94,6 +99,11 @@ namespace Tzkt.Api.Models
         /// Information about the target of the transaction
         /// </summary>
         public Alias Target { get; set; }
+
+        /// <summary>
+        /// Hash of the target contract code, or `null` is the target is not a contract
+        /// </summary>
+        public int? TargetCodeHash { get; set; }
 
         /// <summary>
         /// The transaction amount (micro tez)

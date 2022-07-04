@@ -54,6 +54,11 @@ namespace Tzkt.Api.Models
         public Alias Sender { get; set; }
 
         /// <summary>
+        /// Hash of the sender contract code, or `null` is the sender is not a contract
+        /// </summary>
+        public int? SenderCodeHash { get; set; }
+
+        /// <summary>
         /// An account nonce which is used to prevent internal operation replay
         /// </summary>
         public int? Nonce { get; set; }

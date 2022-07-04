@@ -73,6 +73,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -83,6 +84,7 @@ namespace Tzkt.Api.Repositories
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
                 {
@@ -145,6 +147,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -155,6 +158,7 @@ namespace Tzkt.Api.Repositories
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
                 {
@@ -217,6 +221,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = counter,
                 Nonce = nonce,
                 GasLimit = row.GasLimit,
@@ -227,6 +232,7 @@ namespace Tzkt.Api.Repositories
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
                 {
@@ -270,6 +276,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -280,6 +287,7 @@ namespace Tzkt.Api.Repositories
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
                 {
@@ -310,6 +318,9 @@ namespace Tzkt.Api.Repositories
             Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter codeHash,
+            Int32Parameter senderCodeHash,
+            Int32Parameter targetCodeHash,
             StringParameter entrypoint,
             JsonParameter parameter,
             BoolParameter hasInternals,
@@ -343,6 +354,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
+                .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
+                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -388,6 +402,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -398,6 +413,7 @@ namespace Tzkt.Api.Repositories
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
                 Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
                 {
@@ -430,6 +446,9 @@ namespace Tzkt.Api.Repositories
             Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter codeHash,
+            Int32Parameter senderCodeHash,
+            Int32Parameter targetCodeHash,
             StringParameter entrypoint,
             JsonParameter parameter,
             BoolParameter hasInternals,
@@ -454,6 +473,7 @@ namespace Tzkt.Api.Repositories
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "initiator": columns.Add(@"o.""InitiatorId"""); break;
                     case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "senderCodeHash": columns.Add(@"o.""SenderCodeHash"""); break;
                     case "counter": columns.Add(@"o.""Counter"""); break;
                     case "nonce": columns.Add(@"o.""Nonce"""); break;
                     case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
@@ -464,6 +484,7 @@ namespace Tzkt.Api.Repositories
                     case "storageFee": columns.Add(@"o.""StorageFee"""); break;
                     case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                     case "target": columns.Add(@"o.""TargetId"""); break;
+                    case "targetCodeHash": columns.Add(@"o.""TargetCodeHash"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
                     case "parameter":
                         columns.Add(@"o.""Entrypoint""");
@@ -517,6 +538,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
+                .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
+                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -568,6 +592,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.SenderId);
                         break;
+                    case "senderCodeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SenderCodeHash;
+                        break;
                     case "counter":
                         foreach (var row in rows)
                             result[j++][i] = row.Counter;
@@ -607,6 +635,10 @@ namespace Tzkt.Api.Repositories
                     case "target":
                         foreach (var row in rows)
                             result[j++][i] = row.TargetId != null ? await Accounts.GetAliasAsync(row.TargetId) : null;
+                        break;
+                    case "targetCodeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TargetCodeHash;
                         break;
                     case "amount":
                         foreach (var row in rows)
@@ -688,6 +720,9 @@ namespace Tzkt.Api.Repositories
             Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter codeHash,
+            Int32Parameter senderCodeHash,
+            Int32Parameter targetCodeHash,
             StringParameter entrypoint,
             JsonParameter parameter,
             BoolParameter hasInternals,
@@ -710,6 +745,7 @@ namespace Tzkt.Api.Repositories
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "initiator": columns.Add(@"o.""InitiatorId"""); break;
                 case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "senderCodeHash": columns.Add(@"o.""SenderCodeHash"""); break;
                 case "counter": columns.Add(@"o.""Counter"""); break;
                 case "nonce": columns.Add(@"o.""Nonce"""); break;
                 case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
@@ -720,6 +756,7 @@ namespace Tzkt.Api.Repositories
                 case "storageFee": columns.Add(@"o.""StorageFee"""); break;
                 case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                 case "target": columns.Add(@"o.""TargetId"""); break;
+                case "targetCodeHash": columns.Add(@"o.""TargetCodeHash"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
                 case "parameter":
                     columns.Add(@"o.""Entrypoint""");
@@ -772,6 +809,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
+                .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
+                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -821,6 +861,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.SenderId);
                     break;
+                case "senderCodeHash":
+                    foreach (var row in rows)
+                        result[j++] = row.SenderCodeHash;
+                    break;
                 case "counter":
                     foreach (var row in rows)
                         result[j++] = row.Counter;
@@ -860,6 +904,10 @@ namespace Tzkt.Api.Repositories
                 case "target":
                     foreach (var row in rows)
                         result[j++] = row.TargetId != null ? await Accounts.GetAliasAsync(row.TargetId) : null;
+                    break;
+                case "targetCodeHash":
+                    foreach (var row in rows)
+                        result[j++] = row.TargetCodeHash;
                     break;
                 case "amount":
                     foreach (var row in rows)

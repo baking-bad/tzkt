@@ -44,6 +44,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -81,6 +82,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -118,6 +120,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = counter,
                 Nonce = nonce,
                 GasLimit = row.GasLimit,
@@ -153,6 +156,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -175,6 +179,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter newDelegate,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -195,6 +200,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -216,6 +222,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                 Sender = Accounts.GetAlias(row.SenderId),
+                SenderCodeHash = row.SenderCodeHash,
                 Counter = row.Counter,
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
@@ -238,6 +245,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter newDelegate,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -258,6 +266,7 @@ namespace Tzkt.Api.Repositories
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "initiator": columns.Add(@"o.""InitiatorId"""); break;
                     case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "senderCodeHash": columns.Add(@"o.""SenderCodeHash"""); break;
                     case "counter": columns.Add(@"o.""Counter"""); break;
                     case "nonce": columns.Add(@"o.""Nonce"""); break;
                     case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
@@ -293,6 +302,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -340,6 +350,10 @@ namespace Tzkt.Api.Repositories
                     case "sender":
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.SenderId);
+                        break;
+                    case "senderCodeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SenderCodeHash;
                         break;
                     case "counter":
                         foreach (var row in rows)
@@ -399,6 +413,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter newDelegate,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -417,6 +432,7 @@ namespace Tzkt.Api.Repositories
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "initiator": columns.Add(@"o.""InitiatorId"""); break;
                 case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "senderCodeHash": columns.Add(@"o.""SenderCodeHash"""); break;
                 case "counter": columns.Add(@"o.""Counter"""); break;
                 case "nonce": columns.Add(@"o.""Nonce"""); break;
                 case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
@@ -451,6 +467,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -496,6 +513,10 @@ namespace Tzkt.Api.Repositories
                 case "sender":
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.SenderId);
+                    break;
+                case "senderCodeHash":
+                    foreach (var row in rows)
+                        result[j++] = row.SenderCodeHash;
                     break;
                 case "counter":
                     foreach (var row in rows)

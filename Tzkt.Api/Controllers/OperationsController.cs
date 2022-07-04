@@ -1466,6 +1466,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `prevDelegate`.</param>
         /// <param name="level">Filters delegations by level.</param>
         /// <param name="timestamp">Filters delegations by timestamp.</param>
+        /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
@@ -1484,6 +1485,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter newDelegate,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -1555,8 +1557,8 @@ namespace Tzkt.Api.Controllers
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("prevDelegate", prevDelegate), 
-                ("newDelegate", newDelegate), ("level", level), ("timestamp", timestamp), ("status", status),
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+                ("newDelegate", newDelegate), ("level", level), ("timestamp", timestamp), ("senderCodeHash", senderCodeHash),
+                ("status", status), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -1564,25 +1566,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1660,6 +1662,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="codeHash">Filters origination operations by 32-bit hash of originated contract code (helpful for searching originations of same contracts)</param>
         /// <param name="level">Filters origination operations by level.</param>
         /// <param name="timestamp">Filters origination operations by timestamp.</param>
+        /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
+        /// <param name="anyCodeHash">Filters by either `senderCodeHash` or `codeHash`.</param>
         /// <param name="status">Filters origination operations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
@@ -1683,6 +1687,8 @@ namespace Tzkt.Api.Controllers
             Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
+            Int32Parameter anyCodeHash,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -1768,8 +1774,8 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("contractManager", contractManager), 
                 ("contractDelegate", contractDelegate), ("originatedContract", originatedContract), ("id", id),  ("typeHash", typeHash),
-                ("codeHash", codeHash), ("level", level), ("timestamp", timestamp), ("status", status),
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
+                ("codeHash", codeHash), ("level", level), ("timestamp", timestamp), ("senderCodeHash", senderCodeHash), ("anyCodeHash", anyCodeHash),
+                ("status", status), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -1777,25 +1783,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields, micheline, quote)
                     };
                 }
             }
@@ -1874,6 +1880,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Filters transactions by id.</param>
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
+        /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
+        /// <param name="targetCodeHash">Filters by `targetCodeHash`.</param>
+        /// <param name="codeHash">Filters by either `senderCodeHash` or `targetCodeHash`.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
@@ -1898,6 +1907,9 @@ namespace Tzkt.Api.Controllers
             Int32Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
+            Int32Parameter targetCodeHash,
+            Int32Parameter codeHash,
             StringParameter entrypoint,
             JsonParameter parameter,
             BoolParameter hasInternals,
@@ -1961,7 +1973,8 @@ namespace Tzkt.Api.Controllers
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), 
-                ("amount", amount), ("id", id),  ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint),
+                ("amount", amount), ("id", id),  ("level", level), ("timestamp", timestamp), ("codeHash", codeHash),
+                ("senderCodeHash", senderCodeHash), ("targetCodeHash", targetCodeHash), ("entrypoint", entrypoint),
                 ("parameter", parameter), ("hasInternals", hasInternals), ("status", status), ("select", select),
                 ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
@@ -1971,25 +1984,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp,entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote);
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote);
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote);
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
                     };
                 }
             }

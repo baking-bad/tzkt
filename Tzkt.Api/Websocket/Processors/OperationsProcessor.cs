@@ -17,19 +17,28 @@ namespace Tzkt.Api.Websocket.Processors
     public class OperationsProcessor<T> : IHubProcessor where T : Hub
     {
         #region static
-        const string OperationsGroup = "operations";
-        const string OperationsChannel = "operations";
+        const string Group = "operations";
+        const string Channel = "operations";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly Dictionary<Operations, Sub> TypesSubs = new();
+        static readonly Dictionary<Operations, TypeSub> TypeSubs = new();
         static readonly Dictionary<string, int> Limits = new();
 
-        class Sub
+        class TypeSub
         {
-            public HashSet<string> All { get; set; }
-            public Dictionary<string, HashSet<string>> Addresses { get; set; }
+            public HashSet<string> Subs { get; set; }
+            public Dictionary<int, HashSet<string>> CodeHashSubs { get; set; }
+            public Dictionary<string, AddressSub> AddressSubs { get; set; }
 
-            public bool Empty => All == null && Addresses == null;
+            public bool Empty => Subs == null && CodeHashSubs == null && AddressSubs == null;
+        }
+
+        class AddressSub
+        {
+            public HashSet<string> Subs { get; set; }
+            public Dictionary<int, HashSet<string>> CodeHashSubs { get; set; }
+
+            public bool Empty => Subs == null && CodeHashSubs == null;
         }
         #endregion
 
@@ -60,8 +69,8 @@ namespace Tzkt.Api.Websocket.Processors
                 {
                     Logger.LogDebug("Sending reorg message with state {0}", State.ValidLevel);
                     sendings.Add(Context.Clients
-                        .Group(OperationsGroup)
-                        .SendReorg(OperationsChannel, State.ValidLevel));
+                        .Group(Group)
+                        .SendReorg(Channel, State.ValidLevel));
                 }
                 #endregion
 
@@ -87,115 +96,115 @@ namespace Tzkt.Api.Websocket.Processors
                 var limit = 1_000_000; // crutch
                 var symbols = Symbols.None;
 
-                var endorsements = TypesSubs.TryGetValue(Operations.Endorsements, out var endorsementsSub)
+                var endorsements = TypeSubs.TryGetValue(Operations.Endorsements, out var endorsementsSub)
                     ? Repo.GetEndorsements(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsementOperation>());
 
-                var preendorsements = TypesSubs.TryGetValue(Operations.Preendorsements, out var preendorsementsSub)
+                var preendorsements = TypeSubs.TryGetValue(Operations.Preendorsements, out var preendorsementsSub)
                     ? Repo.GetPreendorsements(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.PreendorsementOperation>());
 
-                var proposals = TypesSubs.TryGetValue(Operations.Proposals, out var proposalsSub)
+                var proposals = TypeSubs.TryGetValue(Operations.Proposals, out var proposalsSub)
                     ? Repo.GetProposals(null, level, null, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ProposalOperation>());
 
-                var ballots = TypesSubs.TryGetValue(Operations.Ballots, out var ballotsSub)
+                var ballots = TypeSubs.TryGetValue(Operations.Ballots, out var ballotsSub)
                     ? Repo.GetBallots(null, level, null, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BallotOperation>());
 
-                var activations = TypesSubs.TryGetValue(Operations.Activations, out var activationsSub)
+                var activations = TypeSubs.TryGetValue(Operations.Activations, out var activationsSub)
                     ? Repo.GetActivations(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ActivationOperation>());
 
-                var doubleBaking = TypesSubs.TryGetValue(Operations.DoubleBakings, out var doubleBakingSub)
+                var doubleBaking = TypeSubs.TryGetValue(Operations.DoubleBakings, out var doubleBakingSub)
                     ? Repo.GetDoubleBakings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleBakingOperation>());
 
-                var doubleEndorsing = TypesSubs.TryGetValue(Operations.DoubleEndorsings, out var doubleEndorsingSub)
+                var doubleEndorsing = TypeSubs.TryGetValue(Operations.DoubleEndorsings, out var doubleEndorsingSub)
                     ? Repo.GetDoubleEndorsings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleEndorsingOperation>());
 
-                var doublePreendorsing = TypesSubs.TryGetValue(Operations.DoublePreendorsings, out var doublePreendorsingSub)
+                var doublePreendorsing = TypeSubs.TryGetValue(Operations.DoublePreendorsings, out var doublePreendorsingSub)
                     ? Repo.GetDoublePreendorsings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoublePreendorsingOperation>());
 
-                var revelations = TypesSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
+                var revelations = TypeSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
                     ? Repo.GetNonceRevelations(null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.NonceRevelationOperation>());
 
-                var delegations = TypesSubs.TryGetValue(Operations.Delegations, out var delegationsSub)
-                    ? Repo.GetDelegations(null, null, null, null, null, level, null, null, null, null, limit, symbols)
+                var delegations = TypeSubs.TryGetValue(Operations.Delegations, out var delegationsSub)
+                    ? Repo.GetDelegations(null, null, null, null, null, level, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
 
-                var originations = TypesSubs.TryGetValue(Operations.Originations, out var originationsSub)
-                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                var originations = TypeSubs.TryGetValue(Operations.Originations, out var originationsSub)
+                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, null, level, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
-                var transactions = TypesSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
-                    ? Repo.GetTransactions(null, null, null, null, null, null, level, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                var transactions = TypeSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
+                    ? Repo.GetTransactions(null, null, null, null, null, null, level, null, null, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.TransactionOperation>());
 
-                var reveals = TypesSubs.TryGetValue(Operations.Reveals, out var revealsSub)
+                var reveals = TypeSubs.TryGetValue(Operations.Reveals, out var revealsSub)
                     ? Repo.GetReveals(null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevealOperation>());
 
-                var registerConstants = TypesSubs.TryGetValue(Operations.RegisterConstant, out var registerConstantsSub)
+                var registerConstants = TypeSubs.TryGetValue(Operations.RegisterConstant, out var registerConstantsSub)
                     ? Repo.GetRegisterConstants(null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RegisterConstantOperation>());
 
-                var setDepositsLimits = TypesSubs.TryGetValue(Operations.SetDepositsLimits, out var setDepositsLimitsSub)
+                var setDepositsLimits = TypeSubs.TryGetValue(Operations.SetDepositsLimits, out var setDepositsLimitsSub)
                     ? Repo.GetSetDepositsLimits(null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.SetDepositsLimitOperation>());
 
-                var transferTicketOps = TypesSubs.TryGetValue(Operations.TransferTicket, out var transferTicketSub)
+                var transferTicketOps = TypeSubs.TryGetValue(Operations.TransferTicket, out var transferTicketSub)
                     ? Repo.GetTransferTicketOps(null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TransferTicketOperation>());
 
-                var txRollupCommitOps = TypesSubs.TryGetValue(Operations.TxRollupCommit, out var txRollupCommitSub)
+                var txRollupCommitOps = TypeSubs.TryGetValue(Operations.TxRollupCommit, out var txRollupCommitSub)
                     ? Repo.GetTxRollupCommitOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupCommitOperation>());
 
-                var txRollupDispatchTicketsOps = TypesSubs.TryGetValue(Operations.TxRollupDispatchTickets, out var txRollupDispatchTicketsSub)
+                var txRollupDispatchTicketsOps = TypeSubs.TryGetValue(Operations.TxRollupDispatchTickets, out var txRollupDispatchTicketsSub)
                     ? Repo.GetTxRollupDispatchTicketsOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupDispatchTicketsOperation>());
 
-                var txRollupFinalizeCommitmentOps = TypesSubs.TryGetValue(Operations.TxRollupFinalizeCommitment, out var txRollupFinalizeCommitmentSub)
+                var txRollupFinalizeCommitmentOps = TypeSubs.TryGetValue(Operations.TxRollupFinalizeCommitment, out var txRollupFinalizeCommitmentSub)
                     ? Repo.GetTxRollupFinalizeCommitmentOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupFinalizeCommitmentOperation>());
 
-                var txRollupOriginationOps = TypesSubs.TryGetValue(Operations.TxRollupOrigination, out var txRollupOriginationSub)
+                var txRollupOriginationOps = TypeSubs.TryGetValue(Operations.TxRollupOrigination, out var txRollupOriginationSub)
                     ? Repo.GetTxRollupOriginationOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupOriginationOperation>());
 
-                var txRollupRejectionOps = TypesSubs.TryGetValue(Operations.TxRollupRejection, out var txRollupRejectionSub)
+                var txRollupRejectionOps = TypeSubs.TryGetValue(Operations.TxRollupRejection, out var txRollupRejectionSub)
                     ? Repo.GetTxRollupRejectionOps(null, null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupRejectionOperation>());
 
-                var txRollupRemoveCommitmentOps = TypesSubs.TryGetValue(Operations.TxRollupRemoveCommitment, out var txRollupRemoveCommitmentSub)
+                var txRollupRemoveCommitmentOps = TypeSubs.TryGetValue(Operations.TxRollupRemoveCommitment, out var txRollupRemoveCommitmentSub)
                     ? Repo.GetTxRollupRemoveCommitmentOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupRemoveCommitmentOperation>());
 
-                var txRollupReturnBondOps = TypesSubs.TryGetValue(Operations.TxRollupReturnBond, out var txRollupReturnBondSub)
+                var txRollupReturnBondOps = TypeSubs.TryGetValue(Operations.TxRollupReturnBond, out var txRollupReturnBondSub)
                     ? Repo.GetTxRollupReturnBondOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupReturnBondOperation>());
 
-                var txRollupSubmitBatchOps = TypesSubs.TryGetValue(Operations.TxRollupSubmitBatch, out var txRollupSubmitBatchSub)
+                var txRollupSubmitBatchOps = TypeSubs.TryGetValue(Operations.TxRollupSubmitBatch, out var txRollupSubmitBatchSub)
                     ? Repo.GetTxRollupSubmitBatchOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupSubmitBatchOperation>());
 
-                var migrations = TypesSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
+                var migrations = TypeSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
 
-                var penalties = TypesSubs.TryGetValue(Operations.RevelationPenalty, out var penaltiesSub)
+                var penalties = TypeSubs.TryGetValue(Operations.RevelationPenalty, out var penaltiesSub)
                     ? Repo.GetRevelationPenalties(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevelationPenaltyOperation>());
 
-                var baking = TypesSubs.TryGetValue(Operations.Baking, out var bakingSub)
+                var baking = TypeSubs.TryGetValue(Operations.Baking, out var bakingSub)
                     ? Repo.GetBakings(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
-                var endorsingRewards = TypesSubs.TryGetValue(Operations.EndorsingRewards, out var endorsingRewardsSub)
+                var endorsingRewards = TypeSubs.TryGetValue(Operations.EndorsingRewards, out var endorsingRewardsSub)
                     ? Repo.GetEndorsingRewards(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsingRewardOperation>());
 
@@ -261,416 +270,518 @@ namespace Tzkt.Api.Websocket.Processors
 
                 if (endorsements.Result.Any())
                 {
-                    if (endorsementsSub.All != null)
-                        AddRange(endorsementsSub.All, endorsements.Result);
+                    if (endorsementsSub.Subs != null)
+                        AddRange(endorsementsSub.Subs, endorsements.Result);
 
-                    if (endorsementsSub.Addresses != null)
+                    if (endorsementsSub.AddressSubs != null)
                         foreach (var op in endorsements.Result)
-                            if (endorsementsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
-                                Add(delegateSubs, op);
+                            if (endorsementsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs.Subs, op);
                 }
 
                 if (preendorsements.Result.Any())
                 {
-                    if (preendorsementsSub.All != null)
-                        AddRange(preendorsementsSub.All, preendorsements.Result);
+                    if (preendorsementsSub.Subs != null)
+                        AddRange(preendorsementsSub.Subs, preendorsements.Result);
 
-                    if (preendorsementsSub.Addresses != null)
+                    if (preendorsementsSub.AddressSubs != null)
                         foreach (var op in preendorsements.Result)
-                            if (preendorsementsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
-                                Add(delegateSubs, op);
+                            if (preendorsementsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs.Subs, op);
                 }
 
                 if (ballots.Result.Any())
                 {
-                    if (ballotsSub.All != null)
-                        AddRange(ballotsSub.All, ballots.Result);
+                    if (ballotsSub.Subs != null)
+                        AddRange(ballotsSub.Subs, ballots.Result);
 
-                    if (ballotsSub.Addresses != null)
+                    if (ballotsSub.AddressSubs != null)
                         foreach (var op in ballots.Result)
-                            if (ballotsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
-                                Add(delegateSubs, op);
+                            if (ballotsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs.Subs, op);
                 }
 
                 if (proposals.Result.Any())
                 {
-                    if (proposalsSub.All != null)
-                        AddRange(proposalsSub.All, proposals.Result);
+                    if (proposalsSub.Subs != null)
+                        AddRange(proposalsSub.Subs, proposals.Result);
 
-                    if (proposalsSub.Addresses != null)
+                    if (proposalsSub.AddressSubs != null)
                         foreach (var op in proposals.Result)
-                            if (proposalsSub.Addresses.TryGetValue(op.Delegate.Address, out var delegateSubs))
-                                Add(delegateSubs, op);
+                            if (proposalsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs.Subs, op);
                 }
 
                 if (activations.Result.Any())
                 {
-                    if (activationsSub.All != null)
-                        AddRange(activationsSub.All, activations.Result);
+                    if (activationsSub.Subs != null)
+                        AddRange(activationsSub.Subs, activations.Result);
 
-                    if (activationsSub.Addresses != null)
+                    if (activationsSub.AddressSubs != null)
                         foreach (var op in activations.Result)
-                            if (activationsSub.Addresses.TryGetValue(op.Account.Address, out var accountSubs))
-                                Add(accountSubs, op);
+                            if (activationsSub.AddressSubs.TryGetValue(op.Account.Address, out var accountSubs))
+                                Add(accountSubs.Subs, op);
                 }
 
                 if (doubleBaking.Result.Any())
                 {
-                    if (doubleBakingSub.All != null)
-                        AddRange(doubleBakingSub.All, doubleBaking.Result);
+                    if (doubleBakingSub.Subs != null)
+                        AddRange(doubleBakingSub.Subs, doubleBaking.Result);
 
-                    if (doubleBakingSub.Addresses != null)
+                    if (doubleBakingSub.AddressSubs != null)
                         foreach (var op in doubleBaking.Result)
                         {
-                            if (doubleBakingSub.Addresses.TryGetValue(op.Accuser.Address, out var accuserSubs))
-                                Add(accuserSubs, op);
+                            if (doubleBakingSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs))
+                                Add(accuserSubs.Subs, op);
 
-                            if (doubleBakingSub.Addresses.TryGetValue(op.Offender.Address, out var offenderSubs))
-                                Add(offenderSubs, op);
+                            if (doubleBakingSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs))
+                                Add(offenderSubs.Subs, op);
                         }
                 }
 
                 if (doubleEndorsing.Result.Any())
                 {
-                    if (doubleEndorsingSub.All != null)
-                        AddRange(doubleEndorsingSub.All, doubleEndorsing.Result);
+                    if (doubleEndorsingSub.Subs != null)
+                        AddRange(doubleEndorsingSub.Subs, doubleEndorsing.Result);
 
-                    if (doubleEndorsingSub.Addresses != null)
+                    if (doubleEndorsingSub.AddressSubs != null)
                         foreach (var op in doubleEndorsing.Result)
                         {
-                            if (doubleEndorsingSub.Addresses.TryGetValue(op.Accuser.Address, out var accuserSubs))
-                                Add(accuserSubs, op);
+                            if (doubleEndorsingSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs))
+                                Add(accuserSubs.Subs, op);
 
-                            if (doubleEndorsingSub.Addresses.TryGetValue(op.Offender.Address, out var offenderSubs))
-                                Add(offenderSubs, op);
+                            if (doubleEndorsingSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs))
+                                Add(offenderSubs.Subs, op);
                         }
                 }
 
                 if (doublePreendorsing.Result.Any())
                 {
-                    if (doublePreendorsingSub.All != null)
-                        AddRange(doublePreendorsingSub.All, doublePreendorsing.Result);
+                    if (doublePreendorsingSub.Subs != null)
+                        AddRange(doublePreendorsingSub.Subs, doublePreendorsing.Result);
 
-                    if (doublePreendorsingSub.Addresses != null)
+                    if (doublePreendorsingSub.AddressSubs != null)
                         foreach (var op in doublePreendorsing.Result)
                         {
-                            if (doublePreendorsingSub.Addresses.TryGetValue(op.Accuser.Address, out var accuserSubs))
-                                Add(accuserSubs, op);
+                            if (doublePreendorsingSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs))
+                                Add(accuserSubs.Subs, op);
 
-                            if (doublePreendorsingSub.Addresses.TryGetValue(op.Offender.Address, out var offenderSubs))
-                                Add(offenderSubs, op);
+                            if (doublePreendorsingSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs))
+                                Add(offenderSubs.Subs, op);
                         }
                 }
 
                 if (revelations.Result.Any())
                 {
-                    if (revelationsSub.All != null)
-                        AddRange(revelationsSub.All, revelations.Result);
+                    if (revelationsSub.Subs != null)
+                        AddRange(revelationsSub.Subs, revelations.Result);
 
-                    if (revelationsSub.Addresses != null)
+                    if (revelationsSub.AddressSubs != null)
                         foreach (var op in revelations.Result)
                         {
-                            if (revelationsSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
-                                Add(bakerSubs, op);
+                            if (revelationsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs.Subs, op);
 
-                            if (revelationsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (revelationsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
                         }
                 }
 
                 if (delegations.Result.Any())
                 {
-                    if (delegationsSub.All != null)
-                        AddRange(delegationsSub.All, delegations.Result);
+                    if (delegationsSub.Subs != null)
+                        AddRange(delegationsSub.Subs, delegations.Result);
 
-                    if (delegationsSub.Addresses != null)
+                    void AddByCodeHash(Dictionary<int, HashSet<string>> subs, Models.DelegationOperation op)
+                    {
+                        if (op.SenderCodeHash != null && subs.TryGetValue((int)op.SenderCodeHash, out var senderCodeHashSubs))
+                            Add(senderCodeHashSubs, op);
+                    }
+
+                    if (delegationsSub.CodeHashSubs != null)
+                        foreach (var op in delegations.Result)
+                            AddByCodeHash(delegationsSub.CodeHashSubs, op);
+
+                    if (delegationsSub.AddressSubs != null)
                         foreach (var op in delegations.Result)
                         {
-                            if (op.Initiator != null && delegationsSub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
-                                Add(initiatorSubs, op);
+                            if (op.Initiator != null && delegationsSub.AddressSubs.TryGetValue(op.Initiator.Address, out var initiatorSubs))
+                            {
+                                if (initiatorSubs.Subs != null)
+                                    Add(initiatorSubs.Subs, op);
 
-                            if (delegationsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                                if (initiatorSubs.CodeHashSubs != null)
+                                    AddByCodeHash(initiatorSubs.CodeHashSubs, op);
+                            }
 
-                            if (op.PrevDelegate != null && delegationsSub.Addresses.TryGetValue(op.PrevDelegate.Address, out var prevSubs))
-                                Add(prevSubs, op);
+                            if (delegationsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                            {
+                                if (senderSubs.Subs != null)
+                                    Add(senderSubs.Subs, op);
 
-                            if (op.NewDelegate != null && delegationsSub.Addresses.TryGetValue(op.NewDelegate.Address, out var newSubs))
-                                Add(newSubs, op);
+                                if (senderSubs.CodeHashSubs != null)
+                                    AddByCodeHash(senderSubs.CodeHashSubs, op);
+                            }
+
+                            if (op.PrevDelegate != null && delegationsSub.AddressSubs.TryGetValue(op.PrevDelegate.Address, out var prevSubs))
+                            {
+                                if (prevSubs.Subs != null)
+                                    Add(prevSubs.Subs, op);
+
+                                if (prevSubs.CodeHashSubs != null)
+                                    AddByCodeHash(prevSubs.CodeHashSubs, op);
+                            }
+
+                            if (op.NewDelegate != null && delegationsSub.AddressSubs.TryGetValue(op.NewDelegate.Address, out var newSubs))
+                            {
+                                if (newSubs.Subs != null)
+                                    Add(newSubs.Subs, op);
+
+                                if (newSubs.CodeHashSubs != null)
+                                    AddByCodeHash(newSubs.CodeHashSubs, op);
+                            }
                         }
                 }
 
                 if (originations.Result.Any())
                 {
-                    if (originationsSub.All != null)
-                        AddRange(originationsSub.All, originations.Result);
+                    if (originationsSub.Subs != null)
+                        AddRange(originationsSub.Subs, originations.Result);
 
-                    if (originationsSub.Addresses != null)
+                    void AddByCodeHash(Dictionary<int, HashSet<string>> subs, Models.OriginationOperation op)
+                    {
+                        if (op.SenderCodeHash != null && subs.TryGetValue((int)op.SenderCodeHash, out var senderCodeHashSubs))
+                            Add(senderCodeHashSubs, op);
+
+                        if (op.OriginatedContract?.CodeHash != null && subs.TryGetValue(op.OriginatedContract.CodeHash, out var targetCodeHash))
+                            Add(targetCodeHash, op);
+                    }
+
+                    if (originationsSub.CodeHashSubs != null)
+                        foreach (var op in originations.Result)
+                            AddByCodeHash(originationsSub.CodeHashSubs, op);
+
+                    if (originationsSub.AddressSubs != null)
                         foreach (var op in originations.Result)
                         {
-                            if (op.Initiator != null && originationsSub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
-                                Add(initiatorSubs, op);
+                            if (op.Initiator != null && originationsSub.AddressSubs.TryGetValue(op.Initiator.Address, out var initiatorSubs))
+                            {
+                                if (initiatorSubs.Subs != null)
+                                    Add(initiatorSubs.Subs, op);
 
-                            if (originationsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                                if (initiatorSubs.CodeHashSubs != null)
+                                    AddByCodeHash(initiatorSubs.CodeHashSubs, op);
+                            }
 
-                            if (op.ContractManager != null && originationsSub.Addresses.TryGetValue(op.ContractManager.Address, out var managerSubs))
-                                Add(managerSubs, op);
+                            if (originationsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                            {
+                                if (senderSubs.Subs != null)
+                                    Add(senderSubs.Subs, op);
 
-                            if (op.ContractDelegate != null && originationsSub.Addresses.TryGetValue(op.ContractDelegate.Address, out var delegateSubs))
-                                Add(delegateSubs, op);
+                                if (senderSubs.CodeHashSubs != null)
+                                    AddByCodeHash(senderSubs.CodeHashSubs, op);
+                            }
+
+                            if (op.ContractManager != null && originationsSub.AddressSubs.TryGetValue(op.ContractManager.Address, out var managerSubs))
+                            {
+                                if (managerSubs.Subs != null)
+                                    Add(managerSubs.Subs, op);
+
+                                if (managerSubs.CodeHashSubs != null)
+                                    AddByCodeHash(managerSubs.CodeHashSubs, op);
+                            }
+
+                            if (op.ContractDelegate != null && originationsSub.AddressSubs.TryGetValue(op.ContractDelegate.Address, out var delegateSubs))
+                            {
+                                if (delegateSubs.Subs != null)
+                                    Add(delegateSubs.Subs, op);
+
+                                if (delegateSubs.CodeHashSubs != null)
+                                    AddByCodeHash(delegateSubs.CodeHashSubs, op);
+                            }
                         }
                 }
 
                 if (transactions.Result.Any())
                 {
-                    if (transactionsSub.All != null)
-                        AddRange(transactionsSub.All, transactions.Result);
+                    if (transactionsSub.Subs != null)
+                        AddRange(transactionsSub.Subs, transactions.Result);
 
-                    if (transactionsSub.Addresses != null)
+                    void AddByCodeHash(Dictionary<int, HashSet<string>> subs, Models.TransactionOperation op)
+                    {
+                        if (op.SenderCodeHash != null && subs.TryGetValue((int)op.SenderCodeHash, out var senderCodeHashSubs))
+                            Add(senderCodeHashSubs, op);
+
+                        if (op.TargetCodeHash != null && subs.TryGetValue((int)op.TargetCodeHash, out var targetCodeHash))
+                            Add(targetCodeHash, op);
+                    }
+
+                    if (transactionsSub.CodeHashSubs != null)
+                        foreach (var op in transactions.Result)
+                            AddByCodeHash(transactionsSub.CodeHashSubs, op);
+
+                    if (transactionsSub.AddressSubs != null)
                         foreach (var op in transactions.Result)
                         {
-                            if (op.Initiator != null && transactionsSub.Addresses.TryGetValue(op.Initiator.Address, out var initiatorSubs))
-                                Add(initiatorSubs, op);
+                            if (op.Initiator != null && transactionsSub.AddressSubs.TryGetValue(op.Initiator.Address, out var initiatorSubs))
+                            {
+                                if (initiatorSubs.Subs != null)
+                                    Add(initiatorSubs.Subs, op);
 
-                            if (transactionsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                                if (initiatorSubs.CodeHashSubs != null)
+                                    AddByCodeHash(initiatorSubs.CodeHashSubs, op);
+                            }
 
-                            if (op.Target != null && transactionsSub.Addresses.TryGetValue(op.Target.Address, out var targetSubs))
-                                Add(targetSubs, op);
+                            if (transactionsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                            {
+                                if (senderSubs.Subs != null)
+                                    Add(senderSubs.Subs, op);
+
+                                if (senderSubs.CodeHashSubs != null)
+                                    AddByCodeHash(senderSubs.CodeHashSubs, op);
+                            }
+
+                            if (op.Target != null && transactionsSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
+                            {
+                                if (targetSubs.Subs != null)
+                                    Add(targetSubs.Subs, op);
+
+                                if (targetSubs.CodeHashSubs != null)
+                                    AddByCodeHash(targetSubs.CodeHashSubs, op);
+                            }
                         }
                 }
 
                 if (reveals.Result.Any())
                 {
-                    if (revealsSub.All != null)
-                        AddRange(revealsSub.All, reveals.Result);
+                    if (revealsSub.Subs != null)
+                        AddRange(revealsSub.Subs, reveals.Result);
 
-                    if (revealsSub.Addresses != null)
+                    if (revealsSub.AddressSubs != null)
                         foreach (var op in reveals.Result)
-                            if (revealsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (revealsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
                 }
 
                 if (registerConstants.Result.Any())
                 {
-                    if (registerConstantsSub.All != null)
-                        AddRange(registerConstantsSub.All, registerConstants.Result);
+                    if (registerConstantsSub.Subs != null)
+                        AddRange(registerConstantsSub.Subs, registerConstants.Result);
 
-                    if (registerConstantsSub.Addresses != null)
+                    if (registerConstantsSub.AddressSubs != null)
                         foreach (var op in registerConstants.Result)
-                            if (registerConstantsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (registerConstantsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
                 }
 
                 if (setDepositsLimits.Result.Any())
                 {
-                    if (setDepositsLimitsSub.All != null)
-                        AddRange(setDepositsLimitsSub.All, setDepositsLimits.Result);
+                    if (setDepositsLimitsSub.Subs != null)
+                        AddRange(setDepositsLimitsSub.Subs, setDepositsLimits.Result);
 
-                    if (setDepositsLimitsSub.Addresses != null)
+                    if (setDepositsLimitsSub.AddressSubs != null)
                         foreach (var op in setDepositsLimits.Result)
-                            if (setDepositsLimitsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (setDepositsLimitsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
                 }
 
                 if (transferTicketOps.Result.Any())
                 {
-                    if (transferTicketSub.All != null)
-                        AddRange(transferTicketSub.All, transferTicketOps.Result);
+                    if (transferTicketSub.Subs != null)
+                        AddRange(transferTicketSub.Subs, transferTicketOps.Result);
 
-                    if (transferTicketSub.Addresses != null)
+                    if (transferTicketSub.AddressSubs != null)
                         foreach (var op in transferTicketOps.Result)
                         {
-                            if (transferTicketSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (transferTicketSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (transferTicketSub.Addresses.TryGetValue(op.Target.Address, out var targetSubs))
-                                Add(targetSubs, op);
+                            if (transferTicketSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
+                                Add(targetSubs.Subs, op);
 
-                            if (transferTicketSub.Addresses.TryGetValue(op.Ticketer.Address, out var ticketerSubs))
-                                Add(ticketerSubs, op);
+                            if (transferTicketSub.AddressSubs.TryGetValue(op.Ticketer.Address, out var ticketerSubs))
+                                Add(ticketerSubs.Subs, op);
                         }
                 }
 
                 if (txRollupCommitOps.Result.Any())
                 {
-                    if (txRollupCommitSub.All != null)
-                        AddRange(txRollupCommitSub.All, txRollupCommitOps.Result);
+                    if (txRollupCommitSub.Subs != null)
+                        AddRange(txRollupCommitSub.Subs, txRollupCommitOps.Result);
 
-                    if (txRollupCommitSub.Addresses != null)
+                    if (txRollupCommitSub.AddressSubs != null)
                         foreach (var op in txRollupCommitOps.Result)
                         {
-                            if (txRollupCommitSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupCommitSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupCommitSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupCommitSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (txRollupDispatchTicketsOps.Result.Any())
                 {
-                    if (txRollupDispatchTicketsSub.All != null)
-                        AddRange(txRollupDispatchTicketsSub.All, txRollupDispatchTicketsOps.Result);
+                    if (txRollupDispatchTicketsSub.Subs != null)
+                        AddRange(txRollupDispatchTicketsSub.Subs, txRollupDispatchTicketsOps.Result);
 
-                    if (txRollupDispatchTicketsSub.Addresses != null)
+                    if (txRollupDispatchTicketsSub.AddressSubs != null)
                         foreach (var op in txRollupDispatchTicketsOps.Result)
                         {
-                            if (txRollupDispatchTicketsSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupDispatchTicketsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupDispatchTicketsSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupDispatchTicketsSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (txRollupFinalizeCommitmentOps.Result.Any())
                 {
-                    if (txRollupFinalizeCommitmentSub.All != null)
-                        AddRange(txRollupFinalizeCommitmentSub.All, txRollupFinalizeCommitmentOps.Result);
+                    if (txRollupFinalizeCommitmentSub.Subs != null)
+                        AddRange(txRollupFinalizeCommitmentSub.Subs, txRollupFinalizeCommitmentOps.Result);
 
-                    if (txRollupFinalizeCommitmentSub.Addresses != null)
+                    if (txRollupFinalizeCommitmentSub.AddressSubs != null)
                         foreach (var op in txRollupFinalizeCommitmentOps.Result)
                         {
-                            if (txRollupFinalizeCommitmentSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupFinalizeCommitmentSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupFinalizeCommitmentSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupFinalizeCommitmentSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (txRollupOriginationOps.Result.Any())
                 {
-                    if (txRollupOriginationSub.All != null)
-                        AddRange(txRollupOriginationSub.All, txRollupOriginationOps.Result);
+                    if (txRollupOriginationSub.Subs != null)
+                        AddRange(txRollupOriginationSub.Subs, txRollupOriginationOps.Result);
 
-                    if (txRollupOriginationSub.Addresses != null)
+                    if (txRollupOriginationSub.AddressSubs != null)
                         foreach (var op in txRollupOriginationOps.Result)
                         {
-                            if (txRollupOriginationSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupOriginationSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupOriginationSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupOriginationSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (txRollupRejectionOps.Result.Any())
                 {
-                    if (txRollupRejectionSub.All != null)
-                        AddRange(txRollupRejectionSub.All, txRollupRejectionOps.Result);
+                    if (txRollupRejectionSub.Subs != null)
+                        AddRange(txRollupRejectionSub.Subs, txRollupRejectionOps.Result);
 
-                    if (txRollupRejectionSub.Addresses != null)
+                    if (txRollupRejectionSub.AddressSubs != null)
                         foreach (var op in txRollupRejectionOps.Result)
                         {
-                            if (txRollupRejectionSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupRejectionSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupRejectionSub.Addresses.TryGetValue(op.Committer.Address, out var committerSubs))
-                                Add(committerSubs, op);
+                            if (txRollupRejectionSub.AddressSubs.TryGetValue(op.Committer.Address, out var committerSubs))
+                                Add(committerSubs.Subs, op);
 
-                            if (txRollupRejectionSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupRejectionSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (txRollupRemoveCommitmentOps.Result.Any())
                 {
-                    if (txRollupRemoveCommitmentSub.All != null)
-                        AddRange(txRollupRemoveCommitmentSub.All, txRollupRemoveCommitmentOps.Result);
+                    if (txRollupRemoveCommitmentSub.Subs != null)
+                        AddRange(txRollupRemoveCommitmentSub.Subs, txRollupRemoveCommitmentOps.Result);
 
-                    if (txRollupRemoveCommitmentSub.Addresses != null)
+                    if (txRollupRemoveCommitmentSub.AddressSubs != null)
                         foreach (var op in txRollupRemoveCommitmentOps.Result)
                         {
-                            if (txRollupRemoveCommitmentSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupRemoveCommitmentSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupRemoveCommitmentSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupRemoveCommitmentSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (txRollupReturnBondOps.Result.Any())
                 {
-                    if (txRollupReturnBondSub.All != null)
-                        AddRange(txRollupReturnBondSub.All, txRollupReturnBondOps.Result);
+                    if (txRollupReturnBondSub.Subs != null)
+                        AddRange(txRollupReturnBondSub.Subs, txRollupReturnBondOps.Result);
 
-                    if (txRollupReturnBondSub.Addresses != null)
+                    if (txRollupReturnBondSub.AddressSubs != null)
                         foreach (var op in txRollupReturnBondOps.Result)
                         {
-                            if (txRollupReturnBondSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupReturnBondSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupReturnBondSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupReturnBondSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (txRollupSubmitBatchOps.Result.Any())
                 {
-                    if (txRollupSubmitBatchSub.All != null)
-                        AddRange(txRollupSubmitBatchSub.All, txRollupSubmitBatchOps.Result);
+                    if (txRollupSubmitBatchSub.Subs != null)
+                        AddRange(txRollupSubmitBatchSub.Subs, txRollupSubmitBatchOps.Result);
 
-                    if (txRollupSubmitBatchSub.Addresses != null)
+                    if (txRollupSubmitBatchSub.AddressSubs != null)
                         foreach (var op in txRollupSubmitBatchOps.Result)
                         {
-                            if (txRollupSubmitBatchSub.Addresses.TryGetValue(op.Sender.Address, out var senderSubs))
-                                Add(senderSubs, op);
+                            if (txRollupSubmitBatchSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
 
-                            if (txRollupSubmitBatchSub.Addresses.TryGetValue(op.Rollup.Address, out var rollupSubs))
-                                Add(rollupSubs, op);
+                            if (txRollupSubmitBatchSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 
                 if (migrations.Result.Any())
                 {
-                    if (migrationsSub.All != null)
-                        AddRange(migrationsSub.All, migrations.Result);
+                    if (migrationsSub.Subs != null)
+                        AddRange(migrationsSub.Subs, migrations.Result);
 
-                    if (migrationsSub.Addresses != null)
+                    if (migrationsSub.AddressSubs != null)
                         foreach (var op in migrations.Result)
-                            if (migrationsSub.Addresses.TryGetValue(op.Account.Address, out var accountSubs))
-                                Add(accountSubs, op);
+                            if (migrationsSub.AddressSubs.TryGetValue(op.Account.Address, out var accountSubs))
+                                Add(accountSubs.Subs, op);
                 }
 
                 if (penalties.Result.Any())
                 {
-                    if (penaltiesSub.All != null)
-                        AddRange(penaltiesSub.All, penalties.Result);
+                    if (penaltiesSub.Subs != null)
+                        AddRange(penaltiesSub.Subs, penalties.Result);
 
-                    if (penaltiesSub.Addresses != null)
+                    if (penaltiesSub.AddressSubs != null)
                         foreach (var op in penalties.Result)
-                            if (penaltiesSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
-                                Add(bakerSubs, op);
+                            if (penaltiesSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs.Subs, op);
                 }
 
                 if (baking.Result.Any())
                 {
-                    if (bakingSub.All != null)
-                        AddRange(bakingSub.All, baking.Result);
+                    if (bakingSub.Subs != null)
+                        AddRange(bakingSub.Subs, baking.Result);
 
-                    if (bakingSub.Addresses != null)
+                    if (bakingSub.AddressSubs != null)
                         foreach (var op in baking.Result)
                         {
-                            if (bakingSub.Addresses.TryGetValue(op.Proposer.Address, out var proposerSubs))
-                                Add(proposerSubs, op);
+                            if (bakingSub.AddressSubs.TryGetValue(op.Proposer.Address, out var proposerSubs))
+                                Add(proposerSubs.Subs, op);
 
-                            if (bakingSub.Addresses.TryGetValue(op.Producer.Address, out var producerSubs))
-                                Add(producerSubs, op);
+                            if (bakingSub.AddressSubs.TryGetValue(op.Producer.Address, out var producerSubs))
+                                Add(producerSubs.Subs, op);
                         }
                 }
 
                 if (endorsingRewards.Result.Any())
                 {
-                    if (endorsingRewardsSub.All != null)
-                        AddRange(endorsingRewardsSub.All, endorsingRewards.Result);
+                    if (endorsingRewardsSub.Subs != null)
+                        AddRange(endorsingRewardsSub.Subs, endorsingRewards.Result);
 
-                    if (endorsingRewardsSub.Addresses != null)
+                    if (endorsingRewardsSub.AddressSubs != null)
                         foreach (var op in endorsingRewards.Result)
-                            if (endorsingRewardsSub.Addresses.TryGetValue(op.Baker.Address, out var bakerSubs))
-                                Add(bakerSubs, op);
+                            if (endorsingRewardsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs.Subs, op);
                 }
                 #endregion
 
@@ -683,7 +794,7 @@ namespace Tzkt.Api.Websocket.Processors
 
                     sendings.Add(Context.Clients
                         .Client(connectionId)
-                        .SendData(OperationsChannel, data, State.Current.Level));
+                        .SendData(Channel, data, State.Current.Level));
 
                     Logger.LogDebug("{0} operations sent to {1}", operations.Count, connectionId);
                 }
@@ -729,37 +840,48 @@ namespace Tzkt.Api.Websocket.Processors
                 #region add to subs
                 foreach (var type in parameter.TypesList)
                 {
-                    if (!TypesSubs.TryGetValue(type, out var typeSub))
+                    if (!TypeSubs.TryGetValue(type, out var typeSub))
                     {
                         typeSub = new();
-                        TypesSubs.Add(type, typeSub);
+                        TypeSubs.Add(type, typeSub);
                     }
-                    if (parameter.Address == null)
+                    if (parameter.Address != null)
                     {
-                        typeSub.All ??= new();
-                        if (typeSub.All.Add(connectionId))
-                            Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-                    }   
+                        typeSub.AddressSubs ??= new();
+                        if (!typeSub.AddressSubs.TryGetValue(parameter.Address, out var addressSub))
+                        {
+                            addressSub = new();
+                            typeSub.AddressSubs.Add(parameter.Address, addressSub);
+                        }
+                        if (parameter.CodeHash != null)
+                        {
+                            addressSub.CodeHashSubs ??= new();
+                            TryAdd(addressSub.CodeHashSubs, (int)parameter.CodeHash, connectionId);
+                        }
+                        else
+                        {
+                            addressSub.Subs ??= new();
+                            TryAdd(addressSub.Subs, connectionId);
+                        }
+                    }
+                    else if (parameter.CodeHash != null)
+                    {
+                        typeSub.CodeHashSubs ??= new();
+                        TryAdd(typeSub.CodeHashSubs, (int)parameter.CodeHash, connectionId);
+                    }
                     else
                     {
-                        typeSub.Addresses ??= new(4);
-                        if (!typeSub.Addresses.TryGetValue(parameter.Address, out var addressSub))
-                        {
-                            addressSub = new(4);
-                            typeSub.Addresses.Add(parameter.Address, addressSub);
-                        }
-
-                        if (addressSub.Add(connectionId))
-                            Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+                        typeSub.Subs ??= new();
+                        TryAdd(typeSub.Subs, connectionId);
                     }
                 }
                 #endregion
 
                 #region add to group
-                await Context.Groups.AddToGroupAsync(connectionId, OperationsGroup);
+                await Context.Groups.AddToGroupAsync(connectionId, Group);
                 #endregion
 
-                sending = client.SendState(OperationsChannel, State.Current.Level);
+                sending = client.SendState(Channel, State.Current.Level);
 
                 Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, State.Current.Level);
                 return State.Current.Level;
@@ -796,34 +918,27 @@ namespace Tzkt.Api.Websocket.Processors
                 if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
 
-                foreach (var (type, typeSub) in TypesSubs)
+                foreach (var (type, typeSub) in TypeSubs)
                 {
-                    if (typeSub.All != null)
+                    typeSub.Subs = TryRemove(typeSub.Subs, connectionId);
+                    typeSub.CodeHashSubs = TryRemove(typeSub.CodeHashSubs, connectionId);
+                    if (typeSub.AddressSubs != null)
                     {
-                        if (typeSub.All.Remove(connectionId))
-                            Limits[connectionId]--;
-
-                        if (typeSub.All.Count == 0)
-                            typeSub.All = null;
-                    }
-
-                    if (typeSub.Addresses != null)
-                    {
-                        foreach (var (address, addressSubs) in typeSub.Addresses)
+                        foreach (var (address, addressSub) in typeSub.AddressSubs)
                         {
-                            if (addressSubs.Remove(connectionId))
-                                Limits[connectionId]--;
-
-                            if (addressSubs.Count == 0)
-                                typeSub.Addresses.Remove(address);
+                            addressSub.Subs = TryRemove(addressSub.Subs, connectionId);
+                            addressSub.CodeHashSubs = TryRemove(addressSub.CodeHashSubs, connectionId);
+                            
+                            if (addressSub.Empty)
+                                typeSub.AddressSubs.Remove(address);
                         }
-
-                        if (typeSub.Addresses.Count == 0)
-                            typeSub.Addresses = null;
+                        
+                        if (typeSub.AddressSubs.Count == 0)
+                            typeSub.AddressSubs = null;
                     }
 
                     if (typeSub.Empty)
-                        TypesSubs.Remove(type);
+                        TypeSubs.Remove(type);
                 }
 
                 if (Limits[connectionId] != 0)
@@ -840,6 +955,50 @@ namespace Tzkt.Api.Websocket.Processors
             {
                 Sema.Release();
             }
+        }
+
+        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId)
+        {
+            if (!subs.TryGetValue(key, out var set))
+            {
+                set = new(4);
+                subs.Add(key, set);
+            }
+
+            if (set.Add(connectionId))
+                Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+        }
+
+        private static void TryAdd(HashSet<string> set, string connectionId)
+        {
+            if (set.Add(connectionId))
+                Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+        }
+
+        private static Dictionary<TSubKey, HashSet<string>> TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId)
+        {
+            if (subs == null) return null;
+            foreach (var (key, value) in subs)
+            {
+                if (value.Remove(connectionId))
+                    Limits[connectionId]--;
+
+                if (value.Count == 0)
+                    subs.Remove(key);
+            }
+            if (subs.Count == 0) return null;
+            return subs;
+        }
+
+        private static HashSet<string> TryRemove(HashSet<string> set, string connectionId)
+        {
+            if (set == null) return null;
+            if (set.Remove(connectionId))
+            {
+                Limits[connectionId]--;
+                if (set.Count == 0) return null;
+            }
+            return set;
         }
 
         private static IEnumerable<Operation> Distinct(List<Operation> ops)
