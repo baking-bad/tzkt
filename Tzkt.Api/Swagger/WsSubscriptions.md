@@ -120,13 +120,16 @@ Sends operations of specified types or related to specified accounts, included i
 
 ````js
 {
-	address: '', // address you want to subscribe to,
-	             // or null if you want to subscribe for all operations
+    address: '', // address you want to subscribe to,
+                 // or null if you want to subscribe for all operations
 
-	types: ''    // comma-separated list of operation types, any of:
-	             // 'transaction', 'origination', 'delegation', 'reveal', 'register_constant', 'set_deposits_limit'
-				 // 'double_baking', 'double_endorsing', 'double_preendorsing', 'nonce_revelation', 'activation'
-				 // 'proposal', 'ballot', 'endorsement', 'preendorsement'.
+    codeHash: 0, // hash of the code of the contract to which the operation is related
+                 // (can be used with 'transaction', 'origination', 'delegation' types only)
+
+    types: ''    // comma-separated list of operation types, any of:
+                 // 'transaction', 'origination', 'delegation', 'reveal', 'register_constant', 'set_deposits_limit'
+                 // 'double_baking', 'double_endorsing', 'double_preendorsing', 'nonce_revelation', 'activation'
+                 // 'proposal', 'ballot', 'endorsement', 'preendorsement'.
 }
 ````
 																	 
@@ -146,6 +149,8 @@ State contains level (`int`) of the last processed block.
 connection.on("operations", (msg) => { console.log(msg); });
 // subscribe to all transactions
 await connection.invoke("SubscribeToOperations", { types: 'transaction' });
+// subscribe to all transactions of the entire contract family
+await connection.invoke("SubscribeToOperations", { types: 'transaction', codeHash: 1928472 });
 // subscribe to all delegations and originations related to the address 'tz1234...'
 await connection.invoke("SubscribeToOperations", { address: 'tz1234...', types: 'delegation,origination' });
 ````
