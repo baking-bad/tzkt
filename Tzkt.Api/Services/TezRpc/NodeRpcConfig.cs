@@ -37,20 +37,22 @@ namespace Tzkt.Api.Services
             var nodeConfig = config.GetNodeRpcConfig();
             if (!nodeConfig.Enabled)
                 return;
-
+            
+            string chainId;
             try
             {
-                var chainId = await rpc.GetChainIdAsync();
-                if (chainId != state.Current.ChainId)
-                {
-                    throw new ConfigurationException(
-                        $"The API chain ID {chainId} doesn't match the indexer chain ID {state.Current.ChainId}." +
-                        $" Please, check that the indexer and API use the same network");
-                }
+                chainId = await rpc.GetChainIdAsync();
             }
             catch
             {
                 throw new ConfigurationException("Couldn't validate NodeRpc. Provide working Tezos RPC to NodeRpc.Endpoint");
+            }
+            
+            if (chainId != state.Current.ChainId)
+            {
+                throw new ConfigurationException(
+                    $"The API chain ID {chainId} doesn't match the indexer chain ID {state.Current.ChainId}." +
+                    $" Please, check that the indexer and API use the same network");
             }
         }
     }

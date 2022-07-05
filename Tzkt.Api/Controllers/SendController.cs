@@ -51,12 +51,6 @@ namespace Tzkt.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> Post([FromBody][Required] string signedTx, bool force = false)
         {
-            if (string.IsNullOrEmpty(signedTx))
-            {
-                return new BadRequest($"{nameof(signedTx)}", "Body is null");
-
-            }
-            
             try
             {
                 return Ok(await Rpc.Send(signedTx, force));
