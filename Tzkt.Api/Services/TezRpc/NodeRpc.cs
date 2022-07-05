@@ -9,29 +9,26 @@ namespace Tzkt.Api.Services
 {
     public sealed class NodeRpc : IDisposable
     {
-        readonly StateCache State;
-        readonly ILogger Logger;
-
+        readonly bool Enabled;
         readonly TezosRpc Rpc;
 
-        public NodeRpc(IConfiguration config, StateCache state, ILogger<NodeRpc> logger)
+        public NodeRpc(IConfiguration config)
         {
-            State = state;
-            Logger = logger;
-            var nodeConf = config.GetTezRpcConfig();
-            Rpc = new TezosRpc(nodeConf.Endpoint, nodeConf.Timeout);
+            var nodeConf = config.GetNodeRpcConfig();
+            Enabled = nodeConf.Enabled;
+            Rpc = Enabled ? new TezosRpc(nodeConf.Endpoint, nodeConf.Timeout) : null;
         }
 
         public async Task<string> Send(string content, bool async)
         {
-            return await Rpc.Inject.Operation.PostAsync<string>(content, async);
+            return Enabled ? await Rpc.Inject.Operation.PostAsync<string>(content, async) : null;
         }
         
         public void Dispose() => Rpc.Dispose();
 
         public async Task<string> GetChainIdAsync()
         {
-            return (await Rpc.Blocks.Head.Header.GetAsync()).chain_id;
+            return Enabled ? (await Rpc.Blocks.Head.Header.GetAsync()).chain_id : null;
         }
     }
 }

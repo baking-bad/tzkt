@@ -101,10 +101,13 @@ namespace Tzkt.Api
         {
             using var scope = host.Services.CreateScope();
             var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            
+            config.ValidateAuthConfig();
+            config.ValidateNodeRpcConfig();
+            
             var state = scope.ServiceProvider.GetRequiredService<StateCache>();
             var rpc = scope.ServiceProvider.GetRequiredService<NodeRpc>();
-            config.ValidateAuthConfig();
-            await config.ValidateTezRpcConfig(state, rpc);
+            await config.ValidateNodeRpcChain(state, rpc);
             return host;
         }
     }
