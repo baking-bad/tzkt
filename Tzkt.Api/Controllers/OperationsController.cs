@@ -845,7 +845,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<DoubleBakingOperation>());
             }
 
@@ -1006,7 +1006,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
             }
 
@@ -1167,7 +1167,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
             }
 
@@ -1330,7 +1330,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "baker" && x != "sender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `baker`, `sender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<NonceRevelationOperation>());
             }
 
@@ -1499,7 +1499,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "prevDelegate" && x != "newDelegate"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `prevDelegate`, `newDelegate` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
@@ -1703,7 +1703,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "contractManager" && x != "contractDelegate" && x != "originatedContract"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `contractManager`, `contractDelegate`, `originatedContract` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
@@ -1927,7 +1927,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "target"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `target` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
@@ -4033,7 +4033,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "proposer" && x != "producer"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `proposer`, `producer` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<BakingOperation>());
             }
             if (proposer != null)

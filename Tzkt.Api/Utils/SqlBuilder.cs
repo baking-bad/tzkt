@@ -50,16 +50,54 @@ namespace Tzkt.Api
 
         public SqlBuilder Filter(AnyOfParameter anyof, Func<string, string> map)
         {
-            if (anyof != null)
-                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" = {anyof.Value}"))})");
+            if (anyof == null) return this;
+
+            if (anyof.Eq != null)
+                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" = {anyof.Eq}"))})");
+
+            if (anyof.In != null)
+            {
+                if (!anyof.InHasNull)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" = ANY ({Param(anyof.In)})"))})");
+                else if (anyof.In.Count == 0)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" IS NULL"))})");
+                else
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"(""{map(x)}"" = ANY ({Param(anyof.In)}) OR ""{map(x)}"" IS NULL)"))})");
+            }
+
+            if (anyof.Null != null)
+            {
+                AppendFilter(anyof.Null == true
+                    ? $"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" IS NULL"))})"
+                    : $"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" IS NOT NULL"))})");
+            }
 
             return this;
         }
 
         public SqlBuilder FilterA(AnyOfParameter anyof, Func<string, string> map)
         {
-            if (anyof != null)
-                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"{map(x)} = {anyof.Value}"))})");
+            if (anyof == null) return this;
+
+            if (anyof.Eq != null)
+                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} = {anyof.Eq}"))})");
+
+            if (anyof.In != null)
+            {
+                if (!anyof.InHasNull)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} = ANY ({Param(anyof.In)})"))})");
+                else if (anyof.In.Count == 0)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} IS NULL"))})");
+                else
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"({map(x)} = ANY ({Param(anyof.In)}) OR {map(x)} IS NULL)"))})");
+            }
+
+            if (anyof.Null != null)
+            {
+                AppendFilter(anyof.Null == true
+                    ? $"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} IS NULL"))})"
+                    : $"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} IS NOT NULL"))})");
+            }
 
             return this;
         }

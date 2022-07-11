@@ -89,7 +89,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "proposer" && x != "producer"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `proposer`, `producer` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<Block>());
             }
             if (proposer != null)
