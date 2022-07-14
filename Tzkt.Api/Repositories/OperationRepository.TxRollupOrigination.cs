@@ -49,7 +49,7 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -84,7 +84,7 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -117,7 +117,7 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -171,7 +171,7 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -302,7 +302,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "rollup":
                         foreach (var row in rows)
-                            result[j++][i] = await Accounts.GetAliasAsync(row.RollupId);
+                            result[j++][i] = row.RollupId == null ? null : await Accounts.GetAliasAsync(row.RollupId);
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -441,7 +441,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "rollup":
                     foreach (var row in rows)
-                        result[j++] = await Accounts.GetAliasAsync(row.RollupId);
+                        result[j++] = row.RollupId == null ? null : await Accounts.GetAliasAsync(row.RollupId);
                     break;
                 case "status":
                     foreach (var row in rows)
