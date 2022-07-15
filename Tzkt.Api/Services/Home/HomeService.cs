@@ -513,7 +513,7 @@ namespace Tzkt.Api.Services
                         Hash = x.Hash,
                         Metadata = x.Metadata,
                         VotingPower = x.VotingPower,
-                        VotingPowerPercentage = Math.Round(100.0 * x.VotingPower / (int)period.TotalVotingPower!, 2)
+                        VotingPowerPercentage = Math.Round(100.0 * x.VotingPower / (long)period.TotalVotingPower!, 2)
                     }).ToList(),
                     UpvotesQuorum = period.UpvotesQuorum,
                     PeriodEndTime = period.EndTime,
