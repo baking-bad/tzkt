@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             protocol.LBToggleThreshold = parameters["liquidity_baking_toggle_ema_threshold"]?.Value<int>() ?? 1_000_000_000;
             protocol.BlocksPerVoting = (parameters["cycles_per_voting_period"]?.Value<int>() ?? 5) * protocol.BlocksPerCycle;
             protocol.TxRollupOriginationSize = parameters["tx_rollup_origination_size"]?.Value<int>() ?? 4_000;
-            protocol.TxRollupCommitmentBond = parameters["tx_rollup_commitment_bond"]?.Value<long>() ?? 10_000_000_000;
+            protocol.TxRollupCommitmentBond = long.Parse((parameters["tx_rollup_commitment_bond"]?.Value<string>() ?? "10000000000").Replace("_", ""));
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
