@@ -481,7 +481,7 @@ namespace Tzkt.Api.Services
             return new AccountsData
             {
                 TotalAccounts = State.Current.AccountsCount,
-                FundedAccounts = await AccountsRepo.GetCount(null, null, new Int64Parameter { Ge = 1_000_000 }, null),
+                FundedAccounts = await AccountsRepo.GetCount(null, null, new Int64Parameter { Ge = 1_000_000 }, null, null),
                 ActiveAccounts = await db.ExecuteScalarAsync<int>(
                     $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}"),
                 PublicAccounts = await db.ExecuteScalarAsync<int>(

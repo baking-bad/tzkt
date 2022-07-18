@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -272,13 +271,14 @@ namespace Tzkt.Api.Repositories
             }
         }
 
-        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind, Int64Parameter balance, BoolParameter staked)
+        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind, Int64Parameter balance, BoolParameter staked, Int32Parameter firstActivity)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("Balance", balance)
-                .Filter("Staked", staked);
+                .Filter("Staked", staked)
+                .Filter("FirstLevel", firstActivity);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
