@@ -132,16 +132,18 @@ namespace Tzkt.Api.Controllers
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="balance">Filters accounts by balance</param>
         /// <param name="staked">Filters accounts by participation in staking</param>
+        /// <param name="firstActivity">Filters accounts by first activity level (where the account was created)</param>
         /// <returns></returns>
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount(
             AccountTypeParameter type,
             ContractKindParameter kind,
             Int64Parameter balance,
-            BoolParameter staked)
+            BoolParameter staked,
+            Int32Parameter firstActivity)
         {
             #region optimize
-            if (type == null && kind == null && balance == null && staked == null)
+            if (type == null && kind == null && balance == null && staked == null && firstActivity == null)
                 return Ok(State.Current.AccountsCount);
 
             if (kind?.Eq != null && type == null)
@@ -149,12 +151,12 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("type", type), ("kind", kind), ("balance", balance), ("staked", staked));  
+                ("type", type), ("kind", kind), ("balance", balance), ("staked", staked), ("firstActivity", firstActivity));  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetCount(type, kind, balance, staked);
+            var res = await Accounts.GetCount(type, kind, balance, staked, firstActivity);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
