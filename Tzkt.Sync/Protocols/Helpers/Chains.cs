@@ -12,6 +12,7 @@
             "NetXZSsxBpMQeAT" => "hangzhou2net",
             "NetXLH1uAxK7CCh" => "jakartanet",
             "NetXnHfVqm9iesp" => "ghostnet",
+            "NetXazhm4yetmff" => "kathmandunet",
             _ => "private"
         };
     }
