@@ -42,8 +42,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0
-        };
+                GasUsed = GetConsumedGas(result)
+            };
             #endregion
 
             #region entities
@@ -133,6 +133,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.RevealOps.Remove(reveal);
             Cache.AppState.ReleaseManagerCounter();
+        }
+
+        protected virtual int GetConsumedGas(JsonElement result)
+        {
+            return result.OptionalInt32("consumed_gas") ?? 0;
         }
     }
 }

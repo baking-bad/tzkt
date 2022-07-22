@@ -49,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0
+                GasUsed = GetConsumedGas(result)
             };
             #endregion
 
@@ -175,7 +175,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0
+                GasUsed = GetConsumedGas(result)
             };
             #endregion
 
@@ -416,6 +416,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.DelegationOps.Remove(delegation);
+        }
+
+        protected virtual int GetConsumedGas(JsonElement result)
+        {
+            return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
         void UpgradeUser(DelegationOperation delegation)
