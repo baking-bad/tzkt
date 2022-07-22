@@ -93,7 +93,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = null,
                 AllocationFee = block.Protocol.TxRollupOriginationSize * block.Protocol.ByteCost

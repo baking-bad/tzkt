@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
                     ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
@@ -203,7 +203,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
                     ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
@@ -688,6 +688,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     },
                 }
             };
+        }
+
+        protected virtual int GetConsumedGas(JsonElement result)
+        {
+            return result.OptionalInt32("consumed_gas") ?? 0;
         }
     }
 }
