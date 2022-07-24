@@ -54,7 +54,7 @@ Sends the blockchain head every time cycle is changed.
 
 ### Data model
 
-Same as in [/blocks](#operation/Blocks_GetHead)
+Same as in [/cycle](#operation/Cycles_GetByIndex)
 
 ### State
 
