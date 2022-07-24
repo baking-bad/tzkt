@@ -27,6 +27,9 @@ namespace Tzkt.Api.Websocket.Processors
         readonly IHubContext<T> Context;
         readonly ILogger Logger;
 
+        Cycle CurrentCycle = null;
+        Dictionary<Symbols, Cycle> QuoteCache = new();
+
         public CyclesProcessor(StateCache cache, CyclesRepository repo, IHubContext<T> hubContext, ILogger<CyclesProcessor<T>> logger)
         {
             StateCache = cache;
@@ -42,15 +45,25 @@ namespace Tzkt.Api.Websocket.Processors
             {
                 await Sema.WaitAsync();
 
-                var cycleData = await CyclesRepo.Get(StateCache.Current.Cycle, Symbols.None);
+                if (CurrentCycle == null || StateCache.Current.Level < CurrentCycle.FirstLevel || StateCache.Current.Level > CurrentCycle.LastLevel)
+                {
+                    QuoteCache.Clear();
+                    CurrentCycle = await CyclesRepo.Get(StateCache.Current.Cycle, Symbols.None);
+                    QuoteCache.Add(Symbols.None, CurrentCycle);
+                }
 
                 // we notify only group of clients with matching delay
-                if (DelaySubs.TryGetValue(StateCache.Current.Level - cycleData.FirstLevel, out var connections))
+                if (DelaySubs.TryGetValue(StateCache.Current.Level - CurrentCycle.FirstLevel, out var connections))
                 {
                     foreach (var connectionId in connections)
                     {
                         var quote = QuoteSubs[connectionId];
-                        var cycleDataWithQuotes = quote == Symbols.None ? cycleData : await CyclesRepo.Get(StateCache.Current.Cycle, quote);
+                        if (!QuoteCache.TryGetValue(quote, out var cycleDataWithQuotes))
+                        {
+                            cycleDataWithQuotes = await CyclesRepo.Get(StateCache.Current.Cycle, quote);
+                            QuoteCache.Add(quote, cycleDataWithQuotes);
+                        }
+
                         sendings.Add(Context.Clients
                            .Client(connectionId)
                            .SendData(CycleChannel, cycleDataWithQuotes, StateCache.Current.Cycle));
