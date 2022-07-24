@@ -18,6 +18,7 @@ using Tzkt.Api.Websocket;
 using Tzkt.Api.Websocket.Hubs;
 using Tzkt.Api.Websocket.Processors;
 using Tzkt.Data;
+using System.Text.Json.Serialization;
 
 namespace Tzkt.Api
 {
@@ -92,8 +93,8 @@ namespace Tzkt.Api
                 services.AddTransient<HeadProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, HeadProcessor<DefaultHub>>();
 
-                services.AddTransient<CycleProcessor<DefaultHub>>();
-                services.AddTransient<IHubProcessor, CycleProcessor<DefaultHub>>();
+                services.AddTransient<CyclesProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, CyclesProcessor<DefaultHub>>();
 
                 services.AddTransient<BlocksProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BlocksProcessor<DefaultHub>>();
@@ -126,6 +127,7 @@ namespace Tzkt.Api
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new DateTimeConverter());
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationConverter());
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
+                    jsonOptions.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
             }
             #endregion

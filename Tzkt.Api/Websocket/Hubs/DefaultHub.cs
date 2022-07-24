@@ -9,7 +9,7 @@ namespace Tzkt.Api.Websocket.Hubs
     public class DefaultHub : BaseHub
     {
         readonly HeadProcessor<DefaultHub> Head;
-        readonly CycleProcessor<DefaultHub> Cycle;
+        readonly CyclesProcessor<DefaultHub> Cycle;
         readonly BlocksProcessor<DefaultHub> Blocks;
         readonly OperationsProcessor<DefaultHub> Operations;
         readonly BigMapsProcessor<DefaultHub> BigMaps;
@@ -19,7 +19,7 @@ namespace Tzkt.Api.Websocket.Hubs
 
         public DefaultHub(
             HeadProcessor<DefaultHub> head,
-            CycleProcessor<DefaultHub> cycle,
+            CyclesProcessor<DefaultHub> cycle,
             BlocksProcessor<DefaultHub> blocks,
             OperationsProcessor<DefaultHub> operations,
             BigMapsProcessor<DefaultHub> bigMaps,
@@ -44,7 +44,7 @@ namespace Tzkt.Api.Websocket.Hubs
             return Head.Subscribe(Clients.Caller, Context.ConnectionId);
         }
 
-        public Task<int> SubscribeToCycle(CycleParameter parameters)
+        public Task<int> SubscribeToCycles(CyclesParameter parameters = null)
         {
             parameters ??= new();
             parameters.EnsureValid();

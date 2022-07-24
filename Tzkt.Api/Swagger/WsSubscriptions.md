@@ -37,18 +37,20 @@ Sends the blockchain head every time cycle is changed.
 
 ### Method
 
-`SubscribeToCycle`
+`SubscribeToCycles`
 
 ### Channel
 
-`cycle`
+`cycles`
 
 ### Parameters
 
 ````js
 {
-	delayBlocks: 2, // number of blocks to delay cycle changed notification
-					// minimum 2, defaults to 2
+	delayBlocks: 2,		// number of blocks to delay cycle changed notification
+						// minimum 2, defaults to 2
+	quote: "eur,usd" 	// comma-separated list of ticker symbols to inject historical prices into response
+						// defaults to "none"
 }
 ````
 
@@ -63,8 +65,8 @@ State contains cycle (`int`) of the last processed cycle.
 ### Example
 
 ````js
-connection.on("cycle", (msg) => { console.log(msg); });
-await connection.invoke("SubscribeToCycle");
+connection.on("cycles", (msg) => { console.log(msg); });
+await connection.invoke("SubscribeToCycles");
 ````
 
 ---

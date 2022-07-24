@@ -12,11 +12,11 @@ using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Websocket.Processors
 {
-    public class CycleProcessor<T> : IHubProcessor where T : Hub
+    public class CyclesProcessor<T> : IHubProcessor where T : Hub
     {
         #region static
-        const string CycleGroup = "cycle";
-        const string CycleChannel = "cycle";
+        const string CycleGroup = "cycles";
+        const string CycleChannel = "cycles";
         static readonly SemaphoreSlim Sema = new(1, 1);
         static readonly Dictionary<int, HashSet<string>> DelaySubs = new();
         static readonly Dictionary<string, Symbols> QuoteSubs = new();
@@ -27,7 +27,7 @@ namespace Tzkt.Api.Websocket.Processors
         readonly IHubContext<T> Context;
         readonly ILogger Logger;
 
-        public CycleProcessor(StateCache cache, CyclesRepository repo, IHubContext<T> hubContext, ILogger<CycleProcessor<T>> logger)
+        public CyclesProcessor(StateCache cache, CyclesRepository repo, IHubContext<T> hubContext, ILogger<CyclesProcessor<T>> logger)
         {
             StateCache = cache;
             CyclesRepo = repo;
@@ -79,7 +79,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        public async Task<int> Subscribe(IClientProxy client, string connectionId, CycleParameter parameter)
+        public async Task<int> Subscribe(IClientProxy client, string connectionId, CyclesParameter parameter)
         {
             Task sending = Task.CompletedTask;
             try

@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Websocket
 {
-    public class CycleParameter
+    public class CyclesParameter
     {
         public int DelayBlocks { get; set; } = 2; // 2 to cover possible reorganization
         public Symbols Quote { get; set; } = Symbols.None;
