@@ -21,17 +21,14 @@ namespace Tzkt.Api.Websocket.Processors
         #endregion
 
         readonly StateCache StateCache;
-        readonly StateRepository StateRepo;
+        readonly CyclesRepository CyclesRepo;
         readonly IHubContext<T> Context;
         readonly ILogger Logger;
 
-        private int cycleStartLevel = 0;
-        private int lastProcessedCycle = 0;
-        
-        public CycleProcessor(StateCache cache, StateRepository repo, IHubContext<T> hubContext, ILogger<CycleProcessor<T>> logger)
+        public CycleProcessor(StateCache cache, CyclesRepository repo, IHubContext<T> hubContext, ILogger<CycleProcessor<T>> logger)
         {
             StateCache = cache;
-            StateRepo = repo;
+            CyclesRepo = repo;
             Context = hubContext;
             Logger = logger;
         }
@@ -42,19 +39,17 @@ namespace Tzkt.Api.Websocket.Processors
             try
             {
                 await Sema.WaitAsync();
-              
-                if (lastProcessedCycle != StateCache.Current.Cycle)
-                    cycleStartLevel = StateCache.Current.Level;
-                lastProcessedCycle = StateCache.Current.Cycle;
+
+                var cycleData = await CyclesRepo.Get(StateCache.Current.Cycle, Models.Symbols.None);
 
                 // we notify only group of clients with matching delay
-                if (DelaySubs.TryGetValue(StateCache.Current.Level - cycleStartLevel, out var connections))
+                if (DelaySubs.TryGetValue(StateCache.Current.Level - cycleData.FirstLevel, out var connections))
                 {
                     foreach (var connectionId in connections)
                     {
                         sendings.Add(Context.Clients
                            .Client(connectionId)
-                           .SendData(CycleChannel, StateRepo.Get(), StateCache.Current.Cycle));
+                           .SendData(CycleChannel, cycleData, StateCache.Current.Cycle));
                     }
                     Logger.LogDebug("Cycle {0} sent", StateCache.Current.Cycle);
                 }
