@@ -43,6 +43,7 @@ namespace Tzkt.Api.Websocket.Hubs
         {
             return Head.Subscribe(Clients.Caller, Context.ConnectionId);
         }
+
         public Task<int> SubscribeToCycle(CycleParameter parameters)
         {
             parameters ??= new();

@@ -31,6 +31,44 @@ await connection.invoke("SubscribeToHead");
 
 ---
 
+## SubscribeToCycle
+
+Sends the blockchain head every time cycle is changed.
+
+### Method
+
+`SubscribeToCycle`
+
+### Channel
+
+`cycle`
+
+### Parameters
+
+````js
+{
+	delayBlocks: 2, // number of blocks to delay cycle changed notification
+					// minimum 2, defaults to 2
+}
+````
+
+### Data model
+
+Same as in [/blocks](#operation/Blocks_GetHead)
+
+### State
+
+State contains cycle (`int`) of the last processed cycle.
+
+### Example
+
+````js
+connection.on("cycle", (msg) => { console.log(msg); });
+await connection.invoke("SubscribeToCycle");
+````
+
+---
+
 ## SubscribeToBlocks  
 
 Sends blocks added to the blockchain
