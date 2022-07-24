@@ -92,6 +92,9 @@ namespace Tzkt.Api
                 services.AddTransient<HeadProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, HeadProcessor<DefaultHub>>();
 
+                services.AddTransient<CycleProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, CycleProcessor<DefaultHub>>();
+
                 services.AddTransient<BlocksProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BlocksProcessor<DefaultHub>>();
 
