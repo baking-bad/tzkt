@@ -49,8 +49,6 @@ Sends the blockchain head every time cycle is changed.
 {
 	delayBlocks: 2,		// number of blocks to delay cycle changed notification
 						// minimum 2, defaults to 2
-	quote: "eur,usd" 	// comma-separated list of ticker symbols to inject historical prices into response
-						// defaults to "none"
 }
 ````
 
