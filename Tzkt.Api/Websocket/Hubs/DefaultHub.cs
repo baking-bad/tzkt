@@ -9,6 +9,7 @@ namespace Tzkt.Api.Websocket.Hubs
     public class DefaultHub : BaseHub
     {
         readonly HeadProcessor<DefaultHub> Head;
+        readonly CyclesProcessor<DefaultHub> Cycles;
         readonly BlocksProcessor<DefaultHub> Blocks;
         readonly OperationsProcessor<DefaultHub> Operations;
         readonly BigMapsProcessor<DefaultHub> BigMaps;
@@ -18,6 +19,7 @@ namespace Tzkt.Api.Websocket.Hubs
 
         public DefaultHub(
             HeadProcessor<DefaultHub> head,
+            CyclesProcessor<DefaultHub> cycles,
             BlocksProcessor<DefaultHub> blocks,
             OperationsProcessor<DefaultHub> operations,
             BigMapsProcessor<DefaultHub> bigMaps,
@@ -28,6 +30,7 @@ namespace Tzkt.Api.Websocket.Hubs
             IConfiguration config) : base(logger, config)
         {
             Head = head;
+            Cycles = cycles;
             Blocks = blocks;
             Operations = operations;
             BigMaps = bigMaps;
@@ -39,6 +42,13 @@ namespace Tzkt.Api.Websocket.Hubs
         public Task<int> SubscribeToHead()
         {
             return Head.Subscribe(Clients.Caller, Context.ConnectionId);
+        }
+
+        public Task<int> SubscribeToCycles(CyclesParameter parameters = null)
+        {
+            parameters ??= new();
+            parameters.EnsureValid();
+            return Cycles.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
         public Task<int> SubscribeToBlocks()
@@ -83,6 +93,7 @@ namespace Tzkt.Api.Websocket.Hubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
+            Cycles.Unsubscribe(Context.ConnectionId);
             Operations.Unsubscribe(Context.ConnectionId);
             BigMaps.Unsubscribe(Context.ConnectionId);
             Balances.Unsubscribe(Context.ConnectionId);
