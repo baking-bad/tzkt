@@ -19,6 +19,7 @@ namespace Tzkt.Api.Websocket.Processors
         const string CycleChannel = "cycles";
         static readonly SemaphoreSlim Sema = new(1, 1);
         static readonly Dictionary<int, HashSet<string>> DelaySubs = new();
+        HashSet<string> Subs = new();
         #endregion
 
         readonly StateCache StateCache;
@@ -42,6 +43,11 @@ namespace Tzkt.Api.Websocket.Processors
             try
             {
                 await Sema.WaitAsync();
+                if (Subs.Count == 0)
+                {
+                    Logger.LogDebug("No cycles subs");
+                    return;
+                }
 
                 if (CurrentCycle == null || StateCache.Current.Level < CurrentCycle.FirstLevel || StateCache.Current.Level > CurrentCycle.LastLevel)
                 {
@@ -87,6 +93,11 @@ namespace Tzkt.Api.Websocket.Processors
             try
             {
                 await Sema.WaitAsync();
+                if (Subs.Contains(connectionId))
+                {
+                    throw new HubException($"{connectionId} already subscribed.");
+                }
+
                 Logger.LogDebug("New subscription...");
 
                 if (!DelaySubs.TryGetValue(parameter.DelayBlocks, out var delaySub))
@@ -94,6 +105,7 @@ namespace Tzkt.Api.Websocket.Processors
                     delaySub = new(4);
                     DelaySubs.Add(parameter.DelayBlocks, delaySub);
                 }
+                Subs.Add(connectionId);
                 delaySub.Add(connectionId);
 
                 await Context.Groups.AddToGroupAsync(connectionId, CycleGroup);
@@ -134,6 +146,7 @@ namespace Tzkt.Api.Websocket.Processors
                     value.Remove(connectionId);
                     if (value.Count == 0)
                         DelaySubs.Remove(key);
+                    Subs.Remove(connectionId);
                 }
 
                 Logger.LogDebug("Client {0} unsubscribed", connectionId);
