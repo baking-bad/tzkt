@@ -49,6 +49,7 @@ Sends the blockchain head every time cycle is changed.
 {
 	delayBlocks: 2,		// number of blocks to delay cycle changed notification
 						// minimum 2, defaults to 2
+						// delayBlocks has to be lower than number of blocks in cycle to get notifications
 }
 ````
 
