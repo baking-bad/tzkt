@@ -19,7 +19,6 @@ namespace Tzkt.Api.Websocket.Processors
         const string CycleChannel = "cycles";
         static readonly SemaphoreSlim Sema = new(1, 1);
         static readonly Dictionary<int, HashSet<string>> DelaySubs = new();
-        static readonly Dictionary<string, Symbols> QuoteSubs = new();
         #endregion
 
         readonly StateCache StateCache;
@@ -28,7 +27,6 @@ namespace Tzkt.Api.Websocket.Processors
         readonly ILogger Logger;
 
         Cycle CurrentCycle = null;
-        Dictionary<Symbols, Cycle> QuoteCache = new();
 
         public CyclesProcessor(StateCache cache, CyclesRepository repo, IHubContext<T> hubContext, ILogger<CyclesProcessor<T>> logger)
         {
@@ -47,9 +45,7 @@ namespace Tzkt.Api.Websocket.Processors
 
                 if (CurrentCycle == null || StateCache.Current.Level < CurrentCycle.FirstLevel || StateCache.Current.Level > CurrentCycle.LastLevel)
                 {
-                    QuoteCache.Clear();
                     CurrentCycle = await CyclesRepo.Get(StateCache.Current.Cycle, Symbols.None);
-                    QuoteCache.Add(Symbols.None, CurrentCycle);
                 }
 
                 // we notify only group of clients with matching delay
@@ -57,16 +53,9 @@ namespace Tzkt.Api.Websocket.Processors
                 {
                     foreach (var connectionId in connections)
                     {
-                        var quote = QuoteSubs[connectionId];
-                        if (!QuoteCache.TryGetValue(quote, out var cycleDataWithQuotes))
-                        {
-                            cycleDataWithQuotes = await CyclesRepo.Get(StateCache.Current.Cycle, quote);
-                            QuoteCache.Add(quote, cycleDataWithQuotes);
-                        }
-
                         sendings.Add(Context.Clients
                            .Client(connectionId)
-                           .SendData(CycleChannel, cycleDataWithQuotes, StateCache.Current.Cycle));
+                           .SendData(CycleChannel, CurrentCycle, StateCache.Current.Cycle));
                     }
                     Logger.LogDebug("Cycle {0} sent", StateCache.Current.Cycle);
                 }
@@ -105,7 +94,6 @@ namespace Tzkt.Api.Websocket.Processors
                     delaySub = new(4);
                     DelaySubs.Add(parameter.DelayBlocks, delaySub);
                 }
-                QuoteSubs[connectionId] = parameter.Quote;
                 delaySub.Add(connectionId);
 
                 await Context.Groups.AddToGroupAsync(connectionId, CycleGroup);
@@ -147,7 +135,6 @@ namespace Tzkt.Api.Websocket.Processors
                     if (value.Count == 0)
                         DelaySubs.Remove(key);
                 }
-                QuoteSubs.Remove(connectionId);
 
                 Logger.LogDebug("Client {0} unsubscribed", connectionId);
             }

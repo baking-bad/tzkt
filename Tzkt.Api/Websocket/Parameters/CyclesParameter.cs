@@ -8,8 +8,7 @@ namespace Tzkt.Api.Websocket
     public class CyclesParameter
     {
         public int DelayBlocks { get; set; } = 2; // 2 to cover possible reorganization
-        public Symbols Quote { get; set; } = Symbols.None;
-
+        
         public void EnsureValid()
         {
             if (DelayBlocks < 2)
