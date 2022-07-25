@@ -19,15 +19,14 @@ namespace Tzkt.Api.Websocket.Processors
         const string CycleChannel = "cycles";
         static readonly SemaphoreSlim Sema = new(1, 1);
         static readonly Dictionary<int, HashSet<string>> DelaySubs = new();
-        HashSet<string> Subs = new();
+        static readonly HashSet<string> Subs = new();
+        static Cycle CurrentCycle = null;
         #endregion
 
         readonly StateCache StateCache;
         readonly CyclesRepository CyclesRepo;
         readonly IHubContext<T> Context;
         readonly ILogger Logger;
-
-        Cycle CurrentCycle = null;
 
         public CyclesProcessor(StateCache cache, CyclesRepository repo, IHubContext<T> hubContext, ILogger<CyclesProcessor<T>> logger)
         {
