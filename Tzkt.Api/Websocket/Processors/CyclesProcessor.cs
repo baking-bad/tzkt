@@ -15,7 +15,6 @@ namespace Tzkt.Api.Websocket.Processors
     public class CyclesProcessor<T> : IHubProcessor where T : Hub
     {
         #region static
-        const string CycleGroup = "cycles";
         const string CycleChannel = "cycles";
         static readonly SemaphoreSlim Sema = new(1, 1);
         static readonly Dictionary<int, HashSet<string>> DelaySubs = new();
@@ -107,11 +106,14 @@ namespace Tzkt.Api.Websocket.Processors
                 Subs.Add(connectionId);
                 delaySub.Add(connectionId);
 
-                await Context.Groups.AddToGroupAsync(connectionId, CycleGroup);
                 sending = client.SendState(CycleChannel, StateCache.Current.Cycle);
 
                 Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, StateCache.Current.Cycle);
-                return StateCache.Current.Level;
+                return StateCache.Current.Cycle;
+            }
+            catch (HubException ex)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -145,8 +147,8 @@ namespace Tzkt.Api.Websocket.Processors
                     value.Remove(connectionId);
                     if (value.Count == 0)
                         DelaySubs.Remove(key);
-                    Subs.Remove(connectionId);
                 }
+                Subs.Remove(connectionId);
 
                 Logger.LogDebug("Client {0} unsubscribed", connectionId);
             }
