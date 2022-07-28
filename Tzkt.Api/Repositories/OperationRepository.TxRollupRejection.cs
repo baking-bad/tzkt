@@ -53,7 +53,6 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 Rollup = Accounts.GetAlias(row.RollupId),
                 Committer = Accounts.GetAlias(row.CommitterId),
@@ -90,7 +89,6 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 Rollup = Accounts.GetAlias(row.RollupId),
                 Committer = Accounts.GetAlias(row.CommitterId),
@@ -125,7 +123,6 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 Rollup = Accounts.GetAlias(row.RollupId),
                 Committer = Accounts.GetAlias(row.CommitterId),
@@ -185,7 +182,6 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 Rollup = Accounts.GetAlias(row.RollupId),
                 Committer = Accounts.GetAlias(row.CommitterId),
@@ -227,7 +223,6 @@ namespace Tzkt.Api.Repositories
                     case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                     case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
                     case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
-                    case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "rollup": columns.Add(@"o.""RollupId"""); break;
                     case "committer": columns.Add(@"o.""CommitterId"""); break;
@@ -313,10 +308,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.StorageLimit;
                         break;
-                    case "storageUsed":
-                        foreach (var row in rows)
-                            result[j++][i] = row.StorageUsed;
-                        break;
                     case "bakerFee":
                         foreach (var row in rows)
                             result[j++][i] = row.BakerFee;
@@ -383,7 +374,6 @@ namespace Tzkt.Api.Repositories
                 case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                 case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
                 case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
-                case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "rollup": columns.Add(@"o.""RollupId"""); break;
                 case "committer": columns.Add(@"o.""CommitterId"""); break;
@@ -465,10 +455,6 @@ namespace Tzkt.Api.Repositories
                 case "storageLimit":
                     foreach (var row in rows)
                         result[j++] = row.StorageLimit;
-                    break;
-                case "storageUsed":
-                    foreach (var row in rows)
-                        result[j++] = row.StorageUsed;
                     break;
                 case "bakerFee":
                     foreach (var row in rows)

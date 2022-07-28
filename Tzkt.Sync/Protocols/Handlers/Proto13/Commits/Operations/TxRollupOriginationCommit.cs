@@ -94,8 +94,6 @@ namespace Tzkt.Sync.Protocols.Proto13
                     ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
-                StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
-                StorageFee = null,
                 AllocationFee = block.Protocol.TxRollupOriginationSize * block.Protocol.ByteCost
             };
             #endregion
