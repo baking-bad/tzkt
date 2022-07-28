@@ -123,7 +123,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     : null,
                 GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
-                StorageFee = (result.OptionalInt32("paid_storage_size_diff") ?? 0) * block.Protocol.ByteCost,
+                StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
+                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    : null,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
             #endregion
@@ -324,7 +326,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     : null,
                 GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
-                StorageFee = (result.OptionalInt32("paid_storage_size_diff") ?? 0) * block.Protocol.ByteCost,
+                StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
+                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    : null,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
             #endregion

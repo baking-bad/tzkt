@@ -61,11 +61,6 @@ namespace Tzkt.Api.Models
         public int StorageLimit { get; set; }
 
         /// <summary>
-        /// Amount of storage, consumed by the operation
-        /// </summary>
-        public int StorageUsed { get; set; }
-
-        /// <summary>
         /// Fee to the baker, produced block, in which the operation was included (micro tez)
         /// </summary>
         public long BakerFee { get; set; }

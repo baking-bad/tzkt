@@ -53,7 +53,6 @@ namespace Tzkt.Sync.Protocols.Proto13
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
                     ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
                     : null,
-                AllocationFee = null,
                 Amount = BigInteger.Parse(content.RequiredString("ticket_amount")),
                 TicketerId = ticketer?.Id,
                 Entrypoint = content.RequiredString("entrypoint"),

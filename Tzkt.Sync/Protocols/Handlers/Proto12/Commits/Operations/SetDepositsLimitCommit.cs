@@ -46,7 +46,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                     ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
-                StorageUsed = result.OptionalInt32("storage_size") ?? 0,
                 Limit = limit == null ? null : BigInteger.Parse(limit)
             };
             #endregion
