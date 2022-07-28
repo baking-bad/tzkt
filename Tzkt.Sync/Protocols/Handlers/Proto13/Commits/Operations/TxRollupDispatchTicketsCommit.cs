@@ -49,8 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
                     ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
-                    : null,
-                AllocationFee = null
+                    : null
             };
             #endregion
 
