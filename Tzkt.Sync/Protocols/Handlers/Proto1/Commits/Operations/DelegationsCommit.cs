@@ -453,6 +453,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ActiveTokensCount = user.ActiveTokensCount,
                 TokenBalancesCount = user.TokenBalancesCount,
                 TokenTransfersCount = user.TokenTransfersCount,
+                TransferTicketCount = user.TransferTicketCount,
+                TxRollupCommitCount = user.TxRollupCommitCount,
+                TxRollupDispatchTicketsCount = user.TxRollupDispatchTicketsCount,
+                TxRollupFinalizeCommitmentCount = user.TxRollupFinalizeCommitmentCount,
+                TxRollupOriginationCount = user.TxRollupOriginationCount,
+                TxRollupRejectionCount = user.TxRollupRejectionCount,
+                TxRollupRemoveCommitmentCount = user.TxRollupRemoveCommitmentCount,
+                TxRollupReturnBondCount = user.TxRollupReturnBondCount,
+                TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
+                RollupBonds = user.RollupBonds,
+                RollupsCount = user.RollupsCount
             };
 
             #region update relations
@@ -536,8 +547,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            var isAdded = Db.Entry(user).State == EntityState.Added;
             Db.Entry(user).State = EntityState.Detached;
-            Db.Entry(delegat).State = EntityState.Modified;
+            Db.Entry(delegat).State = isAdded ? EntityState.Added : EntityState.Modified;
             Cache.Accounts.Add(delegat);
 
             #region update graph
@@ -579,6 +591,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ActiveTokensCount = delegat.ActiveTokensCount,
                 TokenBalancesCount = delegat.TokenBalancesCount,
                 TokenTransfersCount = delegat.TokenTransfersCount,
+                TransferTicketCount = delegat.TransferTicketCount,
+                TxRollupCommitCount = delegat.TxRollupCommitCount,
+                TxRollupDispatchTicketsCount = delegat.TxRollupDispatchTicketsCount,
+                TxRollupFinalizeCommitmentCount = delegat.TxRollupFinalizeCommitmentCount,
+                TxRollupOriginationCount = delegat.TxRollupOriginationCount,
+                TxRollupRejectionCount = delegat.TxRollupRejectionCount,
+                TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
+                TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
+                TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
+                RollupBonds = delegat.RollupBonds,
+                RollupsCount = delegat.RollupsCount
             };
 
             #region update relations
@@ -671,8 +694,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            var isAdded = Db.Entry(delegat).State == EntityState.Added;
             Db.Entry(delegat).State = EntityState.Detached;
-            Db.Entry(user).State = EntityState.Modified;
+            Db.Entry(user).State = isAdded ? EntityState.Added : EntityState.Modified;
             Cache.Accounts.Add(user);
 
             #region update graph
