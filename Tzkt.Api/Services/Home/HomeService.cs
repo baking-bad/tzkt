@@ -535,15 +535,15 @@ namespace Tzkt.Api.Services
 
             if (period.Kind is PeriodKinds.Exploration or PeriodKinds.Promotion)
             {
-                var yayNaySum = (int)period.YayVotingPower! + (int)period.NayVotingPower!;
-                var totalVoted = yayNaySum + (int)period.PassVotingPower!;
+                var yayNaySum = (long)period.YayVotingPower! + (long)period.NayVotingPower!;
+                var totalVoted = yayNaySum + (long)period.PassVotingPower!;
 
                 result.YayVotes = yayNaySum > 0
-                    ? Math.Round(100.0 * (int)period.YayVotingPower / yayNaySum, 2)
+                    ? Math.Round(100.0 * (long)period.YayVotingPower / yayNaySum, 2)
                     : 0;
 
                 result.Participation = period.TotalVotingPower > 0
-                    ? Math.Round(100.0 * totalVoted / (int)period.TotalVotingPower, 2)
+                    ? Math.Round(100.0 * totalVoted / (long)period.TotalVotingPower, 2)
                     : 0;
 
                 result.BallotsQuorum = Math.Round((double)period.BallotsQuorum!, 2);
