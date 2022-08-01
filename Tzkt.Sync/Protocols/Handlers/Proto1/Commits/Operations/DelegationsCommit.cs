@@ -497,16 +497,30 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Sender?.Id == user.Id)
                                 op.Sender = delegat;
 
-                            if (op.Manager?.Id == user.Id)
-                                op.Manager = delegat;
-
                             if (op.Initiator?.Id == user.Id)
                                 op.Initiator = delegat;
+
+                            if (op.Manager?.Id == user.Id)
+                                op.Manager = delegat;
 
                             touched.Add((op, entry.State));
                         }
                         break;
+                    case RegisterConstantOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
                     case RevealOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case SetDepositsLimitOperation op:
                         if (op.Sender?.Id == user.Id)
                         {
                             op.Sender = delegat;
@@ -519,12 +533,75 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Sender?.Id == user.Id)
                                 op.Sender = delegat;
 
-                            if (op.Target?.Id == user.Id)
-                                op.Target = delegat;
-
                             if (op.Initiator?.Id == user.Id)
                                 op.Initiator = delegat;
 
+                            if (op.Target?.Id == user.Id)
+                                op.Target = delegat;
+
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TransferTicketOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupCommitOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupDispatchTicketsOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupFinalizeCommitmentOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupOriginationOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupRejectionOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupRemoveCommitmentOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupReturnBondOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupSubmitBatchOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
                             touched.Add((op, entry.State));
                         }
                         break;
@@ -623,11 +700,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
 
-                            if (op.Delegate?.Id == delegat.Id)
-                                op.Delegate = null;
-
                             if (op.Initiator?.Id == delegat.Id)
                                 op.Initiator = user;
+
+                            if (op.Delegate?.Id == delegat.Id)
+                                op.Delegate = null;
 
                             if (op.PrevDelegate?.Id == delegat.Id)
                                 op.PrevDelegate = null;
@@ -641,19 +718,33 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
 
+                            if (op.Initiator?.Id == delegat.Id)
+                                op.Initiator = user;
+
                             if (op.Manager?.Id == delegat.Id)
                                 op.Manager = user;
 
                             if (op.Delegate?.Id == delegat.Id)
                                 op.Delegate = null;
 
-                            if (op.Initiator?.Id == delegat.Id)
-                                op.Initiator = user;
-
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case RegisterConstantOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
                             touched.Add((op, entry.State));
                         }
                         break;
                     case RevealOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case SetDepositsLimitOperation op:
                         if (op.Sender?.Id == delegat.Id)
                         {
                             op.Sender = user;
@@ -666,12 +757,75 @@ namespace Tzkt.Sync.Protocols.Proto1
                             if (op.Sender?.Id == delegat.Id)
                                 op.Sender = user;
 
-                            if (op.Target?.Id == delegat.Id)
-                                op.Target = user;
-
                             if (op.Initiator?.Id == delegat.Id)
                                 op.Initiator = user;
 
+                            if (op.Target?.Id == delegat.Id)
+                                op.Target = user;
+
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TransferTicketOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupCommitOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupDispatchTicketsOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupFinalizeCommitmentOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupOriginationOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupRejectionOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupRemoveCommitmentOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupReturnBondOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case TxRollupSubmitBatchOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
                             touched.Add((op, entry.State));
                         }
                         break;
