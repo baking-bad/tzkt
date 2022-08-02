@@ -69,6 +69,7 @@ namespace Tzkt.Api.Websocket.Processors
                 if (Limits.Count == 0)
                 {
                     Logger.LogDebug("No token transfers subs");
+                    LastId = State.Current.OperationCounter;
                     return;
                 }
 
