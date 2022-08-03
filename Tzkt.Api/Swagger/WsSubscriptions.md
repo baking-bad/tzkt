@@ -31,9 +31,9 @@ await connection.invoke("SubscribeToHead");
 
 ---
 
-## SubscribeToCycle
+## SubscribeToCycles
 
-Sends the blockchain head every time cycle is changed.
+Notifies of the start of a new cycle with a specified delay.
 
 ### Method
 
@@ -47,9 +47,8 @@ Sends the blockchain head every time cycle is changed.
 
 ````js
 {
-	delayBlocks: 2,		// number of blocks to delay cycle changed notification
-						// minimum 2, defaults to 2
-						// delayBlocks has to be lower than number of blocks in cycle to get notifications
+	delayBlocks: 2,    // number of blocks (2 by default) to delay a new cycle notification
+                       // should be >= 2 (to not worry abour reorgs) and < cycle size
 }
 ````
 
@@ -59,7 +58,7 @@ Same as in [/cycle](#operation/Cycles_GetByIndex)
 
 ### State
 
-State contains cycle (`int`) of the last processed cycle.
+State contains an index (`int`) of the last processed cycle.
 
 ### Example
 

@@ -111,7 +111,7 @@ namespace Tzkt.Api.Websocket.Processors
                 Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, StateCache.Current.Cycle);
                 return StateCache.Current.Cycle;
             }
-            catch (HubException ex)
+            catch (HubException)
             {
                 throw;
             }

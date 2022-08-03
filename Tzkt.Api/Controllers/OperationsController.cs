@@ -1886,7 +1886,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
+        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.
+        /// Also, note that `.value` part must be omitted in the path, so, for example, filtering by `parameter.value.foo` must be specified as `?parameter.foo=...`.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
@@ -2111,6 +2112,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters transactions by timestamp.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.
+        /// Also, note that `.value` part must be omitted in the path, so, for example, filtering by `parameter.value.foo` must be specified as `?parameter.foo=...`.</param>
         /// <returns></returns>
         [HttpGet("transactions/count")]
         public async Task<ActionResult<int>> GetTransactionsCount(
@@ -2123,6 +2127,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
+            JsonParameter parameter,
             OperationStatusParameter status)
         {
             if (anyof == null &&
@@ -2132,17 +2137,18 @@ namespace Tzkt.Api.Controllers
                 level == null &&
                 timestamp == null &&
                 entrypoint == null &&
+                parameter == null &&
                 status == null)
                 return Ok(State.Current.TransactionOpsCount);
         
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), 
-                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("status", status));
+                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("status", status));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, status);
+            var res = await Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, parameter, status);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }

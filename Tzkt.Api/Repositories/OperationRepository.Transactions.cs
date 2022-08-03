@@ -18,6 +18,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
+            JsonParameter parameter,
             OperationStatusParameter status)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""TransactionOps""")
@@ -28,6 +29,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
                 .Filter("Entrypoint", entrypoint)
+                .Filter("JsonParameters", parameter)
                 .Filter("Status", status);
 
             using var db = GetConnection();
