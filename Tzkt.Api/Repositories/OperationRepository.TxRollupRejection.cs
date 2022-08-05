@@ -4,11 +4,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository : DbConnection
     {
+        public async Task<bool?> GetTxRollupRejectionStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.TxRollupRejectionOps), hash);
+        }
+
         public async Task<int> GetTxRollupRejectionOpsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)

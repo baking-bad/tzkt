@@ -4,11 +4,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository : DbConnection
     {
+        public async Task<bool?> GetTxRollupRemoveCommitmentStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.TxRollupRemoveCommitmentOps), hash);
+        }
+
         public async Task<int> GetTxRollupRemoveCommitmentOpsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)

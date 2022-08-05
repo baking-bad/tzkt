@@ -6,11 +6,18 @@ using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository : DbConnection
     {
+        public async Task<bool?> GetOriginationStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.OriginationOps), hash);
+        }
+
         public async Task<int> GetOriginationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)

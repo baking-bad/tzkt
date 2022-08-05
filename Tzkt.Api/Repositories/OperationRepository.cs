@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
@@ -16,6 +19,36 @@ namespace Tzkt.Api.Repositories
         {
             Accounts = accounts;
             Quotes = quotes;
+        }
+
+        static async Task<bool?> GetStatus(IDbConnection db, string table, string hash)
+        {
+            return await db.QueryFirstOrDefaultAsync<bool?>($@"
+                SELECT ""Status"" = 1
+                FROM   ""{table}""
+                WHERE  ""OpHash"" = @hash::character(51)
+                LIMIT  1",
+            new { hash });
+        }
+
+        public async Task<bool?> GetStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.TransactionOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.OriginationOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.DelegationOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.RevealOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.RegisterConstantOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SetDepositsLimitOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TransferTicketOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupCommitOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupDispatchTicketsOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupFinalizeCommitmentOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupOriginationOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupRejectionOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupRemoveCommitmentOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupReturnBondOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.TxRollupSubmitBatchOps), hash);
         }
 
         public async Task<IEnumerable<Operation>> Get(string hash, MichelineFormat format, Symbols quote)

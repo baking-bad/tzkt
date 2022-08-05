@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +33,9 @@ namespace Tzkt.Api.Controllers
         /// Get operations by hash
         /// </summary>
         /// <remarks>
-        /// Returns a list of operations with the specified hash.
+        /// Returns a list of operations with the specified hash.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}/{hash}`
+        /// (e.g. [/v1/operations/transactions/{hash}](#operation/Operations_GetTransactionByHash)) instead, because it's much more efficient.**
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
@@ -61,7 +62,9 @@ namespace Tzkt.Api.Controllers
         /// Get operations by hash and counter
         /// </summary>
         /// <remarks>
-        /// Returns a list of operations with the specified hash and counter.
+        /// Returns a list of operations with the specified hash and counter.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}/{hash}/{counter}`
+        /// (e.g. [/v1/operations/transactions/{hash}/{counter}](#operation/Operations_GetTransactionByHashCounter)) instead, because it's much more efficient.**
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
@@ -90,7 +93,9 @@ namespace Tzkt.Api.Controllers
         /// Get operations by hash, counter and nonce
         /// </summary>
         /// <remarks>
-        /// Returns an internal operations with the specified hash, counter and nonce.
+        /// Returns an internal operations with the specified hash, counter and nonce.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}/{hash}/{counter}/{nonce}`
+        /// (e.g. [/v1/operations/transactions/{hash}/{counter}/{nonce}](#operation/Operations_GetTransactionByHashCounterNonce)) instead, because it's much more efficient.**
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
@@ -113,6 +118,29 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.Get(hash, counter, nonce, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get operation status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.  
+        /// **NOTE: if you know in advance what operation type you want to check (e.g. transactions), prefer using `/v1/operations/{type}/{hash}/status`
+        /// (e.g. [/v1/operations/transactions/{hash}/status](#operation/Operations_GetTransactionStatus)) instead, because it's much more efficient.**
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("{hash}/status")]
+        public async Task<ActionResult<bool?>> GetStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -1616,6 +1644,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get delegation status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("delegations/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetDelegationStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDelegationStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get delegations count
         /// </summary>
         /// <remarks>
@@ -1832,6 +1881,27 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetOriginations(hash, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get origination status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("originations/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetOriginationStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetOriginationStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -2099,6 +2169,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get transaction status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("transactions/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTransactionStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransactionStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get transactions count
         /// </summary>
         /// <remarks>
@@ -2262,6 +2353,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get reveal status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("reveals/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetRevealStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRevealStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get reveals count
         /// </summary>
         /// <remarks>
@@ -2404,6 +2516,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get register constant status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("register_constants/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetRegisterConstantStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRegisterConstantStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get register constants count
         /// </summary>
         /// <remarks>
@@ -2535,6 +2668,27 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetSetDepositsLimits(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get set deposits limit status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("set_deposits_limits/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetSetDepositsLimitStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetSetDepositsLimitStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -2693,6 +2847,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get transfer ticket status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("transfer_ticket/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTransferTicketStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransferTicketStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get transfer ticket count
         /// </summary>
         /// <remarks>
@@ -2813,6 +2988,27 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Operations.GetTxRollupCommitOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup commit status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_commit/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupCommitStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupCommitStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -2939,6 +3135,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup dispatch tickets status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_dispatch_tickets/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupDispatchTicketsStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupDispatchTicketsStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup dispatch tickets count
         /// </summary>
         /// <remarks>
@@ -3062,6 +3279,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup finalize commitment status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_finalize_commitment/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupFinalizeCommitmentStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupFinalizeCommitmentStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup finalize commitment count
         /// </summary>
         /// <remarks>
@@ -3182,6 +3420,27 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Operations.GetTxRollupOriginationOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup origination status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_origination/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupOriginationStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupOriginationStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3326,6 +3585,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup rejection status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_rejection/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupRejectionStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupRejectionStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup rejection count
         /// </summary>
         /// <remarks>
@@ -3446,6 +3726,27 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Operations.GetTxRollupRemoveCommitmentOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup remove commitment status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_remove_commitment/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupRemoveCommitmentStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupRemoveCommitmentStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3572,6 +3873,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup return bond status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_return_bond/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupReturnBondStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupReturnBondStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup return bond count
         /// </summary>
         /// <remarks>
@@ -3692,6 +4014,27 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Operations.GetTxRollupSubmitBatchOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup submit batch status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_submit_batch/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupSubmitBatchStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupSubmitBatchStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>

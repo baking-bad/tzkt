@@ -269,7 +269,9 @@ namespace Tzkt.Api.Controllers
         /// Note: for better flexibility this endpoint accumulates query parameters (filters) of each `/operations/{type}` endpoint,
         /// so a particular filter may affect several operation types containing this filter.
         /// For example, if you specify an `initiator` it will affect all transactions, delegations and originations,
-        /// because all these types have an `initiator` field.
+        /// because all these types have an `initiator` field.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
+        /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
         /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`, `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`, `set_deposits_limit`, `migration`, `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>

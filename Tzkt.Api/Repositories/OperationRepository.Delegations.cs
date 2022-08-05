@@ -4,11 +4,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository : DbConnection
     {
+        public async Task<bool?> GetDelegationStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.DelegationOps), hash);
+        }
+
         public async Task<int> GetDelegationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
