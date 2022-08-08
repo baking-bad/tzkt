@@ -438,6 +438,7 @@ namespace Tzkt.Api.Controllers
                 : null;
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("type", string.Join(",", types.OrderBy(x => x))),
                 ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
                 ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
                 ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
