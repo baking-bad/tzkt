@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            await Spend(sender, delegation.BakerFee);
+            sender.Balance -= delegation.BakerFee;
             if (prevDelegate != null)
             {
                 prevDelegate.StakingBalance -= delegation.BakerFee;
@@ -82,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Delegations;
             block.Fees += delegation.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, delegation.Counter);
+            sender.Counter = delegation.Counter;
             #endregion
 
             #region apply result
@@ -134,6 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            Proto.Manager.Set(delegation.Sender);
             Db.DelegationOps.Add(delegation);
         }
 
@@ -326,7 +327,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            await Return(sender, delegation.BakerFee);
+            sender.Balance += delegation.BakerFee;
             if (prevDelegate != null)
             {
                 prevDelegate.StakingBalance += delegation.BakerFee;
@@ -340,7 +341,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount--;
             if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount--;
 
-            sender.Counter = Math.Min(sender.Counter, delegation.Counter - 1);
+            sender.Counter = delegation.Counter - 1;
+            (sender as User).Revealed = true;
             #endregion
 
             Db.DelegationOps.Remove(delegation);

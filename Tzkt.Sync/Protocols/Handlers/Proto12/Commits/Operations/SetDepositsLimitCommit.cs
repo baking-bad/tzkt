@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            await Spend(sender, operation.BakerFee);
+            sender.Balance -= operation.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= operation.BakerFee;
@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             blockBaker.StakingBalance += operation.BakerFee;
 
             sender.SetDepositsLimitsCount++;
-            sender.Counter = Math.Max(sender.Counter, operation.Counter);
+            sender.Counter = operation.Counter;
 
             block.Operations |= Operations.SetDepositsLimits;
             block.Fees += operation.BakerFee;
@@ -96,6 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
             #endregion
 
+            Proto.Manager.Set(operation.Sender);
             Db.SetDepositsLimitOps.Add(operation);
         }
 
@@ -141,7 +142,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region revert operation
-            await Return(sender, op.BakerFee);
+            sender.Balance += op.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += op.BakerFee;
@@ -153,7 +154,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             blockBaker.StakingBalance -= op.BakerFee;
 
             sender.SetDepositsLimitsCount--;
-            sender.Counter = Math.Min(sender.Counter, op.Counter - 1);
+            sender.Counter = op.Counter - 1;
+            sender.Revealed = true;
 
             Cache.AppState.Get().SetDepositsLimitOpsCount--;
             #endregion

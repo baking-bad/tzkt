@@ -130,8 +130,7 @@ namespace Tzkt.Sync.Protocols
             #region operations 3
             foreach (var operation in operations[3].EnumerateArray())
             {
-                Cache.AppState.IncreaseManagerCounter(operation.RequiredArray("contents").Count());
-
+                Manager.Init(operation);
                 foreach (var content in operation.RequiredArray("contents").EnumerateArray())
                 {
                     switch (content.RequiredString("kind"))
@@ -185,7 +184,6 @@ namespace Tzkt.Sync.Protocols
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
                                     }
                                 }
-                                ResetIfEmpty(parent.Transaction.Sender);
                             }
                             break;
                         case "tx_rollup_origination":
@@ -224,18 +222,20 @@ namespace Tzkt.Sync.Protocols
                                         case "transaction":
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent1.Operation, internalContent);
+                                            if (internalTx.BigMapDiffs != null)
+                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
                                             break;
                                         default:
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' inside 'transfer_ticket' is not expected");
                                     }
                                 }
-                                ResetIfEmpty(parent1.Operation.Sender);
                             }
                             break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not expected in operations[3]");
                     }
                 }
+                Manager.Reset();
             }
             #endregion
 
@@ -439,12 +439,7 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case TransactionOperation transaction:
                         if (transaction.InitiatorId == null)
-                        {
-                            if (transaction.InternalOperations != null)
-                                RestoreIfEmpty(transaction.Sender);
-
                             await new TransactionsCommit(this).Revert(currBlock, transaction);
-                        }
                         else
                             await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
                         break;
@@ -473,7 +468,6 @@ namespace Tzkt.Sync.Protocols
                         await new TxRollupDispatchTicketsCommit(this).Revert(currBlock, dispatchTickets);
                         break;
                     case TransferTicketOperation transferTicket:
-                        RestoreIfEmpty(transferTicket.Sender);
                         await new TransferTicketCommit(this).Revert(currBlock, transferTicket);
                         break;
                     default:

@@ -27,6 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Protocols\Handlers\Proto13\Activation\emptied.contracts">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Protocols\Handlers\Proto13\Activation\patched.contracts">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

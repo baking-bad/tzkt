@@ -64,7 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region apply operation
-            await Spend(sender, operation.BakerFee);
+            sender.Balance -= operation.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= operation.BakerFee;
@@ -80,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             block.Operations |= Operations.TxRollupCommit;
             block.Fees += operation.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, operation.Counter);
+            sender.Counter = operation.Counter;
 
             Cache.AppState.Get().TxRollupCommitOpsCount++;
             #endregion
@@ -88,23 +88,12 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                await Spend(sender,
-                    (operation.StorageFee ?? 0));
-
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= operation.StorageFee ?? 0;
-                    if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance -= operation.StorageFee ?? 0;
-                    }
-                }
-
                 sender.RollupBonds += operation.Bond;
                 rollup.RollupBonds += operation.Bond;
             }
             #endregion
 
+            Proto.Manager.Set(operation.Sender);
             Db.TxRollupCommitOps.Add(operation);
             Operation = operation;
         }
@@ -135,25 +124,13 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                await Return(sender,
-                    (operation.StorageFee ?? 0));
-
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += operation.StorageFee ?? 0;
-                    if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance += operation.StorageFee ?? 0;
-                    }
-                }
-
                 sender.RollupBonds -= operation.Bond;
                 rollup.RollupBonds -= operation.Bond;
             }
             #endregion
 
             #region revert operation
-            await Return(sender, operation.BakerFee);
+            sender.Balance += operation.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += operation.BakerFee;
@@ -166,7 +143,8 @@ namespace Tzkt.Sync.Protocols.Proto13
             sender.TxRollupCommitCount--;
             if (rollup != null) rollup.TxRollupCommitCount--;
 
-            sender.Counter = Math.Min(sender.Counter, operation.Counter - 1);
+            sender.Counter = operation.Counter - 1;
+            (sender as User).Revealed = true;
 
             Cache.AppState.Get().TxRollupCommitOpsCount--;
             #endregion
