@@ -56,7 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            await Spend(sender, reveal.BakerFee);
+            sender.Balance -= reveal.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= reveal.BakerFee;
@@ -71,7 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Reveals;
             block.Fees += reveal.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, reveal.Counter);
+            sender.Counter = reveal.Counter;
             #endregion
 
             #region apply result
@@ -82,6 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            Proto.Manager.Set(reveal.Sender);
             Db.RevealOps.Add(reveal);
         }
 
@@ -116,7 +117,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            await Return(sender, reveal.BakerFee, true);
+            sender.Balance += reveal.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += reveal.BakerFee;
@@ -128,7 +129,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             sender.RevealsCount--;
 
-            sender.Counter = Math.Min(sender.Counter, reveal.Counter - 1);
+            sender.Counter = reveal.Counter - 1;
             #endregion
 
             Db.RevealOps.Remove(reveal);
