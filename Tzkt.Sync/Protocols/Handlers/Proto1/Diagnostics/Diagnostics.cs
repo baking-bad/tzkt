@@ -167,7 +167,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var remote = await Rpc.GetContractAsync(level, account.Address);
 
-            if (account is not Data.Models.Delegate && remote.RequiredInt64("balance") != account.Balance)
+            if (account is not Data.Models.Delegate && remote.RequiredInt64("balance") != account.Balance - account.RollupBonds)
                 throw new Exception($"Diagnostics failed: wrong balance {account.Address}");
 
             TestAccountDelegate(remote, account);
