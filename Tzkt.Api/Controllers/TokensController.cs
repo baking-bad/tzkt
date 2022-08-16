@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
@@ -74,6 +75,24 @@ namespace Tzkt.Api.Controllers
                 Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
                 Rows = await Tokens.GetTokens(filter, pagination, selection.select.Fields ?? selection.select.Values)
             });
+        }
+
+        /// <summary>
+        /// Get tokens by list of contract:tokenId
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of tokens.
+        /// </remarks>
+        /// <param name="value">TokenIdList</param>
+        /// <returns></returns>
+        [HttpPost("")]
+        public async Task<ActionResult<int>> GetTokensBatch(
+            [FromBody] object value)
+        {
+            var ids = JsonConvert.DeserializeObject<TokenIdList>(value.ToString()).Ids.
+                Select(id => id.Split(":"));
+            var batch = await Tokens.GetTokensBatch(ids);
+            return Ok(batch);
         }
         #endregion
 

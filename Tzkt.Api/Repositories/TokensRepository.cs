@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using System;
 
 namespace Tzkt.Api.Repositories
 {
@@ -233,6 +234,15 @@ namespace Tzkt.Api.Repositories
             }
 
             return result;
+        }
+
+        public async Task<IEnumerable<Token>> GetTokensBatch(IEnumerable<string[]> ids)
+        {
+            using var db = GetConnection();
+            var cond = String.Join(",", ids.Select(x => $"('{Regex.Replace(x[0], @"\s+", "")}','{Regex.Replace(x[1], "[^0-9]", "")}')"));
+            var sql = new SqlBuilder($@"SELECT t.* FROM ""Tokens"" t left join ""Accounts"" a on t.""ContractId"" = a.""Id""
+                        where(a.""Address"", t.""TokenId"") in ({cond})");
+            return await db.QueryAsync<Token>(sql.Query);
         }
         #endregion
 
