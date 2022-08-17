@@ -423,6 +423,37 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<TokenBalance>> GetTokenBalancesBatch(IEnumerable<string[]> ids)
+        {
+            using var db = GetConnection();
+            var cond = String.Join(",", ids.Select(x => $"('{Regex.Replace(x[0], @"\s+", "")}','{Regex.Replace(x[1], "[^0-9]", "")}','{Regex.Replace(x[2], @"\s+", "")}')"));
+            var sql = new SqlBuilder($@"SELECT tb.""Id"",tb.""AccountId"",tb.""Balance"",tb.""FirstLevel"",tb.""LastLevel"",tb.""TransfersCount"",tb.""TokenId"" as ""tId"",tb.""ContractId"" as ""tContractId"",t.""TokenId"" as ""tTokenId"",t.""Tags"" as ""tTags"",t.""Metadata"" as ""tMetadata"" FROM ""TokenBalances"" tb
+                    left join ""Accounts"" a on tb.""AccountId"" = a.""Id""
+                    left join ""Tokens"" t on tb.""TokenId"" = t.""Id""
+                    left join ""Accounts"" c on t.""ContractId"" = c.""Id""
+                        where (c.""Address"", t.""TokenId"", a.""Address"") in ({cond})");
+            var rows = await db.QueryAsync<dynamic>(sql.Query);
+            return rows.Select(row => new TokenBalance
+            {
+                Id = row.Id,
+                Account = Accounts.GetAlias(row.AccountId),
+                Balance = row.Balance,
+                FirstLevel = row.FirstLevel,
+                FirstTime = Times[row.FirstLevel],
+                LastLevel = row.LastLevel,
+                LastTime = Times[row.LastLevel],
+                TransfersCount = row.TransfersCount,
+                Token = new TokenInfo
+                {
+                    Id = row.tId,
+                    Contract = Accounts.GetAlias(row.tContractId),
+                    TokenId = row.tTokenId,
+                    Standard = TokenStandards.ToString(row.tTags),
+                    Metadata = (RawJson)row.tMetadata
+                }
+            });
+        }
+
         public async Task<object[][]> GetTokenBalances(TokenBalanceFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryTokenBalancesAsync(filter, pagination, fields);

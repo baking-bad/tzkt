@@ -172,6 +172,24 @@ namespace Tzkt.Api.Controllers
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
+
+        /// <summary>
+        /// Get tokens by list of contract:tokenId:account
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of token balances.
+        /// </remarks>
+        /// <param name="value">TokenIdList</param>
+        /// <returns></returns>
+        [HttpPost("balances")]
+        public async Task<ActionResult<int>> GetTokenBalancesBatch(
+                [FromBody] object value)
+        {
+            var ids = JsonConvert.DeserializeObject<TokenIdList>(value.ToString()).Ids.
+                Select(id => id.Split(":"));
+            var batch = await Tokens.GetTokenBalancesBatch(ids);
+            return Ok(batch);
+        }
         #endregion
 
         #region token transfers
