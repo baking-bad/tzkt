@@ -242,7 +242,26 @@ namespace Tzkt.Api.Repositories
             var cond = String.Join(",", ids.Select(x => $"('{Regex.Replace(x[0], @"\s+", "")}','{Regex.Replace(x[1], "[^0-9]", "")}')"));
             var sql = new SqlBuilder($@"SELECT t.* FROM ""Tokens"" t left join ""Accounts"" a on t.""ContractId"" = a.""Id""
                         where(a.""Address"", t.""TokenId"") in ({cond})");
-            return await db.QueryAsync<Token>(sql.Query);
+            var rows = await db.QueryAsync<dynamic>(sql.Query);
+            var result = rows.Select(row => new Token
+            {
+                Contract = Accounts.GetAlias(row.ContractId),
+                Id = row.Id,
+                BalancesCount = row.BalancesCount,
+                FirstLevel = row.FirstLevel,
+                FirstTime = Times[row.FirstLevel],
+                HoldersCount = row.HoldersCount,
+                LastLevel = row.LastLevel,
+                LastTime = Times[row.LastLevel],
+                Standard = TokenStandards.ToString(row.Tags),
+                TokenId = row.TokenId,
+                TotalBurned = row.TotalBurned,
+                TotalMinted = row.TotalMinted,
+                TotalSupply = row.TotalSupply,
+                TransfersCount = row.TransfersCount,
+                Metadata = row.Metadata
+            });
+            return result;
         }
         #endregion
 
