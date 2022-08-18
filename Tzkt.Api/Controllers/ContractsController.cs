@@ -195,6 +195,24 @@ namespace Tzkt.Api.Controllers
             return this.Bytes(cached);
         }
 
+
+        /// <summary>
+        /// Get contracts by list of contract
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of contracts.
+        /// </remarks>
+        /// <param name="value">TokenIdList</param>
+        /// <returns></returns>
+        [HttpPost("")]
+        public async Task<ActionResult<IEnumerable<Contract>>> GetTokensBatch(
+            [FromBody] object value)
+        {
+            var ids = Newtonsoft.Json.JsonConvert.DeserializeObject<TokenIdList>(value.ToString()).Ids;
+            var batch = await Accounts.GetContractBatch(ids);
+            return Ok(batch);
+        }
+
         /// <summary>
         /// Get same contracts
         /// </summary>

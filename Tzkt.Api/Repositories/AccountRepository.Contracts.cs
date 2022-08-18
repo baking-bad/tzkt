@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 using Netezos.Contracts;
@@ -133,6 +134,71 @@ namespace Tzkt.Api.Repositories
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
+            return rows.Select(row =>
+            {
+                var creator = row.CreatorId == null ? null
+                    : Accounts.Get((int)row.CreatorId);
+
+                var manager = row.ManagerId == null ? null
+                    : (RawUser)Accounts.Get((int)row.ManagerId);
+
+                var contractDelegate = row.DelegateId == null ? null
+                    : Accounts.Get((int)row.DelegateId);
+
+                return new Contract
+                {
+                    Id = row.Id,
+                    Alias = row.Alias,
+                    Address = row.Address,
+                    Kind = ContractKinds.ToString(row.Kind),
+                    Tzips = ContractTags.ToList((Data.Models.ContractTags)row.Tags),
+                    Balance = row.Balance,
+                    Creator = creator == null ? null : new CreatorInfo
+                    {
+                        Alias = creator.Alias,
+                        Address = creator.Address
+                    },
+                    Manager = manager == null ? null : new ManagerInfo
+                    {
+                        Alias = manager.Alias,
+                        Address = manager.Address,
+                        PublicKey = manager.PublicKey,
+                    },
+                    Delegate = contractDelegate == null ? null : new DelegateInfo
+                    {
+                        Alias = contractDelegate.Alias,
+                        Address = contractDelegate.Address,
+                        Active = contractDelegate.Staked
+                    },
+                    DelegationLevel = contractDelegate == null ? null : row.DelegationLevel,
+                    DelegationTime = contractDelegate == null ? null : (DateTime?)Time[row.DelegationLevel],
+                    FirstActivity = row.FirstLevel,
+                    FirstActivityTime = Time[row.FirstLevel],
+                    LastActivity = row.LastLevel,
+                    LastActivityTime = Time[row.LastLevel],
+                    NumContracts = row.ContractsCount,
+                    ActiveTokensCount = row.ActiveTokensCount,
+                    TokenBalancesCount = row.TokenBalancesCount,
+                    TokenTransfersCount = row.TokenTransfersCount,
+                    NumDelegations = row.DelegationsCount,
+                    NumOriginations = row.OriginationsCount,
+                    NumReveals = row.RevealsCount,
+                    NumMigrations = row.MigrationsCount,
+                    NumTransactions = row.TransactionsCount,
+                    TransferTicketCount = row.TransferTicketCount,
+                    TypeHash = row.TypeHash,
+                    CodeHash = row.CodeHash,
+                    Storage = row.Kind == 0 ? $"\"{manager.Address}\"" : (RawJson)row.JsonValue
+                };
+            });
+        }
+
+        public async Task<IEnumerable<Contract>> GetContractBatch(IEnumerable<string> ids)
+        {
+            using var db = GetConnection();
+            var cond = String.Join(",", ids.Select(x => $"'{Regex.Replace(x, @"\s+", "")}'"));
+            var sql = new SqlBuilder($@"SELECT a.* FROM ""Accounts"" a where a.""Address"" in ({cond})");
+            var rows = await db.QueryAsync<dynamic>(sql.Query);
             return rows.Select(row =>
             {
                 var creator = row.CreatorId == null ? null
