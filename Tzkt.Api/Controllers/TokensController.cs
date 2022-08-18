@@ -86,7 +86,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="value">TokenIdList</param>
         /// <returns></returns>
         [HttpPost("")]
-        public async Task<ActionResult<int>> GetTokensBatch(
+        public async Task<ActionResult<IEnumerable<Token>>> GetTokensBatch(
             [FromBody] object value)
         {
             var ids = JsonConvert.DeserializeObject<TokenIdList>(value.ToString()).Ids.
