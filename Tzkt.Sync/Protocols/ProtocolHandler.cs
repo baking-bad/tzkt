@@ -329,6 +329,7 @@ namespace Tzkt.Sync
                         b.TxRollupRejectionOps = null;
                         b.TxRollupDispatchTicketsOps = null;
                         b.TransferTicketOps = null;
+                        b.IncreasePaidStorageOps = null;
                         break;
                 }
             }

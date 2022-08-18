@@ -69,6 +69,8 @@ namespace Tzkt.Data.Models
         public int TxRollupDispatchTicketsOpsCount { get; set; }
         public int TransferTicketOpsCount { get; set; }
 
+        public int IncreasePaidStorageOpsCount { get; set; }
+
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
 

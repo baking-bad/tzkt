@@ -93,7 +93,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             #region balance updates
             var balanceUpdates = metadata.RequiredArray("balance_updates").EnumerateArray();
-            if (balanceUpdates.Any(x => x.RequiredString("kind") == "contract" && !Cache.Accounts.DelegateExists(x.RequiredString("contract"))))
+            if (balanceUpdates.Any(x => x.RequiredString("kind") == "contract" && x.RequiredString("origin") == "block" && !Cache.Accounts.DelegateExists(x.RequiredString("contract"))))
                 throw new ValidationException("non-existent delegate in block balance updates");
 
             if (Cycle < Protocol.NoRewardCycles)
@@ -174,6 +174,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                             case "reveal": await ValidateReveal(content); break;
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
                             case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
+                            case "increase_paid_storage": await ValidateIncreasePaidStorage(content); break;
                             case "tx_rollup_origination": await ValidateTxRollupOrigination(content); break;
                             case "tx_rollup_submit_batch": await ValidateTxRollupSubmitBatch(content); break; 
                             case "tx_rollup_commit": await ValidateTxRollupCommit(content); break; 
@@ -456,6 +457,19 @@ namespace Tzkt.Sync.Protocols.Proto14
         }
 
         protected virtual async Task ValidateSetDepositsLimit(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+        }
+
+        protected virtual async Task ValidateIncreasePaidStorage(JsonElement content)
         {
             var source = content.RequiredString("source");
 

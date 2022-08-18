@@ -42,5 +42,7 @@ namespace Tzkt.Data.Models
         TxRollupRejection           = 0b_0000_0010_0000_0000_0000_0000_0000_0000,
         TxRollupDispatchTickets     = 0b_0000_0100_0000_0000_0000_0000_0000_0000,
         TransferTicket              = 0b_0000_1000_0000_0000_0000_0000_0000_0000,
+
+        IncreasePaidStorage         = 0b_0001_0000_0000_0000_0000_0000_0000_0000,
     }
 }
