@@ -52,6 +52,8 @@ namespace Tzkt.Data
         public DbSet<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
         public DbSet<TransferTicketOperation> TransferTicketOps { get; set; }
 
+        public DbSet<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
@@ -146,6 +148,8 @@ namespace Tzkt.Data
             modelBuilder.BuildTxRollupRejectionOperationModel();
             modelBuilder.BuildTxRollupDispatchTicketsOperationModel();
             modelBuilder.BuildTransferTicketOperationModel();
+
+            modelBuilder.BuildIncreasePaidStorageOperationModel();
 
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();

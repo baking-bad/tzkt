@@ -138,6 +138,9 @@ namespace Tzkt.Sync.Protocols
                         case "set_deposits_limit":
                             await new SetDepositsLimitCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "increase_paid_storage":
+                            await new IncreasePaidStorageCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         case "reveal":
                             await new RevealsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
@@ -311,6 +314,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
                 operations.AddRange(await Db.RegisterConstantOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.IncreasePaidStorage))
+                operations.AddRange(await Db.IncreasePaidStorageOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Revelations))
                 operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -418,6 +424,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case RevealOperation reveal:
                         await new RevealsCommit(this).Revert(currBlock, reveal);
+                        break;
+                    case IncreasePaidStorageOperation op:
+                        await new IncreasePaidStorageCommit(this).Revert(currBlock, op);
                         break;
                     case RegisterConstantOperation registerConstant:
                         await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
