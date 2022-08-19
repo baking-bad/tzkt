@@ -87,6 +87,12 @@ namespace Tzkt.Sync.Protocols.Proto12
                 statistics.TotalCreated += rewards;
             }
 
+            if (block.VdfRevelationOps != null)
+            {
+                var rewards = block.VdfRevelationOps.Sum(x => x.Reward);
+                statistics.TotalCreated += rewards;
+            }
+
             if (block.Migrations != null && block.Migrations.Any(x => x.Kind == MigrationKind.Subsidy))
             {
                 var subsidy = block.Migrations.Where(x => x.Kind == MigrationKind.Subsidy).Sum(x => x.BalanceChange);

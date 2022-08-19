@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .Select(x => x.Nonce)
                     .ToListAsync();
 
-                var futureSeed = Seed.GetNextSeed(lastSeed, nonces);
+                var futureSeed = Seed.GetNextSeed(lastSeed, nonces, null);
                 var snapshotIndex = 0;
                 var snapshotLevel = 1;
                 var snapshotProto = await Cache.Protocols.FindByCycleAsync(Math.Max(block.Cycle - 2, 0));

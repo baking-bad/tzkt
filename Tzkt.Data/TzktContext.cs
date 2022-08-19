@@ -35,6 +35,7 @@ namespace Tzkt.Data
         public DbSet<EndorsementOperation> EndorsementOps { get; set; }
         public DbSet<PreendorsementOperation> PreendorsementOps { get; set; }
         public DbSet<NonceRevelationOperation> NonceRevelationOps { get; set; }
+        public DbSet<VdfRevelationOperation> VdfRevelationOps { get; set; }
         public DbSet<OriginationOperation> OriginationOps { get; set; }
         public DbSet<ProposalOperation> ProposalOps { get; set; }
         public DbSet<RevealOperation> RevealOps { get; set; }
@@ -134,6 +135,7 @@ namespace Tzkt.Data
             modelBuilder.BuildEndorsementOperationModel();
             modelBuilder.BuildPreendorsementOperationModel();
             modelBuilder.BuildNonceRevelationOperationModel();
+            modelBuilder.BuildVdfRevelationOperationModel();
             modelBuilder.BuildOriginationOperationModel();
             modelBuilder.BuildProposalOperationModel();
             modelBuilder.BuildRevealOperationModel();

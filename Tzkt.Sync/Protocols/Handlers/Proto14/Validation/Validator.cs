@@ -168,6 +168,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                             case "double_endorsement_evidence": ValidateDoubleBaking(content); break;
                             case "double_preendorsement_evidence": ValidateDoubleBaking(content); break;
                             case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
+                            case "vdf_revelation": ValidateVdfRevelation(content); break;
                             case "delegation": await ValidateDelegation(content); break;
                             case "origination": await ValidateOrigination(content); break;
                             case "transaction": await ValidateTransaction(content); break;
@@ -292,6 +293,18 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             if (balanceUpdate.RequiredInt64("change") != Protocol.RevelationReward)
                 throw new ValidationException("invalid seed nonce revelation balance update amount");
+        }
+
+        protected virtual void ValidateVdfRevelation(JsonElement content)
+        {
+            var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()
+                .SingleOrDefault(x => x.RequiredString("kind") == "contract");
+
+            if (balanceUpdate.RequiredString("kind") != "contract")
+                throw new ValidationException("invalid vdf revelation balance update kind");
+
+            if (balanceUpdate.ValueKind != JsonValueKind.Undefined && balanceUpdate.RequiredString("contract") != Proposer)
+                throw new ValidationException("invalid vdf revelation baker");
         }
 
         protected virtual async Task ValidateDelegation(JsonElement content)
