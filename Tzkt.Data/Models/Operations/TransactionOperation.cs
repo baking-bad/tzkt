@@ -22,6 +22,8 @@ namespace Tzkt.Data.Models
         public short? InternalOriginations { get; set; }
         public short? InternalTransactions { get; set; }
 
+        public int? EventsCount { get; set; }
+
         #region relations
         [ForeignKey(nameof(TargetId))]
         public Account Target { get; set; }

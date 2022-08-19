@@ -407,6 +407,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                         case "delegation": ValidateInternalDelegation(internalContent, source); break;
                         case "origination": ValidateInternalOrigination(internalContent, source); break;
                         case "transaction": ValidateInternalTransaction(internalContent, source); break;
+                        case "event": break;
                         default:
                             throw new ValidationException("invalid internal operation kind");
                     }
