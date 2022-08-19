@@ -82,6 +82,7 @@ namespace Tzkt.Data.Models
         public List<TransferTicketOperation> TransferTicketOps { get; set; }
 
         public List<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+        public List<VdfRevelationOperation> VdfRevelationOps { get; set; }
 
         public List<MigrationOperation> Migrations { get; set; }
         public List<RevelationPenaltyOperation> RevelationPenalties { get; set; }

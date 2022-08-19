@@ -44,5 +44,6 @@ namespace Tzkt.Data.Models
         TransferTicket              = 0b_0000_1000_0000_0000_0000_0000_0000_0000,
 
         IncreasePaidStorage         = 0b_0001_0000_0000_0000_0000_0000_0000_0000,
+        VdfRevelation               = 0b_0010_0000_0000_0000_0000_0000_0000_0000,
     }
 }
