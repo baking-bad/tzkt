@@ -36,7 +36,9 @@ namespace Tzkt.Sync.Protocols.Proto13
                 .Select(x => x.Nonce)
                 .ToListAsync();
 
-            var futureSeed = Seed.GetNextSeed(lastSeed, nonces);
+            var vdfSolution = await GetVdfSolution(block);
+
+            var futureSeed = Seed.GetNextSeed(lastSeed, nonces, vdfSolution);
             var snapshotIndex = 0;
             var snapshotLevel = 1;
 
@@ -106,5 +108,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 DELETE  FROM ""Cycles""
                 WHERE   ""Index"" = {futureCycle}");
         }
+
+        protected virtual Task<byte[]> GetVdfSolution(Block block) => Task.FromResult<byte[]>(null);
     }
 }

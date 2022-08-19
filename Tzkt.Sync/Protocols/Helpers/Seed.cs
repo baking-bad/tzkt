@@ -19,13 +19,13 @@ namespace Tzkt.Sync.Protocols
             return list;
         }
 
-        public static byte[] GetNextSeed(byte[] seed, IEnumerable<byte[]> nonces)
+        public static byte[] GetNextSeed(byte[] seed, IEnumerable<byte[]> nonces, byte[] vdfSolution)
         {
             var res = Blake2b.ComputeHash(32, seed.Concat(new byte[32]));
             foreach (var nonce in nonces)
-            {
                 res = Blake2b.ComputeHash(32, res.Concat(nonce));
-            }
+            if (vdfSolution != null)
+                res = Blake2b.ComputeHash(32, res.Concat(vdfSolution));
             return res;
         }
 

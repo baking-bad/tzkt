@@ -330,6 +330,7 @@ namespace Tzkt.Sync
                         b.TxRollupDispatchTicketsOps = null;
                         b.TransferTicketOps = null;
                         b.IncreasePaidStorageOps = null;
+                        b.VdfRevelationOps = null;
                         break;
                 }
             }

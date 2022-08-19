@@ -118,6 +118,9 @@ namespace Tzkt.Sync.Protocols
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "vdf_revelation":
+                            await new VdfRevelationCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[2]");
                     }
@@ -323,6 +326,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Revelations))
                 operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.VdfRevelation))
+                operations.AddRange(await Db.VdfRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Transactions))
                 operations.AddRange(await Db.TransactionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -425,6 +431,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case NonceRevelationOperation revelation:
                         await new NonceRevelationsCommit(this).Revert(currBlock, revelation);
+                        break;
+                    case VdfRevelationOperation op:
+                        await new VdfRevelationCommit(this).Revert(currBlock, op);
                         break;
                     case RevealOperation reveal:
                         await new RevealsCommit(this).Revert(currBlock, reveal);
