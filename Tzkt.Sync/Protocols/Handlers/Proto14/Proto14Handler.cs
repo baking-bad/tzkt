@@ -183,6 +183,9 @@ namespace Tzkt.Sync.Protocols
                                             if (internalTx.BigMapDiffs != null)
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
                                             break;
+                                        case "event":
+                                            await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
+                                            break;
                                         default:
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
                                     }
@@ -390,6 +393,7 @@ namespace Tzkt.Sync.Protocols
             await new BakingRightsCommit(this).Revert(currBlock);
             await new TokensCommit(this).Revert(currBlock);
             await new BigMapCommit(this).Revert(currBlock);
+            await new ContractEventCommit(this).Revert(currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
             {

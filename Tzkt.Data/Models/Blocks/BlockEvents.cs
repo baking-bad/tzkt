@@ -16,6 +16,7 @@ namespace Tzkt.Data.Models
         SmartContracts      = 0b_0000_1000_0000,
         DelegatorContracts  = 0b_0001_0000_0000,
         Bigmaps             = 0b_0010_0000_0000,
-        Tokens              = 0b_0100_0000_0000
+        Tokens              = 0b_0100_0000_0000,
+        Events              = 0b_1000_0000_0000
     }
 }
