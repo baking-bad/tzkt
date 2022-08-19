@@ -57,6 +57,8 @@ namespace Tzkt.Data
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
+
+        public DbSet<ContractEvent> Events { get; set; }
         #endregion
 
         #region voting
@@ -154,6 +156,8 @@ namespace Tzkt.Data
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
+
+            modelBuilder.BuildContractEventModel();
             #endregion
 
             #region voting
