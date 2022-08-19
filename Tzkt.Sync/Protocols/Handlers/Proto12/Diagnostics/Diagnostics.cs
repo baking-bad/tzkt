@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Utils;
@@ -23,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 
-            if (remote.RequiredInt64("delegated_balance") != delegat.DelegatedBalance + delegat.RollupBonds)
+            if (!CheckDelegatedBalance(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong delegated balance {delegat.Address}");
 
             if (remote.RequiredBool("deactivated") != !delegat.Staked)
@@ -93,5 +94,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredArray("selected_stake_distribution").Count() != cycle.SelectedBakers)
                 throw new Exception($"Invalid cycle {cycle.Index} selected bakers {cycle.SelectedBakers}");
         }
+
+        protected virtual bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat) =>
+            remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.RollupBonds;
     }
 }
