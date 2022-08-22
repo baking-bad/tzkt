@@ -62,6 +62,7 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     ContractId = table.Column<int>(type: "integer", nullable: false),
+                    ContractCodeHash = table.Column<int>(type: "integer", nullable: false),
                     TransactionId = table.Column<int>(type: "integer", nullable: false),
                     Tag = table.Column<string>(type: "text", nullable: true),
                     Type = table.Column<byte[]>(type: "bytea", nullable: true),
@@ -144,6 +145,16 @@ namespace Tzkt.Data.Migrations
                         principalColumn: "Level",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_ContractCodeHash",
+                table: "Events",
+                column: "ContractCodeHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_ContractCodeHash_Tag",
+                table: "Events",
+                columns: new[] { "ContractCodeHash", "Tag" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_ContractId",

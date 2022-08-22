@@ -7,6 +7,7 @@ namespace Tzkt.Data.Models
         public int Id { get; set; }
         public int Level { get; set; }
         public int ContractId { get; set; }
+        public int ContractCodeHash { get; set; }
         public int TransactionId { get; set; }
 
         public string Tag { get; set; }
@@ -42,6 +43,9 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.ContractId);
 
             modelBuilder.Entity<ContractEvent>()
+                .HasIndex(x => x.ContractCodeHash);
+
+            modelBuilder.Entity<ContractEvent>()
                 .HasIndex(x => x.TransactionId);
 
             modelBuilder.Entity<ContractEvent>()
@@ -49,6 +53,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<ContractEvent>()
                 .HasIndex(x => new { x.ContractId, x.Tag });
+
+            modelBuilder.Entity<ContractEvent>()
+                .HasIndex(x => new { x.ContractCodeHash, x.Tag });
 
             modelBuilder.Entity<ContractEvent>()
                 .HasIndex(x => x.JsonPayload)

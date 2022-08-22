@@ -33,6 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 Id = Cache.AppState.NextOperationId(),
                 Level = block.Level,
                 ContractId = contract.Id,
+                ContractCodeHash = contract.CodeHash,
                 TransactionId = parentTx.Id,
                 Tag = content.RequiredString("tag")
             };
