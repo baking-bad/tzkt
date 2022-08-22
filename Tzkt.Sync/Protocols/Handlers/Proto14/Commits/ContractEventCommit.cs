@@ -26,7 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             if (parentTx.Status != OperationStatus.Applied || result.RequiredString("status") != "applied")
                 return;
 
-            var consumedGas = (int)((result.RequiredInt64("consumed_milligas") + 999) / 1000);
+            var consumedGas = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000);
 
             var contractEvent = new ContractEvent
             {
