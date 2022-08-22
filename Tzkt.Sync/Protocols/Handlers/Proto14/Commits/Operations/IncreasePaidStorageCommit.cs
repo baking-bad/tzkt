@@ -22,10 +22,10 @@ namespace Tzkt.Sync.Protocols.Proto14
             var contract = await Cache.Accounts.GetAsync(content.RequiredString("destination")) as Contract;
 
             var result = content.Required("metadata").Required("operation_result");
-            var balanceUpdate = result.RequiredArray("balance_updates").EnumerateArray()
+            var balanceUpdate = result.OptionalArray("balance_updates")?.EnumerateArray()
                 .FirstOrDefault(x => x.RequiredString("kind") == "burned" && x.RequiredString("category") == "storage fees");
-            var storageFee = balanceUpdate.ValueKind != JsonValueKind.Undefined
-                ? balanceUpdate.RequiredInt64("change")
+            var storageFee = balanceUpdate is JsonElement el && el.ValueKind != JsonValueKind.Undefined
+                ? el.RequiredInt64("change")
                 : 0;
 
             var operation = new IncreasePaidStorageOperation
@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = (int)((result.RequiredInt64("consumed_milligas") + 999) / 1000),
+                GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
                 StorageUsed = (int)(storageFee / block.Protocol.ByteCost),
                 StorageFee = storageFee
             };
