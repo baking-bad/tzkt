@@ -1014,6 +1014,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<int>("ContractCodeHash")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ContractId")
                         .HasColumnType("integer");
 
@@ -1037,6 +1040,8 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContractCodeHash");
+
                     b.HasIndex("ContractId");
 
                     b.HasIndex("Id")
@@ -1051,6 +1056,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Tag");
 
                     b.HasIndex("TransactionId");
+
+                    b.HasIndex("ContractCodeHash", "Tag");
 
                     b.HasIndex("ContractId", "Tag");
 
