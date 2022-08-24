@@ -77,6 +77,11 @@ namespace Tzkt.Api.Models
         public int ActiveTokensCount { get; set; }
 
         /// <summary>
+        /// Number of tokens minted in the contract
+        /// </summary>
+        public int TokensCount { get; set; }
+
+        /// <summary>
         /// Number of tokens the account ever had
         /// </summary>
         public int TokenBalancesCount { get; set; }
@@ -116,6 +121,11 @@ namespace Tzkt.Api.Models
         /// Number of transfer ticket operations related to the account
         /// </summary>
         public int TransferTicketCount { get; set; }
+
+        /// <summary>
+        /// Number of events produced by the contract
+        /// </summary>
+        public int EventsCount { get; set; }
 
         /// <summary>
         /// Block height of the contract creation

@@ -179,6 +179,11 @@ namespace Tzkt.Api.Models
         public int NumNonceRevelations { get; set; }
 
         /// <summary>
+        /// Number of `vdf_revelation` operations included into blocks by the delegate
+        /// </summary>
+        public int VdfRevelationsCount { get; set; }
+
+        /// <summary>
         /// Number of operations for all time in which rewards were lost due to unrevealed seed nonces by the delegate (synthetic type)
         /// </summary>
         public int NumRevelationPenalties { get; set; }
@@ -269,6 +274,11 @@ namespace Tzkt.Api.Models
         /// Number of transfer ticket operations sent by the account
         /// </summary>
         public int TransferTicketCount { get; set; }
+
+        /// <summary>
+        /// Number of `increase_paid_storage` operations sent by the acount
+        /// </summary>
+        public int IncreasePaidStorageCount { get; set; }
 
         /// <summary>
         /// Block height of the first operation, related to the delegate (baker)
