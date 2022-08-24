@@ -70,6 +70,8 @@ namespace Tzkt.Api.Repositories
                         TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
                         TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
                         TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
+                        IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
+                        VdfRevelationsCount = delegat.VdfRevelationsCount,
                         FrozenDeposit = delegat.FrozenDeposit,
                         FrozenDepositLimit = delegat.FrozenDepositLimit,
                         DelegatedBalance = delegat.DelegatedBalance,
@@ -133,6 +135,7 @@ namespace Tzkt.Api.Repositories
                         TxRollupRemoveCommitmentCount = user.TxRollupRemoveCommitmentCount,
                         TxRollupReturnBondCount = user.TxRollupReturnBondCount,
                         TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
+                        IncreasePaidStorageCount = user.IncreasePaidStorageCount,
                         Counter = user.Balance > 0 ? user.Counter : State.Current.ManagerCounter,
                         FirstActivity = user.FirstLevel,
                         FirstActivityTime = Time[user.FirstLevel],
@@ -208,6 +211,7 @@ namespace Tzkt.Api.Repositories
                         LastActivityTime = Time[contract.LastLevel],
                         NumContracts = contract.ContractsCount,
                         ActiveTokensCount = contract.ActiveTokensCount,
+                        TokensCount = contract.TokensCount,
                         TokenBalancesCount = contract.TokenBalancesCount,
                         TokenTransfersCount = contract.TokenTransfersCount,
                         NumDelegations = contract.DelegationsCount,
@@ -215,6 +219,7 @@ namespace Tzkt.Api.Repositories
                         NumReveals = contract.RevealsCount,
                         NumMigrations = contract.MigrationsCount,
                         NumTransactions = contract.TransactionsCount,
+                        EventsCount = contract.EventsCount,
                         TypeHash = contract.TypeHash,
                         CodeHash = contract.CodeHash,
                         Metadata = metadata ? contract.Metadata : null
@@ -345,6 +350,7 @@ namespace Tzkt.Api.Repositories
                             TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
                             TxRollupReturnBondCount = row.TxRollupReturnBondCount,
                             TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
+                            IncreasePaidStorageCount = row.IncreasePaidStorageCount,
                             Counter = row.Balance > 0 ? row.Counter : State.Current.ManagerCounter,
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
@@ -397,6 +403,8 @@ namespace Tzkt.Api.Repositories
                             TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
                             TxRollupReturnBondCount = row.TxRollupReturnBondCount,
                             TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
+                            IncreasePaidStorageCount = row.IncreasePaidStorageCount,
+                            VdfRevelationsCount = row.VdfRevelationsCount,
                             FrozenDeposit = row.FrozenDeposit,
                             FrozenDepositLimit = row.FrozenDepositLimit,
                             DelegatedBalance = row.DelegatedBalance,
@@ -483,6 +491,7 @@ namespace Tzkt.Api.Repositories
                             LastActivityTime = Time[row.LastLevel],
                             NumContracts = row.ContractsCount,
                             ActiveTokensCount = row.ActiveTokensCount,
+                            TokensCount = row.TokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
                             NumDelegations = row.DelegationsCount,
@@ -490,6 +499,7 @@ namespace Tzkt.Api.Repositories
                             NumReveals = row.RevealsCount,
                             NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount,
+                            EventsCount = row.EventsCount,
                             TypeHash = row.TypeHash,
                             CodeHash = row.CodeHash,
                         });
@@ -622,6 +632,8 @@ namespace Tzkt.Api.Repositories
                     case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
                     case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
                     case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
+                    case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
+                    case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
 
                     case "delegate": columns.Add(@"""DelegateId"""); break;
                     case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -631,6 +643,8 @@ namespace Tzkt.Api.Repositories
                     case "tzips": columns.Add(@"""Tags"""); break;
                     case "creator": columns.Add(@"""CreatorId"""); break;
                     case "manager": columns.Add(@"""ManagerId"""); break;
+                    case "tokensCount": columns.Add(@"""TokensCount"""); break;
+                    case "eventsCount": columns.Add(@"""EventsCount"""); break;
                 }
             }
 
@@ -895,6 +909,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TxRollupSubmitBatchCount;
                         break;
+                    case "vdfRevelationsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationsCount;
+                        break;
+                    case "increasePaidStorageCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.IncreasePaidStorageCount;
+                        break;
                     case "delegate":
                         foreach (var row in rows)
                         {
@@ -945,6 +967,14 @@ namespace Tzkt.Api.Repositories
                                 PublicKey = manager.PublicKey,
                             };
                         }
+                        break;
+                    case "tokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokensCount;
+                        break;
+                    case "eventsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EventsCount;
                         break;
                 }
             }
@@ -1025,6 +1055,8 @@ namespace Tzkt.Api.Repositories
                 case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
                 case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
                 case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
+                case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
+                case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
 
                 case "delegate": columns.Add(@"""DelegateId"""); break;
                 case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -1034,6 +1066,8 @@ namespace Tzkt.Api.Repositories
                 case "tzips": columns.Add(@"""Tags"""); break;
                 case "creator": columns.Add(@"""CreatorId"""); break;
                 case "manager": columns.Add(@"""ManagerId"""); break;
+                case "tokensCount": columns.Add(@"""TokensCount"""); break;
+                case "eventsCount": columns.Add(@"""EventsCount"""); break;
             }
 
             if (columns.Count == 0)
@@ -1294,6 +1328,14 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TxRollupSubmitBatchCount;
                     break;
+                case "vdfRevelationsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationsCount;
+                    break;
+                case "increasePaidStorageCount":
+                    foreach (var row in rows)
+                        result[j++] = row.IncreasePaidStorageCount;
+                    break;
                 case "delegate":
                     foreach (var row in rows)
                     {
@@ -1344,6 +1386,14 @@ namespace Tzkt.Api.Repositories
                             PublicKey = manager.PublicKey,
                         };
                     }
+                    break;
+                case "tokensCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokensCount;
+                    break;
+                case "eventsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.EventsCount;
                     break;
             }
 

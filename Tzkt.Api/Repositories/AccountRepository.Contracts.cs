@@ -71,6 +71,8 @@ namespace Tzkt.Api.Repositories
                 NumMigrations = contract.MigrationsCount,
                 NumTransactions = contract.TransactionsCount,
                 TransferTicketCount = contract.TransferTicketCount,
+                TokensCount = contract.TokensCount,
+                EventsCount = contract.EventsCount,
                 TypeHash = contract.TypeHash,
                 CodeHash = contract.CodeHash,
             };
@@ -185,6 +187,8 @@ namespace Tzkt.Api.Repositories
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
                     TransferTicketCount = row.TransferTicketCount,
+                    TokensCount = row.TokensCount,
+                    EventsCount = row.EventsCount,
                     TypeHash = row.TypeHash,
                     CodeHash = row.CodeHash,
                     Storage = row.Kind == 0 ? $"\"{manager.Address}\"" : (RawJson)row.JsonValue
@@ -237,6 +241,8 @@ namespace Tzkt.Api.Repositories
                     case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
                     case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
                     case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                    case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
+                    case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                     case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
                     case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                     case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
@@ -397,6 +403,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TransferTicketCount;
                         break;
+                    case "tokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokensCount;
+                        break;
+                    case "eventsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EventsCount;
+                        break;
                     case "firstActivity":
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
@@ -484,6 +498,8 @@ namespace Tzkt.Api.Repositories
                 case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
                 case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
                 case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
+                case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                 case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
                 case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                 case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
@@ -639,6 +655,14 @@ namespace Tzkt.Api.Repositories
                 case "transferTicketCount":
                     foreach (var row in rows)
                         result[j++] = row.TransferTicketCount;
+                    break;
+                case "tokensCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokensCount;
+                    break;
+                case "eventsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.EventsCount;
                     break;
                 case "firstActivity":
                     foreach (var row in rows)
