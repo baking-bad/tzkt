@@ -42,7 +42,7 @@ namespace Tzkt.Api.Swagger
                         Description = File.Exists("Swagger/WsGetStarted.md")
                             ? File.ReadAllText("Swagger/WsGetStarted.md")
                             : null,
-                        ExtensionData = {{"tzkt-category", "ws"}}
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
@@ -50,7 +50,7 @@ namespace Tzkt.Api.Swagger
                         Description = File.Exists("Swagger/WsSubscriptions.md")
                             ? File.ReadAllText("Swagger/WsSubscriptions.md")
                             : null,
-                        ExtensionData = {{"tzkt-category", "ws"}}
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
@@ -58,7 +58,7 @@ namespace Tzkt.Api.Swagger
                         Description = File.Exists("Swagger/WsExamples.md")
                             ? File.ReadAllText("Swagger/WsExamples.md")
                             : null,
-                        ExtensionData = {{"tzkt-category", "ws"}}
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
@@ -66,7 +66,7 @@ namespace Tzkt.Api.Swagger
                         Description = File.Exists("Swagger/TypescriptSdk.md")
                             ? File.ReadAllText("Swagger/TypescriptSdk.md")
                             : null,
-                        ExtensionData = {{"tzkt-category", "sdk"}}
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
                     });
                     document.ExtensionData = new Dictionary<string, object>
                     {
@@ -82,7 +82,7 @@ namespace Tzkt.Api.Swagger
                                 {
                                     name = "WebSocket API",
                                     tags = document.Tags
-                                        .Where(x => x.ExtensionData["tzkt-category"].Equals("ws"))
+                                        .Where(x => x.ExtensionData["x-tagGroup"].Equals("ws"))
                                         .Select(x => x.Name)
                                         .ToList()
                                 },
@@ -90,7 +90,7 @@ namespace Tzkt.Api.Swagger
                                 {
                                     name = "Libraries",
                                     tags = document.Tags
-                                        .Where(x => x.ExtensionData["tzkt-category"].Equals("sdk"))
+                                        .Where(x => x.ExtensionData["x-tagGroup"].Equals("sdk"))
                                         .Select(x => x.Name)
                                         .ToList()
                                 }
