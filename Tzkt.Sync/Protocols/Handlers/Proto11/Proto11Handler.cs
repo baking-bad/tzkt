@@ -124,8 +124,7 @@ namespace Tzkt.Sync.Protocols
             #region operations 3
             foreach (var operation in operations[3].EnumerateArray())
             {
-                Cache.AppState.IncreaseManagerCounter(operation.RequiredArray("contents").Count());
-
+                Manager.Init(operation);
                 foreach (var content in operation.RequiredArray("contents").EnumerateArray())
                 {
                     switch (content.RequiredString("kind"))
@@ -176,13 +175,13 @@ namespace Tzkt.Sync.Protocols
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
                                     }
                                 }
-                                ResetIfEmpty(parent.Transaction.Sender);
                             }
                             break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not expected in operations[3]");
                     }
                 }
+                Manager.Reset();
             }
             #endregion
 
@@ -335,12 +334,7 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case TransactionOperation transaction:
                         if (transaction.InitiatorId == null)
-                        {
-                            if (transaction.InternalOperations != null)
-                                RestoreIfEmpty(transaction.Sender);
-
                             await new TransactionsCommit(this).Revert(currBlock, transaction);
-                        }
                         else
                             await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
                         break;

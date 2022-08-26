@@ -11,6 +11,7 @@ namespace Tzkt.Data.Models
         public int CodeHash { get; set; }
         public ContractTags Tags { get; set; }
         public int TokensCount { get; set; }
+        public int EventsCount { get; set; }
 
         public bool? Spendable { get; set; }
 

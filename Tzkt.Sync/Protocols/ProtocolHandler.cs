@@ -27,6 +27,7 @@ namespace Tzkt.Sync
         public readonly IServiceProvider Services;
         public readonly TezosProtocolsConfig Config;
         public readonly ILogger Logger;
+        public readonly ManagerContext Manager;
         
         public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger)
         {
@@ -37,6 +38,7 @@ namespace Tzkt.Sync
             Services = services;
             Config = config.GetTezosProtocolsConfig();
             Logger = logger;
+            Manager = new(this);
         }
 
         public virtual async Task<AppState> CommitBlock(int head)
@@ -221,23 +223,6 @@ namespace Tzkt.Sync
 
         public abstract Task Revert();
 
-        protected void ResetIfEmpty(Account account)
-        {
-            if (account.Balance <= 0 && account is User user && user.Revealed)
-            {
-                user.Counter = Cache.AppState.GetManagerCounter();
-                user.Revealed = false;
-            }
-        }
-
-        protected void RestoreIfEmpty(Account account)
-        {
-            if (account is User user && !user.Revealed && user.Balance > 0)
-            {
-                user.Revealed = true;
-            }
-        }
-
         void TouchAccounts()
         {
             var state = Cache.AppState.Get();
@@ -344,6 +329,8 @@ namespace Tzkt.Sync
                         b.TxRollupRejectionOps = null;
                         b.TxRollupDispatchTicketsOps = null;
                         b.TransferTicketOps = null;
+                        b.IncreasePaidStorageOps = null;
+                        b.VdfRevelationOps = null;
                         break;
                 }
             }

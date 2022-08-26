@@ -51,6 +51,7 @@ namespace Tzkt.Data.Models
         public int EndorsementOpsCount { get; set; }
         public int PreendorsementOpsCount { get; set; }
         public int NonceRevelationOpsCount { get; set; }
+        public int VdfRevelationOpsCount { get; set; }
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
@@ -69,6 +70,8 @@ namespace Tzkt.Data.Models
         public int TxRollupDispatchTicketsOpsCount { get; set; }
         public int TransferTicketOpsCount { get; set; }
 
+        public int IncreasePaidStorageOpsCount { get; set; }
+
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
 
@@ -80,6 +83,7 @@ namespace Tzkt.Data.Models
         public int TokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
+        public int EventsCount { get; set; }
         #endregion
 
         #region quotes

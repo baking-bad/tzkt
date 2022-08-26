@@ -32,7 +32,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
-                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Nonce"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Nonce"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
                 FROM        ""DelegationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -56,6 +56,7 @@ namespace Tzkt.Api.Repositories
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
@@ -70,7 +71,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
-                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Nonce"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Nonce"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
                 FROM        ""DelegationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -94,6 +95,7 @@ namespace Tzkt.Api.Repositories
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
@@ -108,7 +110,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
-                            o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
                 FROM        ""DelegationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -132,6 +134,7 @@ namespace Tzkt.Api.Repositories
                 Nonce = nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
@@ -146,7 +149,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""Status"", ""Nonce"", ""Amount"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
+                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""Status"", ""Nonce"", ""Amount"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
                 FROM      ""DelegationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -168,6 +171,7 @@ namespace Tzkt.Api.Repositories
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
@@ -234,6 +238,7 @@ namespace Tzkt.Api.Repositories
                 Nonce = row.Nonce,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
@@ -278,6 +283,7 @@ namespace Tzkt.Api.Repositories
                     case "nonce": columns.Add(@"o.""Nonce"""); break;
                     case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                     case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                    case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
                     case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
@@ -378,6 +384,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.GasUsed;
                         break;
+                    case "storageLimit":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StorageLimit;
+                        break;
                     case "bakerFee":
                         foreach (var row in rows)
                             result[j++][i] = row.BakerFee;
@@ -444,6 +454,7 @@ namespace Tzkt.Api.Repositories
                 case "nonce": columns.Add(@"o.""Nonce"""); break;
                 case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                 case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
                 case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
@@ -540,6 +551,10 @@ namespace Tzkt.Api.Repositories
                 case "gasUsed":
                     foreach (var row in rows)
                         result[j++] = row.GasUsed;
+                    break;
+                case "storageLimit":
+                    foreach (var row in rows)
+                        result[j++] = row.StorageLimit;
                     break;
                 case "bakerFee":
                     foreach (var row in rows)

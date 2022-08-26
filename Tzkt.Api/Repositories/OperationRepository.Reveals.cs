@@ -31,7 +31,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""Counter"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Errors"", b.""Hash""
                 FROM        ""RevealOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -52,6 +52,7 @@ namespace Tzkt.Api.Repositories
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -62,7 +63,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(string hash, int counter, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""Status"", o.""Errors"", b.""Hash""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""BakerFee"", o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Errors"", b.""Hash""
                 FROM        ""RevealOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -83,6 +84,7 @@ namespace Tzkt.Api.Repositories
                 Counter = counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -93,7 +95,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<RevealOperation>> GetReveals(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""Status"", ""Errors""
+                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""Counter"", ""BakerFee"", ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""Status"", ""Errors""
                 FROM      ""RevealOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -112,6 +114,7 @@ namespace Tzkt.Api.Repositories
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -156,6 +159,7 @@ namespace Tzkt.Api.Repositories
                 Counter = row.Counter,
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
+                StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
@@ -189,6 +193,7 @@ namespace Tzkt.Api.Repositories
                     case "counter": columns.Add(@"o.""Counter"""); break;
                     case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                     case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                    case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
@@ -263,6 +268,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.GasUsed;
                         break;
+                    case "storageLimit":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StorageLimit;
+                        break;
                     case "bakerFee":
                         foreach (var row in rows)
                             result[j++][i] = row.BakerFee;
@@ -309,6 +318,7 @@ namespace Tzkt.Api.Repositories
                 case "counter": columns.Add(@"o.""Counter"""); break;
                 case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                 case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
+                case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
@@ -379,6 +389,10 @@ namespace Tzkt.Api.Repositories
                 case "gasUsed":
                     foreach (var row in rows)
                         result[j++] = row.GasUsed;
+                    break;
+                case "storageLimit":
+                    foreach (var row in rows)
+                        result[j++] = row.StorageLimit;
                     break;
                 case "bakerFee":
                     foreach (var row in rows)

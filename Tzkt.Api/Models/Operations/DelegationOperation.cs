@@ -74,6 +74,11 @@ namespace Tzkt.Api.Models
         public int GasUsed { get; set; }
 
         /// <summary>
+        /// A cap on the amount of storage a given operation can consume
+        /// </summary>
+        public int StorageLimit { get; set; }
+
+        /// <summary>
         /// Fee to a baker, produced block, in which the operation was included
         /// </summary>
         public long BakerFee { get; set; }

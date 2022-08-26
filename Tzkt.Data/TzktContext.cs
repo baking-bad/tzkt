@@ -35,6 +35,7 @@ namespace Tzkt.Data
         public DbSet<EndorsementOperation> EndorsementOps { get; set; }
         public DbSet<PreendorsementOperation> PreendorsementOps { get; set; }
         public DbSet<NonceRevelationOperation> NonceRevelationOps { get; set; }
+        public DbSet<VdfRevelationOperation> VdfRevelationOps { get; set; }
         public DbSet<OriginationOperation> OriginationOps { get; set; }
         public DbSet<ProposalOperation> ProposalOps { get; set; }
         public DbSet<RevealOperation> RevealOps { get; set; }
@@ -52,9 +53,13 @@ namespace Tzkt.Data
         public DbSet<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
         public DbSet<TransferTicketOperation> TransferTicketOps { get; set; }
 
+        public DbSet<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
+
+        public DbSet<ContractEvent> Events { get; set; }
         #endregion
 
         #region voting
@@ -130,6 +135,7 @@ namespace Tzkt.Data
             modelBuilder.BuildEndorsementOperationModel();
             modelBuilder.BuildPreendorsementOperationModel();
             modelBuilder.BuildNonceRevelationOperationModel();
+            modelBuilder.BuildVdfRevelationOperationModel();
             modelBuilder.BuildOriginationOperationModel();
             modelBuilder.BuildProposalOperationModel();
             modelBuilder.BuildRevealOperationModel();
@@ -147,9 +153,13 @@ namespace Tzkt.Data
             modelBuilder.BuildTxRollupDispatchTicketsOperationModel();
             modelBuilder.BuildTransferTicketOperationModel();
 
+            modelBuilder.BuildIncreasePaidStorageOperationModel();
+
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
+
+            modelBuilder.BuildContractEventModel();
             #endregion
 
             #region voting

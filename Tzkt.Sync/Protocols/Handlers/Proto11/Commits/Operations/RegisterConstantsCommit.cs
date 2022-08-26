@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto11
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("storage_size") ?? 0,
                 StorageFee = result.OptionalInt32("storage_size") > 0
                     ? result.OptionalInt32("storage_size") * block.Protocol.ByteCost
@@ -59,7 +59,7 @@ namespace Tzkt.Sync.Protocols.Proto11
             #endregion
 
             #region apply operation
-            await Spend(sender, registerConstant.BakerFee);
+            sender.Balance -= registerConstant.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= registerConstant.BakerFee;
@@ -74,18 +74,21 @@ namespace Tzkt.Sync.Protocols.Proto11
             block.Operations |= Operations.RegisterConstant;
             block.Fees += registerConstant.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, registerConstant.Counter);
+            sender.Counter = registerConstant.Counter;
             #endregion
 
             #region apply result
             if (registerConstant.Status == OperationStatus.Applied)
             {
-                await Spend(sender, registerConstant.StorageFee ?? 0);
+                var burned = registerConstant.StorageFee ?? 0;
+                Proto.Manager.Burn(burned);
+
+                sender.Balance -= burned;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance -= registerConstant.StorageFee ?? 0;
+                    senderDelegate.StakingBalance -= burned;
                     if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance -= registerConstant.StorageFee ?? 0;
+                        senderDelegate.DelegatedBalance -= burned;
                 }
 
                 registerConstant.Address = result.RequiredString("global_address");
@@ -96,6 +99,7 @@ namespace Tzkt.Sync.Protocols.Proto11
             }
             #endregion
 
+            Proto.Manager.Set(registerConstant.Sender);
             Db.RegisterConstantOps.Add(registerConstant);
         }
 
@@ -122,12 +126,14 @@ namespace Tzkt.Sync.Protocols.Proto11
             #region revert result
             if (registerConstant.Status == OperationStatus.Applied)
             {
-                await Return(sender, registerConstant.StorageFee ?? 0);
+                var spent = registerConstant.StorageFee ?? 0;
+
+                sender.Balance += spent;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance += registerConstant.StorageFee ?? 0;
+                    senderDelegate.StakingBalance += spent;
                     if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance += registerConstant.StorageFee ?? 0;
+                        senderDelegate.DelegatedBalance += spent;
                 }
 
                 Cache.AppState.Get().ConstantsCount--;
@@ -135,7 +141,7 @@ namespace Tzkt.Sync.Protocols.Proto11
             #endregion
 
             #region revert operation
-            await Return(sender, registerConstant.BakerFee);
+            sender.Balance += registerConstant.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += registerConstant.BakerFee;
@@ -147,11 +153,17 @@ namespace Tzkt.Sync.Protocols.Proto11
 
             sender.RegisterConstantsCount--;
 
-            sender.Counter = Math.Min(sender.Counter, registerConstant.Counter - 1);
+            sender.Counter = registerConstant.Counter - 1;
+            sender.Revealed = true;
             #endregion
 
             Db.RegisterConstantOps.Remove(registerConstant);
             Cache.AppState.ReleaseManagerCounter();
+        }
+
+        protected virtual int GetConsumedGas(JsonElement result)
+        {
+            return result.OptionalInt32("consumed_gas") ?? 0;
         }
     }
 }

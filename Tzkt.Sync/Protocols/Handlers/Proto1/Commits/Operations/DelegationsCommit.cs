@@ -49,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0
+                GasUsed = GetConsumedGas(result)
             };
             #endregion
 
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            await Spend(sender, delegation.BakerFee);
+            sender.Balance -= delegation.BakerFee;
             if (prevDelegate != null)
             {
                 prevDelegate.StakingBalance -= delegation.BakerFee;
@@ -82,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Delegations;
             block.Fees += delegation.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, delegation.Counter);
+            sender.Counter = delegation.Counter;
             #endregion
 
             #region apply result
@@ -134,6 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            Proto.Manager.Set(delegation.Sender);
             Db.DelegationOps.Add(delegation);
         }
 
@@ -175,7 +176,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0
+                GasUsed = GetConsumedGas(result)
             };
             #endregion
 
@@ -326,7 +327,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            await Return(sender, delegation.BakerFee);
+            sender.Balance += delegation.BakerFee;
             if (prevDelegate != null)
             {
                 prevDelegate.StakingBalance += delegation.BakerFee;
@@ -340,7 +341,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount--;
             if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount--;
 
-            sender.Counter = Math.Min(sender.Counter, delegation.Counter - 1);
+            sender.Counter = delegation.Counter - 1;
+            (sender as User).Revealed = true;
             #endregion
 
             Db.DelegationOps.Remove(delegation);
@@ -418,6 +420,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.DelegationOps.Remove(delegation);
         }
 
+        protected virtual int GetConsumedGas(JsonElement result)
+        {
+            return result.OptionalInt32("consumed_gas") ?? 0;
+        }
+
         void UpgradeUser(DelegationOperation delegation)
         {
             var user = delegation.Sender as User;
@@ -462,6 +469,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TxRollupRemoveCommitmentCount = user.TxRollupRemoveCommitmentCount,
                 TxRollupReturnBondCount = user.TxRollupReturnBondCount,
                 TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
+                IncreasePaidStorageCount = user.IncreasePaidStorageCount,
                 RollupBonds = user.RollupBonds,
                 RollupsCount = user.RollupsCount
             };
@@ -605,6 +613,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                             touched.Add((op, entry.State));
                         }
                         break;
+                    case IncreasePaidStorageOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
                     case Contract contract:
                         if (contract.WeirdDelegate?.Id == user.Id || contract.Creator?.Id == user.Id || contract.Manager?.Id == user.Id)
                         {
@@ -677,6 +692,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
                 TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
                 TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
+                IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
                 RollupBonds = delegat.RollupBonds,
                 RollupsCount = delegat.RollupsCount
             };
@@ -823,6 +839,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                         }
                         break;
                     case TxRollupSubmitBatchOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case IncreasePaidStorageOperation op:
                         if (op.Sender?.Id == delegat.Id)
                         {
                             op.Sender = user;
