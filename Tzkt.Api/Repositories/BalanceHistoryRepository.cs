@@ -270,6 +270,7 @@ namespace Tzkt.Api.Repositories
             if (account.TxRollupReturnBondCount > 0) SumTxRollupReturnBondOps(union, from, to);
             if (account.TxRollupSubmitBatchCount > 0) SumTxRollupSubmitBatchOps(union, from, to);
             if (account.TransferTicketCount > 0) SumTransferTicketOps(union, from, to);
+            if (account.IncreasePaidStorageCount > 0) SumIncreasePaidStorageOps(union, from, to);
 
             if (account is RawUser user)
             {
@@ -287,6 +288,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.DoubleEndorsingCount > 0) SumDoubleEndorsing(union, from, to);
                 if (delegat.DoublePreendorsingCount > 0) SumDoublePreendorsing(union, from, to);
                 if (delegat.NonceRevelationsCount > 0) SumNonceRevelations(union, from, to);
+                if (delegat.VdfRevelationsCount > 0) SumVdfRevelations(union, from, to);
                 if (delegat.RevelationPenaltiesCount > 0) SumRevelationPenalties(union, from, to);
             }
 
@@ -479,6 +481,22 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"SUM(""Reward"") ");
             sql.Append(@"FROM ""NonceRevelationOps"" ");
+            sql.Append(@"WHERE ""BakerId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumVdfRevelations(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(""Reward"") ");
+            sql.Append(@"FROM ""VdfRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
             if (from > 0)
@@ -847,6 +865,22 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void SumIncreasePaidStorageOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+            sql.Append(@"FROM ""IncreasePaidStorageOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
         void SumRevelationPenalties(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -899,6 +933,7 @@ namespace Tzkt.Api.Repositories
             if (account.TxRollupReturnBondCount > 0) UnionTxRollupReturnBondOps(union);
             if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(union);
             if (account.TransferTicketCount > 0) UnionTransferTicketOps(union);
+            if (account.IncreasePaidStorageCount > 0) UnionIncreasePaidStorageOps(union);
 
             if (account is RawUser user)
             {
@@ -916,6 +951,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(union);
                 if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(union);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(union);
+                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(union);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(union);
             }
 
@@ -1068,7 +1104,6 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
             #endregion
         }
-
         void UnionNonceRevelations(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1077,6 +1112,19 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Reward"" as ""Change"" ");
 
             sql.Append(@"FROM ""NonceRevelationOps"" ");
+            sql.Append(@"WHERE ""BakerId"" = @account ");
+
+            sql.AppendLine();
+        }
+        
+        void UnionVdfRevelations(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""Reward"" as ""Change"" ");
+
+            sql.Append(@"FROM ""VdfRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
             sql.AppendLine();
@@ -1369,6 +1417,19 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
 
             sql.Append(@"FROM ""TransferTicketOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionIncreasePaidStorageOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+
+            sql.Append(@"FROM ""IncreasePaidStorageOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
 
             sql.AppendLine();

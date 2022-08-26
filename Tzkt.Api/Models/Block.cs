@@ -144,9 +144,14 @@ namespace Tzkt.Api.Models
         public IEnumerable<DoublePreendorsingOperation> DoublePreendorsing { get; set; }
 
         /// <summary>
-        /// List of nonce revelation (are used by the blockchain to create randomness) operations, included in the block
+        /// List of nonce revelation (used by the blockchain to create randomness) operations, included in the block
         /// </summary>
         public IEnumerable<NonceRevelationOperation> NonceRevelations { get; set; }
+
+        /// <summary>
+        /// List of vdf revelation (used by the blockchain to create randomness) operations, included in the block
+        /// </summary>
+        public IEnumerable<VdfRevelationOperation> VdfRevelations { get; set; }
 
         /// <summary>
         /// List of delegation (is used to delegate funds to a delegate (an implicit account registered as a baker))
@@ -226,6 +231,11 @@ namespace Tzkt.Api.Models
         public IEnumerable<TxRollupSubmitBatchOperation> TxRollupSubmitBatchOps { get; set; }
 
         /// <summary>
+        /// List of increase paid storage operations, included in the block
+        /// </summary>
+        public IEnumerable<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+
+        /// <summary>
         /// List of migration operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<MigrationOperation> Migrations { get; set; }
@@ -246,28 +256,6 @@ namespace Tzkt.Api.Models
         /// Injected historical quote at the time of block
         /// </summary>
         public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int Priority => BlockRound;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public Alias Baker => Producer;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public bool LBEscapeVote => LBToggle == false;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int LBEscapeEma => LBToggleEma;
         #endregion
     }
 }

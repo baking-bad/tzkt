@@ -272,7 +272,11 @@ namespace Tzkt.Api.Controllers
         /// because all these types have an `initiator` field.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`, `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`, `set_deposits_limit`, `migration`, `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
+        /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`,
+        /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
+        /// `set_deposits_limit`, `increase_paid_storage`, 'tx_rollup_origination', 'tx_rollup_submit_batch', 'tx_rollup_commit', 'tx_rollup_return_bond',
+        /// 'tx_rollup_finalize_commitment', 'tx_rollup_remove_commitment', 'tx_rollup_rejection', 'tx_rollup_dispatch_tickets', 'transfer_ticket', `migration`,
+        /// `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
         /// <param name="initiator">Filters transactions, delegations and originations by initiator. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="sender">Filters transactions, delegations, originations, reveals and seed nonce revelations by sender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
