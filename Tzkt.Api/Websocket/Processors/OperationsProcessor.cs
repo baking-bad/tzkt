@@ -132,6 +132,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetNonceRevelations(null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.NonceRevelationOperation>());
 
+                var vdfRevelations = TypeSubs.TryGetValue(Operations.VdfRevelation, out var vdfRevelationsSub)
+                    ? Repo.GetVdfRevelations(null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.VdfRevelationOperation>());
+
                 var delegations = TypeSubs.TryGetValue(Operations.Delegations, out var delegationsSub)
                     ? Repo.GetDelegations(null, null, null, null, null, level, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
@@ -192,6 +196,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetTxRollupSubmitBatchOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupSubmitBatchOperation>());
 
+                var increasePaidStorageOps = TypeSubs.TryGetValue(Operations.IncreasePaidStorage, out var increasePaidStorageSubs)
+                    ? Repo.GetIncreasePaidStorageOps(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.IncreasePaidStorageOperation>());
+
                 var migrations = TypeSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -218,6 +226,7 @@ namespace Tzkt.Api.Websocket.Processors
                     doubleEndorsing,
                     doublePreendorsing,
                     revelations,
+                    vdfRevelations,
                     delegations,
                     originations,
                     transactions,
@@ -233,6 +242,7 @@ namespace Tzkt.Api.Websocket.Processors
                     txRollupRemoveCommitmentOps,
                     txRollupReturnBondOps,
                     txRollupSubmitBatchOps,
+                    increasePaidStorageOps,
                     migrations,
                     penalties,
                     baking,
@@ -385,6 +395,17 @@ namespace Tzkt.Api.Websocket.Processors
                             if (revelationsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
                         }
+                }
+
+                if (vdfRevelations.Result.Any())
+                {
+                    if (vdfRevelationsSub.Subs != null)
+                        AddRange(vdfRevelationsSub.Subs, vdfRevelations.Result);
+
+                    if (vdfRevelationsSub.AddressSubs != null)
+                        foreach (var op in vdfRevelations.Result)
+                            if (vdfRevelationsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs.Subs, op);
                 }
 
                 if (delegations.Result.Any())
@@ -732,6 +753,22 @@ namespace Tzkt.Api.Websocket.Processors
 
                             if (txRollupSubmitBatchSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
+                        }
+                }
+
+                if (increasePaidStorageOps.Result.Any())
+                {
+                    if (increasePaidStorageSubs.Subs != null)
+                        AddRange(increasePaidStorageSubs.Subs, increasePaidStorageOps.Result);
+
+                    if (increasePaidStorageSubs.AddressSubs != null)
+                        foreach (var op in increasePaidStorageOps.Result)
+                        {
+                            if (increasePaidStorageSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (increasePaidStorageSubs.AddressSubs.TryGetValue(op.Contract.Address, out var contractSubs))
+                                Add(contractSubs.Subs, op);
                         }
                 }
 

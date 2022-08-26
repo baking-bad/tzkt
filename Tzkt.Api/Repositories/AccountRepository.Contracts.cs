@@ -71,6 +71,7 @@ namespace Tzkt.Api.Repositories
                 NumMigrations = contract.MigrationsCount,
                 NumTransactions = contract.TransactionsCount,
                 TransferTicketCount = contract.TransferTicketCount,
+                IncreasePaidStorageCount = contract.IncreasePaidStorageCount,
                 TokensCount = contract.TokensCount,
                 EventsCount = contract.EventsCount,
                 TypeHash = contract.TypeHash,
@@ -187,6 +188,7 @@ namespace Tzkt.Api.Repositories
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
                     TransferTicketCount = row.TransferTicketCount,
+                    IncreasePaidStorageCount = row.IncreasePaidStorageCount,
                     TokensCount = row.TokensCount,
                     EventsCount = row.EventsCount,
                     TypeHash = row.TypeHash,
@@ -241,6 +243,7 @@ namespace Tzkt.Api.Repositories
                     case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
                     case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
                     case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                    case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
                     case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
                     case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                     case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
@@ -403,6 +406,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TransferTicketCount;
                         break;
+                    case "increasePaidStorageCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.IncreasePaidStorageCount;
+                        break; 
                     case "tokensCount":
                         foreach (var row in rows)
                             result[j++][i] = row.TokensCount;
@@ -498,6 +505,7 @@ namespace Tzkt.Api.Repositories
                 case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
                 case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
                 case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
                 case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
                 case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                 case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
@@ -656,6 +664,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TransferTicketCount;
                     break;
+                case "increasePaidStorageCount":
+                    foreach (var row in rows)
+                        result[j++] = row.IncreasePaidStorageCount;
+                    break; 
                 case "tokensCount":
                     foreach (var row in rows)
                         result[j++] = row.TokensCount;

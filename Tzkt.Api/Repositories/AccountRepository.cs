@@ -186,6 +186,7 @@ namespace Tzkt.Api.Repositories
                         Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags),
                         Balance = contract.Balance,
                         TransferTicketCount = contract.TransferTicketCount,
+                        IncreasePaidStorageCount = contract.IncreasePaidStorageCount,
                         Creator = creator == null ? null : new CreatorInfo
                         {
                             Alias = creator.Alias,
@@ -466,6 +467,7 @@ namespace Tzkt.Api.Repositories
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)row.Tags),
                             Balance = row.Balance,
                             TransferTicketCount = row.TransferTicketCount,
+                            IncreasePaidStorageCount = row.IncreasePaidStorageCount,
                             Creator = creator == null ? null : new CreatorInfo
                             {
                                 Alias = creator.Alias,
@@ -1556,6 +1558,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Eq = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
+                    var vdfRevelations = delegat.VdfRevelationsCount > 0 && types.Contains(OpTypes.VdfRevelation)
+                        ? Operations.GetVdfRevelations(baker, level, null, timestamp, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
+
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
                         ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
@@ -1616,6 +1622,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetTxRollupSubmitBatchOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
 
+                    var increasePaidStorageOps = delegat.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
+                        ? Operations.GetIncreasePaidStorageOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1642,6 +1652,7 @@ namespace Tzkt.Api.Repositories
                         doubleEndorsing,
                         doublePreendorsing,
                         nonceRevelations,
+                        vdfRevelations,
                         delegations,
                         originations,
                         transactions,
@@ -1657,6 +1668,7 @@ namespace Tzkt.Api.Repositories
                         txRollupRemoveCommitmentOps,
                         txRollupReturnBondOps,
                         txRollupSubmitBatchOps,
+                        increasePaidStorageOps,
                         migrations,
                         revelationPenalties,
                         bakingOps,
@@ -1671,6 +1683,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(doubleEndorsing.Result);
                     result.AddRange(doublePreendorsing.Result);
                     result.AddRange(nonceRevelations.Result);
+                    result.AddRange(vdfRevelations.Result);
                     result.AddRange(delegations.Result);
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
@@ -1686,6 +1699,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(txRollupRemoveCommitmentOps.Result);
                     result.AddRange(txRollupReturnBondOps.Result);
                     result.AddRange(txRollupSubmitBatchOps.Result);
+                    result.AddRange(increasePaidStorageOps.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
@@ -1759,6 +1773,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetTxRollupSubmitBatchOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
 
+                    var userIncreasePaidStorageOps = user.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
+                        ? Operations.GetIncreasePaidStorageOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1780,6 +1798,7 @@ namespace Tzkt.Api.Repositories
                         userTxRollupRemoveCommitmentOps,
                         userTxRollupReturnBondOps,
                         userTxRollupSubmitBatchOps,
+                        userIncreasePaidStorageOps,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -1798,6 +1817,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userTxRollupRemoveCommitmentOps.Result);
                     result.AddRange(userTxRollupReturnBondOps.Result);
                     result.AddRange(userTxRollupSubmitBatchOps.Result);
+                    result.AddRange(userIncreasePaidStorageOps.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;
@@ -1824,6 +1844,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Eq = contract.Id }, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
 
+                    var contractIncreasePaidStorageOps = contract.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
+                        ? Operations.GetIncreasePaidStorageOps(null, _contract, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
                     var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_contract, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1834,6 +1858,7 @@ namespace Tzkt.Api.Repositories
                         contractTransactions,
                         contractReveals,
                         contractTransferTicketOps,
+                        contractIncreasePaidStorageOps,
                         contractMigrations);
 
                     result.AddRange(contractDelegations.Result);
@@ -1841,6 +1866,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
                     result.AddRange(contractTransferTicketOps.Result);
+                    result.AddRange(contractIncreasePaidStorageOps.Result);
                     result.AddRange(contractMigrations.Result);
 
                     break;

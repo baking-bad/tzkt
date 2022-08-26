@@ -15,6 +15,7 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(DoubleEndorsingOperation))]
     [KnownType(typeof(DoublePreendorsingOperation))]
     [KnownType(typeof(NonceRevelationOperation))]
+    [KnownType(typeof(VdfRevelationOperation))]
     [KnownType(typeof(DelegationOperation))]
     [KnownType(typeof(OriginationOperation))]
     [KnownType(typeof(TransactionOperation))]
@@ -34,6 +35,7 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(TxRollupRemoveCommitmentOperation))]
     [KnownType(typeof(TxRollupReturnBondOperation))]
     [KnownType(typeof(TxRollupSubmitBatchOperation))]
+    [KnownType(typeof(IncreasePaidStorageOperation))]
     public abstract class Operation
     {
         /// <summary>
@@ -79,6 +81,9 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(NonceRevelationOperation))
                 return OpTypes.NonceRevelation;
+
+            if (type == typeof(VdfRevelationOperation))
+                return OpTypes.VdfRevelation;
 
             if (type == typeof(DelegationOperation))
                 return OpTypes.Delegation;
@@ -136,6 +141,9 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(TxRollupSubmitBatchOperation))
                 return OpTypes.TxRollupSubmitBatch;
+
+            if (type == typeof(IncreasePaidStorageOperation))
+                return OpTypes.IncreasePaidStorage;
 
             return base.GetDiscriminatorValue(type);
         }

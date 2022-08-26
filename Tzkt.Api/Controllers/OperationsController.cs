@@ -1480,6 +1480,142 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region vdf revelations
+        /// <summary>
+        /// Get vdf revelations
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of vdf revelation operations.
+        /// </remarks>
+        /// <param name="baker">Filters by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="cycle">Filters by cycle in which the operation was included.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("vdf_revelations")]
+        public async Task<ActionResult<IEnumerable<VdfRevelationOperation>>> GetVdfRevelations(
+            AccountParameter baker,
+            Int32Parameter level,
+            Int32Parameter cycle,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (baker != null)
+            {
+                if (baker.Eqx != null)
+                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (baker.Nex != null)
+                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (baker.Eq == -1 || baker.In?.Count == 0 || baker.Null == true)
+                    return Ok(Enumerable.Empty<VdfRevelationOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("baker", baker), ("level", level), ("cycle", cycle), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get vdf revelation by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns a vdf revelation operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("vdf_revelations/{hash}")]
+        public async Task<ActionResult<IEnumerable<VdfRevelationOperation>>> GetVdfRevelationByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetVdfRevelations(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get vdf revelations count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of vdf revelation operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("vdf_revelations/count")]
+        public async Task<ActionResult<int>> GetVdfRevelationsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.VdfRevelationOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetVdfRevelationsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
         #region delegations
         /// <summary>
         /// Get delegations
@@ -4055,6 +4191,152 @@ namespace Tzkt.Api.Controllers
                 return Task.FromResult(State.Current.TxRollupSubmitBatchOpsCount);
 
             return Operations.GetTxRollupSubmitBatchOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region increase paid storage
+        /// <summary>
+        /// Get increase paid storage
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of increase paid storage operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="contract">Filters by contract. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts operations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("increase_paid_storage")]
+        public async Task<ActionResult<IEnumerable<IncreasePaidStorageOperation>>> GetIncreasePaidStorageOps(
+            AccountParameter sender,
+            AccountParameter contract,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<RegisterConstantOperation>());
+            }
+
+            if (contract != null)
+            {
+                if (contract.Eqx != null)
+                    return new BadRequest($"{nameof(contract)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (contract.Nex != null)
+                    return new BadRequest($"{nameof(contract)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sender", sender), ("contract", contract), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get increase paid storage by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns increase paid storage operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("increase_paid_storage/{hash}")]
+        public async Task<ActionResult<IEnumerable<IncreasePaidStorageOperation>>> GetIncreasePaidStorageByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetIncreasePaidStorageOps(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get increase paid storage count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of increase paid storage operations.
+        /// </remarks>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("increase_paid_storage/count")]
+        public async Task<ActionResult<int>> GetIncreasePaidStorageCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.IncreasePaidStorageOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetIncreasePaidStorageOpsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
