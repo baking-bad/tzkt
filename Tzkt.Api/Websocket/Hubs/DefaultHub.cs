@@ -13,6 +13,7 @@ namespace Tzkt.Api.Websocket.Hubs
         readonly BlocksProcessor<DefaultHub> Blocks;
         readonly OperationsProcessor<DefaultHub> Operations;
         readonly BigMapsProcessor<DefaultHub> BigMaps;
+        readonly EventsProcessor<DefaultHub> Events;
         readonly TokenBalancesProcessor<DefaultHub> Balances;
         readonly TokenTransfersProcessor<DefaultHub> Transfers;
         readonly AccountsProcessor<DefaultHub> Accounts;
@@ -23,6 +24,7 @@ namespace Tzkt.Api.Websocket.Hubs
             BlocksProcessor<DefaultHub> blocks,
             OperationsProcessor<DefaultHub> operations,
             BigMapsProcessor<DefaultHub> bigMaps,
+            EventsProcessor<DefaultHub> events,
             TokenBalancesProcessor<DefaultHub> balances,
             TokenTransfersProcessor<DefaultHub> transfers,
             AccountsProcessor<DefaultHub> accounts,
@@ -34,6 +36,7 @@ namespace Tzkt.Api.Websocket.Hubs
             Blocks = blocks;
             Operations = operations;
             BigMaps = bigMaps;
+            Events = events;
             Balances = balances;
             Transfers = transfers;
             Accounts = accounts;
@@ -70,6 +73,13 @@ namespace Tzkt.Api.Websocket.Hubs
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
+        public Task<int> SubscribeToEvents(EventsParameter parameters)
+        {
+            parameters ??= new();
+            parameters.EnsureValid();
+            return Events.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+        }
+
         public Task<int> SubscribeToTokenBalances(TokenTransfersParameter parameters)
         {
             parameters ??= new();
@@ -96,6 +106,7 @@ namespace Tzkt.Api.Websocket.Hubs
             Cycles.Unsubscribe(Context.ConnectionId);
             Operations.Unsubscribe(Context.ConnectionId);
             BigMaps.Unsubscribe(Context.ConnectionId);
+            Events.Unsubscribe(Context.ConnectionId);
             Balances.Unsubscribe(Context.ConnectionId);
             Transfers.Unsubscribe(Context.ConnectionId);
             Accounts.Unsubscribe(Context.ConnectionId);
