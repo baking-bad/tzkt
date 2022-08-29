@@ -63,6 +63,7 @@ namespace Tzkt.Api
             services.AddTransient<TokensRepository>();
             services.AddTransient<MetadataRepository>();
             services.AddTransient<ConstantsRepository>();
+            services.AddTransient<ContractEventsRepository>();
 
             services.AddAuthService(Configuration);
 
@@ -103,6 +104,9 @@ namespace Tzkt.Api
 
                 services.AddTransient<BigMapsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
+
+                services.AddTransient<EventsProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, EventsProcessor<DefaultHub>>();
 
                 services.AddTransient<TokenBalancesProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, TokenBalancesProcessor<DefaultHub>>();
@@ -177,7 +181,10 @@ namespace Tzkt.Api
                 #region web socket
                 if (Configuration.GetWebsocketConfig().Enabled)
                 {
+                    endpoints.MapHub<DefaultHub>("/v1/ws");
+                    #region DEPRECATED
                     endpoints.MapHub<DefaultHub>("/v1/events");
+                    #endregion
                 }
                 #endregion
 
