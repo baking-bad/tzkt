@@ -25,7 +25,7 @@ namespace TestConsoleCore
         static async Task Main(string[] args)
         {
             var connection = new HubConnectionBuilder()
-                .WithUrl("https://api.tzkt.io/v1/events")
+                .WithUrl("https://api.tzkt.io/v1/ws")
                 .Build();
 
             async Task Init(Exception arg = null)
@@ -89,7 +89,7 @@ See more details [here](https://docs.microsoft.com/aspnet/core/signalr/javascrip
 
 ````js
 const connection = new signalR.HubConnectionBuilder()
-	.withUrl("https://api.tzkt.io/v1/events")
+	.withUrl("https://api.tzkt.io/v1/ws")
 	.build();
 
 async function init() {
@@ -136,7 +136,7 @@ from time import sleep
 from pprint import pprint
 
 connection = HubConnectionBuilder()\
-    .with_url('https://api.tzkt.io/v1/events')\
+    .with_url('https://api.tzkt.io/v1/ws')\
     .with_automatic_reconnect({
         "type": "interval",
         "keep_alive_interval": 10,

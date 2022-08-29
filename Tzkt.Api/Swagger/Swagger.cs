@@ -38,7 +38,7 @@ namespace Tzkt.Api.Swagger
                     };
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
-                        Name = "TzKT Events",
+                        Name = "Get Started",
                         Description = File.Exists("Swagger/WsGetStarted.md")
                             ? File.ReadAllText("Swagger/WsGetStarted.md")
                             : null
