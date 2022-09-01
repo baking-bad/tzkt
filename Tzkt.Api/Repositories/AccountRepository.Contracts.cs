@@ -920,7 +920,7 @@ namespace Tzkt.Api.Repositories
                 if (script == null) return null;
                 param = new ContractParameter(Micheline.FromBytes(script.ParameterSchema));
                 storage = new ContractStorage(Micheline.FromBytes(script.StorageSchema));
-                code = Micheline.FromBytes(script.FromBytes(script.Code));
+                code = Micheline.FromBytes(script.CodeSchema);
             }
 
             var rawStorage = await GetRawStorageValue(address);
@@ -948,7 +948,7 @@ namespace Tzkt.Api.Repositories
                     })
                     .ToList(),
                 Events = code
-                    .FindPrimNodes(x => x.Prim == PrimType.EMIT && x.Annots.Count == 1 && x.Args.Count == 1)
+                    .FindPrimNodes(x => x.Prim == PrimType.EMIT && x.Annots?.Count == 1 && x.Args?.Count == 1)
                     .Select(x => new EventInterface()
                     {
                         Tag = x.Annots[0].Value,

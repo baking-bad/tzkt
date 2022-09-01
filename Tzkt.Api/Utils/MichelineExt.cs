@@ -15,14 +15,17 @@ namespace Tzkt.Api
             {
                 switch (stack.Pop())
                 {
+                    case null: break;
                     case MichelinePrim node:
                     {
                         if (predicate(node))
                             yield return node;
 
-                        foreach (var arg in node.Args)
-                            stack.Push(arg);
-
+                        if (node.Args != null)
+                        { 
+                            foreach (var arg in node.Args)
+                                stack.Push(arg);
+                        }
                         break;
                     }
                     case MichelineArray arr:
