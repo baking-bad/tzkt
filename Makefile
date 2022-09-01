@@ -88,3 +88,6 @@ jakarta-stop:
 
 jakarta-db-start:
 	docker-compose -f docker-compose.jakarta.yml up -d jakarta-db
+
+kathmandu-start:
+	NODE_RPC=https://rpc.tzkt.io/kathmandunet docker-compose up -d
