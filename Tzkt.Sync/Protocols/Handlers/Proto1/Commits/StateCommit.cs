@@ -34,11 +34,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Activations != null)
                 state.ActivationOpsCount += block.Activations.Count;
 
-            if (block.Ballots != null)
-                state.BallotOpsCount += block.Ballots.Count;
+            //if (block.Ballots != null)
+            //    state.BallotOpsCount += block.Ballots.Count;
 
-            if (block.Proposals != null)
-                state.ProposalOpsCount += block.Proposals.Count;
+            //if (block.Proposals != null)
+            //    state.ProposalOpsCount += block.Proposals.Count;
 
             if (block.Delegations != null)
                 state.DelegationOpsCount += block.Delegations.Count;
@@ -76,9 +76,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.RevelationPenalties != null)
                 state.RevelationPenaltyOpsCount += block.RevelationPenalties.Count;
 
-            if (block.Proposals != null)
-                state.ProposalsCount += Db.ChangeTracker.Entries().Count(
-                    x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Added);
+            //if (block.Proposals != null)
+            //    state.ProposalsCount += Db.ChangeTracker.Entries().Count(
+            //        x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Added);
 
             return Task.CompletedTask;
         }
@@ -109,11 +109,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Activations != null)
                 state.ActivationOpsCount -= block.Activations.Count;
 
-            if (block.Ballots != null)
-                state.BallotOpsCount -= block.Ballots.Count;
+            //if (block.Ballots != null)
+            //    state.BallotOpsCount -= block.Ballots.Count;
 
-            if (block.Proposals != null)
-                state.ProposalOpsCount -= block.Proposals.Count;
+            //if (block.Proposals != null)
+            //    state.ProposalOpsCount -= block.Proposals.Count;
 
             if (block.Delegations != null)
                 state.DelegationOpsCount -= block.Delegations.Count;
@@ -151,9 +151,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.RevelationPenalties != null)
                 state.RevelationPenaltyOpsCount -= block.RevelationPenalties.Count;
 
-            if (block.Proposals != null)
-                state.ProposalsCount -= Db.ChangeTracker.Entries().Count(
-                    x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Deleted);
+            //if (block.Proposals != null)
+            //    state.ProposalsCount -= Db.ChangeTracker.Entries().Count(
+            //        x => x.Entity is Proposal && x.State == Microsoft.EntityFrameworkCore.EntityState.Deleted);
 
             Cache.Blocks.Remove(block);
         }

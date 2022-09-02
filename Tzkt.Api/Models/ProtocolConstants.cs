@@ -185,6 +185,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public long TxRollupCommitmentBond { get; set; }
 
+        /// <summary>
+        /// Governance dictator
+        /// </summary>
+        public string Dictator { get; set; }
+
         #region deprecated
         /// <summary>
         /// [DEPRECATED]

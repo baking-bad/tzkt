@@ -150,6 +150,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public int? TokenTransfersCount { get; set; }
 
+        /// <summary>
+        /// Number of events produced by the operation, or `null` if there are no events
+        /// </summary>
+        public int? EventsCount { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation

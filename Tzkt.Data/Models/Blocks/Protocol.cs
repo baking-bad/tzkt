@@ -78,6 +78,8 @@ namespace Tzkt.Data.Models
         public int TxRollupOriginationSize { get; set; }
         public long TxRollupCommitmentBond { get; set; }
 
+        public string Dictator { get; set; }
+
         #region helpers
         public int GetCycleStart(int cycle)
         {
@@ -120,6 +122,9 @@ namespace Tzkt.Data.Models
 
         [NotMapped]
         public int SnapshotsPerCycle => BlocksPerCycle / BlocksPerSnapshot;
+
+        [NotMapped]
+        public bool HasDictator => Dictator != null;
         #endregion
     }
 

@@ -293,6 +293,7 @@ namespace Tzkt.Api.Repositories
                 EndTime = Time[row.LastLevel],
                 Kind = PeriodKinds.ToString(row.Kind),
                 Status = PeriodStatuses.ToString(row.Status),
+                Dictator = PeriodDictatorStatuses.ToString(row.Dictator),
                 TotalBakers = row.TotalBakers,
                 TotalVotingPower = row.TotalVotingPower,
                 UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -328,6 +329,7 @@ namespace Tzkt.Api.Repositories
                 EndTime = Time[row.LastLevel],
                 Kind = PeriodKinds.ToString(row.Kind),
                 Status = PeriodStatuses.ToString(row.Status),
+                Dictator = PeriodDictatorStatuses.ToString(row.Dictator),
                 TotalBakers = row.TotalBakers,
                 TotalVotingPower = row.TotalVotingPower,
                 UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -361,6 +363,7 @@ namespace Tzkt.Api.Repositories
                     case "endTime": columns.Add(@"""LastLevel"""); break;
                     case "kind": columns.Add(@"""Kind"""); break;
                     case "status": columns.Add(@"""Status"""); break;
+                    case "dictator": columns.Add(@"""Dictator"""); break;
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                     case "totalVotingPower": columns.Add(@"""TotalVotingPower"""); break;
                     case "upvotesQuorum": columns.Add(@"""UpvotesQuorum"""); break;
@@ -426,6 +429,10 @@ namespace Tzkt.Api.Repositories
                     case "status":
                         foreach (var row in rows)
                             result[j++][i] = PeriodStatuses.ToString(row.Status);
+                        break;
+                    case "dictator":
+                        foreach (var row in rows)
+                            result[j++][i] = PeriodDictatorStatuses.ToString(row.Dictator);
                         break;
                     case "totalBakers":
                         foreach (var row in rows)
@@ -503,6 +510,7 @@ namespace Tzkt.Api.Repositories
                 case "endTime": columns.Add(@"""LastLevel"""); break;
                 case "kind": columns.Add(@"""Kind"""); break;
                 case "status": columns.Add(@"""Status"""); break;
+                case "dictator": columns.Add(@"""Dictator"""); break;
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                 case "totalVotingPower": columns.Add(@"""TotalVotingPower"""); break;
                 case "upvotesQuorum": columns.Add(@"""UpvotesQuorum"""); break;
@@ -565,6 +573,10 @@ namespace Tzkt.Api.Repositories
                 case "status":
                     foreach (var row in rows)
                         result[j++] = PeriodStatuses.ToString(row.Status);
+                    break;
+                case "dictator":
+                    foreach (var row in rows)
+                        result[j++] = PeriodDictatorStatuses.ToString(row.Dictator);
                     break;
                 case "totalBakers":
                     foreach (var row in rows)
@@ -712,6 +724,7 @@ namespace Tzkt.Api.Repositories
                     EndTime = Time[row.LastLevel],
                     Kind = PeriodKinds.ToString(row.Kind),
                     Status = PeriodStatuses.ToString(row.Status),
+                    Dictator = PeriodDictatorStatuses.ToString(row.Dictator),
                     TotalBakers = row.TotalBakers,
                     TotalVotingPower = row.TotalVotingPower,
                     UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -785,6 +798,7 @@ namespace Tzkt.Api.Repositories
                             EndTime = Time[row.LastLevel],
                             Kind = PeriodKinds.ToString(row.Kind),
                             Status = PeriodStatuses.ToString(row.Status),
+                            Dictator = PeriodDictatorStatuses.ToString(row.Dictator),
                             TotalBakers = row.TotalBakers,
                             TotalVotingPower = row.TotalVotingPower,
                             UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
@@ -847,6 +861,7 @@ namespace Tzkt.Api.Repositories
                     EndTime = Time[row.LastLevel],
                     Kind = PeriodKinds.ToString(row.Kind),
                     Status = PeriodStatuses.ToString(row.Status),
+                    Dictator = PeriodDictatorStatuses.ToString(row.Dictator),
                     TotalBakers = row.TotalBakers,
                     TotalVotingPower = row.TotalVotingPower,
                     UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,

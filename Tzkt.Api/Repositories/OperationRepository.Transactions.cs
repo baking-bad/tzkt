@@ -113,6 +113,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -187,6 +188,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -261,6 +263,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -314,6 +317,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -442,6 +446,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -515,6 +520,7 @@ namespace Tzkt.Api.Repositories
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
                     case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
+                    case "eventsCount": columns.Add(@"o.""EventsCount"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -705,6 +711,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TokenTransfers;
                         break;
+                    case "eventsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EventsCount;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -787,6 +797,7 @@ namespace Tzkt.Api.Repositories
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
                 case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
+                case "eventsCount": columns.Add(@"o.""EventsCount"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -973,6 +984,10 @@ namespace Tzkt.Api.Repositories
                 case "tokenTransfersCount":
                     foreach (var row in rows)
                         result[j++] = row.TokenTransfers;
+                    break;
+                case "eventsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.EventsCount;
                     break;
                 case "quote":
                     foreach (var row in rows)

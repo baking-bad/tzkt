@@ -12,6 +12,7 @@ namespace Tzkt.Data.Models
 
         public PeriodKind Kind { get; set; }
         public PeriodStatus Status { get; set; }
+        public DictatorStatus Dictator { get; set; }
 
         public int? TotalBakers { get; set; }
         public long? TotalVotingPower { get; set; }
@@ -81,5 +82,13 @@ namespace Tzkt.Data.Models
         NoQuorum,
         NoSupermajority,
         Success
+    }
+
+    public enum DictatorStatus
+    {
+        None,
+        Abort,
+        Reset,
+        Submit
     }
 }

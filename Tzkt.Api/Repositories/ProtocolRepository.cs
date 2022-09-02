@@ -83,7 +83,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             };
@@ -150,7 +151,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             };
@@ -217,7 +219,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             };
@@ -285,7 +288,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             });
