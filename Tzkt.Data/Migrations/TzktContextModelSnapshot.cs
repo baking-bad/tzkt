@@ -1958,6 +1958,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ConsensusThreshold")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Dictator")
+                        .HasColumnType("text");
+
                     b.Property<long>("DoubleBakingPunishment")
                         .HasColumnType("bigint");
 
@@ -3593,6 +3596,9 @@ namespace Tzkt.Data.Migrations
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<int?>("BallotsQuorum")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Dictator")
                         .HasColumnType("integer");
 
                     b.Property<int>("Epoch")

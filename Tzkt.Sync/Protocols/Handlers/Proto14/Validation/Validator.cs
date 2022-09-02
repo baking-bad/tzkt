@@ -80,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 if (periodIndex != period.Index)
                     throw new ValidationException("invalid voting period index");
 
-                if (periodKind != period.Kind)
+                if (!Protocol.HasDictator && periodKind != period.Kind)
                     throw new ValidationException("unexpected voting period");
             }
             #endregion
@@ -233,7 +233,8 @@ namespace Tzkt.Sync.Protocols.Proto14
             if (Cache.AppState.Get().VotingPeriod != periodIndex)
                 throw new ValidationException("invalid proposal voting period");
 
-            if (!Cache.Accounts.DelegateExists(content.RequiredString("source")))
+            var source = content.RequiredString("source");
+            if (Protocol.Dictator != source && !Cache.Accounts.DelegateExists(source))
                 throw new ValidationException("invalid proposal sender");
         }
 

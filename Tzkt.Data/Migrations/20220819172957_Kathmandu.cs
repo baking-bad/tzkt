@@ -9,9 +9,22 @@ namespace Tzkt.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
+                name: "Dictator",
+                table: "VotingPeriods",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<int>(
                 name: "EventsCount",
                 table: "TransactionOps",
                 type: "integer",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "Dictator",
+                table: "Protocols",
+                type: "text",
                 nullable: true);
 
             migrationBuilder.AddColumn<int>(
@@ -247,8 +260,16 @@ namespace Tzkt.Data.Migrations
                 name: "VdfRevelationOps");
 
             migrationBuilder.DropColumn(
+                name: "Dictator",
+                table: "VotingPeriods");
+
+            migrationBuilder.DropColumn(
                 name: "EventsCount",
                 table: "TransactionOps");
+
+            migrationBuilder.DropColumn(
+                name: "Dictator",
+                table: "Protocols");
 
             migrationBuilder.DropColumn(
                 name: "EventsCount",

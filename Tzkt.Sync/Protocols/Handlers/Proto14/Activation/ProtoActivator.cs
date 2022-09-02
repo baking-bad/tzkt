@@ -13,12 +13,16 @@ namespace Tzkt.Sync.Protocols.Proto14
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
+            protocol.Dictator = parameters["testnet_dictator"]?.Value<string>();
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             if (Cache.AppState.GetChainId() == "NetXnHfVqm9iesp") // ghostnet
+            {
                 protocol.BlocksPerVoting = prev.BlocksPerCycle;
+                protocol.Dictator = "tz1Xf8zdT3DbAX9cHw3c3CXh79rc4nK4gCe8"; // oxhead_testnet_baker
+            }
         }
 
         protected override async Task MigrateContext(AppState state)

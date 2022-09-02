@@ -71,7 +71,10 @@ namespace Tzkt.Sync.Protocols.Proto3
                 if (!proposalOp.Duplicated)
                 {
                     if (proposal.Upvotes == 0)
+                    {
                         period.ProposalsCount++;
+                        Cache.AppState.Get().ProposalsCount++;
+                    }
 
                     proposal.Upvotes++;
                     proposal.VotingPower += proposalOp.VotingPower;
@@ -88,6 +91,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 sender.ProposalsCount++;
 
                 block.Operations |= Operations.Proposals;
+
+                Cache.AppState.Get().ProposalOpsCount++;
                 #endregion
 
                 Db.ProposalOps.Add(proposalOp);
@@ -149,13 +154,18 @@ namespace Tzkt.Sync.Protocols.Proto3
                 }
 
                 if (proposal.Upvotes == 0)
+                {
                     period.ProposalsCount--;
+                    Cache.AppState.Get().ProposalsCount--;
+                }
 
                 if (!await Db.ProposalOps.AnyAsync(x => x.Period == period.Index && x.SenderId == sender.Id && x.Id < proposalOp.Id))
                     snapshot.Status = VoterStatus.None;
             }
 
             sender.ProposalsCount--;
+
+            Cache.AppState.Get().ProposalOpsCount--;
             #endregion
 
             if (proposal.Upvotes == 0)

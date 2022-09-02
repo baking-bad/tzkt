@@ -97,6 +97,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .Where(x => x.Status == ProposalStatus.Active)
                     .ToListAsync();
 
+                if (proposals.Count == 0)
+                    proposals = Db.ChangeTracker.Entries()
+                        .Where(x => x.Entity is Proposal p && p.Status == ProposalStatus.Active)
+                        .Select(x => x.Entity as Proposal)
+                        .ToList();
+
                 foreach (var proposal in proposals)
                     proposal.Status = ProposalStatus.Skipped;
 
@@ -244,6 +250,22 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Kind = kind,
                 Status = PeriodStatus.Active
             };
+
+            if (proto.HasDictator)
+            {
+                #region snapshot
+                Db.VotingSnapshots.AddRange(Cache.Accounts.GetDelegates()
+                    .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                    .Select(x => new VotingSnapshot
+                    {
+                        Level = block.Level,
+                        Period = period.Index,
+                        BakerId = x.Id,
+                        VotingPower = GetVotingPower(x, proto),
+                        Status = VoterStatus.None
+                    }));
+                #endregion
+            }
 
             Db.VotingPeriods.Add(period);
             Cache.Periods.Add(period);

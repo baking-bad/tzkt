@@ -59,6 +59,15 @@ namespace Tzkt.Api.Models
         public string Status { get; set; }
 
         /// <summary>
+        /// Status of the governance dictator:
+        /// `none` - means that there were no actions by the dictator 
+        /// `abort` - means that the epoch was aborted by the dictator
+        /// `reset` - means that the period was reset by the dictator
+        /// `submit` - means that the dictator submitted a proposal
+        /// </summary>
+        public string Dictator { get; set; }
+
+        /// <summary>
         /// The number of bakers on the voters list
         /// </summary>
         public int? TotalBakers { get; set; }
