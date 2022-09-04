@@ -42,6 +42,19 @@ namespace Tzkt.Api.Models
         public RawJson ParameterSchema { get; set; }
     }
 
+    public class EventInterface
+    {
+        /// <summary>
+        /// Event tag
+        /// </summary>
+        public string Tag { get; set; }
+
+        /// <summary>
+        /// JSON Schema of the event type in humanified format (as returned by API)
+        /// </summary>
+        public RawJson EventSchema { get; set; }
+    }
+
     public class ContractInterface
     {
         /// <summary>
@@ -58,5 +71,10 @@ namespace Tzkt.Api.Models
         /// List of currently available Big_maps
         /// </summary>
         public List<BigMapInterface> BigMaps { get; set; }
+
+        /// <summary>
+        /// List of events extractable from the code ("static")
+        /// </summary>
+        public List<EventInterface> Events { get; set; }
     }
 }
