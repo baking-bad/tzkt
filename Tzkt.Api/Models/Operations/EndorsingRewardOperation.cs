@@ -12,7 +12,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
         /// </summary>
-        public override int Id { get; set; }
+        public override long Id { get; set; }
 
         /// <summary>
         /// Height of the block from the genesis

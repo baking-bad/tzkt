@@ -103,6 +103,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             Cache.AppState.Get().EndorsingRewardOpsCount -= ops.Count;
 
             Db.EndorsingRewardOps.RemoveRange(ops);
+            Cache.AppState.ReleaseOperationId(ops.Count);
         }
     }
 }

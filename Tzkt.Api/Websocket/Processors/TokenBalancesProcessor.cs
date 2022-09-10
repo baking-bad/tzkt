@@ -46,7 +46,6 @@ namespace Tzkt.Api.Websocket.Processors
         readonly IHubContext<T> Context;
         readonly WebsocketConfig Config;
         readonly ILogger Logger;
-        int LastId;
 
         public TokenBalancesProcessor(StateCache state, TokensRepository tokens,
             IHubContext<T> hubContext, IConfiguration config, ILogger<TokenBalancesProcessor<T>> logger)
@@ -56,7 +55,6 @@ namespace Tzkt.Api.Websocket.Processors
             Context = hubContext;
             Config = config.GetWebsocketConfig();
             Logger = logger;
-            LastId = state.Current.TokenCounter;
         }
         
         public async Task OnStateChanged()
@@ -69,7 +67,6 @@ namespace Tzkt.Api.Websocket.Processors
                 if (Limits.Count == 0)
                 {
                     Logger.LogDebug("No token balances subs");
-                    LastId = State.Current.OperationCounter;
                     return;
                 }
 
@@ -109,26 +106,30 @@ namespace Tzkt.Api.Websocket.Processors
                 };
                 var params2 = new TokenBalanceFilter
                 {
-                    id = new Int32Parameter
-                    {
-                        Gt = LastId,
-                        Le = State.Current.TokenCounter
-                    },
                     lastLevel = new Int32Parameter
                     {
                         Le = State.ValidLevel
                     },
+                    indexedAt = State.Current.Level == State.ValidLevel + 1
+                        ? new Int32NullParameter
+                        {
+                            Null = false,
+                            Eq = State.Current.Level
+                        }
+                        : new Int32NullParameter
+                        {
+                            Null = false,
+                            Gt = State.ValidLevel,
+                            Le = State.Current.Level
+                        },
                     account = new(),
                     token = new()
                 };
                 var limit = 1_000_000;
 
-                var balances = await Repo.GetTokenBalances(params1, new() { limit = limit });
-                if (LastId != State.Current.TokenCounter)
-                {
-                    // we do the second requests because there may be new tokens added retroactively
-                    balances = balances.Concat(await Repo.GetTokenBalances(params2, new() { limit = limit }));
-                }
+                var balances = (await Repo.GetTokenBalances(params1, new() { limit = limit }))
+                    // we do the second requests because there may be new token balances added retroactively
+                    .Concat(await Repo.GetTokenBalances(params2, new() { limit = limit }));
                 var count = balances.Count();
 
                 Logger.LogDebug("{0} token balances fetched", count);
@@ -207,8 +208,6 @@ namespace Tzkt.Api.Websocket.Processors
 
                 Logger.LogDebug("{0} token balances sent", count);
                 #endregion
-
-                LastId = State.Current.TokenCounter;
             }
             catch (Exception ex)
             {
@@ -454,7 +453,7 @@ namespace Tzkt.Api.Websocket.Processors
 
         private static IEnumerable<Models.TokenBalance> Distinct(List<Models.TokenBalance> items)
         {
-            var set = new HashSet<int>(items.Count);
+            var set = new HashSet<long>(items.Count);
             foreach (var item in items)
                 if (set.Add(item.Id))
                     yield return item;

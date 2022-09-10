@@ -52,7 +52,7 @@ namespace Tzkt.Api
         /// Filter by id of the transaction, in which the event was emitted.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter transactionId { get; set; }
+        public Int64Parameter transactionId { get; set; }
 
         public string Normalize(string name)
         {

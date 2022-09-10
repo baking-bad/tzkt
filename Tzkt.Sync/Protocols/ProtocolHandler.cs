@@ -44,6 +44,7 @@ namespace Tzkt.Sync
         public virtual async Task<AppState> CommitBlock(int head)
         {
             var state = Cache.AppState.Get();
+            Db.TryAttach(state);
 
             Logger.LogDebug($"Load block {state.Level + 1}");
             var block = await Rpc.GetBlockAsync(state.Level + 1);
@@ -259,8 +260,9 @@ namespace Tzkt.Sync
 
                 if (account.FirstLevel == level)
                 {
-                    Db.Remove(account);
+                    Db.Accounts.Remove(account);
                     Cache.Accounts.Remove(account);
+                    Cache.AppState.ReleaseAccountId();
                     state.AccountsCount--;
                 }
             }

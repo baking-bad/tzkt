@@ -220,9 +220,10 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             Db.TxRollupRejectionOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
 
-        async Task<int> RestoreCounter(User user, int opId)
+        async Task<int> RestoreCounter(User user, long opId)
         {
             var counter = 0;
 

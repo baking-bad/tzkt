@@ -153,6 +153,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
 
             Db.Blocks.Remove(Block);
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual bool? GetLBToggleVote(JsonElement block)

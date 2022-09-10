@@ -44,7 +44,8 @@ namespace Tzkt.Api.Controllers
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
                 filter.tokenId != null ||
-                filter.id != null)
+                filter.id != null ||
+                filter.indexedAt != null)
                 return Tokens.GetTokensCount(filter);
 
             return Task.FromResult(State.Current.TokensCount);
@@ -95,6 +96,7 @@ namespace Tzkt.Api.Controllers
                 filter.firstLevel != null ||
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
+                filter.indexedAt != null ||
                 filter.id != null ||
                 filter.token.id != null ||
                 filter.token.contract != null ||
@@ -177,6 +179,7 @@ namespace Tzkt.Api.Controllers
                 filter.transactionId != null ||
                 filter.originationId != null ||
                 filter.migrationId != null ||
+                filter.indexedAt != null ||
                 filter.token.id != null ||
                 filter.token.contract != null ||
                 filter.token.tokenId != null ||

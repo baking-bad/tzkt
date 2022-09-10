@@ -6,14 +6,15 @@ namespace Tzkt.Data.Models
 {
     public class TokenBalance
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public int ContractId { get; set; }
-        public int TokenId { get; set; }
+        public long TokenId { get; set; }
         public int AccountId { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
         public int TransfersCount { get; set; }
         public BigInteger Balance { get; set; }
+        public int? IndexedAt { get; set; }
     }
 
     public static class TokenBalanceModel
@@ -71,6 +72,10 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<TokenBalance>()
                 .HasIndex(x => x.LastLevel);
+
+            modelBuilder.Entity<TokenBalance>()
+                .HasIndex(x => x.IndexedAt)
+                .HasFilter($@"""{nameof(TokenBalance.IndexedAt)}"" is not null");
             #endregion
         }
     }

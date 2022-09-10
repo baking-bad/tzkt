@@ -175,6 +175,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
 
             Db.ProposalOps.Remove(proposalOp);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

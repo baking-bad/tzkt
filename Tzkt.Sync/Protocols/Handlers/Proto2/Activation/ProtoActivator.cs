@@ -142,6 +142,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 .ToListAsync();
 
             Db.MigrationOps.RemoveRange(migrationOps);
+            Cache.AppState.ReleaseOperationId(migrationOps.Count);
 
             state.MigrationOpsCount -= migrationOps.Count;
 

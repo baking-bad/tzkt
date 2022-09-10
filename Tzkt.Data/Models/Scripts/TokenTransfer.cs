@@ -6,18 +6,19 @@ namespace Tzkt.Data.Models
 {
     public class TokenTransfer
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public int Level { get; set; }
         public int ContractId { get; set; }
-        public int TokenId { get; set; }
+        public long TokenId { get; set; }
         public BigInteger Amount { get; set; }
 
         public int? FromId { get; set; }
         public int? ToId { get; set; }
 
-        public int? OriginationId { get; set; }
-        public int? TransactionId { get; set; }
-        public int? MigrationId { get; set; }
+        public long? OriginationId { get; set; }
+        public long? TransactionId { get; set; }
+        public long? MigrationId { get; set; }
+        public int? IndexedAt { get; set; }
     }
 
     public static class TokenTransferModel
@@ -53,6 +54,10 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<TokenTransfer>()
+                .HasIndex(x => x.IndexedAt)
+                .HasFilter($@"""{nameof(TokenTransfer.IndexedAt)}"" is not null");
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.OriginationId)

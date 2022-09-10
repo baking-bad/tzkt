@@ -46,7 +46,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Internal TzKT id of the transaction operation, caused the event.
         /// </summary>
-        public int TransactionId { get; set; }
+        public long TransactionId { get; set; }
 
         /// <summary>
         /// Michelson type of the payload.  

@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
         /// Internal TzKT id.  
         /// **[sortable]**
         /// </summary>
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         /// <summary>
         /// Owner account.  

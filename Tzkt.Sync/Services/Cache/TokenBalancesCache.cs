@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
 
-        static readonly Dictionary<(int, int), TokenBalance> Cached = new(MaxItems);
+        static readonly Dictionary<(int, long), TokenBalance> Cached = new(MaxItems);
 
         readonly TzktContext Db;
 
@@ -59,26 +59,26 @@ namespace Tzkt.Sync.Services.Cache
             return tokenBalance;
         }
 
-        public TokenBalance Get(int accountId, int tokenId)
+        public TokenBalance Get(int accountId, long tokenId)
         {
             if (!Cached.TryGetValue((accountId, tokenId), out var tokenBalance))
                 throw new Exception($"TokenBalance ({accountId}, {tokenId}) doesn't exist");
             return tokenBalance;
         }
 
-        public bool TryGet(int accountId, int tokenId, out TokenBalance tokenBalance)
+        public bool TryGet(int accountId, long tokenId, out TokenBalance tokenBalance)
         {
             return Cached.TryGetValue((accountId, tokenId), out tokenBalance);
         }
 
-        public async Task Preload(IEnumerable<(int, int)> ids)
+        public async Task Preload(IEnumerable<(int, long)> ids)
         {
             var missed = ids.Where(x => !Cached.ContainsKey(x)).ToHashSet();
             if (missed.Count > 0)
             {
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {
-                    var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, '{x.Item2}')"));
+                    var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, {x.Item2})"));
                     var items = await Db.TokenBalances
                         .FromSqlRaw($@"
                             SELECT * FROM ""{nameof(TzktContext.TokenBalances)}""

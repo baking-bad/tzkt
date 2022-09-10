@@ -170,6 +170,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             Db.TxRollupDispatchTicketsOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

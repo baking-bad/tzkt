@@ -234,6 +234,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             Db.TxRollupOriginationOps.Remove(origination);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

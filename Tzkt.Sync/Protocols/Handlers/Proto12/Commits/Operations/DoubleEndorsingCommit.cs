@@ -98,6 +98,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.DoubleEndorsingOps.Remove(doubleEndorsing);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

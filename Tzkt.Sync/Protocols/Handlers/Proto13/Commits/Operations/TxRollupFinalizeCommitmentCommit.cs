@@ -143,6 +143,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             Db.TxRollupFinalizeCommitmentOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

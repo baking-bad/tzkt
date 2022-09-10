@@ -1867,7 +1867,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
@@ -2111,7 +2111,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter sender,
             AccountParameter target,
             Int64Parameter amount,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -4365,7 +4365,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -4439,9 +4439,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("migrations/{id:int}")]
+        [HttpGet("migrations/{id:long}")]
         public async Task<ActionResult<MigrationOperation>> GetMigrationById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             MichelineFormat micheline = MichelineFormat.Json, 
             Symbols quote = Symbols.None)
         {
@@ -4574,9 +4574,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Operation id</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("revelation_penalties/{id:int}")]
+        [HttpGet("revelation_penalties/{id:long}")]
         public async Task<ActionResult<RevelationPenaltyOperation>> GetRevelationPenaltyById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
@@ -4739,9 +4739,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Operation id</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("baking/{id:int}")]
+        [HttpGet("baking/{id:long}")]
         public async Task<ActionResult<BakingOperation>> GetBakingById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
@@ -4873,9 +4873,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Operation id</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("endorsing_rewards/{id:int}")]
+        [HttpGet("endorsing_rewards/{id:long}")]
         public async Task<ActionResult<EndorsingRewardOperation>> GetEndorsingRewardById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,

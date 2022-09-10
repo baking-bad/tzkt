@@ -86,6 +86,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
+                .Filter("IndexedAt", filter.indexedAt)
                 .Filter("Metadata", filter.metadata)
                 .Take(pagination, x => x switch
                 {
@@ -115,6 +116,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
+                .Filter("IndexedAt", filter.indexedAt)
                 .Filter("Metadata", filter.metadata);
 
             using var db = GetConnection();
@@ -328,6 +330,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
+                .FilterA(@"tb.""IndexedAt""", filter.indexedAt)
                 .FilterA(@"tb.""TokenId""", filter.token.id)
                 .FilterA(@"tb.""ContractId""", filter.token.contract)
                 .FilterA(@"t.""TokenId""", filter.token.tokenId)
@@ -360,6 +363,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
+                .FilterA(@"tb.""IndexedAt""", filter.indexedAt)
                 .FilterA(@"tb.""TokenId""", filter.token.id)
                 .FilterA(@"tb.""ContractId""", filter.token.contract)
                 .FilterA(@"t.""TokenId""", filter.token.tokenId)
@@ -588,6 +592,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""Id""", filter.id)
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)
+                .FilterA(@"tr.""IndexedAt""", filter.indexedAt)
                 .FilterA(filter.anyof, x => x == "from" ? @"tr.""FromId""" : @"tr.""ToId""")
                 .FilterA(@"tr.""FromId""", filter.from)
                 .FilterA(@"tr.""ToId""", filter.to)
@@ -621,6 +626,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""Id""", filter.id)
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)
+                .FilterA(@"tr.""IndexedAt""", filter.indexedAt)
                 .FilterA(filter.anyof, x => x == "from" ? @"tr.""FromId""" : @"tr.""ToId""")
                 .FilterA(@"tr.""FromId""", filter.from)
                 .FilterA(@"tr.""ToId""", filter.to)

@@ -124,6 +124,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.RevealOps.Remove(reveal);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual int GetConsumedGas(JsonElement result)

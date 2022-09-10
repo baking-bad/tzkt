@@ -110,6 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
 
             Db.Blocks.Remove(Block);
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual (long, long) ParseBalanceUpdates(JsonElement balanceUpdates)

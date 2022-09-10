@@ -73,6 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             #endregion
 
             Db.VdfRevelationOps.Remove(revelation);
+            Cache.AppState.ReleaseOperationId();
             return Task.CompletedTask;
         }
     }
