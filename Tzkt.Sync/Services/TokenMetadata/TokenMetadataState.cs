@@ -10,7 +10,9 @@ namespace Tzkt.Sync.Services
     public class DipDupState
     {
         public int LastUpdateId { get; set; } = 0;
-        public int LastTokenId { get; set; } = 0;  // TzKT internal ID
+        public long LastTokenId { get; set; } = 0;  // TzKT internal ID
+        public int LastIndexedAt { get; set; } = 0; // TzKT internals
+        public long LastIndexedAtId { get; set; } = 0; // TzKT internals
         public string Sentinel { get; set; } = string.Empty;
     }
 }

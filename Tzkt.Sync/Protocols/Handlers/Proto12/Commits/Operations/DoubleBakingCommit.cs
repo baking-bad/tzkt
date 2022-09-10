@@ -98,6 +98,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.DoubleBakingOps.Remove(doubleBaking);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

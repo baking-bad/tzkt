@@ -172,6 +172,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             Db.IncreasePaidStorageOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

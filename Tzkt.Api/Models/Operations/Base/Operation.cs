@@ -46,7 +46,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
         /// </summary>
-        public abstract int Id { get; set; }
+        public abstract long Id { get; set; }
     }
 
     public class OperationJsonInheritanceConverter : JsonInheritanceConverter

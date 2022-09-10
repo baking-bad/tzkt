@@ -8,7 +8,7 @@ namespace Tzkt.Data.Models
         public int Level { get; set; }
         public int ContractId { get; set; }
         public int ContractCodeHash { get; set; }
-        public int TransactionId { get; set; }
+        public long TransactionId { get; set; }
 
         public string Tag { get; set; }
         public byte[] Type { get; set; }

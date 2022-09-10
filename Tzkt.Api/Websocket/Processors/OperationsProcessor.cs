@@ -1040,7 +1040,7 @@ namespace Tzkt.Api.Websocket.Processors
 
         private static IEnumerable<Operation> Distinct(List<Operation> ops)
         {
-            var set = new HashSet<int>(ops.Count);
+            var set = new HashSet<long>(ops.Count);
             foreach (var op in ops)
                 if (set.Add(op.Id))
                     yield return op;

@@ -129,6 +129,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             #endregion
 
             Db.BallotOps.Remove(ballot);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

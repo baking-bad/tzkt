@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
 {
     public class RevelationPenaltyOperation
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
 

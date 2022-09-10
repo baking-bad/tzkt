@@ -44,6 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             baker.PreendorsementsCount--;
 
             Db.PreendorsementOps.Remove(preendorsement);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

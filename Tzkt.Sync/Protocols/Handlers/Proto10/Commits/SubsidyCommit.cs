@@ -74,6 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 contract.MigrationsCount--;
 
                 Cache.AppState.Get().MigrationOpsCount--;
+                Cache.AppState.ReleaseOperationId();
                 Db.MigrationOps.Remove(op);
                 
                 var storage = await Cache.Storages.GetAsync(contract);
@@ -88,6 +89,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     Cache.Storages.Add(contract, prevStorage);
 
                     Db.Storages.Remove(storage);
+                    Cache.AppState.ReleaseStorageId();
                 }
             }
         }

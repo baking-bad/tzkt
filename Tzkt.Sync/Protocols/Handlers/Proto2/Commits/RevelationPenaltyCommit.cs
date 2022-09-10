@@ -121,6 +121,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 delegat.RevelationPenaltiesCount--;
 
                 Db.RevelationPenaltyOps.Remove(penalty);
+                Cache.AppState.ReleaseOperationId();
             }
         }
 

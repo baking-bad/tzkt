@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
@@ -112,6 +111,10 @@ namespace Tzkt.Sync.Protocols.Proto10
             Cache.BigMaps.Reset();
             Cache.Tokens.Reset();
             Cache.TokenBalances.Reset();
+
+            Cache.AppState.Get().BigMapCounter = 0;
+            Cache.AppState.Get().BigMapKeyCounter = 0;
+            Cache.AppState.Get().BigMapUpdateCounter = 0;
         }
 
         protected override async Task MigrateContext(AppState state)
@@ -661,7 +664,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     #region tokens
                     var token = new Token
                     {
-                        Id = Cache.AppState.NextTokenId(),
+                        Id = Cache.AppState.NextSubId(migration),
                         Tags = TokenTags.Fa12,
                         BalancesCount = 1,
                         ContractId = contract.Id,
@@ -676,7 +679,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     };
                     var tokenBalance = new TokenBalance
                     {
-                        Id = Cache.AppState.NextTokenBalanceId(),
+                        Id = Cache.AppState.NextSubId(migration),
                         AccountId = NullAddress.Id,
                         Balance = 100,
                         FirstLevel = migration.Level,
@@ -687,7 +690,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     };
                     var tokenTransfer = new TokenTransfer
                     {
-                        Id = Cache.AppState.NextOperationId(),
+                        Id = Cache.AppState.NextSubId(migration),
                         Amount = 100,
                         Level = migration.Level,
                         MigrationId = migration.Id,
@@ -768,11 +771,19 @@ namespace Tzkt.Sync.Protocols.Proto10
                 DELETE FROM ""BigMaps"" WHERE ""Ptr"" = ANY({0});",
                 bigmaps.Select(x => x.Ptr).ToList(), contract.Id);
 
+            Cache.AppState.ReleaseOperationId();
+            Cache.AppState.ReleaseScriptId();
+            Cache.AppState.ReleaseStorageId();
             Cache.Storages.Remove(contract);
             Cache.Schemas.Remove(contract);
             Cache.BigMapKeys.Reset();
             foreach (var bigmap in bigmaps)
+            {
                 Cache.BigMaps.Remove(bigmap);
+                Cache.AppState.ReleaseBigMapId();
+                Cache.AppState.ReleaseBigMapKeyId(bigmap.TotalKeys);
+                Cache.AppState.ReleaseBigMapUpdateId(bigmap.Updates);
+            }
 
             if (contract.TokenTransfersCount != 0)
             {

@@ -21,7 +21,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<EndorsingRewardOperation> GetEndorsingReward(int id, Symbols quote)
+        public async Task<EndorsingRewardOperation> GetEndorsingReward(long id, Symbols quote)
         {
             var sql = $@"
                 SELECT      o.*, b.""Hash""

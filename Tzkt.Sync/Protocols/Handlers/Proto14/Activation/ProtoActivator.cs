@@ -70,6 +70,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             invoice.Account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);
+            Cache.AppState.ReleaseOperationId();
 
             state.MigrationOpsCount--;
         }

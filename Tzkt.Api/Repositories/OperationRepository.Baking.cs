@@ -22,7 +22,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<BakingOperation> GetBaking(int id, Symbols quote)
+        public async Task<BakingOperation> GetBaking(long id, Symbols quote)
         {
             var sql = $@"
                 SELECT      *

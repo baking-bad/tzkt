@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Services.Cache
     {
         public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
 
-        static readonly Dictionary<int, Token> CachedById = new(MaxItems);
+        static readonly Dictionary<long, Token> CachedById = new(MaxItems);
         static readonly Dictionary<(int, BigInteger), Token> CachedByKey = new(MaxItems);
 
         readonly TzktContext Db;
@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Services.Cache
             return token;
         }
 
-        public Token Get(int id)
+        public Token Get(long id)
         {
             if (!CachedById.TryGetValue(id, out var token))
                 throw new Exception($"Token #{id} doesn't exist");
@@ -88,7 +88,7 @@ namespace Tzkt.Sync.Services.Cache
             return CachedByKey.TryGetValue((contractId, tokenId), out token);
         }
 
-        public async Task Preload(IEnumerable<int> ids)
+        public async Task Preload(IEnumerable<long> ids)
         {
             var missed = ids.Where(x => !CachedById.ContainsKey(x)).ToHashSet();
             if (missed.Count > 0)

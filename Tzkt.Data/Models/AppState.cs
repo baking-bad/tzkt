@@ -5,6 +5,8 @@ namespace Tzkt.Data.Models
 {
     public class AppState
     {
+        public const int SubIdBits = 20;
+
         public int Id { get; set; }
         public string Chain { get; set; }
         public string ChainId { get; set; }
@@ -24,15 +26,14 @@ namespace Tzkt.Data.Models
 
         #region counters
         public int AccountCounter { get; set; }
-        public int OperationCounter { get; set; }
+        public long OperationCounter { get; set; }
         public int ManagerCounter { get; set; }
         public int BigMapCounter { get; set; }
         public int BigMapKeyCounter { get; set; }
         public int BigMapUpdateCounter { get; set; }
         public int StorageCounter { get; set; }
         public int ScriptCounter { get; set; }
-        public int TokenCounter { get; set; }
-        public int TokenBalanceCounter { get; set; }
+        public int EventCounter { get; set; }
         #endregion
 
         #region entities count

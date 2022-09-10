@@ -1141,6 +1141,37 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, Int64Parameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($"{column} != {value.Ne}");
+
+            if (value.Gt != null)
+                AppendFilter($"{column} > {value.Gt}");
+
+            if (value.Ge != null)
+                AppendFilter($"{column} >= {value.Ge}");
+
+            if (value.Lt != null)
+                AppendFilter($"{column} < {value.Lt}");
+
+            if (value.Le != null)
+                AppendFilter($"{column} <= {value.Le}");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In)})");
+
+            if (value.Ni != null)
+                AppendFilter($"NOT ({column} = ANY ({Param(value.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, Int64ExParameter value, Func<string, string> map = null)
         {
             if (value == null) return this;
@@ -1218,6 +1249,44 @@ namespace Tzkt.Api
                 AppendFilter(value.Null == true
                     ? $@"""{column}"" IS NULL"
                     : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, Int64NullParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($"({column} IS NULL OR {column} != {value.Ne})");
+
+            if (value.Gt != null)
+                AppendFilter($"{column} > {value.Gt}");
+
+            if (value.Ge != null)
+                AppendFilter($"{column} >= {value.Ge}");
+
+            if (value.Lt != null)
+                AppendFilter($"{column} < {value.Lt}");
+
+            if (value.Le != null)
+                AppendFilter($"{column} <= {value.Le}");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In)})");
+
+            if (value.Ni != null)
+                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(value.Ni)})))");
+
+            if (value.Null != null)
+            {
+                AppendFilter(value.Null == true
+                    ? $"{column} IS NULL"
+                    : $"{column} IS NOT NULL");
             }
 
             return this;

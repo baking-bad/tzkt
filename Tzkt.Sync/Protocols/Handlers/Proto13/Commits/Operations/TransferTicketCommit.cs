@@ -193,6 +193,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             Db.TransferTicketOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

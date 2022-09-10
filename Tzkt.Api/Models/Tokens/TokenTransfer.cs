@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
         /// Internal TzKT id.  
         /// **[sortable]**
         /// </summary>
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         /// <summary>
         /// Level of the block, at which the token transfer was made.  
@@ -48,16 +48,16 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Internal TzKT id of the transaction operation, caused the token transfer.
         /// </summary>
-        public int? TransactionId { get; set; }
+        public long? TransactionId { get; set; }
 
         /// <summary>
         /// Internal TzKT id of the origination operation, caused the token transfer.
         /// </summary>
-        public int? OriginationId { get; set; }
+        public long? OriginationId { get; set; }
 
         /// <summary>
         /// Internal TzKT id of the migration operation, caused the token transfer.
         /// </summary>
-        public int? MigrationId { get; set; }
+        public long? MigrationId { get; set; }
     }
 }

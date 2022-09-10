@@ -159,6 +159,7 @@ namespace Tzkt.Sync.Protocols.Proto11
 
             Db.RegisterConstantOps.Remove(registerConstant);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual int GetConsumedGas(JsonElement result)

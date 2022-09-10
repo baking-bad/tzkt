@@ -520,6 +520,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.OriginationOps.Remove(origination);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
 
         public virtual async Task RevertInternal(Block block, OriginationOperation origination)
@@ -631,6 +632,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.OriginationOps.Remove(origination);
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual async Task<User> GetWeirdDelegate(JsonElement content)
@@ -830,10 +832,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.Scripts.Remove(new Script { Id = (int)origination.ScriptId });
             Cache.Schemas.Remove(contract);
+            Cache.AppState.ReleaseScriptId();
 
             var storage = await Cache.Storages.GetAsync(contract);
             Db.Storages.Remove(storage);
             Cache.Storages.Remove(contract);
+            Cache.AppState.ReleaseStorageId();
         }
 
         protected virtual IEnumerable<BigMapDiff> ParseBigMapDiffs(OriginationOperation origination, JsonElement result, MichelineArray code, IMicheline storage)

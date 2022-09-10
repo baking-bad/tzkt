@@ -162,6 +162,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Db.SetDepositsLimitOps.Remove(op);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

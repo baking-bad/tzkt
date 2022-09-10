@@ -21,7 +21,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<RevelationPenaltyOperation> GetRevelationPenalty(int id, Symbols quote)
+        public async Task<RevelationPenaltyOperation> GetRevelationPenalty(long id, Symbols quote)
         {
             var sql = $@"
                 SELECT      o.*, b.""Hash""

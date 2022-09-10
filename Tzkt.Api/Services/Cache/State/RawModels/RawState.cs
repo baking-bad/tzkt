@@ -30,9 +30,9 @@ namespace Tzkt.Api.Services.Cache
 
         public int ManagerCounter { get; set; }
         
-        public int OperationCounter { get; set; }
+        public long OperationCounter { get; set; }
 
-        public int TokenCounter { get; set; }
+        public int EventCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }

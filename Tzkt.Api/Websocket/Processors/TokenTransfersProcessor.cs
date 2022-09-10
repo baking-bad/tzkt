@@ -46,7 +46,6 @@ namespace Tzkt.Api.Websocket.Processors
         readonly IHubContext<T> Context;
         readonly WebsocketConfig Config;
         readonly ILogger Logger;
-        int LastId;
 
         public TokenTransfersProcessor(StateCache state, TokensRepository tokens,
             IHubContext<T> hubContext, IConfiguration config, ILogger<TokenTransfersProcessor<T>> logger)
@@ -56,7 +55,6 @@ namespace Tzkt.Api.Websocket.Processors
             Context = hubContext;
             Config = config.GetWebsocketConfig();
             Logger = logger;
-            LastId = state.Current.OperationCounter;
         }
         
         public async Task OnStateChanged()
@@ -69,7 +67,6 @@ namespace Tzkt.Api.Websocket.Processors
                 if (Limits.Count == 0)
                 {
                     Logger.LogDebug("No token transfers subs");
-                    LastId = State.Current.OperationCounter;
                     return;
                 }
 
@@ -90,16 +87,47 @@ namespace Tzkt.Api.Websocket.Processors
                 }
 
                 #region load token transfers
-                Logger.LogDebug("Fetching token transfers from id#{0} to id#{1}", LastId, State.Current.OperationCounter);
+                Logger.LogDebug("Fetching token transfers from block {0} to block {1}", State.ValidLevel, State.Current.Level);
 
-                var id = new Int32Parameter
+                var params1 = new TokenTransferFilter
                 {
-                    Gt = LastId,
-                    Le = State.Current.OperationCounter
+                    level = State.Current.Level == State.ValidLevel + 1
+                        ? new Int32Parameter
+                        {
+                            Eq = State.Current.Level
+                        }
+                        : new Int32Parameter
+                        {
+                            Gt = State.ValidLevel,
+                            Le = State.Current.Level
+                        },
+                    token = new()
+                };
+                var params2 = new TokenTransferFilter
+                {
+                    level = new Int32Parameter
+                    {
+                        Le = State.ValidLevel
+                    },
+                    indexedAt = State.Current.Level == State.ValidLevel + 1
+                        ? new Int32NullParameter
+                        {
+                            Null = false,
+                            Eq = State.Current.Level
+                        }
+                        : new Int32NullParameter
+                        {
+                            Null = false,
+                            Gt = State.ValidLevel,
+                            Le = State.Current.Level
+                        },
+                    token = new()
                 };
                 var limit = 1_000_000;
 
-                var transfers = await Repo.GetTokenTransfers(new() { id = id, token = new() }, new() { limit = limit });
+                var transfers = (await Repo.GetTokenTransfers(params1, new() { limit = limit }))
+                    // we do the second requests because there may be new token balances added retroactively
+                    .Concat(await Repo.GetTokenTransfers(params2, new() { limit = limit }));
                 var count = transfers.Count();
 
                 Logger.LogDebug("{0} token transfers fetched", count);
@@ -202,8 +230,6 @@ namespace Tzkt.Api.Websocket.Processors
 
                 Logger.LogDebug("{0} token transfers sent", count);
                 #endregion
-
-                LastId = State.Current.OperationCounter;
             }
             catch (Exception ex)
             {
@@ -449,7 +475,7 @@ namespace Tzkt.Api.Websocket.Processors
 
         private static IEnumerable<Models.TokenTransfer> Distinct(List<Models.TokenTransfer> items)
         {
-            var set = new HashSet<int>(items.Count);
+            var set = new HashSet<long>(items.Count);
             foreach (var item in items)
                 if (set.Add(item.Id))
                     yield return item;

@@ -71,6 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.ActivationOps.Remove(activation);
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual long ParseBalance(JsonElement balanceUpdates) => balanceUpdates[0].RequiredInt64("change");

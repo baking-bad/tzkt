@@ -9,7 +9,7 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id. Note, this is not the same as `tokenId`.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter id { get; set; }
+        public Int64Parameter id { get; set; }
 
         /// <summary>
         /// Filter by contract address.  

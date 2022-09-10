@@ -477,6 +477,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await Db.Database.ExecuteSqlRawAsync(@$"
                     DELETE FROM ""BigMapUpdates"" WHERE ""Level"" = {block.Level};
                 ");
+                Cache.AppState.ReleaseBigMapUpdateId(updates.Count);
 
                 foreach (var key in keys)
                 {
@@ -490,6 +491,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         bigmap.TotalKeys--;
                         Db.BigMapKeys.Remove(key);
                         Cache.BigMapKeys.Remove(key);
+                        Cache.AppState.ReleaseBigMapKeyId();
                     }
                     else
                     {
@@ -519,6 +521,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {
                         Db.BigMaps.Remove(bigmap);
                         Cache.BigMaps.Remove(bigmap);
+                        Cache.AppState.ReleaseBigMapId();
                     }
                     else
                     {

@@ -9,7 +9,7 @@ namespace Tzkt.Api.Models
         /// Internal TzKT id (not the same as `tokenId`).  
         /// **[sortable]**
         /// </summary>
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         /// <summary>
         /// Contract, created the token.

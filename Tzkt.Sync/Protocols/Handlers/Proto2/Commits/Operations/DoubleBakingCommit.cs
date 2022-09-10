@@ -107,6 +107,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             Db.DoubleBakingOps.Remove(doubleBaking);
+            Cache.AppState.ReleaseOperationId();
             return Task.CompletedTask;
         }
     }

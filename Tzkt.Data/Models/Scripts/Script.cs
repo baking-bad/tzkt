@@ -11,8 +11,8 @@ namespace Tzkt.Data.Models
         public int Id { get; set; }
         public int Level { get; set; }
         public int ContractId { get; set; }
-        public int? OriginationId { get; set; }
-        public int? MigrationId { get; set; }
+        public long? OriginationId { get; set; }
+        public long? MigrationId { get; set; }
         public bool Current { get; set; }
 
         public byte[] ParameterSchema { get; set; }

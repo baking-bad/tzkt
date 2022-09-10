@@ -115,6 +115,8 @@ namespace Tzkt.Sync.Protocols
             state.Hash = prev.Hash;
             state.BlocksCount--;
             state.ProtocolsCount--;
+
+            Cache.AppState.ReleaseOperationId();
             #endregion
         }
     }

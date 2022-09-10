@@ -193,6 +193,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             }
             #endregion
         }
-        protected override Task RevertContext(AppState state) => Task.CompletedTask;
+
+        protected override Task RevertContext(AppState state) => throw new NotImplementedException();
     }
 }

@@ -387,6 +387,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.TransactionOps.Remove(transaction);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
 
         public virtual async Task RevertInternal(Block block, TransactionOperation transaction)
@@ -479,6 +480,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.TransactionOps.Remove(transaction);
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual bool HasAllocated(JsonElement result) => false;
@@ -603,6 +605,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Cache.Storages.Add(contract, prevStorage);
 
                 Db.Storages.Remove(storage);
+                Cache.AppState.ReleaseStorageId();
             }
         }
 

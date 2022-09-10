@@ -30,12 +30,12 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             var contractEvent = new ContractEvent
             {
-                Id = Cache.AppState.NextOperationId(),
+                Id = Cache.AppState.NextEventId(),
                 Level = block.Level,
                 ContractId = contract.Id,
                 ContractCodeHash = contract.CodeHash,
                 TransactionId = parentTx.Id,
-                Tag = content.RequiredString("tag")
+                Tag = content.OptionalString("tag")
             };
 
             try
@@ -80,10 +80,10 @@ namespace Tzkt.Sync.Protocols.Proto14
                 Db.TryAttach(contract);
                 contract.EventsCount--;
 
-                var state = Cache.AppState.Get();
-                Db.TryAttach(state);
-                state.EventsCount--;
+                Cache.AppState.Get().EventsCount--;
             }
+
+            Cache.AppState.ReleaseEventId(events.Count);
 
             await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""Events"" WHERE ""Level"" = {block.Level};");
         }
