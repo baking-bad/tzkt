@@ -486,10 +486,10 @@ namespace Tzkt.Api
                 AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {Param(str.Ne)})");
 
             if (str.As != null)
-                AppendFilter($@"""{column}"" LIKE {Param(str.As)}");
+                AppendFilter($@"""{column}"" ILIKE {Param(str.As)}");
 
             if (str.Un != null)
-                AppendFilter($@"NOT (""{column}"" LIKE ({Param(str.Un)}))");
+                AppendFilter($@"NOT (""{column}"" ILIKE ({Param(str.Un)}))");
 
             if (str.In != null)
                 AppendFilter($@"""{column}"" = ANY ({Param(str.In)})");
@@ -587,7 +587,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.As)
                 {
-                    AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)}");
+                    AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)}");
                 }
             }
 
@@ -595,7 +595,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Un)
                 {
-                    AppendFilter($@"NOT (""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)})");
+                    AppendFilter($@"NOT (""{column}"" #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)})");
                 }
             }
 
@@ -729,7 +729,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.As)
                 {
-                    AppendFilter($"{column} #>> {Param(JsonPath.Select(path))} LIKE {Param(value)}");
+                    AppendFilter($"{column} #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)}");
                 }
             }
 
@@ -737,7 +737,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Un)
                 {
-                    AppendFilter($"NOT ({column} #>> {Param(JsonPath.Select(path))} LIKE {Param(value)})");
+                    AppendFilter($"NOT ({column} #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)})");
                 }
             }
 
