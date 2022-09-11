@@ -5,7 +5,7 @@ init:
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
 	docker-compose exec -T db apt update
 	docker-compose exec -T db apt install -y wget
-	docker-compose exec -T db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_mainnet.backup" -O tzkt_db.backup
+	docker-compose exec -T db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_mainnet.backup" -O tzkt_db.backup
 	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose exec -T db rm tzkt_db.backup
 	docker-compose exec -T db apt autoremove --purge -y wget
@@ -52,7 +52,7 @@ ghost-init:
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt update
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt install -y wget
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_ghostnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_ghostnet.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db rm tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt autoremove --purge -y wget
@@ -74,7 +74,7 @@ jakarta-init:
 	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db apt update
 	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db apt install -y wget
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_jakartanet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_jakartanet.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db rm tzkt_db.backup
 	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db apt autoremove --purge -y wget
@@ -89,5 +89,24 @@ jakarta-stop:
 jakarta-db-start:
 	docker-compose -f docker-compose.jakarta.yml up -d jakarta-db
 
+kathmandu-init:
+	docker-compose -f docker-compose.kathmandu.yml up   -d kathmandu-db
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db apt update
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db apt install -y wget
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_kathmandunet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db rm tzkt_db.backup
+	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db apt autoremove --purge -y wget
+	docker-compose pull	
+	
 kathmandu-start:
-	NODE_RPC=https://rpc.tzkt.io/kathmandunet docker-compose up -d
+	docker-compose -f docker-compose.kathmandu.yml up -d
+
+kathmandu-stop:
+	docker-compose -f docker-compose.kathmandu.yml down
+
+kathmandu-db-start:
+	docker-compose -f docker-compose.kathmandu.yml up -d kathmandu-db
