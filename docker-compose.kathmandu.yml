@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  kathmandu-db:
+    container_name: kathmandu-db
+    restart: always
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tzkt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
+      POSTGRES_DB: ${POSTGRES_DB:-tzkt_db}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - 127.0.0.1:5434:5432
+
+  kathmandu-api:
+    container_name: kathmandu-api
+    restart: always
+    image: bakingbad/tzkt-api:latest
+    depends_on:
+      - kathmandu-db
+    environment:
+      ConnectionStrings__DefaultConnection: host=kathmandu-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
+    ports:
+      - 0.0.0.0:5020:5000
+
+  kathmandu-sync:
+    container_name: kathmandu-sync
+    restart: always
+    image: bakingbad/tzkt-sync:latest
+    environment:
+      ConnectionStrings__DefaultConnection: host=kathmandu-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      TezosNode__Endpoint: https://rpc.tzkt.io/kathmandunet/
+    depends_on:
+      - kathmandu-db
+
+volumes:
+  postgres:

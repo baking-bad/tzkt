@@ -40,6 +40,7 @@ namespace Tzkt.Api.Repositories
                 ?? await GetStatus(db, nameof(TzktContext.RevealOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.RegisterConstantOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SetDepositsLimitOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.IncreasePaidStorageOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TransferTicketOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupCommitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupDispatchTicketsOps), hash)
@@ -60,6 +61,7 @@ namespace Tzkt.Api.Repositories
             var reveals = GetReveals(hash, quote);
             var registerConstants = GetRegisterConstants(hash, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, quote);
+            var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
             var transferTicketOps = GetTransferTicketOps(hash, format, quote);
             var txRollupCommitOps = GetTxRollupCommitOps(hash, quote);
             var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, quote);
@@ -77,6 +79,7 @@ namespace Tzkt.Api.Repositories
                 reveals,
                 registerConstants,
                 setDepositsLimits,
+                increasePaidStorageOps,
                 transferTicketOps,
                 txRollupCommitOps,
                 txRollupDispatchTicketsOps,
@@ -93,6 +96,7 @@ namespace Tzkt.Api.Repositories
                 .Concat(reveals.Result)
                 .Concat(registerConstants.Result)
                 .Concat(setDepositsLimits.Result)
+                .Concat(increasePaidStorageOps.Result)
                 .Concat(transferTicketOps.Result)
                 .Concat(txRollupCommitOps.Result)
                 .Concat(txRollupDispatchTicketsOps.Result)
@@ -131,6 +135,7 @@ namespace Tzkt.Api.Repositories
             var doubleEndorsing = GetDoubleEndorsings(hash, quote);
             var doublePreendorsing = GetDoublePreendorsings(hash, quote);
             var nonceRevelation = GetNonceRevelations(hash, quote);
+            var vdfRevelation = GetVdfRevelations(hash, quote);
 
             await Task.WhenAll(endorsements, preendorsements, doubleBaking, doubleEndorsing, doublePreendorsing, nonceRevelation);
 
@@ -151,6 +156,9 @@ namespace Tzkt.Api.Repositories
 
             if (nonceRevelation.Result.Any())
                 return nonceRevelation.Result;
+
+            if (vdfRevelation.Result.Any())
+                return vdfRevelation.Result;
             #endregion
 
             return new List<Operation>(0);
@@ -164,6 +172,7 @@ namespace Tzkt.Api.Repositories
             var reveals = GetReveals(hash, counter, quote);
             var registerConstants = GetRegisterConstants(hash, counter, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, counter, quote);
+            var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
             var transferTicketOps = GetTransferTicketOps(hash, counter, format, quote);
             var txRollupCommitOps = GetTxRollupCommitOps(hash, counter, quote);
             var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, counter, quote);
@@ -181,6 +190,7 @@ namespace Tzkt.Api.Repositories
                 reveals,
                 registerConstants,
                 setDepositsLimits,
+                increasePaidStorageOps,
                 transferTicketOps,
                 txRollupCommitOps,
                 txRollupDispatchTicketsOps,
@@ -214,6 +224,9 @@ namespace Tzkt.Api.Repositories
 
             if (txRollupCommitOps.Result.Any())
                 return txRollupCommitOps.Result;
+
+            if (increasePaidStorageOps.Result.Any())
+                return increasePaidStorageOps.Result;
 
             if (setDepositsLimits.Result.Any())
                 return setDepositsLimits.Result;
