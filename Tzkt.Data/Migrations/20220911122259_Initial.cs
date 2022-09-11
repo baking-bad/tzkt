@@ -27,15 +27,14 @@ namespace Tzkt.Data.Migrations
                     VotingEpoch = table.Column<int>(type: "integer", nullable: false),
                     VotingPeriod = table.Column<int>(type: "integer", nullable: false),
                     AccountCounter = table.Column<int>(type: "integer", nullable: false),
-                    OperationCounter = table.Column<int>(type: "integer", nullable: false),
+                    OperationCounter = table.Column<long>(type: "bigint", nullable: false),
                     ManagerCounter = table.Column<int>(type: "integer", nullable: false),
                     BigMapCounter = table.Column<int>(type: "integer", nullable: false),
                     BigMapKeyCounter = table.Column<int>(type: "integer", nullable: false),
                     BigMapUpdateCounter = table.Column<int>(type: "integer", nullable: false),
                     StorageCounter = table.Column<int>(type: "integer", nullable: false),
                     ScriptCounter = table.Column<int>(type: "integer", nullable: false),
-                    TokenCounter = table.Column<int>(type: "integer", nullable: false),
-                    TokenBalanceCounter = table.Column<int>(type: "integer", nullable: false),
+                    EventCounter = table.Column<int>(type: "integer", nullable: false),
                     CommitmentsCount = table.Column<int>(type: "integer", nullable: false),
                     AccountsCount = table.Column<int>(type: "integer", nullable: false),
                     BlocksCount = table.Column<int>(type: "integer", nullable: false),
@@ -49,6 +48,7 @@ namespace Tzkt.Data.Migrations
                     EndorsementOpsCount = table.Column<int>(type: "integer", nullable: false),
                     PreendorsementOpsCount = table.Column<int>(type: "integer", nullable: false),
                     NonceRevelationOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    VdfRevelationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     OriginationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     ProposalOpsCount = table.Column<int>(type: "integer", nullable: false),
                     RevealOpsCount = table.Column<int>(type: "integer", nullable: false),
@@ -65,6 +65,7 @@ namespace Tzkt.Data.Migrations
                     TxRollupRejectionOpsCount = table.Column<int>(type: "integer", nullable: false),
                     TxRollupDispatchTicketsOpsCount = table.Column<int>(type: "integer", nullable: false),
                     TransferTicketOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    IncreasePaidStorageOpsCount = table.Column<int>(type: "integer", nullable: false),
                     MigrationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     RevelationPenaltyOpsCount = table.Column<int>(type: "integer", nullable: false),
                     ProposalsCount = table.Column<int>(type: "integer", nullable: false),
@@ -73,6 +74,7 @@ namespace Tzkt.Data.Migrations
                     TokensCount = table.Column<int>(type: "integer", nullable: false),
                     TokenBalancesCount = table.Column<int>(type: "integer", nullable: false),
                     TokenTransfersCount = table.Column<int>(type: "integer", nullable: false),
+                    EventsCount = table.Column<int>(type: "integer", nullable: false),
                     QuoteLevel = table.Column<int>(type: "integer", nullable: false),
                     QuoteBtc = table.Column<double>(type: "double precision", nullable: false),
                     QuoteEur = table.Column<double>(type: "double precision", nullable: false),
@@ -207,9 +209,9 @@ namespace Tzkt.Data.Migrations
                     BigMapPtr = table.Column<int>(type: "integer", nullable: false),
                     Action = table.Column<int>(type: "integer", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
-                    OriginationId = table.Column<int>(type: "integer", nullable: true),
-                    TransactionId = table.Column<int>(type: "integer", nullable: true),
-                    MigrationId = table.Column<int>(type: "integer", nullable: true),
+                    OriginationId = table.Column<long>(type: "bigint", nullable: true),
+                    TransactionId = table.Column<long>(type: "bigint", nullable: true),
+                    MigrationId = table.Column<long>(type: "bigint", nullable: true),
                     BigMapKeyId = table.Column<int>(type: "integer", nullable: true),
                     RawValue = table.Column<byte[]>(type: "bytea", nullable: true),
                     JsonValue = table.Column<string>(type: "jsonb", nullable: true)
@@ -280,7 +282,7 @@ namespace Tzkt.Data.Migrations
                 name: "EndorsingRewardOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -291,6 +293,26 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EndorsingRewardOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Events",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    ContractId = table.Column<int>(type: "integer", nullable: false),
+                    ContractCodeHash = table.Column<int>(type: "integer", nullable: false),
+                    TransactionId = table.Column<long>(type: "bigint", nullable: false),
+                    Tag = table.Column<string>(type: "text", nullable: true),
+                    Type = table.Column<byte[]>(type: "bytea", nullable: true),
+                    RawPayload = table.Column<byte[]>(type: "bytea", nullable: true),
+                    JsonPayload = table.Column<string>(type: "jsonb", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Events", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -381,6 +403,7 @@ namespace Tzkt.Data.Migrations
                     MaxEndorsingReward = table.Column<long>(type: "bigint", nullable: false),
                     TxRollupOriginationSize = table.Column<int>(type: "integer", nullable: false),
                     TxRollupCommitmentBond = table.Column<long>(type: "bigint", nullable: false),
+                    Dictator = table.Column<string>(type: "text", nullable: true),
                     Metadata = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -419,8 +442,8 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     ContractId = table.Column<int>(type: "integer", nullable: false),
-                    OriginationId = table.Column<int>(type: "integer", nullable: true),
-                    MigrationId = table.Column<int>(type: "integer", nullable: true),
+                    OriginationId = table.Column<long>(type: "bigint", nullable: true),
+                    MigrationId = table.Column<long>(type: "bigint", nullable: true),
                     Current = table.Column<bool>(type: "boolean", nullable: false),
                     ParameterSchema = table.Column<byte[]>(type: "bytea", nullable: true),
                     StorageSchema = table.Column<byte[]>(type: "bytea", nullable: true),
@@ -501,9 +524,9 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     ContractId = table.Column<int>(type: "integer", nullable: false),
-                    OriginationId = table.Column<int>(type: "integer", nullable: true),
-                    TransactionId = table.Column<int>(type: "integer", nullable: true),
-                    MigrationId = table.Column<int>(type: "integer", nullable: true),
+                    OriginationId = table.Column<long>(type: "bigint", nullable: true),
+                    TransactionId = table.Column<long>(type: "bigint", nullable: true),
+                    MigrationId = table.Column<long>(type: "bigint", nullable: true),
                     Current = table.Column<bool>(type: "boolean", nullable: false),
                     RawValue = table.Column<byte[]>(type: "bytea", nullable: true),
                     JsonValue = table.Column<string>(type: "jsonb", nullable: true)
@@ -517,15 +540,16 @@ namespace Tzkt.Data.Migrations
                 name: "TokenBalances",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ContractId = table.Column<int>(type: "integer", nullable: false),
-                    TokenId = table.Column<int>(type: "integer", nullable: false),
+                    TokenId = table.Column<long>(type: "bigint", nullable: false),
                     AccountId = table.Column<int>(type: "integer", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     TransfersCount = table.Column<int>(type: "integer", nullable: false),
-                    Balance = table.Column<string>(type: "text", nullable: false)
+                    Balance = table.Column<string>(type: "text", nullable: false),
+                    IndexedAt = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -536,11 +560,12 @@ namespace Tzkt.Data.Migrations
                 name: "Tokens",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ContractId = table.Column<int>(type: "integer", nullable: false),
                     TokenId = table.Column<string>(type: "text", nullable: false),
                     Tags = table.Column<int>(type: "integer", nullable: false),
+                    FirstMinterId = table.Column<int>(type: "integer", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     TransfersCount = table.Column<int>(type: "integer", nullable: false),
@@ -550,6 +575,7 @@ namespace Tzkt.Data.Migrations
                     TotalBurned = table.Column<string>(type: "text", nullable: false),
                     TotalSupply = table.Column<string>(type: "text", nullable: false),
                     OwnerId = table.Column<int>(type: "integer", nullable: true),
+                    IndexedAt = table.Column<int>(type: "integer", nullable: true),
                     Metadata = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -561,17 +587,18 @@ namespace Tzkt.Data.Migrations
                 name: "TokenTransfers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     ContractId = table.Column<int>(type: "integer", nullable: false),
-                    TokenId = table.Column<int>(type: "integer", nullable: false),
+                    TokenId = table.Column<long>(type: "bigint", nullable: false),
                     Amount = table.Column<string>(type: "text", nullable: false),
                     FromId = table.Column<int>(type: "integer", nullable: true),
                     ToId = table.Column<int>(type: "integer", nullable: true),
-                    OriginationId = table.Column<int>(type: "integer", nullable: true),
-                    TransactionId = table.Column<int>(type: "integer", nullable: true),
-                    MigrationId = table.Column<int>(type: "integer", nullable: true)
+                    OriginationId = table.Column<long>(type: "bigint", nullable: true),
+                    TransactionId = table.Column<long>(type: "bigint", nullable: true),
+                    MigrationId = table.Column<long>(type: "bigint", nullable: true),
+                    IndexedAt = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -590,6 +617,7 @@ namespace Tzkt.Data.Migrations
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     Kind = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
+                    Dictator = table.Column<int>(type: "integer", nullable: false),
                     TotalBakers = table.Column<int>(type: "integer", nullable: true),
                     TotalVotingPower = table.Column<long>(type: "bigint", nullable: true),
                     UpvotesQuorum = table.Column<int>(type: "integer", nullable: true),
@@ -633,7 +661,7 @@ namespace Tzkt.Data.Migrations
                 name: "ActivationOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AccountId = table.Column<int>(type: "integer", nullable: false),
                     Balance = table.Column<long>(type: "bigint", nullable: false),
@@ -650,7 +678,7 @@ namespace Tzkt.Data.Migrations
                 name: "BallotOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Epoch = table.Column<int>(type: "integer", nullable: false),
                     Period = table.Column<int>(type: "integer", nullable: false),
@@ -677,7 +705,7 @@ namespace Tzkt.Data.Migrations
                 name: "Blocks",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Cycle = table.Column<int>(type: "integer", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -696,7 +724,7 @@ namespace Tzkt.Data.Migrations
                     Fees = table.Column<long>(type: "bigint", nullable: false),
                     ProposerId = table.Column<int>(type: "integer", nullable: true),
                     ProducerId = table.Column<int>(type: "integer", nullable: true),
-                    RevelationId = table.Column<int>(type: "integer", nullable: true),
+                    RevelationId = table.Column<long>(type: "bigint", nullable: true),
                     ResetBakerDeactivation = table.Column<int>(type: "integer", nullable: true),
                     ResetProposerDeactivation = table.Column<int>(type: "integer", nullable: true),
                     LBToggle = table.Column<bool>(type: "boolean", nullable: true),
@@ -752,6 +780,7 @@ namespace Tzkt.Data.Migrations
                     TxRollupRejectionCount = table.Column<int>(type: "integer", nullable: false),
                     TxRollupDispatchTicketsCount = table.Column<int>(type: "integer", nullable: false),
                     TransferTicketCount = table.Column<int>(type: "integer", nullable: false),
+                    IncreasePaidStorageCount = table.Column<int>(type: "integer", nullable: false),
                     MigrationsCount = table.Column<int>(type: "integer", nullable: false),
                     DelegateId = table.Column<int>(type: "integer", nullable: true),
                     DelegationLevel = table.Column<int>(type: "integer", nullable: true),
@@ -762,6 +791,7 @@ namespace Tzkt.Data.Migrations
                     CodeHash = table.Column<int>(type: "integer", nullable: true),
                     Tags = table.Column<int>(type: "integer", nullable: true),
                     TokensCount = table.Column<int>(type: "integer", nullable: true),
+                    EventsCount = table.Column<int>(type: "integer", nullable: true),
                     Spendable = table.Column<bool>(type: "boolean", nullable: true),
                     CreatorId = table.Column<int>(type: "integer", nullable: true),
                     ManagerId = table.Column<int>(type: "integer", nullable: true),
@@ -787,6 +817,7 @@ namespace Tzkt.Data.Migrations
                     DoubleEndorsingCount = table.Column<int>(type: "integer", nullable: true),
                     DoublePreendorsingCount = table.Column<int>(type: "integer", nullable: true),
                     NonceRevelationsCount = table.Column<int>(type: "integer", nullable: true),
+                    VdfRevelationsCount = table.Column<int>(type: "integer", nullable: true),
                     RevelationPenaltiesCount = table.Column<int>(type: "integer", nullable: true),
                     EndorsingRewardsCount = table.Column<int>(type: "integer", nullable: true),
                     SoftwareId = table.Column<int>(type: "integer", nullable: true)
@@ -836,7 +867,7 @@ namespace Tzkt.Data.Migrations
                 name: "DelegationOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
                     DelegateId = table.Column<int>(type: "integer", nullable: true),
@@ -899,7 +930,7 @@ namespace Tzkt.Data.Migrations
                 name: "DoubleBakingOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AccusedLevel = table.Column<int>(type: "integer", nullable: false),
                     AccuserId = table.Column<int>(type: "integer", nullable: false),
@@ -937,7 +968,7 @@ namespace Tzkt.Data.Migrations
                 name: "DoubleEndorsingOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AccusedLevel = table.Column<int>(type: "integer", nullable: false),
                     AccuserId = table.Column<int>(type: "integer", nullable: false),
@@ -975,7 +1006,7 @@ namespace Tzkt.Data.Migrations
                 name: "DoublePreendorsingOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AccusedLevel = table.Column<int>(type: "integer", nullable: false),
                     AccuserId = table.Column<int>(type: "integer", nullable: false),
@@ -1013,7 +1044,7 @@ namespace Tzkt.Data.Migrations
                 name: "EndorsementOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     DelegateId = table.Column<int>(type: "integer", nullable: false),
                     Slots = table.Column<int>(type: "integer", nullable: false),
@@ -1042,10 +1073,50 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "IncreasePaidStorageOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ContractId = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<string>(type: "text", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IncreasePaidStorageOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_IncreasePaidStorageOps_Accounts_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_IncreasePaidStorageOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MigrationOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -1055,7 +1126,8 @@ namespace Tzkt.Data.Migrations
                     ScriptId = table.Column<int>(type: "integer", nullable: true),
                     StorageId = table.Column<int>(type: "integer", nullable: true),
                     BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
-                    TokenTransfers = table.Column<int>(type: "integer", nullable: true)
+                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1090,7 +1162,7 @@ namespace Tzkt.Data.Migrations
                 name: "NonceRevelationOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     BakerId = table.Column<int>(type: "integer", nullable: false),
                     SenderId = table.Column<int>(type: "integer", nullable: false),
@@ -1130,7 +1202,7 @@ namespace Tzkt.Data.Migrations
                 name: "OriginationOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
                     ManagerId = table.Column<int>(type: "integer", nullable: true),
@@ -1157,7 +1229,8 @@ namespace Tzkt.Data.Migrations
                     Nonce = table.Column<int>(type: "integer", nullable: true),
                     StorageId = table.Column<int>(type: "integer", nullable: true),
                     BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
-                    TokenTransfers = table.Column<int>(type: "integer", nullable: true)
+                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1216,7 +1289,7 @@ namespace Tzkt.Data.Migrations
                 name: "PreendorsementOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     DelegateId = table.Column<int>(type: "integer", nullable: false),
                     Slots = table.Column<int>(type: "integer", nullable: false),
@@ -1246,7 +1319,7 @@ namespace Tzkt.Data.Migrations
                 name: "ProposalOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Epoch = table.Column<int>(type: "integer", nullable: false),
                     Period = table.Column<int>(type: "integer", nullable: false),
@@ -1285,7 +1358,7 @@ namespace Tzkt.Data.Migrations
                 name: "RegisterConstantOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Address = table.Column<string>(type: "character varying(54)", maxLength: 54, nullable: true),
                     Value = table.Column<byte[]>(type: "bytea", nullable: true),
@@ -1327,7 +1400,7 @@ namespace Tzkt.Data.Migrations
                 name: "RevealOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -1365,7 +1438,7 @@ namespace Tzkt.Data.Migrations
                 name: "RevelationPenaltyOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
@@ -1394,7 +1467,7 @@ namespace Tzkt.Data.Migrations
                 name: "SetDepositsLimitOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Limit = table.Column<string>(type: "text", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -1433,7 +1506,7 @@ namespace Tzkt.Data.Migrations
                 name: "TransactionOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
                     TargetId = table.Column<int>(type: "integer", nullable: true),
@@ -1447,6 +1520,7 @@ namespace Tzkt.Data.Migrations
                     InternalDelegations = table.Column<short>(type: "smallint", nullable: true),
                     InternalOriginations = table.Column<short>(type: "smallint", nullable: true),
                     InternalTransactions = table.Column<short>(type: "smallint", nullable: true),
+                    EventsCount = table.Column<int>(type: "integer", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
@@ -1465,7 +1539,8 @@ namespace Tzkt.Data.Migrations
                     Nonce = table.Column<int>(type: "integer", nullable: true),
                     StorageId = table.Column<int>(type: "integer", nullable: true),
                     BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
-                    TokenTransfers = table.Column<int>(type: "integer", nullable: true)
+                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1506,7 +1581,7 @@ namespace Tzkt.Data.Migrations
                 name: "TransferTicketOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TargetId = table.Column<int>(type: "integer", nullable: true),
                     TicketerId = table.Column<int>(type: "integer", nullable: true),
@@ -1551,7 +1626,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupCommitOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     Bond = table.Column<long>(type: "bigint", nullable: false),
@@ -1591,7 +1666,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupDispatchTicketsOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -1630,7 +1705,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupFinalizeCommitmentOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -1669,7 +1744,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupOriginationOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -1708,7 +1783,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupRejectionOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     CommitterId = table.Column<int>(type: "integer", nullable: false),
@@ -1750,7 +1825,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupRemoveCommitmentOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -1789,7 +1864,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupReturnBondOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     Bond = table.Column<long>(type: "bigint", nullable: false),
@@ -1829,7 +1904,7 @@ namespace Tzkt.Data.Migrations
                 name: "TxRollupSubmitBatchOps",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RollupId = table.Column<int>(type: "integer", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
@@ -1864,10 +1939,42 @@ namespace Tzkt.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "VdfRevelationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Cycle = table.Column<int>(type: "integer", nullable: false),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    Reward = table.Column<long>(type: "bigint", nullable: false),
+                    Solution = table.Column<byte[]>(type: "bytea", nullable: true),
+                    Proof = table.Column<byte[]>(type: "bytea", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VdfRevelationOps", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VdfRevelationOps_Accounts_BakerId",
+                        column: x => x.BakerId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_VdfRevelationOps_Blocks_Level",
+                        column: x => x.Level,
+                        principalTable: "Blocks",
+                        principalColumn: "Level",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "AccountCounter", "AccountsCount", "ActivationOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DelegationOpsCount", "DoubleBakingOpsCount", "DoubleEndorsingOpsCount", "DoublePreendorsingOpsCount", "EndorsementOpsCount", "EndorsingRewardOpsCount", "Hash", "KnownHead", "LastSync", "Level", "ManagerCounter", "Metadata", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PreendorsementOpsCount", "ProposalOpsCount", "ProposalsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDepositsLimitOpsCount", "StorageCounter", "Timestamp", "TokenBalanceCounter", "TokenBalancesCount", "TokenCounter", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "VotingEpoch", "VotingPeriod" },
-                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, null, null, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, "", 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, null, 0, "", 0, 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
+                columns: new[] { "Id", "AccountCounter", "AccountsCount", "ActivationOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DelegationOpsCount", "DoubleBakingOpsCount", "DoubleEndorsingOpsCount", "DoublePreendorsingOpsCount", "EndorsementOpsCount", "EndorsingRewardOpsCount", "EventCounter", "EventsCount", "Hash", "IncreasePaidStorageOpsCount", "KnownHead", "LastSync", "Level", "ManagerCounter", "Metadata", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PreendorsementOpsCount", "ProposalOpsCount", "ProposalsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDepositsLimitOpsCount", "StorageCounter", "Timestamp", "TokenBalancesCount", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "VdfRevelationOpsCount", "VotingEpoch", "VotingPeriod" },
+                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, null, null, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, null, 0, "", 0, 0L, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",
@@ -2330,9 +2437,77 @@ namespace Tzkt.Data.Migrations
                 column: "Level");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Events_ContractCodeHash",
+                table: "Events",
+                column: "ContractCodeHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_ContractCodeHash_Tag",
+                table: "Events",
+                columns: new[] { "ContractCodeHash", "Tag" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_ContractId",
+                table: "Events",
+                column: "ContractId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_ContractId_Tag",
+                table: "Events",
+                columns: new[] { "ContractId", "Tag" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_Id",
+                table: "Events",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_JsonPayload",
+                table: "Events",
+                column: "JsonPayload")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "jsonb_path_ops" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_Level",
+                table: "Events",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_Tag",
+                table: "Events",
+                column: "Tag");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_TransactionId",
+                table: "Events",
+                column: "TransactionId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FreezerUpdates_Cycle",
                 table: "FreezerUpdates",
                 column: "Cycle");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IncreasePaidStorageOps_ContractId",
+                table: "IncreasePaidStorageOps",
+                column: "ContractId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IncreasePaidStorageOps_Level",
+                table: "IncreasePaidStorageOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IncreasePaidStorageOps_OpHash",
+                table: "IncreasePaidStorageOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IncreasePaidStorageOps_SenderId",
+                table: "IncreasePaidStorageOps",
+                column: "SenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MigrationOps_AccountId",
@@ -2649,6 +2824,12 @@ namespace Tzkt.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_TokenBalances_IndexedAt",
+                table: "TokenBalances",
+                column: "IndexedAt",
+                filter: "\"IndexedAt\" is not null");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TokenBalances_LastLevel",
                 table: "TokenBalances",
                 column: "LastLevel");
@@ -2671,10 +2852,21 @@ namespace Tzkt.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Tokens_FirstMinterId",
+                table: "Tokens",
+                column: "FirstMinterId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tokens_Id",
                 table: "Tokens",
                 column: "Id",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tokens_IndexedAt",
+                table: "Tokens",
+                column: "IndexedAt",
+                filter: "\"IndexedAt\" is not null");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tokens_LastLevel",
@@ -2704,6 +2896,12 @@ namespace Tzkt.Data.Migrations
                 table: "TokenTransfers",
                 column: "Id",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TokenTransfers_IndexedAt",
+                table: "TokenTransfers",
+                column: "IndexedAt",
+                filter: "\"IndexedAt\" is not null");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenTransfers_Level",
@@ -2979,6 +3177,26 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_VdfRevelationOps_BakerId",
+                table: "VdfRevelationOps",
+                column: "BakerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VdfRevelationOps_Cycle",
+                table: "VdfRevelationOps",
+                column: "Cycle");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VdfRevelationOps_Level",
+                table: "VdfRevelationOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VdfRevelationOps_OpHash",
+                table: "VdfRevelationOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_VotingPeriods_Epoch",
                 table: "VotingPeriods",
                 column: "Epoch");
@@ -3051,7 +3269,7 @@ namespace Tzkt.Data.Migrations
                 table: "Blocks",
                 column: "RevelationId",
                 principalTable: "NonceRevelationOps",
-                principalColumn: "RevealedLevel",
+                principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
         }
 
@@ -3117,7 +3335,13 @@ namespace Tzkt.Data.Migrations
                 name: "EndorsingRewardOps");
 
             migrationBuilder.DropTable(
+                name: "Events");
+
+            migrationBuilder.DropTable(
                 name: "FreezerUpdates");
+
+            migrationBuilder.DropTable(
+                name: "IncreasePaidStorageOps");
 
             migrationBuilder.DropTable(
                 name: "MigrationOps");
@@ -3190,6 +3414,9 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "TxRollupSubmitBatchOps");
+
+            migrationBuilder.DropTable(
+                name: "VdfRevelationOps");
 
             migrationBuilder.DropTable(
                 name: "VotingPeriods");

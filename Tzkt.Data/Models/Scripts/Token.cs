@@ -87,6 +87,9 @@ namespace Tzkt.Data.Models
                 .IsUnique();
 
             modelBuilder.Entity<Token>()
+                .HasIndex(x => x.FirstMinterId);
+
+            modelBuilder.Entity<Token>()
                 .HasIndex(x => x.LastLevel);
 
             modelBuilder.Entity<Token>()
