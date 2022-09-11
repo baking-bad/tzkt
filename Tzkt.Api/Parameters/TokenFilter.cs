@@ -30,6 +30,12 @@ namespace Tzkt.Api
         public TokenStandardParameter standard { get; set; }
 
         /// <summary>
+        /// Filter by address of the first minter.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public AccountParameter firstMinter { get; set; }
+
+        /// <summary>
         /// Filter by level of the block where the token was first seen.  
         /// Click on the parameter to expand more details.
         /// </summary>
@@ -67,7 +73,7 @@ namespace Tzkt.Api
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("firstLevel", firstLevel), 
+                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
                 ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("metadata", metadata), ("indexedAt", indexedAt));
         }
     }

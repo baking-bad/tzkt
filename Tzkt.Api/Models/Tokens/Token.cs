@@ -28,6 +28,11 @@ namespace Tzkt.Api.Models
         public string Standard { get; set; }
 
         /// <summary>
+        /// Account, minted the token first.
+        /// </summary>
+        public Alias FirstMinter { get; set; }
+
+        /// <summary>
         /// Level of the block where the token was first seen.  
         /// **[sortable]**
         /// </summary>

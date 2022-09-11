@@ -622,6 +622,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     Id = Cache.AppState.NextSubId(op),
                     ContractId = contract.Id,
                     TokenId = tokenId,
+                    FirstMinterId = op.InitiatorId ?? op.SenderId,
                     FirstLevel = op.Level,
                     LastLevel = op.Level,
                     TotalBurned = BigInteger.Zero,

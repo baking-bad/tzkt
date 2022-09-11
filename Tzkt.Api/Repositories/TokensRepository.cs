@@ -37,6 +37,7 @@ namespace Tzkt.Api.Repositories
                         case "contract": columns.Add(@"""ContractId"""); break;
                         case "balancesCount": columns.Add(@"""BalancesCount"""); break;
                         case "holdersCount": columns.Add(@"""HoldersCount"""); break;
+                        case "firstMinter": columns.Add(@"""FirstMinterId"""); break;
                         case "firstLevel": columns.Add(@"""FirstLevel"""); break;
                         case "firstTime": columns.Add(@"""FirstLevel"""); break;
                         case "lastLevel": columns.Add(@"""LastLevel"""); break;
@@ -82,6 +83,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ContractId", filter.contract)
                 .Filter("TokenId", filter.tokenId)
                 .Filter("Tags", filter.standard)
+                .Filter("FirstMinterId", filter.firstMinter)
                 .Filter("FirstLevel", filter.firstLevel)
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
@@ -112,6 +114,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ContractId", filter.contract)
                 .Filter("TokenId", filter.tokenId)
                 .Filter("Tags", filter.standard)
+                .Filter("FirstMinterId", filter.firstMinter)
                 .Filter("FirstLevel", filter.firstLevel)
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
@@ -131,6 +134,7 @@ namespace Tzkt.Api.Repositories
                 Contract = Accounts.GetAlias(row.ContractId),
                 Id = row.Id,
                 BalancesCount = row.BalancesCount,
+                FirstMinter = Accounts.GetAlias(row.FirstMinterId),
                 FirstLevel = row.FirstLevel,
                 FirstTime = Times[row.FirstLevel],
                 HoldersCount = row.HoldersCount,
@@ -181,6 +185,18 @@ namespace Tzkt.Api.Repositories
                     case "holdersCount":
                         foreach (var row in rows)
                             result[j++][i] = row.HoldersCount;
+                        break;
+                    case "firstMinter":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.FirstMinterId);
+                        break;
+                    case "firstMinter.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.FirstMinterId).Name;
+                        break;
+                    case "firstMinter.address":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.FirstMinterId).Address;
                         break;
                     case "firstLevel":
                         foreach (var row in rows)

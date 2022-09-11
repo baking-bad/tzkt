@@ -12,6 +12,7 @@ namespace Tzkt.Data.Models
         public BigInteger TokenId { get; set; }
         public TokenTags Tags { get; set; }
 
+        public int FirstMinterId { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
 
