@@ -268,6 +268,7 @@ namespace Tzkt.Api.Repositories
                 tb.""ContractId"" as ""tContractId"",
                 t.""TokenId"" as ""tTokenId"",
                 t.""Tags"" as ""tTags"",
+                t.""TotalSupply"" as ""tTotalSupply"",
                 t.""Metadata"" as ""tMetadata""";
             if (fields != null)
             {
@@ -292,6 +293,7 @@ namespace Tzkt.Api.Repositories
                                 columns.Add(@"tb.""ContractId"" as ""tContractId""");
                                 columns.Add(@"t.""TokenId"" as ""tTokenId""");
                                 columns.Add(@"t.""Tags"" as ""tTags""");
+                                columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
                                 columns.Add(@"t.""Metadata"" as ""tMetadata""");
                             }
                             else
@@ -303,6 +305,7 @@ namespace Tzkt.Api.Repositories
                                     case "contract": columns.Add(@"tb.""ContractId"" as ""tContractId"""); break;
                                     case "tokenId": columns.Add(@"t.""TokenId"" as ""tTokenId"""); break;
                                     case "standard": columns.Add(@"t.""Tags"" as ""tTags"""); break;
+                                    case "totalSupply": columns.Add(@"t.""TotalSupply"" as ""tTotalSupply"""); break;
                                     case "metadata":
                                         if (subField.Path == null)
                                         {
@@ -409,6 +412,7 @@ namespace Tzkt.Api.Repositories
                     Contract = Accounts.GetAlias(row.tContractId),
                     TokenId = row.tTokenId,
                     Standard = TokenStandards.ToString(row.tTags),
+                    TotalSupply = row.tTotalSupply,
                     Metadata = (RawJson)row.tMetadata
                 }
             });
@@ -474,6 +478,7 @@ namespace Tzkt.Api.Repositories
                                 Contract = Accounts.GetAlias(row.tContractId),
                                 TokenId = row.tTokenId,
                                 Standard = TokenStandards.ToString(row.tTags),
+                                TotalSupply = row.tTotalSupply,
                                 Metadata = (RawJson)row.tMetadata
                             };
                         break;
@@ -500,6 +505,10 @@ namespace Tzkt.Api.Repositories
                     case "token.standard":
                         foreach (var row in rows)
                             result[j++][i] = TokenStandards.ToString(row.tTags);
+                        break;
+                    case "token.totalSupply":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTotalSupply;
                         break;
                     case "token.metadata":
                         foreach (var row in rows)
@@ -533,6 +542,7 @@ namespace Tzkt.Api.Repositories
                 tr.""ContractId"" as ""tContractId"",
                 t.""TokenId"" as ""tTokenId"",
                 t.""Tags"" as ""tTags"",
+                t.""TotalSupply"" as ""tTotalSupply"",
                 t.""Metadata"" as ""tMetadata""";
             if (fields != null)
             {
@@ -558,6 +568,7 @@ namespace Tzkt.Api.Repositories
                                 columns.Add(@"tr.""ContractId"" as ""tContractId""");
                                 columns.Add(@"t.""TokenId"" as ""tTokenId""");
                                 columns.Add(@"t.""Tags"" as ""tTags""");
+                                columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
                                 columns.Add(@"t.""Metadata"" as ""tMetadata""");
                             }
                             else
@@ -569,6 +580,7 @@ namespace Tzkt.Api.Repositories
                                     case "contract": columns.Add(@"tr.""ContractId"" as ""tContractId"""); break;
                                     case "tokenId": columns.Add(@"t.""TokenId"" as ""tTokenId"""); break;
                                     case "standard": columns.Add(@"t.""Tags"" as ""tTags"""); break;
+                                    case "totalSupply": columns.Add(@"t.""TotalSupply"" as ""tTotalSupply"""); break;
                                     case "metadata":
                                         if (subField.Path == null)
                                         {
@@ -680,6 +692,7 @@ namespace Tzkt.Api.Repositories
                     Contract = Accounts.GetAlias(row.tContractId),
                     TokenId = row.tTokenId,
                     Standard = TokenStandards.ToString(row.tTags),
+                    TotalSupply = row.tTotalSupply,
                     Metadata = (RawJson)row.tMetadata
                 }
             });
@@ -757,6 +770,7 @@ namespace Tzkt.Api.Repositories
                                 Contract = Accounts.GetAlias(row.tContractId),
                                 TokenId = row.tTokenId,
                                 Standard = TokenStandards.ToString(row.tTags),
+                                TotalSupply = row.tTotalSupply,
                                 Metadata = (RawJson)row.tMetadata
                             };
                         break;
@@ -783,6 +797,10 @@ namespace Tzkt.Api.Repositories
                     case "token.standard":
                         foreach (var row in rows)
                             result[j++][i] = TokenStandards.ToString(row.tTags);
+                        break;
+                    case "token.totalSupply":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTotalSupply;
                         break;
                     case "token.metadata":
                         foreach (var row in rows)
