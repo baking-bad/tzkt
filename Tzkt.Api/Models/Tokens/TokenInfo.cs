@@ -25,6 +25,11 @@ namespace Tzkt.Api.Models
         public string Standard { get; set; }
 
         /// <summary>
+        /// Total number of existing tokens (raw value, not divided by `decimals`). In historical token balances this field is omitted.
+        /// </summary>
+        public string TotalSupply { get; set; }
+
+        /// <summary>
         /// Token metadata.  
         /// **[sortable]**
         /// </summary>
