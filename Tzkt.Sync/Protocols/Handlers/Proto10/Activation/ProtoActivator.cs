@@ -668,6 +668,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         Tags = TokenTags.Fa12,
                         BalancesCount = 1,
                         ContractId = contract.Id,
+                        FirstMinterId = contract.Id,
                         FirstLevel = migration.Level,
                         HoldersCount = 1,
                         LastLevel = migration.Level,

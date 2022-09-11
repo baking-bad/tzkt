@@ -40,6 +40,7 @@ namespace Tzkt.Api.Controllers
                 filter.metadata != null ||
                 filter.standard != null ||
                 filter.firstTime != null ||
+                filter.firstMinter != null ||
                 filter.firstLevel != null ||
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
