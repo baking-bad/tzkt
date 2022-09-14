@@ -257,5 +257,27 @@ namespace Tzkt.Api.Models
         /// </summary>
         public QuoteShort Quote { get; set; }
         #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int Priority => BlockRound;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public Alias Baker => Producer;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public bool LBEscapeVote => LBToggle == false;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int LBEscapeEma => LBToggleEma;
+        #endregion
     }
 }
