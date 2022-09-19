@@ -41,21 +41,32 @@ namespace Tzkt.Api.Swagger
                         Name = "Get Started",
                         Description = File.Exists("Swagger/WsGetStarted.md")
                             ? File.ReadAllText("Swagger/WsGetStarted.md")
-                            : null
+                            : null,
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
                         Name = "Subscriptions",
                         Description = File.Exists("Swagger/WsSubscriptions.md")
                             ? File.ReadAllText("Swagger/WsSubscriptions.md")
-                            : null
+                            : null,
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
                         Name = "Examples",
                         Description = File.Exists("Swagger/WsExamples.md")
                             ? File.ReadAllText("Swagger/WsExamples.md")
-                            : null
+                            : null,
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
+                    });
+                    document.Tags.Add(new NSwag.OpenApiTag
+                    {
+                        Name = "Typescript SDK",
+                        Description = File.Exists("Swagger/TypescriptSdk.md")
+                            ? File.ReadAllText("Swagger/TypescriptSdk.md")
+                            : null,
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
                     });
                     document.ExtensionData = new Dictionary<string, object>
                     {
@@ -70,7 +81,18 @@ namespace Tzkt.Api.Swagger
                                 new
                                 {
                                     name = "WebSocket API",
-                                    tags = document.Tags.Select(x => x.Name).ToList()
+                                    tags = document.Tags
+                                        .Where(x => x.ExtensionData["x-tagGroup"].Equals("ws"))
+                                        .Select(x => x.Name)
+                                        .ToList()
+                                },
+                                new
+                                {
+                                    name = "Libraries",
+                                    tags = document.Tags
+                                        .Where(x => x.ExtensionData["x-tagGroup"].Equals("sdk"))
+                                        .Select(x => x.Name)
+                                        .ToList()
                                 }
                             }
                         }
