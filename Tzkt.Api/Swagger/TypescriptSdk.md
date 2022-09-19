@@ -12,7 +12,7 @@ For querying REST API:
 npm i @tzkt/sdk-api
 ```
 
-For TzKT events:
+For WebSocket API:
 ```bash
 npm i @tzkt/sdk-events
 ```
@@ -60,11 +60,11 @@ Please refer to the [original documentation](https://github.com/cellular/oazapft
 
 ### Subscriptions
 
-Create an instance of events service specifying TzKT events endpoint.
+Create an instance of events service specifying TzKT WebSocket endpoint.
 ```js
 import { EventsService } from "@tzkt/sdk-events";
 
-const events = new EventsService({ url: "https://api.tzkt.io/v1/events", reconnect: true });
+const events = new EventsService({ url: "https://api.tzkt.io/v1/ws", reconnect: true });
 ```
 
 Connection is not initiated until the first request (lazy connection):
