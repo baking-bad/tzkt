@@ -325,7 +325,7 @@ namespace Tzkt.Api.Controllers
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortMode sort = SortMode.Descending,
-            int? lastId = null,
+            long? lastId = null,
             [Range(0, 1000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
