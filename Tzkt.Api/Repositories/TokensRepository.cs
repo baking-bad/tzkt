@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using System;
 
 namespace Tzkt.Api.Repositories
 {
@@ -252,6 +253,34 @@ namespace Tzkt.Api.Repositories
 
             return result;
         }
+
+        public async Task<IEnumerable<Token>> GetTokensBatch(IEnumerable<string[]> ids)
+        {
+            using var db = GetConnection();
+            var cond = String.Join(",", ids.Select(x => $"('{Regex.Replace(x[0], @"\s+", "")}','{Regex.Replace(x[1], "[^0-9]", "")}')"));
+            var sql = new SqlBuilder($@"SELECT t.* FROM ""Tokens"" t left join ""Accounts"" a on t.""ContractId"" = a.""Id""
+                        where(a.""Address"", t.""TokenId"") in ({cond})");
+            var rows = await db.QueryAsync<dynamic>(sql.Query);
+            var result = rows.Select(row => new Token
+            {
+                Contract = Accounts.GetAlias(row.ContractId),
+                Id = row.Id,
+                BalancesCount = row.BalancesCount,
+                FirstLevel = row.FirstLevel,
+                FirstTime = Times[row.FirstLevel],
+                HoldersCount = row.HoldersCount,
+                LastLevel = row.LastLevel,
+                LastTime = Times[row.LastLevel],
+                Standard = TokenStandards.ToString(row.Tags),
+                TokenId = row.TokenId,
+                TotalBurned = row.TotalBurned,
+                TotalMinted = row.TotalMinted,
+                TotalSupply = row.TotalSupply,
+                TransfersCount = row.TransfersCount,
+                Metadata = row.Metadata
+            });
+            return result;
+        }
         #endregion
 
         #region token balances
@@ -413,6 +442,37 @@ namespace Tzkt.Api.Repositories
                     TokenId = row.tTokenId,
                     Standard = TokenStandards.ToString(row.tTags),
                     TotalSupply = row.tTotalSupply,
+                    Metadata = (RawJson)row.tMetadata
+                }
+            });
+        }
+
+        public async Task<IEnumerable<TokenBalance>> GetTokenBalancesBatch(IEnumerable<string[]> ids)
+        {
+            using var db = GetConnection();
+            var cond = String.Join(",", ids.Select(x => $"('{Regex.Replace(x[0], @"\s+", "")}','{Regex.Replace(x[1], "[^0-9]", "")}','{Regex.Replace(x[2], @"\s+", "")}')"));
+            var sql = new SqlBuilder($@"SELECT tb.""Id"",tb.""AccountId"",tb.""Balance"",tb.""FirstLevel"",tb.""LastLevel"",tb.""TransfersCount"",tb.""TokenId"" as ""tId"",tb.""ContractId"" as ""tContractId"",t.""TokenId"" as ""tTokenId"",t.""Tags"" as ""tTags"",t.""Metadata"" as ""tMetadata"" FROM ""TokenBalances"" tb
+                    left join ""Accounts"" a on tb.""AccountId"" = a.""Id""
+                    left join ""Tokens"" t on tb.""TokenId"" = t.""Id""
+                    left join ""Accounts"" c on t.""ContractId"" = c.""Id""
+                        where (c.""Address"", t.""TokenId"", a.""Address"") in ({cond})");
+            var rows = await db.QueryAsync<dynamic>(sql.Query);
+            return rows.Select(row => new TokenBalance
+            {
+                Id = row.Id,
+                Account = Accounts.GetAlias(row.AccountId),
+                Balance = row.Balance,
+                FirstLevel = row.FirstLevel,
+                FirstTime = Times[row.FirstLevel],
+                LastLevel = row.LastLevel,
+                LastTime = Times[row.LastLevel],
+                TransfersCount = row.TransfersCount,
+                Token = new TokenInfo
+                {
+                    Id = row.tId,
+                    Contract = Accounts.GetAlias(row.tContractId),
+                    TokenId = row.tTokenId,
+                    Standard = TokenStandards.ToString(row.tTags),
                     Metadata = (RawJson)row.tMetadata
                 }
             });
