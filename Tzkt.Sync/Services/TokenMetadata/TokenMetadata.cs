@@ -386,7 +386,7 @@ namespace Tzkt.Sync.Services
                     {
                         if (any) sql.AppendLine(",");
                         else any = true;
-                        param.Add($"@p{j}", JsonSerializer.Serialize(item.Metadata, options));
+                        param.Add($"@p{j}", JsonSerializer.Serialize(item.Metadata, options).Replace("\u0000", string.Empty));
                         sql.Append($"({contractId}, '{item.TokenId}', @p{j}::jsonb)");
                     }
                 }
