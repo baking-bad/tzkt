@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
+using Netezos.Encoding;
 
 namespace Tzkt.Sync.Services
 {
@@ -20,6 +22,7 @@ namespace Tzkt.Sync.Services
         readonly string ConnectionString;
         readonly TokenMetadataConfig Config;
         readonly ILogger Logger;
+        readonly Regex Regex = new(@"(?<=(^|[^\\])(\\\\)*)\\u0000", RegexOptions.Compiled);
 
         TokenMetadataState State;
 
@@ -327,7 +330,7 @@ namespace Tzkt.Sync.Services
             };
 
             return JsonSerializer.Deserialize<DipDupResponse<DipDupItem>>(
-                await res.Content.ReadAsStringAsync(), options).Data.Items;
+                Utf8.Parse(await res.Content.ReadAsStringAsync()), options).Data.Items;
         }
 
         async Task<List<DipDupItem>> GetDipDupMetadata<T>(Dictionary<(string, string), T> tokens, DipDupConfig dipDupConfig)
@@ -354,7 +357,7 @@ namespace Tzkt.Sync.Services
                     Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
                 var _items = JsonSerializer.Deserialize<DipDupResponse<DipDupItem>>(
-                    await res.Content.ReadAsStringAsync(), options).Data.Items;
+                    Utf8.Parse(await res.Content.ReadAsStringAsync()), options).Data.Items;
 
                 items.AddRange(_items.Where(x => tokens.ContainsKey((x.Contract, x.TokenId))));
                 if (_items.Count < dipDupConfig.SelectLimit) break;
@@ -386,7 +389,7 @@ namespace Tzkt.Sync.Services
                     {
                         if (any) sql.AppendLine(",");
                         else any = true;
-                        param.Add($"@p{j}", JsonSerializer.Serialize(item.Metadata, options).Replace("\u0000", string.Empty));
+                        param.Add($"@p{j}", Regex.Replace(JsonSerializer.Serialize(item.Metadata, options), string.Empty));
                         sql.Append($"({contractId}, '{item.TokenId}', @p{j}::jsonb)");
                     }
                 }
