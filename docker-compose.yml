@@ -32,7 +32,7 @@ services:
     image: bakingbad/tzkt-sync:latest
     environment:
       ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty}; 
-      TezosNode__Endpoint: ${NODE_RPC:-https://mainnet-tezos.giganode.io/}
+      TezosNode__Endpoint: ${NODE_RPC:-https://rpc.tzkt.io/mainnet/}
     depends_on:
       - db
 
