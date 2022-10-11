@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <AssemblyVersion>1.10.0</AssemblyVersion>
+    <AssemblyVersion>1.10.1</AssemblyVersion>
   </PropertyGroup>
   
   <PropertyGroup>
