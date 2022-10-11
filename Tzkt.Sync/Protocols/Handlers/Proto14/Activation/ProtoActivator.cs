@@ -52,6 +52,13 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             var stats = await Cache.Statistics.GetAsync(state.Level);
             stats.TotalCreated += 3_000_000_000L;
+
+            if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet
+            {
+                var votingPeriod = await Cache.Periods.GetAsync(58);
+                Db.TryAttach(votingPeriod);
+                votingPeriod.LastLevel = 0;
+            }
         }
 
         protected override async Task RevertContext(AppState state)
