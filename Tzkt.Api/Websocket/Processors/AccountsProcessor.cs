@@ -19,7 +19,9 @@ namespace Tzkt.Api.Websocket.Processors
         const string AccountsChannel = "accounts";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
+        static readonly HashSet<string> AllSubs = new();
         static readonly Dictionary<string, HashSet<string>> AccountSubs = new();
+
         static readonly Dictionary<string, int> Limits = new();
         #endregion
 
@@ -92,6 +94,16 @@ namespace Tzkt.Api.Websocket.Processors
 
                 foreach (var account in accounts)
                 {
+                    foreach (var clientId in AllSubs)
+                    {
+                        if (!toSend.TryGetValue(clientId, out var list))
+                        {
+                            list = new(4);
+                            toSend.Add(clientId, list);
+                        }
+                        list.Add(account);
+                    }
+
                     if (AccountSubs.TryGetValue(account.Address, out var accountSubs))
                     {
                         foreach (var clientId in accountSubs)
@@ -110,6 +122,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region send
                 foreach (var (connectionId, updatesList) in toSend.Where(x => x.Value.Count > 0))
                 {
+                    // TODO: distinct by Id
                     sendings.Add(Context.Clients
                         .Client(connectionId)
                         .SendData(AccountsChannel, updatesList, State.Current.Level));
@@ -152,7 +165,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region check limits
                 var cnt = Limits.GetValueOrDefault(connectionId);
 
-                if (cnt + parameter.Addresses.Count > Config.MaxAccountsSubscriptions)
+                if (cnt + (parameter.Addresses?.Count ?? 0) > Config.MaxAccountsSubscriptions)
                     throw new HubException($"Subscriptions limit exceeded");
                 
                 if (cnt > 0) // reuse already allocated string
@@ -160,15 +173,23 @@ namespace Tzkt.Api.Websocket.Processors
                 #endregion
 
                 #region add to subs
-                foreach (var address in parameter.Addresses)
+                if (parameter.Addresses?.Count > 0)
                 {
-                    if (!AccountSubs.TryGetValue(address, out var accountSub))
+                    foreach (var address in parameter.Addresses)
                     {
-                        accountSub = new(4);
-                        AccountSubs.Add(address, accountSub);
-                    }
+                        if (!AccountSubs.TryGetValue(address, out var accountSub))
+                        {
+                            accountSub = new(4);
+                            AccountSubs.Add(address, accountSub);
+                        }
 
-                    if (accountSub.Add(connectionId))
+                        if (accountSub.Add(connectionId))
+                            Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
+                    }
+                }
+                else
+                {
+                    if (AllSubs.Add(connectionId))
                         Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
                 }
                 #endregion
@@ -211,6 +232,9 @@ namespace Tzkt.Api.Websocket.Processors
                 Sema.Wait();
                 if (!Limits.ContainsKey(connectionId)) return;
                 Logger.LogDebug("Remove subscription...");
+
+                if (AllSubs.Remove(connectionId))
+                    Limits[connectionId]--;
 
                 foreach (var (key, value) in AccountSubs)
                 {

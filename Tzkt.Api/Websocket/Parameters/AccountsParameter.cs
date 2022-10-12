@@ -11,12 +11,13 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (Addresses == null || !Addresses.Any())
-                throw new HubException("Empty accounts array. At least one address should be provided");
-            if (Addresses.Any(string.IsNullOrEmpty))
-                throw new HubException("Empty address. Array should not contain nulls or empty strings");
-            if (Addresses.Any(x => !Regex.IsMatch(x, "^(tz1|tz2|tz3|KT1|txr1)[0-9A-Za-z]{33}$")))
-                throw new HubException("Array contains an invalid address");
+            if (Addresses?.Count > 0)
+            {
+                if (Addresses.Any(string.IsNullOrEmpty))
+                    throw new HubException("Empty address. Array should not contain nulls or empty strings");
+                if (Addresses.Any(x => !Regex.IsMatch(x, "^(tz1|tz2|tz3|KT1|txr1)[0-9A-Za-z]{33}$")))
+                    throw new HubException("Array contains an invalid address");
+            }
         }
     }
 }

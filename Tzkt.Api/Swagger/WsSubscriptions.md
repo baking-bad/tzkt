@@ -118,7 +118,7 @@ Sends touched accounts (affected by any operation in any way).
 
 ````js
 {
-	addresses: [], // [required] array of address you want to subscribe to
+	addresses: [], // array of address you want to subscribe to
 }
 ````
 
