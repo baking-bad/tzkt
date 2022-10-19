@@ -89,7 +89,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://snapshots.tzkt.io/tzkt_v1.10_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -321,13 +321,13 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
  - Ghostnet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_ghostnet.backup
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.10_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
  - Jakartanet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_jakartanet.backup
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.10_jakartanet.backup
    - RPC node: https://rpc.tzkt.io/jakartanet/
  - Kathmandunet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.10_kathmandunet.backup
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.10_kathmandunet.backup
    - RPC node: https://rpc.tzkt.io/kathmandunet/
 
 ### Testnet installation using docker containers
