@@ -41,11 +41,15 @@ namespace Tzkt.Sync.Protocols.Proto14
             try
             {
                 var type = Micheline.FromJson(content.Required("type"));
-                var rawPayload = Micheline.FromJson(content.Required("payload"));
                 var schema = Schema.Create(type as MichelinePrim);
+                contractEvent.Type = type.ToBytes();
+
+                var rawPayload = content.TryGetProperty("payload", out var payload) 
+                    ? Micheline.FromJson(payload)
+                    : new MichelinePrim { Prim = PrimType.Unit };
+
                 contractEvent.JsonPayload = schema.Humanize(rawPayload);
                 contractEvent.RawPayload = schema.Optimize(rawPayload).ToBytes();
-                contractEvent.Type = type.ToBytes();
             }
             catch (Exception ex)
             {

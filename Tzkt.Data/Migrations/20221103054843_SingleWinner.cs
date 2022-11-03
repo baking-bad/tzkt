@@ -24,6 +24,11 @@ namespace Tzkt.Data.Migrations
                 SET ""SingleWinner"" = true
                 WHERE ""Kind"" = {(int)PeriodKind.Proposal}
                 AND ""TopVotingPower"" > 0");
+
+            migrationBuilder.Sql($@"
+                UPDATE ""VotingPeriods""
+                SET ""Status"" = {(int)PeriodStatus.Success}
+                WHERE ""Status"" = {(int)PeriodStatus.NoSingleWinner}");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
