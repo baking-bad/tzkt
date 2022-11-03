@@ -23,6 +23,8 @@ namespace Tzkt.Data.Models
         public int? ProposalsCount { get; set; }
         public int? TopUpvotes { get; set; }
         public long? TopVotingPower { get; set; }
+
+        public bool? SingleWinner { get; set; }
         #endregion
 
         #region ballot
@@ -81,6 +83,7 @@ namespace Tzkt.Data.Models
         NoProposals,
         NoQuorum,
         NoSupermajority,
+        NoSingleWinner,
         Success
     }
 

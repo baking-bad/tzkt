@@ -123,6 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 period.ProposalsCount = 0;
                 period.TopUpvotes = 0;
                 period.TopVotingPower = 0;
+                period.SingleWinner = false;
             }
             else
             {
@@ -136,6 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 period.ProposalsCount = null;
                 period.TopUpvotes = null;
                 period.TopVotingPower = null;
+                period.SingleWinner = null;
             }
 
             period.ParticipationEma = null;

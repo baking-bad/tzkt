@@ -83,6 +83,11 @@ namespace Tzkt.Sync.Protocols.Proto3
                     {
                         period.TopUpvotes = proposal.Upvotes;
                         period.TopVotingPower = proposal.VotingPower;
+                        period.SingleWinner = true;
+                    }
+                    else if (proposal.VotingPower == period.TopVotingPower)
+                    {
+                        period.SingleWinner = false;
                     }
 
                     snapshot.Status = VoterStatus.Upvoted;
@@ -132,13 +137,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 if (period.ProposalsCount > 1)
                 {
                     var proposals = await Db.Proposals
-                        .AsNoTracking()
                         .Where(x => x.Epoch == period.Epoch)
                         .ToListAsync();
-
-                    var curr = proposals.First(x => x.Id == proposal.Id);
-                    curr.VotingPower -= proposalOp.VotingPower;
-                    curr.Upvotes--;
 
                     var prevMax = proposals
                         .OrderByDescending(x => x.VotingPower)
@@ -146,11 +146,13 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     period.TopUpvotes = prevMax.Upvotes;
                     period.TopVotingPower = prevMax.VotingPower;
+                    period.SingleWinner = proposals.Count(x => x.VotingPower == period.TopVotingPower) == 1;
                 }
                 else
                 {
                     period.TopUpvotes = proposal.Upvotes;
                     period.TopVotingPower = proposal.VotingPower;
+                    period.SingleWinner = proposal.VotingPower > 0;
                 }
 
                 if (proposal.Upvotes == 0)
