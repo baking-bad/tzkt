@@ -6,7 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+<<<<<<< HEAD
     <PackageReference Include="Netezos" Version="2.7.2" />
+=======
+    <PackageReference Include="App.Metrics" Version="4.3.0" />
+    <PackageReference Include="App.Metrics.AspNetCore.All" Version="4.3.0" />
+    <PackageReference Include="App.Metrics.AspNetCore.Tracking" Version="4.3.0" />
+    <PackageReference Include="Netezos" Version="2.7.2" />
+>>>>>>> 6e8f4602 (Metrics inital)
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.0" />
   </ItemGroup>
 

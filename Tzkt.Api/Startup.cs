@@ -73,6 +73,7 @@ namespace Tzkt.Api
             services.AddStateListener();
 
             services.AddControllers()
+                .AddMetrics()
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new AccountConverter());

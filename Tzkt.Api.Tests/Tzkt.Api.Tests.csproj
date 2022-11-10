@@ -9,6 +9,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="App.Metrics" Version="4.3.0" />
+        <PackageReference Include="App.Metrics.AspNetCore.All" Version="4.3.0" />
+        <PackageReference Include="App.Metrics.AspNetCore.Tracking" Version="4.3.0" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
         <PackageReference Include="xunit" Version="2.4.2" />
