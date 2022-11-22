@@ -11,17 +11,17 @@ using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 using Tzkt.Sync.Services;
-using Tzkt.Sync.Protocols.Proto14;
+using Tzkt.Sync.Protocols.Proto15;
 
 namespace Tzkt.Sync.Protocols
 {
-    class Proto14Handler : ProtocolHandler
+    class Proto15Handler : ProtocolHandler
     {
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public Proto14Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto14Handler> logger)
+        public Proto15Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto15Handler> logger)
             : base(node, db, cache, quotes, services, config, logger)
         {
             Rpc = new Rpc(node);

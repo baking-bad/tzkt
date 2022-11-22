@@ -25,6 +25,7 @@ namespace Tzkt.Sync
             services.AddScoped<Proto12Handler>();
             services.AddScoped<Proto13Handler>();
             services.AddScoped<Proto14Handler>();
+            services.AddScoped<Proto15Handler>();
         }
 
         public static ProtocolHandler GetProtocolHandler(this IServiceProvider services, int level, string protocol)
@@ -47,6 +48,7 @@ namespace Tzkt.Sync
                     "Psithaca2MLRFYargivpo7YvUr7wUDqyxrdhC5CQq78mRvimz6A" => services.GetRequiredService<Proto12Handler>(),
                     "PtJakart2xVj7pYXJBXrqHgd82rdkLey5ZeeGwDgPp9rhQUbSqY" => services.GetRequiredService<Proto13Handler>(),
                     "PtKathmankSpLLDALzWw7CGD2j2MtyveTwboEYokqUCP4a1LxMg" => services.GetRequiredService<Proto14Handler>(),
+                    "PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW" => services.GetRequiredService<Proto15Handler>(),
                     _ => throw new NotImplementedException($"Protocol '{protocol}' is not supported"),
                 };
             }
