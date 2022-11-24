@@ -108,7 +108,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 BallotQuorumMax = prev.BallotQuorumMax,
                 ProposalQuorum = prev.ProposalQuorum,
                 LBSubsidy = prev.LBSubsidy,
-                LBSunsetLevel = prev.LBSunsetLevel,
                 LBToggleThreshold = prev.LBToggleThreshold,
                 ConsensusThreshold = prev.ConsensusThreshold,
                 DoubleBakingPunishment = prev.DoubleBakingPunishment,
