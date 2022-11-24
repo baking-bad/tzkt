@@ -333,6 +333,7 @@ namespace Tzkt.Sync
                         b.TransferTicketOps = null;
                         b.IncreasePaidStorageOps = null;
                         b.VdfRevelationOps = null;
+                        b.UpdateConsensusKeyOps = null;
                         break;
                 }
             }

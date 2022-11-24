@@ -54,6 +54,7 @@ namespace Tzkt.Data
         public DbSet<TransferTicketOperation> TransferTicketOps { get; set; }
 
         public DbSet<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+        public DbSet<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; }
 
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
@@ -154,6 +155,7 @@ namespace Tzkt.Data
             modelBuilder.BuildTransferTicketOperationModel();
 
             modelBuilder.BuildIncreasePaidStorageOperationModel();
+            modelBuilder.BuildUpdateConsensusKeyOperationModel();
 
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();

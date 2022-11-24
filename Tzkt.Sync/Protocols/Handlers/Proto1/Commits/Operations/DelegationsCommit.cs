@@ -472,6 +472,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TxRollupReturnBondCount = user.TxRollupReturnBondCount,
                 TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
                 IncreasePaidStorageCount = user.IncreasePaidStorageCount,
+                UpdateConsensusKeyCount = user.UpdateConsensusKeyCount,
                 RollupBonds = user.RollupBonds,
                 RollupsCount = user.RollupsCount
             };
@@ -622,6 +623,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                             touched.Add((op, entry.State));
                         }
                         break;
+                    case UpdateConsensusKeyOperation op:
+                        if (op.Sender?.Id == user.Id)
+                        {
+                            op.Sender = delegat;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
                     case Contract contract:
                         if (contract.WeirdDelegate?.Id == user.Id || contract.Creator?.Id == user.Id || contract.Manager?.Id == user.Id)
                         {
@@ -695,6 +703,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
                 TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
                 IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
+                UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
                 RollupBonds = delegat.RollupBonds,
                 RollupsCount = delegat.RollupsCount
             };
@@ -848,6 +857,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                         }
                         break;
                     case IncreasePaidStorageOperation op:
+                        if (op.Sender?.Id == delegat.Id)
+                        {
+                            op.Sender = user;
+                            touched.Add((op, entry.State));
+                        }
+                        break;
+                    case UpdateConsensusKeyOperation op:
                         if (op.Sender?.Id == delegat.Id)
                         {
                             op.Sender = user;

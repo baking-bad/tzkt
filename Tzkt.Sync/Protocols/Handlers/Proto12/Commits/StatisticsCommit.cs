@@ -179,6 +179,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                     statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
             }
 
+            if (block.UpdateConsensusKeyOps != null)
+            {
+                var ops = block.UpdateConsensusKeyOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+            }
+
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
                 statistics.Cycle = block.Cycle;
 
