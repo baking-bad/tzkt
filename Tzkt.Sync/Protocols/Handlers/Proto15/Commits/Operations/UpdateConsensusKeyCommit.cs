@@ -76,6 +76,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
+
+            Cache.AppState.Get().UpdateConsensusKeyOpsCount++;
             #endregion
 
             #region apply result
@@ -122,6 +124,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             sender.UpdateConsensusKeyCount--;
 
             sender.Counter = operation.Counter - 1;
+
+            Cache.AppState.Get().UpdateConsensusKeyOpsCount--;
             #endregion
 
             Db.UpdateConsensusKeyOps.Remove(operation);

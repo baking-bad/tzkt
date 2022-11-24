@@ -75,6 +75,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             if (target != drainedBaker && target != blockBaker) target.DrainDelegateCount++;
 
             block.Operations |= Operations.DrainDelegate;
+
+            Cache.AppState.Get().DrainDelegateOpsCount++;
             #endregion
 
             Db.DrainDelegateOps.Add(operation);
@@ -117,6 +119,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             drainedBaker.DrainDelegateCount--;
             if (blockBaker != drainedBaker) blockBaker.DrainDelegateCount--;
             if (target != drainedBaker && target != blockBaker) target.DrainDelegateCount--;
+
+            Cache.AppState.Get().DrainDelegateOpsCount--;
             #endregion
 
             Db.DrainDelegateOps.Remove(operation);
