@@ -105,8 +105,23 @@ namespace Tzkt.Sync.Protocols
                 throw new Exception("Invalid sampler 'support'");
 
             for (int i = 0; i < Bakers.Length; i++)
-                if (PubKey.FromBase58(state.support.elements[i]).Address != proto.Cache.Accounts.GetDelegate(Bakers[i]).Address)
-                    throw new Exception("Invalid sampler 'support' element");
+            {
+                if (state.support.elements[i] is DJsonValue)
+                {
+                    if (PubKey.FromBase58(state.support.elements[i]).Address != proto.Cache.Accounts.GetDelegate(Bakers[i]).Address)
+                        throw new Exception("Invalid sampler 'support' element");
+                }
+                else if (state.support.elements[i].@delegate == null)
+                {
+                    if (PubKey.FromBase58(state.support.elements[i].consensus_pk).Address != proto.Cache.Accounts.GetDelegate(Bakers[i]).Address)
+                        throw new Exception("Invalid sampler 'support' element");
+                }
+                else
+                {
+                    if (state.support.elements[i].@delegate != proto.Cache.Accounts.GetDelegate(Bakers[i]).Address)
+                        throw new Exception("Invalid sampler 'support' element");
+                }
+            }
 
             if (state.p.elements.length != P.Length)
                 throw new Exception("Invalid sampler 'p'");

@@ -33,6 +33,9 @@
     <None Update="Protocols\Handlers\Proto13\Activation\patched.contracts">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Protocols\Handlers\Proto15\Activation\patched.contracts">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
