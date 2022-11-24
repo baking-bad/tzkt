@@ -121,6 +121,9 @@ namespace Tzkt.Sync.Protocols
                         case "vdf_revelation":
                             await new VdfRevelationCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "drain_delegate":
+                            await new DrainDelegateCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[2]");
                     }
@@ -374,6 +377,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.DoublePreendorsings))
                 operations.AddRange(await Db.DoublePreendorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.DrainDelegate))
+                operations.AddRange(await Db.DrainDelegateOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Ballots))
                 operations.AddRange(await Db.BallotOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -440,6 +446,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case VdfRevelationOperation op:
                         await new VdfRevelationCommit(this).Revert(currBlock, op);
+                        break;
+                    case DrainDelegateOperation op:
+                        await new DrainDelegateCommit(this).Revert(currBlock, op);
                         break;
                     case RevealOperation reveal:
                         await new RevealsCommit(this).Revert(currBlock, reveal);

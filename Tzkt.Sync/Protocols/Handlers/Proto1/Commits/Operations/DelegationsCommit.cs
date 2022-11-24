@@ -473,6 +473,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
                 IncreasePaidStorageCount = user.IncreasePaidStorageCount,
                 UpdateConsensusKeyCount = user.UpdateConsensusKeyCount,
+                DrainDelegateCount = user.DrainDelegateCount,
                 RollupBonds = user.RollupBonds,
                 RollupsCount = user.RollupsCount
             };
@@ -667,7 +668,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var delegat = delegation.Delegate;
 
             var user = new User
-            {                
+            {
                 Address = delegat.Address,
                 FirstLevel = delegat.FirstLevel,
                 LastLevel = delegat.LastLevel,
@@ -704,6 +705,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
                 IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
                 UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
+                DrainDelegateCount = delegat.DrainDelegateCount,
                 RollupBonds = delegat.RollupBonds,
                 RollupsCount = delegat.RollupsCount
             };

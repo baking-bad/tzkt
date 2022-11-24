@@ -3,7 +3,7 @@
 namespace Tzkt.Data.Models
 {
     [Flags]
-    public enum Operations
+    public enum Operations : long
     {
         None                        = 0b_0000_0000_0000_0000_0000_0000_0000_0000,
 
@@ -47,5 +47,6 @@ namespace Tzkt.Data.Models
         VdfRevelation               = 0b_0010_0000_0000_0000_0000_0000_0000_0000,
         
         UpdateConsensusKey          = 0b_0100_0000_0000_0000_0000_0000_0000_0000,
+        DrainDelegate               = 0b_1000_0000_0000_0000_0000_0000_0000_0000,
     }
 }
