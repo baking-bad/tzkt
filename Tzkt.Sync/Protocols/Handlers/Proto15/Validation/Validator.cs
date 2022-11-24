@@ -176,6 +176,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
                             case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
                             case "increase_paid_storage": await ValidateIncreasePaidStorage(content); break;
+                            case "update_consensus_key": await ValidateUpdateConsensusKey(content); break;
                             case "tx_rollup_origination": await ValidateTxRollupOrigination(content); break;
                             case "tx_rollup_submit_batch": await ValidateTxRollupSubmitBatch(content); break; 
                             case "tx_rollup_commit": await ValidateTxRollupCommit(content); break; 
@@ -483,8 +484,21 @@ namespace Tzkt.Sync.Protocols.Proto15
                 source,
                 content.RequiredInt64("fee"));
         }
-
+        
         protected virtual async Task ValidateIncreasePaidStorage(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+        }
+
+        protected virtual async Task ValidateUpdateConsensusKey(JsonElement content)
         {
             var source = content.RequiredString("source");
 

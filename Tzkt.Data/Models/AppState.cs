@@ -72,6 +72,7 @@ namespace Tzkt.Data.Models
         public int TransferTicketOpsCount { get; set; }
 
         public int IncreasePaidStorageOpsCount { get; set; }
+        public int UpdateConsensusKeyOpsCount { get; set; }
 
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }

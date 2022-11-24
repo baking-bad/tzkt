@@ -45,5 +45,7 @@ namespace Tzkt.Data.Models
 
         IncreasePaidStorage         = 0b_0001_0000_0000_0000_0000_0000_0000_0000,
         VdfRevelation               = 0b_0010_0000_0000_0000_0000_0000_0000_0000,
+        
+        UpdateConsensusKey          = 0b_0100_0000_0000_0000_0000_0000_0000_0000,
     }
 }

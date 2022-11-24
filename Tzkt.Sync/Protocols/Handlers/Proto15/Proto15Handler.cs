@@ -144,6 +144,9 @@ namespace Tzkt.Sync.Protocols
                         case "increase_paid_storage":
                             await new IncreasePaidStorageCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "update_consensus_key":
+                            await new UpdateConsensusKeyCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         case "reveal":
                             await new RevealsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
@@ -323,6 +326,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.IncreasePaidStorage))
                 operations.AddRange(await Db.IncreasePaidStorageOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.UpdateConsensusKey))
+                operations.AddRange(await Db.UpdateConsensusKeyOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Revelations))
                 operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -440,6 +446,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case IncreasePaidStorageOperation op:
                         await new IncreasePaidStorageCommit(this).Revert(currBlock, op);
+                        break;
+                    case UpdateConsensusKeyOperation op:
+                        await new UpdateConsensusKeyCommit(this).Revert(currBlock, op);
                         break;
                     case RegisterConstantOperation registerConstant:
                         await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
