@@ -55,6 +55,7 @@ namespace Tzkt.Data
 
         public DbSet<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
         public DbSet<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; }
+        public DbSet<DrainDelegateOperation> DrainDelegateOps { get; set; }
 
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
@@ -156,6 +157,7 @@ namespace Tzkt.Data
 
             modelBuilder.BuildIncreasePaidStorageOperationModel();
             modelBuilder.BuildUpdateConsensusKeyOperationModel();
+            modelBuilder.BuildDrainDelegateOperationModel();
 
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();

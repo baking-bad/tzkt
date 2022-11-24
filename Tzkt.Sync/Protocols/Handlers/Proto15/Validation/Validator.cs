@@ -169,6 +169,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                             case "double_preendorsement_evidence": ValidateDoubleBaking(content); break;
                             case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
                             case "vdf_revelation": ValidateVdfRevelation(content); break;
+                            case "drain_delegate": ValidateDrainDelegate(content); break;
                             case "delegation": await ValidateDelegation(content); break;
                             case "origination": await ValidateOrigination(content); break;
                             case "transaction": await ValidateTransaction(content); break;
@@ -296,7 +297,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             if (balanceUpdate.RequiredInt64("change") != Protocol.RevelationReward)
                 throw new ValidationException("invalid seed nonce revelation balance update amount");
         }
-
+        
         protected virtual void ValidateVdfRevelation(JsonElement content)
         {
             var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()
@@ -307,6 +308,21 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             if (balanceUpdate.ValueKind != JsonValueKind.Undefined && balanceUpdate.RequiredString("contract") != Proposer)
                 throw new ValidationException("invalid vdf revelation baker");
+        }
+
+        protected virtual void ValidateDrainDelegate(JsonElement content)
+        {
+            var drainedBaker = content.RequiredString("delegate");
+            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
+            
+            if (!Cache.Accounts.DelegateExists(drainedBaker))
+                throw new ValidationException("unknown drained delegate");
+
+            if (balanceUpdates.Count() % 2 != 0)
+                throw new ValidationException("invalid drain balance updates count");
+
+            if (balanceUpdates.Where(x => x.RequiredInt64("change") < 0).Any(x => x.RequiredString("contract") != drainedBaker))
+                throw new ValidationException("invalid drain balance updates");
         }
 
         protected virtual async Task ValidateDelegation(JsonElement content)
