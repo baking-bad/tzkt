@@ -58,7 +58,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.TimeBetweenBlocks = parameters["minimal_block_delay"]?.Value<int>() ?? 30;
 
             protocol.LBSubsidy = parameters["liquidity_baking_subsidy"]?.Value<int>() ?? 2_500_000;
-            protocol.LBSunsetLevel = parameters["liquidity_baking_sunset_level"]?.Value<int>() ?? 2_032_928;
             protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 1_000_000) * 1000;
         }
 
@@ -81,7 +80,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.TimeBetweenBlocks /= 2;
 
             protocol.LBSubsidy = 2_500_000;
-            protocol.LBSunsetLevel = 2_032_928;
             protocol.LBToggleThreshold = 1_000_000_000;
         }
 

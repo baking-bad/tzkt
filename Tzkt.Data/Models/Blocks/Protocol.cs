@@ -55,10 +55,6 @@ namespace Tzkt.Data.Models
         /// </summary>
         public int LBSubsidy { get; set; }
         /// <summary>
-        /// Level after protocol activation when liquidity baking shuts off
-        /// </summary>
-        public int LBSunsetLevel { get; set; }
-        /// <summary>
         /// 1/2 window size of 2000 blocks with precision of 1000000 for integer computation
         /// </summary>
         public int LBToggleThreshold { get; set; }
