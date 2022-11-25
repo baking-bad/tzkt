@@ -38,6 +38,8 @@ namespace Tzkt.Api.Repositories
                 TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
                 VdfRevelationsCount = delegat.VdfRevelationsCount,
                 IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
+                UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
+                DrainDelegateCount = delegat.DrainDelegateCount,
                 FrozenDeposit = delegat.FrozenDeposit,
                 FrozenDepositLimit = delegat.FrozenDepositLimit,
                 DelegatedBalance = delegat.DelegatedBalance,
@@ -137,6 +139,8 @@ namespace Tzkt.Api.Repositories
                     TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
                     VdfRevelationsCount = row.VdfRevelationsCount,
                     IncreasePaidStorageCount = row.IncreasePaidStorageCount,
+                    UpdateConsensusKeyCount = row.UpdateConsensusKeyCount,
+                    DrainDelegateCount = row.DrainDelegateCount,
                     FrozenDeposit = row.FrozenDeposit,
                     FrozenDepositLimit = row.FrozenDepositLimit,
                     DelegatedBalance = row.DelegatedBalance,
@@ -251,6 +255,8 @@ namespace Tzkt.Api.Repositories
                     case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
                     case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
                     case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
+                    case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
+                    case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
                 }
             }
 
@@ -518,9 +524,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.IncreasePaidStorageCount;
                         break;
+                    case "updateConsensusKeyCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UpdateConsensusKeyCount;
+                        break;
+                    case "drainDelegateCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DrainDelegateCount;
+                        break;
                 }
             }
-
+            
             return result;
         }
 
@@ -594,6 +608,8 @@ namespace Tzkt.Api.Repositories
                 case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
                 case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
                 case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
+                case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
+                case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
             }
 
             if (columns.Count == 0)
@@ -856,6 +872,14 @@ namespace Tzkt.Api.Repositories
                 case "increasePaidStorageCount":
                     foreach (var row in rows)
                         result[j++] = row.IncreasePaidStorageCount;
+                    break;
+                case "updateConsensusKeyCount":
+                    foreach (var row in rows)
+                        result[j++] = row.UpdateConsensusKeyCount;
+                    break;
+                case "drainDelegateCount":
+                    foreach (var row in rows)
+                        result[j++] = row.DrainDelegateCount;
                     break;
             }
 

@@ -1616,6 +1616,158 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region drain delegate
+        /// <summary>
+        /// Get drain delegate
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of drain delegate operations.
+        /// </remarks>
+        /// <param name="anyof">Filtersby any of the specified fields. Example: `anyof.delegate.target=tz1...` will return operations where `delegate` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="delegate">Filters by drained baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="target">Filters by target. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("drain_delegate")]
+        public async Task<ActionResult<IEnumerable<DrainDelegateOperation>>> GetDrainDelegateOps(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "delegate,target")]
+            AnyOfParameter anyof,
+            AccountParameter @delegate,
+            AccountParameter target,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (@delegate != null)
+            {
+                if (@delegate.Eqx != null)
+                    return new BadRequest($"{nameof(@delegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (@delegate.Nex != null)
+                    return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (@delegate.Eq == -1 || @delegate.In?.Count == 0 || @delegate.Null == true)
+                    return Ok(Enumerable.Empty<DrainDelegateOperation>());
+            }
+
+            if (target != null)
+            {
+                if (target.Eqx != null)
+                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (target.Nex != null)
+                    return new BadRequest($"{nameof(target)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (target.Eq == -1 || target.In?.Count == 0 || target.Null == true)
+                    return Ok(Enumerable.Empty<DrainDelegateOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("delegate", @delegate), ("target", target), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get drain delegate by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns a drain delegate operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("drain_delegate/{hash}")]
+        public async Task<ActionResult<IEnumerable<DrainDelegateOperation>>> GetDrainDelegateByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDrainDelegates(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get drain delegate count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of drain delegate operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("drain_delegate/count")]
+        public async Task<ActionResult<int>> GetDrainDelegateOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.DrainDelegateOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDrainDelegatesCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
         #region delegations
         /// <summary>
         /// Get delegations
@@ -4235,7 +4387,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
 
                 if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
-                    return Ok(Enumerable.Empty<RegisterConstantOperation>());
+                    return Ok(Enumerable.Empty<IncreasePaidStorageOperation>());
             }
 
             if (contract != null)
@@ -4335,6 +4487,143 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetIncreasePaidStorageOpsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
+        #region update consensus key
+        /// <summary>
+        /// Get update consensus key
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of update consensus key operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="activationCycle">Filters by activation cycle. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts operations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("update_consensus_key")]
+        public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyOps(
+            AccountParameter sender,
+            Int32Parameter activationCycle,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<UpdateConsensusKeyOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sender", sender), ("activationCycle", activationCycle), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get update consensus key by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns update consensus key operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("update_consensus_key/{hash}")]
+        public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetUpdateConsensusKeys(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get update consensus key count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of update consensus key operations.
+        /// </remarks>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("update_consensus_key/count")]
+        public async Task<ActionResult<int>> GetUpdateConsensusKeyOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.UpdateConsensusKeyOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetUpdateConsensusKeysCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }

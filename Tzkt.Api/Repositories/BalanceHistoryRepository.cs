@@ -277,6 +277,7 @@ namespace Tzkt.Api.Repositories
                 if (user.Activated == true) SumActivations(union, from, to);
                 if (user.RegisterConstantsCount > 0) SumRegisterConstants(union, from, to);
                 if (user.SetDepositsLimitsCount > 0) SumSetDepositsLimits(union, from, to);
+                if (user.DrainDelegateCount > 0) SumDrainDelegateOps(union, from, to);
             }
 
             if (account is RawDelegate delegat)
@@ -290,6 +291,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.NonceRevelationsCount > 0) SumNonceRevelations(union, from, to);
                 if (delegat.VdfRevelationsCount > 0) SumVdfRevelations(union, from, to);
                 if (delegat.RevelationPenaltiesCount > 0) SumRevelationPenalties(union, from, to);
+                if (delegat.UpdateConsensusKeyCount > 0) SumUpdateConsensusKeyOps(union, from, to);
             }
 
             return union.ToString();
@@ -881,6 +883,55 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void SumUpdateConsensusKeyOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""UpdateConsensusKeyOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumDrainDelegateOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region delegate
+            sql.Append(@"SUM(-""Amount"" - ""Fee"") as ""Change"" ");
+            sql.Append(@"FROM ""DrainDelegateOps"" ");
+            sql.Append(@"WHERE ""DelegateId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region target
+            sql.Append(@"SUM(""Amount"") as ""Change"" ");
+            sql.Append(@"FROM ""DrainDelegateOps"" ");
+            sql.Append(@"WHERE ""TargetId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
         void SumRevelationPenalties(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -940,6 +991,7 @@ namespace Tzkt.Api.Repositories
                 if (user.Activated == true) UnionActivations(union);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstants(union);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(union);
+                if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(union);
             }
 
             if (account is RawDelegate delegat)
@@ -953,6 +1005,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(union);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(union);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(union);
+                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(union);
             }
 
             return union.ToString();
@@ -1104,6 +1157,7 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
             #endregion
         }
+
         void UnionNonceRevelations(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1433,6 +1487,46 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"WHERE ""SenderId"" = @account ");
 
             sql.AppendLine();
+        }
+
+        void UnionUpdateConsensusKeyOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""UpdateConsensusKeyOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionDrainDelegateOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region delegate
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""Amount"" - ""Fee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""DrainDelegateOps"" ");
+            sql.Append(@"WHERE ""DelegateId"" = @account ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region target
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(""Amount"") as ""Change"" ");
+
+            sql.Append(@"FROM ""DrainDelegateOps"" ");
+            sql.Append(@"WHERE ""TargetId"" = @account ");
+
+            sql.AppendLine();
+            #endregion
         }
 
         void UnionRevelationPenalties(StringBuilder sql)

@@ -17,6 +17,7 @@ namespace Tzkt.Api
         public const string DoublePreendorsing = "double_preendorsing";
         public const string NonceRevelation = "nonce_revelation";
         public const string VdfRevelation = "vdf_revelation";
+        public const string DrainDelegate = "drain_delegate";
 
         public const string Delegation = "delegation";
         public const string Origination = "origination";
@@ -36,6 +37,7 @@ namespace Tzkt.Api
         public const string TransferTicket = "transfer_ticket";
 
         public const string IncreasePaidStorage = "increase_paid_storage";
+        public const string UpdateConsensusKey = "update_consensus_key";
 
         public const string Migration = "migration";
         public const string RevelationPenalty = "revelation_penalty";
@@ -57,6 +59,7 @@ namespace Tzkt.Api
                 case DoublePreendorsing: res = Operations.DoublePreendorsings; break;
                 case NonceRevelation: res = Operations.Revelations; break;
                 case VdfRevelation: res = Operations.VdfRevelation; break;
+                case DrainDelegate: res = Operations.DrainDelegate; break;
                 case Delegation: res = Operations.Delegations; break;
                 case Origination: res = Operations.Originations; break;
                 case Transaction: res = Operations.Transactions; break;
@@ -77,6 +80,7 @@ namespace Tzkt.Api
                 case TxRollupDispatchTickets: res = Operations.TxRollupDispatchTickets; break;
                 case TransferTicket: res = Operations.TransferTicket; break;
                 case IncreasePaidStorage: res = Operations.IncreasePaidStorage; break;
+                case UpdateConsensusKey: res = Operations.UpdateConsensusKey; break;
                 default: return false;
             }
             return true;
@@ -91,6 +95,7 @@ namespace Tzkt.Api
             DoubleEndorsing,
             NonceRevelation,
             VdfRevelation,
+            DrainDelegate,
             Delegation,
             Origination,
             Transaction,
@@ -108,7 +113,8 @@ namespace Tzkt.Api
             TxRollupRemoveCommitment,
             TxRollupReturnBond,
             TxRollupSubmitBatch,
-            IncreasePaidStorage
+            IncreasePaidStorage,
+            UpdateConsensusKey
         };
     }
 }
