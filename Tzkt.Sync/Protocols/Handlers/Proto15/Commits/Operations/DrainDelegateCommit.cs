@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto15
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var drainedBaker = Cache.Accounts.GetDelegate(content.RequiredString("delegate"));
+            var delegat = Cache.Accounts.GetDelegate(content.RequiredString("delegate"));
             var target = await Cache.Accounts.GetAsync(content.RequiredString("destination"));
 
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
@@ -34,8 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                BlockBakerId = (int)block.ProposerId,
-                DrainedBakerId = drainedBaker.Id,
+                DelegateId = delegat.Id,
                 TargetId = target.Id,
                 Amount = amount,
                 Fee = fee
@@ -47,17 +46,17 @@ namespace Tzkt.Sync.Protocols.Proto15
             var targetDelegate = Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
-            Db.TryAttach(drainedBaker);
+            Db.TryAttach(delegat);
             Db.TryAttach(target);
             Db.TryAttach(targetDelegate);
             #endregion
 
             #region apply operation
-            drainedBaker.Balance -= operation.Amount;
-            drainedBaker.StakingBalance -= operation.Amount;
+            delegat.Balance -= operation.Amount;
+            delegat.StakingBalance -= operation.Amount;
 
-            drainedBaker.Balance -= operation.Fee;
-            drainedBaker.StakingBalance -= operation.Fee;
+            delegat.Balance -= operation.Fee;
+            delegat.StakingBalance -= operation.Fee;
 
             target.Balance += operation.Amount;
             if (targetDelegate != null)
@@ -70,11 +69,11 @@ namespace Tzkt.Sync.Protocols.Proto15
             blockBaker.Balance += operation.Fee;
             blockBaker.StakingBalance += operation.Fee;
 
-            drainedBaker.DrainDelegateCount++;
-            if (blockBaker != drainedBaker) blockBaker.DrainDelegateCount++;
-            if (target != drainedBaker && target != blockBaker) target.DrainDelegateCount++;
+            delegat.DrainDelegateCount++;
+            if (target != delegat) target.DrainDelegateCount++;
 
             block.Operations |= Operations.DrainDelegate;
+            block.Fees += operation.Fee;
 
             Cache.AppState.Get().DrainDelegateOpsCount++;
             #endregion
@@ -88,8 +87,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             var blockBaker = Cache.Accounts.GetDelegate(block.ProposerId);
             Db.TryAttach(blockBaker);
             
-            var drainedBaker = Cache.Accounts.GetDelegate(operation.DrainedBakerId);
-            Db.TryAttach(drainedBaker);
+            var delegat = Cache.Accounts.GetDelegate(operation.DelegateId);
+            Db.TryAttach(delegat);
             
             var target = await Cache.Accounts.GetAsync(operation.TargetId);
             Db.TryAttach(target);
@@ -99,11 +98,11 @@ namespace Tzkt.Sync.Protocols.Proto15
             #endregion
 
             #region apply operation
-            drainedBaker.Balance += operation.Amount;
-            drainedBaker.StakingBalance += operation.Amount;
+            delegat.Balance += operation.Amount;
+            delegat.StakingBalance += operation.Amount;
 
-            drainedBaker.Balance += operation.Fee;
-            drainedBaker.StakingBalance += operation.Fee;
+            delegat.Balance += operation.Fee;
+            delegat.StakingBalance += operation.Fee;
 
             target.Balance -= operation.Amount;
             if (targetDelegate != null)
@@ -116,9 +115,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             blockBaker.Balance -= operation.Fee;
             blockBaker.StakingBalance -= operation.Fee;
 
-            drainedBaker.DrainDelegateCount--;
-            if (blockBaker != drainedBaker) blockBaker.DrainDelegateCount--;
-            if (target != drainedBaker && target != blockBaker) target.DrainDelegateCount--;
+            delegat.DrainDelegateCount--;
+            if (target != delegat) target.DrainDelegateCount--;
 
             Cache.AppState.Get().DrainDelegateOpsCount--;
             #endregion

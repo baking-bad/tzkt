@@ -5,8 +5,7 @@ namespace Tzkt.Data.Models
 {
     public class DrainDelegateOperation : BaseOperation
     {
-        public int BlockBakerId { get; set; }
-        public int DrainedBakerId { get; set; }
+        public int DelegateId { get; set; }
         public int TargetId { get; set; }
         public long Amount { get; set; }
         public long Fee { get; set; }
@@ -37,10 +36,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<DrainDelegateOperation>()
-                .HasIndex(x => x.BlockBakerId);
-
-            modelBuilder.Entity<DrainDelegateOperation>()
-                .HasIndex(x => x.DrainedBakerId);
+                .HasIndex(x => x.DelegateId);
 
             modelBuilder.Entity<DrainDelegateOperation>()
                 .HasIndex(x => x.TargetId);

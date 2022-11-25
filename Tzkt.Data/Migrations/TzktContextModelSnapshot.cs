@@ -1407,10 +1407,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("Amount")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("BlockBakerId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DrainedBakerId")
+                    b.Property<int>("DelegateId")
                         .HasColumnType("integer");
 
                     b.Property<long>("Fee")
@@ -1433,9 +1430,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BlockBakerId");
-
-                    b.HasIndex("DrainedBakerId");
+                    b.HasIndex("DelegateId");
 
                     b.HasIndex("Level");
 
