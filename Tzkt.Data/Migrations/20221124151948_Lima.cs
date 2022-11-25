@@ -54,8 +54,7 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BlockBakerId = table.Column<int>(type: "integer", nullable: false),
-                    DrainedBakerId = table.Column<int>(type: "integer", nullable: false),
+                    DelegateId = table.Column<int>(type: "integer", nullable: false),
                     TargetId = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<long>(type: "bigint", nullable: false),
                     Fee = table.Column<long>(type: "bigint", nullable: false),
@@ -116,14 +115,9 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_DrainDelegateOps_BlockBakerId",
+                name: "IX_DrainDelegateOps_DelegateId",
                 table: "DrainDelegateOps",
-                column: "BlockBakerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DrainDelegateOps_DrainedBakerId",
-                table: "DrainDelegateOps",
-                column: "DrainedBakerId");
+                column: "DelegateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DrainDelegateOps_Level",
