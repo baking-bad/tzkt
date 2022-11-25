@@ -281,6 +281,16 @@ namespace Tzkt.Api.Models
         public int IncreasePaidStorageCount { get; set; }
 
         /// <summary>
+        /// Number of `update_consensus_key` operations sent by the acount
+        /// </summary>
+        public int UpdateConsensusKeyCount { get; set; }
+
+        /// <summary>
+        /// Number of `drain_delegate` operations related to the acount
+        /// </summary>
+        public int DrainDelegateCount { get; set; }
+
+        /// <summary>
         /// Block height of the first operation, related to the delegate (baker)
         /// </summary>
         public int FirstActivity { get; set; }

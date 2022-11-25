@@ -41,6 +41,7 @@ namespace Tzkt.Api.Repositories
                 ?? await GetStatus(db, nameof(TzktContext.RegisterConstantOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SetDepositsLimitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.IncreasePaidStorageOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.UpdateConsensusKeyOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TransferTicketOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupCommitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupDispatchTicketsOps), hash)
@@ -58,10 +59,11 @@ namespace Tzkt.Api.Repositories
             var delegations = GetDelegations(hash, quote);
             var originations = GetOriginations(hash, format, quote);
             var transactions = GetTransactions(hash, format, quote);
-            var reveals = GetReveals(hash, quote);
             var registerConstants = GetRegisterConstants(hash, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, quote);
             var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
+            var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
+            var reveals = GetReveals(hash, quote);
             var transferTicketOps = GetTransferTicketOps(hash, format, quote);
             var txRollupCommitOps = GetTxRollupCommitOps(hash, quote);
             var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, quote);
@@ -80,6 +82,7 @@ namespace Tzkt.Api.Repositories
                 registerConstants,
                 setDepositsLimits,
                 increasePaidStorageOps,
+                updateConsensusKeyOps,
                 transferTicketOps,
                 txRollupCommitOps,
                 txRollupDispatchTicketsOps,
@@ -97,6 +100,7 @@ namespace Tzkt.Api.Repositories
                 .Concat(registerConstants.Result)
                 .Concat(setDepositsLimits.Result)
                 .Concat(increasePaidStorageOps.Result)
+                .Concat(updateConsensusKeyOps.Result)
                 .Concat(transferTicketOps.Result)
                 .Concat(txRollupCommitOps.Result)
                 .Concat(txRollupDispatchTicketsOps.Result)
@@ -112,11 +116,15 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region less likely
+            var drainDelegates = GetDrainDelegates(hash, quote);
             var activations = GetActivations(hash, quote);
             var proposals = GetProposals(hash, quote);
             var ballots = GetBallots(hash, quote);
 
-            await Task.WhenAll(activations, proposals, ballots);
+            await Task.WhenAll(drainDelegates, activations, proposals, ballots);
+
+            if (drainDelegates.Result.Any())
+                return drainDelegates.Result;
 
             if (activations.Result.Any())
                 return activations.Result;
@@ -173,6 +181,7 @@ namespace Tzkt.Api.Repositories
             var registerConstants = GetRegisterConstants(hash, counter, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, counter, quote);
             var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
+            var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
             var transferTicketOps = GetTransferTicketOps(hash, counter, format, quote);
             var txRollupCommitOps = GetTxRollupCommitOps(hash, counter, quote);
             var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, counter, quote);
@@ -191,6 +200,7 @@ namespace Tzkt.Api.Repositories
                 registerConstants,
                 setDepositsLimits,
                 increasePaidStorageOps,
+                updateConsensusKeyOps,
                 transferTicketOps,
                 txRollupCommitOps,
                 txRollupDispatchTicketsOps,
@@ -227,6 +237,9 @@ namespace Tzkt.Api.Repositories
 
             if (increasePaidStorageOps.Result.Any())
                 return increasePaidStorageOps.Result;
+
+            if (updateConsensusKeyOps.Result.Any())
+                return updateConsensusKeyOps.Result;
 
             if (setDepositsLimits.Result.Any())
                 return setDepositsLimits.Result;

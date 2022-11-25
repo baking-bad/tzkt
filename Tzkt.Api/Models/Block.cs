@@ -236,6 +236,16 @@ namespace Tzkt.Api.Models
         public IEnumerable<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
 
         /// <summary>
+        /// List of update consensus key operations, included in the block
+        /// </summary>
+        public IEnumerable<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; }
+
+        /// <summary>
+        /// List of drain delegate operations, included in the block
+        /// </summary>
+        public IEnumerable<DrainDelegateOperation> DrainDelegateOps { get; set; }
+
+        /// <summary>
         /// List of migration operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<MigrationOperation> Migrations { get; set; }

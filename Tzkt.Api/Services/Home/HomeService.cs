@@ -378,6 +378,10 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransferTicketOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
             var txs = await db.QueryFirstOrDefaultAsync(
@@ -432,6 +436,10 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransferTicketOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
             
             var prevTxs = await db.QueryFirstOrDefaultAsync(

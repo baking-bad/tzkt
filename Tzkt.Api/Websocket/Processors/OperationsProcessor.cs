@@ -200,6 +200,14 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetIncreasePaidStorageOps(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.IncreasePaidStorageOperation>());
 
+                var updateConsensusKeyOps = TypeSubs.TryGetValue(Operations.UpdateConsensusKey, out var updateConsensusKeySubs)
+                    ? Repo.GetUpdateConsensusKeys(null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.UpdateConsensusKeyOperation>());
+
+                var drainDelegateOps = TypeSubs.TryGetValue(Operations.DrainDelegate, out var drainDelegateSubs)
+                    ? Repo.GetDrainDelegates(null, null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DrainDelegateOperation>());
+
                 var migrations = TypeSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -243,6 +251,8 @@ namespace Tzkt.Api.Websocket.Processors
                     txRollupReturnBondOps,
                     txRollupSubmitBatchOps,
                     increasePaidStorageOps,
+                    updateConsensusKeyOps,
+                    drainDelegateOps,
                     migrations,
                     penalties,
                     baking,
@@ -769,6 +779,35 @@ namespace Tzkt.Api.Websocket.Processors
 
                             if (increasePaidStorageSubs.AddressSubs.TryGetValue(op.Contract.Address, out var contractSubs))
                                 Add(contractSubs.Subs, op);
+                        }
+                }
+
+                if (updateConsensusKeyOps.Result.Any())
+                {
+                    if (updateConsensusKeySubs.Subs != null)
+                        AddRange(updateConsensusKeySubs.Subs, updateConsensusKeyOps.Result);
+
+                    if (updateConsensusKeySubs.AddressSubs != null)
+                        foreach (var op in updateConsensusKeyOps.Result)
+                        {
+                            if (updateConsensusKeySubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+                        }
+                }
+
+                if (drainDelegateOps.Result.Any())
+                {
+                    if (drainDelegateSubs.Subs != null)
+                        AddRange(drainDelegateSubs.Subs, drainDelegateOps.Result);
+
+                    if (drainDelegateSubs.AddressSubs != null)
+                        foreach (var op in drainDelegateOps.Result)
+                        {
+                            if (drainDelegateSubs.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs))
+                                Add(delegateSubs.Subs, op);
+
+                            if (drainDelegateSubs.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
+                                Add(targetSubs.Subs, op);
                         }
                 }
 
