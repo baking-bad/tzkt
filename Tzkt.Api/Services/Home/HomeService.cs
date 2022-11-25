@@ -381,7 +381,7 @@ namespace Tzkt.Api.Services
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
+                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
             var txs = await db.QueryFirstOrDefaultAsync(
