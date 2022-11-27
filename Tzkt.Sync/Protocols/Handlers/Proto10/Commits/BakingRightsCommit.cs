@@ -42,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             }
             catch
             {
-                Logger.LogInformation("Failed to load by cycle. Loading by level for {0} blocks with 10 seconds timeout...", block.Protocol.BlocksPerCycle);
+                Logger.LogInformation("Failed to load by cycle. Loading by level for {cnt} blocks with 10 seconds timeout...", block.Protocol.BlocksPerCycle);
                 #region throttle
                 using var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
                 {
@@ -67,11 +67,11 @@ namespace Tzkt.Sync.Protocols.Proto10
                         attempts = 0;
 
                         if (level % 128 == 0)
-                            Logger.LogInformation("Loaded {0} of {1} blocks", level - firstLevel + 1, lastLevel - firstLevel + 1);
+                            Logger.LogInformation("Loaded {cnt} of {total} blocks", level - firstLevel + 1, lastLevel - firstLevel + 1);
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError("Failed to fetch endorsing rights for level {0}: {1} Retrying...", level, ex.Message);
+                        Logger.LogError(ex, "Failed to fetch endorsing rights for level {level}. Retrying...", level);
                         if (++attempts >= 30) throw new Exception("Too many RPC errors when fetching endorsing rights");
                         await Task.Delay(1000);
                         level--;

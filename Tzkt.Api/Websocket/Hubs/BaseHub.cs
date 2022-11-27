@@ -24,20 +24,20 @@ namespace Tzkt.Api.Websocket.Hubs
         {
             if (Connections >= Config.MaxConnections)
             {
-                Logger.LogWarning("Connections limit exceeded. Client {0} dropped", Context.ConnectionId);
+                Logger.LogWarning("Connections limit exceeded. Client {id} dropped", Context.ConnectionId);
                 throw new HubException("Connections limit exceeded");
             }
 
             if (string.IsNullOrEmpty(Context.ConnectionId))
             {
-                Logger.LogCritical("Invalid connection ID: {0}", Context.ConnectionId);
+                Logger.LogCritical("Invalid connection ID: {id}", Context.ConnectionId);
                 throw new HubException("Invalid connection ID");
             }
 
             lock (Crit)
             {
                 Connections++;
-                Logger.LogDebug("Client {0} connected. Total connections: {1}", Context.ConnectionId, Connections);
+                Logger.LogDebug("Client {id} connected. Total connections: {cnd}", Context.ConnectionId, Connections);
             }
             
             return base.OnConnectedAsync();
@@ -48,7 +48,7 @@ namespace Tzkt.Api.Websocket.Hubs
             lock (Crit)
             {
                 Connections--;
-                Logger.LogDebug("Client {0} disconnected: {1}. Total connections: {2}",
+                Logger.LogDebug("Client {id} disconnected: {ex}. Total connections: {cnt}",
                     Context.ConnectionId, exception?.Message ?? string.Empty, Connections);
             }
 

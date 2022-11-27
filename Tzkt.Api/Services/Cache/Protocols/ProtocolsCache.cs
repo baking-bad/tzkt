@@ -23,7 +23,7 @@ namespace Tzkt.Api.Services.Cache
 
             Logger.LogDebug("Initializing protocols cache...");
             InitCache();
-            Logger.LogInformation("Loaded {1} of {2} protocols", Protocols.Count, state.Current.ProtocolsCount);
+            Logger.LogInformation("Loaded {cnt} of {total} protocols", Protocols.Count, state.Current.ProtocolsCount);
         }
 
         public Task UpdateAsync()
@@ -32,7 +32,7 @@ namespace Tzkt.Api.Services.Cache
             if (State.Reorganized && Protocols.Any(x => x.FirstLevel > State.ValidLevel) || State.Current.ProtocolsCount != Protocols.Count)
             {
                 InitCache();
-                Logger.LogDebug("{1} protocols updated", Protocols.Count);
+                Logger.LogDebug("{cnt} protocols updated", Protocols.Count);
             }
             else
             {

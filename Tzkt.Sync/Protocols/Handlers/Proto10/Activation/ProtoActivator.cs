@@ -337,7 +337,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             //    }
             //    catch (Exception ex)
             //    {
-            //        Logger.LogError("Failed to fetch endorsing rights for level {0}: {1}", level, ex.Message);
+            //        Logger.LogError(ex, "Failed to fetch endorsing rights for level {level}", level);
             //        if (++attempts >= 10) throw new Exception("Too many RPC errors when fetching endorsing rights");
             //        await Task.Delay(3000);
             //        level--;

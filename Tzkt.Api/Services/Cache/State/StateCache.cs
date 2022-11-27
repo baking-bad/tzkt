@@ -24,12 +24,12 @@ namespace Tzkt.Api.Services.Cache
             Logger = logger;
             using var db = GetConnection();
             Current = db.QueryFirst<RawState>(StateSql);
-            logger.LogInformation("Loaded state [{1}:{2}]", Current.Level, Current.Hash);
+            logger.LogInformation("Loaded state [{level}:{hash}]", Current.Level, Current.Hash);
         }
 
         public void Update(RawState newState, List<(int Level, string Hash)> changes)
         {
-            Logger.LogDebug("Updating state cache with {1} changes...", changes.Count);
+            Logger.LogDebug("Updating state cache with {cnt} changes...", changes.Count);
 
             var validLevel = Current.Level;
             foreach (var (level, _) in changes.Where(x => x.Level < Current.Level))
@@ -39,8 +39,8 @@ namespace Tzkt.Api.Services.Cache
             ValidLevel = validLevel;
             Current = newState;
 
-            if (Reorganized) Logger.LogDebug("Reorg after block {1} detected", validLevel);
-            Logger.LogDebug("New state [{1}:{2}]", Current.Level, Current.Hash);
+            if (Reorganized) Logger.LogDebug("Reorg after block {level} detected", validLevel);
+            Logger.LogDebug("New state [{level}:{hash}]", Current.Level, Current.Hash);
         }
 
         public void UpdateSyncState(int knownHead, DateTime lastSync)

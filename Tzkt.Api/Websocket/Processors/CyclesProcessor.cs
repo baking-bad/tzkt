@@ -61,12 +61,12 @@ namespace Tzkt.Api.Websocket.Processors
                            .Client(connectionId)
                            .SendData(CycleChannel, CurrentCycle, StateCache.Current.Cycle));
                     }
-                    Logger.LogDebug("Cycle {0} sent", StateCache.Current.Cycle);
+                    Logger.LogDebug("Cycle {index} sent", StateCache.Current.Cycle);
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process state change: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to process state change");
             }
             finally
             {
@@ -79,7 +79,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogError("Sendings failed: {0}", ex.Message);
+                    Logger.LogError(ex, "Sendings failed");
                 }
                 #endregion
             }
@@ -108,7 +108,7 @@ namespace Tzkt.Api.Websocket.Processors
 
                 sending = client.SendState(CycleChannel, StateCache.Current.Cycle);
 
-                Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, StateCache.Current.Cycle);
+                Logger.LogDebug("Client {id} subscribed with state {state}", connectionId, StateCache.Current.Cycle);
                 return StateCache.Current.Cycle;
             }
             catch (HubException)
@@ -117,7 +117,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to add subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to add subscription");
                 return 0;
             }
             finally
@@ -130,7 +130,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogError("Sending failed: {0}", ex.Message);
+                    Logger.LogError(ex, "Sending failed");
                 }
             }
         }
@@ -150,11 +150,11 @@ namespace Tzkt.Api.Websocket.Processors
                 }
                 Subs.Remove(connectionId);
 
-                Logger.LogDebug("Client {0} unsubscribed", connectionId);
+                Logger.LogDebug("Client {id} unsubscribed", connectionId);
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to remove subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to remove subscription");
             }
             finally
             {

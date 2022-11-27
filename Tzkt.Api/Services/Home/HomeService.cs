@@ -193,7 +193,7 @@ namespace Tzkt.Api.Services
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to update home stats: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to update home stats");
             }
             finally
             {
