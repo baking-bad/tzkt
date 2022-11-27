@@ -30,7 +30,7 @@ namespace Tzkt.Api.Services.Cache
             Times = new List<DateTime>(times.Count() + 130_000);
             Times.AddRange(times);
 
-            logger.LogInformation("Loaded {1} timestamps", Times.Count);
+            logger.LogInformation("Loaded {cnt} timestamps", Times.Count);
         }
 
         public async Task UpdateAsync()
@@ -48,7 +48,7 @@ namespace Tzkt.Api.Services.Cache
                 else
                     Times.Add(row.Timestamp);
             }
-            Logger.LogDebug("{1} timestamps updated", rows.Count());
+            Logger.LogDebug("{cnt} timestamps updated", rows.Count());
         }
 
         public DateTime this[int level]

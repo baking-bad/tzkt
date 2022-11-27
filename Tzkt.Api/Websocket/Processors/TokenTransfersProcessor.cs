@@ -73,7 +73,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region check reorg
                 if (State.Reorganized)
                 {
-                    Logger.LogDebug("Sending reorg message with state {0}", State.ValidLevel);
+                    Logger.LogDebug("Sending reorg message with state {state}", State.ValidLevel);
                     sendings.Add(Context.Clients
                         .Group(TransfersGroup)
                         .SendReorg(TransfersChannel, State.ValidLevel));
@@ -87,7 +87,7 @@ namespace Tzkt.Api.Websocket.Processors
                 }
 
                 #region load token transfers
-                Logger.LogDebug("Fetching token transfers from block {0} to block {1}", State.ValidLevel, State.Current.Level);
+                Logger.LogDebug("Fetching token transfers from block {valid} to block {current}", State.ValidLevel, State.Current.Level);
 
                 var params1 = new TokenTransferFilter
                 {
@@ -130,7 +130,7 @@ namespace Tzkt.Api.Websocket.Processors
                     .Concat(await Repo.GetTokenTransfers(params2, new() { limit = limit }));
                 var count = transfers.Count();
 
-                Logger.LogDebug("{0} token transfers fetched", count);
+                Logger.LogDebug("{cnt} token transfers fetched", count);
                 #endregion
 
                 #region prepare to send
@@ -225,15 +225,15 @@ namespace Tzkt.Api.Websocket.Processors
                         .Client(connectionId)
                         .SendData(TransfersChannel, data, State.Current.Level));
 
-                    Logger.LogDebug("{0} token transfers sent to {1}", transfersList.Count, connectionId);
+                    Logger.LogDebug("{cnt} token transfers sent to {id}", transfersList.Count, connectionId);
                 }
 
-                Logger.LogDebug("{0} token transfers sent", count);
+                Logger.LogDebug("{cnt} token transfers sent", count);
                 #endregion
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process state change: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to process state change");
             }
             finally
             {
@@ -331,7 +331,7 @@ namespace Tzkt.Api.Websocket.Processors
 
                 sending = client.SendState(TransfersChannel, State.Current.Level);
 
-                Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, State.Current.Level);
+                Logger.LogDebug("Client {id} subscribed with state {state}", connectionId, State.Current.Level);
                 return State.Current.Level;
             }
             catch (HubException)
@@ -340,7 +340,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to add subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to add subscription");
                 return 0;
             }
             finally
@@ -414,14 +414,14 @@ namespace Tzkt.Api.Websocket.Processors
                 #endregion
 
                 if (Limits[connectionId] != 0)
-                    Logger.LogCritical("Failed to unsubscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
+                    Logger.LogCritical("Failed to unsubscribe {id}: {cnt} subs left", connectionId, Limits[connectionId]);
                 Limits.Remove(connectionId);
 
-                Logger.LogDebug("Client {0} unsubscribed", connectionId);
+                Logger.LogDebug("Client {id} unsubscribed", connectionId);
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to remove subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to remove subscription");
             }
             finally
             {

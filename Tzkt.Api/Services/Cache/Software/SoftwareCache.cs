@@ -53,7 +53,7 @@ namespace Tzkt.Api.Services.Cache
 
             Software = rows.ToDictionary(row => (int)row.Id, row => (SoftwareAlias)Parse(row));
 
-            Logger.LogDebug("Loaded {0} software", Software.Count);
+            Logger.LogDebug("Loaded {cnt} software", Software.Count);
         }
 
         public void UpdateMetadata(string shortHash)

@@ -45,7 +45,7 @@ namespace Tzkt.Api.Services.Cache
                     foreach (var key in corrupted)
                         Cached.Remove(key);
 
-                    Logger.LogDebug("Removed {0} corrupted BigMaps", corrupted.Count);
+                    Logger.LogDebug("Removed {cnt} corrupted BigMaps", corrupted.Count);
                 }
                 #endregion
 
@@ -69,7 +69,7 @@ namespace Tzkt.Api.Services.Cache
                         item.LastLevel = lastLevel;
 
                 LastUpdate = State.Current.Level;
-                Logger.LogDebug("Updated {0} bigmaps since block {1}", removed.Count + updated.Count, from);
+                Logger.LogDebug("Updated {cnd} bigmaps since block {level}", removed.Count + updated.Count, from);
             }
             finally
             {

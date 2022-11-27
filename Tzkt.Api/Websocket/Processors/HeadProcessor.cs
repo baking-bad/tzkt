@@ -41,7 +41,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region check reorg
                 if (StateCache.Reorganized)
                 {
-                    Logger.LogDebug("Sending reorg message with state {0}", StateCache.ValidLevel);
+                    Logger.LogDebug("Sending reorg message with state {state}", StateCache.ValidLevel);
                     sendings.Add(Context.Clients
                         .Group(HeadGroup)
                         .SendReorg(HeadChannel, StateCache.ValidLevel));
@@ -52,11 +52,11 @@ namespace Tzkt.Api.Websocket.Processors
                     .Group(HeadGroup)
                     .SendData(HeadChannel, StateRepo.Get(), StateCache.Current.Level));
 
-                Logger.LogDebug("Head {0} sent", StateCache.Current.Level);
+                Logger.LogDebug("Head {level} sent", StateCache.Current.Level);
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process state change: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to process state change");
             }
             finally
             {
@@ -69,7 +69,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogError("Sendings failed: {0}", ex.Message);
+                    Logger.LogError(ex, "Sendings failed");
                 }
                 #endregion
             }
@@ -86,12 +86,12 @@ namespace Tzkt.Api.Websocket.Processors
                 await Context.Groups.AddToGroupAsync(connectionId, HeadGroup);
                 sending = client.SendState(HeadChannel, StateCache.Current.Level);
 
-                Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, StateCache.Current.Level);
+                Logger.LogDebug("Client {id} subscribed with state {state}", connectionId, StateCache.Current.Level);
                 return StateCache.Current.Level;
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to add subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to add subscription");
                 return 0;
             }
             finally
@@ -104,7 +104,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogError("Sending failed: {0}", ex.Message);
+                    Logger.LogError(ex, "Sending failed");
                 }
             }
         }

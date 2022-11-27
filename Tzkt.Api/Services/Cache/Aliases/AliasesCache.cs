@@ -26,7 +26,7 @@ namespace Tzkt.Api.Services.Cache
                 $@"{SelectQuery} WHERE ""Metadata""@>'{{""profile"":{{}}}}' AND ""Metadata""#>>'{{profile,alias}}' IS NOT NULL")
                 .ToList();
 
-            logger.LogInformation("Loaded {1} aliases", Aliases.Count);
+            logger.LogInformation("Loaded {cnt} aliases", Aliases.Count);
 
             foreach (var alias in Aliases)
                 AddTrigrams(alias);
