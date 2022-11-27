@@ -13,6 +13,7 @@
             "NetXLH1uAxK7CCh" => "jakartanet",
             "NetXnHfVqm9iesp" => "ghostnet",
             "NetXi2ZagzEsXbZ" => "kathmandunet",
+            "NetXizpkH94bocH" => "limanet",
             _ => "private"
         };
     }

@@ -186,7 +186,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogCritical("Sendings failed: {0}", ex.Message);
+                    Logger.LogCritical(ex, "Sendings failed");
                 }
                 #endregion
             }
@@ -283,7 +283,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogCritical("Sending failed: {0}", ex.Message);
+                    Logger.LogCritical(ex, "Sending failed");
                 }
             }
         }

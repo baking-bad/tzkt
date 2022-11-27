@@ -2,12 +2,62 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
+#nullable disable
+
 namespace Tzkt.Data.Migrations
 {
+    /// <inheritdoc />
     public partial class Lima : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            void ToTimestamptz(string table, string column) =>
+                migrationBuilder.Sql($@"ALTER TABLE ""{table}"" ALTER ""{column}"" TYPE timestamptz USING ""{column}"" AT TIME ZONE 'UTC';");
+
+            Triggers.RemoveNotificationTrigger(migrationBuilder, "sync_state_changed", "AppState");
+
+            ToTimestamptz("VdfRevelationOps", "Timestamp");
+            ToTimestamptz("TxRollupSubmitBatchOps", "Timestamp");
+            ToTimestamptz("TxRollupReturnBondOps", "Timestamp");
+            ToTimestamptz("TxRollupRemoveCommitmentOps", "Timestamp");
+            ToTimestamptz("TxRollupRejectionOps", "Timestamp");
+            ToTimestamptz("TxRollupOriginationOps", "Timestamp");
+            ToTimestamptz("TxRollupFinalizeCommitmentOps", "Timestamp");
+            ToTimestamptz("TxRollupDispatchTicketsOps", "Timestamp");
+            ToTimestamptz("TxRollupCommitOps", "Timestamp");
+            ToTimestamptz("TransferTicketOps", "Timestamp");
+            ToTimestamptz("TransactionOps", "Timestamp");
+            ToTimestamptz("Statistics", "Date");
+            ToTimestamptz("SetDepositsLimitOps", "Timestamp");
+            ToTimestamptz("RevelationPenaltyOps", "Timestamp");
+            ToTimestamptz("RevealOps", "Timestamp");
+            ToTimestamptz("RegisterConstantOps", "Timestamp");
+            ToTimestamptz("Quotes", "Timestamp");
+            ToTimestamptz("ProposalOps", "Timestamp");
+            ToTimestamptz("PreendorsementOps", "Timestamp");
+            ToTimestamptz("OriginationOps", "Timestamp");
+            ToTimestamptz("NonceRevelationOps", "Timestamp");
+            ToTimestamptz("MigrationOps", "Timestamp");
+            ToTimestamptz("IncreasePaidStorageOps", "Timestamp");
+            ToTimestamptz("EndorsingRewardOps", "Timestamp");
+            ToTimestamptz("EndorsementOps", "Timestamp");
+            ToTimestamptz("DoublePreendorsingOps", "Timestamp");
+            ToTimestamptz("DoubleEndorsingOps", "Timestamp");
+            ToTimestamptz("DoubleBakingOps", "Timestamp");
+            ToTimestamptz("DelegationOps", "Timestamp");
+            ToTimestamptz("Blocks", "Timestamp");
+            ToTimestamptz("BallotOps", "Timestamp");
+            ToTimestamptz("AppState", "Timestamp");
+            ToTimestamptz("AppState", "LastSync");
+            ToTimestamptz("ActivationOps", "Timestamp");
+
+            Triggers.AddNotificationTrigger(migrationBuilder,
+                name: "sync_state_changed",
+                table: "AppState",
+                column: "LastSync",
+                payload: @"NEW.""KnownHead"" || ':' || NEW.""LastSync""");
+
             migrationBuilder.DropColumn(
                 name: "LBSunsetLevel",
                 table: "Protocols");
@@ -59,7 +109,7 @@ namespace Tzkt.Data.Migrations
                     Amount = table.Column<long>(type: "bigint", nullable: false),
                     Fee = table.Column<long>(type: "bigint", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
                 },
                 constraints: table =>
@@ -83,7 +133,7 @@ namespace Tzkt.Data.Migrations
                     PublicKey = table.Column<string>(type: "text", nullable: true),
                     PublicKeyHash = table.Column<string>(type: "text", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
                     SenderId = table.Column<int>(type: "integer", nullable: false),
                     Counter = table.Column<int>(type: "integer", nullable: false),
@@ -150,8 +200,55 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            void ToTimestamp(string table, string column) =>
+                migrationBuilder.Sql($@"ALTER TABLE ""{table}"" ALTER ""{column}"" TYPE timestamp;");
+
+            Triggers.RemoveNotificationTrigger(migrationBuilder, "sync_state_changed", "AppState");
+
+            ToTimestamp("VdfRevelationOps", "Timestamp");
+            ToTimestamp("TxRollupSubmitBatchOps", "Timestamp");
+            ToTimestamp("TxRollupReturnBondOps", "Timestamp");
+            ToTimestamp("TxRollupRemoveCommitmentOps", "Timestamp");
+            ToTimestamp("TxRollupRejectionOps", "Timestamp");
+            ToTimestamp("TxRollupOriginationOps", "Timestamp");
+            ToTimestamp("TxRollupFinalizeCommitmentOps", "Timestamp");
+            ToTimestamp("TxRollupDispatchTicketsOps", "Timestamp");
+            ToTimestamp("TxRollupCommitOps", "Timestamp");
+            ToTimestamp("TransferTicketOps", "Timestamp");
+            ToTimestamp("TransactionOps", "Timestamp");
+            ToTimestamp("Statistics", "Date");
+            ToTimestamp("SetDepositsLimitOps", "Timestamp");
+            ToTimestamp("RevelationPenaltyOps", "Timestamp");
+            ToTimestamp("RevealOps", "Timestamp");
+            ToTimestamp("RegisterConstantOps", "Timestamp");
+            ToTimestamp("Quotes", "Timestamp");
+            ToTimestamp("ProposalOps", "Timestamp");
+            ToTimestamp("PreendorsementOps", "Timestamp");
+            ToTimestamp("OriginationOps", "Timestamp");
+            ToTimestamp("NonceRevelationOps", "Timestamp");
+            ToTimestamp("MigrationOps", "Timestamp");
+            ToTimestamp("IncreasePaidStorageOps", "Timestamp");
+            ToTimestamp("EndorsingRewardOps", "Timestamp");
+            ToTimestamp("EndorsementOps", "Timestamp");
+            ToTimestamp("DoublePreendorsingOps", "Timestamp");
+            ToTimestamp("DoubleEndorsingOps", "Timestamp");
+            ToTimestamp("DoubleBakingOps", "Timestamp");
+            ToTimestamp("DelegationOps", "Timestamp");
+            ToTimestamp("Blocks", "Timestamp");
+            ToTimestamp("BallotOps", "Timestamp");
+            ToTimestamp("AppState", "Timestamp");
+            ToTimestamp("AppState", "LastSync");
+            ToTimestamp("ActivationOps", "Timestamp");
+
+            Triggers.AddNotificationTrigger(migrationBuilder,
+                name: "sync_state_changed",
+                table: "AppState",
+                column: "LastSync",
+                payload: @"NEW.""KnownHead"" || ':' || NEW.""LastSync""");
+
             migrationBuilder.DropTable(
                 name: "DrainDelegateOps");
 

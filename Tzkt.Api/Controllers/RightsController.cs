@@ -129,7 +129,7 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest(nameof(to), "Maximum schedule period is 14 days");
             #endregion
 
-            return Ok(await BakingRights.GetSchedule(baker, from.DateTime, to.DateTime, maxRound));
+            return Ok(await BakingRights.GetSchedule(baker, from.UtcDateTime, to.UtcDateTime, maxRound));
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <AssemblyVersion>1.10.3</AssemblyVersion>
   </PropertyGroup>
   
@@ -40,16 +40,12 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.123" />
-    <PackageReference Include="Npgsql" Version="5.0.10" />
-    <PackageReference Include="NSwag.AspNetCore" Version="13.16.1" />
+    <PackageReference Include="Npgsql" Version="7.0.0" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.18.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Tzkt.Data\Tzkt.Data.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="../libs/System.Text.Json/net5.0/System.Text.Json.dll" />
   </ItemGroup>
 
 </Project>

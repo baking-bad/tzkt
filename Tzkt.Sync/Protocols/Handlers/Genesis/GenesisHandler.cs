@@ -99,7 +99,7 @@ namespace Tzkt.Sync.Protocols
             state.Chain = null;
             state.Cycle = -1;
             state.Level = -1;
-            state.Timestamp = DateTime.MinValue;
+            state.Timestamp = DateTimeOffset.MinValue.UtcDateTime;
             state.Protocol = "";
             state.NextProtocol = "";
             state.Hash = "";

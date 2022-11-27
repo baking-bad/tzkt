@@ -203,7 +203,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, content, code, storage);
+                    await ProcessScript(origination, code, storage);
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
@@ -403,7 +403,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, content, code, storage);
+                    await ProcessScript(origination, code, storage);
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
@@ -697,7 +697,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             return array;
         }
 
-        protected async Task ProcessScript(OriginationOperation origination, JsonElement content, MichelineArray code, IMicheline storageValue)
+        protected async Task ProcessScript(OriginationOperation origination, MichelineArray code, IMicheline storageValue)
         {
             var contract = origination.Contract;
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);

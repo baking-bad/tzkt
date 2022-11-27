@@ -69,7 +69,7 @@ namespace Tzkt.Api.Services.Cache
         SoftwareAlias Parse(dynamic row) => new()
         {
             Version = row.Version,
-            Date = DateTimeOffset.TryParse(row.CommitDate, out DateTimeOffset dt) ? dt.DateTime : Time[row.FirstLevel]
+            Date = DateTimeOffset.TryParse(row.CommitDate, out DateTimeOffset dt) ? dt.UtcDateTime : Time[row.FirstLevel]
         };
     }
 }

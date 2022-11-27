@@ -570,7 +570,7 @@ namespace Tzkt.Api.Services
         {
             var period = -29;
             var end = Times[State.Current.QuoteLevel];
-            var start = new DateTime(end.AddDays(period).Year, end.AddDays(period).Month, end.AddDays(period).Day, (end.AddDays(period).Hour / 12) * 12, 0, 0, DateTimeKind.Unspecified) ;
+            var start = new DateTime(end.AddDays(period).Year, end.AddDays(period).Month, end.AddDays(period).Day, (end.AddDays(period).Hour / 12) * 12, 0, 0, DateTimeKind.Utc);
             var levels = Enumerable.Range(0, 59)
                 .Select(offset =>  Times.FindLevel(start.AddHours(offset * 12), SearchMode.ExactOrHigher))
                 .ToList();

@@ -81,7 +81,7 @@ namespace Tzkt.Sync.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Failed to sync quotes: {ex.Message}");
+                    Logger.LogError(ex, "Failed to sync quotes");
                 }
             }
         }
@@ -146,7 +146,7 @@ namespace Tzkt.Sync.Services
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Failed to commit quotes: {ex.Message}");
+                Logger.LogError(ex, "Failed to commit quotes");
                 if (!Config.Async) throw;
             }
         }
@@ -166,7 +166,7 @@ namespace Tzkt.Sync.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Failed to revert quotes: {ex.Message}");
+                    Logger.LogError(ex, "Failed to revert quotes");
                     if (!Config.Async) throw;
                 }
             }

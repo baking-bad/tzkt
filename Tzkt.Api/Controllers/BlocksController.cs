@@ -218,7 +218,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            var level = Time.FindLevel(timestamp.DateTime, SearchMode.ExactOrLower);
+            var level = Time.FindLevel(timestamp.UtcDateTime, SearchMode.ExactOrLower);
             return Blocks.Get(level, operations, micheline, quote);
         }
 
@@ -233,7 +233,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{timestamp:DateTime}/level")]
         public int GetByDate(DateTimeOffset timestamp)
         {
-            return Time.FindLevel(timestamp.DateTime, SearchMode.ExactOrLower);
+            return Time.FindLevel(timestamp.UtcDateTime, SearchMode.ExactOrLower);
         }
 
         // BCD bootstrap

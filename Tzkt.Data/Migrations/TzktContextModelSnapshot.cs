@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
 
+#nullable disable
+
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
@@ -15,16 +17,18 @@ namespace Tzkt.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("ProductVersion", "5.0.10")
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                .HasAnnotation("ProductVersion", "7.0.0")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Tzkt.Data.Models.Account", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ActiveTokensCount")
                         .HasColumnType("integer");
@@ -139,9 +143,10 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.HasIndex("Metadata")
-                        .HasMethod("gin")
-                        .HasOperators(new[] { "jsonb_path_ops" });
+                    b.HasIndex("Metadata");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Metadata"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Metadata"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("Staked");
 
@@ -150,14 +155,17 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Accounts");
 
                     b.HasDiscriminator<byte>("Type").HasValue((byte)3);
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.ActivationOperation", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccountId")
                         .HasColumnType("integer");
@@ -172,10 +180,10 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -193,8 +201,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccountCounter")
                         .HasColumnType("integer");
@@ -275,7 +284,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("LastSync")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
@@ -362,7 +371,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("TokenBalancesCount")
                         .HasColumnType("integer");
@@ -500,8 +509,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<long>("ActiveStake")
                         .HasColumnType("bigint");
@@ -615,8 +625,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -654,8 +665,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("Epoch")
                         .HasColumnType("integer");
@@ -667,7 +679,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("Period")
                         .HasColumnType("integer");
@@ -679,7 +691,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Vote")
                         .HasColumnType("integer");
@@ -708,8 +720,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
@@ -766,8 +779,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
@@ -807,13 +821,15 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.HasIndex("JsonKey")
-                        .HasMethod("gin")
-                        .HasOperators(new[] { "jsonb_path_ops" });
+                    b.HasIndex("JsonKey");
 
-                    b.HasIndex("JsonValue")
-                        .HasMethod("gin")
-                        .HasOperators(new[] { "jsonb_path_ops" });
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("JsonKey"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("JsonKey"), new[] { "jsonb_path_ops" });
+
+                    b.HasIndex("JsonValue");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("JsonValue"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("JsonValue"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("LastLevel");
 
@@ -829,8 +845,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Action")
                         .HasColumnType("integer");
@@ -887,8 +904,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("BlockRound")
                         .HasColumnType("integer");
@@ -912,7 +930,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<bool?>("LBToggle")
                         .HasColumnType("boolean");
@@ -957,7 +975,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Validations")
                         .HasColumnType("integer");
@@ -988,8 +1006,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("AccountId")
                         .HasColumnType("integer");
@@ -998,7 +1017,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(37)
                         .HasColumnType("character(37)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<long>("Balance")
                         .HasColumnType("bigint");
@@ -1021,8 +1040,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ContractCodeHash")
                         .HasColumnType("integer");
@@ -1057,9 +1077,10 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.HasIndex("JsonPayload")
-                        .HasMethod("gin")
-                        .HasOperators(new[] { "jsonb_path_ops" });
+                    b.HasIndex("JsonPayload");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("JsonPayload"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("JsonPayload"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("Level");
 
@@ -1078,8 +1099,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("FirstLevel")
                         .HasColumnType("integer");
@@ -1094,7 +1116,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("bytea")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("SelectedBakers")
                         .HasColumnType("integer");
@@ -1134,8 +1156,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -1174,7 +1197,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("PrevDelegateId")
                         .HasColumnType("integer");
@@ -1201,7 +1224,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1227,8 +1250,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -1260,8 +1284,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccusedLevel")
                         .HasColumnType("integer");
@@ -1285,10 +1310,10 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1307,8 +1332,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccusedLevel")
                         .HasColumnType("integer");
@@ -1332,10 +1358,10 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1354,8 +1380,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccusedLevel")
                         .HasColumnType("integer");
@@ -1379,10 +1406,10 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1401,8 +1428,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long>("Amount")
                         .HasColumnType("bigint");
@@ -1420,13 +1448,13 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("TargetId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1445,8 +1473,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("DelegateId")
                         .HasColumnType("integer");
@@ -1461,7 +1490,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("ResetDeactivation")
                         .HasColumnType("integer");
@@ -1473,7 +1502,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1490,8 +1519,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -1506,7 +1536,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1521,8 +1551,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -1544,8 +1575,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -1579,7 +1611,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
@@ -1597,7 +1629,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1616,8 +1648,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccountId")
                         .HasColumnType("integer");
@@ -1644,7 +1677,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("TokenTransfers")
                         .HasColumnType("integer");
@@ -1666,8 +1699,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -1679,13 +1713,13 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("bytea")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<string>("OpHash")
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("RevealedCycle")
                         .HasColumnType("integer");
@@ -1700,7 +1734,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1723,8 +1757,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -1775,7 +1810,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("ScriptId")
                         .HasColumnType("integer");
@@ -1805,7 +1840,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("TokenTransfers")
                         .HasColumnType("integer");
@@ -1843,8 +1878,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("DelegateId")
                         .HasColumnType("integer");
@@ -1856,7 +1892,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("ResetDeactivation")
                         .HasColumnType("integer");
@@ -1865,7 +1901,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1882,8 +1918,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Epoch")
                         .HasColumnType("integer");
@@ -1894,7 +1931,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<string>("Hash")
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("InitiatorId")
                         .HasColumnType("integer");
@@ -1927,8 +1964,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("Duplicated")
                         .HasColumnType("boolean");
@@ -1943,7 +1981,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("Period")
                         .HasColumnType("integer");
@@ -1955,7 +1993,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<long>("VotingPower")
                         .HasColumnType("bigint");
@@ -1981,8 +2019,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BallotQuorumMax")
                         .HasColumnType("integer");
@@ -2069,7 +2108,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("LBSubsidy")
                         .HasColumnType("integer");
@@ -2137,8 +2176,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<double>("Btc")
                         .HasColumnType("double precision");
@@ -2165,7 +2205,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<double>("Usd")
                         .HasColumnType("double precision");
@@ -2182,8 +2222,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Address")
                         .HasMaxLength(54)
@@ -2235,7 +2276,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("Value")
                         .HasColumnType("bytea");
@@ -2259,8 +2300,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -2287,7 +2329,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
@@ -2305,7 +2347,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -2322,8 +2364,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -2338,7 +2381,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -2353,8 +2396,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CodeHash")
                         .HasColumnType("integer");
@@ -2404,8 +2448,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -2450,7 +2495,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -2467,8 +2512,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AccountId")
                         .HasColumnType("integer");
@@ -2503,8 +2549,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BlocksCount")
                         .HasColumnType("integer");
@@ -2522,7 +2569,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(8)
                         .HasColumnType("character(8)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.HasKey("Id");
 
@@ -2533,14 +2580,15 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("Cycle")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("Date")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
@@ -2589,8 +2637,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ContractId")
                         .HasColumnType("integer");
@@ -2635,8 +2684,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("BalancesCount")
                         .HasColumnType("integer");
@@ -2701,9 +2751,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("LastLevel");
 
-                    b.HasIndex("Metadata")
-                        .HasMethod("gin")
-                        .HasOperators(new[] { "jsonb_path_ops" });
+                    b.HasIndex("Metadata");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Metadata"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Metadata"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("ContractId", "TokenId")
                         .IsUnique();
@@ -2715,8 +2766,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccountId")
                         .HasColumnType("integer");
@@ -2774,8 +2826,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Amount")
                         .IsRequired()
@@ -2844,8 +2897,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -2905,7 +2959,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<byte[]>("RawParameters")
                         .HasColumnType("bytea");
@@ -2944,7 +2998,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("TokenTransfers")
                         .HasColumnType("integer");
@@ -2953,9 +3007,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("InitiatorId");
 
-                    b.HasIndex("JsonParameters")
-                        .HasMethod("gin")
-                        .HasOperators(new[] { "jsonb_path_ops" });
+                    b.HasIndex("JsonParameters");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("JsonParameters"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("JsonParameters"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("Level");
 
@@ -2980,8 +3035,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3018,7 +3074,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<byte[]>("RawContent")
                         .HasColumnType("bytea");
@@ -3048,7 +3104,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3069,8 +3125,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3100,7 +3157,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("RollupId")
                         .HasColumnType("integer");
@@ -3121,7 +3178,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3140,8 +3197,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3168,7 +3226,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("RollupId")
                         .HasColumnType("integer");
@@ -3189,7 +3247,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3208,8 +3266,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3236,7 +3295,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("RollupId")
                         .HasColumnType("integer");
@@ -3257,7 +3316,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3276,8 +3335,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3304,7 +3364,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("RollupId")
                         .HasColumnType("integer");
@@ -3325,7 +3385,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3344,8 +3404,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3378,7 +3439,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<long>("Reward")
                         .HasColumnType("bigint");
@@ -3402,7 +3463,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3423,8 +3484,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3451,7 +3513,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("RollupId")
                         .HasColumnType("integer");
@@ -3472,7 +3534,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3491,8 +3553,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3522,7 +3585,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("RollupId")
                         .HasColumnType("integer");
@@ -3543,7 +3606,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3562,8 +3625,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
@@ -3590,7 +3654,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<int?>("RollupId")
                         .HasColumnType("integer");
@@ -3611,7 +3675,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3630,8 +3694,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("ActivationCycle")
                         .HasColumnType("integer");
@@ -3661,7 +3726,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<string>("PublicKey")
                         .HasColumnType("text");
@@ -3685,7 +3750,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3702,8 +3767,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -3718,7 +3784,7 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<byte[]>("Proof")
                         .HasColumnType("bytea");
@@ -3730,7 +3796,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bytea");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3749,8 +3815,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("BallotsQuorum")
                         .HasColumnType("integer");
@@ -3840,8 +3907,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
