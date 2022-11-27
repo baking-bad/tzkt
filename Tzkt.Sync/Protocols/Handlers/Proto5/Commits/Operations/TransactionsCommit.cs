@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     transaction.RawParameters ??= rawParam.ToBytes();
 
                     if (transaction.Status == OperationStatus.Applied)
-                        Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                        Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
             else if (transaction.Target is Rollup)
@@ -123,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 catch (Exception ex)
                 {
                     if (transaction.Status == OperationStatus.Applied)
-                        Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                        Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
             else

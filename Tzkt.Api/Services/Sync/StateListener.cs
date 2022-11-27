@@ -123,7 +123,7 @@ namespace Tzkt.Api.Services.Sync
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex)
             {
-                Logger.LogCritical($"DB listener crashed: {ex.Message}");
+                Logger.LogCritical(ex, "DB listener crashed");
             }
             finally
             {
@@ -146,12 +146,12 @@ namespace Tzkt.Api.Services.Sync
                 var separator = e.Payload.IndexOf(':');
                 if (separator == -1 ||
                     !int.TryParse(e.Payload[..separator], out var knownHead) ||
-                    !DateTime.TryParse(e.Payload[(separator + 1)..], out var lastSync))
+                    !DateTimeOffset.TryParse(e.Payload[(separator + 1)..], out var lastSync))
                 {
                     Logger.LogCritical("Invalid trigger payload {1}", e.Payload);
                     return;
                 }
-                State.UpdateSyncState(knownHead, lastSync);
+                State.UpdateSyncState(knownHead, lastSync.UtcDateTime);
             }
             else if (e.Channel == StateHashChanged)
             {

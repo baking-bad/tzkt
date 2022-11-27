@@ -86,7 +86,7 @@ namespace Tzkt.Api
             }
             catch (Exception ex)
             {
-                logger.LogCritical($"Failed to initialize database: {ex.Message}");
+                logger.LogCritical(ex, "Failed to initialize database");
                 if (attempt >= 30) throw;
                 Thread.Sleep(1000);
 

@@ -206,7 +206,7 @@ namespace Tzkt.Api
                     }
 
                     hasValue = true;
-                    result = value.DateTime;
+                    result = value.UtcDateTime;
                 }
             }
 
@@ -241,7 +241,7 @@ namespace Tzkt.Api
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid datetime value.");
                             return false;
                         }
-                        result.Add(value.DateTime);
+                        result.Add(value.UtcDateTime);
                     }
                 }
             }

@@ -125,7 +125,7 @@ namespace Tzkt.Data.Models
                     Id = -1,
                     Cycle = -1,
                     Level = -1,
-                    Timestamp = DateTime.MinValue,
+                    Timestamp = DateTimeOffset.MinValue.UtcDateTime,
                     Protocol = "",
                     NextProtocol = "",
                     Hash = "",

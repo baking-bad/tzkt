@@ -566,7 +566,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await History.Get(address, datetime.DateTime);
+            var res = await History.Get(address, datetime.UtcDateTime);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -704,8 +704,8 @@ namespace Tzkt.Api.Controllers
             };
             #endregion
 
-            var _from = from?.DateTime ?? DateTime.MinValue;
-            var _to = to?.DateTime ?? DateTime.MaxValue;
+            var _from = (from ?? DateTimeOffset.MinValue).UtcDateTime;
+            var _to = (to ?? DateTimeOffset.MaxValue).UtcDateTime;
 
             var stream = new MemoryStream();
             var csv = new StreamWriter(stream);

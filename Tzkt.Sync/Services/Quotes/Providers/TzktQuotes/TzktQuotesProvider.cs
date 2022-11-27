@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -94,6 +95,7 @@ namespace Tzkt.Sync.Services
     public class TzktQuote : IQuote
     {
         [JsonPropertyName("timestamp")]
+        [JsonConverter(typeof(JsonDateTimeConverter))]
         public DateTime Timestamp { get; set; }
 
         [JsonPropertyName("btc")]

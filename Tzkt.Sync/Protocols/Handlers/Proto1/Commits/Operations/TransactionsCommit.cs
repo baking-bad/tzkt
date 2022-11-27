@@ -539,7 +539,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         transaction.RawParameters ??= rawParam.ToBytes();
 
                         if (transaction.Status == OperationStatus.Applied)
-                            Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                            Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                     }
                 }
             }
