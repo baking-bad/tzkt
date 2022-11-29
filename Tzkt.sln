@@ -1,15 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29230.61
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33006.217
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tzkt.Api", "Tzkt.Api\Tzkt.Api.csproj", "{48559098-2B55-4822-8EAC-EFB30E7E7D99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tzkt.Api", "Tzkt.Api\Tzkt.Api.csproj", "{48559098-2B55-4822-8EAC-EFB30E7E7D99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tzkt.Data", "Tzkt.Data\Tzkt.Data.csproj", "{C8AEA17C-C791-4E15-949F-38D5A7829F29}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tzkt.Data", "Tzkt.Data\Tzkt.Data.csproj", "{C8AEA17C-C791-4E15-949F-38D5A7829F29}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tzkt.Sync", "Tzkt.Sync\Tzkt.Sync.csproj", "{2A9CB3C6-92C4-4CEA-9091-821CB2A1F955}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tzkt.Sync", "Tzkt.Sync\Tzkt.Sync.csproj", "{2A9CB3C6-92C4-4CEA-9091-821CB2A1F955}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tzkt.Api.Tests", "Tzkt.Api.Tests\Tzkt.Api.Tests.csproj", "{EF9A9BF1-4EA6-4D8A-8571-9860C2069439}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tzkt.Api.Tests", "Tzkt.Api.Tests\Tzkt.Api.Tests.csproj", "{EF9A9BF1-4EA6-4D8A-8571-9860C2069439}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tzkt.Sync.Tests", "Tzkt.Sync.Tests\Tzkt.Sync.Tests.csproj", "{64EE7642-CEC8-409B-A727-3456FF62CF20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{EF9A9BF1-4EA6-4D8A-8571-9860C2069439}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EF9A9BF1-4EA6-4D8A-8571-9860C2069439}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EF9A9BF1-4EA6-4D8A-8571-9860C2069439}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64EE7642-CEC8-409B-A727-3456FF62CF20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64EE7642-CEC8-409B-A727-3456FF62CF20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64EE7642-CEC8-409B-A727-3456FF62CF20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64EE7642-CEC8-409B-A727-3456FF62CF20}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
