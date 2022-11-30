@@ -17,9 +17,7 @@ services:
   lima-api:
     container_name: lima-api
     restart: always
-    build:
-      context: .
-      dockerfile: Tzkt.Api/Dockerfile
+    image: bakingbad/tzkt-api:latest
     depends_on:
       - lima-db
     environment:
@@ -35,18 +33,6 @@ services:
     environment:
       ConnectionStrings__DefaultConnection: host=lima-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
       TezosNode__Endpoint: https://rpc.tzkt.io/limanet/
-    depends_on:
-      - lima-db
-    
-  lima-sync-tests:
-    container_name: lima-sync-tests
-    restart: always
-    build:
-      context: .
-      dockerfile: Tzkt.Sync.Tests/Dockerfile
-    environment:
-      TezosNode__Endpoint: https://rpc.tzkt.io/limanet/
-      ConnectionStrings__DefaultConnection: host=lima-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
     depends_on:
       - lima-db
 
