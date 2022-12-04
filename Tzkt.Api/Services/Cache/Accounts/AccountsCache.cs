@@ -124,6 +124,11 @@ namespace Tzkt.Api.Services.Cache
             return Get(id).Info;
         }
 
+        public Alias GetAlias(string address)
+        {
+            return Get(address)?.Info ?? new() { Address = address };
+        }
+
         public async Task<Alias> GetAliasAsync(int id)
         {
             // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)

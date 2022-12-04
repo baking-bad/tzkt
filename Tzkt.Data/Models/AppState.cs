@@ -89,7 +89,7 @@ namespace Tzkt.Data.Models
         public int EventsCount { get; set; }
         #endregion
 
-        #region quotes
+        #region plugins
         public int QuoteLevel { get; set; }
         public double QuoteBtc { get; set; }
         public double QuoteEur { get; set; }
@@ -99,7 +99,10 @@ namespace Tzkt.Data.Models
         public double QuoteKrw { get; set; }
         public double QuoteEth { get; set; }
         public double QuoteGbp { get; set; }
-        #endregion
+
+        public string DomainsNameRegistry { get; set; }
+        public int DomainsLevel { get; set; }
+        #endregion 
     }
 
     public static class AppStateModel

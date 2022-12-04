@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
 using Tzkt.Sync.Services;
+using Tzkt.Sync.Services.Domains;
 
 namespace Tzkt.Sync
 {
@@ -62,6 +63,12 @@ namespace Tzkt.Sync
                             config.Period = TimeSpan.FromSeconds(healthChecks.Period);
                         });
                     }
+                    #endregion
+
+                    #region domains
+                    var domains = hostContext.Configuration.GetDomainsConfig();
+                    if (domains.Enabled)
+                        services.AddHostedService<DomainsService>();
                     #endregion
 
                     #region token metadata

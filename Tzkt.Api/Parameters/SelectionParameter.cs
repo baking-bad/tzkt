@@ -41,7 +41,7 @@ namespace Tzkt.Api
     public class SelectionField
     {
         static readonly Regex FieldRegex = new(@"^[\w]+$", RegexOptions.Compiled);
-        static readonly Regex FieldPathRegex = new(@"^[\w]+(\.[\w]+)+$", RegexOptions.Compiled);
+        static readonly Regex FieldPathRegex = new(@"^[\w:]+(\.[\w:]+)+$", RegexOptions.Compiled);
 
         public string Alias { get; init; }
         public string Field { get; init; }
