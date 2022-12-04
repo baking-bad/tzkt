@@ -65,6 +65,7 @@ namespace Tzkt.Api
             services.AddTransient<MetadataRepository>();
             services.AddTransient<ConstantsRepository>();
             services.AddTransient<ContractEventsRepository>();
+            services.AddTransient<DomainsRepository>();
 
             services.AddAuthService(Configuration);
 

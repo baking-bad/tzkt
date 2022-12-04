@@ -475,6 +475,46 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, AddressParameter address, Func<string, string> map = null)
+        {
+            if (address == null) return this;
+
+            if (address.Eq != null)
+                AppendFilter($@"""{column}"" = {Param(address.Eq)}");
+
+            if (address.Ne != null)
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {Param(address.Ne)})");
+
+            if (address.In != null)
+            {
+                if (!address.InHasNull)
+                    AppendFilter($@"""{column}"" = ANY ({Param(address.In)})");
+                else if (address.In.Count == 0)
+                    AppendFilter($@"""{column}"" IS NULL");
+                else
+                    AppendFilter($@"(""{column}"" = ANY ({Param(address.In)}) OR ""{column}"" IS NULL)");
+            }
+
+            if (address.Ni != null)
+            {
+                if (!address.NiHasNull)
+                    AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY ({Param(address.Ni)})))");
+                else if (address.Ni.Count == 0)
+                    AppendFilter($@"""{column}"" IS NOT NULL");
+                else
+                    AppendFilter($@"(""{column}"" IS NOT NULL AND NOT (""{column}"" = ANY ({Param(address.Ni)})))");
+            }
+
+            if (address.Null != null)
+            {
+                AppendFilter(address.Null == true
+                    ? $@"""{column}"" IS NULL"
+                    : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, StringParameter str, Func<string, string> map = null)
         {
             if (str == null) return this;
