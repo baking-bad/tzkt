@@ -7,9 +7,9 @@ using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
 {
-    [ModelBinder(BinderType = typeof(AddressBinder))]
+    [ModelBinder(BinderType = typeof(AddressNullBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    public class AddressParameter : INormalizable
+    public class AddressNullParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=` is the same as `param=`). \
@@ -43,6 +43,20 @@ namespace Tzkt.Api
         /// </summary>
         public List<string> Ni { get; set; }
 
+        /// <summary>
+        /// **Is null** filter mode. \
+        /// Use this mode to get items where the specified field is null or not.
+        /// 
+        /// Example: `?address.null` or `?address.null=false`.
+        /// </summary>
+        public bool? Null { get; set; }
+
+        [JsonIgnore]
+        public bool InHasNull { get; set; }
+
+        [JsonIgnore]
+        public bool NiHasNull { get; set; }
+
         public string Normalize(string name)
         {
             var sb = new StringBuilder();
@@ -66,6 +80,14 @@ namespace Tzkt.Api
             {
                 sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
             }
+
+            if (Null != null)
+            {
+                sb.Append($"{name}.null={Null}&");
+            }
+
+            sb.Append($"{name}.NiHasNull={NiHasNull}&");
+            sb.Append($"{name}.InHasNull={InHasNull}&");
 
             return sb.ToString();
         }

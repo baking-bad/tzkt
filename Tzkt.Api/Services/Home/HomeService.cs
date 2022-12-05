@@ -224,7 +224,7 @@ namespace Tzkt.Api.Services
 
         async Task<object[][]> GetAccounts()
         {
-            return await AccountsRepo.Get(null, null, null, null, null, null, null,
+            return await AccountsRepo.Get(null, null, null, null, null, null, null, null,
                 new SortParameter { Desc = "balance" }, null, 10, AccountFields);
         }
 
@@ -237,7 +237,7 @@ namespace Tzkt.Api.Services
         async Task<object[][]> GetAssets()
         {
             return (await AccountsRepo.Get(
-                    null,
+                    null, null,
                     new AccountTypeParameter { Eq = 2 }, new ContractKindParameter { Eq = 2 }, 
                     null, null, null, null,
                     new SortParameter { Desc = "numTransactions" }, null, 100, AssetFields))

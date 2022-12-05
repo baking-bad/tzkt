@@ -22,19 +22,19 @@ namespace Tzkt.Api
             var model = bindingContext.ModelName;
             var hasValue = false;
 
-            if (!bindingContext.TryGetAccount($"{model}", ref hasValue, out var value))
+            if (!bindingContext.TryGetAddress($"{model}", ref hasValue, out var value))
                 return;
 
-            if (!bindingContext.TryGetAccount($"{model}.eq", ref hasValue, out var eq))
+            if (!bindingContext.TryGetAddress($"{model}.eq", ref hasValue, out var eq))
                 return;
 
-            if (!bindingContext.TryGetAccount($"{model}.ne", ref hasValue, out var ne))
+            if (!bindingContext.TryGetAddress($"{model}.ne", ref hasValue, out var ne))
                 return;
 
-            if (!bindingContext.TryGetAccountList($"{model}.in", ref hasValue, out var @in))
+            if (!bindingContext.TryGetAddressNullList($"{model}.in", ref hasValue, out var @in))
                 return;
 
-            if (!bindingContext.TryGetAccountList($"{model}.ni", ref hasValue, out var ni))
+            if (!bindingContext.TryGetAddressNullList($"{model}.ni", ref hasValue, out var ni))
                 return;
 
             if (!bindingContext.TryGetString($"{model}.eqx", ref hasValue, out var eqx))

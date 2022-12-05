@@ -1,9 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Tzkt.Api
 {
-    public class AddressBinder : IModelBinder
+    public class AddressNullBinder : IModelBinder
     {
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
@@ -19,10 +20,13 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetAddress($"{model}.ne", ref hasValue, out var ne))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetAddressList($"{model}.in", ref hasValue, out var @in))
+            if (!bindingContext.TryGetAddressNullList($"{model}.in", ref hasValue, out var @in))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetAddressList($"{model}.ni", ref hasValue, out var ni))
+            if (!bindingContext.TryGetAddressNullList($"{model}.ni", ref hasValue, out var ni))
+                return Task.CompletedTask;
+
+            if (!bindingContext.TryGetBool($"{model}.null", ref hasValue, out var isNull))
                 return Task.CompletedTask;
 
             if (!hasValue)
@@ -31,12 +35,15 @@ namespace Tzkt.Api
                 return Task.CompletedTask;
             }
 
-            bindingContext.Result = ModelBindingResult.Success(new AddressParameter
+            bindingContext.Result = ModelBindingResult.Success(new AddressNullParameter
             {
                 Eq = value ?? eq,
                 Ne = ne,
-                In = @in,
-                Ni = ni
+                In = @in?.Where(x => x != null).ToList(),
+                Ni = ni?.Where(x => x != null).ToList(),
+                Null = isNull,
+                InHasNull = @in?.Any(x => x == null) == true,
+                NiHasNull = ni?.Any(x => x == null) == true
             });
 
             return Task.CompletedTask;
