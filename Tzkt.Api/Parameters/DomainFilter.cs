@@ -26,13 +26,13 @@ namespace Tzkt.Api
         /// Filter by the address the domain points to.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AddressParameter address { get; set; }
+        public AddressNullParameter address { get; set; }
 
         /// <summary>
         /// Filter by the domain owner.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AddressParameter owner { get; set; }
+        public AddressNullParameter owner { get; set; }
 
         /// <summary>
         /// Filter by the domain expiration.  

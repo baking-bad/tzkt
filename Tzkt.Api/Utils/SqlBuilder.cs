@@ -486,6 +486,25 @@ namespace Tzkt.Api
                 AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {Param(address.Ne)})");
 
             if (address.In != null)
+                AppendFilter($@"""{column}"" = ANY ({Param(address.In)})");
+
+            if (address.Ni != null)
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY ({Param(address.Ni)})))");
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, AddressNullParameter address, Func<string, string> map = null)
+        {
+            if (address == null) return this;
+
+            if (address.Eq != null)
+                AppendFilter($@"""{column}"" = {Param(address.Eq)}");
+
+            if (address.Ne != null)
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {Param(address.Ne)})");
+
+            if (address.In != null)
             {
                 if (!address.InHasNull)
                     AppendFilter($@"""{column}"" = ANY ({Param(address.In)})");

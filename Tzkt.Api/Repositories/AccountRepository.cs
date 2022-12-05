@@ -295,6 +295,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Account>> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -307,6 +308,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder($@"SELECT *, {AliasQuery} FROM ""Accounts""")
                 .Filter("Id", id)
+                .Filter("Address", address)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -567,6 +569,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -663,6 +666,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Id", id)
+                .Filter("Address", address)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -1002,6 +1006,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -1095,6 +1100,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Id", id)
+                .Filter("Address", address)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)

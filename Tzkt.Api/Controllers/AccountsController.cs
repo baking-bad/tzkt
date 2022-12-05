@@ -39,6 +39,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts.
         /// </remarks>
         /// <param name="id">Filters by internal id.</param>
+        /// <param name="address">Filters by address.</param>
         /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `ghost`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="delegate">Filters accounts by delegate. Allowed fields for `.eqx` mode: none.</param>
@@ -53,6 +54,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Account>>> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -87,7 +89,7 @@ namespace Tzkt.Api.Controllers
             #endregion
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("id", id),  ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
+                ("id", id), ("address", address),  ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
                 ("lastActivity", lastActivity), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -96,25 +98,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit);
+                res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]);
                 else
-                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields)
+                        Rows = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields)
                     };
                 }
             }

@@ -40,6 +40,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of contract accounts.
         /// </remarks>
+        /// <param name="address">Filters by address</param>
         /// <param name="kind">Contract kind to filter by (`delegator_contract`, `smart_contract`, or `asset`)</param>
         /// <param name="tzips">Filters by tzips (`fa1`, `fa12`, or `fa2`)</param>
         /// <param name="creator">Filters contracts by creator. Allowed fields for `.eqx` mode: `manager`, `delegate`.</param>
@@ -57,6 +58,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Contract>>> Get(
+            AddressParameter address,
             ContractKindParameter kind,
             ContractTagsParameter tzips,
             AccountParameter creator,
@@ -114,7 +116,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("kind", kind), ("tzips", tzips), ("creator", creator), ("manager", manager), ("@delegate", @delegate),
+                ("address", address), ("kind", kind), ("tzips", tzips), ("creator", creator), ("manager", manager), ("@delegate", @delegate),
                 ("balance", balance), ("lastActivity", lastActivity), ("typeHash", typeHash), ("codeHash", codeHash),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
 
@@ -124,27 +126,27 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Accounts.GetContracts(kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, includeStorage);
+                res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, includeStorage);
             }
             else
             {
                 if (select.Values != null)
                 {
                     if (select.Values.Length == 1)
-                        res = await Accounts.GetContracts(kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values[0], includeStorage);
+                        res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values[0], includeStorage);
                     else
-                        res = await Accounts.GetContracts(kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values, includeStorage);
+                        res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values, includeStorage);
                 }
                 else
                 {
                     if (select.Fields.Length == 1)
-                        res = await Accounts.GetContracts(kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields[0], includeStorage);
+                        res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields[0], includeStorage);
                     else
                     {
                         res = new SelectionResponse
                         {
                             Cols = select.Fields,
-                            Rows = await Accounts.GetContracts(kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields, includeStorage)
+                            Rows = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields, includeStorage)
                         };
                     }
                 }
@@ -238,27 +240,27 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, includeStorage);
+                res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, includeStorage);
             }
             else
             {
                 if (select.Values != null)
                 {
                     if (select.Values.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values[0], includeStorage);
+                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values[0], includeStorage);
                     else
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values, includeStorage);
+                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values, includeStorage);
                 }
                 else
                 {
                     if (select.Fields.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields[0], includeStorage);
+                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields[0], includeStorage);
                     else
                     {
                         res = new SelectionResponse
                         {
                             Cols = select.Fields,
-                            Rows = await Accounts.GetContracts(null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields, includeStorage)
+                            Rows = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields, includeStorage)
                         };
                     }
                 }
@@ -310,27 +312,27 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Accounts.GetContracts(null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, includeStorage);
+                res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, includeStorage);
             }
             else
             {
                 if (select.Values != null)
                 {
                     if (select.Values.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values[0], includeStorage);
+                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values[0], includeStorage);
                     else
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values, includeStorage);
+                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values, includeStorage);
                 }
                 else
                 {
                     if (select.Fields.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Fields[0], includeStorage);
+                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Fields[0], includeStorage);
                     else
                     {
                         res = new SelectionResponse
                         {
                             Cols = select.Fields,
-                            Rows = await Accounts.GetContracts(null, null, null, null, null, null, null, typeHash, null,
+                            Rows = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null,
                                 sort, offset, limit, select.Fields, includeStorage)
                         };
                     }

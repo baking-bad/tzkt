@@ -90,6 +90,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Contract>> GetContracts(
+            AddressParameter address,
             ContractKindParameter kind,
             ContractTagsParameter tags,
             AccountParameter creator,
@@ -114,6 +115,7 @@ namespace Tzkt.Api.Repositories
                 : $@"SELECT *, {AliasQuery} FROM ""Accounts""";
 
             var sql = new SqlBuilder(query)
+                .Filter("Address", address)
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -199,6 +201,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetContracts(
+            AddressParameter address,
             ContractKindParameter kind,
             ContractTagsParameter tags,
             AccountParameter creator,
@@ -265,6 +268,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
+                .Filter("Address", address)
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -463,6 +467,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetContracts(
+            AddressParameter address,
             ContractKindParameter kind,
             ContractTagsParameter tags,
             AccountParameter creator,
@@ -526,6 +531,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
+                .Filter("Address", address)
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")

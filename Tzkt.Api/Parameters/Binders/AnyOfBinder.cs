@@ -44,13 +44,13 @@ namespace Tzkt.Api
 
             var hasValue = false;
 
-            if (!bindingContext.TryGetAccount($"{key}", ref hasValue, out var value))
+            if (!bindingContext.TryGetAddress($"{key}", ref hasValue, out var value))
                 return;
 
-            if (!bindingContext.TryGetAccount($"{key}.eq", ref hasValue, out var eq))
+            if (!bindingContext.TryGetAddress($"{key}.eq", ref hasValue, out var eq))
                 return;
 
-            if (!bindingContext.TryGetAccountList($"{key}.in", ref hasValue, out var @in))
+            if (!bindingContext.TryGetAddressNullList($"{key}.in", ref hasValue, out var @in))
                 return;
 
             if (!bindingContext.TryGetBool($"{key}.null", ref hasValue, out var isNull))
