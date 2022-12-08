@@ -77,6 +77,7 @@ namespace Tzkt.Sync.Protocols
             #endregion
 
             #region operations 1
+            var dictatorSeen = false;
             foreach (var operation in operations[1].EnumerateArray())
             {
                 foreach (var content in operation.RequiredArray("contents", 1).EnumerateArray())
@@ -84,7 +85,9 @@ namespace Tzkt.Sync.Protocols
                     switch (content.RequiredString("kind"))
                     {
                         case "proposals":
-                            await new ProposalsCommit(this).Apply(blockCommit.Block, operation, content);
+                            var proposalsCommit = new ProposalsCommit(this);
+                            await proposalsCommit.Apply(blockCommit.Block, operation, content);
+                            dictatorSeen = proposalsCommit.DictatorSeen;
                             break;
                         case "ballot":
                             await new BallotsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -93,6 +96,7 @@ namespace Tzkt.Sync.Protocols
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[1]");
                     }
                 }
+                if (dictatorSeen) break;
             }
             #endregion
 
