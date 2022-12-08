@@ -58,6 +58,8 @@ namespace Tzkt.Sync.Protocols.Proto14
                 var votingPeriod = await Cache.Periods.GetAsync(58);
                 Db.TryAttach(votingPeriod);
                 votingPeriod.LastLevel = 0;
+                state.VotingPeriod = 58;
+                state.VotingEpoch = 58;
             }
         }
 

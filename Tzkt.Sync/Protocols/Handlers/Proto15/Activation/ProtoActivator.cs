@@ -33,15 +33,97 @@ namespace Tzkt.Sync.Protocols.Proto15
             await MigrateFutureRights(state, nextProto);
             await PatchContracts(state);
 
-            if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet
+            if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet: amend broken voting period
             {
-                // TODO: amend broken voting period
+                await RestartVotingPeriod(state, nextProto);
             }
         }
 
         protected override Task RevertContext(AppState state)
         {
             throw new NotImplementedException("Reverting Lima migration block is not implemented, because likely won't be needed");
+        }
+
+        async Task RestartVotingPeriod(AppState state, Protocol nextProto)
+        {
+            var currentPeriod = await Cache.Periods.GetAsync(58);
+            Db.TryAttach(currentPeriod);
+
+            #region update current period
+            currentPeriod.LastLevel = state.Level;
+            currentPeriod.Status = currentPeriod.ProposalsCount == 0
+                ? PeriodStatus.NoProposals
+                : PeriodStatus.NoQuorum;
+            #endregion
+
+            #region update proposals status
+            if (currentPeriod.ProposalsCount > 0)
+            {
+                var proposals = await Db.Proposals
+                    .Where(x => x.Status == ProposalStatus.Active)
+                    .ToListAsync();
+
+                var pendings = Db.ChangeTracker.Entries()
+                    .Where(x => x.Entity is Proposal p && p.Status == ProposalStatus.Active)
+                    .Select(x => x.Entity as Proposal)
+                    .ToList();
+
+                foreach (var pending in pendings)
+                    if (!proposals.Any(x => x.Id == pending.Id))
+                        proposals.Add(pending);
+
+                foreach (var proposal in proposals)
+                    proposal.Status = ProposalStatus.Skipped;
+            }
+            #endregion
+
+            #region update snapshots
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "VotingSnapshots"
+                WHERE "Period" > 58;
+                """);
+
+            Db.VotingSnapshots.AddRange((await Db.VotingSnapshots
+                .AsNoTracking()
+                .Where(x => x.Period == 58)
+                .ToListAsync())
+                .Select(x => new VotingSnapshot
+                {
+                    BakerId = x.BakerId,
+                    Level = x.Level,
+                    Period = x.Period + 1,
+                    Status = VoterStatus.None,
+                    VotingPower = x.VotingPower
+                }));
+            #endregion
+
+            #region add next period
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "VotingPeriods"
+                WHERE "Index" > 58;
+                """);
+
+            Db.VotingPeriods.Add(new VotingPeriod
+            {
+                Index = currentPeriod.Index + 1,
+                Epoch = currentPeriod.Epoch + 1,
+                FirstLevel = currentPeriod.LastLevel + 1,
+                LastLevel = currentPeriod.LastLevel + nextProto.BlocksPerVoting,
+                Kind = PeriodKind.Proposal,
+                Status = PeriodStatus.Active,
+                TotalBakers = currentPeriod.TotalBakers,
+                TotalVotingPower = currentPeriod.TotalVotingPower,
+                UpvotesQuorum = nextProto.ProposalQuorum,
+                ProposalsCount = 0,
+                TopUpvotes = 0,
+                TopVotingPower = 0,
+                SingleWinner = false,
+            });
+            #endregion
+
+            state.VotingPeriod = currentPeriod.Index + 1;
+            state.VotingEpoch = currentPeriod.Epoch + 1;
+            Cache.Periods.Reset();
         }
 
         async Task AddInvoice(AppState state, string address, long amount)

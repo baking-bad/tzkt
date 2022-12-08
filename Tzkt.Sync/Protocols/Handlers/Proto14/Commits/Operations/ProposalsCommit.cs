@@ -9,6 +9,8 @@ namespace Tzkt.Sync.Protocols.Proto14
 {
     class ProposalsCommit : Proto3.ProposalsCommit
     {
+        public bool DictatorSeen = false;
+
         public ProposalsCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public override async Task Apply(Block block, JsonElement op, JsonElement content)
@@ -20,8 +22,9 @@ namespace Tzkt.Sync.Protocols.Proto14
             }
 
             Logger.LogWarning("Governance dictator is resetting the current voting epoch. All the voting history will be irrevocably removed from the database.");
-            
+
             // Dictator's actions cause one-way changes, so in case of reorg the indexer won't be able to revert them
+            DictatorSeen = true;
 
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
