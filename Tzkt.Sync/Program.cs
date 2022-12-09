@@ -2,6 +2,10 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using App.Metrics;
+using App.Metrics.AspNetCore;
+using App.Metrics.Formatters.Prometheus;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,13 +21,20 @@ namespace Tzkt.Sync
 {
     public class Program
     {
+        public static IMetricsRoot Metrics { get; set; }
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Init().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            Metrics = AppMetrics.CreateDefaultBuilder()
+                .OutputMetrics.AsPrometheusPlainText()
+                .OutputMetrics.AsPrometheusProtobuf()
+                .Build();
+            
+            return Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((host, appConfig) =>
                 {
                     appConfig.Sources.Clear();
@@ -38,6 +49,16 @@ namespace Tzkt.Sync
                     logConfig.ClearProviders();
                     logConfig.AddConsole();
                 })
+                .UseMetrics(
+                    options =>
+                    {
+                        options.EndpointOptions = endpointsOptions =>
+                        {
+                            endpointsOptions.MetricsTextEndpointOutputFormatter = Metrics.OutputMetricsFormatters.OfType<MetricsPrometheusTextOutputFormatter>().First();
+                            endpointsOptions.MetricsEndpointOutputFormatter = Metrics.OutputMetricsFormatters.OfType<MetricsPrometheusProtobufOutputFormatter>().First();
+                        };
+                    })
+                .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddDbContext<TzktContext>(options =>
@@ -77,6 +98,7 @@ namespace Tzkt.Sync
                         services.AddHostedService<TokenMetadata>();
                     #endregion
                 });
+        }
     }
 
     static class IHostExt
