@@ -1,8 +1,8 @@
 version: '3'
 
 services:
-  jakarta-db:
-    container_name: jakarta-db
+  lima-db:
+    container_name: lima-db
     restart: always
     image: postgres:13
     environment:
@@ -14,27 +14,27 @@ services:
     ports:
       - 127.0.0.1:5434:5432
 
-  jakarta-api:
-    container_name: jakarta-api
+  lima-api:
+    container_name: lima-api
     restart: always
     image: bakingbad/tzkt-api:latest
     depends_on:
-      - jakarta-db
+      - lima-db
     environment:
-      ConnectionStrings__DefaultConnection: host=jakarta-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      ConnectionStrings__DefaultConnection: host=lima-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
     ports:
       - 0.0.0.0:5020:5000
 
-  jakarta-sync:
-    container_name: jakarta-sync
+  lima-sync:
+    container_name: lima-sync
     restart: always
     image: bakingbad/tzkt-sync:latest
     environment:
-      ConnectionStrings__DefaultConnection: host=jakarta-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
-      TezosNode__Endpoint: https://rpc.tzkt.io/jakartanet/
+      ConnectionStrings__DefaultConnection: host=lima-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      TezosNode__Endpoint: https://rpc.tzkt.io/limanet/
     depends_on:
-      - jakarta-db
+      - lima-db
 
 volumes:
   postgres:

@@ -67,27 +67,27 @@ ghost-stop:
 ghost-db-start:
 	docker-compose -f docker-compose.ghost.yml up -d ghost-db
 
-jakarta-init:
-	docker-compose -f docker-compose.jakarta.yml up   -d jakarta-db
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db apt update
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db apt install -y wget
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db wget "https://snapshots.tzkt.io/tzkt_v1.10_jakartanet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db rm tzkt_db.backup
-	docker-compose -f docker-compose.jakarta.yml exec -T jakarta-db apt autoremove --purge -y wget
+lima-init:
+	docker-compose -f docker-compose.lima.yml up   -d lima-db
+	docker-compose -f docker-compose.lima.yml exec -T lima-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.lima.yml exec -T lima-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.lima.yml exec -T lima-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.lima.yml exec -T lima-db apt update
+	docker-compose -f docker-compose.lima.yml exec -T lima-db apt install -y wget
+	docker-compose -f docker-compose.lima.yml exec -T lima-db wget "https://snapshots.tzkt.io/tzkt_v1.10_limanet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.lima.yml exec -T lima-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.lima.yml exec -T lima-db rm tzkt_db.backup
+	docker-compose -f docker-compose.lima.yml exec -T lima-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-jakarta-start:
-	docker-compose -f docker-compose.jakarta.yml up -d
+lima-start:
+	docker-compose -f docker-compose.lima.yml up -d
 
-jakarta-stop:
-	docker-compose -f docker-compose.jakarta.yml down
+lima-stop:
+	docker-compose -f docker-compose.lima.yml down
 
-jakarta-db-start:
-	docker-compose -f docker-compose.jakarta.yml up -d jakarta-db
+lima-db-start:
+	docker-compose -f docker-compose.lima.yml up -d lima-db
 
 kathmandu-init:
 	docker-compose -f docker-compose.kathmandu.yml up   -d kathmandu-db
