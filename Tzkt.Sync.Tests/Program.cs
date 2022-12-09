@@ -19,7 +19,7 @@ namespace Tzkt.Sync.Tests
 
             #region configuration
             builder.Configuration.Sources.Clear();
-            builder.Configuration.AddJsonFile("appsettings.json", true);
+            builder.Configuration.AddJsonFile("settings.json", true);
             builder.Configuration.AddEnvironmentVariables();
             builder.Configuration.AddEnvironmentVariables("TZKT_SYNC_");
             builder.Configuration.AddCommandLine(args);
