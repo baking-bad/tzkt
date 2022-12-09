@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using App.Metrics;
+using App.Metrics.Timer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,15 +14,17 @@ namespace Tzkt.Sync.Services
     {
         public AppState AppState { get; private set; }
 
-        private readonly TezosNode Node;
-        private readonly IServiceScopeFactory Services;
-        private readonly ILogger Logger;
+        readonly TezosNode Node;
+        readonly IServiceScopeFactory Services;
+        readonly ILogger Logger;
+        readonly IMetrics Metrics;
 
-        public Observer(TezosNode node, IServiceScopeFactory services, ILogger<Observer> logger)
+        public Observer(TezosNode node, IServiceScopeFactory services, ILogger<Observer> logger, IMetrics metrics)
         {
             Node = node;
             Services = services;
             Logger = logger;
+            Metrics = metrics;
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancelToken)
@@ -166,19 +170,30 @@ namespace Tzkt.Sync.Services
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                var header = await Node.GetHeaderAsync();
-                if (AppState.Level == header.Level) break;
+                var requestTimer = new TimerOptions
+                {
+                    Name = "Block apply timer",
+                    MeasurementUnit = Unit.Requests,
+                    DurationUnit = TimeUnit.Milliseconds,
+                    RateUnit = TimeUnit.Milliseconds
+                };
 
-                //if (AppState.Level >= 0)
-                //    throw new ValidationException("Test", true);
+                using (Metrics.Measure.Timer.Time(requestTimer))
+                {
+                    var header = await Node.GetHeaderAsync();
+                    if (AppState.Level == header.Level) break;
 
-                Logger.LogDebug($"Applying block...");
+                    //if (AppState.Level >= 0)
+                    //    throw new ValidationException("Test", true);
 
-                using var scope = Services.CreateScope();
-                var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
-                AppState = await protocol.CommitBlock(header.Level);
+                    Logger.LogDebug($"Applying block...");
 
-                Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
+                    using var scope = Services.CreateScope();
+                    var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
+                    AppState = await protocol.CommitBlock(header.Level);
+
+                    Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
+                }
             }
 
             return !cancelToken.IsCancellationRequested;
