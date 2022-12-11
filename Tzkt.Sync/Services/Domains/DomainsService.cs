@@ -140,7 +140,7 @@ namespace Tzkt.Sync.Services.Domains
                         Owner = row.Owner,
                         Expiration = row.Expiration is string s 
                             ? DateTimeOffset.Parse(s).UtcDateTime
-                            : DateTimeOffset.MaxValue.UtcDateTime,
+                            : DateTimeOffset.MaxValue.UtcDateTime.Date,
                         Data = row.Data == "{}" ? null : ParseDomainData((string)row.Data),
                         FirstLevel = row.FirstLevel,
                         LastLevel = row.LastLevel
@@ -218,6 +218,7 @@ namespace Tzkt.Sync.Services.Domains
                 	INNER JOIN "Domains" AS domain
                 	ON domain."Id" = id
                 	WHERE domain."Expiration" != expiration
+                    FOR UPDATE
                 ) updates
                 WHERE "Id" = updates.id
                 """, new { ptr = RecordsBigMap, ptr2 = ExpiryBigMap, level = Level });

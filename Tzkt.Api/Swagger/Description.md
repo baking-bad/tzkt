@@ -7,8 +7,8 @@ TzKT API is available for the following Tezos networks with the following base U
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io)) 
 - Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
-- Jakartanet: `https://api.jakartanet.tzkt.io/` ([view docs](https://api.jakartanet.tzkt.io))
 - Kathmandunet: `https://api.kathmandunet.tzkt.io/` ([view docs](https://api.kathmandunet.tzkt.io))
+- Limanet: `https://api.limanet.tzkt.io/` ([view docs](https://api.limanet.tzkt.io))
 
 We also provide a staging environment for testing newest features and pre-updating client applications before deploying to production:
 
