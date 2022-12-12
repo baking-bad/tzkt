@@ -137,14 +137,17 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
         {
-            while (!await Node.HasUpdatesAsync(AppState.Level))
+            using (Metrics.Measure.Timer.Time(MetricsRegistry.BlockWaitingTimer))
             {
-                if (cancelToken.IsCancellationRequested)
-                    return false;
+                while (!await Node.HasUpdatesAsync(AppState.Level))
+                {
+                    if (cancelToken.IsCancellationRequested)
+                        return false;
 
-                await Task.Delay(1000, CancellationToken.None);
+                    await Task.Delay(1000, CancellationToken.None);
+                }
+                return true;
             }
-            return true;
         }
 
         private async Task<bool> RebaseLocalBranchAsync(CancellationToken cancelToken)
@@ -170,15 +173,7 @@ namespace Tzkt.Sync.Services
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                var requestTimer = new TimerOptions
-                {
-                    Name = "Block apply timer",
-                    MeasurementUnit = Unit.Requests,
-                    DurationUnit = TimeUnit.Milliseconds,
-                    RateUnit = TimeUnit.Milliseconds
-                };
-
-                using (Metrics.Measure.Timer.Time(requestTimer))
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.BlockApplyTimer))
                 {
                     var header = await Node.GetHeaderAsync();
                     if (AppState.Level == header.Level) break;

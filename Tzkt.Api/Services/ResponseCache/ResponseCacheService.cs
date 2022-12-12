@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using App.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Services
 {
@@ -12,16 +14,18 @@ namespace Tzkt.Api.Services
     {
         readonly JsonSerializerOptions Options;
         readonly ILogger Logger;
+        readonly IMetrics Metrics;
         readonly Dictionary<string, byte[]> Cache;
         readonly long CacheSize;
         long Used = 0;
         int Hits = 0;
         int Misses = 0;
 
-        public ResponseCacheService(IConfiguration configuration, IOptions<JsonOptions> options, ILogger<ResponseCacheService> logger)
+        public ResponseCacheService(IConfiguration configuration, IOptions<JsonOptions> options, ILogger<ResponseCacheService> logger, IMetrics metrics)
         {
             Options = options.Value.JsonSerializerOptions;
             Logger = logger;
+            Metrics = metrics;
             CacheSize = configuration.GetOutputCacheConfig().CacheSize * 1024 * 1024;
             Cache = new Dictionary<string, byte[]>(4096);
         }
@@ -72,6 +76,21 @@ namespace Tzkt.Api.Services
             }
 
             return bytes;
+        }
+
+        public void CollectMetrics()
+        {
+            if (Hits + Misses == 0)
+            {
+                Metrics.Measure.Gauge.SetValue(MetricsRegistry.CacheHitsGauge, 0);
+            }
+            else
+            {
+                Metrics.Measure.Gauge.SetValue(MetricsRegistry.CacheHitsGauge, (double)Hits/(Hits + Misses));
+            }
+
+            Metrics.Measure.Gauge.SetValue(MetricsRegistry.CacheUsageGauge, (double)Used/CacheSize);
+
         }
 
         public void Clear()

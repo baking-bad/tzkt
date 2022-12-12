@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using App.Metrics;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Websocket.Hubs
 {
@@ -12,11 +14,13 @@ namespace Tzkt.Api.Websocket.Hubs
         static int Connections = 0;
 
         readonly ILogger Logger;
+        readonly IMetrics Metrics;
         readonly WebsocketConfig Config;
 
-        protected BaseHub(ILogger logger, IConfiguration config)
+        protected BaseHub(ILogger logger, IConfiguration config, IMetrics metrics)
         {
             Logger = logger;
+            Metrics = metrics;
             Config = config.GetWebsocketConfig();
         }
 
@@ -36,6 +40,7 @@ namespace Tzkt.Api.Websocket.Hubs
 
             lock (Crit)
             {
+                Metrics.Measure.Counter.Increment(MetricsRegistry.WebsocketConnectionsCounter);
                 Connections++;
                 Logger.LogDebug("Client {id} connected. Total connections: {cnd}", Context.ConnectionId, Connections);
             }
@@ -47,6 +52,7 @@ namespace Tzkt.Api.Websocket.Hubs
         {
             lock (Crit)
             {
+                Metrics.Measure.Counter.Decrement(MetricsRegistry.WebsocketConnectionsCounter);
                 Connections--;
                 Logger.LogDebug("Client {id} disconnected: {ex}. Total connections: {cnt}",
                     Context.ConnectionId, exception?.Message ?? string.Empty, Connections);

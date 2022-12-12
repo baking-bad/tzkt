@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using App.Metrics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -21,8 +22,8 @@ namespace Tzkt.Sync.Protocols
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public Proto14Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto14Handler> logger)
-            : base(node, db, cache, quotes, services, config, logger)
+        public Proto14Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto14Handler> logger, IMetrics metrics)
+            : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);
             Diagnostics = new Diagnostics(this);

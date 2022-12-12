@@ -44,7 +44,7 @@ namespace Tzkt.Sync.Services.Domains
                 await InitState();
                 if (RecordsBigMap == -1 || ExpiryBigMap == -1)
                 {
-                    Logger.LogWarning("Domains plugin configured with invalid name registry contract");
+                    Logger.LogWarning("Domains plugin configured with an invalid name registry contract");
                     return;
                 }
 
