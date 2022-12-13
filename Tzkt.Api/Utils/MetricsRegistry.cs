@@ -12,12 +12,6 @@ public static class MetricsRegistry
         MeasurementUnit = Unit.Bytes,
     };
 
-    public static GaugeOptions CacheMissGauge = new GaugeOptions
-    {
-        Name = "Cache Miss Gauge",
-        MeasurementUnit = Unit.Bytes,
-    };
-
     public static GaugeOptions CacheUsageGauge = new GaugeOptions
     {
         Name = "Cache Usage Rate",

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using App.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Tzkt.Api.Websocket.Processors;
@@ -29,7 +30,8 @@ namespace Tzkt.Api.Websocket.Hubs
             TokenTransfersProcessor<DefaultHub> transfers,
             AccountsProcessor<DefaultHub> accounts,
             ILogger<DefaultHub> logger,
-            IConfiguration config) : base(logger, config)
+            IMetrics metrics,
+            IConfiguration config) : base(logger, config, metrics)
         {
             Head = head;
             Cycles = cycles;
