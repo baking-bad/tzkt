@@ -137,17 +137,14 @@ namespace Tzkt.Sync.Services
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
         {
-            using (Metrics.Measure.Timer.Time(MetricsRegistry.BlockWaitingTimer))
+            while (!await Node.HasUpdatesAsync(AppState.Level))
             {
-                while (!await Node.HasUpdatesAsync(AppState.Level))
-                {
-                    if (cancelToken.IsCancellationRequested)
-                        return false;
+                if (cancelToken.IsCancellationRequested)
+                    return false;
 
-                    await Task.Delay(1000, CancellationToken.None);
-                }
-                return true;
+                await Task.Delay(1000, CancellationToken.None);
             }
+            return true;
         }
 
         private async Task<bool> RebaseLocalBranchAsync(CancellationToken cancelToken)
@@ -173,22 +170,22 @@ namespace Tzkt.Sync.Services
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                using (Metrics.Measure.Timer.Time(MetricsRegistry.BlockApplyTimer))
-                {
-                    var header = await Node.GetHeaderAsync();
-                    if (AppState.Level == header.Level) break;
+                var header = await Node.GetHeaderAsync();
+                if (AppState.Level == header.Level) break;
 
+                Metrics.Measure.Histogram.Update(MetricsRegistry.BlockAppearanceDelay,
+                    (long) (DateTime.UtcNow - header.Timestamp).TotalMilliseconds);
+                
                     //if (AppState.Level >= 0)
                     //    throw new ValidationException("Test", true);
 
-                    Logger.LogDebug($"Applying block...");
+                Logger.LogDebug($"Applying block...");
 
-                    using var scope = Services.CreateScope();
-                    var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
-                    AppState = await protocol.CommitBlock(header.Level);
+                using var scope = Services.CreateScope();
+                var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
+                AppState = await protocol.CommitBlock(header.Level);
 
-                    Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
-                }
+                Logger.LogInformation($"Applied {AppState.Level} of {AppState.KnownHead}");
             }
 
             return !cancelToken.IsCancellationRequested;

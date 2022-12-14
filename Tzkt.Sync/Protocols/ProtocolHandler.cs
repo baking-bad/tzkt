@@ -60,61 +60,73 @@ namespace Tzkt.Sync
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
-                using (Metrics.Measure.Timer.Time(MetricsRegistry.BlockCommitDbTransactionTimer))
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.CacheWarmUpTimer))
                 {
                     Logger.LogDebug("Warm up cache");
                     await WarmUpCache(block);
+                }
 
-                    if (Config.Validation)
+                if (Config.Validation)
+                {
+                    using (Metrics.Measure.Timer.Time(MetricsRegistry.ValidationTimer))
                     {
-                        using (Metrics.Measure.Timer.Time(MetricsRegistry.ValidationTimer))
-                        {
-                            Logger.LogDebug("Validate block");
-                            await Validator.ValidateBlock(block);
-                        }
+                        Logger.LogDebug("Validate block");
+                        await Validator.ValidateBlock(block);
                     }
+                }
 
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.BlockProcessingTimer))
+                {
                     Logger.LogDebug("Process block");
                     await Commit(block);
+                }
 
-                    var nextProtocol = this;
-                    if (state.Protocol != state.NextProtocol)
+                var nextProtocol = this;
+                if (state.Protocol != state.NextProtocol)
+                {
+                    Logger.LogDebug($"Activate next protocol {state.NextProtocol.Substring(0, 8)}");
+                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                    await nextProtocol.Activate(state, block);
+                }
+
+                Logger.LogDebug("Touch accounts");
+                TouchAccounts();
+
+                if (Config.Diagnostics)
+                {
+                    using (Metrics.Measure.Timer.Time(MetricsRegistry.DiagnosticsTimer))
                     {
-                        Logger.LogDebug($"Activate next protocol {state.NextProtocol.Substring(0, 8)}");
-                        nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
-                        await nextProtocol.Activate(state, block);
+                        Logger.LogDebug("Diagnostics");
+                        await nextProtocol.Diagnostics.Run(block);
                     }
+                }
 
-                    Logger.LogDebug("Touch accounts");
-                    TouchAccounts();
-
-                    if (Config.Diagnostics)
-                    {
-                        using (Metrics.Measure.Timer.Time(MetricsRegistry.DiagnosticsTimer))
-                        {
-                            Logger.LogDebug("Diagnostics");
-                            await nextProtocol.Diagnostics.Run(block);
-                        }
-                    }
-
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.DbSaveTimer))
+                {
                     Logger.LogDebug("Save changes");
                     await Db.SaveChangesAsync();
+                }
 
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.PostProcessingTimer))
+                {
                     Logger.LogDebug("Save post-changes");
                     await AfterCommit(block);
+                }
 
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.QuotesProcessingTimer))
+                {
                     Logger.LogDebug("Process quotes");
                     await Quotes.Commit();
-
-                    if (state.Protocol != state.NextProtocol)
-                    {
-                        Logger.LogDebug("Run post activation");
-                        await nextProtocol.PostActivation(state);
-                    }
-
-                    Logger.LogDebug("Commit DB transaction");
-                    await tx.CommitAsync();
                 }
+
+                if (state.Protocol != state.NextProtocol)
+                {
+                    Logger.LogDebug("Run post activation");
+                    await nextProtocol.PostActivation(state);
+                }
+
+                Logger.LogDebug("Commit DB transaction");
+                await tx.CommitAsync();
             }
             catch (Exception)
             {
@@ -133,49 +145,61 @@ namespace Tzkt.Sync
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
-                using (Metrics.Measure.Timer.Time(MetricsRegistry.ReorgTimer))
+                var state = Cache.AppState.Get();
+                Db.TryAttach(state);
+
+                var nextProtocol = this;
+                if (state.Protocol != state.NextProtocol)
                 {
-                    var state = Cache.AppState.Get();
-                    Db.TryAttach(state);
+                    Logger.LogDebug("Run pre deactivation");
+                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                    await nextProtocol.PreDeactivation(state);
+                }
 
-                    var nextProtocol = this;
-                    if (state.Protocol != state.NextProtocol)
-                    {
-                        Logger.LogDebug("Run pre deactivation");
-                        nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
-                        await nextProtocol.PreDeactivation(state);
-                    }
-
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.QuotesRevertTimer))
+                {
                     Logger.LogDebug("Revert quotes");
                     await Quotes.Revert();
+                }
 
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.PostchangesRevertTimer))
+                {
                     Logger.LogDebug("Revert post-changes");
                     await BeforeRevert();
+                }
 
-                    if (state.Protocol != state.NextProtocol)
-                    {
-                        Logger.LogDebug("Deactivate latest protocol");
-                        await nextProtocol.Deactivate(state);
-                    }
+                if (state.Protocol != state.NextProtocol)
+                {
+                    Logger.LogDebug("Deactivate latest protocol");
+                    await nextProtocol.Deactivate(state);
+                }
 
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.BlockRevertTimer))
+                {
                     Logger.LogDebug("Revert block");
                     await Revert();
+                }
 
-                    Logger.LogDebug("Touch accounts");
-                    ClearAccounts(state.Level + 1);
+                Logger.LogDebug("Touch accounts");
+                ClearAccounts(state.Level + 1);
 
-                    if (Config.Diagnostics && state.Hash == predecessor)
+                if (Config.Diagnostics && state.Hash == predecessor)
+                {
+                    using (Metrics.Measure.Timer.Time(MetricsRegistry.DiagnosticOfRevertTimer))
                     {
                         Logger.LogDebug("Diagnostics");
                         await Diagnostics.Run(state.Level);
                     }
+                }
 
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertDbSaveTimer))
+                {
                     Logger.LogDebug("Save changes");
                     await Db.SaveChangesAsync();
-
-                    Logger.LogDebug("Commit DB transaction");
-                    await tx.CommitAsync();
                 }
+
+                Logger.LogDebug("Commit DB transaction");
+                await tx.CommitAsync();
             }
             catch (Exception)
             {
