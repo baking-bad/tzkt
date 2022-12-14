@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
-using App.Metrics.Timer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -176,8 +175,8 @@ namespace Tzkt.Sync.Services
                 Metrics.Measure.Histogram.Update(MetricsRegistry.BlockAppearanceDelay,
                     (long) (DateTime.UtcNow - header.Timestamp).TotalMilliseconds);
                 
-                    //if (AppState.Level >= 0)
-                    //    throw new ValidationException("Test", true);
+                //if (AppState.Level >= 0)
+                //    throw new ValidationException("Test", true);
 
                 Logger.LogDebug($"Applying block...");
 

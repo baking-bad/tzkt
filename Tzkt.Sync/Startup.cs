@@ -1,6 +1,5 @@
 using App.Metrics;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Tzkt.Sync;

@@ -88,9 +88,7 @@ namespace Tzkt.Api.Services
             {
                 Metrics.Measure.Gauge.SetValue(MetricsRegistry.CacheHitsGauge, (double)Hits/(Hits + Misses));
             }
-
             Metrics.Measure.Gauge.SetValue(MetricsRegistry.CacheUsageGauge, (double)Used/CacheSize);
-
         }
 
         public void Clear()
