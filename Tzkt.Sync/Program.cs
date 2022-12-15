@@ -21,20 +21,13 @@ namespace Tzkt.Sync
 {
     public class Program
     {
-        public static IMetricsRoot Metrics { get; set; }
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Init().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            Metrics = AppMetrics.CreateDefaultBuilder()
-                .OutputMetrics.AsPrometheusPlainText()
-                .OutputMetrics.AsPrometheusProtobuf()
-                .Build();
-            
-            return Host.CreateDefaultBuilder(args)
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((host, appConfig) =>
                 {
                     appConfig.Sources.Clear();
@@ -54,8 +47,13 @@ namespace Tzkt.Sync
                     {
                         options.EndpointOptions = endpointsOptions =>
                         {
-                            endpointsOptions.MetricsTextEndpointOutputFormatter = Metrics.OutputMetricsFormatters.OfType<MetricsPrometheusTextOutputFormatter>().First();
-                            endpointsOptions.MetricsEndpointOutputFormatter = Metrics.OutputMetricsFormatters.OfType<MetricsPrometheusProtobufOutputFormatter>().First();
+                            var metrics = AppMetrics.CreateDefaultBuilder()
+                                .OutputMetrics.AsPrometheusPlainText()
+                                .OutputMetrics.AsPrometheusProtobuf()
+                                .Build();
+                            
+                            endpointsOptions.MetricsTextEndpointOutputFormatter = metrics.OutputMetricsFormatters.OfType<MetricsPrometheusTextOutputFormatter>().First();
+                            endpointsOptions.MetricsEndpointOutputFormatter = metrics.OutputMetricsFormatters.OfType<MetricsPrometheusProtobufOutputFormatter>().First();
                         };
                     })
                 .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); })
@@ -98,7 +96,6 @@ namespace Tzkt.Sync
                         services.AddHostedService<TokenMetadata>();
                     #endregion
                 });
-        }
     }
 
     static class IHostExt

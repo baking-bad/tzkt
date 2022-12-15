@@ -52,7 +52,7 @@ namespace Tzkt.Sync
             JsonElement block;
             using (Metrics.Measure.Timer.Time(MetricsRegistry.RpcBlockRequestTimer))
             {
-                Logger.LogDebug($"Load block {state.Level + 1}");
+                Logger.LogDebug("Load block {StateLevel}", state.Level + 1);
                 block = await Rpc.GetBlockAsync(state.Level + 1);
             }
 

@@ -9,18 +9,18 @@ public static class MetricsRegistry
     public static GaugeOptions CacheHitsGauge = new GaugeOptions
     {
         Name = "Cache Hits Gauge",
-        MeasurementUnit = Unit.Bytes,
+        MeasurementUnit = Unit.Percent,
     };
 
     public static GaugeOptions CacheUsageGauge = new GaugeOptions
     {
         Name = "Cache Usage Rate",
-        MeasurementUnit = Unit.Bytes,
+        MeasurementUnit = Unit.Percent,
     };
 
     public static CounterOptions WebsocketConnectionsCounter = new CounterOptions
     {
         Name = "Websocket connections",
-        MeasurementUnit = Unit.Bytes,
+        MeasurementUnit = Unit.Connections,
     };
 }

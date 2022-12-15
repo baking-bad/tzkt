@@ -86,7 +86,7 @@ public static class MetricsRegistry
     public static readonly TimerOptions RevertDbSaveTimer = new TimerOptions
     {
         Name = "Revert DB save timer",
-                DurationUnit = TimeUnit.Milliseconds,
+        DurationUnit = TimeUnit.Milliseconds,
         RateUnit = TimeUnit.Milliseconds
     };
 }
