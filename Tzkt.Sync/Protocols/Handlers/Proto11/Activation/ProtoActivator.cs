@@ -7,6 +7,7 @@ namespace Tzkt.Sync.Protocols.Proto11
     {
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
+        protected override void UpgradeParameters(Protocol protocol, Protocol prev) { }
         protected override Task MigrateContext(AppState state) => Task.CompletedTask;
         protected override Task RevertContext(AppState state) => Task.CompletedTask;
     }
