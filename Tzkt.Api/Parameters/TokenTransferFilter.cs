@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -77,7 +78,9 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return ResponseCacheService.BuildKey("",
+                ("id", id), ("level", level), ("timestamp", timestamp), ("token", token), ("anyof", anyof), ("from", from), ("to", to),
+                ("amount", amount), ("transactionId", transactionId), ("originationId", originationId), ("migrationId", migrationId), ("indexedAt", indexedAt));
         }
     }
 }
