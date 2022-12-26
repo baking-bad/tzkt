@@ -4,7 +4,7 @@ using App.Metrics.Gauge;
 
 namespace Tzkt.Api.Utils;
 
-public static class MetricsRegistry
+static class MetricsRegistry
 {
     public static GaugeOptions CacheHitsGauge = new GaugeOptions
     {

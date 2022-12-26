@@ -4,7 +4,7 @@ using App.Metrics.Timer;
 
 namespace Tzkt.Sync;
 
-public static class MetricsRegistry
+static class MetricsRegistry
 {
     public static readonly TimerOptions CacheWarmUpTimer = new TimerOptions
     {

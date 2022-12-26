@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using App.Metrics;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using App.Metrics;
 using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Websocket.Hubs

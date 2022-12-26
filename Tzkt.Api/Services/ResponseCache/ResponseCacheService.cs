@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
-using App.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using App.Metrics;
 using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Services
