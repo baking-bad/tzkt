@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using Tzkt.Sync.Protocols;
@@ -32,6 +33,7 @@ namespace Tzkt.Sync
         {
             if (level > 1)
             {
+                var fallbackProtocol = services.GetRequiredService<IConfiguration>().GetValue<string>("Protocols:Fallback");
                 return protocol switch
                 {
                     "PtCJ7pwoxe8JasnHY8YonnLYjcVHmhiARPJvqcC6VfHT5s8k8sY" => services.GetRequiredService<Proto1Handler>(),
@@ -49,7 +51,7 @@ namespace Tzkt.Sync
                     "PtJakart2xVj7pYXJBXrqHgd82rdkLey5ZeeGwDgPp9rhQUbSqY" => services.GetRequiredService<Proto13Handler>(),
                     "PtKathmankSpLLDALzWw7CGD2j2MtyveTwboEYokqUCP4a1LxMg" => services.GetRequiredService<Proto14Handler>(),
                     "PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW" => services.GetRequiredService<Proto15Handler>(),
-                    "ProtoALphaALphaALphaALphaALphaALphaALphaALphaDdp3zK" => services.GetRequiredService<Proto15Handler>(),
+                    _ when fallbackProtocol is not null => GetProtocolHandler(services, level, fallbackProtocol),
                     _ => throw new NotImplementedException($"Protocol '{protocol}' is not supported"),
                 };
             }
