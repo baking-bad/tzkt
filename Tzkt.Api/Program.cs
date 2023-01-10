@@ -50,6 +50,8 @@ namespace Tzkt.Api
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
 
+            var maxAttempts = 120
+
             logger.LogInformation("Version {version}",
                 Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
@@ -63,14 +65,14 @@ namespace Tzkt.Api
                 {
                     if (migrations[i] != appliedMigrations[i])
                     {
-                        attempt = 30;
+                        attempt = maxAttempts;
                         throw new Exception($"API and DB schema have incompatible versions. Drop the DB and restore it from the appropriate snapshot.");
                     }
                 }
 
                 if (appliedMigrations.Count > migrations.Count)
                 {
-                    attempt = 30;
+                    attempt = maxAttempts;
                     throw new Exception($"API version seems older than version of the DB schema. Update the API to the newer version.");
                 }
 
@@ -87,7 +89,7 @@ namespace Tzkt.Api
             catch (Exception ex)
             {
                 logger.LogCritical(ex, "Failed to initialize database");
-                if (attempt >= 30) throw;
+                if (attempt >= maxAttempts) throw;
                 Thread.Sleep(1000);
 
                 return host.Init(++attempt);
