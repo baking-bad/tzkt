@@ -50,7 +50,7 @@ namespace Tzkt.Api
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
 
-            var maxAttempts = 120
+            var maxAttempts = 120;
 
             logger.LogInformation("Version {version}",
                 Assembly.GetExecutingAssembly().GetName().Version.ToString());
