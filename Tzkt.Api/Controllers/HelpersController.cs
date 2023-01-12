@@ -26,8 +26,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="bytes">Forged operation bytes + signature in hex format.</param>
         /// <param name="async">If `true`, the function returns immediately. Otherwise, the operation will be validated before the result is returned.</param>
         /// <returns></returns>
-        [HttpPost]
-        public async Task<ActionResult<string>> Post([FromBody][Required] string bytes, bool async = true)
+        [HttpPost("inject")]
+        public async Task<ActionResult<string>> PostInject([FromBody][Required] string bytes, bool async = true)
         {
             try
             {
