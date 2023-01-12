@@ -68,6 +68,14 @@ namespace Tzkt.Api.Swagger
                             : null,
                         ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
                     });
+                    document.Tags.Add(new NSwag.OpenApiTag
+                    {
+                        Name = "Taquito extension",
+                        Description = File.Exists("Swagger/TaquitoExt.md")
+                            ? File.ReadAllText("Swagger/TaquitoExt.md")
+                            : null,
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
+                    });
                     document.ExtensionData = new Dictionary<string, object>
                     {
                         {
