@@ -11,7 +11,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Services;
-using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api
@@ -20,7 +19,7 @@ namespace Tzkt.Api
     {
         public static async Task Main(string[] args)
         {
-           (await CreateHostBuilder(args).Build().Check()).Init().Run();
+           (await CreateHostBuilder(args).Build().Init().Check()).Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -102,14 +101,10 @@ namespace Tzkt.Api
         public static async Task<IHost> Check(this IHost host)
         {
             using var scope = host.Services.CreateScope();
-            var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+            scope.ServiceProvider.ValidateAuthConfig();
+            await scope.ServiceProvider.ValidateRpcHelpersConfig();
             
-            config.ValidateAuthConfig();
-            config.ValidateNodeRpcConfig();
-            
-            var state = scope.ServiceProvider.GetRequiredService<StateCache>();
-            var rpc = scope.ServiceProvider.GetRequiredService<NodeRpc>();
-            await config.ValidateNodeRpcChain(state, rpc);
             return host;
         }
     }
