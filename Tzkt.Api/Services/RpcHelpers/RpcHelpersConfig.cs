@@ -35,7 +35,7 @@ namespace Tzkt.Api.Services
             {
                 string chainId = await DJson.GetAsync($"{config.Endpoint.TrimEnd('/')}/chains/main/chain_id");
 
-                if (chainId == services.GetRequiredService<StateCache>().Current.ChainId)
+                if (chainId != services.GetRequiredService<StateCache>().Current.ChainId)
                     throw new ConfigurationException("RpcHelpers.Endpoint refers to the node with different chain_id");
             }
             catch (ConfigurationException)
