@@ -112,7 +112,7 @@ namespace Tzkt.Api.Services.Sync
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { break; }
                     catch (Exception ex)
                     {
-                        Logger.LogError("DB listener disconnected: {0}", ex.Message);
+                        Logger.LogError(ex, "DB listener disconnected");
                         await Task.Delay(1000, cancellationToken);
                     }
                 }
@@ -123,7 +123,7 @@ namespace Tzkt.Api.Services.Sync
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex)
             {
-                Logger.LogCritical($"DB listener crashed: {ex.Message}");
+                Logger.LogCritical(ex, "DB listener crashed");
             }
             finally
             {
@@ -133,7 +133,7 @@ namespace Tzkt.Api.Services.Sync
 
         private void OnNotification(object sender, NpgsqlNotificationEventArgs e)
         {
-            Logger.LogDebug("Received {1} notification with payload {2}", e.Channel, e.Payload);
+            Logger.LogDebug("Received {channel} notification with payload {payload}", e.Channel, e.Payload);
 
             if (e.Payload == null)
             {
@@ -146,19 +146,19 @@ namespace Tzkt.Api.Services.Sync
                 var separator = e.Payload.IndexOf(':');
                 if (separator == -1 ||
                     !int.TryParse(e.Payload[..separator], out var knownHead) ||
-                    !DateTime.TryParse(e.Payload[(separator + 1)..], out var lastSync))
+                    !DateTimeOffset.TryParse(e.Payload[(separator + 1)..], out var lastSync))
                 {
-                    Logger.LogCritical("Invalid trigger payload {1}", e.Payload);
+                    Logger.LogCritical("Invalid trigger payload {payload}", e.Payload);
                     return;
                 }
-                State.UpdateSyncState(knownHead, lastSync);
+                State.UpdateSyncState(knownHead, lastSync.UtcDateTime);
             }
             else if (e.Channel == StateHashChanged)
             {
                 var data = e.Payload.Split(':', StringSplitOptions.RemoveEmptyEntries);
                 if (data.Length != 2 || !int.TryParse(data[0], out var level) || data[1].Length != 51)
                 {
-                    Logger.LogCritical("Invalid trigger payload {1}", e.Payload);
+                    Logger.LogCritical("Invalid trigger payload {payload}", e.Payload);
                     return;
                 }
 
@@ -192,7 +192,7 @@ namespace Tzkt.Api.Services.Sync
                     if (attempts++ > 32)
                     {
                         // should never get here, but to make sure there are no infinite loops...
-                        Logger.LogCritical("Failed to reach state equal to trigger's payload '{1}'", StateChanges[^1].Hash);
+                        Logger.LogCritical("Failed to reach state equal to trigger's payload '{hash}'", StateChanges[^1].Hash);
                         return;
                     }
 
@@ -250,7 +250,7 @@ namespace Tzkt.Api.Services.Sync
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process state notification: {1}", ex.Message);
+                Logger.LogError(ex, "Failed to process state notification");
             }
         }
 
@@ -298,7 +298,7 @@ namespace Tzkt.Api.Services.Sync
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process metadata notification: {1}", ex.Message);
+                Logger.LogError(ex, "Failed to process metadata notification");
             }
         }
     }

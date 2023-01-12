@@ -31,6 +31,44 @@ await connection.invoke("SubscribeToHead");
 
 ---
 
+## SubscribeToCycles
+
+Notifies of the start of a new cycle with a specified delay.
+
+### Method
+
+`SubscribeToCycles`
+
+### Channel
+
+`cycles`
+
+### Parameters
+
+````js
+{
+	delayBlocks: 2,    // number of blocks (2 by default) to delay a new cycle notification
+                       // should be >= 2 (to not worry abour reorgs) and < cycle size
+}
+````
+
+### Data model
+
+Same as in [/cycle](#operation/Cycles_GetByIndex)
+
+### State
+
+State contains an index (`int`) of the last processed cycle.
+
+### Example
+
+````js
+connection.on("cycles", (msg) => { console.log(msg); });
+await connection.invoke("SubscribeToCycles");
+````
+
+---
+
 ## SubscribeToBlocks  
 
 Sends blocks added to the blockchain
@@ -80,7 +118,7 @@ Sends touched accounts (affected by any operation in any way).
 
 ````js
 {
-	addresses: [], // [required] array of address you want to subscribe to
+	addresses: [], // array of address you want to subscribe to
 }
 ````
 
@@ -120,13 +158,18 @@ Sends operations of specified types or related to specified accounts, included i
 
 ````js
 {
-	address: '', // address you want to subscribe to,
-	             // or null if you want to subscribe for all operations
+    address: '', // address you want to subscribe to,
+                 // or null if you want to subscribe for all operations
 
-	types: ''    // comma-separated list of operation types, any of:
-	             // 'transaction', 'origination', 'delegation', 'reveal', 'register_constant', 'set_deposits_limit'
-				 // 'double_baking', 'double_endorsing', 'double_preendorsing', 'nonce_revelation', 'activation'
-				 // 'proposal', 'ballot', 'endorsement', 'preendorsement'.
+    codeHash: 0, // hash of the code of the contract to which the operation is related
+                 // (can be used with 'transaction', 'origination', 'delegation' types only)
+
+    types: ''    // comma-separated list of operation types, any of:
+                 // 'transaction', 'origination', 'delegation', 'reveal', 'register_constant', 'set_deposits_limit', 'increase_paid_storage'
+				 // 'tx_rollup_origination', 'tx_rollup_submit_batch', 'tx_rollup_commit', 'tx_rollup_return_bond', 'tx_rollup_finalize_commitment',
+				 // 'tx_rollup_remove_commitment', 'tx_rollup_rejection', 'tx_rollup_dispatch_tickets', 'transfer_ticket',
+                 // 'double_baking', 'double_endorsing', 'double_preendorsing', 'nonce_revelation', 'vdf_revelation', 'activation'
+                 // 'proposal', 'ballot', 'endorsement', 'preendorsement'.
 }
 ````
 																	 
@@ -146,6 +189,8 @@ State contains level (`int`) of the last processed block.
 connection.on("operations", (msg) => { console.log(msg); });
 // subscribe to all transactions
 await connection.invoke("SubscribeToOperations", { types: 'transaction' });
+// subscribe to all transactions of the entire contract family
+await connection.invoke("SubscribeToOperations", { types: 'transaction', codeHash: 1928472 });
 // subscribe to all delegations and originations related to the address 'tz1234...'
 await connection.invoke("SubscribeToOperations", { address: 'tz1234...', types: 'delegation,origination' });
 ````
@@ -392,6 +437,85 @@ State contains level (`int`) of the last processed block.
 connection.on("transfers", (msg) => { console.log(msg); });
 // subscribe to all transfers of the 'tz123...' account
 await connection.invoke("SubscribeToTokenTransfers", { account: 'tz123...' });
+````
+
+---			
+
+## SubscribeToEvents 
+														  
+Sends contract events
+		
+### Method 
+
+`SubscribeToEvents`
+
+### Channel 
+
+`events`
+
+### Parameters
+
+This method accepts the following parameters:
+
+````js
+{
+	codeHash: 0,    // hash of the contract code
+	contract: '',   // contract address
+	tag: '',        // event tag
+}
+````
+
+You can set various combinations of these fields to configure what you want to subscribe to. For example:
+
+````js
+// subscribe to all events
+{
+}	 
+
+// subscribe to events with specific tag
+{		
+	tag: 'transfer'
+}
+
+// subscribe  to events of the specific contract
+{
+	contract: 'KT1...'
+}
+
+// subscribe to events of the specific contract with specific tag
+{
+	contract: 'KT1...',
+	tag: 'transfer'
+}
+
+// subscribe to events of the 'family' of contracts
+{
+	codeHash: 1234
+}
+	
+// subscribe to events of the 'family' of contracts with specific tag
+{
+	codeHash: 1234,
+	tag: 'transfer'
+}
+````
+
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
+
+### Data model
+
+Same as in [/contracts/events](#operation/Events_GetContractEvents).
+
+### State
+
+State contains level (`int`) of the last processed block.
+
+### Example
+
+````js
+connection.on("events", (msg) => { console.log(msg); });
+// subscribe to all events of the 'KT123...' contract
+await connection.invoke("SubscribeToEvents", { contract: 'KT123...' });
 ````
 
 ---

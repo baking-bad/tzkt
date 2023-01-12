@@ -9,9 +9,9 @@ namespace Tzkt.Data.Models
         public BigMapAction Action { get; set; }
 
         public int Level { get; set; }
-        public int? OriginationId { get; set; }
-        public int? TransactionId { get; set; }
-        public int? MigrationId { get; set; }
+        public long? OriginationId { get; set; }
+        public long? TransactionId { get; set; }
+        public long? MigrationId { get; set; }
 
         public int? BigMapKeyId { get; set; }
         public byte[] RawValue { get; set; }

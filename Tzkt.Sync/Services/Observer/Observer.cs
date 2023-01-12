@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Services
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError(ex, $"Failed to check updates. {ex.Message}");
+                        Logger.LogError(ex, "Failed to check updates");
                         await Task.Delay(3000, CancellationToken.None);
                         continue;
                     }
@@ -66,7 +66,7 @@ namespace Tzkt.Sync.Services
                     }
                     catch (BaseException ex) when (ex.RebaseRequired)
                     {
-                        Logger.LogError($"Failed to apply block: {ex.Message}. Rebase local branch...");
+                        Logger.LogError(ex, "Failed to apply block. Rebase local branch...");
                         if (!await ResetState(cancelToken)) break;
                          
                         try
@@ -75,7 +75,7 @@ namespace Tzkt.Sync.Services
                         }
                         catch (Exception exx)
                         {
-                            Logger.LogError(exx, $"Failed to rebase branch. {exx.Message}");
+                            Logger.LogError(exx, "Failed to rebase branch");
                             await Task.Delay(3000, CancellationToken.None);
                             if (!await ResetState(cancelToken)) break;
                             continue;
@@ -83,7 +83,7 @@ namespace Tzkt.Sync.Services
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError(ex, $"Failed to apply updates. {ex.Message}");
+                        Logger.LogError(ex, "Failed to apply updates");
                         await Task.Delay(3000, CancellationToken.None);
                         if (!await ResetState(cancelToken)) break;
                         continue;
@@ -94,7 +94,7 @@ namespace Tzkt.Sync.Services
             catch (Exception ex)
             {
                 // should never get here
-                Logger.LogCritical($"Observer crashed: {ex.Message}");
+                Logger.LogCritical(ex, "Observer crashed");
             }
             finally
             {
@@ -117,7 +117,7 @@ namespace Tzkt.Sync.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Failed to reset state. {ex.Message}");
+                    Logger.LogError(ex, "Failed to reset state");
                     await Task.Delay(1000, CancellationToken.None);
                 }
             }

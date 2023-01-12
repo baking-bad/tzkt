@@ -13,7 +13,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
         /// </summary>
-        public override int Id { get; set; }
+        public override long Id { get; set; }
 
         /// <summary>
         /// The height of the block from the genesis block, in which the operation was included
@@ -49,6 +49,11 @@ namespace Tzkt.Api.Models
         /// Information about the account sent the transaction
         /// </summary>
         public Alias Sender { get; set; }
+
+        /// <summary>
+        /// Hash of the sender contract code, or `null` is the sender is not a contract
+        /// </summary>
+        public int? SenderCodeHash { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent internal operation replay
@@ -96,6 +101,11 @@ namespace Tzkt.Api.Models
         public Alias Target { get; set; }
 
         /// <summary>
+        /// Hash of the target contract code, or `null` is the target is not a contract
+        /// </summary>
+        public int? TargetCodeHash { get; set; }
+
+        /// <summary>
         /// The transaction amount (micro tez)
         /// </summary>
         public long Amount { get; set; }
@@ -139,6 +149,11 @@ namespace Tzkt.Api.Models
         /// Number of token transfers produced by the operation, or `null` if there are no transfers
         /// </summary>
         public int? TokenTransfersCount { get; set; }
+
+        /// <summary>
+        /// Number of events produced by the operation, or `null` if there are no events
+        /// </summary>
+        public int? EventsCount { get; set; }
 
         #region injecting
         /// <summary>

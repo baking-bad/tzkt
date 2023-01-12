@@ -41,12 +41,14 @@ namespace Tzkt.Api.Repositories
             if (account.TxRollupReturnBondCount > 0) UnionTxRollupReturnBondOps(sql);
             if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(sql);
             if (account.TransferTicketCount > 0) UnionTransferTicketOps(sql);
+            if (account.IncreasePaidStorageCount > 0) UnionIncreasePaidStorageOps(sql);
 
             if (account is RawUser user)
             {
                 if (user.Activated == true) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
+                if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -58,7 +60,9 @@ namespace Tzkt.Api.Repositories
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
                 if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(sql);
             }
 
             if (sql.Length == 0) return;
@@ -163,12 +167,14 @@ namespace Tzkt.Api.Repositories
             if (account.TxRollupReturnBondCount > 0) UnionTxRollupReturnBondOps(sql);
             if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(sql);
             if (account.TransferTicketCount > 0) UnionTransferTicketOps(sql);
+            if (account.IncreasePaidStorageCount > 0) UnionIncreasePaidStorageOps(sql);
 
             if (account is RawUser user)
             {
                 if (user.Activated == true) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
+                if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -180,7 +186,9 @@ namespace Tzkt.Api.Repositories
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
                 if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(sql);
             }
 
             if (sql.Length == 0) return;
@@ -319,12 +327,14 @@ namespace Tzkt.Api.Repositories
             if (account.TxRollupReturnBondCount > 0) UnionTxRollupReturnBondOps(sql);
             if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(sql);
             if (account.TransferTicketCount > 0) UnionTransferTicketOps(sql);
+            if (account.IncreasePaidStorageCount > 0) UnionIncreasePaidStorageOps(sql);
 
             if (account is RawUser user)
             {
                 if (user.Activated == true) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
+                if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -336,7 +346,9 @@ namespace Tzkt.Api.Repositories
                 if (delegat.DoubleEndorsingCount > 0) UnionDoubleEndorsing(sql);
                 if (delegat.DoublePreendorsingCount > 0) UnionDoublePreendorsing(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(sql);
             }
 
             if (sql.Length == 0) return;
@@ -512,7 +524,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append("UNION ALL SELECT ");
 
-            #region offender
+            #region producer
             sql.Append(@"0 as ""Type"", ");
             sql.Append(@"""Id"" as ""Id"", ");
             sql.Append(@"""Level"" as ""Level"", ");
@@ -770,6 +782,32 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""NonceRevelationOps"" ");
+            sql.Append(@"WHERE ""BakerId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+
+            sql.AppendLine();
+        }
+
+        void UnionVdfRevelations(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"31 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"""Reward"" as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""VdfRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
 
@@ -1077,7 +1115,7 @@ namespace Tzkt.Api.Repositories
 
             sql.AppendLine();
         }
-
+        
         void UnionSetDepositsLimits(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1374,6 +1412,113 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void UnionIncreasePaidStorageOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"32 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"(""BakerFee"" + COALESCE(""StorageFee"", 0)) as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""IncreasePaidStorageOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionUpdateConsensusKeyOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"33 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"""BakerFee"" as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""UpdateConsensusKeyOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""BakerFee"" > 0 ");
+
+            sql.AppendLine();
+        }
+
+        void UnionDrainDelegateOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region delegate
+            sql.Append(@"34 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"""Amount"" as ""Sent"", ");
+            sql.Append(@"""Fee"" as ""Fee"", ");
+            sql.Append(@"""TargetId"" as ""To"" ");
+
+            sql.Append(@"FROM ""DrainDelegateOps"" ");
+            sql.Append(@"WHERE ""DelegateId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region target
+            sql.Append(@"34 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"""Amount"" as ""Received"", ");
+            sql.Append(@"""DelegateId"" as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""DrainDelegateOps"" ");
+            sql.Append(@"WHERE ""TargetId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
         void UnionRevelationPenalties(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1465,6 +1610,12 @@ namespace Tzkt.Api.Repositories
             "tx rollup rejection",              // 28
             "tx rollup dispatch tickets",       // 29
             "transfer ticket",                  // 30
+
+            "vdf revelation",                   // 31
+            "increase paid storage",            // 32
+
+            "update consensus key",             // 33
+            "drain delegate",                   // 34
         };
     }
 }

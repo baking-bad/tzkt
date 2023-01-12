@@ -67,6 +67,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.EndorsementOps.Remove(endorsement);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

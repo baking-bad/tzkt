@@ -89,7 +89,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "proposer" && x != "producer"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `proposer`, `producer` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<Block>());
             }
             if (proposer != null)
@@ -218,7 +218,7 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            var level = Time.FindLevel(timestamp.DateTime, SearchMode.ExactOrLower);
+            var level = Time.FindLevel(timestamp.UtcDateTime, SearchMode.ExactOrLower);
             return Blocks.Get(level, operations, micheline, quote);
         }
 
@@ -233,7 +233,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{timestamp:DateTime}/level")]
         public int GetByDate(DateTimeOffset timestamp)
         {
-            return Time.FindLevel(timestamp.DateTime, SearchMode.ExactOrLower);
+            return Time.FindLevel(timestamp.UtcDateTime, SearchMode.ExactOrLower);
         }
 
         // BCD bootstrap

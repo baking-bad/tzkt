@@ -35,6 +35,7 @@ namespace Tzkt.Data
         public DbSet<EndorsementOperation> EndorsementOps { get; set; }
         public DbSet<PreendorsementOperation> PreendorsementOps { get; set; }
         public DbSet<NonceRevelationOperation> NonceRevelationOps { get; set; }
+        public DbSet<VdfRevelationOperation> VdfRevelationOps { get; set; }
         public DbSet<OriginationOperation> OriginationOps { get; set; }
         public DbSet<ProposalOperation> ProposalOps { get; set; }
         public DbSet<RevealOperation> RevealOps { get; set; }
@@ -52,9 +53,15 @@ namespace Tzkt.Data
         public DbSet<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
         public DbSet<TransferTicketOperation> TransferTicketOps { get; set; }
 
+        public DbSet<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+        public DbSet<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; }
+        public DbSet<DrainDelegateOperation> DrainDelegateOps { get; set; }
+
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
+
+        public DbSet<ContractEvent> Events { get; set; }
         #endregion
 
         #region voting
@@ -70,10 +77,6 @@ namespace Tzkt.Data
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
         public DbSet<FreezerUpdate> FreezerUpdates { get; set; }
-        #endregion
-
-        #region quotes
-        public DbSet<Quote> Quotes { get; set; }
         #endregion
 
         #region statistics
@@ -95,6 +98,11 @@ namespace Tzkt.Data
         public DbSet<Token> Tokens { get; set; }
         public DbSet<TokenBalance> TokenBalances { get; set; }
         public DbSet<TokenTransfer> TokenTransfers { get; set; }
+        #endregion
+
+        #region plugins
+        public DbSet<Quote> Quotes { get; set; }
+        public DbSet<Domain> Domains { get; set; }
         #endregion
 
         public TzktContext(DbContextOptions options) : base(options) { }
@@ -130,6 +138,7 @@ namespace Tzkt.Data
             modelBuilder.BuildEndorsementOperationModel();
             modelBuilder.BuildPreendorsementOperationModel();
             modelBuilder.BuildNonceRevelationOperationModel();
+            modelBuilder.BuildVdfRevelationOperationModel();
             modelBuilder.BuildOriginationOperationModel();
             modelBuilder.BuildProposalOperationModel();
             modelBuilder.BuildRevealOperationModel();
@@ -147,9 +156,15 @@ namespace Tzkt.Data
             modelBuilder.BuildTxRollupDispatchTicketsOperationModel();
             modelBuilder.BuildTransferTicketOperationModel();
 
+            modelBuilder.BuildIncreasePaidStorageOperationModel();
+            modelBuilder.BuildUpdateConsensusKeyOperationModel();
+            modelBuilder.BuildDrainDelegateOperationModel();
+
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
+
+            modelBuilder.BuildContractEventModel();
             #endregion
 
             #region voting
@@ -165,10 +180,6 @@ namespace Tzkt.Data
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
             modelBuilder.BuildFreezerUpdateModel();
-            #endregion
-
-            #region quotes
-            modelBuilder.BuildQuoteModel();
             #endregion
 
             #region statistics
@@ -190,6 +201,11 @@ namespace Tzkt.Data
             modelBuilder.BuildTokenModel();
             modelBuilder.BuildTokenBalanceModel();
             modelBuilder.BuildTokenTransferModel();
+            #endregion
+
+            #region plugins
+            modelBuilder.BuildQuoteModel();
+            modelBuilder.BuildDomainModel();
             #endregion
         }
     }

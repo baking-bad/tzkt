@@ -68,7 +68,7 @@ namespace Tzkt.Sync
 
         public static DateTime RequiredDateTime(this JsonElement el, string name)
         {
-            return el.TryGetProperty(name, out var res) && res.ValueKind == JsonValueKind.String ? res.GetDateTimeOffset().DateTime
+            return el.TryGetProperty(name, out var res) && res.ValueKind == JsonValueKind.String ? res.GetDateTimeOffset().UtcDateTime
                 : throw new SerializationException($"Missed required string {name}");
         }
 

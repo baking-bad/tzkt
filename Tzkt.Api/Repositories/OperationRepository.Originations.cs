@@ -6,11 +6,18 @@ using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository : DbConnection
     {
+        public async Task<bool?> GetOriginationStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.OriginationOps), hash);
+        }
+
         public async Task<int> GetOriginationsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
@@ -50,7 +57,7 @@ namespace Tzkt.Api.Repositories
             #region include diffs
             var diffs = await BigMapsRepository.GetOriginationDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
-                    .Select(x => (int)x.Id)
+                    .Select(x => (long)x.Id)
                     .ToList(),
                 format);
             #endregion
@@ -80,6 +87,7 @@ namespace Tzkt.Api.Repositories
                     Hash = hash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
+                    SenderCodeHash = row.SenderCodeHash,
                     Counter = row.Counter,
                     Nonce = row.Nonce,
                     GasLimit = row.GasLimit,
@@ -93,7 +101,7 @@ namespace Tzkt.Api.Repositories
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((long)row.Id),
                     Status = OpStatuses.ToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -140,7 +148,7 @@ namespace Tzkt.Api.Repositories
             #region include diffs
             var diffs = await BigMapsRepository.GetOriginationDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
-                    .Select(x => (int)x.Id)
+                    .Select(x => (long)x.Id)
                     .ToList(),
                 format);
             #endregion
@@ -170,6 +178,7 @@ namespace Tzkt.Api.Repositories
                     Hash = hash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
+                    SenderCodeHash = row.SenderCodeHash,
                     Counter = counter,
                     Nonce = row.Nonce,
                     GasLimit = row.GasLimit,
@@ -183,7 +192,7 @@ namespace Tzkt.Api.Repositories
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((long)row.Id),
                     Status = OpStatuses.ToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -230,7 +239,7 @@ namespace Tzkt.Api.Repositories
             #region include diffs
             var diffs = await BigMapsRepository.GetOriginationDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
-                    .Select(x => (int)x.Id)
+                    .Select(x => (long)x.Id)
                     .ToList(),
                 format);
             #endregion
@@ -260,6 +269,7 @@ namespace Tzkt.Api.Repositories
                     Hash = hash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
+                    SenderCodeHash = row.SenderCodeHash,
                     Counter = counter,
                     Nonce = nonce,
                     GasLimit = row.GasLimit,
@@ -273,7 +283,7 @@ namespace Tzkt.Api.Repositories
                     ContractBalance = row.Balance,
                     Code = (int)format % 2 == 0 ? code : code.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((long)row.Id),
                     Status = OpStatuses.ToString(row.Status),
                     OriginatedContract = contract == null ? null :
                         new OriginatedContract
@@ -296,8 +306,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"", ""StorageFee"", ""AllocationFee"", 
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""StorageUsed"", ""Status"", ""Nonce"", ""ContractId"", ""DelegateId"", ""Balance"", ""ManagerId"", ""Errors""
+                SELECT    *
                 FROM      ""OriginationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -319,6 +328,7 @@ namespace Tzkt.Api.Repositories
                     Hash = row.OpHash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
+                    SenderCodeHash = row.SenderCodeHash,
                     Counter = row.Counter,
                     Nonce = row.Nonce,
                     GasLimit = row.GasLimit,
@@ -356,11 +366,13 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter anyCodeHash,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -391,10 +403,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
-                .FilterA(@"c.""CodeHash""", codeHash)
+                .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
+                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -425,7 +439,7 @@ namespace Tzkt.Api.Repositories
             var diffs = includeBigmaps
                 ? await BigMapsRepository.GetOriginationDiffs(db,
                     rows.Where(x => x.BigMapUpdates != null)
-                        .Select(x => (int)x.Id)
+                        .Select(x => (long)x.Id)
                         .ToList(),
                     format)
                 : null;
@@ -445,6 +459,7 @@ namespace Tzkt.Api.Repositories
                     Hash = row.OpHash,
                     Initiator = row.InitiatorId != null ? Accounts.GetAlias(row.InitiatorId) : null,
                     Sender = Accounts.GetAlias(row.SenderId),
+                    SenderCodeHash = row.SenderCodeHash,
                     Counter = row.Counter,
                     Nonce = row.Nonce,
                     GasLimit = row.GasLimit,
@@ -467,7 +482,7 @@ namespace Tzkt.Api.Repositories
                         Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                     },
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
-                    Diffs = diffs?.GetValueOrDefault((int)row.Id),
+                    Diffs = diffs?.GetValueOrDefault((long)row.Id),
                     ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
@@ -483,11 +498,13 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter anyCodeHash,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -509,6 +526,7 @@ namespace Tzkt.Api.Repositories
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "initiator": columns.Add(@"o.""InitiatorId"""); break;
                     case "sender": columns.Add(@"o.""SenderId"""); break;
+                    case "senderCodeHash": columns.Add(@"o.""SenderCodeHash"""); break;
                     case "counter": columns.Add(@"o.""Counter"""); break;
                     case "nonce": columns.Add(@"o.""Nonce"""); break;
                     case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
@@ -567,10 +585,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
-                .FilterA(@"c.""CodeHash""", codeHash)
+                .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
+                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -622,6 +642,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.SenderId);
                         break;
+                    case "senderCodeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SenderCodeHash;
+                        break; 
                     case "counter":
                         foreach (var row in rows)
                             result[j++][i] = row.Counter;
@@ -696,12 +720,12 @@ namespace Tzkt.Api.Repositories
                     case "diffs":
                         var diffs = await BigMapsRepository.GetOriginationDiffs(db,
                             rows.Where(x => x.BigMapUpdates != null)
-                                .Select(x => (int)x.Id)
+                                .Select(x => (long)x.Id)
                                 .ToList(),
                             format);
                         if (diffs != null)
                             foreach (var row in rows)
-                                result[j++][i] = diffs.GetValueOrDefault((int)row.Id);
+                                result[j++][i] = diffs.GetValueOrDefault((long)row.Id);
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -751,11 +775,13 @@ namespace Tzkt.Api.Repositories
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter anyCodeHash,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
@@ -766,7 +792,7 @@ namespace Tzkt.Api.Repositories
         {
             var columns = new HashSet<string>(1);
             var joins = new HashSet<string>(1);
-
+            
             switch (field)
             {
                 case "id": columns.Add(@"o.""Id"""); break;
@@ -775,6 +801,7 @@ namespace Tzkt.Api.Repositories
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "initiator": columns.Add(@"o.""InitiatorId"""); break;
                 case "sender": columns.Add(@"o.""SenderId"""); break;
+                case "senderCodeHash": columns.Add(@"o.""SenderCodeHash"""); break;
                 case "counter": columns.Add(@"o.""Counter"""); break;
                 case "nonce": columns.Add(@"o.""Nonce"""); break;
                 case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
@@ -832,10 +859,12 @@ namespace Tzkt.Api.Repositories
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
-                .FilterA(@"c.""CodeHash""", codeHash)
+                .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
+                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Id", "Level"),
@@ -884,6 +913,10 @@ namespace Tzkt.Api.Repositories
                 case "sender":
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.SenderId);
+                    break;
+                case "senderCodeHash":
+                    foreach (var row in rows)
+                        result[j++] = row.SenderCodeHash;
                     break;
                 case "counter":
                     foreach (var row in rows)
@@ -959,12 +992,12 @@ namespace Tzkt.Api.Repositories
                 case "diffs":
                     var diffs = await BigMapsRepository.GetOriginationDiffs(db,
                         rows.Where(x => x.BigMapUpdates != null)
-                            .Select(x => (int)x.Id)
+                            .Select(x => (long)x.Id)
                             .ToList(),
                         format);
                     if (diffs != null)
                         foreach (var row in rows)
-                            result[j++] = diffs.GetValueOrDefault((int)row.Id);
+                            result[j++] = diffs.GetValueOrDefault((long)row.Id);
                     break;
                 case "status":
                     foreach (var row in rows)

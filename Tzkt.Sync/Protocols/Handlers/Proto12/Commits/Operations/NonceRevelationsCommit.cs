@@ -88,6 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.NonceRevelationOps.Remove(revelation);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

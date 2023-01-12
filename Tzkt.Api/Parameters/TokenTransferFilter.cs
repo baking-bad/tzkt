@@ -1,4 +1,7 @@
-﻿namespace Tzkt.Api
+﻿using System.Text.Json.Serialization;
+using Tzkt.Api.Services;
+
+namespace Tzkt.Api
 {
     public class TokenTransferFilter : INormalizable
     {
@@ -6,7 +9,7 @@
         /// Filter by internal TzKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter id { get; set; }
+        public Int64Parameter id { get; set; }
 
         /// <summary>
         /// Filter by level of the block where the transfer was made.  
@@ -56,23 +59,28 @@
         /// Filter by id of the transaction, caused the token transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32NullParameter transactionId { get; set; }
+        public Int64NullParameter transactionId { get; set; }
 
         /// <summary>
         /// Filter by id of the origination, caused the token transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32NullParameter originationId { get; set; }
+        public Int64NullParameter originationId { get; set; }
 
         /// <summary>
         /// Filter by id of the migration, caused the token transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32NullParameter migrationId { get; set; }
+        public Int64NullParameter migrationId { get; set; }
+
+        [JsonIgnore]
+        public Int32NullParameter indexedAt { get; set; }
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            return ResponseCacheService.BuildKey("",
+                ("id", id), ("level", level), ("timestamp", timestamp), ("token", token), ("anyof", anyof), ("from", from), ("to", to),
+                ("amount", amount), ("transactionId", transactionId), ("originationId", originationId), ("migrationId", migrationId), ("indexedAt", indexedAt));
         }
     }
 }

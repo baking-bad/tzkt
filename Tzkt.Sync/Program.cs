@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
 using Tzkt.Sync.Services;
+using Tzkt.Sync.Services.Domains;
 
 namespace Tzkt.Sync
 {
@@ -64,6 +65,12 @@ namespace Tzkt.Sync
                     }
                     #endregion
 
+                    #region domains
+                    var domains = hostContext.Configuration.GetDomainsConfig();
+                    if (domains.Enabled)
+                        services.AddHostedService<DomainsService>();
+                    #endregion
+
                     #region token metadata
                     var tokenMetadata = hostContext.Configuration.GetTokenMetadataConfig();
                     if (tokenMetadata.Enabled)
@@ -106,7 +113,7 @@ namespace Tzkt.Sync
 
                 if (appliedMigrations.Count < migrations.Count)
                 {
-                    logger.LogWarning($"{migrations.Count - appliedMigrations.Count} migrations can be applied. Migrating database...");
+                    logger.LogWarning("{cnt} migrations can be applied. Migrating database...", migrations.Count - appliedMigrations.Count);
                     db.Database.SetCommandTimeout(0);
                     db.Database.Migrate();
                 }
@@ -116,7 +123,7 @@ namespace Tzkt.Sync
             }
             catch (Exception ex)
             {
-                logger.LogCritical($"Failed to initialize database: {ex.Message}");
+                logger.LogCritical(ex, "Failed to initialize database");
                 if (attempt >= 10) throw;
                 Thread.Sleep(1000);
 

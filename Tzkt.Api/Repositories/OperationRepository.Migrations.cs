@@ -21,7 +21,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<MigrationOperation> GetMigration(int id, MichelineFormat format, Symbols quote)
+        public async Task<MigrationOperation> GetMigration(long id, MichelineFormat format, Symbols quote)
         {
             var sql = $@"
                 SELECT      o.*, b.""Hash""
@@ -48,7 +48,7 @@ namespace Tzkt.Api.Repositories
             #region include diffs
             var diffs = await BigMapsRepository.GetMigrationDiffs(db,
                 rows.Where(x => x.BigMapUpdates != null)
-                    .Select(x => (int)x.Id)
+                    .Select(x => (long)x.Id)
                     .ToList(),
                 format);
             #endregion
@@ -73,7 +73,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -111,7 +111,7 @@ namespace Tzkt.Api.Repositories
             var diffs = includeDiffs
                 ? await BigMapsRepository.GetMigrationDiffs(db,
                     rows.Where(x => x.BigMapUpdates != null)
-                        .Select(x => (int)x.Id)
+                        .Select(x => (long)x.Id)
                         .ToList(),
                     format)
                 : null;
@@ -137,7 +137,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -239,7 +239,7 @@ namespace Tzkt.Api.Repositories
                     case "diffs":
                         var diffs = await BigMapsRepository.GetMigrationDiffs(db,
                             rows.Where(x => x.BigMapUpdates != null)
-                                .Select(x => (int)x.Id)
+                                .Select(x => (long)x.Id)
                                 .ToList(),
                             format);
                         if (diffs != null)
@@ -264,7 +264,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -361,7 +361,7 @@ namespace Tzkt.Api.Repositories
                 case "diffs":
                     var diffs = await BigMapsRepository.GetMigrationDiffs(db,
                         rows.Where(x => x.BigMapUpdates != null)
-                            .Select(x => (int)x.Id)
+                            .Select(x => (long)x.Id)
                             .ToList(),
                         format);
                     if (diffs != null)

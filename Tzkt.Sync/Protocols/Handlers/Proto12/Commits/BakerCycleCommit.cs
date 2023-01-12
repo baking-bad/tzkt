@@ -174,6 +174,17 @@ namespace Tzkt.Sync.Protocols.Proto12
                     }
                 }
             }
+
+            if (block.VdfRevelationOps != null)
+            {
+                foreach (var op in block.VdfRevelationOps)
+                {
+                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
+                    Db.TryAttach(bakerCycle);
+
+                    bakerCycle.RevelationRewards += op.Reward;
+                }
+            }
             #endregion
 
             #region new cycle
@@ -400,6 +411,17 @@ namespace Tzkt.Sync.Protocols.Proto12
                         Db.TryAttach(bakerCycle);
                         bakerCycle.RevelationRewards -= op.Reward;
                     }
+                }
+            }
+
+            if (block.VdfRevelationOps != null)
+            {
+                foreach (var op in block.VdfRevelationOps)
+                {
+                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
+                    Db.TryAttach(bakerCycle);
+
+                    bakerCycle.RevelationRewards -= op.Reward;
                 }
             }
             #endregion

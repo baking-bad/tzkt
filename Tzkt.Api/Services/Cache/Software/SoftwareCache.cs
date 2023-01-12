@@ -53,7 +53,7 @@ namespace Tzkt.Api.Services.Cache
 
             Software = rows.ToDictionary(row => (int)row.Id, row => (SoftwareAlias)Parse(row));
 
-            Logger.LogDebug("Loaded {0} software", Software.Count);
+            Logger.LogDebug("Loaded {cnt} software", Software.Count);
         }
 
         public void UpdateMetadata(string shortHash)
@@ -69,7 +69,7 @@ namespace Tzkt.Api.Services.Cache
         SoftwareAlias Parse(dynamic row) => new()
         {
             Version = row.Version,
-            Date = DateTimeOffset.TryParse(row.CommitDate, out DateTimeOffset dt) ? dt.DateTime : Time[row.FirstLevel]
+            Date = DateTimeOffset.TryParse(row.CommitDate, out DateTimeOffset dt) ? dt.UtcDateTime : Time[row.FirstLevel]
         };
     }
 }

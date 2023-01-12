@@ -15,6 +15,8 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(DoubleEndorsingOperation))]
     [KnownType(typeof(DoublePreendorsingOperation))]
     [KnownType(typeof(NonceRevelationOperation))]
+    [KnownType(typeof(VdfRevelationOperation))]
+    [KnownType(typeof(DrainDelegateOperation))]
     [KnownType(typeof(DelegationOperation))]
     [KnownType(typeof(OriginationOperation))]
     [KnownType(typeof(TransactionOperation))]
@@ -34,6 +36,8 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(TxRollupRemoveCommitmentOperation))]
     [KnownType(typeof(TxRollupReturnBondOperation))]
     [KnownType(typeof(TxRollupSubmitBatchOperation))]
+    [KnownType(typeof(IncreasePaidStorageOperation))]
+    [KnownType(typeof(UpdateConsensusKeyOperation))]
     public abstract class Operation
     {
         /// <summary>
@@ -44,7 +48,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
         /// </summary>
-        public abstract int Id { get; set; }
+        public abstract long Id { get; set; }
     }
 
     public class OperationJsonInheritanceConverter : JsonInheritanceConverter
@@ -79,6 +83,12 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(NonceRevelationOperation))
                 return OpTypes.NonceRevelation;
+
+            if (type == typeof(VdfRevelationOperation))
+                return OpTypes.VdfRevelation;
+
+            if (type == typeof(DrainDelegateOperation))
+                return OpTypes.DrainDelegate;
 
             if (type == typeof(DelegationOperation))
                 return OpTypes.Delegation;
@@ -136,6 +146,12 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(TxRollupSubmitBatchOperation))
                 return OpTypes.TxRollupSubmitBatch;
+
+            if (type == typeof(IncreasePaidStorageOperation))
+                return OpTypes.IncreasePaidStorage;
+
+            if (type == typeof(UpdateConsensusKeyOperation))
+                return OpTypes.UpdateConsensusKey;
 
             return base.GetDiscriminatorValue(type);
         }

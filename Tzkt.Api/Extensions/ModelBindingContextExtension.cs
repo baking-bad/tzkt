@@ -206,7 +206,7 @@ namespace Tzkt.Api
                     }
 
                     hasValue = true;
-                    result = value.DateTime;
+                    result = value.UtcDateTime;
                 }
             }
 
@@ -241,7 +241,7 @@ namespace Tzkt.Api
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid datetime value.");
                             return false;
                         }
-                        result.Add(value.DateTime);
+                        result.Add(value.UtcDateTime);
                     }
                 }
             }
@@ -249,7 +249,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAccount(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetAddress(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -273,7 +273,46 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAccountList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetAddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36,37}$"))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid account address.");
+                            return false;
+                        }
+                        else
+                        {
+                            result.Add(rawValue);
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetAddressNullList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);

@@ -55,10 +55,6 @@ namespace Tzkt.Data.Models
         /// </summary>
         public int LBSubsidy { get; set; }
         /// <summary>
-        /// Level after protocol activation when liquidity baking shuts off
-        /// </summary>
-        public int LBSunsetLevel { get; set; }
-        /// <summary>
         /// 1/2 window size of 2000 blocks with precision of 1000000 for integer computation
         /// </summary>
         public int LBToggleThreshold { get; set; }
@@ -77,6 +73,8 @@ namespace Tzkt.Data.Models
 
         public int TxRollupOriginationSize { get; set; }
         public long TxRollupCommitmentBond { get; set; }
+
+        public string Dictator { get; set; }
 
         #region helpers
         public int GetCycleStart(int cycle)
@@ -120,6 +118,9 @@ namespace Tzkt.Data.Models
 
         [NotMapped]
         public int SnapshotsPerCycle => BlocksPerCycle / BlocksPerSnapshot;
+
+        [NotMapped]
+        public bool HasDictator => Dictator != null;
         #endregion
     }
 

@@ -50,16 +50,54 @@ namespace Tzkt.Api
 
         public SqlBuilder Filter(AnyOfParameter anyof, Func<string, string> map)
         {
-            if (anyof != null)
-                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" = {anyof.Value}"))})");
+            if (anyof == null) return this;
+
+            if (anyof.Eq != null)
+                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" = {anyof.Eq}"))})");
+
+            if (anyof.In != null)
+            {
+                if (!anyof.InHasNull)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" = ANY ({Param(anyof.In)})"))})");
+                else if (anyof.In.Count == 0)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" IS NULL"))})");
+                else
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"(""{map(x)}"" = ANY ({Param(anyof.In)}) OR ""{map(x)}"" IS NULL)"))})");
+            }
+
+            if (anyof.Null != null)
+            {
+                AppendFilter(anyof.Null == true
+                    ? $"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" IS NULL"))})"
+                    : $"({string.Join(" OR ", anyof.Fields.Select(x => $@"""{map(x)}"" IS NOT NULL"))})");
+            }
 
             return this;
         }
 
         public SqlBuilder FilterA(AnyOfParameter anyof, Func<string, string> map)
         {
-            if (anyof != null)
-                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $@"{map(x)} = {anyof.Value}"))})");
+            if (anyof == null) return this;
+
+            if (anyof.Eq != null)
+                AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} = {anyof.Eq}"))})");
+
+            if (anyof.In != null)
+            {
+                if (!anyof.InHasNull)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} = ANY ({Param(anyof.In)})"))})");
+                else if (anyof.In.Count == 0)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} IS NULL"))})");
+                else
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"({map(x)} = ANY ({Param(anyof.In)}) OR {map(x)} IS NULL)"))})");
+            }
+
+            if (anyof.Null != null)
+            {
+                AppendFilter(anyof.Null == true
+                    ? $"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} IS NULL"))})"
+                    : $"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x)} IS NOT NULL"))})");
+            }
 
             return this;
         }
@@ -437,6 +475,65 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, AddressParameter address, Func<string, string> map = null)
+        {
+            if (address == null) return this;
+
+            if (address.Eq != null)
+                AppendFilter($@"""{column}"" = {Param(address.Eq)}");
+
+            if (address.Ne != null)
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {Param(address.Ne)})");
+
+            if (address.In != null)
+                AppendFilter($@"""{column}"" = ANY ({Param(address.In)})");
+
+            if (address.Ni != null)
+                AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY ({Param(address.Ni)})))");
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, AddressNullParameter address, Func<string, string> map = null)
+        {
+            if (address == null) return this;
+
+            if (address.Eq != null)
+                AppendFilter($@"""{column}"" = {Param(address.Eq)}");
+
+            if (address.Ne != null)
+                AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {Param(address.Ne)})");
+
+            if (address.In != null)
+            {
+                if (!address.InHasNull)
+                    AppendFilter($@"""{column}"" = ANY ({Param(address.In)})");
+                else if (address.In.Count == 0)
+                    AppendFilter($@"""{column}"" IS NULL");
+                else
+                    AppendFilter($@"(""{column}"" = ANY ({Param(address.In)}) OR ""{column}"" IS NULL)");
+            }
+
+            if (address.Ni != null)
+            {
+                if (!address.NiHasNull)
+                    AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY ({Param(address.Ni)})))");
+                else if (address.Ni.Count == 0)
+                    AppendFilter($@"""{column}"" IS NOT NULL");
+                else
+                    AppendFilter($@"(""{column}"" IS NOT NULL AND NOT (""{column}"" = ANY ({Param(address.Ni)})))");
+            }
+
+            if (address.Null != null)
+            {
+                AppendFilter(address.Null == true
+                    ? $@"""{column}"" IS NULL"
+                    : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, StringParameter str, Func<string, string> map = null)
         {
             if (str == null) return this;
@@ -448,10 +545,10 @@ namespace Tzkt.Api
                 AppendFilter($@"(""{column}"" IS NULL OR ""{column}"" != {Param(str.Ne)})");
 
             if (str.As != null)
-                AppendFilter($@"""{column}"" LIKE {Param(str.As)}");
+                AppendFilter($@"""{column}"" ILIKE {Param(str.As)}");
 
             if (str.Un != null)
-                AppendFilter($@"NOT (""{column}"" LIKE ({Param(str.Un)}))");
+                AppendFilter($@"NOT (""{column}"" ILIKE ({Param(str.Un)}))");
 
             if (str.In != null)
                 AppendFilter($@"""{column}"" = ANY ({Param(str.In)})");
@@ -549,7 +646,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.As)
                 {
-                    AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)}");
+                    AppendFilter($@"""{column}"" #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)}");
                 }
             }
 
@@ -557,7 +654,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Un)
                 {
-                    AppendFilter($@"NOT (""{column}"" #>> {Param(JsonPath.Select(path))} LIKE {Param(value)})");
+                    AppendFilter($@"NOT (""{column}"" #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)})");
                 }
             }
 
@@ -691,7 +788,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.As)
                 {
-                    AppendFilter($"{column} #>> {Param(JsonPath.Select(path))} LIKE {Param(value)}");
+                    AppendFilter($"{column} #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)}");
                 }
             }
 
@@ -699,7 +796,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in json.Un)
                 {
-                    AppendFilter($"NOT ({column} #>> {Param(JsonPath.Select(path))} LIKE {Param(value)})");
+                    AppendFilter($"NOT ({column} #>> {Param(JsonPath.Select(path))} ILIKE {Param(value)})");
                 }
             }
 
@@ -811,6 +908,37 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
                 AppendFilter($"NOT ({column}::numeric = ANY ({Param(value.Ni)}::numeric[]))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterOrA(string[] columns, Int32Parameter value)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} = {value.Eq}"))})");
+
+            if (value.Ne != null)
+                AppendFilter($@"({string.Join(" AND ", columns.Select(col => $@"{col} != {value.Ne}"))})");
+
+            if (value.Gt != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} > {value.Gt}"))})");
+
+            if (value.Ge != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} >= {value.Ge}"))})");
+
+            if (value.Lt != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} < {value.Lt}"))})");
+
+            if (value.Le != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} <= {value.Le}"))})");
+
+            if (value.In != null)
+                AppendFilter($@"({string.Join(" OR ", columns.Select(col => $@"{col} = ANY ({Param(value.In)})"))})");
+
+            if (value.Ni != null)
+                AppendFilter($@"({string.Join(" AND ", columns.Select(col => $@"NOT ({col} = ANY ({Param(value.Ni)}))"))})");
 
             return this;
         }
@@ -1072,6 +1200,37 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, Int64Parameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($"{column} != {value.Ne}");
+
+            if (value.Gt != null)
+                AppendFilter($"{column} > {value.Gt}");
+
+            if (value.Ge != null)
+                AppendFilter($"{column} >= {value.Ge}");
+
+            if (value.Lt != null)
+                AppendFilter($"{column} < {value.Lt}");
+
+            if (value.Le != null)
+                AppendFilter($"{column} <= {value.Le}");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In)})");
+
+            if (value.Ni != null)
+                AppendFilter($"NOT ({column} = ANY ({Param(value.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, Int64ExParameter value, Func<string, string> map = null)
         {
             if (value == null) return this;
@@ -1149,6 +1308,44 @@ namespace Tzkt.Api
                 AppendFilter(value.Null == true
                     ? $@"""{column}"" IS NULL"
                     : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, Int64NullParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($"({column} IS NULL OR {column} != {value.Ne})");
+
+            if (value.Gt != null)
+                AppendFilter($"{column} > {value.Gt}");
+
+            if (value.Ge != null)
+                AppendFilter($"{column} >= {value.Ge}");
+
+            if (value.Lt != null)
+                AppendFilter($"{column} < {value.Lt}");
+
+            if (value.Le != null)
+                AppendFilter($"{column} <= {value.Le}");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In)})");
+
+            if (value.Ni != null)
+                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(value.Ni)})))");
+
+            if (value.Null != null)
+            {
+                AppendFilter(value.Null == true
+                    ? $"{column} IS NULL"
+                    : $"{column} IS NOT NULL");
             }
 
             return this;

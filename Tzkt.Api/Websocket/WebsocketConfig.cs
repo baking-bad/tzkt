@@ -8,6 +8,7 @@ namespace Tzkt.Api.Websocket
         public int MaxConnections { get; set; } = 1000;
         public int MaxOperationSubscriptions { get; set; } = 50;
         public int MaxBigMapSubscriptions { get; set; } = 50;
+        public int MaxEventSubscriptions { get; set; } = 50;
         public int MaxAccountsSubscriptions { get; set; } = 50;
         public int MaxTokenBalancesSubscriptions { get; set; } = 50;
         public int MaxTokenTransfersSubscriptions { get; set; } = 50;

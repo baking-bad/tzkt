@@ -36,6 +36,10 @@ namespace Tzkt.Api.Repositories
                 TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
                 TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
                 TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
+                VdfRevelationsCount = delegat.VdfRevelationsCount,
+                IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
+                UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
+                DrainDelegateCount = delegat.DrainDelegateCount,
                 FrozenDeposit = delegat.FrozenDeposit,
                 FrozenDepositLimit = delegat.FrozenDepositLimit,
                 DelegatedBalance = delegat.DelegatedBalance,
@@ -133,6 +137,10 @@ namespace Tzkt.Api.Repositories
                     TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
                     TxRollupReturnBondCount = row.TxRollupReturnBondCount,
                     TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
+                    VdfRevelationsCount = row.VdfRevelationsCount,
+                    IncreasePaidStorageCount = row.IncreasePaidStorageCount,
+                    UpdateConsensusKeyCount = row.UpdateConsensusKeyCount,
+                    DrainDelegateCount = row.DrainDelegateCount,
                     FrozenDeposit = row.FrozenDeposit,
                     FrozenDepositLimit = row.FrozenDepositLimit,
                     DelegatedBalance = row.DelegatedBalance,
@@ -245,6 +253,10 @@ namespace Tzkt.Api.Repositories
                     case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
                     case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
                     case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
+                    case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
+                    case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
+                    case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
+                    case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
                 }
             }
 
@@ -504,9 +516,25 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TxRollupSubmitBatchCount;
                         break;
+                    case "vdfRevelationsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationsCount;
+                        break;
+                    case "increasePaidStorageCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.IncreasePaidStorageCount;
+                        break;
+                    case "updateConsensusKeyCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UpdateConsensusKeyCount;
+                        break;
+                    case "drainDelegateCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DrainDelegateCount;
+                        break;
                 }
             }
-
+            
             return result;
         }
 
@@ -578,6 +606,10 @@ namespace Tzkt.Api.Repositories
                 case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
                 case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
                 case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
+                case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
+                case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
+                case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
+                case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
             }
 
             if (columns.Count == 0)
@@ -832,6 +864,22 @@ namespace Tzkt.Api.Repositories
                 case "txRollupSubmitBatchCount":
                     foreach (var row in rows)
                         result[j++] = row.TxRollupSubmitBatchCount;
+                    break;
+                case "vdfRevelationsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationsCount;
+                    break;
+                case "increasePaidStorageCount":
+                    foreach (var row in rows)
+                        result[j++] = row.IncreasePaidStorageCount;
+                    break;
+                case "updateConsensusKeyCount":
+                    foreach (var row in rows)
+                        result[j++] = row.UpdateConsensusKeyCount;
+                    break;
+                case "drainDelegateCount":
+                    foreach (var row in rows)
+                        result[j++] = row.DrainDelegateCount;
                     break;
             }
 

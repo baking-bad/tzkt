@@ -72,7 +72,6 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
-                    LBSunsetLevel = row.LBSunsetLevel,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     DoubleBakingPunishment = row.DoubleBakingPunishment,
@@ -83,7 +82,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             };
@@ -139,7 +139,6 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
-                    LBSunsetLevel = row.LBSunsetLevel,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     DoubleBakingPunishment = row.DoubleBakingPunishment,
@@ -150,7 +149,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             };
@@ -206,7 +206,6 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
-                    LBSunsetLevel = row.LBSunsetLevel,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     DoubleBakingPunishment = row.DoubleBakingPunishment,
@@ -217,7 +216,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             };
@@ -274,7 +274,6 @@ namespace Tzkt.Api.Repositories
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBSubsidy = row.LBSubsidy,
-                    LBSunsetLevel = row.LBSunsetLevel,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     DoubleBakingPunishment = row.DoubleBakingPunishment,
@@ -285,7 +284,8 @@ namespace Tzkt.Api.Repositories
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
-                    TxRollupCommitmentBond = row.TxRollupCommitmentBond
+                    TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    Dictator = row.Dictator
                 },
                 Metadata = row.Metadata
             });

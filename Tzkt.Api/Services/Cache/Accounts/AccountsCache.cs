@@ -64,7 +64,7 @@ namespace Tzkt.Api.Services.Cache
             }
 
             LastUpdate = State.Current.Level;
-            logger.LogInformation("Loaded {1} of {2} accounts", AccountsByAddress.Count, State.Current.AccountsCount);
+            logger.LogInformation("Loaded {cnt} of {total} accounts", AccountsByAddress.Count, State.Current.AccountsCount);
         }
 
         public async Task UpdateAsync()
@@ -89,7 +89,7 @@ namespace Tzkt.Api.Services.Cache
                         AccountsByAddress.Remove(account.Address);
                     }
                 }
-                Logger.LogDebug("Removed {1} corrupted accounts", corrupted.Count);
+                Logger.LogDebug("Removed {cnt} corrupted accounts", corrupted.Count);
             }
             #endregion
 
@@ -114,7 +114,7 @@ namespace Tzkt.Api.Services.Cache
             }
 
             LastUpdate = State.Current.Level;
-            Logger.LogDebug("Updated {1} accounts since block {2}", cnt, from);
+            Logger.LogDebug("Updated {cnt} accounts since block {level}", cnt, from);
         }
 
         #region metadata
@@ -122,6 +122,11 @@ namespace Tzkt.Api.Services.Cache
         {
             // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
             return Get(id).Info;
+        }
+
+        public Alias GetAlias(string address)
+        {
+            return Get(address)?.Info ?? new() { Address = address };
         }
 
         public async Task<Alias> GetAliasAsync(int id)
@@ -268,14 +273,14 @@ namespace Tzkt.Api.Services.Cache
                         AccountsById.Remove(acc.Id);
                         AccountsByAddress.Remove(acc.Address);
                     }
-                    Logger.LogDebug("Removed {1} oldest accounts", oldest.Count);
+                    Logger.LogDebug("Removed {cnt} oldest accounts", oldest.Count);
                 }
                 #endregion
 
                 AccountsById[account.Id] = account;
                 AccountsByAddress[account.Address] = account;
             }
-            Logger.LogDebug("Account {1} cached", account.Address);
+            Logger.LogDebug("Account {address} cached", account.Address);
         }
     }
 }

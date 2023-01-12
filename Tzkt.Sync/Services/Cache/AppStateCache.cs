@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Services.Cache
 {
@@ -64,56 +65,96 @@ namespace Tzkt.Sync.Services.Cache
 
         public int NextAccountId()
         {
-            Db.TryAttach(AppState);
             return ++AppState.AccountCounter;
         }
 
-        public int NextOperationId()
+        public void ReleaseAccountId(int count = 1)
         {
-            Db.TryAttach(AppState);
-            return ++AppState.OperationCounter;
+            AppState.AccountCounter -= count;
+        }
+
+        public long NextOperationId()
+        {
+            return (++AppState.OperationCounter << AppState.SubIdBits);
+        }
+
+        public void ReleaseOperationId(int count = 1)
+        {
+            AppState.OperationCounter -= count;
         }
 
         public int NextBigMapId()
         {
-            Db.TryAttach(AppState);
             return ++AppState.BigMapCounter;
+        }
+
+        public void ReleaseBigMapId(int count = 1)
+        {
+            AppState.BigMapCounter -= count;
         }
 
         public int NextBigMapKeyId()
         {
-            Db.TryAttach(AppState);
             return ++AppState.BigMapKeyCounter;
+        }
+
+        public void ReleaseBigMapKeyId(int count = 1)
+        {
+            AppState.BigMapKeyCounter -= count;
         }
 
         public int NextBigMapUpdateId()
         {
-            Db.TryAttach(AppState);
             return ++AppState.BigMapUpdateCounter;
+        }
+
+        public void ReleaseBigMapUpdateId(int count = 1)
+        {
+            AppState.BigMapUpdateCounter -= count;
+        }
+
+        public int NextEventId()
+        {
+            return ++AppState.EventCounter;
+        }
+
+        public void ReleaseEventId(int count)
+        {
+            AppState.EventCounter -= count;
         }
 
         public int NextStorageId()
         {
-            Db.TryAttach(AppState);
             return ++AppState.StorageCounter;
+        }
+
+        public void ReleaseStorageId(int count = 1)
+        {
+            AppState.StorageCounter -= count;
         }
 
         public int NextScriptId()
         {
-            Db.TryAttach(AppState);
             return ++AppState.ScriptCounter;
         }
 
-        public int NextTokenId()
+        public void ReleaseScriptId(int count = 1)
         {
-            Db.TryAttach(AppState);
-            return ++AppState.TokenCounter;
+            AppState.ScriptCounter -= count;
         }
 
-        public int NextTokenBalanceId()
+        public long NextSubId(ContractOperation op)
         {
-            Db.TryAttach(AppState);
-            return ++AppState.TokenBalanceCounter;
+            op.SubIds = (op.SubIds ?? 0) +  1;
+            if (op.SubIds >= 1 << AppState.SubIdBits) throw new Exception("SubId overflow");
+            return op.Id + (int)op.SubIds;
+        }
+
+        public long NextSubId(MigrationOperation op)
+        {
+            op.SubIds = (op.SubIds ?? 0) + 1;
+            if (op.SubIds >= 1 << AppState.SubIdBits) throw new Exception("SubId overflow");
+            return op.Id + (int)op.SubIds;
         }
 
         public int GetManagerCounter()
@@ -123,13 +164,11 @@ namespace Tzkt.Sync.Services.Cache
 
         public void IncreaseManagerCounter(int value)
         {
-            Db.TryAttach(AppState);
             AppState.ManagerCounter += value;
         }
 
         public void ReleaseManagerCounter()
         {
-            Db.TryAttach(AppState);
             --AppState.ManagerCounter;
         }
     }

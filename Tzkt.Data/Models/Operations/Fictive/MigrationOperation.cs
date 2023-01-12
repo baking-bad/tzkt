@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
 {
     public class MigrationOperation
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
 
@@ -18,6 +18,8 @@ namespace Tzkt.Data.Models
         public int? StorageId { get; set; }
         public int? BigMapUpdates { get; set; }
         public int? TokenTransfers { get; set; }
+
+        public int? SubIds { get; set; }
 
         #region relations
         [ForeignKey(nameof(Level))]

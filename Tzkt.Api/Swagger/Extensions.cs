@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using NSwag;
 using NSwag.Generation.Processors;
 using NSwag.Generation.Processors.Contexts;
 
@@ -17,18 +16,9 @@ namespace Tzkt.Api.Swagger
                     var extensionData = param.Schema.OneOf.First().Reference.ExtensionData;
                     if (extensionData != null)
                     {
-                        if (param.ExtensionData == null) 
-                        {
-                            param.ExtensionData = new Dictionary<string, object>();
-                        }
-
+                        param.ExtensionData ??= new Dictionary<string, object>();
                         foreach (var item in extensionData)
-                        {
-                            if (!param.ExtensionData.ContainsKey(item.Key)) 
-                            {
-                                param.ExtensionData.Add(item.Key, item.Value);
-                            }
-                        }
+                            param.ExtensionData.TryAdd(item.Key, item.Value);
                     }
                 }
             }
@@ -40,9 +30,7 @@ namespace Tzkt.Api.Swagger
     {
         private string OperationId { get; }
         private string AnyOfValues { get; }
-        private const string ExtensionKey = "x-tzkt-extension";
         private const string AnyOfName = "anyof";
-        private const string AnyOfExtension = "anyof-parameter";
         private const string AnyOfExtensionKey = "x-tzkt-anyof-parameter";
 
         public AnyOfExtensionProcessor(string operationId, string anyOfValues)
@@ -59,12 +47,7 @@ namespace Tzkt.Api.Swagger
                 {
                     if (param.Name == AnyOfName)
                     {
-                        if (param.ExtensionData == null) 
-                        {
-                            param.ExtensionData = new Dictionary<string, object>();
-                        }
-
-                        param.ExtensionData.Add(ExtensionKey, AnyOfExtension);
+                        param.ExtensionData ??= new Dictionary<string, object>();
                         param.ExtensionData.Add(AnyOfExtensionKey, AnyOfValues);
                     }
                 }

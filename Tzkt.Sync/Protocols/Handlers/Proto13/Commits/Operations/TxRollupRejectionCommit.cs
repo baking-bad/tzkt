@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -56,12 +57,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
-                StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
-                StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
-                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
-                    : null,
-                AllocationFee = null
+                GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000)
             };
             #endregion
 
@@ -79,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region apply operation
-            await Spend(sender, operation.BakerFee);
+            sender.Balance -= operation.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= operation.BakerFee;
@@ -96,7 +92,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             block.Operations |= Operations.TxRollupRejection;
             block.Fees += operation.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, operation.Counter);
+            sender.Counter = operation.Counter;
 
             Cache.AppState.Get().TxRollupRejectionOpsCount++;
             #endregion
@@ -104,24 +100,15 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                await Spend(sender,
-                    (operation.StorageFee ?? 0));
-
                 sender.Balance += operation.Reward;
-
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance -= operation.StorageFee ?? 0;
                     senderDelegate.StakingBalance += operation.Reward;
                     if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance -= operation.StorageFee ?? 0;
                         senderDelegate.DelegatedBalance += operation.Reward;
-                    }
                 }
 
-                await Spend(committer, operation.Loss);
-
+                committer.Balance -= operation.Loss;
                 if (committerDelegate != null)
                 {
                     committerDelegate.StakingBalance -= operation.Loss;
@@ -129,11 +116,23 @@ namespace Tzkt.Sync.Protocols.Proto13
                         committerDelegate.DelegatedBalance -= operation.Loss;
                 }
 
+                if (sender.Id != committer.Id)
+                {
+                    Proto.Manager.Credit(operation.Reward);
+
+                    if (committer.Balance == 0 && committer is User user && user.Revealed)
+                    {
+                        user.Counter = Cache.AppState.GetManagerCounter();
+                        user.Revealed = false;
+                    }
+                }
+
                 committer.RollupBonds -= operation.Loss;
                 rollup.RollupBonds -= operation.Loss;
             }
             #endregion
 
+            Proto.Manager.Set(operation.Sender);
             Db.TxRollupRejectionOps.Add(operation);
             Operation = operation;
         }
@@ -169,26 +168,28 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (operation.Status == OperationStatus.Applied)
             {
                 sender.Balance -= operation.Reward;
-
-                await Return(sender,
-                    (operation.StorageFee ?? 0));
-
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance += operation.StorageFee ?? 0;
+                    senderDelegate.StakingBalance -= operation.Reward;
                     if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance += operation.StorageFee ?? 0;
-                    }
+                        senderDelegate.DelegatedBalance -= operation.Reward;
                 }
 
-                await Return(committer, operation.Loss);
-
+                committer.Balance += operation.Loss;
                 if (committerDelegate != null)
                 {
                     committerDelegate.StakingBalance += operation.Loss;
                     if (committerDelegate.Id != committer.Id)
                         committerDelegate.DelegatedBalance += operation.Loss;
+                }
+
+                if (sender.Id != committer.Id)
+                {
+                    if (committer.Balance == operation.Loss && committer is User user && !user.Revealed)
+                    {
+                        user.Counter = await RestoreCounter(user, operation.Id);
+                        user.Revealed = true;
+                    }
                 }
 
                 committer.RollupBonds += operation.Loss;
@@ -197,7 +198,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region revert operation
-            await Return(sender, operation.BakerFee);
+            sender.Balance += operation.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += operation.BakerFee;
@@ -211,13 +212,187 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (rollup != null) rollup.TxRollupRejectionCount--;
             if (committer.Id != sender.Id) committer.TxRollupRejectionCount--;
 
-            sender.Counter = Math.Min(sender.Counter, operation.Counter - 1);
+            sender.Counter = operation.Counter - 1;
+            (sender as User).Revealed = true;
 
             Cache.AppState.Get().TxRollupRejectionOpsCount--;
             #endregion
 
             Db.TxRollupRejectionOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
+        }
+
+        async Task<int> RestoreCounter(User user, long opId)
+        {
+            var counter = 0;
+
+            if (user.DelegationsCount > 0)
+            {
+                var opCounter = await Db.DelegationOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.OriginationsCount > 0)
+            {
+                var opCounter = await Db.OriginationOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TransactionsCount > 0)
+            {
+                var opCounter = await Db.TransactionOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.RevealsCount > 0)
+            {
+                var opCounter = await Db.RevealOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.RegisterConstantsCount > 0)
+            {
+                var opCounter = await Db.RegisterConstantOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.SetDepositsLimitsCount > 0)
+            {
+                var opCounter = await Db.SetDepositsLimitOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TransferTicketCount > 0)
+            {
+                var opCounter = await Db.TransferTicketOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupCommitCount > 0)
+            {
+                var opCounter = await Db.TxRollupCommitOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupDispatchTicketsCount > 0)
+            {
+                var opCounter = await Db.TxRollupDispatchTicketsOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupFinalizeCommitmentCount > 0)
+            {
+                var opCounter = await Db.TxRollupFinalizeCommitmentOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupOriginationCount > 0)
+            {
+                var opCounter = await Db.TxRollupOriginationOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupRejectionCount > 0)
+            {
+                var opCounter = await Db.TxRollupRejectionOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupRemoveCommitmentCount > 0)
+            {
+                var opCounter = await Db.TxRollupRemoveCommitmentOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupReturnBondCount > 0)
+            {
+                var opCounter = await Db.TxRollupReturnBondOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            if (user.TxRollupSubmitBatchCount > 0)
+            {
+                var opCounter = await Db.TxRollupSubmitBatchOps
+                    .AsNoTracking()
+                    .Where(x => x.SenderId == user.Id && x.Id < opId)
+                    .OrderByDescending(x => x.Id)
+                    .Select(x => x.Counter)
+                    .FirstAsync();
+                counter = Math.Max(counter, opCounter);
+            }
+
+            return counter;
         }
     }
 }

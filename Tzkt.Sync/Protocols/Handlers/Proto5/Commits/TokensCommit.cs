@@ -110,7 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 var txIds = pendingUpdates
                     .Where(x => x.TransactionId != null)
-                    .Select(x => (int)x.TransactionId)
+                    .Select(x => (long)x.TransactionId)
                     .ToHashSet();
 
                 var txs = txIds.Count == 0 ? new() : await Db.TransactionOps
@@ -120,7 +120,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 var origIds = pendingUpdates
                     .Where(x => x.OriginationId != null)
-                    .Select(x => (int)x.OriginationId)
+                    .Select(x => (long)x.OriginationId)
                     .ToHashSet();
 
                 var origs = origIds.Count == 0 ? new() : await Db.OriginationOps
@@ -129,7 +129,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     .ToDictionaryAsync(x => x.Id);
 
                 var contracts = pendingBigMaps.Values
-                    .Select(x => (int?)x.ContractId)
+                    .Select(x => (long?)x.ContractId)
                     .ToHashSet();
 
                 // transfers with no balance updates, e.g. to itself or with 0 amount
@@ -185,8 +185,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     var bigmap = pendingBigMaps[update.BigMapPtr];
                     var op = update.OriginationId != null
-                        ? origs[(int)update.OriginationId] as ContractOperation
-                        : txs[(int)update.TransactionId];
+                        ? origs[(long)update.OriginationId] as ContractOperation
+                        : txs[(long)update.TransactionId];
 
                     op.Block ??= Cache.Blocks.GetCached(op.Level);
                     Db.TryAttach(op.Block);
@@ -289,7 +289,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region precache
             var accountsSet = new HashSet<string>();
             var tokensSet = new HashSet<(int, BigInteger)>();
-            var balancesSet = new HashSet<(int, int)>();
+            var balancesSet = new HashSet<(int, long)>();
             var nftAccountsSet = new HashSet<int>();
 
             foreach (var (op, opCtx) in ops)
@@ -614,11 +614,15 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             if (!Cache.Tokens.TryGet(contract.Id, tokenId, out var token))
             {
+                var state = Cache.AppState.Get();
+                state.TokensCount++;
+
                 token = new Token
                 {
-                    Id = Cache.AppState.NextTokenId(),
+                    Id = Cache.AppState.NextSubId(op),
                     ContractId = contract.Id,
                     TokenId = tokenId,
+                    FirstMinterId = op.InitiatorId ?? op.SenderId,
                     FirstLevel = op.Level,
                     LastLevel = op.Level,
                     TotalBurned = BigInteger.Zero,
@@ -628,7 +632,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                         ? TokenTags.Nft
                         : contract.Tags.HasFlag(ContractTags.FA2)
                             ? TokenTags.Fa2
-                            : TokenTags.Fa12
+                            : TokenTags.Fa12,
+                    IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
                 };
                 Db.Tokens.Add(token);
                 Cache.Tokens.Add(token);
@@ -638,10 +643,6 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 Db.TryAttach(op.Block);
                 op.Block.Events |= BlockEvents.Tokens;
-
-                var state = Cache.AppState.Get();
-                //Db.TryAttach(state);
-                state.TokensCount++;
             }
             return token;
         }
@@ -650,15 +651,19 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             if (!Cache.TokenBalances.TryGet(account.Id, token.Id, out var tokenBalance))
             {
+                var state = Cache.AppState.Get();
+                state.TokenBalancesCount++;
+
                 tokenBalance = new TokenBalance
                 {
-                    Id = Cache.AppState.NextTokenBalanceId(),
+                    Id = Cache.AppState.NextSubId(op),
                     AccountId = account.Id,
                     TokenId = token.Id,
                     ContractId = token.ContractId,
                     FirstLevel = op.Level,
                     LastLevel = op.Level,
-                    Balance = BigInteger.Zero
+                    Balance = BigInteger.Zero,
+                    IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
                 };
                 Db.TokenBalances.Add(tokenBalance);
                 Cache.TokenBalances.Add(tokenBalance);
@@ -673,10 +678,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                     account.FirstLevel = op.Level;
                     op.Block.Events |= BlockEvents.NewAccounts;
                 }
-
-                var state = Cache.AppState.Get();
-                //Db.TryAttach(state);
-                state.TokenBalancesCount++;
             }
             return tokenBalance;
         }
@@ -722,12 +723,11 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
 
             var state = Cache.AppState.Get();
-            //Db.TryAttach(state);
             state.TokenTransfersCount++;
 
             Db.TokenTransfers.Add(new TokenTransfer
             {
-                Id = Cache.AppState.NextOperationId(),
+                Id = Cache.AppState.NextSubId(op),
                 Amount = amount,
                 FromId = from.Id,
                 ToId = to.Id,
@@ -735,7 +735,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 TokenId = token.Id,
                 ContractId = token.ContractId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                OriginationId = (op as OriginationOperation)?.Id
+                OriginationId = (op as OriginationOperation)?.Id,
+                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
             });
         }
 
@@ -775,12 +776,11 @@ namespace Tzkt.Sync.Protocols.Proto5
             token.TotalSupply += diff;
 
             var state = Cache.AppState.Get();
-            //Db.TryAttach(state);
             state.TokenTransfersCount++;
 
             Db.TokenTransfers.Add(new TokenTransfer
             {
-                Id = Cache.AppState.NextOperationId(),
+                Id = Cache.AppState.NextSubId(op),
                 Amount = diff > BigInteger.Zero ? diff : -diff,
                 FromId = diff < BigInteger.Zero ? account.Id : null,
                 ToId = diff > BigInteger.Zero ? account.Id : null,
@@ -788,7 +788,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 TokenId = token.Id,
                 ContractId = token.ContractId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                OriginationId = (op as OriginationOperation)?.Id
+                OriginationId = (op as OriginationOperation)?.Id,
+                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
             });
         }
 
@@ -798,7 +799,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                 return;
 
             var state = Cache.AppState.Get();
-            Db.TryAttach(state);
 
             var transfers = await Db.TokenTransfers
                 .AsNoTracking()
@@ -808,8 +808,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region precache
             var accountsSet = new HashSet<int>();
-            var tokensSet = new HashSet<int>();
-            var tokenBalancesSet = new HashSet<(int, int)>();
+            var tokensSet = new HashSet<long>();
+            var tokenBalancesSet = new HashSet<(int, long)>();
 
             foreach (var tr in transfers)
                 tokensSet.Add(tr.TokenId);

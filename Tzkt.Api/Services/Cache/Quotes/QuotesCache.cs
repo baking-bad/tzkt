@@ -47,7 +47,7 @@ namespace Tzkt.Api.Services.Cache
                 Quotes[7].Add(row.Gbp);
             }
 
-            logger.LogInformation("Loaded {1} quotes", Quotes[0].Count);
+            logger.LogInformation("Loaded {cnt} quotes", Quotes[0].Count);
         }
 
         public async Task UpdateAsync()
@@ -87,7 +87,7 @@ namespace Tzkt.Api.Services.Cache
                     Quotes[7].Add(row.Gbp);
                 }
             }
-            Logger.LogDebug("{1} quotes updates", rows.Count());
+            Logger.LogDebug("{cnt} quotes updates", rows.Count());
         }
 
         public double Get(int symbol)

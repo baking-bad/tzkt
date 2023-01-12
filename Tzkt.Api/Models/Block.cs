@@ -144,9 +144,14 @@ namespace Tzkt.Api.Models
         public IEnumerable<DoublePreendorsingOperation> DoublePreendorsing { get; set; }
 
         /// <summary>
-        /// List of nonce revelation (are used by the blockchain to create randomness) operations, included in the block
+        /// List of nonce revelation (used by the blockchain to create randomness) operations, included in the block
         /// </summary>
         public IEnumerable<NonceRevelationOperation> NonceRevelations { get; set; }
+
+        /// <summary>
+        /// List of vdf revelation (used by the blockchain to create randomness) operations, included in the block
+        /// </summary>
+        public IEnumerable<VdfRevelationOperation> VdfRevelations { get; set; }
 
         /// <summary>
         /// List of delegation (is used to delegate funds to a delegate (an implicit account registered as a baker))
@@ -224,6 +229,21 @@ namespace Tzkt.Api.Models
         /// List of tx rollup submit batch operations, included in the block
         /// </summary>
         public IEnumerable<TxRollupSubmitBatchOperation> TxRollupSubmitBatchOps { get; set; }
+
+        /// <summary>
+        /// List of increase paid storage operations, included in the block
+        /// </summary>
+        public IEnumerable<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+
+        /// <summary>
+        /// List of update consensus key operations, included in the block
+        /// </summary>
+        public IEnumerable<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; }
+
+        /// <summary>
+        /// List of drain delegate operations, included in the block
+        /// </summary>
+        public IEnumerable<DrainDelegateOperation> DrainDelegateOps { get; set; }
 
         /// <summary>
         /// List of migration operations, implicitly applied at the end of the block

@@ -26,7 +26,20 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         protected override async Task ProcessParameters(TransactionOperation transaction, JsonElement param)
         {
-            var (rawEp, rawParam) = (param.RequiredString("entrypoint"), Micheline.FromJson(param.Required("value")));
+            string rawEp = null;
+            IMicheline rawParam = null;
+            try
+            {
+                rawEp = param.RequiredString("entrypoint");
+                rawParam = Micheline.FromJson(param.Required("value"));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to parse tx parameters");
+                transaction.Entrypoint = rawEp ?? string.Empty;
+                transaction.RawParameters = new MichelineArray().ToBytes();
+                return;
+            }
 
             if (transaction.Target is Contract contract)
             {
@@ -48,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     transaction.RawParameters ??= rawParam.ToBytes();
 
                     if (transaction.Status == OperationStatus.Applied)
-                        Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                        Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
             else if (transaction.Target is Rollup)
@@ -110,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 catch (Exception ex)
                 {
                     if (transaction.Status == OperationStatus.Applied)
-                        Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                        Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
             else

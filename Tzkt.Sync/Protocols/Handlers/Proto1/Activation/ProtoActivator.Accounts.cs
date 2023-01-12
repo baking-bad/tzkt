@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
         {
             var bootstrapAccounts = parameters["bootstrap_accounts"]?
-                .Select(x => (x[0].Value<string>(), x[1].Value<long>()))
+                .Select(x => (x[0].Value<string>(), x[1].Value<long>(), x.Count() > 2 ? x[2].Value<string>() : null))
                 .ToList() ?? new(0);
 
             var bootstrapContracts = parameters["bootstrap_contracts"]?
@@ -39,8 +39,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 throw new Exception("Failed to allocate null-address");
             #endregion
 
-            #region bootstrap delegates
-            foreach (var (pubKey, balance) in bootstrapAccounts.Where(x => x.Item1[0] != 't'))
+            #region bootstrap bakers
+            foreach (var (pubKey, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 == null))
             {
                 var baker = new Data.Models.Delegate
                 {
@@ -64,8 +64,38 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            #region bootstrap delegated users
+            foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 != null))
+            {
+                var delegat = Cache.Accounts.GetDelegate(delegateTo);
+
+                var user = new User
+                {
+                    Id = Cache.AppState.NextAccountId(),
+                    Address = PubKey.FromBase58(pubKey).Address,
+                    Balance = balance,
+                    Counter = 0,
+                    FirstLevel = 1,
+                    LastLevel = 1,
+                    Type = AccountType.User,
+                    PublicKey = pubKey,
+                    Revealed = true, 
+                    Staked = true,
+                    DelegationLevel = 1,
+                    Delegate = delegat
+                };
+
+                delegat.DelegatorsCount++;
+                delegat.StakingBalance += user.Balance;
+                delegat.DelegatedBalance += user.Balance;
+
+                Cache.Accounts.Add(user);
+                accounts.Add(user);
+            }
+            #endregion
+
             #region bootstrap users
-            foreach (var (pkh, balance) in bootstrapAccounts.Where(x => x.Item1[0] == 't' && x.Item1[1] == 'z'))
+            foreach (var (pkh, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] == 't'))
             {
                 var user = new User
                 {
@@ -250,8 +280,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Storages.Reset();
 
             var state = Cache.AppState.Get();
+            Cache.AppState.ReleaseAccountId(state.AccountsCount);
+            Cache.AppState.ReleaseOperationId(state.MigrationOpsCount);
             state.AccountsCount = 0;
             state.MigrationOpsCount = 0;
+            state.ScriptCounter = 0;
+            state.StorageCounter = 0;
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +33,9 @@ namespace Tzkt.Api.Controllers
         /// Get operations by hash
         /// </summary>
         /// <remarks>
-        /// Returns a list of operations with the specified hash.
+        /// Returns a list of operations with the specified hash.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}/{hash}`
+        /// (e.g. [/v1/operations/transactions/{hash}](#operation/Operations_GetTransactionByHash)) instead, because it's much more efficient.**
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
@@ -61,7 +62,9 @@ namespace Tzkt.Api.Controllers
         /// Get operations by hash and counter
         /// </summary>
         /// <remarks>
-        /// Returns a list of operations with the specified hash and counter.
+        /// Returns a list of operations with the specified hash and counter.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}/{hash}/{counter}`
+        /// (e.g. [/v1/operations/transactions/{hash}/{counter}](#operation/Operations_GetTransactionByHashCounter)) instead, because it's much more efficient.**
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
@@ -90,7 +93,9 @@ namespace Tzkt.Api.Controllers
         /// Get operations by hash, counter and nonce
         /// </summary>
         /// <remarks>
-        /// Returns an internal operations with the specified hash, counter and nonce.
+        /// Returns an internal operations with the specified hash, counter and nonce.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}/{hash}/{counter}/{nonce}`
+        /// (e.g. [/v1/operations/transactions/{hash}/{counter}/{nonce}](#operation/Operations_GetTransactionByHashCounterNonce)) instead, because it's much more efficient.**
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="counter">Operation counter</param>
@@ -113,6 +118,29 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.Get(hash, counter, nonce, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get operation status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.  
+        /// **NOTE: if you know in advance what operation type you want to check (e.g. transactions), prefer using `/v1/operations/{type}/{hash}/status`
+        /// (e.g. [/v1/operations/transactions/{hash}/status](#operation/Operations_GetTransactionStatus)) instead, because it's much more efficient.**
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("{hash}/status")]
+        public async Task<ActionResult<bool?>> GetStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -845,7 +873,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<DoubleBakingOperation>());
             }
 
@@ -1006,7 +1034,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
             }
 
@@ -1167,7 +1195,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
             }
 
@@ -1330,7 +1358,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "baker" && x != "sender"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `baker`, `sender` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
                     return Ok(Enumerable.Empty<NonceRevelationOperation>());
             }
 
@@ -1452,6 +1480,294 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region vdf revelations
+        /// <summary>
+        /// Get vdf revelations
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of vdf revelation operations.
+        /// </remarks>
+        /// <param name="baker">Filters by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="cycle">Filters by cycle in which the operation was included.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("vdf_revelations")]
+        public async Task<ActionResult<IEnumerable<VdfRevelationOperation>>> GetVdfRevelations(
+            AccountParameter baker,
+            Int32Parameter level,
+            Int32Parameter cycle,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (baker != null)
+            {
+                if (baker.Eqx != null)
+                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (baker.Nex != null)
+                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (baker.Eq == -1 || baker.In?.Count == 0 || baker.Null == true)
+                    return Ok(Enumerable.Empty<VdfRevelationOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("baker", baker), ("level", level), ("cycle", cycle), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get vdf revelation by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns a vdf revelation operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("vdf_revelations/{hash}")]
+        public async Task<ActionResult<IEnumerable<VdfRevelationOperation>>> GetVdfRevelationByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetVdfRevelations(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get vdf revelations count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of vdf revelation operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("vdf_revelations/count")]
+        public async Task<ActionResult<int>> GetVdfRevelationsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.VdfRevelationOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetVdfRevelationsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
+        #region drain delegate
+        /// <summary>
+        /// Get drain delegate
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of drain delegate operations.
+        /// </remarks>
+        /// <param name="anyof">Filtersby any of the specified fields. Example: `anyof.delegate.target=tz1...` will return operations where `delegate` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="delegate">Filters by drained baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="target">Filters by target. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("drain_delegate")]
+        public async Task<ActionResult<IEnumerable<DrainDelegateOperation>>> GetDrainDelegateOps(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "delegate,target")]
+            AnyOfParameter anyof,
+            AccountParameter @delegate,
+            AccountParameter target,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (@delegate != null)
+            {
+                if (@delegate.Eqx != null)
+                    return new BadRequest($"{nameof(@delegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (@delegate.Nex != null)
+                    return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (@delegate.Eq == -1 || @delegate.In?.Count == 0 || @delegate.Null == true)
+                    return Ok(Enumerable.Empty<DrainDelegateOperation>());
+            }
+
+            if (target != null)
+            {
+                if (target.Eqx != null)
+                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (target.Nex != null)
+                    return new BadRequest($"{nameof(target)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (target.Eq == -1 || target.In?.Count == 0 || target.Null == true)
+                    return Ok(Enumerable.Empty<DrainDelegateOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("delegate", @delegate), ("target", target), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get drain delegate by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns a drain delegate operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("drain_delegate/{hash}")]
+        public async Task<ActionResult<IEnumerable<DrainDelegateOperation>>> GetDrainDelegateByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDrainDelegates(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get drain delegate count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of drain delegate operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("drain_delegate/count")]
+        public async Task<ActionResult<int>> GetDrainDelegateOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.DrainDelegateOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDrainDelegatesCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
         #region delegations
         /// <summary>
         /// Get delegations
@@ -1466,6 +1782,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `prevDelegate`.</param>
         /// <param name="level">Filters delegations by level.</param>
         /// <param name="timestamp">Filters delegations by timestamp.</param>
+        /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
         /// <param name="status">Filters delegations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts delegations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `bakerFee`.</param>
@@ -1484,6 +1801,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter newDelegate,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -1497,7 +1815,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "prevDelegate" && x != "newDelegate"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `prevDelegate`, `newDelegate` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<DelegationOperation>());
             }
 
@@ -1555,8 +1873,8 @@ namespace Tzkt.Api.Controllers
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("prevDelegate", prevDelegate), 
-                ("newDelegate", newDelegate), ("level", level), ("timestamp", timestamp), ("status", status),
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+                ("newDelegate", newDelegate), ("level", level), ("timestamp", timestamp), ("senderCodeHash", senderCodeHash),
+                ("status", status), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -1564,25 +1882,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1609,6 +1927,27 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetDelegations(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get delegation status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("delegations/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetDelegationStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDelegationStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -1660,6 +1999,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="codeHash">Filters origination operations by 32-bit hash of originated contract code (helpful for searching originations of same contracts)</param>
         /// <param name="level">Filters origination operations by level.</param>
         /// <param name="timestamp">Filters origination operations by timestamp.</param>
+        /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
+        /// <param name="anyCodeHash">Filters by either `senderCodeHash` or `codeHash`.</param>
         /// <param name="status">Filters origination operations by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts originations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `contractBalance`.</param>
@@ -1678,11 +2019,13 @@ namespace Tzkt.Api.Controllers
             AccountParameter contractManager,
             AccountParameter contractDelegate,
             AccountParameter originatedContract,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
+            Int32Parameter anyCodeHash,
             OperationStatusParameter status,
             SelectParameter select,
             SortParameter sort,
@@ -1697,7 +2040,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "contractManager" && x != "contractDelegate" && x != "originatedContract"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `contractManager`, `contractDelegate`, `originatedContract` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
@@ -1768,8 +2111,8 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("contractManager", contractManager), 
                 ("contractDelegate", contractDelegate), ("originatedContract", originatedContract), ("id", id),  ("typeHash", typeHash),
-                ("codeHash", codeHash), ("level", level), ("timestamp", timestamp), ("status", status),
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
+                ("codeHash", codeHash), ("level", level), ("timestamp", timestamp), ("senderCodeHash", senderCodeHash), ("anyCodeHash", anyCodeHash),
+                ("status", status), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -1777,25 +2120,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields, micheline, quote)
                     };
                 }
             }
@@ -1826,6 +2169,27 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetOriginations(hash, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get origination status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("originations/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetOriginationStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetOriginationStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -1874,10 +2238,14 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Filters transactions by id.</param>
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
+        /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
+        /// <param name="targetCodeHash">Filters by `targetCodeHash`.</param>
+        /// <param name="codeHash">Filters by either `senderCodeHash` or `targetCodeHash`.</param>
         /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
+        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.
+        /// Also, note that `.value` part must be omitted in the path, so, for example, filtering by `parameter.value.foo` must be specified as `?parameter.foo=...`.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts transactions by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`, `allocationFee`, `amount`.</param>
@@ -1895,9 +2263,12 @@ namespace Tzkt.Api.Controllers
             AccountParameter sender,
             AccountParameter target,
             Int64Parameter amount,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
+            Int32Parameter senderCodeHash,
+            Int32Parameter targetCodeHash,
+            Int32Parameter codeHash,
             StringParameter entrypoint,
             JsonParameter parameter,
             BoolParameter hasInternals,
@@ -1915,7 +2286,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "target"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `target` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<TransactionOperation>());
             }
 
@@ -1961,7 +2332,8 @@ namespace Tzkt.Api.Controllers
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), 
-                ("amount", amount), ("id", id),  ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint),
+                ("amount", amount), ("id", id),  ("level", level), ("timestamp", timestamp), ("codeHash", codeHash),
+                ("senderCodeHash", senderCodeHash), ("targetCodeHash", targetCodeHash), ("entrypoint", entrypoint),
                 ("parameter", parameter), ("hasInternals", hasInternals), ("status", status), ("select", select),
                 ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
@@ -1971,25 +2343,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp,entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote);
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote);
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote);
+                    res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields, micheline, quote)
                     };
                 }
             }
@@ -2085,6 +2457,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get transaction status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("transactions/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTransactionStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransactionStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get transactions count
         /// </summary>
         /// <remarks>
@@ -2098,6 +2491,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters transactions by timestamp.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
         /// <param name="status">Filters transactions by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.
+        /// Also, note that `.value` part must be omitted in the path, so, for example, filtering by `parameter.value.foo` must be specified as `?parameter.foo=...`.</param>
         /// <returns></returns>
         [HttpGet("transactions/count")]
         public async Task<ActionResult<int>> GetTransactionsCount(
@@ -2110,6 +2506,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
+            JsonParameter parameter,
             OperationStatusParameter status)
         {
             if (anyof == null &&
@@ -2119,17 +2516,18 @@ namespace Tzkt.Api.Controllers
                 level == null &&
                 timestamp == null &&
                 entrypoint == null &&
+                parameter == null &&
                 status == null)
                 return Ok(State.Current.TransactionOpsCount);
         
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), 
-                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("status", status));
+                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("status", status));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, status);
+            var res = await Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, parameter, status);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -2238,6 +2636,27 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetReveals(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get reveal status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("reveals/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetRevealStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRevealStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -2385,6 +2804,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get register constant status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("register_constants/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetRegisterConstantStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetRegisterConstantStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get register constants count
         /// </summary>
         /// <remarks>
@@ -2516,6 +2956,27 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetSetDepositsLimits(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get set deposits limit status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("set_deposits_limits/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetSetDepositsLimitStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetSetDepositsLimitStatus(hash);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -2674,6 +3135,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get transfer ticket status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("transfer_ticket/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTransferTicketStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTransferTicketStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get transfer ticket count
         /// </summary>
         /// <remarks>
@@ -2794,6 +3276,27 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Operations.GetTxRollupCommitOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup commit status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_commit/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupCommitStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupCommitStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -2920,6 +3423,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup dispatch tickets status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_dispatch_tickets/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupDispatchTicketsStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupDispatchTicketsStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup dispatch tickets count
         /// </summary>
         /// <remarks>
@@ -3043,6 +3567,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup finalize commitment status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_finalize_commitment/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupFinalizeCommitmentStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupFinalizeCommitmentStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup finalize commitment count
         /// </summary>
         /// <remarks>
@@ -3163,6 +3708,27 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Operations.GetTxRollupOriginationOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup origination status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_origination/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupOriginationStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupOriginationStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3307,6 +3873,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup rejection status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_rejection/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupRejectionStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupRejectionStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup rejection count
         /// </summary>
         /// <remarks>
@@ -3427,6 +4014,27 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             return Operations.GetTxRollupRemoveCommitmentOps(hash, quote);
+        }
+
+        /// <summary>
+        /// Get tx rollup remove commitment status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_remove_commitment/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupRemoveCommitmentStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupRemoveCommitmentStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
 
         /// <summary>
@@ -3553,6 +4161,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup return bond status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_return_bond/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupReturnBondStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupReturnBondStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup return bond count
         /// </summary>
         /// <remarks>
@@ -3676,6 +4305,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get tx rollup submit batch status
+        /// </summary>
+        /// <remarks>
+        /// Returns operation status: `true` if applied, `false` if failed, `null` (or HTTP 204) if doesn't exist.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <returns></returns>
+        [HttpGet("tx_rollup_submit_batch/{hash}/status")]
+        public async Task<ActionResult<bool?>> GetTxRollupSubmitBatchStatus([Required][OpHash] string hash)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetTxRollupSubmitBatchStatus(hash);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get tx rollup submit batch count
         /// </summary>
         /// <remarks>
@@ -3693,6 +4343,289 @@ namespace Tzkt.Api.Controllers
                 return Task.FromResult(State.Current.TxRollupSubmitBatchOpsCount);
 
             return Operations.GetTxRollupSubmitBatchOpsCount(level, timestamp);
+        }
+        #endregion
+
+        #region increase paid storage
+        /// <summary>
+        /// Get increase paid storage
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of increase paid storage operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="contract">Filters by contract. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts operations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("increase_paid_storage")]
+        public async Task<ActionResult<IEnumerable<IncreasePaidStorageOperation>>> GetIncreasePaidStorageOps(
+            AccountParameter sender,
+            AccountParameter contract,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<IncreasePaidStorageOperation>());
+            }
+
+            if (contract != null)
+            {
+                if (contract.Eqx != null)
+                    return new BadRequest($"{nameof(contract)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (contract.Nex != null)
+                    return new BadRequest($"{nameof(contract)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sender", sender), ("contract", contract), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get increase paid storage by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns increase paid storage operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("increase_paid_storage/{hash}")]
+        public async Task<ActionResult<IEnumerable<IncreasePaidStorageOperation>>> GetIncreasePaidStorageByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetIncreasePaidStorageOps(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get increase paid storage count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of increase paid storage operations.
+        /// </remarks>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("increase_paid_storage/count")]
+        public async Task<ActionResult<int>> GetIncreasePaidStorageCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.IncreasePaidStorageOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetIncreasePaidStorageOpsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
+        #region update consensus key
+        /// <summary>
+        /// Get update consensus key
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of update consensus key operations.
+        /// </remarks>
+        /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="activationCycle">Filters by activation cycle. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts operations by specified field. Supported fields: `id` (default), `level`, `gasUsed`, `storageUsed`, `bakerFee`, `storageFee`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("update_consensus_key")]
+        public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyOps(
+            AccountParameter sender,
+            Int32Parameter activationCycle,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            OperationStatusParameter status,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
+                    return Ok(Enumerable.Empty<UpdateConsensusKeyOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("sender", sender), ("activationCycle", activationCycle), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get update consensus key by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns update consensus key operation with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("update_consensus_key/{hash}")]
+        public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetUpdateConsensusKeys(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get update consensus key count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of update consensus key operations.
+        /// </remarks>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("update_consensus_key/count")]
+        public async Task<ActionResult<int>> GetUpdateConsensusKeyOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.UpdateConsensusKeyOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetUpdateConsensusKeysCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -3721,7 +4654,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter account,
             MigrationKindParameter kind,
             Int64Parameter balanceChange,
-            Int32Parameter id,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -3795,9 +4728,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("migrations/{id:int}")]
+        [HttpGet("migrations/{id:long}")]
         public async Task<ActionResult<MigrationOperation>> GetMigrationById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             MichelineFormat micheline = MichelineFormat.Json, 
             Symbols quote = Symbols.None)
         {
@@ -3930,9 +4863,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Operation id</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("revelation_penalties/{id:int}")]
+        [HttpGet("revelation_penalties/{id:long}")]
         public async Task<ActionResult<RevelationPenaltyOperation>> GetRevelationPenaltyById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
@@ -4020,7 +4953,7 @@ namespace Tzkt.Api.Controllers
                 if (anyof.Fields.Any(x => x != "proposer" && x != "producer"))
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `proposer`, `producer` fields only.");
 
-                if (anyof.Value == -1)
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<BakingOperation>());
             }
             if (proposer != null)
@@ -4095,9 +5028,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Operation id</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("baking/{id:int}")]
+        [HttpGet("baking/{id:long}")]
         public async Task<ActionResult<BakingOperation>> GetBakingById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
@@ -4229,9 +5162,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Operation id</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("endorsing_rewards/{id:int}")]
+        [HttpGet("endorsing_rewards/{id:long}")]
         public async Task<ActionResult<EndorsingRewardOperation>> GetEndorsingRewardById(
-            [Required][Min(0)] int id,
+            [Required][Min(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,

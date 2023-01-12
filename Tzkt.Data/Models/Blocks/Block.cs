@@ -7,7 +7,7 @@ namespace Tzkt.Data.Models
 {
     public class Block
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public int Cycle { get; set; }
         public int Level { get; set; }
         public string Hash { get; set; }
@@ -28,7 +28,7 @@ namespace Tzkt.Data.Models
 
         public int? ProposerId { get; set; }
         public int? ProducerId { get; set; }
-        public int? RevelationId { get; set; }
+        public long? RevelationId { get; set; }
         public int? ResetBakerDeactivation { get; set; }
         public int? ResetProposerDeactivation { get; set; }
 
@@ -80,6 +80,12 @@ namespace Tzkt.Data.Models
         public List<TxRollupRejectionOperation> TxRollupRejectionOps { get; set; }
         public List<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
         public List<TransferTicketOperation> TransferTicketOps { get; set; }
+
+        public List<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
+        public List<VdfRevelationOperation> VdfRevelationOps { get; set; }
+
+        public List<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; }
+        public List<DrainDelegateOperation> DrainDelegateOps { get; set; }
 
         public List<MigrationOperation> Migrations { get; set; }
         public List<RevelationPenaltyOperation> RevelationPenalties { get; set; }
@@ -137,8 +143,7 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Block>()
                 .HasOne(x => x.Revelation)
                 .WithOne(x => x.RevealedBlock)
-                .HasForeignKey<Block>(x => x.RevelationId)
-                .HasPrincipalKey<NonceRevelationOperation>(x => x.RevealedLevel);
+                .HasForeignKey<Block>(x => x.RevelationId);
 
             modelBuilder.Entity<Block>()
                 .HasOne(x => x.Software)

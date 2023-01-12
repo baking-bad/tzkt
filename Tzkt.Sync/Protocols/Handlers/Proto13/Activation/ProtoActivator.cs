@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             protocol.LBToggleThreshold = parameters["liquidity_baking_toggle_ema_threshold"]?.Value<int>() ?? 1_000_000_000;
             protocol.BlocksPerVoting = (parameters["cycles_per_voting_period"]?.Value<int>() ?? 5) * protocol.BlocksPerCycle;
             protocol.TxRollupOriginationSize = parameters["tx_rollup_origination_size"]?.Value<int>() ?? 4_000;
-            protocol.TxRollupCommitmentBond = parameters["tx_rollup_commitment_bond"]?.Value<long>() ?? 10_000_000_000;
+            protocol.TxRollupCommitmentBond = long.Parse((parameters["tx_rollup_commitment_bond"]?.Value<string>() ?? "10000000000").Replace("_", ""));
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
@@ -172,7 +172,28 @@ namespace Tzkt.Sync.Protocols.Proto13
                 }
             }
             #endregion
+
+            #region empty contracts
+            // Account emptying has been significatnly changed, so  that its behavoir is completely incompatible with previous protocols.
+            // Instead of adding a lot of code crutches to support both the new and old behavior, we just use the new one for all protocols
+            // and simply patch the accounts broken in previous protocols.
+            if (state.Chain == "mainnet")
+            {
+                var emptied = File.ReadAllLines("./Protocols/Handlers/Proto13/Activation/emptied.contracts");
+                foreach (var address in emptied)
+                {
+                    if (await Cache.Accounts.GetAsync(address) is User user)
+                    {
+                        Db.TryAttach(user);
+                        var rawUser = await Proto.Rpc.GetContractAsync(state.Level, user.Address);
+                        user.Counter = rawUser.RequiredInt32("counter");
+                        user.Revealed = false;
+                    }
+                }
+            }
+            #endregion
         }
-        protected override Task RevertContext(AppState state) => Task.CompletedTask;
+
+        protected override Task RevertContext(AppState state) => throw new NotImplementedException();
     }
 }

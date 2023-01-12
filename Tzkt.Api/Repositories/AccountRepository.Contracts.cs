@@ -71,6 +71,9 @@ namespace Tzkt.Api.Repositories
                 NumMigrations = contract.MigrationsCount,
                 NumTransactions = contract.TransactionsCount,
                 TransferTicketCount = contract.TransferTicketCount,
+                IncreasePaidStorageCount = contract.IncreasePaidStorageCount,
+                TokensCount = contract.TokensCount,
+                EventsCount = contract.EventsCount,
                 TypeHash = contract.TypeHash,
                 CodeHash = contract.CodeHash,
             };
@@ -87,6 +90,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Contract>> GetContracts(
+            AddressParameter address,
             ContractKindParameter kind,
             ContractTagsParameter tags,
             AccountParameter creator,
@@ -111,6 +115,7 @@ namespace Tzkt.Api.Repositories
                 : $@"SELECT *, {AliasQuery} FROM ""Accounts""";
 
             var sql = new SqlBuilder(query)
+                .Filter("Address", address)
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -185,6 +190,9 @@ namespace Tzkt.Api.Repositories
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
                     TransferTicketCount = row.TransferTicketCount,
+                    IncreasePaidStorageCount = row.IncreasePaidStorageCount,
+                    TokensCount = row.TokensCount,
+                    EventsCount = row.EventsCount,
                     TypeHash = row.TypeHash,
                     CodeHash = row.CodeHash,
                     Storage = row.Kind == 0 ? $"\"{manager.Address}\"" : (RawJson)row.JsonValue
@@ -193,6 +201,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetContracts(
+            AddressParameter address,
             ContractKindParameter kind,
             ContractTagsParameter tags,
             AccountParameter creator,
@@ -237,6 +246,9 @@ namespace Tzkt.Api.Repositories
                     case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
                     case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
                     case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                    case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
+                    case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
+                    case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                     case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
                     case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                     case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
@@ -256,6 +268,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
+                .Filter("Address", address)
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -397,6 +410,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TransferTicketCount;
                         break;
+                    case "increasePaidStorageCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.IncreasePaidStorageCount;
+                        break; 
+                    case "tokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokensCount;
+                        break;
+                    case "eventsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EventsCount;
+                        break;
                     case "firstActivity":
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
@@ -442,6 +467,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetContracts(
+            AddressParameter address,
             ContractKindParameter kind,
             ContractTagsParameter tags,
             AccountParameter creator,
@@ -484,6 +510,9 @@ namespace Tzkt.Api.Repositories
                 case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
                 case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
                 case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
+                case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
+                case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                 case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
                 case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                 case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
@@ -502,6 +531,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
+                .Filter("Address", address)
                 .Filter("Type", 2)
                 .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
                 .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
@@ -639,6 +669,18 @@ namespace Tzkt.Api.Repositories
                 case "transferTicketCount":
                     foreach (var row in rows)
                         result[j++] = row.TransferTicketCount;
+                    break;
+                case "increasePaidStorageCount":
+                    foreach (var row in rows)
+                        result[j++] = row.IncreasePaidStorageCount;
+                    break; 
+                case "tokensCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokensCount;
+                    break;
+                case "eventsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.EventsCount;
                     break;
                 case "firstActivity":
                     foreach (var row in rows)
@@ -864,17 +906,19 @@ namespace Tzkt.Api.Repositories
 
             ContractParameter param;
             ContractStorage storage;
+            IMicheline code;
 
             if (contract.Kind == 0)
             {
                 param = Data.Models.Script.ManagerTz.Parameter;
                 storage = Data.Models.Script.ManagerTz.Storage;
+                code = new MichelineArray();
             }
             else
             {
                 using var db = GetConnection();
                 var script = await db.QueryFirstOrDefaultAsync($@"
-                    SELECT      ""StorageSchema"", ""ParameterSchema""
+                    SELECT      ""StorageSchema"", ""ParameterSchema"", ""CodeSchema""
                     FROM        ""Scripts""
                     WHERE       ""ContractId"" = {contract.Id} AND ""Current"" = true
                     LIMIT       1"
@@ -882,6 +926,7 @@ namespace Tzkt.Api.Repositories
                 if (script == null) return null;
                 param = new ContractParameter(Micheline.FromBytes(script.ParameterSchema));
                 storage = new ContractStorage(Micheline.FromBytes(script.StorageSchema));
+                code = Micheline.FromBytes(script.CodeSchema);
             }
 
             var rawStorage = await GetRawStorageValue(address);
@@ -906,6 +951,14 @@ namespace Tzkt.Api.Repositories
                         Path = x.Path,
                         KeySchema = (x.Schema as BigMapSchema).Key.GetJsonSchema(),
                         ValueSchema = (x.Schema as BigMapSchema).Value.GetJsonSchema()
+                    })
+                    .ToList(),
+                Events = code
+                    .FindPrimNodes(x => x.Prim == PrimType.EMIT && x.Annots?.Count == 1 && x.Args?.Count == 1)
+                    .Select(x => new EventInterface()
+                    {
+                        Tag = x.Annots[0].Value,
+                        EventSchema = Schema.Create(x.Args[0] as MichelinePrim).GetJsonSchema()
                     })
                     .ToList()
             };

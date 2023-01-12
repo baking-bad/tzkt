@@ -5,11 +5,18 @@ using System.Threading.Tasks;
 using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository : DbConnection
     {
+        public async Task<bool?> GetTransferTicketStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.TransferTicketOps), hash);
+        }
+
         public async Task<int> GetTransferTicketOpsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)

@@ -255,6 +255,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
 
             Db.MigrationOps.RemoveRange(airDrops);
+            Cache.AppState.ReleaseOperationId(airDrops.Count);
 
             state.MigrationOpsCount -= airDrops.Count;
             #endregion
@@ -272,6 +273,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             invoice.Account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);
+            Cache.AppState.ReleaseOperationId();
 
             state.MigrationOpsCount--;
             #endregion
@@ -341,7 +343,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Cache.Storages.Add(contract, oldStorage);
 
                 Db.Scripts.Remove(change.Script);
+                Cache.AppState.ReleaseScriptId();
                 Db.Storages.Remove(change.Storage);
+                Cache.AppState.ReleaseStorageId();
 
                 contract.TypeHash = oldScript.TypeHash;
                 contract.CodeHash = oldScript.CodeHash;
@@ -349,6 +353,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
 
             Db.MigrationOps.RemoveRange(codeChanges);
+            Cache.AppState.ReleaseOperationId(codeChanges.Count);
             state.MigrationOpsCount -= codeChanges.Count;
             #endregion
         }

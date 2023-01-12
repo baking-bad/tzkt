@@ -74,6 +74,8 @@ namespace Tzkt.Sync.Protocols.Proto3
             sender.BallotsCount++;
 
             block.Operations |= Operations.Ballots;
+
+            Cache.AppState.Get().BallotOpsCount++;
             #endregion
 
             Db.BallotOps.Add(ballot);
@@ -122,9 +124,12 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
 
             sender.BallotsCount--;
+
+            Cache.AppState.Get().BallotOpsCount--;
             #endregion
 
             Db.BallotOps.Remove(ballot);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

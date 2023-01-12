@@ -5,8 +5,8 @@ namespace Tzkt.Sync.Services
     public class TezosNodeConfig
     {
         public string Endpoint { get; set; }
-        public int Timeout { get; set; }
-        public int Lag { get; set; }
+        public int Timeout { get; set; } = 60;
+        public int Lag { get; set; } = 0;
     }
 
     public static class TezosNodeConfigExt

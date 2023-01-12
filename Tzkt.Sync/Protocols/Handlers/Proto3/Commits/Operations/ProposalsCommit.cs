@@ -71,7 +71,10 @@ namespace Tzkt.Sync.Protocols.Proto3
                 if (!proposalOp.Duplicated)
                 {
                     if (proposal.Upvotes == 0)
+                    {
                         period.ProposalsCount++;
+                        Cache.AppState.Get().ProposalsCount++;
+                    }
 
                     proposal.Upvotes++;
                     proposal.VotingPower += proposalOp.VotingPower;
@@ -80,6 +83,11 @@ namespace Tzkt.Sync.Protocols.Proto3
                     {
                         period.TopUpvotes = proposal.Upvotes;
                         period.TopVotingPower = proposal.VotingPower;
+                        period.SingleWinner = true;
+                    }
+                    else if (proposal.VotingPower == period.TopVotingPower)
+                    {
+                        period.SingleWinner = false;
                     }
 
                     snapshot.Status = VoterStatus.Upvoted;
@@ -88,6 +96,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 sender.ProposalsCount++;
 
                 block.Operations |= Operations.Proposals;
+
+                Cache.AppState.Get().ProposalOpsCount++;
                 #endregion
 
                 Db.ProposalOps.Add(proposalOp);
@@ -127,13 +137,8 @@ namespace Tzkt.Sync.Protocols.Proto3
                 if (period.ProposalsCount > 1)
                 {
                     var proposals = await Db.Proposals
-                        .AsNoTracking()
                         .Where(x => x.Epoch == period.Epoch)
                         .ToListAsync();
-
-                    var curr = proposals.First(x => x.Id == proposal.Id);
-                    curr.VotingPower -= proposalOp.VotingPower;
-                    curr.Upvotes--;
 
                     var prevMax = proposals
                         .OrderByDescending(x => x.VotingPower)
@@ -141,21 +146,28 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     period.TopUpvotes = prevMax.Upvotes;
                     period.TopVotingPower = prevMax.VotingPower;
+                    period.SingleWinner = proposals.Count(x => x.VotingPower == period.TopVotingPower) == 1;
                 }
                 else
                 {
                     period.TopUpvotes = proposal.Upvotes;
                     period.TopVotingPower = proposal.VotingPower;
+                    period.SingleWinner = proposal.VotingPower > 0;
                 }
 
                 if (proposal.Upvotes == 0)
+                {
                     period.ProposalsCount--;
+                    Cache.AppState.Get().ProposalsCount--;
+                }
 
                 if (!await Db.ProposalOps.AnyAsync(x => x.Period == period.Index && x.SenderId == sender.Id && x.Id < proposalOp.Id))
                     snapshot.Status = VoterStatus.None;
             }
 
             sender.ProposalsCount--;
+
+            Cache.AppState.Get().ProposalOpsCount--;
             #endregion
 
             if (proposal.Upvotes == 0)
@@ -165,6 +177,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             }
 
             Db.ProposalOps.Remove(proposalOp);
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

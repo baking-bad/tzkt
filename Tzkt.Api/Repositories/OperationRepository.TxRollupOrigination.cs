@@ -4,11 +4,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository : DbConnection
     {
+        public async Task<bool?> GetTxRollupOriginationStatus(string hash)
+        {
+            using var db = GetConnection();
+            return await GetStatus(db, nameof(TzktContext.TxRollupOriginationOps), hash);
+        }
+
         public async Task<int> GetTxRollupOriginationOpsCount(
             Int32Parameter level,
             DateTimeParameter timestamp)
@@ -46,10 +53,9 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -81,10 +87,9 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -114,10 +119,9 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -168,10 +172,9 @@ namespace Tzkt.Api.Repositories
                 GasLimit = row.GasLimit,
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
-                StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 AllocationFee = row.AllocationFee ?? 0,
-                Rollup = Accounts.GetAlias(row.RollupId),
+                Rollup = row.RollupId == null ? null : Accounts.GetAlias(row.RollupId),
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -206,7 +209,6 @@ namespace Tzkt.Api.Repositories
                     case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                     case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
                     case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
-                    case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                     case "rollup": columns.Add(@"o.""RollupId"""); break;
@@ -288,10 +290,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.StorageLimit;
                         break;
-                    case "storageUsed":
-                        foreach (var row in rows)
-                            result[j++][i] = row.StorageUsed;
-                        break;
                     case "bakerFee":
                         foreach (var row in rows)
                             result[j++][i] = row.BakerFee;
@@ -302,7 +300,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "rollup":
                         foreach (var row in rows)
-                            result[j++][i] = await Accounts.GetAliasAsync(row.RollupId);
+                            result[j++][i] = row.RollupId == null ? null : await Accounts.GetAliasAsync(row.RollupId);
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -348,7 +346,6 @@ namespace Tzkt.Api.Repositories
                 case "gasLimit": columns.Add(@"o.""GasLimit"""); break;
                 case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
                 case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
-                case "storageUsed": columns.Add(@"o.""StorageUsed"""); break;
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                 case "rollup": columns.Add(@"o.""RollupId"""); break;
@@ -427,10 +424,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.StorageLimit;
                     break;
-                case "storageUsed":
-                    foreach (var row in rows)
-                        result[j++] = row.StorageUsed;
-                    break;
                 case "bakerFee":
                     foreach (var row in rows)
                         result[j++] = row.BakerFee;
@@ -441,7 +434,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "rollup":
                     foreach (var row in rows)
-                        result[j++] = await Accounts.GetAliasAsync(row.RollupId);
+                        result[j++] = row.RollupId == null ? null : await Accounts.GetAliasAsync(row.RollupId);
                     break;
                 case "status":
                     foreach (var row in rows)

@@ -533,6 +533,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetNonceRevelations(block, quote)
                 : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
+            var vdfRevelations = operations.HasFlag(Data.Models.Operations.VdfRevelation)
+                ? Operations.GetVdfRevelations(block, quote)
+                : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
+
             var delegations = operations.HasFlag(Data.Models.Operations.Delegations)
                 ? Operations.GetDelegations(block, quote)
                 : Task.FromResult(Enumerable.Empty<DelegationOperation>());
@@ -593,6 +597,18 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetTxRollupSubmitBatchOps(block, quote)
                 : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
 
+            var increasePaidStorageOps = operations.HasFlag(Data.Models.Operations.IncreasePaidStorage)
+                ? Operations.GetIncreasePaidStorageOps(block, quote)
+                : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
+            var updateConsensusKeyOps = operations.HasFlag(Data.Models.Operations.UpdateConsensusKey)
+                ? Operations.GetUpdateConsensusKeys(block, quote)
+                : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
+
+            var drainDelegateOps = operations.HasFlag(Data.Models.Operations.DrainDelegate)
+                ? Operations.GetDrainDelegates(block, quote)
+                : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -615,6 +631,7 @@ namespace Tzkt.Api.Repositories
                 doubleEndorsing,
                 doublePreendorsing,
                 nonceRevelations,
+                vdfRevelations,
                 delegations,
                 originations,
                 transactions,
@@ -630,6 +647,9 @@ namespace Tzkt.Api.Repositories
                 txRollupRemoveCommitmentOps,
                 txRollupReturnBondOps,
                 txRollupSubmitBatchOps,
+                increasePaidStorageOps,
+                updateConsensusKeyOps,
+                drainDelegateOps,
                 migrations,
                 penalties,
                 endorsingRewards);
@@ -643,6 +663,7 @@ namespace Tzkt.Api.Repositories
             block.DoubleEndorsing = doubleEndorsing.Result;
             block.DoublePreendorsing = doublePreendorsing.Result;
             block.NonceRevelations = nonceRevelations.Result;
+            block.VdfRevelations = vdfRevelations.Result;
             block.Delegations = delegations.Result;
             block.Originations = originations.Result;
             block.Transactions = transactions.Result;
@@ -658,6 +679,9 @@ namespace Tzkt.Api.Repositories
             block.TxRollupRemoveCommitmentOps = txRollupRemoveCommitmentOps.Result;
             block.TxRollupReturnBondOps = txRollupReturnBondOps.Result;
             block.TxRollupSubmitBatchOps = txRollupSubmitBatchOps.Result;
+            block.IncreasePaidStorageOps = increasePaidStorageOps.Result;
+            block.UpdateConsensusKeyOps = updateConsensusKeyOps.Result;
+            block.DrainDelegateOps = drainDelegateOps.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;

@@ -7,7 +7,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Internal TzKT id (not the same as `tokenId`).
         /// </summary>
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         /// <summary>
         /// Contract, created the token.
@@ -23,6 +23,11 @@ namespace Tzkt.Api.Models
         /// Token standard (either `fa1.2` or `fa2`).
         /// </summary>
         public string Standard { get; set; }
+
+        /// <summary>
+        /// Total number of existing tokens (raw value, not divided by `decimals`). In historical token balances this field is omitted.
+        /// </summary>
+        public string TotalSupply { get; set; }
 
         /// <summary>
         /// Token metadata.  

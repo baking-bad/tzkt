@@ -43,7 +43,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region check reorg
                 if (State.Reorganized)
                 {
-                    Logger.LogDebug("Sending reorg message with state {0}", State.ValidLevel);
+                    Logger.LogDebug("Sending reorg message with state {state}", State.ValidLevel);
                     sendings.Add(Context.Clients
                         .Group(BlocksGroup)
                         .SendReorg(BlocksChannel, State.ValidLevel));
@@ -57,7 +57,7 @@ namespace Tzkt.Api.Websocket.Processors
                 }
 
                 #region load blocks
-                Logger.LogDebug("Fetching blocks from {0} to {1}", State.ValidLevel, State.Current.Level);
+                Logger.LogDebug("Fetching blocks from {valid} to {current}", State.ValidLevel, State.Current.Level);
 
                 var level = State.Current.Level == State.ValidLevel + 1
                     ? new Int32Parameter
@@ -75,7 +75,7 @@ namespace Tzkt.Api.Websocket.Processors
                 var blocks = await Blocks.Get(null, null, null, level, null, null, null, null, limit, symbols);
                 var count = blocks.Count();
 
-                Logger.LogDebug("{0} blocks fetched", count);
+                Logger.LogDebug("{cnt} blocks fetched", count);
                 #endregion
 
                 #region send
@@ -83,12 +83,12 @@ namespace Tzkt.Api.Websocket.Processors
                     .Group(BlocksGroup)
                     .SendData(BlocksChannel, blocks, State.Current.Level));
 
-                Logger.LogDebug("{0} blocks sent", count);
+                Logger.LogDebug("{cnt} blocks sent", count);
                 #endregion
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process state change: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to process state change");
             }
             finally
             {
@@ -101,7 +101,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogError("Sendings failed: {0}", ex.Message);
+                    Logger.LogError(ex, "Sendings failed");
                 }
                 #endregion
             }
@@ -118,12 +118,12 @@ namespace Tzkt.Api.Websocket.Processors
                 await Context.Groups.AddToGroupAsync(connectionId, BlocksGroup);
                 sending = client.SendState(BlocksChannel, State.Current.Level);
 
-                Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, State.Current.Level);
+                Logger.LogDebug("Client {id} subscribed with state {state}", connectionId, State.Current.Level);
                 return State.Current.Level;
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to add subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to add subscription");
                 return 0;
             }
             finally
@@ -136,7 +136,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogError("Sending failed: {0}", ex.Message);
+                    Logger.LogError(ex, "Sending failed");
                 }
             }
         }

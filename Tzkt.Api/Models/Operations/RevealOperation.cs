@@ -16,7 +16,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
         /// </summary>
-        public override int Id { get; set; }
+        public override long Id { get; set; }
 
         /// <summary>
         /// The height of the block from the genesis block, in which the operation was included
@@ -57,6 +57,11 @@ namespace Tzkt.Api.Models
         /// Amount of gas, consumed by the operation
         /// </summary>
         public int GasUsed { get; set; }
+
+        /// <summary>
+        /// A cap on the amount of storage a given operation can consume
+        /// </summary>
+        public int StorageLimit { get; set; }
 
         /// <summary>
         /// Fee to the baker, produced block, in which the operation was included (micro tez)

@@ -75,7 +75,7 @@ namespace Tzkt.Sync.Services
                     catch (Exception ex)
                     {
                         // no big deal...
-                        Logger.LogWarning("Failed to update AppState.LastSync: {0}", ex.Message);
+                        Logger.LogWarning(ex, "Failed to update AppState");
                     }
                 }
                 #endregion

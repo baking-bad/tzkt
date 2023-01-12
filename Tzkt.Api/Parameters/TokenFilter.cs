@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using System.Text.Json.Serialization;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -8,7 +9,7 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id. Note, this is not the same as `tokenId` nat value.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter id { get; set; }
+        public Int64Parameter id { get; set; }
 
         /// <summary>
         /// Filter by contract address.  
@@ -27,6 +28,12 @@ namespace Tzkt.Api
         /// Click on the parameter to expand more details.
         /// </summary>
         public TokenStandardParameter standard { get; set; }
+
+        /// <summary>
+        /// Filter by address of the first minter.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public AccountParameter firstMinter { get; set; }
 
         /// <summary>
         /// Filter by level of the block where the token was first seen.  
@@ -60,11 +67,14 @@ namespace Tzkt.Api
         /// </summary>
         public JsonParameter metadata { get; set; }
 
+        [JsonIgnore]
+        public Int32NullParameter indexedAt { get; set; }
+
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("firstLevel", firstLevel), 
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("metadata", metadata));
+                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
+                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("metadata", metadata), ("indexedAt", indexedAt));
         }
     }
 }

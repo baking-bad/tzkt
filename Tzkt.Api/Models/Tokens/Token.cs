@@ -9,7 +9,7 @@ namespace Tzkt.Api.Models
         /// Internal TzKT id (not the same as `tokenId`).  
         /// **[sortable]**
         /// </summary>
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         /// <summary>
         /// Contract, created the token.
@@ -26,6 +26,11 @@ namespace Tzkt.Api.Models
         /// Token standard (`fa1.2` or `fa2`).
         /// </summary>
         public string Standard { get; set; }
+
+        /// <summary>
+        /// Account, minted the token first.
+        /// </summary>
+        public Alias FirstMinter { get; set; }
 
         /// <summary>
         /// Level of the block where the token was first seen.  

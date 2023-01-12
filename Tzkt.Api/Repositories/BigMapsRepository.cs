@@ -1102,16 +1102,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region diffs
-        public static Task<Dictionary<int, List<BigMapDiff>>> GetTransactionDiffs(IDbConnection db, List<int> ops, MichelineFormat format)
+        public static Task<Dictionary<long, List<BigMapDiff>>> GetTransactionDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
             => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.TransactionId), format);
 
-        public static Task<Dictionary<int, List<BigMapDiff>>> GetOriginationDiffs(IDbConnection db, List<int> ops, MichelineFormat format)
+        public static Task<Dictionary<long, List<BigMapDiff>>> GetOriginationDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
             => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.OriginationId), format);
 
-        public static Task<Dictionary<int, List<BigMapDiff>>> GetMigrationDiffs(IDbConnection db, List<int> ops, MichelineFormat format)
+        public static Task<Dictionary<long, List<BigMapDiff>>> GetMigrationDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
             => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.MigrationId), format);
 
-        static async Task<Dictionary<int, List<BigMapDiff>>> GetBigMapDiffs(IDbConnection db, List<int> ops, string opCol, MichelineFormat format)
+        static async Task<Dictionary<long, List<BigMapDiff>>> GetBigMapDiffs(IDbConnection db, List<long> ops, string opCol, MichelineFormat format)
         {
             if (ops.Count == 0) return null;
 
@@ -1151,13 +1151,13 @@ namespace Tzkt.Api.Repositories
                 new { keyIds }))
                 .ToDictionary(x => (int)x.Id);
 
-            var res = new Dictionary<int, List<BigMapDiff>>(rows.Count());
+            var res = new Dictionary<long, List<BigMapDiff>>(rows.Count());
             foreach (var row in rows)
             {
-                if (!res.TryGetValue((int)row.OpId, out var list))
+                if (!res.TryGetValue((long)row.OpId, out var list))
                 {
                     list = new List<BigMapDiff>();
-                    res.Add((int)row.OpId, list);
+                    res.Add((long)row.OpId, list);
                 }
                 list.Add(new BigMapDiff
                 {

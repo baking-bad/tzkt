@@ -13,7 +13,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
         /// </summary>
-        public override int Id { get; set; }
+        public override long Id { get; set; }
 
         /// <summary>
         /// The height of the block from the genesis block, in which the operation was included
@@ -49,6 +49,11 @@ namespace Tzkt.Api.Models
         /// Information about the account, created a contract
         /// </summary>
         public Alias Sender { get; set; }
+
+        /// <summary>
+        /// Hash of the sender contract code, or `null` is the sender is not a contract
+        /// </summary>
+        public int? SenderCodeHash { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent internal operation replay

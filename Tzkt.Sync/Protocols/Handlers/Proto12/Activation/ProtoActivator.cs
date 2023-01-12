@@ -30,7 +30,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.EndorsementReward0 = parameters["endorsing_reward_per_slot"]?.Value<long>() ?? (totalReward / 2 / protocol.EndorsersPerBlock);
             protocol.EndorsementReward1 = 0;
 
-            protocol.LBSunsetLevel = parameters["liquidity_baking_sunset_level"]?.Value<int>() ?? 3_063_809;
             protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 666_667) * 1000;
 
             protocol.ConsensusThreshold = parameters["consensus_threshold"]?.Value<int>() ?? 4667;
@@ -59,8 +58,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.EndorsementReward0 = totalReward / 2 / protocol.EndorsersPerBlock;
             protocol.EndorsementReward1 = 0;
 
-            if (protocol.LBSunsetLevel == 2_244_609)
-                protocol.LBSunsetLevel = 3_063_809;
             protocol.LBToggleThreshold = 666_667_000;
 
             protocol.ConsensusThreshold = 4667;

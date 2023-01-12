@@ -7,11 +7,12 @@ namespace Tzkt.Data.Models
 {
     public class Token
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public int ContractId { get; set; }
         public BigInteger TokenId { get; set; }
         public TokenTags Tags { get; set; }
 
+        public int FirstMinterId { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
 
@@ -24,6 +25,7 @@ namespace Tzkt.Data.Models
         public BigInteger TotalSupply { get; set; }
 
         public int? OwnerId { get; set; }
+        public int? IndexedAt { get; set; }
     }
 
     [Flags]
@@ -85,7 +87,14 @@ namespace Tzkt.Data.Models
                 .IsUnique();
 
             modelBuilder.Entity<Token>()
+                .HasIndex(x => x.FirstMinterId);
+
+            modelBuilder.Entity<Token>()
                 .HasIndex(x => x.LastLevel);
+
+            modelBuilder.Entity<Token>()
+                .HasIndex(x => x.IndexedAt)
+                .HasFilter($@"""{nameof(Token.IndexedAt)}"" is not null");
 
             // shadow property
             modelBuilder.Entity<Token>()

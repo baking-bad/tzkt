@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -64,6 +65,8 @@ namespace Tzkt.Api
             services.AddTransient<TokensRepository>();
             services.AddTransient<MetadataRepository>();
             services.AddTransient<ConstantsRepository>();
+            services.AddTransient<ContractEventsRepository>();
+            services.AddTransient<DomainsRepository>();
 
             services.AddAuthService(Configuration);
 
@@ -73,12 +76,11 @@ namespace Tzkt.Api
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    options.JsonSerializerOptions.MaxDepth = 100_000;
-                    options.JsonSerializerOptions.IgnoreNullValues = true;
                     options.JsonSerializerOptions.Converters.Add(new AccountConverter());
-                    options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
                     options.JsonSerializerOptions.Converters.Add(new OperationConverter());
                     options.JsonSerializerOptions.Converters.Add(new OperationErrorConverter());
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                    options.JsonSerializerOptions.MaxDepth = 100_000;
                 })
                 .ConfigureApiBehaviorOptions(options =>
                 {
@@ -93,6 +95,9 @@ namespace Tzkt.Api
                 services.AddTransient<HeadProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, HeadProcessor<DefaultHub>>();
 
+                services.AddTransient<CyclesProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, CyclesProcessor<DefaultHub>>();
+
                 services.AddTransient<BlocksProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BlocksProcessor<DefaultHub>>();
 
@@ -101,6 +106,9 @@ namespace Tzkt.Api
 
                 services.AddTransient<BigMapsProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, BigMapsProcessor<DefaultHub>>();
+
+                services.AddTransient<EventsProcessor<DefaultHub>>();
+                services.AddTransient<IHubProcessor, EventsProcessor<DefaultHub>>();
 
                 services.AddTransient<TokenBalancesProcessor<DefaultHub>>();
                 services.AddTransient<IHubProcessor, TokenBalancesProcessor<DefaultHub>>();
@@ -118,12 +126,11 @@ namespace Tzkt.Api
                 })
                 .AddJsonProtocol(jsonOptions =>
                 {
-                    jsonOptions.PayloadSerializerOptions.MaxDepth = 100_000;
-                    jsonOptions.PayloadSerializerOptions.IgnoreNullValues = true;
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new AccountConverter());
-                    jsonOptions.PayloadSerializerOptions.Converters.Add(new DateTimeConverter());
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationConverter());
                     jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
+                    jsonOptions.PayloadSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                    jsonOptions.PayloadSerializerOptions.MaxDepth = 100_000;
                 });
             }
             #endregion
@@ -175,7 +182,10 @@ namespace Tzkt.Api
                 #region web socket
                 if (Configuration.GetWebsocketConfig().Enabled)
                 {
+                    endpoints.MapHub<DefaultHub>("/v1/ws");
+                    #region DEPRECATED
                     endpoints.MapHub<DefaultHub>("/v1/events");
+                    #endregion
                 }
                 #endregion
 

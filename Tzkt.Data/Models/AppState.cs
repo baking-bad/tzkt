@@ -5,6 +5,8 @@ namespace Tzkt.Data.Models
 {
     public class AppState
     {
+        public const int SubIdBits = 20;
+
         public int Id { get; set; }
         public string Chain { get; set; }
         public string ChainId { get; set; }
@@ -24,15 +26,14 @@ namespace Tzkt.Data.Models
 
         #region counters
         public int AccountCounter { get; set; }
-        public int OperationCounter { get; set; }
+        public long OperationCounter { get; set; }
         public int ManagerCounter { get; set; }
         public int BigMapCounter { get; set; }
         public int BigMapKeyCounter { get; set; }
         public int BigMapUpdateCounter { get; set; }
         public int StorageCounter { get; set; }
         public int ScriptCounter { get; set; }
-        public int TokenCounter { get; set; }
-        public int TokenBalanceCounter { get; set; }
+        public int EventCounter { get; set; }
         #endregion
 
         #region entities count
@@ -51,6 +52,7 @@ namespace Tzkt.Data.Models
         public int EndorsementOpsCount { get; set; }
         public int PreendorsementOpsCount { get; set; }
         public int NonceRevelationOpsCount { get; set; }
+        public int VdfRevelationOpsCount { get; set; }
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
@@ -69,6 +71,10 @@ namespace Tzkt.Data.Models
         public int TxRollupDispatchTicketsOpsCount { get; set; }
         public int TransferTicketOpsCount { get; set; }
 
+        public int IncreasePaidStorageOpsCount { get; set; }
+        public int UpdateConsensusKeyOpsCount { get; set; }
+        public int DrainDelegateOpsCount { get; set; }
+
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
 
@@ -80,9 +86,10 @@ namespace Tzkt.Data.Models
         public int TokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
+        public int EventsCount { get; set; }
         #endregion
 
-        #region quotes
+        #region plugins
         public int QuoteLevel { get; set; }
         public double QuoteBtc { get; set; }
         public double QuoteEur { get; set; }
@@ -92,7 +99,10 @@ namespace Tzkt.Data.Models
         public double QuoteKrw { get; set; }
         public double QuoteEth { get; set; }
         public double QuoteGbp { get; set; }
-        #endregion
+
+        public string DomainsNameRegistry { get; set; }
+        public int DomainsLevel { get; set; }
+        #endregion 
     }
 
     public static class AppStateModel
@@ -118,7 +128,7 @@ namespace Tzkt.Data.Models
                     Id = -1,
                     Cycle = -1,
                     Level = -1,
-                    Timestamp = DateTime.MinValue,
+                    Timestamp = DateTimeOffset.MinValue.UtcDateTime,
                     Protocol = "",
                     NextProtocol = "",
                     Hash = "",

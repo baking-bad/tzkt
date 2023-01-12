@@ -69,7 +69,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region check reorg
                 if (State.Reorganized)
                 {
-                    Logger.LogDebug("Sending reorg message with state {0}", State.ValidLevel);
+                    Logger.LogDebug("Sending reorg message with state {state}", State.ValidLevel);
                     sendings.Add(Context.Clients
                         .Group(BigMapsGroup)
                         .SendReorg(BigMapsChannel, State.ValidLevel));
@@ -83,7 +83,7 @@ namespace Tzkt.Api.Websocket.Processors
                 }
 
                 #region load updates
-                Logger.LogDebug("Fetching bigmap updates from {0} to {1}", State.ValidLevel, State.Current.Level);
+                Logger.LogDebug("Fetching bigmap updates from {valid} to {current}", State.ValidLevel, State.Current.Level);
 
                 var level = State.Current.Level == State.ValidLevel + 1
                     ? new Int32Parameter
@@ -101,7 +101,7 @@ namespace Tzkt.Api.Websocket.Processors
                 var updates = await Repo.GetUpdates(null, null, null, level, null, null, null, limit, format);
                 var count = updates.Count();
 
-                Logger.LogDebug("{0} bigmap updates fetched", count);
+                Logger.LogDebug("{cnt} bigmap updates fetched", count);
                 #endregion
 
                 #region prepare to send
@@ -167,15 +167,15 @@ namespace Tzkt.Api.Websocket.Processors
                         .Client(connectionId)
                         .SendData(BigMapsChannel, data, State.Current.Level));
 
-                    Logger.LogDebug("{0} bigmap updates sent to {1}", updatesList.Count, connectionId);
+                    Logger.LogDebug("{cnt} bigmap updates sent to {id}", updatesList.Count, connectionId);
                 }
 
-                Logger.LogDebug("{0} bigmap updates sent", count);
+                Logger.LogDebug("{cnt} bigmap updates sent", count);
                 #endregion
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process state change: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to process state change");
             }
             finally
             {
@@ -188,7 +188,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogCritical("Sendings failed: {0}", ex.Message);
+                    Logger.LogCritical(ex, "Sendings failed");
                 }
                 #endregion
             }
@@ -256,7 +256,7 @@ namespace Tzkt.Api.Websocket.Processors
 
                 sending = client.SendState(BigMapsChannel, State.Current.Level);
 
-                Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, State.Current.Level);
+                Logger.LogDebug("Client {id} subscribed with state {state}", connectionId, State.Current.Level);
                 return State.Current.Level;
             }
             catch (HubException)
@@ -265,7 +265,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to add subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to add subscription");
                 return 0;
             }
             finally
@@ -278,7 +278,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogCritical("Sending failed: {0}", ex.Message);
+                    Logger.LogCritical(ex, "Sending failed");
                 }
             }
         }
@@ -321,14 +321,14 @@ namespace Tzkt.Api.Websocket.Processors
                     ContractSubs.Remove(contract);
 
                 if (Limits[connectionId] != 0)
-                    Logger.LogCritical("Failed to unsubscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
+                    Logger.LogCritical("Failed to unsubscribe {id}: {cnt} subs left", connectionId, Limits[connectionId]);
                 Limits.Remove(connectionId);
 
-                Logger.LogDebug("Client {0} unsubscribed", connectionId);
+                Logger.LogDebug("Client {id} unsubscribed", connectionId);
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to remove subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to remove subscription");
             }
             finally
             {

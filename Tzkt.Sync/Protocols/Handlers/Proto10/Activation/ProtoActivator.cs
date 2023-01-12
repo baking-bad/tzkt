@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
@@ -59,7 +58,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.TimeBetweenBlocks = parameters["minimal_block_delay"]?.Value<int>() ?? 30;
 
             protocol.LBSubsidy = parameters["liquidity_baking_subsidy"]?.Value<int>() ?? 2_500_000;
-            protocol.LBSunsetLevel = parameters["liquidity_baking_sunset_level"]?.Value<int>() ?? 2_032_928;
             protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 1_000_000) * 1000;
         }
 
@@ -82,7 +80,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.TimeBetweenBlocks /= 2;
 
             protocol.LBSubsidy = 2_500_000;
-            protocol.LBSunsetLevel = 2_032_928;
             protocol.LBToggleThreshold = 1_000_000_000;
         }
 
@@ -112,6 +109,10 @@ namespace Tzkt.Sync.Protocols.Proto10
             Cache.BigMaps.Reset();
             Cache.Tokens.Reset();
             Cache.TokenBalances.Reset();
+
+            Cache.AppState.Get().BigMapCounter = 0;
+            Cache.AppState.Get().BigMapKeyCounter = 0;
+            Cache.AppState.Get().BigMapUpdateCounter = 0;
         }
 
         protected override async Task MigrateContext(AppState state)
@@ -336,7 +337,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             //    }
             //    catch (Exception ex)
             //    {
-            //        Logger.LogError("Failed to fetch endorsing rights for level {0}: {1}", level, ex.Message);
+            //        Logger.LogError(ex, "Failed to fetch endorsing rights for level {level}", level);
             //        if (++attempts >= 10) throw new Exception("Too many RPC errors when fetching endorsing rights");
             //        await Task.Delay(3000);
             //        level--;
@@ -661,10 +662,11 @@ namespace Tzkt.Sync.Protocols.Proto10
                     #region tokens
                     var token = new Token
                     {
-                        Id = Cache.AppState.NextTokenId(),
+                        Id = Cache.AppState.NextSubId(migration),
                         Tags = TokenTags.Fa12,
                         BalancesCount = 1,
                         ContractId = contract.Id,
+                        FirstMinterId = contract.Id,
                         FirstLevel = migration.Level,
                         HoldersCount = 1,
                         LastLevel = migration.Level,
@@ -676,7 +678,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     };
                     var tokenBalance = new TokenBalance
                     {
-                        Id = Cache.AppState.NextTokenBalanceId(),
+                        Id = Cache.AppState.NextSubId(migration),
                         AccountId = NullAddress.Id,
                         Balance = 100,
                         FirstLevel = migration.Level,
@@ -687,7 +689,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     };
                     var tokenTransfer = new TokenTransfer
                     {
-                        Id = Cache.AppState.NextOperationId(),
+                        Id = Cache.AppState.NextSubId(migration),
                         Amount = 100,
                         Level = migration.Level,
                         MigrationId = migration.Id,
@@ -768,11 +770,19 @@ namespace Tzkt.Sync.Protocols.Proto10
                 DELETE FROM ""BigMaps"" WHERE ""Ptr"" = ANY({0});",
                 bigmaps.Select(x => x.Ptr).ToList(), contract.Id);
 
+            Cache.AppState.ReleaseOperationId();
+            Cache.AppState.ReleaseScriptId();
+            Cache.AppState.ReleaseStorageId();
             Cache.Storages.Remove(contract);
             Cache.Schemas.Remove(contract);
             Cache.BigMapKeys.Reset();
             foreach (var bigmap in bigmaps)
+            {
                 Cache.BigMaps.Remove(bigmap);
+                Cache.AppState.ReleaseBigMapId();
+                Cache.AppState.ReleaseBigMapKeyId(bigmap.TotalKeys);
+                Cache.AppState.ReleaseBigMapUpdateId(bigmap.Updates);
+            }
 
             if (contract.TokenTransfersCount != 0)
             {

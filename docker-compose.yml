@@ -21,7 +21,7 @@ services:
     depends_on:
       - db
     environment:
-      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
     ports:
       - 0.0.0.0:5000:5000
@@ -31,8 +31,8 @@ services:
     restart: always
     image: bakingbad/tzkt-sync:latest
     environment:
-      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty}; 
-      TezosNode__Endpoint: https://mainnet-tezos.giganode.io/
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
+      TezosNode__Endpoint: ${NODE_RPC:-https://rpc.tzkt.io/mainnet/}
     depends_on:
       - db
 

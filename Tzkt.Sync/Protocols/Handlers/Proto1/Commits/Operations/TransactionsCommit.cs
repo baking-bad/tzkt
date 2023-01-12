@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
                     ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
@@ -94,7 +94,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            await Spend(sender, transaction.BakerFee);
+            sender.Balance -= transaction.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= transaction.BakerFee;
@@ -111,32 +111,25 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Transactions;
             block.Fees += transaction.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, transaction.Counter);
+            sender.Counter = transaction.Counter;
             #endregion
 
             #region apply result
             if (transaction.Status == OperationStatus.Applied)
             {
-                await Spend(sender,
-                    transaction.Amount +
-                    (transaction.StorageFee ?? 0) +
-                    (transaction.AllocationFee ?? 0));
+                var burned = (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
+                var spent = transaction.Amount + burned;
+                Proto.Manager.Burn(burned);
 
+                sender.Balance -= spent;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance -= transaction.Amount;
-                    senderDelegate.StakingBalance -= transaction.StorageFee ?? 0;
-                    senderDelegate.StakingBalance -= transaction.AllocationFee ?? 0;
+                    senderDelegate.StakingBalance -= spent;
                     if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance -= transaction.Amount;
-                        senderDelegate.DelegatedBalance -= transaction.StorageFee ?? 0;
-                        senderDelegate.DelegatedBalance -= transaction.AllocationFee ?? 0;
-                    }
+                        senderDelegate.DelegatedBalance -= spent;
                 }
 
                 target.Balance += transaction.Amount;
-
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += transaction.Amount;
@@ -154,6 +147,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            Proto.Manager.Set(transaction.Sender);
             Db.TransactionOps.Add(transaction);
             Transaction = transaction;
         }
@@ -203,7 +197,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
                     ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
@@ -254,21 +248,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region apply result
             if (transaction.Status == OperationStatus.Applied)
             {
-                parentSender.Balance -= (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
+                var burned = (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
+                Proto.Manager.Burn(burned);
 
+                parentSender.Balance -= burned;
                 if (parentDelegate != null)
                 {
-                    parentDelegate.StakingBalance -= transaction.StorageFee ?? 0;
-                    parentDelegate.StakingBalance -= transaction.AllocationFee ?? 0;
+                    parentDelegate.StakingBalance -= burned;
                     if (parentDelegate.Id != parentSender.Id)
-                    {
-                        parentDelegate.DelegatedBalance -= transaction.StorageFee ?? 0;
-                        parentDelegate.DelegatedBalance -= transaction.AllocationFee ?? 0;
-                    }
+                        parentDelegate.DelegatedBalance -= burned;
                 }
 
                 sender.Balance -= transaction.Amount;
-
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance -= transaction.Amount;
@@ -277,6 +268,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
 
                 target.Balance += transaction.Amount;
+                if (target.Id == parentSender.Id)
+                    Proto.Manager.Credit(transaction.Amount);
 
                 if (targetDelegate != null)
                 {
@@ -359,22 +352,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     }
                 }
 
-                await Return(sender,
-                    transaction.Amount +
-                    (transaction.StorageFee ?? 0) +
-                    (transaction.AllocationFee ?? 0));
+                var spent = transaction.Amount + (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
 
+                sender.Balance += spent;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance += transaction.Amount;
-                    senderDelegate.StakingBalance += transaction.StorageFee ?? 0;
-                    senderDelegate.StakingBalance += transaction.AllocationFee ?? 0;
+                    senderDelegate.StakingBalance += spent;
                     if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance += transaction.Amount;
-                        senderDelegate.DelegatedBalance += transaction.StorageFee ?? 0;
-                        senderDelegate.DelegatedBalance += transaction.AllocationFee ?? 0;
-                    }
+                        senderDelegate.DelegatedBalance += spent;
                 }
 
                 if (transaction.StorageId != null)
@@ -383,7 +368,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            await Return(sender, transaction.BakerFee);
+            sender.Balance += transaction.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += transaction.BakerFee;
@@ -396,11 +381,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.TransactionsCount--;
             if (target != null && target != sender) target.TransactionsCount--;
 
-            sender.Counter = Math.Min(sender.Counter, transaction.Counter - 1);
+            sender.Counter = transaction.Counter - 1;
+            (sender as User).Revealed = true;
             #endregion
 
             Db.TransactionOps.Remove(transaction);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
 
         public virtual async Task RevertInternal(Block block, TransactionOperation transaction)
@@ -471,17 +458,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance += transaction.Amount;
                 }
 
-                parentSender.Balance += (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
-
+                var spent = (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
+                
+                parentSender.Balance += spent;
                 if (parentDelegate != null)
                 {
-                    parentDelegate.StakingBalance += transaction.StorageFee ?? 0;
-                    parentDelegate.StakingBalance += transaction.AllocationFee ?? 0;
+                    parentDelegate.StakingBalance += spent;
                     if (parentDelegate.Id != parentSender.Id)
-                    {
-                        parentDelegate.DelegatedBalance += transaction.StorageFee ?? 0;
-                        parentDelegate.DelegatedBalance += transaction.AllocationFee ?? 0;
-                    }
+                        parentDelegate.DelegatedBalance += spent;
                 }
 
                 if (transaction.StorageId != null)
@@ -496,6 +480,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.TransactionOps.Remove(transaction);
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual bool HasAllocated(JsonElement result) => false;
@@ -554,7 +539,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         transaction.RawParameters ??= rawParam.ToBytes();
 
                         if (transaction.Status == OperationStatus.Applied)
-                            Logger.LogError($"Failed to humanize tx {transaction.OpHash} parameters: {ex.Message}");
+                            Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                     }
                 }
             }
@@ -620,6 +605,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Cache.Storages.Add(contract, prevStorage);
 
                 Db.Storages.Remove(storage);
+                Cache.AppState.ReleaseStorageId();
             }
         }
 
@@ -688,6 +674,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     },
                 }
             };
+        }
+
+        protected virtual int GetConsumedGas(JsonElement result)
+        {
+            return result.OptionalInt32("consumed_gas") ?? 0;
         }
     }
 }

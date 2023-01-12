@@ -9,6 +9,7 @@ namespace Tzkt.Api
         public const string NoProposals = "no_proposals";
         public const string NoQuorum = "no_quorum";
         public const string NoSupermajority = "no_supermajority";
+        public const string NoSingleWinner = "no_single_winner";
         public const string Success = "success";
 
         public static string ToString(int value) => value switch
@@ -17,6 +18,7 @@ namespace Tzkt.Api
             (int)PeriodStatus.NoProposals => NoProposals,
             (int)PeriodStatus.NoQuorum => NoQuorum,
             (int)PeriodStatus.NoSupermajority => NoSupermajority,
+            (int)PeriodStatus.NoSingleWinner => NoSingleWinner,
             (int)PeriodStatus.Success => Success,
             _ => throw new Exception("invalid period status value")
         };

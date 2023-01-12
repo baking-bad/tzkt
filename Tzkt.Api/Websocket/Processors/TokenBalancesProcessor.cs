@@ -46,7 +46,6 @@ namespace Tzkt.Api.Websocket.Processors
         readonly IHubContext<T> Context;
         readonly WebsocketConfig Config;
         readonly ILogger Logger;
-        int LastId;
 
         public TokenBalancesProcessor(StateCache state, TokensRepository tokens,
             IHubContext<T> hubContext, IConfiguration config, ILogger<TokenBalancesProcessor<T>> logger)
@@ -56,7 +55,6 @@ namespace Tzkt.Api.Websocket.Processors
             Context = hubContext;
             Config = config.GetWebsocketConfig();
             Logger = logger;
-            LastId = state.Current.TokenCounter;
         }
         
         public async Task OnStateChanged()
@@ -75,7 +73,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region check reorg
                 if (State.Reorganized)
                 {
-                    Logger.LogDebug("Sending reorg message with state {0}", State.ValidLevel);
+                    Logger.LogDebug("Sending reorg message with state {state}", State.ValidLevel);
                     sendings.Add(Context.Clients
                         .Group(Group)
                         .SendReorg(Channel, State.ValidLevel));
@@ -89,7 +87,7 @@ namespace Tzkt.Api.Websocket.Processors
                 }
 
                 #region load token balances
-                Logger.LogDebug("Fetching token balances from {0} to {1}", State.ValidLevel, State.Current.Level);
+                Logger.LogDebug("Fetching token balances from {valid} to {current}", State.ValidLevel, State.Current.Level);
 
                 var params1 = new TokenBalanceFilter
                 {
@@ -108,29 +106,33 @@ namespace Tzkt.Api.Websocket.Processors
                 };
                 var params2 = new TokenBalanceFilter
                 {
-                    id = new Int32Parameter
-                    {
-                        Gt = LastId,
-                        Le = State.Current.TokenCounter
-                    },
                     lastLevel = new Int32Parameter
                     {
                         Le = State.ValidLevel
                     },
+                    indexedAt = State.Current.Level == State.ValidLevel + 1
+                        ? new Int32NullParameter
+                        {
+                            Null = false,
+                            Eq = State.Current.Level
+                        }
+                        : new Int32NullParameter
+                        {
+                            Null = false,
+                            Gt = State.ValidLevel,
+                            Le = State.Current.Level
+                        },
                     account = new(),
                     token = new()
                 };
                 var limit = 1_000_000;
 
-                var balances = await Repo.GetTokenBalances(params1, new() { limit = limit });
-                if (LastId != State.Current.TokenCounter)
-                {
-                    // we do the second requests because there may be new tokens added retroactively
-                    balances = balances.Concat(await Repo.GetTokenBalances(params2, new() { limit = limit }));
-                }
+                var balances = (await Repo.GetTokenBalances(params1, new() { limit = limit }))
+                    // we do the second requests because there may be new token balances added retroactively
+                    .Concat(await Repo.GetTokenBalances(params2, new() { limit = limit }));
                 var count = balances.Count();
 
-                Logger.LogDebug("{0} token balances fetched", count);
+                Logger.LogDebug("{cnt} token balances fetched", count);
                 #endregion
 
                 #region prepare to send
@@ -201,17 +203,15 @@ namespace Tzkt.Api.Websocket.Processors
                         .Client(connectionId)
                         .SendData(Channel, data, State.Current.Level));
 
-                    Logger.LogDebug("{0} token balances sent to {1}", balancesList.Count, connectionId);
+                    Logger.LogDebug("{cnt} token balances sent to {id}", balancesList.Count, connectionId);
                 }
 
-                Logger.LogDebug("{0} token balances sent", count);
+                Logger.LogDebug("{cnt} token balances sent", count);
                 #endregion
-
-                LastId = State.Current.TokenCounter;
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to process state change: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to process state change");
             }
             finally
             {
@@ -224,7 +224,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogCritical("Sendings failed: {0}", ex.Message);
+                    Logger.LogCritical(ex, "Sendings failed");
                 }
                 #endregion
             }
@@ -309,7 +309,7 @@ namespace Tzkt.Api.Websocket.Processors
 
                 sending = client.SendState(Channel, State.Current.Level);
 
-                Logger.LogDebug("Client {0} subscribed with state {1}", connectionId, State.Current.Level);
+                Logger.LogDebug("Client {id} subscribed with state {state}", connectionId, State.Current.Level);
                 return State.Current.Level;
             }
             catch (HubException)
@@ -318,7 +318,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to add subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to add subscription");
                 return 0;
             }
             finally
@@ -331,7 +331,7 @@ namespace Tzkt.Api.Websocket.Processors
                 catch (Exception ex)
                 {
                     // should never get here
-                    Logger.LogCritical("Sending failed: {0}", ex.Message);
+                    Logger.LogCritical(ex, "Sending failed");
                 }
             }
         }
@@ -392,14 +392,14 @@ namespace Tzkt.Api.Websocket.Processors
                 #endregion
 
                 if (Limits[connectionId] != 0)
-                    Logger.LogCritical("Failed to unsibscribe {0}: {1} subs left", connectionId, Limits[connectionId]);
+                    Logger.LogCritical("Failed to unsibscribe {id}: {cnt} subs left", connectionId, Limits[connectionId]);
                 Limits.Remove(connectionId);
 
-                Logger.LogDebug("Client {0} unsubscribed", connectionId);
+                Logger.LogDebug("Client {id} unsubscribed", connectionId);
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to remove subscription: {0}", ex.Message);
+                Logger.LogError(ex, "Failed to remove subscription");
             }
             finally
             {
@@ -453,7 +453,7 @@ namespace Tzkt.Api.Websocket.Processors
 
         private static IEnumerable<Models.TokenBalance> Distinct(List<Models.TokenBalance> items)
         {
-            var set = new HashSet<int>(items.Count);
+            var set = new HashSet<long>(items.Count);
             foreach (var item in items)
                 if (set.Add(item.Id))
                     yield return item;

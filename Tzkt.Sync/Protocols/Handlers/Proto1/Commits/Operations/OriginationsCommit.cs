@@ -121,9 +121,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
-                StorageFee = (result.OptionalInt32("paid_storage_size_diff") ?? 0) * block.Protocol.ByteCost,
+                StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
+                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    : null,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
             #endregion
@@ -147,7 +149,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            await Spend(sender, origination.BakerFee);
+            sender.Balance -= origination.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= origination.BakerFee;
@@ -165,28 +167,22 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Originations;
             block.Fees += origination.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, origination.Counter);
+            sender.Counter = origination.Counter;
             #endregion
 
             #region apply result
             if (origination.Status == OperationStatus.Applied)
             {
-                await Spend(sender,
-                    origination.Balance +
-                    (origination.StorageFee ?? 0) +
-                    (origination.AllocationFee ?? 0));
-
+                var burned = (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
+                var spent = origination.Balance + burned;
+                Proto.Manager.Burn(burned);
+                
+                sender.Balance -= spent;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance -= origination.Balance;
-                    senderDelegate.StakingBalance -= origination.StorageFee ?? 0;
-                    senderDelegate.StakingBalance -= origination.AllocationFee ?? 0;
+                    senderDelegate.StakingBalance -= spent;
                     if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance -= origination.Balance;
-                        senderDelegate.DelegatedBalance -= origination.StorageFee ?? 0;
-                        senderDelegate.DelegatedBalance -= origination.AllocationFee ?? 0;
-                    }
+                        senderDelegate.DelegatedBalance -= spent;
                 }
 
                 if (contractDelegate != null)
@@ -207,13 +203,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, content, code, storage);
+                    await ProcessScript(origination, code, storage);
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
             }
             #endregion
 
+            Proto.Manager.Set(origination.Sender);
             Db.OriginationOps.Add(origination);
             Origination = origination;
         }
@@ -322,9 +319,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
-                StorageFee = (result.OptionalInt32("paid_storage_size_diff") ?? 0) * block.Protocol.ByteCost,
+                StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
+                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    : null,
                 AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
             };
             #endregion
@@ -367,21 +366,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region apply result
             if (origination.Status == OperationStatus.Applied)
             {
-                parentSender.Balance -= (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
-
+                var burned = (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
+                Proto.Manager.Burn(burned);
+                
+                parentSender.Balance -= burned;
                 if (parentDelegate != null)
                 {
-                    parentDelegate.StakingBalance -= origination.StorageFee ?? 0;
-                    parentDelegate.StakingBalance -= origination.AllocationFee ?? 0;
+                    parentDelegate.StakingBalance -= burned;
                     if (parentDelegate.Id != parentSender.Id)
-                    {
-                        parentDelegate.DelegatedBalance -= origination.StorageFee ?? 0;
-                        parentDelegate.DelegatedBalance -= origination.AllocationFee ?? 0;
-                    }
+                        parentDelegate.DelegatedBalance -= burned;
                 }
 
                 sender.Balance -= origination.Balance;
-
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance -= origination.Balance;
@@ -407,7 +403,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, content, code, storage);
+                    await ProcessScript(origination, code, storage);
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
@@ -453,22 +449,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (origination.Status == OperationStatus.Applied)
             {
-                await Return(sender,
-                    origination.Balance +
-                    (origination.StorageFee ?? 0) +
-                    (origination.AllocationFee ?? 0));
+                var spent = origination.Balance + (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
 
+                sender.Balance += spent;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance += origination.Balance;
-                    senderDelegate.StakingBalance += origination.StorageFee ?? 0;
-                    senderDelegate.StakingBalance += origination.AllocationFee ?? 0;
+                    senderDelegate.StakingBalance += spent;
                     if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance += origination.Balance;
-                        senderDelegate.DelegatedBalance += origination.StorageFee ?? 0;
-                        senderDelegate.DelegatedBalance += origination.AllocationFee ?? 0;
-                    }
+                        senderDelegate.DelegatedBalance += spent;
                 }
 
                 if (contractDelegate != null)
@@ -512,7 +500,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            await Return(sender, origination.BakerFee);
+            sender.Balance += origination.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += origination.BakerFee;
@@ -526,11 +514,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (contractManager != null && contractManager != sender) contractManager.OriginationsCount--;
             if (contractDelegate != null && contractDelegate != sender && contractDelegate != contractManager) contractDelegate.OriginationsCount--;
 
-            sender.Counter = Math.Min(sender.Counter, origination.Counter - 1);
+            sender.Counter = origination.Counter - 1;
+            (sender as User).Revealed = true;
             #endregion
 
             Db.OriginationOps.Remove(origination);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
 
         public virtual async Task RevertInternal(Block block, OriginationOperation origination)
@@ -577,7 +567,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (origination.Status == OperationStatus.Applied)
             {
                 sender.Balance += origination.Balance;
-
                 if (senderDelegate != null)
                 {
                     senderDelegate.StakingBalance += origination.Balance;
@@ -585,17 +574,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance += origination.Balance;
                 }
 
-                parentSender.Balance += (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
+                var spent = (origination.StorageFee ?? 0) + (origination.AllocationFee ?? 0);
 
+                parentSender.Balance += spent;
                 if (parentDelegate != null)
                 {
-                    parentDelegate.StakingBalance += origination.StorageFee ?? 0;
-                    parentDelegate.StakingBalance += origination.AllocationFee ?? 0;
+                    parentDelegate.StakingBalance += spent;
                     if (parentDelegate.Id != parentSender.Id)
-                    {
-                        parentDelegate.DelegatedBalance += origination.StorageFee ?? 0;
-                        parentDelegate.DelegatedBalance += origination.AllocationFee ?? 0;
-                    }
+                        parentDelegate.DelegatedBalance += spent;
                 }
 
                 if (contractDelegate != null)
@@ -646,6 +632,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.OriginationOps.Remove(origination);
+            Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual async Task<User> GetWeirdDelegate(JsonElement content)
@@ -679,6 +666,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 : BlockEvents.None;
         }
 
+        protected virtual int GetConsumedGas(JsonElement result)
+        {
+            return result.OptionalInt32("consumed_gas") ?? 0;
+        }
+
         protected async Task<MichelineArray> ProcessCode(OriginationOperation origination, IMicheline code)
         {
             if (code is not MichelineArray array)
@@ -705,7 +697,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             return array;
         }
 
-        protected async Task ProcessScript(OriginationOperation origination, JsonElement content, MichelineArray code, IMicheline storageValue)
+        protected async Task ProcessScript(OriginationOperation origination, MichelineArray code, IMicheline storageValue)
         {
             var contract = origination.Contract;
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
@@ -840,10 +832,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.Scripts.Remove(new Script { Id = (int)origination.ScriptId });
             Cache.Schemas.Remove(contract);
+            Cache.AppState.ReleaseScriptId();
 
             var storage = await Cache.Storages.GetAsync(contract);
             Db.Storages.Remove(storage);
             Cache.Storages.Remove(contract);
+            Cache.AppState.ReleaseStorageId();
         }
 
         protected virtual IEnumerable<BigMapDiff> ParseBigMapDiffs(OriginationOperation origination, JsonElement result, MichelineArray code, IMicheline storage)

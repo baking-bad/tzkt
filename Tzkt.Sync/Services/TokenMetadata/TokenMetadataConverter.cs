@@ -52,7 +52,14 @@ namespace Tzkt.Sync.Services
                     writer.WriteEndObject();
                     break;
                 default:
-                    value.WriteTo(writer);
+                    try
+                    {
+                        value.WriteTo(writer);
+                    }
+                    catch
+                    {
+                        writer.WriteStringValue("Bad formatted value");
+                    }
                     break;
             }
         }

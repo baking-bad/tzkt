@@ -35,7 +35,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 UpvotesQuorum = protocol.ProposalQuorum,
                 ProposalsCount = 0,
                 TopUpvotes = 0,
-                TopVotingPower = 0
+                TopVotingPower = 0,
+                SingleWinner = false
             };
 
             Db.VotingSnapshots.AddRange(snapshots);

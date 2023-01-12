@@ -39,6 +39,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts.
         /// </remarks>
         /// <param name="id">Filters by internal id.</param>
+        /// <param name="address">Filters by address.</param>
         /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `ghost`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="delegate">Filters accounts by delegate. Allowed fields for `.eqx` mode: none.</param>
@@ -53,6 +54,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Account>>> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -87,7 +89,7 @@ namespace Tzkt.Api.Controllers
             #endregion
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("id", id),  ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
+                ("id", id), ("address", address),  ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
                 ("lastActivity", lastActivity), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -96,25 +98,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit);
+                res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]);
                 else
-                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Accounts.Get(id, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields)
+                        Rows = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields)
                     };
                 }
             }
@@ -132,16 +134,18 @@ namespace Tzkt.Api.Controllers
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="balance">Filters accounts by balance</param>
         /// <param name="staked">Filters accounts by participation in staking</param>
+        /// <param name="firstActivity">Filters accounts by first activity level (where the account was created)</param>
         /// <returns></returns>
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount(
             AccountTypeParameter type,
             ContractKindParameter kind,
             Int64Parameter balance,
-            BoolParameter staked)
+            BoolParameter staked,
+            Int32Parameter firstActivity)
         {
             #region optimize
-            if (type == null && kind == null && balance == null && staked == null)
+            if (type == null && kind == null && balance == null && staked == null && firstActivity == null)
                 return Ok(State.Current.AccountsCount);
 
             if (kind?.Eq != null && type == null)
@@ -149,12 +153,12 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("type", type), ("kind", kind), ("balance", balance), ("staked", staked));  
+                ("type", type), ("kind", kind), ("balance", balance), ("staked", staked), ("firstActivity", firstActivity));  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetCount(type, kind, balance, staked);
+            var res = await Accounts.GetCount(type, kind, balance, staked, firstActivity);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -267,10 +271,16 @@ namespace Tzkt.Api.Controllers
         /// Note: for better flexibility this endpoint accumulates query parameters (filters) of each `/operations/{type}` endpoint,
         /// so a particular filter may affect several operation types containing this filter.
         /// For example, if you specify an `initiator` it will affect all transactions, delegations and originations,
-        /// because all these types have an `initiator` field.
+        /// because all these types have an `initiator` field.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
+        /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`, `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`, `set_deposits_limit`, `migration`, `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
+        /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`,
+        /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
+        /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,
+        /// `tx_rollup_finalize_commitment`, `tx_rollup_remove_commitment`, `tx_rollup_rejection`, `tx_rollup_dispatch_tickets`, `transfer_ticket`, `migration`,
+        /// `update_consensus_key`, `drain_delegate`, `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
         /// <param name="initiator">Filters transactions, delegations and originations by initiator. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="sender">Filters transactions, delegations, originations, reveals and seed nonce revelations by sender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
@@ -317,7 +327,7 @@ namespace Tzkt.Api.Controllers
             BoolParameter hasInternals,
             OperationStatusParameter status,
             SortMode sort = SortMode.Descending,
-            int? lastId = null,
+            long? lastId = null,
             [Range(0, 1000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -434,6 +444,7 @@ namespace Tzkt.Api.Controllers
                 : null;
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("type", string.Join(",", types.OrderBy(x => x))),
                 ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
                 ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
                 ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
@@ -557,7 +568,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await History.Get(address, datetime.DateTime);
+            var res = await History.Get(address, datetime.UtcDateTime);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -695,8 +706,8 @@ namespace Tzkt.Api.Controllers
             };
             #endregion
 
-            var _from = from?.DateTime ?? DateTime.MinValue;
-            var _to = to?.DateTime ?? DateTime.MaxValue;
+            var _from = (from ?? DateTimeOffset.MinValue).UtcDateTime;
+            var _to = (to ?? DateTimeOffset.MaxValue).UtcDateTime;
 
             var stream = new MemoryStream();
             var csv = new StreamWriter(stream);

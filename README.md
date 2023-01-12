@@ -39,7 +39,7 @@ make stop
 
 ## Installation (from source)
 
-This is the preferred way, because you have more control over each TzKT component (database, indexer, API). This guide is for Ubuntu 20.04, but if you are using a different OS, the installation process will probably differ only in the "Install packages" step.
+This is the preferred way, because you have more control over each TzKT component (database, indexer, API). This guide is for Ubuntu 22.04, but if you are using a different OS, the installation process will probably differ only in the "Install packages" step.
 
 ### Install packages
 
@@ -50,25 +50,22 @@ sudo apt update
 sudo apt install git
 ````
 
-#### Install .NET 5.0 SDK
+#### Install .NET
 
 ````
-wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
 
 sudo apt update
-sudo apt install -y apt-transport-https
-sudo apt update
-sudo apt install -y dotnet-sdk-5.0
+sudo apt install -y dotnet-sdk-7.0
 ````
 
-#### Install Postgresql 13
+#### Install Postgresql
 
 ````
-wget -q -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
 sudo apt update
-sudo apt -y install postgresql-13 postgresql-client-13
+sudo apt -y install postgresql postgresql-contrib
 ````
 
 ## Install Tzkt Indexer and API for mainnet
@@ -89,7 +86,7 @@ postgres=# \q
 #### Download fresh snapshot
 
 ````c
-wget "https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://snapshots.tzkt.io/tzkt_v1.11_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -131,30 +128,30 @@ Like this:
     "Diagnostics": false,
     "Validation": true
   },
-
   "TezosNode": {
     "Endpoint": "https://rpc.tzkt.io/mainnet/",
     "Timeout": 60
   },
-
   "Quotes": {
     "Async": true,
     "Provider": {
       "Name": "TzktQuotes"
     }
   },
-
   "ConnectionStrings": {
     "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;command timeout=600;"
   },
-
   "HealthChecks": {
     "Enabled": true,
     "Delay": 10,
     "Period": 10,
     "FilePath": "sync.health"
   },
-  
+  "Domains": {
+    "Enabled": false,
+    "NameRegistry": "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS",
+    "PeriodSec": 30
+  },  
   "TokenMetadata": {
     "Enabled": false,
     "BatchSize": 100,
@@ -177,7 +174,6 @@ Like this:
       }
     ]
   },
-
   "Logging": {
     "LogLevel": {
       "Default": "Information",
@@ -221,7 +217,7 @@ dotnet Tzkt.Sync.dll
 // ....
 ````
 
-That's it. If you want to run the indexer as a daemon, take a look at this guide: https://docs.microsoft.com/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-3.1#create-the-service-file.
+That's it. If you want to run the indexer as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-7.0#create-the-service-file.
 
 ### Build, configure and run Tzkt API for the mainnet indexer
 
@@ -245,17 +241,20 @@ Like this:
   "Cache": {
     "LoadRate": 0.75,
     "MaxAccounts": 32000
+  },  
+  "ResponseCache": {
+    "CacheSize": 256
   },
-
   "Websocket": {
     "Enabled": true,
     "MaxConnections": 1000,
     "MaxOperationSubscriptions": 50,
     "MaxBigMapSubscriptions": 50,
+    "MaxEventSubscriptions": 50,
     "MaxAccountsSubscriptions": 50,
+    "MaxTokenBalancesSubscriptions": 50,
     "MaxTokenTransfersSubscriptions": 50
   },
-
   "ConnectionStrings": {
     "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;command timeout=600;"
   },
@@ -321,11 +320,14 @@ That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If
 
 In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
  - Ghostnet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_ghostnet.backup
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
- - Jakartanet:
-   - Snapshot: https://tzkt.fra1.digitaloceanspaces.com/snapshots/tzkt_v1.9_jakartanet.backup
-   - RPC node: https://rpc.tzkt.io/jakartanet/
+ - Kathmandunet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_kathmandunet.backup
+   - RPC node: https://rpc.tzkt.io/kathmandunet/
+ - Limanet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_limanet.backup
+   - RPC node: https://rpc.tzkt.io/limanet/
 
 ### Testnet installation using docker containers
 

@@ -30,9 +30,9 @@ namespace Tzkt.Api.Services.Cache
 
         public int ManagerCounter { get; set; }
         
-        public int OperationCounter { get; set; }
+        public long OperationCounter { get; set; }
 
-        public int TokenCounter { get; set; }
+        public int EventCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }
@@ -53,6 +53,7 @@ namespace Tzkt.Api.Services.Cache
         public int EndorsementOpsCount { get; set; }
         public int PreendorsementOpsCount { get; set; }
         public int NonceRevelationOpsCount { get; set; }
+        public int VdfRevelationOpsCount { get; set; }
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
@@ -73,9 +74,14 @@ namespace Tzkt.Api.Services.Cache
         public int TxRollupDispatchTicketsOpsCount { get; set; }
         public int TransferTicketOpsCount { get; set; }
 
+        public int IncreasePaidStorageOpsCount { get; set; }
+        public int UpdateConsensusKeyOpsCount { get; set; }
+        public int DrainDelegateOpsCount { get; set; }
+
         public int TokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
+        public int EventsCount { get; set; }
         #endregion
 
         #region quotes

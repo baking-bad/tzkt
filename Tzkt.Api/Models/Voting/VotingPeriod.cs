@@ -54,9 +54,19 @@ namespace Tzkt.Api.Models
         /// `no_proposals` - means that there were no proposals during the voting period
         /// `no_quorum` - means that there was a voting but the quorum was not reached
         /// `no_supermajority` - means that there was a voting but the supermajority was not reached
+        /// `no_single_winner` - means that there were multiple winning proposals with the same voting power
         /// `success` - means that the period was finished with positive voting result
         /// </summary>
         public string Status { get; set; }
+
+        /// <summary>
+        /// Status of the governance dictator:
+        /// `none` - means that there were no actions by the dictator 
+        /// `abort` - means that the epoch was aborted by the dictator
+        /// `reset` - means that the period was reset by the dictator
+        /// `submit` - means that the dictator submitted a proposal
+        /// </summary>
+        public string Dictator { get; set; }
 
         /// <summary>
         /// The number of bakers on the voters list

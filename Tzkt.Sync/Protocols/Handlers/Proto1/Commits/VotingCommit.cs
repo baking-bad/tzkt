@@ -74,6 +74,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (p.TopVotingPower < p.TotalVotingPower * p.UpvotesQuorum / 10000)
                     return PeriodStatus.NoQuorum;
+
+                if (p.SingleWinner == false)
+                    return PeriodStatus.NoSingleWinner;
             }
             else if (p.Kind == PeriodKind.Exploration || p.Kind == PeriodKind.Promotion)
             {
@@ -96,6 +99,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var proposals = await Db.Proposals
                     .Where(x => x.Status == ProposalStatus.Active)
                     .ToListAsync();
+
+                var pendings = Db.ChangeTracker.Entries()
+                    .Where(x => x.Entity is Proposal p && p.Status == ProposalStatus.Active)
+                    .Select(x => x.Entity as Proposal)
+                    .ToList();
+
+                foreach (var pending in pendings)
+                    if (!proposals.Any(x => x.Id == pending.Id))
+                        proposals.Add(pending);
 
                 foreach (var proposal in proposals)
                     proposal.Status = ProposalStatus.Skipped;
@@ -176,6 +188,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             period.ProposalsCount = 0;
             period.TopUpvotes = 0;
             period.TopVotingPower = 0;
+            period.SingleWinner = false;
             #endregion
 
             Db.VotingSnapshots.AddRange(snapshots);
@@ -244,6 +257,22 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Kind = kind,
                 Status = PeriodStatus.Active
             };
+
+            if (proto.HasDictator)
+            {
+                #region snapshot
+                Db.VotingSnapshots.AddRange(Cache.Accounts.GetDelegates()
+                    .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                    .Select(x => new VotingSnapshot
+                    {
+                        Level = block.Level,
+                        Period = period.Index,
+                        BakerId = x.Id,
+                        VotingPower = GetVotingPower(x, proto),
+                        Status = VoterStatus.None
+                    }));
+                #endregion
+            }
 
             Db.VotingPeriods.Add(period);
             Cache.Periods.Add(period);

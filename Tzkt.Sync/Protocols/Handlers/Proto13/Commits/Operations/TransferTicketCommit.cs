@@ -48,12 +48,11 @@ namespace Tzkt.Sync.Protocols.Proto13
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)
                     : null,
-                GasUsed = result.OptionalInt32("consumed_gas") ?? 0,
+                GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
                     ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
                     : null,
-                AllocationFee = null,
                 Amount = BigInteger.Parse(content.RequiredString("ticket_amount")),
                 TicketerId = ticketer?.Id,
                 Entrypoint = content.RequiredString("entrypoint"),
@@ -86,7 +85,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region apply operation
-            await Spend(sender, operation.BakerFee);
+            sender.Balance -= operation.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance -= operation.BakerFee;
@@ -103,7 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             block.Operations |= Operations.TransferTicket;
             block.Fees += operation.BakerFee;
 
-            sender.Counter = Math.Max(sender.Counter, operation.Counter);
+            sender.Counter = operation.Counter;
 
             Cache.AppState.Get().TransferTicketOpsCount++;
             #endregion
@@ -111,20 +110,20 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                await Spend(sender,
-                    (operation.StorageFee ?? 0));
+                var burned = operation.StorageFee ?? 0;
+                Proto.Manager.Burn(burned);
 
+                sender.Balance -= burned;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance -= operation.StorageFee ?? 0;
+                    senderDelegate.StakingBalance -= burned;
                     if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance -= operation.StorageFee ?? 0;
-                    }
+                        senderDelegate.DelegatedBalance -= burned;
                 }
             }
             #endregion
 
+            Proto.Manager.Set(operation.Sender);
             Db.TransferTicketOps.Add(operation);
             Operation = operation;
         }
@@ -157,22 +156,22 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                await Return(sender,
-                    (operation.StorageFee ?? 0));
+                var spent = operation.StorageFee ?? 0;
 
+                sender.Balance += spent;
                 if (senderDelegate != null)
                 {
-                    senderDelegate.StakingBalance += operation.StorageFee ?? 0;
+                    senderDelegate.StakingBalance += spent;
                     if (senderDelegate.Id != sender.Id)
                     {
-                        senderDelegate.DelegatedBalance += operation.StorageFee ?? 0;
+                        senderDelegate.DelegatedBalance += spent;
                     }
                 }
             }
             #endregion
 
             #region revert operation
-            await Return(sender, operation.BakerFee);
+            sender.Balance += operation.BakerFee;
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += operation.BakerFee;
@@ -186,13 +185,15 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (target != null && target != sender) target.TransferTicketCount--;
             if (ticketer != null && ticketer != sender && ticketer != target) ticketer.TransferTicketCount--;
 
-            sender.Counter = Math.Min(sender.Counter, operation.Counter - 1);
+            sender.Counter = operation.Counter - 1;
+            (sender as User).Revealed = true;
 
             Cache.AppState.Get().TransferTicketOpsCount--;
             #endregion
 
             Db.TransferTicketOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
+            Cache.AppState.ReleaseOperationId();
         }
     }
 }

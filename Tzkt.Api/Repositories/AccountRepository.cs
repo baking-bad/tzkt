@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -71,6 +70,10 @@ namespace Tzkt.Api.Repositories
                         TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
                         TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
                         TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
+                        IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
+                        VdfRevelationsCount = delegat.VdfRevelationsCount,
+                        UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
+                        DrainDelegateCount = delegat.DrainDelegateCount,
                         FrozenDeposit = delegat.FrozenDeposit,
                         FrozenDepositLimit = delegat.FrozenDepositLimit,
                         DelegatedBalance = delegat.DelegatedBalance,
@@ -134,6 +137,8 @@ namespace Tzkt.Api.Repositories
                         TxRollupRemoveCommitmentCount = user.TxRollupRemoveCommitmentCount,
                         TxRollupReturnBondCount = user.TxRollupReturnBondCount,
                         TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
+                        IncreasePaidStorageCount = user.IncreasePaidStorageCount,
+                        DrainDelegateCount = user.DrainDelegateCount,
                         Counter = user.Balance > 0 ? user.Counter : State.Current.ManagerCounter,
                         FirstActivity = user.FirstLevel,
                         FirstActivityTime = Time[user.FirstLevel],
@@ -184,6 +189,7 @@ namespace Tzkt.Api.Repositories
                         Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags),
                         Balance = contract.Balance,
                         TransferTicketCount = contract.TransferTicketCount,
+                        IncreasePaidStorageCount = contract.IncreasePaidStorageCount,
                         Creator = creator == null ? null : new CreatorInfo
                         {
                             Alias = creator.Alias,
@@ -209,6 +215,7 @@ namespace Tzkt.Api.Repositories
                         LastActivityTime = Time[contract.LastLevel],
                         NumContracts = contract.ContractsCount,
                         ActiveTokensCount = contract.ActiveTokensCount,
+                        TokensCount = contract.TokensCount,
                         TokenBalancesCount = contract.TokenBalancesCount,
                         TokenTransfersCount = contract.TokenTransfersCount,
                         NumDelegations = contract.DelegationsCount,
@@ -216,6 +223,7 @@ namespace Tzkt.Api.Repositories
                         NumReveals = contract.RevealsCount,
                         NumMigrations = contract.MigrationsCount,
                         NumTransactions = contract.TransactionsCount,
+                        EventsCount = contract.EventsCount,
                         TypeHash = contract.TypeHash,
                         CodeHash = contract.CodeHash,
                         Metadata = metadata ? contract.Metadata : null
@@ -272,13 +280,14 @@ namespace Tzkt.Api.Repositories
             }
         }
 
-        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind, Int64Parameter balance, BoolParameter staked)
+        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind, Int64Parameter balance, BoolParameter staked, Int32Parameter firstActivity)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("Balance", balance)
-                .Filter("Staked", staked);
+                .Filter("Staked", staked)
+                .Filter("FirstLevel", firstActivity);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -286,6 +295,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Account>> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -298,6 +308,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder($@"SELECT *, {AliasQuery} FROM ""Accounts""")
                 .Filter("Id", id)
+                .Filter("Address", address)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -345,6 +356,8 @@ namespace Tzkt.Api.Repositories
                             TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
                             TxRollupReturnBondCount = row.TxRollupReturnBondCount,
                             TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
+                            IncreasePaidStorageCount = row.IncreasePaidStorageCount,
+                            DrainDelegateCount = row.DrainDelegateCount,
                             Counter = row.Balance > 0 ? row.Counter : State.Current.ManagerCounter,
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
@@ -397,6 +410,10 @@ namespace Tzkt.Api.Repositories
                             TxRollupRemoveCommitmentCount = row.TxRollupRemoveCommitmentCount,
                             TxRollupReturnBondCount = row.TxRollupReturnBondCount,
                             TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
+                            IncreasePaidStorageCount = row.IncreasePaidStorageCount,
+                            VdfRevelationsCount = row.VdfRevelationsCount,
+                            UpdateConsensusKeyCount = row.UpdateConsensusKeyCount,
+                            DrainDelegateCount = row.DrainDelegateCount,
                             FrozenDeposit = row.FrozenDeposit,
                             FrozenDepositLimit = row.FrozenDepositLimit,
                             DelegatedBalance = row.DelegatedBalance,
@@ -458,6 +475,7 @@ namespace Tzkt.Api.Repositories
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)row.Tags),
                             Balance = row.Balance,
                             TransferTicketCount = row.TransferTicketCount,
+                            IncreasePaidStorageCount = row.IncreasePaidStorageCount,
                             Creator = creator == null ? null : new CreatorInfo
                             {
                                 Alias = creator.Alias,
@@ -483,6 +501,7 @@ namespace Tzkt.Api.Repositories
                             LastActivityTime = Time[row.LastLevel],
                             NumContracts = row.ContractsCount,
                             ActiveTokensCount = row.ActiveTokensCount,
+                            TokensCount = row.TokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
                             NumDelegations = row.DelegationsCount,
@@ -490,6 +509,7 @@ namespace Tzkt.Api.Repositories
                             NumReveals = row.RevealsCount,
                             NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount,
+                            EventsCount = row.EventsCount,
                             TypeHash = row.TypeHash,
                             CodeHash = row.CodeHash,
                         });
@@ -549,6 +569,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -622,6 +643,10 @@ namespace Tzkt.Api.Repositories
                     case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
                     case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
                     case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
+                    case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
+                    case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
+                    case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
+                    case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
 
                     case "delegate": columns.Add(@"""DelegateId"""); break;
                     case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -631,6 +656,8 @@ namespace Tzkt.Api.Repositories
                     case "tzips": columns.Add(@"""Tags"""); break;
                     case "creator": columns.Add(@"""CreatorId"""); break;
                     case "manager": columns.Add(@"""ManagerId"""); break;
+                    case "tokensCount": columns.Add(@"""TokensCount"""); break;
+                    case "eventsCount": columns.Add(@"""EventsCount"""); break;
                 }
             }
 
@@ -639,6 +666,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Id", id)
+                .Filter("Address", address)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -895,6 +923,22 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TxRollupSubmitBatchCount;
                         break;
+                    case "vdfRevelationsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationsCount;
+                        break;
+                    case "increasePaidStorageCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.IncreasePaidStorageCount;
+                        break;
+                    case "updateConsensusKeyCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UpdateConsensusKeyCount;
+                        break;
+                    case "drainDelegateCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DrainDelegateCount;
+                        break;
                     case "delegate":
                         foreach (var row in rows)
                         {
@@ -946,6 +990,14 @@ namespace Tzkt.Api.Repositories
                             };
                         }
                         break;
+                    case "tokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokensCount;
+                        break;
+                    case "eventsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EventsCount;
+                        break;
                 }
             }
 
@@ -954,6 +1006,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[]> Get(
             Int32Parameter id,
+            AddressParameter address,
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
@@ -1025,6 +1078,10 @@ namespace Tzkt.Api.Repositories
                 case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
                 case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
                 case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
+                case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
+                case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
+                case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
+                case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
 
                 case "delegate": columns.Add(@"""DelegateId"""); break;
                 case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -1034,6 +1091,8 @@ namespace Tzkt.Api.Repositories
                 case "tzips": columns.Add(@"""Tags"""); break;
                 case "creator": columns.Add(@"""CreatorId"""); break;
                 case "manager": columns.Add(@"""ManagerId"""); break;
+                case "tokensCount": columns.Add(@"""TokensCount"""); break;
+                case "eventsCount": columns.Add(@"""EventsCount"""); break;
             }
 
             if (columns.Count == 0)
@@ -1041,6 +1100,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Id", id)
+                .Filter("Address", address)
                 .Filter("Type", type)
                 .Filter("Kind", kind)
                 .Filter("DelegateId", @delegate)
@@ -1294,6 +1354,22 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TxRollupSubmitBatchCount;
                     break;
+                case "vdfRevelationsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationsCount;
+                    break;
+                case "increasePaidStorageCount":
+                    foreach (var row in rows)
+                        result[j++] = row.IncreasePaidStorageCount;
+                    break;
+                case "updateConsensusKeyCount":
+                    foreach (var row in rows)
+                        result[j++] = row.UpdateConsensusKeyCount;
+                    break;
+                case "drainDelegateCount":
+                    foreach (var row in rows)
+                        result[j++] = row.DrainDelegateCount;
+                    break;
                 case "delegate":
                     foreach (var row in rows)
                     {
@@ -1344,6 +1420,14 @@ namespace Tzkt.Api.Repositories
                             PublicKey = manager.PublicKey,
                         };
                     }
+                    break;
+                case "tokensCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TokensCount;
+                    break;
+                case "eventsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.EventsCount;
                     break;
             }
 
@@ -1491,31 +1575,35 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Value = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Value = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var doublePreendorsing = delegat.DoublePreendorsingCount > 0 && types.Contains(OpTypes.DoublePreendorsing)
-                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Value = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Value = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Eq = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
+                    var vdfRevelations = delegat.VdfRevelationsCount > 0 && types.Contains(OpTypes.VdfRevelation)
+                        ? Operations.GetVdfRevelations(baker, level, null, timestamp, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
+
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Value = delegat.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = delegat.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = delegat.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -1551,7 +1639,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
 
                     var txRollupRejectionOps = delegat.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
-                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Value = delegat.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Eq = delegat.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
 
                     var txRollupRemoveCommitmentOps = delegat.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
@@ -1566,6 +1654,18 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetTxRollupSubmitBatchOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
 
+                    var increasePaidStorageOps = delegat.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
+                        ? Operations.GetIncreasePaidStorageOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
+                    var updateConsensusKeyOps = delegat.UpdateConsensusKeyCount > 0 && types.Contains(OpTypes.UpdateConsensusKey)
+                        ? Operations.GetUpdateConsensusKeys(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
+
+                    var drainDelegateOps = delegat.DrainDelegateCount > 0 && types.Contains(OpTypes.DrainDelegate)
+                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = new[] { "delegate", "target" }, Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -1575,7 +1675,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
                     var bakingOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Value = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
@@ -1592,6 +1692,7 @@ namespace Tzkt.Api.Repositories
                         doubleEndorsing,
                         doublePreendorsing,
                         nonceRevelations,
+                        vdfRevelations,
                         delegations,
                         originations,
                         transactions,
@@ -1607,6 +1708,9 @@ namespace Tzkt.Api.Repositories
                         txRollupRemoveCommitmentOps,
                         txRollupReturnBondOps,
                         txRollupSubmitBatchOps,
+                        increasePaidStorageOps,
+                        updateConsensusKeyOps,
+                        drainDelegateOps,
                         migrations,
                         revelationPenalties,
                         bakingOps,
@@ -1621,6 +1725,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(doubleEndorsing.Result);
                     result.AddRange(doublePreendorsing.Result);
                     result.AddRange(nonceRevelations.Result);
+                    result.AddRange(vdfRevelations.Result);
                     result.AddRange(delegations.Result);
                     result.AddRange(originations.Result);
                     result.AddRange(transactions.Result);
@@ -1636,6 +1741,9 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(txRollupRemoveCommitmentOps.Result);
                     result.AddRange(txRollupReturnBondOps.Result);
                     result.AddRange(txRollupSubmitBatchOps.Result);
+                    result.AddRange(increasePaidStorageOps.Result);
+                    result.AddRange(updateConsensusKeyOps.Result);
+                    result.AddRange(drainDelegateOps.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
@@ -1650,15 +1758,15 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Value = user.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = user.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = user.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -1694,7 +1802,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
 
                     var userTxRollupRejectionOps = user.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
-                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Value = user.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Eq = user.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
 
                     var userTxRollupRemoveCommitmentOps = user.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
@@ -1708,6 +1816,14 @@ namespace Tzkt.Api.Repositories
                     var userTxRollupSubmitBatchOps = user.TxRollupSubmitBatchCount > 0 && types.Contains(OpTypes.TxRollupSubmitBatch)
                         ? Operations.GetTxRollupSubmitBatchOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
+                    var userIncreasePaidStorageOps = user.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
+                        ? Operations.GetIncreasePaidStorageOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
+                    var userDrainDelegateOps = user.DrainDelegateCount > 0 && types.Contains(OpTypes.DrainDelegate)
+                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = new[] { "delegate", "target" }, Eq = user.Id }, null, null, level, timestamp, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
 
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
@@ -1730,6 +1846,8 @@ namespace Tzkt.Api.Repositories
                         userTxRollupRemoveCommitmentOps,
                         userTxRollupReturnBondOps,
                         userTxRollupSubmitBatchOps,
+                        userIncreasePaidStorageOps,
+                        userDrainDelegateOps,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -1748,6 +1866,8 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userTxRollupRemoveCommitmentOps.Result);
                     result.AddRange(userTxRollupReturnBondOps.Result);
                     result.AddRange(userTxRollupSubmitBatchOps.Result);
+                    result.AddRange(userIncreasePaidStorageOps.Result);
+                    result.AddRange(userDrainDelegateOps.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;
@@ -1755,15 +1875,15 @@ namespace Tzkt.Api.Repositories
                     var _contract = new AccountParameter { Eq = contract.Id };
 
                     var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Value = contract.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Value = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Value = contract.Id }, initiator, sender, target, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = contract.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -1771,8 +1891,12 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractTransferTicketOps = contract.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Value = contract.Id }, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Eq = contract.Id }, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
+                    var contractIncreasePaidStorageOps = contract.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
+                        ? Operations.GetIncreasePaidStorageOps(null, _contract, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
 
                     var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_contract, null, null, null, level, timestamp, sort, offset, limit, format, quote)
@@ -1784,6 +1908,7 @@ namespace Tzkt.Api.Repositories
                         contractTransactions,
                         contractReveals,
                         contractTransferTicketOps,
+                        contractIncreasePaidStorageOps,
                         contractMigrations);
 
                     result.AddRange(contractDelegations.Result);
@@ -1791,6 +1916,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(contractTransactions.Result);
                     result.AddRange(contractReveals.Result);
                     result.AddRange(contractTransferTicketOps.Result);
+                    result.AddRange(contractIncreasePaidStorageOps.Result);
                     result.AddRange(contractMigrations.Result);
 
                     break;
@@ -1799,7 +1925,7 @@ namespace Tzkt.Api.Repositories
                     var _rollup = new AccountParameter { Eq = rollup.Id };
 
                     var rollupTransactionOps = rollup.TransactionsCount> 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(null, null, null, _rollup, null, null, level, timestamp, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(null, null, null, _rollup, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var rollupTxRollupCommitOps = rollup.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)

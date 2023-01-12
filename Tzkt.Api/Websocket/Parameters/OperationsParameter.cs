@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.SignalR;
 using Tzkt.Data.Models;
@@ -9,6 +10,7 @@ namespace Tzkt.Api.Websocket
     {
         public string Address { get; set; }
         public string Types { get; set; }
+        public int? CodeHash { get; set; }
 
         List<Operations> _TypesList = null;
         public List<Operations> TypesList
@@ -44,6 +46,12 @@ namespace Tzkt.Api.Websocket
 
             if (TypesList.Count == 0)
                 throw new HubException("Invalid operation types");
+
+            if (CodeHash != null && TypesList.Any(x =>
+                x != Operations.Delegations && 
+                x != Operations.Originations &&
+                x != Operations.Transactions))
+                throw new HubException("CodeHash can be used with delegation, origination, and transaction types only");
         }
     }
 }
