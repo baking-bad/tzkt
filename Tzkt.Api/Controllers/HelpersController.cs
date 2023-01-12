@@ -21,9 +21,9 @@ namespace Tzkt.Api.Controllers
         /// Inject operation
         /// </summary>
         /// <remarks>
-        /// Injects the operation to the blockchain and returns the operation hash.
+        /// Injects signed operation to the blockchain and returns the operation hash.
         /// </remarks>
-        /// <param name="bytes">Signed operation contents, constructed and signed by the client</param>
+        /// <param name="bytes">Forged operation bytes + signature in hex format.</param>
         /// <param name="async">If `true`, the function returns immediately. Otherwise, the operation will be validated before the result is returned.</param>
         /// <returns></returns>
         [HttpPost]
