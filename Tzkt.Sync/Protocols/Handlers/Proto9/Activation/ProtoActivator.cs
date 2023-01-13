@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto9
 
             Db.TryAttach(account);
             account.Balance += 100_000_000;
-            if (account is Delegate delegat)
+            if (account is Data.Models.Delegate delegat)
                 delegat.StakingBalance += 100_000_000;
             account.MigrationsCount++;
 
@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto9
             Cache.Accounts.Add(invoice.Account);
 
             invoice.Account.Balance -= 100_000_000;
-            if (invoice.Account is Delegate delegat)
+            if (invoice.Account is Data.Models.Delegate delegat)
                 delegat.StakingBalance -= 100_000_000;
             invoice.Account.MigrationsCount--;
 

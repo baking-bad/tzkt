@@ -14,14 +14,14 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             foreach (var account in accounts.Where(x => x.Type == AccountType.Delegate))
             {
-                var baker = account as Delegate;
+                var baker = account as Data.Models.Delegate;
                 baker.FrozenDeposit = baker.StakingBalance >= protocol.TokensPerRoll
                     ? baker.StakingBalance * protocol.FrozenDepositsPercentage / 100
                     : 0;
             }
 
             var stats = await Cache.Statistics.GetAsync(1);
-            stats.TotalFrozen = accounts.Sum(x => (x as Delegate)?.FrozenDeposit ?? 0);
+            stats.TotalFrozen = accounts.Sum(x => (x as Data.Models.Delegate)?.FrozenDeposit ?? 0);
 
             return accounts;
         }

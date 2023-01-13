@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             #region init
-            List<Delegate> delegates = null;
+            List<Data.Models.Delegate> delegates = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations))
             {
                 var deactivated = rawBlock
@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Revert(Block block)
         {
             #region init
-            List<Delegate> delegates = null;
+            List<Data.Models.Delegate> delegates = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations) || block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 delegates = await Db.Delegates
