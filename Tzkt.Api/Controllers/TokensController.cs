@@ -34,7 +34,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="filter">Filter</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetTokensCount([FromQuery] TokenFilter filter)
+        public async Task<ActionResult<int>> GetTokensCount([FromQuery] TokenFilter filter)
         {
             if (filter.contract != null ||
                 filter.metadata != null ||
@@ -47,9 +47,18 @@ namespace Tzkt.Api.Controllers
                 filter.tokenId != null ||
                 filter.id != null ||
                 filter.indexedAt != null)
-                return Tokens.GetTokensCount(filter);
+            {
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
 
-            return Task.FromResult(State.Current.TokensCount);
+                if (ResponseCache.TryGet(query, out var cached))
+                    return this.Bytes(cached);
+
+                var res = await Tokens.GetTokensCount(filter);
+                cached = ResponseCache.Set(query, res);
+                return this.Bytes(cached);
+            }
+
+            return Ok(State.Current.TokensCount);
         }
 
         /// <summary>
@@ -68,14 +77,27 @@ namespace Tzkt.Api.Controllers
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection)
         {
-            if (selection.select == null)
-                return Ok(await Tokens.GetTokens(filter, pagination));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection));
 
-            return Ok(new SelectionResponse
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (selection.select == null)
             {
-                Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                Rows = await Tokens.GetTokens(filter, pagination, selection.select.Fields ?? selection.select.Values)
-            });
+                res = await Tokens.GetTokens(filter, pagination);
+            }
+            else
+            {
+                res = new SelectionResponse
+                {
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await Tokens.GetTokens(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                };
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -105,6 +127,11 @@ namespace Tzkt.Api.Controllers
                 filter.token.standard != null ||
                 filter.token.metadata != null)
             {
+                #region optimizations
+                if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
+                    return Ok(0);
+                #endregion
+
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
 
                 if (ResponseCache.TryGet(query, out var cached))
@@ -134,6 +161,11 @@ namespace Tzkt.Api.Controllers
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection)
         {
+            #region optimizations
+            if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
+                return Ok(Enumerable.Empty<TokenBalance>());
+            #endregion
+
             var query = ResponseCacheService.BuildKey(Request.Path.Value, 
                 ("filter", filter), ("pagination", pagination), ("selection", selection));
 
@@ -168,7 +200,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="filter">Filter</param>
         /// <returns></returns>
         [HttpGet("transfers/count")]
-        public Task<int> GetTokenTransfersCount([FromQuery] TokenTransferFilter filter)
+        public async Task<ActionResult<int>> GetTokenTransfersCount([FromQuery] TokenTransferFilter filter)
         {
             if (filter.level != null ||
                 filter.timestamp != null ||
@@ -186,9 +218,29 @@ namespace Tzkt.Api.Controllers
                 filter.token.tokenId != null ||
                 filter.token.standard != null ||
                 filter.token.metadata != null)
-                return Tokens.GetTokenTransfersCount(filter);
+            {
+                #region optimizations
+                if (filter.from != null && (filter.from.Eq == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
+                    return Ok(0);
 
-            return Task.FromResult(State.Current.TokenTransfersCount);
+                if (filter.to != null && (filter.to.Eq == -1 || filter.to.In?.Count == 0 && !filter.to.InHasNull))
+                    return Ok(0);
+
+                if (filter.anyof != null && (filter.anyof.Eq == -1 || filter.anyof.In?.Count == 0 && !filter.anyof.InHasNull))
+                    return Ok(0);
+                #endregion
+
+                var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+                if (ResponseCache.TryGet(query, out var cached))
+                    return this.Bytes(cached);
+
+                var res = await Tokens.GetTokenTransfersCount(filter);
+                cached = ResponseCache.Set(query, res);
+                return this.Bytes(cached);
+            }
+
+            return Ok(State.Current.TokenTransfersCount);
         }
 
         /// <summary>
@@ -207,14 +259,38 @@ namespace Tzkt.Api.Controllers
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection)
         {
-            if (selection.select == null)
-                return Ok(await Tokens.GetTokenTransfers(filter, pagination));
+            #region optimizations
+            if (filter.from != null && (filter.from.Eq == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
+                return Ok(Enumerable.Empty<TokenTransfer>());
 
-            return Ok(new SelectionResponse
+            if (filter.to != null && (filter.to.Eq == -1 || filter.to.In?.Count == 0 && !filter.to.InHasNull))
+                return Ok(Enumerable.Empty<TokenTransfer>());
+
+            if (filter.anyof != null && (filter.anyof.Eq == -1 || filter.anyof.In?.Count == 0 && !filter.anyof.InHasNull))
+                return Ok(Enumerable.Empty<TokenTransfer>());
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (selection.select == null)
             {
-                Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                Rows = await Tokens.GetTokenTransfers(filter, pagination, selection.select.Fields ?? selection.select.Values)
-            });
+                res = await Tokens.GetTokenTransfers(filter, pagination);
+            }
+            else
+            {
+                res = new SelectionResponse
+                {
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await Tokens.GetTokenTransfers(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                };
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
 
@@ -246,14 +322,32 @@ namespace Tzkt.Api.Controllers
                 filter.token.tokenId?.Eq == null && filter.token.tokenId?.In == null))
                 return new BadRequest("query", "At least one of the filters (`account`, `token.id`, `token.contract` with `token.tokenId`) must be specified");
 
-            if (selection.select == null)
-                return Ok(await Tokens.GetHistoricalTokenBalances(level, filter, pagination));
+            #region optimizations
+            if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
+                return Ok(Enumerable.Empty<TokenBalanceShort>());
+            #endregion
 
-            return Ok(new SelectionResponse
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (selection.select == null)
             {
-                Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                Rows = await Tokens.GetHistoricalTokenBalances(level, filter, pagination, selection.select.Fields ?? selection.select.Values)
-            });
+                res = await Tokens.GetHistoricalTokenBalances(level, filter, pagination);
+            }
+            else
+            {
+                res = new SelectionResponse
+                {
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await Tokens.GetHistoricalTokenBalances(level, filter, pagination, selection.select.Fields ?? selection.select.Values)
+                };
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
         }
         #endregion
     }

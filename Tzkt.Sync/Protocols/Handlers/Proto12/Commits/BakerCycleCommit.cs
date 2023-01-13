@@ -418,7 +418,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 foreach (var op in block.VdfRevelationOps)
                 {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
+                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
                     Db.TryAttach(bakerCycle);
 
                     bakerCycle.RevelationRewards -= op.Reward;

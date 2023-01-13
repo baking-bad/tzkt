@@ -189,7 +189,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             #endregion
 
             #region apply new rights
-            var sampler = GetSampler(bakerCycles.Values
+            var sampler = GetOldSampler(bakerCycles.Values
                 .Where(x => x.ActiveStake > 0)
                 .Select(x => (x.BakerId, x.ActiveStake))
                 .ToList());
@@ -271,7 +271,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             foreach (var cycle in cycles)
             {
                 var bakerCycles = await Cache.BakerCycles.GetAsync(cycle.Index);
-                var sampler = GetSampler(bakerCycles.Values
+                var sampler = GetOldSampler(bakerCycles.Values
                     .Where(x => x.ActiveStake > 0)
                     .Select(x => (x.BakerId, x.ActiveStake))
                     .ToList());
@@ -481,7 +481,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             }
         }
 
-        protected override Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
+        Sampler GetOldSampler(IEnumerable<(int id, long stake)> selection)
         {
             var sorted = selection
                 .OrderByDescending(x => x.stake)

@@ -171,6 +171,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
                         break;
+                    case "name":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Name;
+                        break;
                     case "owner":
                         foreach (var row in rows)
                             result[j++][i] = row.Owner == null ? null : Accounts.GetAlias(row.Owner);

@@ -2,20 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <AssemblyVersion>1.11.0</AssemblyVersion>
+    <AssemblyVersion>1.11.1</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="App.Metrics.AspNetCore.All" Version="4.3.0" />
     <PackageReference Include="App.Metrics.Formatters.Prometheus" Version="4.3.0" />
     <PackageReference Include="Dapper" Version="2.0.123" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="7.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
-    <PackageReference Include="Netezos" Version="2.7.2" />
+    <PackageReference Include="Netezos" Version="2.7.3" />
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
     <PackageReference Include="SauceControl.Blake2Fast" Version="2.0.0" />
   </ItemGroup>

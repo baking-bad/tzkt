@@ -8,7 +8,7 @@ namespace Tzkt.Api.Swagger
 {
     public static class Swagger
     {
-        const string Version = "v1.11.0";
+        const string Version = "1.11.1";
         const string Path = "/v1/swagger.json";
 
         public static void AddOpenApiDocument(this IServiceCollection services)
@@ -65,6 +65,14 @@ namespace Tzkt.Api.Swagger
                         Name = "Typescript SDK",
                         Description = File.Exists("Swagger/TypescriptSdk.md")
                             ? File.ReadAllText("Swagger/TypescriptSdk.md")
+                            : null,
+                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
+                    });
+                    document.Tags.Add(new NSwag.OpenApiTag
+                    {
+                        Name = "Taquito extension",
+                        Description = File.Exists("Swagger/TaquitoExt.md")
+                            ? File.ReadAllText("Swagger/TaquitoExt.md")
                             : null,
                         ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
                     });
