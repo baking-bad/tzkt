@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -9,15 +10,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Tzkt.Api.Services.Auth;
+using Tzkt.Api.Services;
 using Tzkt.Data;
 
 namespace Tzkt.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Check().Init().Run();
+           (await CreateHostBuilder(args).Build().Init().Check()).Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -96,11 +98,13 @@ namespace Tzkt.Api
             }
         }
         
-        public static IHost Check(this IHost host)
+        public static async Task<IHost> Check(this IHost host)
         {
             using var scope = host.Services.CreateScope();
-            var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            config.ValidateAuthConfig();
+
+            scope.ServiceProvider.ValidateAuthConfig();
+            await scope.ServiceProvider.ValidateRpcHelpersConfig();
+            
             return host;
         }
     }

@@ -68,6 +68,7 @@ namespace Tzkt.Api
             services.AddTransient<DomainsRepository>();
 
             services.AddAuthService(Configuration);
+            services.AddSingleton<RpcHelpers>();
 
             services.AddHomeService();
             services.AddStateListener();
