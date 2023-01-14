@@ -1,10 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using App.Metrics;
+﻿using App.Metrics;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
@@ -34,12 +28,12 @@ namespace Tzkt.Sync.Services
 
                 #region init state
                 if (!await ResetState(cancelToken)) return;
-                Logger.LogInformation("State initialized: [{AppStateLevel}:{AppStateHash}]", AppState.Level, AppState.Hash);
+                Logger.LogInformation("State initialized: [{level}:{hash}]", AppState.Level, AppState.Hash);
                 #endregion
 
                 #region init quotes
                 await InitQuotes();
-                Logger.LogInformation("Quotes initialized: [{AppStateQuoteLevel}]", AppState.QuoteLevel);
+                Logger.LogInformation("Quotes initialized: [{level}]", AppState.QuoteLevel);
                 #endregion
 
                 Logger.LogInformation("Synchronization started");
@@ -51,11 +45,11 @@ namespace Tzkt.Sync.Services
                     {
                         if (!await WaitForUpdatesAsync(cancelToken)) break;
                         var head = await Node.GetHeaderAsync();
-                        Logger.LogDebug("New head is found [{HeadLevel}:{HeadHash}]", head.Level, head.Hash);
-                        if (head.Level == AppState.Level - 1)
+                        Logger.LogDebug("New head is found [{level}:{hash}]", head.Level, head.Hash);
+                        if (head.Level == AppState.Level + 1)
                         {
                             Metrics.Measure.Histogram.Update(MetricsRegistry.BlockAppearanceDelay,
-                                (long) (DateTime.UtcNow - head.Timestamp).TotalMilliseconds);
+                                (long)(DateTime.UtcNow - head.Timestamp).TotalMilliseconds);
                         }
                     }
                     catch (Exception ex)
@@ -70,7 +64,7 @@ namespace Tzkt.Sync.Services
                     try
                     {
                         if (!await ApplyUpdatesAsync(cancelToken)) break;
-                        Logger.LogDebug("Current head [{AppStateLevel}:{AppStateHash}]", AppState.Level, AppState.Hash);
+                        Logger.LogDebug("Current head [{level}:{hash}]", AppState.Level, AppState.Hash);
                     }
                     catch (BaseException ex) when (ex.RebaseRequired)
                     {
@@ -158,13 +152,14 @@ namespace Tzkt.Sync.Services
                 var header = await Node.GetHeaderAsync(AppState.Level);
                 if (AppState.Hash == header.Hash) break;
 
-                Logger.LogError("Invalid head [{AppStateLevel}:{AppStateHash}]. Reverting...", AppState.Level, AppState.Hash);
-
-                using var scope = Services.CreateScope();
-                var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Level, AppState.Protocol);
-                AppState = await protoHandler.RevertLastBlock(header.Predecessor);
-
-                Logger.LogInformation("Reverted to [{AppStateLevel}:{AppStateHash}]", AppState.Level, AppState.Hash);
+                Logger.LogError("Invalid head [{level}:{hash}]. Reverting...", AppState.Level, AppState.Hash);
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertBlockTime))
+                {
+                    using var scope = Services.CreateScope();
+                    var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Level, AppState.Protocol);
+                    AppState = await protoHandler.RevertLastBlock(header.Predecessor);
+                }
+                Logger.LogInformation("Reverted to [{level}:{hash}]", AppState.Level, AppState.Hash);
             }
 
             return !cancelToken.IsCancellationRequested;
@@ -181,12 +176,13 @@ namespace Tzkt.Sync.Services
                 //    throw new ValidationException("Test", true);
 
                 Logger.LogDebug($"Applying block...");
-
-                using var scope = Services.CreateScope();
-                var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
-                AppState = await protocol.CommitBlock(header.Level);
-
-                Logger.LogInformation("Applied {AppStateLevel} of {AppStateKnownHead}", AppState.Level, AppState.KnownHead);
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.ApplyBlockTime))
+                {
+                    using var scope = Services.CreateScope();
+                    var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
+                    AppState = await protocol.CommitBlock(header.Level);
+                }
+                Logger.LogInformation("Applied {level} of {total}", AppState.Level, AppState.KnownHead);
             }
 
             return !cancelToken.IsCancellationRequested;
