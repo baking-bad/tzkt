@@ -98,7 +98,7 @@ namespace Tzkt.Sync
         public static readonly TimerOptions RevertPostProcessingTime = new()
         {
             Context = "Revert block",
-            Name = "Pre-processing time",
+            Name = "Post-processing time",
             DurationUnit = TimeUnit.Milliseconds,
             RateUnit = TimeUnit.Milliseconds
         };
