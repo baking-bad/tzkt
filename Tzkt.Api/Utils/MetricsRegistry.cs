@@ -2,25 +2,27 @@ using App.Metrics;
 using App.Metrics.Counter;
 using App.Metrics.Gauge;
 
-namespace Tzkt.Api.Utils;
-
-static class MetricsRegistry
+namespace Tzkt.Api.Utils
 {
-    public static GaugeOptions CacheHitsGauge = new GaugeOptions
+    static class MetricsRegistry
     {
-        Name = "Cache Hits Gauge",
-        MeasurementUnit = Unit.Percent,
-    };
+        public static CounterOptions ResponseCacheCalls = new()
+        {
+            Name = "Response Cache Calls",
+            MeasurementUnit = Unit.Calls,
+            ResetOnReporting = true, 
+        };
 
-    public static GaugeOptions CacheUsageGauge = new GaugeOptions
-    {
-        Name = "Cache Usage Rate",
-        MeasurementUnit = Unit.Percent,
-    };
+        public static GaugeOptions ResponseCacheSize = new()
+        {
+            Name = "Response Cache Size",
+            MeasurementUnit = Unit.Bytes,
+        };
 
-    public static CounterOptions WebsocketConnectionsCounter = new CounterOptions
-    {
-        Name = "Websocket connections",
-        MeasurementUnit = Unit.Connections,
-    };
+        public static GaugeOptions WebsocketConnections = new()
+        {
+            Name = "Websocket connections",
+            MeasurementUnit = Unit.Connections,
+        };
+    }
 }

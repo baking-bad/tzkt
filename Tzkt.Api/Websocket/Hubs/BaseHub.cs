@@ -40,8 +40,8 @@ namespace Tzkt.Api.Websocket.Hubs
 
             lock (Crit)
             {
-                Metrics.Measure.Counter.Increment(MetricsRegistry.WebsocketConnectionsCounter);
                 Connections++;
+                Metrics.Measure.Gauge.SetValue(MetricsRegistry.WebsocketConnections, Connections);
                 Logger.LogDebug("Client {id} connected. Total connections: {cnd}", Context.ConnectionId, Connections);
             }
             
@@ -52,8 +52,8 @@ namespace Tzkt.Api.Websocket.Hubs
         {
             lock (Crit)
             {
-                Metrics.Measure.Counter.Decrement(MetricsRegistry.WebsocketConnectionsCounter);
                 Connections--;
+                Metrics.Measure.Gauge.SetValue(MetricsRegistry.WebsocketConnections, Connections);
                 Logger.LogDebug("Client {id} disconnected: {ex}. Total connections: {cnt}",
                     Context.ConnectionId, exception?.Message ?? string.Empty, Connections);
             }
