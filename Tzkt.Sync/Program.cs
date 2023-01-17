@@ -72,63 +72,60 @@ builder.Services.AddMetricsEndpoints(builder.Configuration, options =>
 var app = builder.Build();
 
 #region init
-using (var scope = app.Services.CreateScope())
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("Version {version}", Assembly.GetExecutingAssembly().GetName().Version);
+
+while (true)
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    logger.LogInformation("Version {version}", Assembly.GetExecutingAssembly().GetName().Version);
-
-    while (true)
+    try
     {
-        try
+        logger.LogInformation("Initialize database...");
+
+        var migrations = db.Database.GetMigrations().ToList();
+        var applied = db.Database.GetAppliedMigrations().ToList();
+
+        for (int i = 0; i < Math.Min(migrations.Count, applied.Count); i++)
         {
-            logger.LogInformation("Initialize database");
-
-            var migrations = db.Database.GetMigrations().ToList();
-            var applied = db.Database.GetAppliedMigrations().ToList();
-
-            for (int i = 0; i < Math.Min(migrations.Count, applied.Count); i++)
+            if (migrations[i] != applied[i])
             {
-                if (migrations[i] != applied[i])
-                {
-                    throw new InvalidOperationException(
-                        "Indexer and DB have incompatible versions. Drop the DB and restore it from the appropriate snapshot.");
-                }
+                logger.LogError("Initialization failed: indexer and DB schema have incompatible versions. Drop the DB and restore it from the appropriate snapshot.");
+                return 1;
             }
-
-            if (applied.Count > migrations.Count)
-            {
-                throw new InvalidOperationException(
-                    "Indexer is out of date. Update the indexer to the newer version.");
-            }
-
-            if (applied.Count < migrations.Count)
-            {
-                logger.LogWarning("{cnt} migrations can be applied. Migrating database...", migrations.Count - applied.Count);
-                db.Database.SetCommandTimeout(0);
-                db.Database.Migrate();
-            }
-
-            logger.LogInformation("Database initialized");
-            break;
         }
-        catch (InvalidOperationException ex)
+
+        if (applied.Count > migrations.Count)
         {
-            logger.LogCritical(ex, "Failed to initialize database. Exit...");
-            throw;
+            logger.LogError("Initialization failed: indexer version is out of date. Update the indexer to the newer version.");
+            return 2;
         }
-        catch (Exception ex)
+
+        if (applied.Count < migrations.Count)
         {
-            logger.LogCritical(ex, "Failed to initialize database. Try again...");
-            Thread.Sleep(1000);
+            logger.LogWarning("{cnt} pending migrations. Migrate database...", migrations.Count - applied.Count);
+            db.Database.SetCommandTimeout(0);
+            db.Database.Migrate();
         }
+
+        logger.LogInformation("Database initialized");
+        break;
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Initialization failed. Let's try again.");
+        Thread.Sleep(3000);
+        continue;
     }
 }
 #endregion
 
+#region middleware
 app.UseMetricsEndpoint();
 app.UseMetricsTextEndpoint();
 app.MapGet("/version", () => Assembly.GetExecutingAssembly().GetName().Version);
+#endregion
 
 app.Run();
+
+return 0;

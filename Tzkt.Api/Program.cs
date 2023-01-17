@@ -168,66 +168,59 @@ SqlMapper.AddTypeHandler(new RawJsonTypeHandler());
 
 var app = builder.Build();
 
-#region init db
-using (var scope = app.Services.CreateScope())
+#region init
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("Version {version}", Assembly.GetExecutingAssembly().GetName().Version);
+
+while (true)
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    logger.LogInformation("Version {version}", Assembly.GetExecutingAssembly().GetName().Version);
-
-    while (true)
+    try
     {
-        try
+        logger.LogInformation("Initialize database...");
+
+        var migrations = db.Database.GetMigrations().ToList();
+        var applied = db.Database.GetAppliedMigrations().ToList();
+
+        for (int i = 0; i < Math.Min(migrations.Count, applied.Count); i++)
         {
-            logger.LogInformation("Initialize database");
-
-            var migrations = db.Database.GetMigrations().ToList();
-            var applied = db.Database.GetAppliedMigrations().ToList();
-
-            for (int i = 0; i < Math.Min(migrations.Count, applied.Count); i++)
+            if (migrations[i] != applied[i])
             {
-                if (migrations[i] != applied[i])
-                {
-                    throw new InvalidOperationException(
-                        "API and DB have incompatible versions. Drop the DB and restore it from the appropriate snapshot.");
-                }
+                logger.LogError("Initialization failed: API and DB schema have incompatible versions. Drop the DB and restore it from the appropriate snapshot.");
+                return 1;
             }
-
-            if (applied.Count > migrations.Count)
-            {
-                throw new InvalidOperationException(
-                    "API is out of date. Update the API to the newer version.");
-            }
-
-            if (applied.Count < migrations.Count)
-            {
-                logger.LogWarning("{cnt} pending migrations. Wait for the indexer to migrate the database...", migrations.Count - applied.Count);
-                Thread.Sleep(1000);
-                continue;
-            }
-
-            var state = db.AppState.Single();
-            if (state.Level < 1)
-            {
-                logger.LogWarning("Database is empty, at least two blocks are needed");
-                Thread.Sleep(1000);
-                continue;
-            }
-
-            logger.LogInformation("Database initialized");
-            break;
         }
-        catch (InvalidOperationException ex)
+
+        if (applied.Count > migrations.Count)
         {
-            logger.LogCritical(ex, "Failed to initialize database. Exit...");
-            throw;
+            logger.LogError("Initialization failed: API version is out of date. Update the API to the newer version.");
+            return 2;
         }
-        catch (Exception ex)
+
+        if (applied.Count < migrations.Count)
         {
-            logger.LogCritical(ex, "Failed to initialize database. Try again...");
-            Thread.Sleep(1000);
+            logger.LogWarning("{cnt} pending migrations. Let's wait for the indexer to migrate the database, and try again.", migrations.Count - applied.Count);
+            Thread.Sleep(3000);
+            continue;
         }
+
+        var state = db.AppState.Single();
+        if (state.Level < 1)
+        {
+            logger.LogWarning("No data in the database. Let's wait for the indexer to index at least two blocks, and try again.");
+            Thread.Sleep(3000);
+            continue;
+        }
+
+        logger.LogInformation("Database initialized");
+        break;
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Initialization failed. Let's try again.");
+        Thread.Sleep(3000);
+        continue;
     }
 }
 #endregion
@@ -240,6 +233,7 @@ using (var scope = app.Services.CreateScope())
 }
 #endregion
 
+#region middleware
 app.UseMetricsEndpoint();
 app.UseMetricsTextEndpoint();
 
@@ -277,5 +271,8 @@ if (builder.Configuration.GetHealthChecksConfig().Enabled)
 {
     app.MapHealthChecks(builder.Configuration.GetHealthChecksConfig().Endpoint);
 }
+#endregion
 
 app.Run();
+
+return 0;
