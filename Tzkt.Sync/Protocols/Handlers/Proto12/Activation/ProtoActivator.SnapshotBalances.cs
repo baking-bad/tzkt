@@ -14,9 +14,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                     AccountId = x.Id, 
                     Balance = x.Balance,
                     DelegateId = x.DelegateId,
-                    DelegatedBalance = (x as Delegate)?.DelegatedBalance,
-                    DelegatorsCount = (x as Delegate)?.DelegatorsCount,
-                    StakingBalance = (x as Delegate)?.StakingBalance,
+                    DelegatedBalance = (x as Data.Models.Delegate)?.DelegatedBalance,
+                    DelegatorsCount = (x as Data.Models.Delegate)?.DelegatorsCount,
+                    StakingBalance = (x as Data.Models.Delegate)?.StakingBalance,
                     Level = 1
                 }));
         }

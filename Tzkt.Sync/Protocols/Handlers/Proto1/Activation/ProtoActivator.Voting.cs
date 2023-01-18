@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var snapshots = accounts
                 .Where(x => x.Type == AccountType.Delegate)
-                .Select(x => x as Delegate)
+                .Select(x => x as Data.Models.Delegate)
                 .Select(x => new VotingSnapshot
                 {
                     Level = 1,
@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Periods.Reset();
         }
 
-        protected virtual long GetVotingPower(Delegate baker, Protocol protocol)
+        protected virtual long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
         {
             return baker.StakingBalance - baker.StakingBalance % protocol.TokensPerRoll;
         }

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-
+using App.Metrics;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Protocols;
@@ -27,9 +21,10 @@ namespace Tzkt.Sync
         public readonly IServiceProvider Services;
         public readonly TezosProtocolsConfig Config;
         public readonly ILogger Logger;
+        public readonly IMetrics Metrics;
         public readonly ManagerContext Manager;
         
-        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger)
+        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger, IMetrics metrics)
         {
             Node = node;
             Db = db;
@@ -38,6 +33,7 @@ namespace Tzkt.Sync
             Services = services;
             Config = config.GetTezosProtocolsConfig();
             Logger = logger;
+            Metrics = metrics;
             Manager = new(this);
         }
 
@@ -46,29 +42,42 @@ namespace Tzkt.Sync
             var state = Cache.AppState.Get();
             Db.TryAttach(state);
 
-            Logger.LogDebug($"Load block {state.Level + 1}");
-            var block = await Rpc.GetBlockAsync(state.Level + 1);
+            JsonElement block;
+            Logger.LogDebug("Load block {level}", state.Level + 1);
+            using (Metrics.Measure.Timer.Time(MetricsRegistry.RpcResponseTime))
+            {
+                block = await Rpc.GetBlockAsync(state.Level + 1);
+            }
 
             Logger.LogDebug("Begin DB transaction");
             using var tx = await Db.Database.BeginTransactionAsync();
             try
             {
                 Logger.LogDebug("Warm up cache");
-                await WarmUpCache(block);
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.CacheWarmUpTime))
+                {
+                    await WarmUpCache(block);
+                }
 
                 if (Config.Validation)
                 {
                     Logger.LogDebug("Validate block");
-                    await Validator.ValidateBlock(block);
+                    using (Metrics.Measure.Timer.Time(MetricsRegistry.ValidationTime))
+                    {
+                        await Validator.ValidateBlock(block);
+                    }
                 }
 
                 Logger.LogDebug("Process block");
-                await Commit(block);
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.ProcessingTime))
+                {
+                    await Commit(block);
+                }
 
                 var nextProtocol = this;
                 if (state.Protocol != state.NextProtocol)
                 {
-                    Logger.LogDebug($"Activate next protocol {state.NextProtocol.Substring(0, 8)}");
+                    Logger.LogDebug("Activate protocol {hash}", state.NextProtocol);
                     nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
                     await nextProtocol.Activate(state, block);
                 }
@@ -79,17 +88,29 @@ namespace Tzkt.Sync
                 if (Config.Diagnostics)
                 {
                     Logger.LogDebug("Diagnostics");
-                    await nextProtocol.Diagnostics.Run(block);
+                    using (Metrics.Measure.Timer.Time(MetricsRegistry.DiagnosticsTime))
+                    {
+                        await nextProtocol.Diagnostics.Run(block);
+                    }
                 }
 
                 Logger.LogDebug("Save changes");
-                await Db.SaveChangesAsync();
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.SaveChangesTime))
+                {
+                    await Db.SaveChangesAsync();
+                }
 
                 Logger.LogDebug("Save post-changes");
-                await AfterCommit(block);
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.PostProcessingTime))
+                {
+                    await AfterCommit(block);
+                }
 
                 Logger.LogDebug("Process quotes");
-                await Quotes.Commit();
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.QuotesProcessingTime))
+                {
+                    await Quotes.Commit();
+                }
 
                 if (state.Protocol != state.NextProtocol)
                 {
@@ -129,10 +150,16 @@ namespace Tzkt.Sync
                 }
 
                 Logger.LogDebug("Revert quotes");
-                await Quotes.Revert();
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertQuotesProcessingTime))
+                {
+                    await Quotes.Revert();
+                }
 
                 Logger.LogDebug("Revert post-changes");
-                await BeforeRevert();
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertPostProcessingTime))
+                {
+                    await BeforeRevert();
+                }
 
                 if (state.Protocol != state.NextProtocol)
                 {
@@ -141,7 +168,10 @@ namespace Tzkt.Sync
                 }
 
                 Logger.LogDebug("Revert block");
-                await Revert();
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertProcessingTime))
+                {
+                    await Revert();
+                }
 
                 Logger.LogDebug("Touch accounts");
                 ClearAccounts(state.Level + 1);
@@ -149,11 +179,17 @@ namespace Tzkt.Sync
                 if (Config.Diagnostics && state.Hash == predecessor)
                 {
                     Logger.LogDebug("Diagnostics");
-                    await Diagnostics.Run(state.Level);
+                    using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertDiagnosticsTime))
+                    {
+                        await Diagnostics.Run(state.Level);
+                    }
                 }
 
                 Logger.LogDebug("Save changes");
-                await Db.SaveChangesAsync();
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertSaveChangesTime))
+                {
+                    await Db.SaveChangesAsync();
+                }
 
                 Logger.LogDebug("Commit DB transaction");
                 await tx.CommitAsync();

@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             await base.Apply(block, op, content);
 
             var delegat = Cache.Accounts.GetDelegate(Activation.Account.DelegateId)
-                ?? Activation.Account as Delegate;
+                ?? Activation.Account as Data.Models.Delegate;
 
             if (delegat != null)
             {
@@ -29,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             await base.Revert(block, activation);
 
             var delegat = Cache.Accounts.GetDelegate(activation.Account.DelegateId)
-                ?? activation.Account as Delegate;
+                ?? activation.Account as Data.Models.Delegate;
 
             if (delegat != null)
             {

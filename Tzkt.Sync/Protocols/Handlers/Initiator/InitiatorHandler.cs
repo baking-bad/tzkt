@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using App.Metrics;
 
 using Tzkt.Data;
 using Tzkt.Data.Models;
@@ -18,8 +19,8 @@ namespace Tzkt.Sync.Protocols
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
 
-        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<InitiatorHandler> logger)
-            : base(node, db, cache, quotes, services, config, logger)
+        public InitiatorHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<InitiatorHandler> logger, IMetrics metrics)
+            : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Diagnostics = new Diagnostics();
             Validator = new Validator(this);

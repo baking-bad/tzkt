@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using Tzkt.Data;
@@ -24,7 +22,7 @@ namespace Tzkt.Sync.Protocols
             Logger = protocol.Logger;
         }
 
-        protected async Task UpdateDelegate(Delegate delegat, bool staked)
+        protected async Task UpdateDelegate(Data.Models.Delegate delegat, bool staked)
         {
             delegat.Staked = staked;
             foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())

@@ -7,7 +7,7 @@ namespace Tzkt.Sync.Protocols.Proto14
     {
         public Diagnostics(ProtocolHandler handler) : base(handler) { }
 
-        protected override bool CheckDelegatedBalance(JsonElement remote, Delegate delegat) =>
+        protected override bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat) =>
             remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance;
     }
 }

@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using App.Metrics;
+using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Services
 {
@@ -12,16 +11,16 @@ namespace Tzkt.Api.Services
     {
         readonly JsonSerializerOptions Options;
         readonly ILogger Logger;
+        readonly IMetrics Metrics;
         readonly Dictionary<string, byte[]> Cache;
         readonly long CacheSize;
-        long Used = 0;
-        int Hits = 0;
-        int Misses = 0;
+        long CacheUsed = 0;
 
-        public ResponseCacheService(IConfiguration configuration, IOptions<JsonOptions> options, ILogger<ResponseCacheService> logger)
+        public ResponseCacheService(IConfiguration configuration, IOptions<JsonOptions> options, ILogger<ResponseCacheService> logger, IMetrics metrics)
         {
             Options = options.Value.JsonSerializerOptions;
             Logger = logger;
+            Metrics = metrics;
             CacheSize = configuration.GetOutputCacheConfig().CacheSize * 1024 * 1024;
             Cache = new Dictionary<string, byte[]>(4096);
         }
@@ -32,12 +31,12 @@ namespace Tzkt.Api.Services
             {
                 if (Cache.TryGetValue(key, out response))
                 {
-                    Hits++;
+                    Metrics.Measure.Counter.Increment(MetricsRegistry.ResponseCacheCalls, MetricsRegistry.ResponseCacheHit);
                     return true;
                 }
                 else
                 {
-                    Misses++;
+                    Metrics.Measure.Counter.Increment(MetricsRegistry.ResponseCacheCalls, MetricsRegistry.ResponseCacheMiss);
                     return false;
                 }
             }
@@ -61,14 +60,15 @@ namespace Tzkt.Api.Services
             
             lock (Cache)
             {
-                if (Used + size >= CacheSize)
+                if (CacheUsed + size >= CacheSize)
                 {
-                    Logger.LogInformation("Cache size limit reached");
+                    Logger.LogWarning("Cache size limit reached");
                     Clear(); // TODO: do not clear everything, but the oldest entries
                 }
 
-                Used += size;
+                CacheUsed += size;
                 Cache[key] = bytes;
+                Metrics.Measure.Gauge.SetValue(MetricsRegistry.ResponseCacheSize, CacheUsed);
             }
 
             return bytes;
@@ -78,12 +78,8 @@ namespace Tzkt.Api.Services
         {
             lock (Cache)
             {
-                Logger.LogDebug("Cache used: {used} of {limit}", Used, CacheSize);
-                Logger.LogDebug("Cache hits/misses: {hits}/{misses}", Hits, Misses);
                 Cache.Clear();
-                Used = 0;
-                Hits = 0;
-                Misses = 0;
+                CacheUsed = 0;
             }
         }
 
