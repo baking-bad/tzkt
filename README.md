@@ -4,22 +4,22 @@
 
 TzKT is the most advanced [Tezos](https://tezos.com/) blockchain indexer with powerful API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
 
-The indexer fetches raw data from the Tezos node, then processes it and stores in the database in such a way as to provide effective access to the blockchain data. For example, getting operations by hash, or getting all operations of the particular account, or getting detailed baking rewards, etc. None of this can be accessed via node RPC, but TzKT indexer makes this data (and much more) available.
+The indexer fetches raw data from the Tezos blockchain, processes it, and saves it to its database to provide efficient access to the blockchain data. Using indexers is necessary part for most blockchain-related applications, because indexers expose much more data and cover much more use-cases than native node RPC, for example getting operations by hash, or operations related to particular accounts and smart contracts, or created NFTs, or token balances, or baking rewards, etc.
 
 ## Features:
-- **More detailed data.** TzKT not only collects blockchain data, but also processes and extends it with unique properties or even entities. For example, TzKT was the first indexer introduced synthetic operation types such as "migration" or "revelation penalty", which fill in the gaps in account history (because this data is missed in the blockchain), and the only indexer that correctly distinguishes smart contracts among all contracts.
+- **More detailed data.** TzKT not only collects blockchain data, but also processes and extends it to make it more convenient to work with. For example, TzKT was the first indexer introduced synthetic operation types such as "migration" or "revelation penalty", which fill in the gaps in account's history, because this data is simply not available from the node.
 - **Micheline-to-JSON conversion** TzKT automatically converts raw Micheline JSON to human-readable JSON, so it's extremely handy to work with transaction parameters, contract storages, bigmaps keys, etc.
-- **Tokens support** TzKT also indexes FA1.2 and FA2 tokens, token balances and token transfers (including mints and burns), as well as synchronizes token metadata.
-- **Data quality comes first!** You will never see an incorrect account balance, or total rolls, or missed operations, etc. TzKT was built by professionals who know Tezos from A to Z (or, in other words, from tz to KT 😼).
-- **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly. In addition to basic data access TzKT API has a lot of cool features such as deep filtering, sorting, data selection, exporting .csv statements, calculating historical data (at any block) such as balances or BigMap keys, injecting historical quotes and metadata, optimized caching and much more. See the complete [API documentation](https://api.tzkt.io).
+- **Tokens support** TzKT also indexes FA1.2 and FA2 tokens (including NFTs), token balances, and token transfers (including mints and burns), as well as token metadata, even if it is stored in IPFS.
+- **Data quality comes first!** You will never see an incorrect account balance, or contract storage, or missed operations, etc. TzKT was built by professionals who know Tezos from A to Z (or from tz to KT 😼).
+- **Advanced API.** TzKT provides a REST-like API, so you don't have to connect to the database directly (but you can, if you want). In addition to basic data access TzKT API has a lot of cool features such as "deep filtering", "deep selection", "deep sorting", exporting .csv statements, calculating historical data (at some block in the past) such as balances, storages, and bigmap keys, injecting historical quotes and metadata, built-in response cache, and much more. See the complete [API documentation](https://api.tzkt.io).
 - **WebSocket API.** TzKT allows to subscribe to real-time blockchain data, such as new blocks or new operations, etc. via WebSocket. TzKT uses SignalR, which is very easy to use and for which there are many client libraries for different languages.
-- **Low resource consumption.** TzKT is fairly lightweight. To run TzKT on Tezos mainnet it is recommended to have at least 4 GB of RAM, depending on the configured cache size.
-- **No local node needed.** TzKT indexer works well even with remote RPC node. By default it uses public [rpc.tzkt.io](https://rpc.tzkt.io/mainnet/chains/main/blocks/head/header).
-- **Quick start.** Indexer bootstrap takes ~15 minutes by using snapshots publicly available for all supported networks. Of course, you can run full synchronization from scratch as well.
-- **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data. Also, the indexer performs self-diagnostics after each block, which guarantees the correct committing.
-- **Flexibility and scalability.** There is no requirement to run all TzKT components (database, indexer, API) together and on the same machine. This allows flexible optimization, because you can optimize each component separately and according to your needs. Or you can run all the components on the same machine as well, which is much cheaper.
+- **No local node needed.** There is no need to run your own local node. Also, the indexer does not create much load on the node RPC, so it's ok to use any public one. By default it uses [rpc.tzkt.io](https://rpc.tzkt.io/mainnet/chains/main/blocks/head/header).
+- **No archive node needed.** There is no need to use an archive node (running in "archive" mode). If you bootstrap the indexer from the most recent snapshot, using a simple rolling node will be enough.
+- **Easy to start.** Indexer bootstrap is very simple and quite fast, because you can easily restore it from a fresh snapshot, publicly available for all supported networks, so you don't need to index the whole blockchain from scratch. But of course, you can do that, if you want.
+- **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data because of invalid response from the node. Also, the indexer performs self-diagnostics after each block, which guarantees the correctness of its state after committing new data.
+- **Flexibility and scalability.** TzKT is split into 3 components: indexer, database, and API, which enables quite efficient horizontal scalability ([see example](https://baking-bad.org/blog/2019/12/03/tezos-explorer-tzkt-2-overview-of-architecture-and-core-components/#general-picture)). This also enables flexible optimization, because you can optimize each component separately and according to your needs.
 - **PostgreSQL.** TzKT uses the world's most advanced open source database, that gives a lot of possibilities such as removing unused indexes to reduce storage usage or adding specific indexes to increase performance of specific queries. You can configure replication, clustering, partitioning and much more. You can use a lot of plugins to enable cool features like GraphQL. This is a really powerful database.
-- **Friendly support.** We are always happy to help everyone and are open to discussions and feature requests. Feel free to [contact us](https://baking-bad.org/docs#contacts).
+- **Friendly support.** We are always happy to help and open for discussions and feature requests. Feel free to [contact us](https://baking-bad.org/docs#contacts).
 
 ## Installation (docker)
 
@@ -29,17 +29,16 @@ First of all, install `git`, `make`, `docker`, `docker-compose`, then run the fo
 git clone https://github.com/baking-bad/tzkt.git
 cd tzkt/
 
-make init #run this command if you want to restore the DB from the latest snapshot
-make start
-
-curl http://127.0.0.1:5000/v1/head
-
-make stop
+make init  # Restores DB from the latest snapshot. Skip it, if you want to index from scratch.
+make start # Starts DB, indexer, and API. By default, the API will be available at http://127.0.0.1:5000.
+make stop  # Stops DB, indexer, and API.
 ````
+
+You can configure TzKT via `Tzkt.Sync/appsettings.json` (indexer) and `Tzkt.Api/appsettings.json` (API). All the settings can also be passed via env vars or command line args. See an example of how to [provide settings via env vars](https://github.com/baking-bad/tzkt/blob/master/docker-compose.yml#L25) and read some tips about [indexer configuration](#configure-indexer-example-for-mainnet) and [API configuration](#configure-api).
 
 ## Installation (from source)
 
-This is the preferred way, because you have more control over each TzKT component (database, indexer, API). This guide is for Ubuntu 22.04, but if you are using a different OS, the installation process will probably differ only in the "Install packages" step.
+This guide is for Ubuntu 22.04, but even if you use a different OS, the installation process will likely be the same, except for the "Install packages" part.
 
 ### Install packages
 
@@ -68,7 +67,7 @@ sudo apt update
 sudo apt -y install postgresql postgresql-contrib
 ````
 
-## Install Tzkt Indexer and API for mainnet
+---
 
 ### Prepare database
 
@@ -83,30 +82,30 @@ postgres=# grant all privileges on database tzkt_db to tzkt;
 postgres=# \q
 ````
 
-#### Download fresh snapshot
+#### Download fresh snapshot (example for mainnet)
 
-````c
+````
 wget "https://snapshots.tzkt.io/tzkt_v1.11_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
 
 ````c
-// full mainnet restoring takes ~30 min (depending on hardware)
 sudo -u postgres pg_restore -c --if-exists -v -1 -d tzkt_db /tmp/tzkt_db.backup
 ````
 
 Notes:
-- in case of Docker use you may need to add `-U tzkt` parameter;
-- to speed up the restoration replace `-1` with `-e -j {n}`, where `{n}` is a number of parallel workers (e.g. `-e -j 8`).
+- to speed up the restoration replace `-1` with `-e -j {n}`, where `{n}` is a number of parallel workers (e.g., `-e -j 8`);
+- in case of Docker use you may need to add `-U tzkt` parameter.
 
-### Clone, build, configure and run Tzkt Indexer
+---
 
-#### Clone
+### Build, configure and run TzKT Indexer
+
+#### Clone repo
 
 ````
-cd ~
-git clone https://github.com/baking-bad/tzkt.git
+git clone https://github.com/baking-bad/tzkt.git ~/tzkt
 ````
 
 #### Build indexer
@@ -116,77 +115,26 @@ cd ~/tzkt/Tzkt.Sync/
 dotnet publish -o ~/tzkt-sync
 ````
 
-#### Configure indexer
+#### Configure indexer (example for mainnet)
 
-Edit configuration file `~/tzkt-sync/appsettings.json` with your favorite text editor. What you need is to specify `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`.
-
-Like this:
+Edit the configuration file `~/tzkt-sync/appsettings.json`. What you basically need is to adjust the `TezosNode.Endpoint` and `ConnectionStrings.DefaultConnection`, if needed:
 
 ````json
 {
-  "Protocols": {
-    "Diagnostics": false,
-    "Validation": true
-  },
   "TezosNode": {
-    "Endpoint": "https://rpc.tzkt.io/mainnet/",
-    "Timeout": 60
-  },
-  "Quotes": {
-    "Async": true,
-    "Provider": {
-      "Name": "TzktQuotes"
-    }
+    "Endpoint": "https://rpc.tzkt.io/mainnet/"
   },
   "ConnectionStrings": {
     "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;command timeout=600;"
-  },
-  "HealthChecks": {
-    "Enabled": true,
-    "Delay": 10,
-    "Period": 10,
-    "FilePath": "sync.health"
-  },
-  "Domains": {
-    "Enabled": false,
-    "NameRegistry": "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS",
-    "PeriodSec": 30
-  },  
-  "TokenMetadata": {
-    "Enabled": false,
-    "BatchSize": 100,
-    "PeriodSec": 30,
-    "OverriddenMetadata": [],
-    "DipDup": [
-      {
-        "Url": "https://metadata.dipdup.net/v1/graphql",
-        "MetadataTable": "token_metadata",
-        "HeadStatusTable": "dipdup_head_status",
-        "Network": "mainnet"
-      },
-      {
-        "Url": "https://domains.dipdup.net/v1/graphql",
-        "Network": "mainnet"
-      },
-      {
-        "Url": "https://quartz.dipdup.net/v1/graphql",
-        "Network": "mainnet"
-      }
-    ]
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Information"
-    }
   }
 }
 ````
 
-##### Indexing lag
+[Read more](https://www.npgsql.org/doc/connection-string-parameters.html) about connection string and available parameters.
 
-In order to deal with chain reorgs you can set the indexer lag (in blocks):
+##### Chain reorgs and indexing lag
+
+To avoid reorgs (chain reorganizations) you can set the indexing lag `TezosNode.Lag` (1-2 blocks lag is enough):
 
 ````json
 {
@@ -196,32 +144,30 @@ In order to deal with chain reorgs you can set the indexer lag (in blocks):
 }
 ````
 
+##### Collect metrics
+
+You can enable/disable Prometheus metrics by setting `MetricsOptions.Enabled`. By default, they will be available at `http://localhost:5001/metrics` (protobuf) and `http://localhost:5001/metrics-text` (plain text):
+
+````json
+  "MetricsOptions": {
+    "Enabled": true
+  }
+````
+
 #### Run indexer
 
 ````c
 cd ~/tzkt-sync
 dotnet Tzkt.Sync.dll
-
-// info: Microsoft.Hosting.Lifetime[0]
-//       Application started. Press Ctrl+C to shut down.
-// info: Microsoft.Hosting.Lifetime[0]
-//       Hosting environment: Production
-// info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/tzkt-sync
-// warn: Tzkt.Sync.Services.Observer[0]
-//       Observer is started
-// info: Tzkt.Sync.Services.Observer[0]
-//       Applied 776913
-// info: Tzkt.Sync.Services.Observer[0]
-//       Applied 776914
-// ....
 ````
 
 That's it. If you want to run the indexer as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-7.0#create-the-service-file.
 
-### Build, configure and run Tzkt API for the mainnet indexer
+---
 
-Suppose you have already created database `tzkt_db`, database user `tzkt` and cloned Tzkt repo to `~/tzkt`.
+### Build, configure and run TzKT API
+
+Suppose, you have already cloned the repo to `~/tzkt` during the steps above.
 
 #### Build API
 
@@ -232,104 +178,90 @@ dotnet publish -o ~/tzkt-api
 
 #### Configure API
 
-Edit configuration file `~/tzkt-api/appsettings.json` with your favorite text editor. What you need is to specify `ConnectionStrings.DefaultConnection`, a connection string for the database created above.
+Edit the configuration file `~/tzkt-api/appsettings.json`. What you basically need is to adjust the `ConnectionStrings.DefaultConnection`, if needed:
 
 Like this:
 
 ````js
 {
-  "Cache": {
-    "LoadRate": 0.75,
-    "MaxAccounts": 32000
-  },  
-  "ResponseCache": {
-    "CacheSize": 256
-  },
-  "Websocket": {
-    "Enabled": true,
-    "MaxConnections": 1000,
-    "MaxOperationSubscriptions": 50,
-    "MaxBigMapSubscriptions": 50,
-    "MaxEventSubscriptions": 50,
-    "MaxAccountsSubscriptions": 50,
-    "MaxTokenBalancesSubscriptions": 50,
-    "MaxTokenTransfersSubscriptions": 50
-  },
   "ConnectionStrings": {
     "DefaultConnection": "host=localhost;port=5432;database=tzkt_db;username=tzkt;password=qwerty;command timeout=600;"
   },
+}
+````
 
-  "Home": {
-    "Enabled": false,
-    "UpdatePeriod": 30
-  },
+[Read more](https://www.npgsql.org/doc/connection-string-parameters.html) about connection string and available parameters.
 
-  "HealthChecks": {
-    "Enabled": true,
-    "Endpoint": "/health"
-  },
+##### Response cache
 
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Information"
-    }
-  },
-     
+The API has built-in response cache, enabled by default. You can control the cache size limit by setting the `ResponseCache.CacheSize` (MB), or disable it by setting to `0`:
+````json
+{
+   "ResponseCache": {
+      "CacheSize": 1024
+   }
+}
+````
+
+##### RPC helpers (example for mainnet)
+
+The API provides RPC helpers - endpoints proxied directly to the node RPC, specified in the API settings. The Rpc helpers can be enabled in the `RpcHelpers` section:
+
+`````json
+{
+   "RpcHelpers": {
+      "Enabled": true,
+      "Endpoint": "https://rpc.tzkt.io/mainnet/"
+   }
+}
+`````
+
+Please, notice, the API's `RpcHelpers.Endpoint` must point to the same network (with the same `chain_id`) as `TezosNode.Endpoint` in the indexer. Otherwise, an exception will be thrown.
+
+##### Collect metrics
+
+You can enable/disable Prometheus metrics by setting `MetricsOptions.Enabled`. By default, they will be available at `http://localhost:5000/metrics` (protobuf) and `http://localhost:5000/metrics-text` (plain text):
+
+````json
+  "MetricsOptions": {
+    "Enabled": true
+  }
+````
+
+##### TCP port
+
+By default, the API is available at the port `5000`. You can configure it at `Kestrel.Endpoints.Http.Url`:
+
+````json
   "Kestrel": {
     "Endpoints": {
       "Http": {
         "Url": "http://localhost:5000"
       }
     }
-  },
-
-  "AllowedHosts": "*"
-}
+  }
 ````
 
 #### Run API
 
-````c
+````
 cd ~/tzkt-api
 dotnet Tzkt.Api.dll
-
-// info: Tzkt.Api.Services.Metadata.AccountMetadataService[0]
-//       Accounts metadata not found
-// info: Tzkt.Api.Services.Sync.SyncWorker[0]
-//       Sync worker initialized with level 776917 and blocks time 60s
-// info: Tzkt.Api.Services.Sync.SyncWorker[0]
-//       Synchronization started
-// info: Microsoft.Hosting.Lifetime[0]
-//       Now listening on: http://localhost:5000
-// info: Microsoft.Hosting.Lifetime[0]
-//       Now listening on: https://localhost:5001
-// info: Microsoft.Hosting.Lifetime[0]
-//       Application started. Press Ctrl+C to shut down.
-// info: Microsoft.Hosting.Lifetime[0]
-//       Hosting environment: Production
-// info: Microsoft.Hosting.Lifetime[0]
-//       Content root path: /home/tzkt/tzkt-api
-// ....
 ````
 
-That's it. By default API is available on ports 5000 (HTTP) and 5001 (HTTPS). If you want to use HTTPS, you also need to configure certificates. If you want to run API on a different port, change the `"Kestrel"` section in the `appsettings.json`.
+That's it. If you want to run the API as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-7.0#create-the-service-file.
 
 ## Install Tzkt Indexer and API for testnets
 
-In general the steps are the same as for the mainnet, you just need to use different RPC endpoint and DB snapshot. Here are some presets for testnets:
+In general the steps are the same as for the mainnet, you will just need to use a different RPC endpoint and DB snapshot. Here are presets for the current testnets:
  - Ghostnet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
- - Kathmandunet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_kathmandunet.backup
-   - RPC node: https://rpc.tzkt.io/kathmandunet/
  - Limanet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_limanet.backup
    - RPC node: https://rpc.tzkt.io/limanet/
 
-### Testnet installation using docker containers
+### Testnets & docker
 
 First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands:
 
@@ -337,12 +269,9 @@ First of all, install `git`, `make`, `docker`, `docker-compose`, then run the fo
 git clone https://github.com/baking-bad/tzkt.git
 cd tzkt/
 
-make ghost-init #run this command if you want to restore the DB from the latest snapshot
-make ghost-start
-
-curl http://127.0.0.1:5010/v1/head 
-
-make ghost-stop
+make ghost-init  # Restores DB from the latest snapshot. Skip it, if you want to index from scratch.
+make ghost-start # Starts DB, indexer, and API. By default, the API will be available at http://127.0.0.1:5010.
+make ghost-stop  # Stops DB, indexer, and API.
 ````
 
 ## Have a question?
