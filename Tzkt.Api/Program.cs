@@ -77,6 +77,7 @@ builder.Services.AddHomeService();
 builder.Services.AddStateListener();
 
 builder.Services.AddControllers()
+    .AddMetrics()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new AccountConverter());

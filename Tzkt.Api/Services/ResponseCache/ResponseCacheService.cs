@@ -31,12 +31,12 @@ namespace Tzkt.Api.Services
             {
                 if (Cache.TryGetValue(key, out response))
                 {
-                    Metrics.Measure.Counter.Increment(MetricsRegistry.ResponseCacheCalls, "hit");
+                    Metrics.Measure.Counter.Increment(MetricsRegistry.ResponseCacheCalls, MetricsRegistry.ResponseCacheHit);
                     return true;
                 }
                 else
                 {
-                    Metrics.Measure.Counter.Increment(MetricsRegistry.ResponseCacheCalls, "miss");
+                    Metrics.Measure.Counter.Increment(MetricsRegistry.ResponseCacheCalls, MetricsRegistry.ResponseCacheMiss);
                     return false;
                 }
             }

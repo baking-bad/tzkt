@@ -24,5 +24,8 @@ namespace Tzkt.Api.Utils
             Name = "Websocket connections",
             MeasurementUnit = Unit.Connections,
         };
+
+        public static MetricTags ResponseCacheHit = new("cache", "hit");
+        public static MetricTags ResponseCacheMiss = new("cache", "miss");
     }
 }
