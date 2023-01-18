@@ -2487,6 +2487,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="initiator">Filters transactions by initiator. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
+        /// <param name="amount">Filters transactions by amount (microtez).</param>
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
@@ -2503,6 +2504,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
+            Int64Parameter amount,
             Int32Parameter level,
             DateTimeParameter timestamp,
             StringParameter entrypoint,
@@ -2513,6 +2515,7 @@ namespace Tzkt.Api.Controllers
                 initiator == null &&
                 sender == null &&
                 target == null &&
+                amount == null &&
                 level == null &&
                 timestamp == null &&
                 entrypoint == null &&
@@ -2521,13 +2524,13 @@ namespace Tzkt.Api.Controllers
                 return Ok(State.Current.TransactionOpsCount);
         
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), 
+                ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("target", target), ("amount", amount), 
                 ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("status", status));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetTransactionsCount(anyof, initiator, sender, target, level, timestamp, entrypoint, parameter, status);
+            var res = await Operations.GetTransactionsCount(anyof, initiator, sender, target, amount, level, timestamp, entrypoint, parameter, status);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
