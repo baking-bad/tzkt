@@ -1,5 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Netezos.Contracts;
+using Netezos.Encoding;
+
+using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
 
 namespace Tzkt.Api.Controllers
@@ -9,10 +13,12 @@ namespace Tzkt.Api.Controllers
     public class HelpersController : ControllerBase
     {
         readonly RpcHelpers Rpc;
+        readonly AccountRepository Accounts;
 
-        public HelpersController(RpcHelpers rpc)
+        public HelpersController(RpcHelpers rpc,  AccountRepository accounts)
         {
             Rpc = rpc;
+            Accounts = accounts;
         }
 
         /// <summary>
@@ -36,7 +42,7 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest(nameof(bytes), ex.Message);
             }
         }
-
+        
         /// <summary>
         /// Run script view
         /// </summary>
@@ -44,44 +50,24 @@ namespace Tzkt.Api.Controllers
         /// Simulate a call to a michelson view
         /// </remarks>
         /// <param name="contract">Contract address</param>
-        /// <param name="view">Called view</param>
+        /// <param name="name">Called view</param>
         /// <param name="input">Input(micheline michelson expression)/param>
         /// <returns></returns>
-        [HttpGet("runScriptView")]
+        [HttpPost("view/{contract}/{name}")]
         public async Task<ActionResult> PostRunScriptView(            
             [Required][KTAddress] string contract,
-            [Required] string view,
-            [Required] string input)
-        {
-            try
-            {
-                return Ok(await Rpc.RunScriptView(contract, view, input));
-            }
-            catch (Exception ex)
-            {
-                return new BadRequest(nameof(contract), ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Run script view
-        /// </summary>
-        /// <remarks>
-        /// Simulate a call to a michelson view
-        /// </remarks>
-        /// <param name="contract">Contract address</param>
-        /// <param name="view">Called view</param>
-        /// <param name="input">Input(micheline michelson expression)/param>
-        /// <returns></returns>
-        [HttpPost("runScriptView")]
-        public async Task<ActionResult> PostRunScriptView(            
-            [Required][KTAddress] string contract,
-            [Required] string view,
+            [Required] string name,
             [FromBody] object input)
         {
             try
             {
-                return Ok(await Rpc.RunScriptView(contract, view, input));
+                var schema = await Accounts.GetViewSchema(contract, name);
+                if (schema == null)
+                    return Ok(null);
+
+                var inputType = Schema.Create(schema.Args[1] as MichelinePrim);
+                var res = await Rpc.RunScriptView(contract, name, inputType.Optimize(inputType.MapObject(input, true)));
+                return Ok(Schema.Create(schema.Args[2] as MichelinePrim).Humanize(res));
             }
             catch (Exception ex)
             {
