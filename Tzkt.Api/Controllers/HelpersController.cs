@@ -1,6 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Services;
 
@@ -36,6 +34,58 @@ namespace Tzkt.Api.Controllers
             catch (Exception ex)
             {
                 return new BadRequest(nameof(bytes), ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Run script view
+        /// </summary>
+        /// <remarks>
+        /// Simulate a call to a michelson view
+        /// </remarks>
+        /// <param name="contract">Contract address</param>
+        /// <param name="view">Called view</param>
+        /// <param name="input">Input(micheline michelson expression)/param>
+        /// <returns></returns>
+        [HttpGet("runScriptView")]
+        public async Task<ActionResult> PostRunScriptView(            
+            [Required][KTAddress] string contract,
+            [Required] string view,
+            [Required] string input)
+        {
+            try
+            {
+                return Ok(await Rpc.RunScriptView(contract, view, input));
+            }
+            catch (Exception ex)
+            {
+                return new BadRequest(nameof(contract), ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Run script view
+        /// </summary>
+        /// <remarks>
+        /// Simulate a call to a michelson view
+        /// </remarks>
+        /// <param name="contract">Contract address</param>
+        /// <param name="view">Called view</param>
+        /// <param name="input">Input(micheline michelson expression)/param>
+        /// <returns></returns>
+        [HttpPost("runScriptView")]
+        public async Task<ActionResult> PostRunScriptView(            
+            [Required][KTAddress] string contract,
+            [Required] string view,
+            [FromBody] object input)
+        {
+            try
+            {
+                return Ok(await Rpc.RunScriptView(contract, view, input));
+            }
+            catch (Exception ex)
+            {
+                return new BadRequest(nameof(contract), ex.Message);
             }
         }
     }

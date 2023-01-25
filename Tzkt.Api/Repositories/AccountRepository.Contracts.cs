@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Data;
 using Dapper;
 using Netezos.Contracts;
 using Netezos.Encoding;
@@ -962,6 +958,44 @@ namespace Tzkt.Api.Repositories
                     })
                     .ToList()
             };
+        }
+        
+        public async Task<IMicheline> BuildViewInput(string address, string name, object value)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+            
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null || row.Views == null) return null;
+
+            var view = ((byte[][])row.Views)
+                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
+                .Where(x => (x.Args[0] as MichelineString).Value == name)
+                .FirstOrDefault();
+            if (view == null) return null;
+
+            var inputType = Schema.Create(view.Args[1] as MichelinePrim);
+            return inputType.Optimize(inputType.MapObject(value, true));
+        }
+
+        public async Task<RawJson> BuildViewOutput(string address, string name, IMicheline value)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null || row.Views == null) return null;
+
+            var view = ((byte[][])row.Views)
+                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
+                .Where(x => (x.Args[0] as MichelineString).Value == name)
+                .FirstOrDefault();
+            if (view == null) return null;
+
+            var outputType = Schema.Create(view.Args[2] as MichelinePrim);
+            return outputType.Humanize(value);
         }
 
         public async Task<IMicheline> BuildEntrypointParameters(string address, string name, object value)
