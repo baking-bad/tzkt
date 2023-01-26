@@ -32,6 +32,11 @@ namespace Tzkt.Api.Models
         public Alias Address { get; set; }
 
         /// <summary>
+        /// Whether or not the domain is on the reverse records list
+        /// </summary>
+        public bool Reverse { get; set; }
+
+        /// <summary>
         /// Expiration datetime
         /// </summary>
         public DateTime Expiration { get; set; }

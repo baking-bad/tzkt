@@ -91,7 +91,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="name">Domain name</param>
         /// <returns></returns>
         [HttpGet("{name}")]
-        public async Task<ActionResult<Domain>> GetCount(string name)
+        public async Task<ActionResult<Domain>> GetByName(string name)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);
 

@@ -23,16 +23,22 @@ namespace Tzkt.Api
         public StringParameter name { get; set; }
 
         /// <summary>
+        /// Filter by the domain owner.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public AddressNullParameter owner { get; set; }
+
+        /// <summary>
         /// Filter by the address the domain points to.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public AddressNullParameter address { get; set; }
 
         /// <summary>
-        /// Filter by the domain owner.  
+        /// Filter by the 'reverse' flag.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AddressNullParameter owner { get; set; }
+        public BoolParameter reverse { get; set; }
 
         /// <summary>
         /// Filter by the domain expiration.  
@@ -75,8 +81,8 @@ namespace Tzkt.Api
         public string Normalize(string prop)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("level", level), ("name", name), ("address", address), ("owner", owner),
-                ("expiration", expiration), ("data", data), ("firstLevel", firstLevel),
+                ("id", id), ("level", level), ("name", name), ("owner", owner), ("address", address),
+                ("reverse", reverse), ("expiration", expiration), ("data", data), ("firstLevel", firstLevel),
                 ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime));
         }
     }

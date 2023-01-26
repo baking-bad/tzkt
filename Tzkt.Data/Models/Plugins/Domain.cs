@@ -9,8 +9,9 @@ namespace Tzkt.Data.Models
         public int Id { get; set; }
         public int Level { get; set; }
         public string Name { get; set; }
-        public string Address { get; set; }
         public string Owner { get; set; }
+        public string Address { get; set; }
+        public bool Reverse { get; set; }
         public DateTime Expiration { get; set; }
         public JsonElement? Data { get; set; }
 

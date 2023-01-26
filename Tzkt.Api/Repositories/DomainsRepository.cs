@@ -36,6 +36,7 @@ namespace Tzkt.Api.Repositories
                         case "name": columns.Add(@"""Name"""); break;
                         case "owner": columns.Add(@"""Owner"""); break;
                         case "address": columns.Add(@"""Address"""); break;
+                        case "reverse": columns.Add(@"""Reverse"""); break;
                         case "expiration": columns.Add(@"""Expiration"""); break;
                         case "data":
                             if (field.Path == null)
@@ -67,6 +68,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Name", filter.name)
                 .Filter("Owner", filter.owner)
                 .Filter("Address", filter.address)
+                .Filter("Reverse", filter.reverse)
                 .Filter("Expiration", filter.expiration)
                 .Filter("Data", filter.data)
                 .Filter("FirstLevel", filter.firstLevel)
@@ -93,6 +95,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Name", filter.name)
                 .Filter("Owner", filter.owner)
                 .Filter("Address", filter.address)
+                .Filter("Reverse", filter.reverse)
                 .Filter("Expiration", filter.expiration)
                 .Filter("Data", filter.data)
                 .Filter("FirstLevel", filter.firstLevel)
@@ -123,6 +126,7 @@ namespace Tzkt.Api.Repositories
                 Name = row.Name,
                 Owner = row.Owner == null ? null : Accounts.GetAlias(row.Owner),
                 Address = row.Address == null ? null : Accounts.GetAlias(row.Address),
+                Reverse = row.Reverse,
                 Expiration = row.Expiration,
                 Data = row.Data == null ? null : (RawJson)row.Data,
                 FirstLevel = row.FirstLevel,
@@ -142,6 +146,7 @@ namespace Tzkt.Api.Repositories
                 Name = row.Name,
                 Owner = row.Owner == null ? null : Accounts.GetAlias(row.Owner),
                 Address = row.Address == null ? null : Accounts.GetAlias(row.Address),
+                Reverse = row.Reverse,
                 Expiration = row.Expiration,
                 Data = row.Data == null ? null : (RawJson)row.Data,
                 FirstLevel = row.FirstLevel,
@@ -198,6 +203,10 @@ namespace Tzkt.Api.Repositories
                     case "address.address":
                         foreach (var row in rows)
                             result[j++][i] = row.Address == null ? null : Accounts.GetAlias(row.Address).Address;
+                        break;
+                    case "reverse":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Reverse;
                         break;
                     case "expiration":
                         foreach (var row in rows)
